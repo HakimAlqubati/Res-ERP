@@ -1,0 +1,189 @@
+table.pretty {
+    width: 100%;
+}
+
+table.pretty tbody tr td {
+    border-top: 1px solid;
+    text-align: center;
+}
+
+table.pretty tfoot tr th {
+    border-bottom: 2px solid;
+    border-top: 2px solid;
+    font-weight: bold;
+    text-align: center;
+}
+
+table.pretty th,
+table.pretty td {
+    border: 1px solid gainsboro;
+    padding: 0.2em;
+}
+
+table.pretty thead tr th.empty {
+    border: 0 none;
+}
+
+.table:not(.table-dark) {
+    color: inherit;
+}
+
+.table-bordered {
+    border: 1px solid #dee2e6;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+    background-color: transparent;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, .05);
+}
+
+.table-bordered td,
+.table-bordered th {
+    border: 1px solid #dee2e6;
+}
+
+.table td,
+.table th {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+}
+
+
+table.pretty caption {
+    font-style: italic;
+    font-weight: bold;
+    margin-left: inherit;
+    margin-right: inherit;
+}
+
+table.pretty thead tr th {
+    border-bottom: 2px solid;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+table.pretty tfoot tr th {
+    border-bottom: 2px solid;
+    border-top: 2px solid;
+    font-weight: bold;
+    text-align: center;
+}
+
+table.pretty tbody tr th {
+    text-align: center;
+}
+
+
+table.pretty tbody tr.odd td {
+    background: none repeat scroll 0 0 #EBF4FB;
+}
+
+table.pretty tbody tr.even td {
+    background: none repeat scroll 0 0 #BCEEEE;
+}
+
+table.pretty thead tr th.highlightcol {
+    border-color: #2E6E9E #2E6E9E gainsboro;
+    border-style: solid;
+    border-width: 2px 2px 1px;
+}
+
+table.pretty tfoot tr th.highlightcol {
+    border-left: 2px solid #2E6E9E;
+    border-right: 2px solid #2E6E9E;
+}
+
+table.pretty thead tr th.lefthighlightcol,
+table.pretty tbody tr td.lefthighlightcol,
+table.pretty tfoot tr th.lefthighlightcol {
+    border-left: 2px solid #2E6E9E;
+}
+
+table.pretty thead tr th.righthighlightcol,
+table.pretty tbody tr td.righthighlightcol,
+table.pretty tfoot tr th.righthighlightcol {
+    border-right: 2px solid #2E6E9E;
+}
+
+table.pretty thead tr th.lefthighlightcolheader,
+table.pretty tbody tr td.lefthighlightcolheader,
+table.pretty tfoot tr th.lefthighlightcolheader {
+    border-left: 2px solid #2E6E9E;
+}
+
+table.pretty thead tr th.righthighlightcolheader,
+table.pretty tbody tr td.righthighlightcolheader,
+table.pretty tfoot tr th.righthighlightcolheader {
+    border-right: 2px solid #2E6E9E;
+}
+
+.filament-sidebar-nav::-webkit-scrollbar {
+    display: none !important;
+}
+
+.filament-sidebar-nav {
+    scrollbar-width: none;
+}
+
+html {
+    overflow-y: scroll !important;
+}
+
+html::-webkit-scrollbar {
+    display: none;
+}
+
+.loss {
+    color: red;
+}
+
+.circle-image {
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: inline-block;
+    overflow: hidden;
+    max-height: 70px;
+}
+
+.no_border_right_left {
+    border-right: none !important;
+    border-left: none !important;
+}
+
+.no_border_right {
+    border-right: none !important;
+}
+
+.no_border_left {
+    border-left: none !important;
+}
+
+.branch_store_report td,
+.branch_store_report th {
+    padding: 8px !important;
+}
+
+.please_select_message_div {
+    text-align: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    background: #e1e1e1;
+    border-radius: 25px;
+    border: 2px solid #c98108;
+}
+
+.please_select_message_text {
+    font-family: Arial, sans-serif;
+    font-size: 20px;
+    font-weight: bold;
+    color: #c98108;
+    letter-spacing: 2.5px;
+}
