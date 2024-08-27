@@ -6,6 +6,7 @@ use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
 use App\Models\FakeModelReports\ReportProductQuantities;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 
 class ReportProductQuantitiesResource extends Resource
@@ -15,6 +16,9 @@ class ReportProductQuantitiesResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = ReportOrdersCluster::class;
 
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 2;
+    
     /**
      * @deprecated Use `getModelLabel()` instead.
      */

@@ -124,4 +124,5 @@ return [
     'product_approved_by_store'=> 'المنتج بعد تعديله من (المخزن)',
     'ordered_product'=> 'المنتج المطلوب من (الفرع)',
     'employees' => 'الموظفين',
+    'tasks_ms' => 'نظام إدارة المهام',
 ];

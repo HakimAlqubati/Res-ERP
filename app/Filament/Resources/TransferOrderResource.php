@@ -11,6 +11,7 @@ use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -34,6 +35,8 @@ class TransferOrderResource extends Resource
     protected static ?string $navigationLabel = 'Transfers list';
     public static ?string $slug = 'transfers-list';
     protected static ?string $cluster = MainOrdersCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 2;
     public static function getNavigationLabel(): string
     {
         return __('lang.transfers_list');

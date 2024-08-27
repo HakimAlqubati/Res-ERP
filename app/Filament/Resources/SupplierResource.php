@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -25,6 +26,8 @@ class SupplierResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Supplier & Roles';
     protected static ?string $cluster = InventoryCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 2;
     public static function getNavigationLabel(): string
     {
         return __('lang.suppliers');

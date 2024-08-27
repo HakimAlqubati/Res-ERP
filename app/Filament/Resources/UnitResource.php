@@ -9,6 +9,7 @@ use App\Models\Unit;
 use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -28,7 +29,8 @@ class UnitResource extends Resource
     protected static ?string $activeNavigationIcon = 'heroicon-s-document-text';
     // protected static bool $shouldRegisterNavigation = false;
 
-
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationLabel = 'Units';
     public static function getNavigationLabel(): string
     {

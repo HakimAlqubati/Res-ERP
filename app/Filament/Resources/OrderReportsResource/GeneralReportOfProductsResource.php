@@ -6,6 +6,7 @@ use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails;
 use App\Filament\Resources\OrderReportsResource\Pages\ListGeneralReportOfProducts;
 use App\Models\FakeModelReports\GeneralReportOfProducts;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 
 class GeneralReportOfProductsResource extends Resource
@@ -14,6 +15,8 @@ class GeneralReportOfProductsResource extends Resource
     protected static ?string $slug = 'general-report-products';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = ReportOrdersCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 1;
     /**
      * @deprecated Use `getModelLabel()` instead.
      */

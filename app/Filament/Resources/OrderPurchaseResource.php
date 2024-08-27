@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\OrderPurchaseResource\Pages\CreateOrderPurchase;
 use App\Filament\Resources\OrderPurchaseResource\Pages\EditOrderPurchase;
 use App\Filament\Resources\OrderPurchaseResource\Pages\ListOrderPurchase;
@@ -14,6 +15,9 @@ use App\Models\UnitPrice;
 use App\Tables\Columns\count_items_order;
 use App\Tables\Columns\TotalOrder;
 use Closure;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -21,6 +25,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
@@ -33,7 +38,9 @@ class OrderPurchaseResource extends Resource
     protected static ?string $model = Order::class;
     protected static ?string $slug = 'purchased-orders';
     // protected static ?string $navigationIcon = 'heroicon-o-collection';
-
+    protected static ?string $cluster = MainOrdersCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 3;
     public static function getPluralLabel(): ?string
     {
         return __('lang.purchased_orders');
@@ -190,17 +197,17 @@ class OrderPurchaseResource extends Resource
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 TextColumn::make('order_date')->label(__('lang.order_date')),
 
-                count_items_order::make('item_counts')->label(__('lang.item_counts')),
-                TotalOrder::make('total_amount')->label(__('lang.total_amount')),
+                TextColumn::make('item_counts')->label(__('lang.item_counts')),
+                TextColumn::make('total_amount')->label(__('lang.total_amount')),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->sortable(),
             ])
             ->defaultSort('id', 'desc')
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // ViewAction::make(),
+                // EditAction::make(),
+                // DeleteAction::make(),
                 // Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
@@ -242,14 +249,14 @@ class OrderPurchaseResource extends Resource
             ]);
         return $query;
     }
-    // protected static function getNavigationBadge(): ?string
-    // {
-    //     $query = static::getModel()::query();
-    //     $currentRole = getCurrentRole();
+    public static function getNavigationBadge(): ?string
+    {
+        $query = static::getModel()::query();
+        $currentRole = getCurrentRole();
 
-    //     if ($currentRole == 7) {
-    //         $query->where('branch_id', auth()->user()->branch->id);
-    //     }
-    //     return $query->where('is_purchased', 1)->count();
-    // }
+        if ($currentRole == 7) {
+            $query->where('branch_id', auth()->user()->branch->id);
+        }
+        return $query->where('is_purchased', 1)->count();
+    }
 }

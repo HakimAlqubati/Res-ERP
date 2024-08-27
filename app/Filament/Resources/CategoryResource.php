@@ -9,6 +9,7 @@ use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -24,6 +25,8 @@ class CategoryResource extends Resource
     // protected static ?string $navigationGroup = 'Categories';
     protected static ?string $recordTitleAttribute = 'name';
     protected static ?string $cluster = ProductUnitCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 1;
     public static function getNavigationLabel(): string
     {
         return __('lang.categories');
