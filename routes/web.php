@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OrderController;
+use App\Jobs\CreateDailyTask;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
@@ -213,3 +214,12 @@ Route::post('/import_unit_prices', [
     ImportController::class,
     'importUnitPrices'
 ])->name('import_unit_prices');
+
+
+Route::get('/test-tasks-job', function () {
+
+    CreateDailyTask::dispatchSync();
+
+    return 'dailly tasks added';
+
+});
