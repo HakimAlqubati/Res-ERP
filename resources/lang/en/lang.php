@@ -126,4 +126,5 @@ return [
     'ordered_product'=> 'Orderd product from (Branch)',
     'employees' => 'Employees',
     'tasks_ms' => 'Tasks management system',
+    'departments_and_employees' => 'Departments and employees',
 ];

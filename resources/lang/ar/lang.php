@@ -125,4 +125,5 @@ return [
     'ordered_product'=> 'المنتج المطلوب من (الفرع)',
     'employees' => 'الموظفين',
     'tasks_ms' => 'نظام إدارة المهام',
+    'departments_and_employees' => 'الأقسام والموظفين',
 ];

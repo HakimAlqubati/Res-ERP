@@ -36,11 +36,11 @@ class Task extends Model
 
     public function comments()
     {
-        return $this->hasMany(TaskComment::class, 'task_id');
+        return $this->hasOne(TaskComment::class, 'task_id');
     }
 
     public function attachments()
     {
-        return $this->hasMany(TaskAttachment::class, 'task_id');
+        return $this->hasOne(TaskAttachment::class, 'task_id');
     }
 }

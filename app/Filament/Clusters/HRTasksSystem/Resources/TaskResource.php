@@ -8,9 +8,11 @@ use App\Models\Task;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -56,34 +58,48 @@ class TaskResource extends Resource
                 Forms\Components\Select::make('status_id')
                     ->label('Status')
                     ->required()
-                    ->default(1)->disabled()
+                    ->default(1)->disabled(fn ($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord)
                     ->selectablePlaceholder(false)
                     ->relationship('status', 'name', fn(Builder $query) => $query->orderBy('id')),
                 DatePicker::make('due_date')->label('Due date')->required(false),
                 Hidden::make('created_by')->default(auth()->user()->id),
                 Hidden::make('updated_by')->default(auth()->user()->id),
-                FileUpload::make('attachment')
-                ->columnSpanFull()
-                ->imagePreviewHeight('250')
-                ->loadingIndicatorPosition('left')
-                ->panelAspectRatio('2:1')
-                ->panelLayout('integrated')
-                ->removeUploadedFileButtonPosition('right')
-                ->uploadButtonPosition('left')
-                ->uploadProgressIndicatorPosition('left')
-                ->multiple()
-                ->panelLayout('grid')
-                ->reorderable()
-                ->openable()
-                ->downloadable()
-                ->previewable()
-                ->storeFiles(false)
-                ->uploadingMessage('Uploading attachment...')
-                // ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                    // dd($file);
-                    // return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
-                // })
-                ,
+                Fieldset::make('comments')
+                ->hidden('created')
+                ->relationship('comments')->label('Comments')->schema([
+                    TextInput::make('comment'),
+                    Hidden::make('user_id')->default(auth()->user()->id),
+                    
+                ]),
+                // Fieldset::make('Task attachments')->relationship('attachments')->schema([
+                //     FileUpload::make('file_path')
+                //         ->label('Upload file')
+                //         ->columnSpanFull()
+                //         ->imagePreviewHeight('250')
+                //         ->loadingIndicatorPosition('left')
+                //         // ->panelAspectRatio('2:1')
+                //         ->panelLayout('integrated')
+                //         ->removeUploadedFileButtonPosition('right')
+                //         ->uploadButtonPosition('left')
+                //         ->uploadProgressIndicatorPosition('left')
+                //         ->multiple()
+                //         ->panelLayout('grid')
+                //         ->reorderable()
+                //         ->openable()
+                //         ->downloadable()
+                //         ->previewable()
+                //         // ->storeFiles(false)
+                //         // ->uploadingMessage('Uploading attachment...')
+                //         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                //             return (string) str($file->getClientOriginalName())->prepend('task-');
+                //         }),
+                //     Hidden::make('file_name')->default('test'),
+                //     // Hidden::make('file_name')->default('test'),
+
+                //     Hidden::make('created_by')->default(auth()->user()->id),
+                //     Hidden::make('updated_by')->default(auth()->user()->id),
+
+                // ]),
 
             ]);
     }
@@ -146,8 +162,8 @@ class TaskResource extends Resource
     {
         return [
             'index' => Pages\ListTasks::route('/'),
-            // 'create' => Pages\CreateTask::route('/create'),
-            // 'edit' => Pages\EditTask::route('/{record}/edit'),
+            'create' => Pages\CreateTask::route('/create'),
+            'edit' => Pages\EditTask::route('/{record}/edit'),
         ];
     }
 }
