@@ -4,11 +4,16 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskCommentResource\Pages;
+use App\Models\Task;
 use App\Models\TaskComment;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class TaskCommentResource extends Resource
@@ -29,7 +34,8 @@ class TaskCommentResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Select::make('task_id')->options(Task::select('id')->get()->pluck('id')),
+                Textarea::make('comment')->required(),
             ]);
     }
 
@@ -37,13 +43,18 @@ class TaskCommentResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make('task_id')->searchable()->sortable(),
+                TextColumn::make('user.name')->label('Commentor')->searchable()->sortable(),
+                TextColumn::make('comment')->searchable(),
+                TextColumn::make('updated_at')->searchable()->sortable(),
+                TextColumn::make('created_at')->searchable()->sortable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

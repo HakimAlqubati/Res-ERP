@@ -2,15 +2,20 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use Illuminate\Support\Str;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\TaskMenuRelationManager;
 use App\Models\Task;
+use App\Models\TaskAttachment;
 use App\Models\TasksMenu;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -21,12 +26,17 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\ActionsPosition;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
+
+use function Laravel\Prompts\form;
 
 class TaskResource extends Resource
 {
@@ -61,16 +71,21 @@ class TaskResource extends Resource
                     ->required()
                     ->maxLength(65535)
                     ->columnSpanFull(),
-                Forms\Components\Select::make('status_id')
-                    ->label('Status')
-                    ->required()
-                    ->default(1)->disabled(fn($livewire) => $livewire instanceof \Filament\Resources\Pages\CreateRecord)
-                    ->selectablePlaceholder(false)
-                    ->relationship('status', 'name', fn(Builder $query) => $query->orderBy('id')),
+
                 DatePicker::make('due_date')->label('Due date')->required(false),
-                CheckboxList::make('menu_tasks')->nullable()->searchable()->options(
-                    TasksMenu::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id')
+                Select::make('task_status')->options(
+                    [
+                        Task::STATUS_PENDING => Task::STATUS_PENDING,
+                        Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                        Task::STATUS_REVIEW => Task::STATUS_REVIEW,
+                        Task::STATUS_CANCELLED => Task::STATUS_CANCELLED,
+                        Task::STATUS_FAILED => Task::STATUS_FAILED,
+                        Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
+                    ]
                 ),
+                // CheckboxList::make('menu_tasks')->nullable()->searchable()->options(
+                //     TasksMenu::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id')
+                // ),
                 Hidden::make('created_by')->default(auth()->user()->id),
                 Hidden::make('updated_by')->default(auth()->user()->id),
                 // Fieldset::make('comments')
@@ -80,7 +95,13 @@ class TaskResource extends Resource
                 //     Hidden::make('user_id')->default(auth()->user()->id),
 
                 // ]),
-                Rating::make('rating')->stars(10)->theme(RatingTheme::HalfStars),
+
+                Rating::make('rating')->stars(10)->theme(RatingTheme::HalfStars)
+                    ->hidden(function ($record) {
+                        if ($record->status != Task::STATUS_COMPLETED) {
+                            return true;
+                        }
+                    }),
                 // Fieldset::make('Task attachments')->relationship('attachments')->schema([
                 //     FileUpload::make('file_path')
                 //         ->label('Upload file')
@@ -122,8 +143,25 @@ class TaskResource extends Resource
                 Tables\Columns\TextColumn::make('title')
                     ->description(fn(Task $record): string => $record->description)
                     ->searchable(),
-                TextColumn::make('status.name')
-                    ->label('Status'),
+                TextColumn::make('task_status')->label('Status')
+                    ->badge()
+                    ->icon('heroicon-m-check-badge')
+                    ->color(fn(string $state): string => match ($state) {
+                        Task::STATUS_PENDING => Task::COLOR_PENDING,
+                        Task::STATUS_IN_PROGRESS => Task::COLOR_IN_PROGRESS,
+                        Task::STATUS_REVIEW => Task::COLOR_REVIEW,
+                        Task::STATUS_CANCELLED => Task::COLOR_CANCELLED,
+                        Task::STATUS_FAILED => Task::COLOR_FAILED,
+                        Task::STATUS_COMPLETED => Task::COLOR_COMPLETED,
+                        // default => 'gray', // Fallback color in case of unknown status
+                    })
+                    
+                    ,
+
+                // ColumnGroup::make('Visibility', [
+                //     TextColumn::make('task_status'),
+                // ]),
+
 
                 Tables\Columns\TextColumn::make('assigned.name')
                     ->label('Assigned To')
@@ -144,55 +182,152 @@ class TaskResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-
+                SelectFilter::make('task_status')->label('Status')->multiple()->options(
+                    [
+                        Task::STATUS_PENDING => Task::STATUS_PENDING,
+                        Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                        Task::STATUS_REVIEW => Task::STATUS_REVIEW,
+                        Task::STATUS_CANCELLED => Task::STATUS_CANCELLED,
+                        Task::STATUS_FAILED => Task::STATUS_FAILED,
+                        Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
+                    ]
+                )
             ])
             ->selectable()
             ->actions([
-                // Action::make('TaskMenu')
-                //     ->button()
-                //     ->form(function (Task $record){
+                Action::make('TaskMenu')->hidden()
+                    ->button()
+                    ->form(function (Task $record) {
+                        return [
+                            CheckboxList::make('task_menu')
+                                ->relationship(
+                                    titleAttribute: 'name',
+                                    // modifyQueryUsing: fn (Builder $query) => $query->withTrashed(),
+                                )
+                        ];
+                    }),
+                Action::make('AttAttachment')
+                ->hidden()
+                ->form([
+                    FileUpload::make('file_path')
+                        ->label('Upload file')
+                        ->columnSpanFull()
+                        ->imagePreviewHeight('250')
+                        ->loadingIndicatorPosition('left')
+                        ->panelLayout('integrated')
+                        ->removeUploadedFileButtonPosition('right')
+                        ->uploadButtonPosition('left')
+                        ->uploadProgressIndicatorPosition('left')
+                        ->multiple()
+                        ->panelLayout('grid')
+                        ->reorderable()
+                        ->openable()
+                        ->downloadable()
+                        ->previewable()
+                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                            $originalName = $file->getClientOriginalName();
+                            // Ensure the filename is safe and doesn't contain disallowed characters.
+                            $sanitizedFilename = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+                            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
 
-                //         return [
-                //              CheckboxList::make('task_menu')
-                //              ->relationship(
-                //                 titleAttribute: 'name',
-                //                 // modifyQueryUsing: fn (Builder $query) => $query->withTrashed(),
-                //             )
-                //         ];
-                //     })
-                //     ,
+                            return 'task-' . $sanitizedFilename . '.' . $extension;
+                        })
+                ])
+                    ->action(function (array $data, Task $record): void {
+                        foreach ($data as  $filepath) {
+                            TaskAttachment::create([
+                                'task_id' => $record->id,
+                                'file_path' => $filepath,
+                                'file_name' => $filepath,
+                                'created_by' => auth()->user()->id,
+                                'updated_by' => auth()->user()->id,
+                            ]);
+                        }
+                    })
+                    ->button()
+                    ->icon('heroicon-m-newspaper')
+                    ->color('success'),
+
+                Action::make('MoveTask')->button()
+                    // ->badge()
+                    ->form(function ($record) {
+                        return [
+                            Select::make('task_status')->default(function ($record) {
+                                return $record->task_status;
+                            })->columnSpanFull()->options(
+                                [
+                                    Task::STATUS_PENDING => Task::STATUS_PENDING,
+                                    Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                                    Task::STATUS_REVIEW => Task::STATUS_REVIEW,
+                                    Task::STATUS_CANCELLED => Task::STATUS_CANCELLED,
+                                    Task::STATUS_FAILED => Task::STATUS_FAILED,
+                                    Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
+                                ]
+                            )
+                        ];
+                    })
+                    ->icon('heroicon-m-arrows-right-left')
+                    ->color('success')
+                    ->action(function (array $data, Task $record): void {
+                        // dd($data);
+                        $record->update([
+                            'task_status' => $data['task_status']
+                        ]);
+                    }),
+                Action::make('AddComment')->button()
+                    // ->badge()
+                    ->form(function ($record) {
+                        return [
+                            Fieldset::make()->schema([
+                                Textarea::make('comment')->columnSpanFull()->required(),
+                            ])
+                        ];
+                    })
+                    ->icon('heroicon-m-chat-bubble-bottom-center-text')
+                    ->color('info')
+                    ->action(function (array $data, Task $record): void {
+                        // dd($data);
+                        $record->comments()->create([
+                            'comment' => $data['comment'],
+                            'user_id' => auth()->user()->id,
+                        ]);
+                    }),
                 Action::make('Rating')
                     ->button()
-                    ->fillForm(fn(Task $record): array=> [
-                        'task_user_id_assigned' => 'Mohammed Ali',
-                    ]
+                    ->hidden(function ($record) {
+                        if (!in_array(getCurrentRole(), [1, 2])) {
+                            return true;
+                        }
+
+                        // Check if the task status is not 'completed'
+                        if ($record->task_status !== Task::STATUS_COMPLETED) {
+                            return true;
+                        }
+                        return false;
+                    })
+                    ->fillForm(
+                        fn(Task $record): array => [
+                            'task_employee' => $record->assigned->name,
+                        ]
                     )
-                // ->mountUsing(function (Form $form) {
-                //     $form->fill();
-                //     $form->fill([
-                //         'task_rating.test_field' =>'HI',
-                //         'task_rating.task_rating.task_user_id_assigned' =>'HI'
-                //     ]);
-                //     // ...
-                // })
                     ->form(function ($record) {
                         // dd($record->assigned->name);
                         return [
+                            TextInput::make('task_employee')->disabled()->columnSpanFull(),
                             Fieldset::make('task_rating')->relationship('task_rating')->schema([
                                 Rating::make('rating_value')->theme(RatingTheme::Simple)->stars(10)->size('lg'),
                                 // TextInput::make('user')->default($record->assigned->name)->disabled()->label('Task employee'),
                                 Hidden::make('task_user_id_assigned')->default($record->assigned_to),
-                                Textarea::make('comment')->default($record->assigned_to)->columnSpanFull(),
+                                Textarea::make('comment')->columnSpanFull(),
                                 Hidden::make('created_by')->default(auth()->user()->id),
                                 // Hidden::
                             ]),
                         ];
                     })
-                    
+
                     ->tooltip('Rating the Task for 10 Stars')
                     ->icon('heroicon-m-star')
-                    ->color('info')
-                ,
+                    ->color('info'),
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\ViewAction::make(),
@@ -211,7 +346,7 @@ class TaskResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            TaskMenuRelationManager::class,
         ];
     }
 
@@ -222,5 +357,22 @@ class TaskResource extends Resource
             'create' => Pages\CreateTask::route('/create'),
             'edit' => Pages\EditTask::route('/{record}/edit'),
         ];
+    }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = static::getModel()::query();
+
+        if (
+            static::isScopedToTenant() &&
+            ($tenant = Filament::getTenant())
+        ) {
+            static::scopeEloquentQueryToTenant($query, $tenant);
+        }
+        if (!in_array(getCurrentRole(), [1, 2])) {
+            $query->where('assigned_to', auth()->user()->id)
+                ->orWhere('created_by', auth()->user()->id)
+            ;
+        }
+        return $query;
     }
 }
