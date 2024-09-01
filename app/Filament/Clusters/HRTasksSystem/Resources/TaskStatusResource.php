@@ -17,11 +17,11 @@ use Filament\Tables\Table;
 class TaskStatusResource extends Resource
 {
     protected static ?string $model = TaskStatus::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 4;
+    // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    // protected static ?int $navigationSort = 4;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRTasksSystem::class;
+    // protected static ?string $cluster = HRTasksSystem::class;
 
     public static function getNavigationBadge(): ?string
     {

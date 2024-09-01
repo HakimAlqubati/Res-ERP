@@ -15,5 +15,6 @@ class DailyTasksSettingUp extends Model
         'title',
         'description',
         'active',
+        'menu_tasks',
     ];
 }

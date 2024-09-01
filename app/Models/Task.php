@@ -18,6 +18,7 @@ class Task extends Model
         'created_by',
         'updated_by',
         'due_date',
+        'menu_tasks',
     ];
 
     public function status()
@@ -42,5 +43,28 @@ class Task extends Model
     public function attachments()
     {
         return $this->hasOne(TaskAttachment::class, 'task_id');
+    }
+
+    public function task_rating()
+    {
+        return $this->hasOne(TaskRating::class, 'task_id');
+    }
+
+    public function task_menu()
+    {
+        return $this->hasMany(TasksMenus::class, 'task_id');
+    }
+
+    public function menus()
+    {
+        return $this->belongsToMany(TasksMenu::class, 'hr_tasks_menus')
+            // ->withPivot('price')
+            ;
+    }
+
+    // Define the relationship to TasksMenu through the TasksMenus pivot table
+    public function taskMenus()
+    {
+        return $this->hasManyThrough(TasksMenu::class, TasksMenus::class, 'task_id', 'id', 'id', 'menu_task_id');
     }
 }

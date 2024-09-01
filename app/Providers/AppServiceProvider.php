@@ -23,9 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        FilamentAsset::register([
-            Css::make('main', ''),
-        ]);
+        // FilamentAsset::register([
+        //     Css::make('main', ''),
+        // ]);
         FilamentView::registerRenderHook(
             'panels::auth.login.form.after',
             fn(): View => view('filament.login_extra')

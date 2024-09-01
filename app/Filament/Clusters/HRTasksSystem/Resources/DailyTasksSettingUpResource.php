@@ -5,8 +5,10 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
 use App\Models\DailyTasksSettingUp;
+use App\Models\TasksMenu;
 use App\Models\User;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -51,6 +53,9 @@ class DailyTasksSettingUpResource extends Resource
                     Select::make('assigned_by')
                         ->options(User::all()->pluck('name', 'id'))
                         ->columnSpan(1)->searchable()->required(),
+                    CheckboxList::make('menu_tasks')->nullable()->searchable()->options(
+                        TasksMenu::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id')
+                    ),
 
                 ]),
             ]);
@@ -94,5 +99,4 @@ class DailyTasksSettingUpResource extends Resource
         ];
     }
 
- 
 }
