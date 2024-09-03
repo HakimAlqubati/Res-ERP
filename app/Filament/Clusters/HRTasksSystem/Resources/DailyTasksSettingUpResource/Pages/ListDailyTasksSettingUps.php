@@ -16,4 +16,9 @@ class ListDailyTasksSettingUps extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    public function getModelLabel(): ?string
+    {
+        return 'Daily task setup';
+    }
 }

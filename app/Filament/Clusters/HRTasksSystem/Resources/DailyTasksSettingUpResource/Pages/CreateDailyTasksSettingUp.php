@@ -4,7 +4,9 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResou
 
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource;
 use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Contracts\Support\Htmlable;
 
 class CreateDailyTasksSettingUp extends CreateRecord
 {
@@ -17,5 +19,16 @@ class CreateDailyTasksSettingUp extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    public function getTitle(): string | Htmlable
+    {
+        if (filled(static::$title)) {
+            return static::$title;
+        }
+
+        return __('filament-panels::resources/pages/create-record.title', [
+            'label' => 'Daily task setup',
+        ]);
     }
 }

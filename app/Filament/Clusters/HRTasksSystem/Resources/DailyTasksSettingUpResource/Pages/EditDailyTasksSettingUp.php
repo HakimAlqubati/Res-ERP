@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResou
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Contracts\Support\Htmlable;
 
 class EditDailyTasksSettingUp extends EditRecord
 {
@@ -25,5 +26,17 @@ class EditDailyTasksSettingUp extends EditRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+     
+
+    public function getTitle(): string | Htmlable
+    {
+        if (filled(static::$title)) {
+            return static::$title;
+        }
+
+        return __('filament-panels::resources/pages/edit-record.title', [
+            'label' => 'Daily task setup',
+        ]);
     }
 }

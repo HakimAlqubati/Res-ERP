@@ -37,7 +37,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function getTitleCasePluralModelLabel(): string
     {
-        return 'Daily Tasks Setup';
+        return 'Daily Task Setup';
     }
     public static function form(Form $form): Form
     {
