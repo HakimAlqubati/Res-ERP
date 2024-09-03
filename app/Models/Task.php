@@ -54,11 +54,16 @@ class Task extends Model
         return $this->hasMany(TaskComment::class, 'task_id');
     }
 
-    public function attachments()
+    public function photos()
     {
-        return $this->hasOne(TaskAttachment::class, 'task_id');
+        return $this->hasMany(TaskAttachment::class, 'task_id');
     }
 
+    
+    public function getPhotosCountAttribute()
+    {
+        return $this->photos()->count();
+    }
     public function task_rating()
     {
         return $this->hasOne(TaskRating::class, 'task_id');

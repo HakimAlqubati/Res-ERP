@@ -35,6 +35,7 @@ use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
@@ -107,24 +108,25 @@ class TaskResource extends Resource
                 Hidden::make('updated_by')->default(auth()->user()->id),
 
 
-                Rating::make('rating')->stars(10)->theme(RatingTheme::HalfStars)->helperText('10')
+
+                Rating::make('rating')->hidden()->stars(10)->theme(RatingTheme::HalfStars)->helperText('Rate this from 0 to 10')
+                    ->default(0)
+                    ->live()
+                    ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                        $component->helperText("Your rating: $state/10");
+                    })
                     ->hiddenOn('create'),
 
 
-                FileUpload::make('file_path2')
-                ->image()
-                ->getUploadedFileNameForStorageUsing(
-                    fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
-                        ->prepend('custom-prefix-'),
-                )
-                ,
                 FileUpload::make('file_path')
                     ->label('Add photos')
                     ->disk('public')
-                    ->directory('/tasks')
+                    ->directory('tasks')
                     ->visibility('public')
                     ->columnSpanFull()
                     ->imagePreviewHeight('250')
+                    ->image()
+                    ->resize(5)
                     ->loadingIndicatorPosition('left')
                     // ->panelAspectRatio('2:1')
                     ->panelLayout('integrated')
@@ -136,9 +138,8 @@ class TaskResource extends Resource
                     ->reorderable()
                     ->openable()
                     ->downloadable()
+
                     ->previewable()
-                    // ->storeFiles(false)
-                    // ->uploadingMessage('Uploading attachment...')
                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                         return (string) str($file->getClientOriginalName())->prepend('task-');
                     }),
@@ -178,6 +179,7 @@ class TaskResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id'),
+
                 Tables\Columns\TextColumn::make('title')
                     ->description(fn(Task $record): string => $record->description)
                     ->searchable(),
@@ -208,6 +210,7 @@ class TaskResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('photos_count'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -232,12 +235,19 @@ class TaskResource extends Resource
             ->selectable()
             ->actions([
 
-                Action::make('AttAttachment')
-                    ->hidden()
+                Action::make('AddPhotos')
+                    // ->hidden()
                     ->form([
                         FileUpload::make('file_path')
-                            ->label('Upload file')
+                            ->label('')
                             ->columnSpanFull()
+                            ->default(function ($record) {
+                                return storage_path($record->photos[0]->file_name);
+                            })
+                            ->disk('public')
+                            ->directory('tasks')
+                            ->image()
+                            ->resize(5)
                             ->imagePreviewHeight('250')
                             ->loadingIndicatorPosition('left')
                             ->panelLayout('integrated')
@@ -251,23 +261,20 @@ class TaskResource extends Resource
                             ->downloadable()
                             ->previewable()
                             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                $originalName = $file->getClientOriginalName();
-                                // Ensure the filename is safe and doesn't contain disallowed characters.
-                                $sanitizedFilename = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-                                $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-
-                                return 'task-' . $sanitizedFilename . '.' . $extension;
+                                return (string) str($file->getClientOriginalName())->prepend('task-');
                             })
                     ])
                     ->action(function (array $data, Task $record): void {
-                        foreach ($data as  $filepath) {
-                            TaskAttachment::create([
-                                'task_id' => $record->id,
-                                'file_path' => $filepath,
-                                'file_name' => $filepath,
-                                'created_by' => auth()->user()->id,
-                                'updated_by' => auth()->user()->id,
-                            ]);
+                        if (isset($data['file_path']) && is_array($data['file_path']) && count($data['file_path']) > 0) {
+                            foreach ($data['file_path'] as  $file) {
+                                TaskAttachment::create([
+                                    'task_id' => $record->id,
+                                    'file_name' => $file,
+                                    'file_path' => $file,
+                                    'created_by' => auth()->user()->id,
+                                    'updated_by' => auth()->user()->id,
+                                ]);
+                            }
                         }
                     })
                     ->button()
@@ -340,8 +347,22 @@ class TaskResource extends Resource
                         // dd($record->assigned->name);
                         return [
                             TextInput::make('task_employee')->disabled()->columnSpanFull(),
-                            Fieldset::make('task_rating')->relationship('task_rating')->schema([
-                                Rating::make('rating_value')->theme(RatingTheme::Simple)->stars(10)->size('lg'),
+                            Fieldset::make('task_rating')->relationship('task_rating')->label('')->schema([
+                                Rating::make('rating_value')
+                                ->theme(RatingTheme::HalfStars)
+                                ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                                    ->helperText(function ($record) { 
+                                     
+                                        if (is_null($record?->rating_value)) { 
+                                            return 'Rate this from 0 to 10';
+                                        } else {
+                                            return "Your rating:" . $record->rating_value . "/10";
+                                        }
+                                    })
+                                    ->live()
+                                    ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                                        $component->helperText("Your rating: $state/10");
+                                    }),
                                 // TextInput::make('user')->default($record->assigned->name)->disabled()->label('Task employee'),
                                 Hidden::make('task_user_id_assigned')->default($record->assigned_to),
                                 Textarea::make('comment')->columnSpanFull(),
