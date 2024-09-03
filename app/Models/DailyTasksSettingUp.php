@@ -16,5 +16,20 @@ class DailyTasksSettingUp extends Model
         'description',
         'active',
         'menu_tasks',
+        'assigned_to',
     ];
+
+    public function steps()
+    {
+        return $this->morphMany(TaskStep::class, 'morphable');
+    }
+
+    public function assignedto()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+    public function assignedby()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
+    }
 }

@@ -1,110 +1,45 @@
 <?php
 
-namespace App\Models;
+namespace App\Models; 
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Concerns\IsFilamentUser;
-use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Hash;
-use Laravel\Passport\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Model;
 
-class Employee extends Authenticatable implements FilamentUser
-// implements FilamentUser
+class Employee extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
+    use  HasFactory, SoftDeletes;
 
-    protected $table = 'users';
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
+    protected $table = 'hr_employees';   
     protected $fillable = [
         'name',
         'email',
-        'password',
-        'owner_id',
-        'role_id',
         'phone_number',
-        'whatsapp_number',
-        'supplier_address',
+        'job_title',
+        'user_id', 
+        'branch_id',
+        'department_id',
+        'employee_no',
+        'active',
     ];
-
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
-
-    public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
-
-    public static $filamentAdminColumn = 'is_filament_admin'; // The name of a boolean column in your database.
-
-    public static $filamentRolesColumn = 'filament_roles';
-
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return true;
-        return $this->group === 'Filament Users';
-    }
 
     public function branch()
     {
-        return $this->hasOne(Branch::class, 'manager_id');
+        return $this->belongsTo(Branch::class, 'branch_id');
     }
-
-
-    protected static function booted()
+    public function department()
     {
-        static::creating(function ($model) {
-            $model->role_id = $model->role_id ?? 10;
-            $model->password = Hash::make('123456');
-        });
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
-    /**
-     * Get a new query builder instance for the model.
-     *
-     * @param  bool  $excludeDeleted
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    public function newQuery()
+    public function user()
     {
-        $query = parent::newQuery();
-        // Add your default where condition here
-        $query->where('role_id', 10);
-
-        return $query;
-    }
-
-    // public function canAccessFilament(): bool
-    // {
-    //     return true;
-    // }
-
-    public function employee_profile(){
-        return $this->hasOne(EmployeeProfile::class,'employee_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

@@ -9,15 +9,19 @@ use App\Models\TasksMenu;
 use App\Models\User;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
 class DailyTasksSettingUpResource extends Resource
@@ -30,34 +34,64 @@ class DailyTasksSettingUpResource extends Resource
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
+
+    public static function getTitleCasePluralModelLabel(): string
+    {
+        return 'Daily Tasks Setup';
+    }
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Grid::make()->columns(3)->schema([
+                Grid::make()->columns(4)->schema([
                     TextInput::make('title')
                         ->required()
-                        ->columnSpan(2)
                         ->autofocus()
+                        ->columnSpan(1)
                         ->maxLength(255),
-                    Checkbox::make('active')->default(1),
-
-                    Textarea::make('description')
-                        ->required()
-                        ->columnSpan(3)
-                        ->autofocus()
-                        ->maxLength(255),
-                    Select::make('assigned_to_users')->columnSpan(2)
-                        ->options(User::all()->pluck('name', 'id'))
-                        ->multiple()->searchable()->required(),
                     Select::make('assigned_by')
-                        ->options(User::all()->pluck('name', 'id'))
-                        ->columnSpan(1)->searchable()->required(),
-                    CheckboxList::make('menu_tasks')->nullable()->searchable()->options(
-                        TasksMenu::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id')
-                    ),
+                        ->label('Assign by')
+                        ->required()
+                        ->default(auth()->user()->id)
+                        ->columnSpan(1)
+                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                        ->selectablePlaceholder(false),
+                    Select::make('assigned_to')
+                        ->label('Assign to')
+                        ->required()
+                        ->columnSpan(1)
+                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                        ->selectablePlaceholder(false),
+                    Toggle::make('active')->default(1)->inline(false)->columnSpan(1),
+
+
 
                 ]),
+
+                Textarea::make('description')
+                    ->required()
+                    ->maxLength(65535)
+                    ->columnSpanFull(),
+                Repeater::make('steps')
+                    ->itemLabel('Steps')
+                    ->columnSpanFull()
+                    ->relationship('steps')
+                    ->columns(1)
+                    ->schema([
+                        TextInput::make('title')
+                            ->required()
+                            ->live(onBlur: true),
+                    ])
+                    ->collapseAllAction(
+                        fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
+                    )
+                    ->orderColumn('order')
+                    ->reorderable()
+                    ->reorderableWithDragAndDrop()
+                    ->reorderableWithButtons()
+                    ->cloneable()
+                    ->collapsible()
+                    ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
             ]);
     }
 
@@ -65,8 +99,12 @@ class DailyTasksSettingUpResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('id')->searchable(),
                 TextColumn::make('title')->searchable(),
-                TextColumn::make('description')->searchable(),
+                TextColumn::make('description'),
+                TextColumn::make('assignedto.name')->label('Assigned to'),
+                TextColumn::make('assignedby.name')->label('Assigned by'),
+                ToggleColumn::make('active')->label('Active?')->sortable()->disabled(),
 
             ])
             ->filters([
@@ -94,7 +132,7 @@ class DailyTasksSettingUpResource extends Resource
     {
         return static::getModel()::count();
     }
-    
+
     public static function getPages(): array
     {
         return [
@@ -103,5 +141,4 @@ class DailyTasksSettingUpResource extends Resource
             'edit' => Pages\EditDailyTasksSettingUp::route('/{record}/edit'),
         ];
     }
-
 }

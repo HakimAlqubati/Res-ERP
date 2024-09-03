@@ -28,7 +28,7 @@ class DepartmentResource extends Resource
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
@@ -73,6 +73,8 @@ class DepartmentResource extends Resource
             //
         ];
     }
+
+   
 
     public static function getPages(): array
     {

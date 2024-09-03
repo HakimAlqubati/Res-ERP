@@ -11,9 +11,11 @@ class CreateDailyTasksSettingUp extends CreateRecord
     protected static string $resource = DailyTasksSettingUpResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['assigned_to_users'] = json_encode($data['assigned_to_users']);
-        $data['menu_tasks'] = json_encode($data['menu_tasks']);
-        
         return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

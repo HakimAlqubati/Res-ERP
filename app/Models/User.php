@@ -31,6 +31,7 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'owner_id',
         'role_id',
+        'branch_id',
     ];
 
     /**

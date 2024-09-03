@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use App\Models\Task;
+use App\Models\TaskAttachment;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -40,5 +41,25 @@ class EditTask extends EditRecord
                 }),
             // Actions\DeleteAction::make(),
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['file_path']) && is_array($data['file_path']) && count($data['file_path']) > 0) {
+            foreach ($data['file_path'] as  $file) {
+                TaskAttachment::create([
+                    'task_id' => $this->record->id,
+                    'file_name' => $file,
+                    'file_path' => $file,
+                    'created_by' => auth()->user()->id,
+                    'updated_by' => auth()->user()->id,
+                ]);
+            }
+        }
+        return $data;
     }
 }

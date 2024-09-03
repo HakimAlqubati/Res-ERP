@@ -11,7 +11,12 @@ class CreateTask extends CreateRecord
     protected static string $resource = TaskResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        
+
         return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

@@ -4,9 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Models\Branch;
 use App\Models\Department;
 use App\Models\Employee;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -49,59 +51,49 @@ class EmployeeResource extends Resource
         return $form
             ->schema([
 
-                TextInput::make('name')->required(),
-                TextInput::make('email')->email()->required(),
-                Fieldset::make('employee_profile')->relationship('employee_profile')->label('Employee profile')
+
+                Fieldset::make('personal_data')->label('Personal data')
                     ->schema([
-                        TextInput::make('employee_no')->label('Employee number'),
-                        TextInput::make('job_title'),
-                        Select::make('department_id')->label('Department')
-                        ->searchable()
-                            ->options(Department::select('id', 'name')->get()->pluck('name', 'id')),
+                        Grid::make()->columns(3)->schema([
+                            TextInput::make('name')->columnSpan(1)->required(),
+                            TextInput::make('email')->columnSpan(1)->email(),
+                            TextInput::make('phone_number')->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
+                        ]),
+                    ]),
+                Fieldset::make('Employeement')->label('Employeement')
+                    ->schema([
+                        Grid::make()->columns(4)->schema([
+                            TextInput::make('employee_no')->columnSpan(1)->label('Employee number'),
+                            TextInput::make('job_title')->columnSpan(1)->required(),
+                            Select::make('department_id')->columnSpan(1)->label('Department')
+                                ->searchable()
+                                ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                            Select::make('branch_id')->columnSpan(1)->label('Branch')
+                                ->searchable()
+                                ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                        ]),
                     ]),
 
-                Select::make('roles')
-                    ->label('Employee role as user')
-                    ->relationship('roles', 'name')
-                    ->multiple()
-                    ->maxItems(1)
-                    ->preload()
-                    ->searchable(),
-
-                Select::make('owner_id')
-                    ->label('Department manager')
-                    ->searchable()
-                    ->options(function () {
-                        return DB::table('users')->pluck('name', 'id');
-                    }),
-
-                TextInput::make('password')
-                    ->password()
-                    ->columnSpanFull()
-                // ->required()
-                    ->required(fn(string $context) => $context === 'create')
-                    ->reactive()
-                    ->dehydrateStateUsing(fn($state) => Hash::make($state)),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-        ->defaultSort('id','desc')
+            ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('employee_profile.job_title')
+                TextColumn::make('job_title')
                     ->label('Job title')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('employee_profile.employee_no')
+                TextColumn::make('employee_no')
                     ->label('employee number')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('employee_profile.department.name')
+                TextColumn::make('department.name')
                     ->label('Department')
                     ->searchable(),
             ])
@@ -146,7 +138,7 @@ class EmployeeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-        // ->where('role_id',8)
+            // ->where('role_id',8)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

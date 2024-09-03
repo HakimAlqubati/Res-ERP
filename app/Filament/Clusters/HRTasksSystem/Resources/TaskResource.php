@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources;
 use Illuminate\Support\Str;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\StepsRelationManager;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\TaskMenuRelationManager;
 use App\Models\Task;
 use App\Models\TaskAttachment;
@@ -16,7 +17,9 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -57,15 +60,28 @@ class TaskResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->autofocus()
-                    ->maxLength(255),
-                Forms\Components\Select::make('assigned_to')
-                    ->label('Assign to')
-                    ->required()
-                    ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                    ->selectablePlaceholder(false),
+
+                Grid::make()->columns(3)->schema([
+                    Forms\Components\TextInput::make('title')
+                        ->required()
+                        ->autofocus()
+                        ->columnSpan(1)
+                        ->maxLength(255),
+                    Forms\Components\Select::make('assigned_by')
+                        ->label('Assign by')
+                        ->required()
+                        ->default(auth()->user()->id)
+                        ->columnSpan(1)
+                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                        ->selectablePlaceholder(false),
+                    Forms\Components\Select::make('assigned_to')
+                        ->label('Assign to')
+                        ->required()
+                        ->columnSpan(1)
+                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                        ->selectablePlaceholder(false),
+
+                ]),
 
                 Forms\Components\Textarea::make('description')
                     ->required()
@@ -82,56 +98,78 @@ class TaskResource extends Resource
                         Task::STATUS_FAILED => Task::STATUS_FAILED,
                         Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
                     ]
-                ),
+                )->default(Task::STATUS_PENDING)
+                    ->disabledOn('create'),
                 // CheckboxList::make('menu_tasks')->nullable()->searchable()->options(
                 //     TasksMenu::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id')
                 // ),
                 Hidden::make('created_by')->default(auth()->user()->id),
                 Hidden::make('updated_by')->default(auth()->user()->id),
-                // Fieldset::make('comments')
-                //     ->hidden('created')
-                //     ->relationship('comments')->label('Comments')->schema([
-                //     TextInput::make('comment'),
-                //     Hidden::make('user_id')->default(auth()->user()->id),
 
-                // ]),
 
-                Rating::make('rating')->stars(10)->theme(RatingTheme::HalfStars)
-                    ->hidden(function ($record) {
-                        if ($record->status != Task::STATUS_COMPLETED) {
-                            return true;
-                        }
+                Rating::make('rating')->stars(10)->theme(RatingTheme::HalfStars)->helperText('10')
+                    ->hiddenOn('create'),
+
+
+                FileUpload::make('file_path2')
+                ->image()
+                ->getUploadedFileNameForStorageUsing(
+                    fn (TemporaryUploadedFile $file): string => (string) str($file->getClientOriginalName())
+                        ->prepend('custom-prefix-'),
+                )
+                ,
+                FileUpload::make('file_path')
+                    ->label('Add photos')
+                    ->disk('public')
+                    ->directory('/tasks')
+                    ->visibility('public')
+                    ->columnSpanFull()
+                    ->imagePreviewHeight('250')
+                    ->loadingIndicatorPosition('left')
+                    // ->panelAspectRatio('2:1')
+                    ->panelLayout('integrated')
+                    ->removeUploadedFileButtonPosition('right')
+                    ->uploadButtonPosition('left')
+                    ->uploadProgressIndicatorPosition('left')
+                    ->multiple()
+                    ->panelLayout('grid')
+                    ->reorderable()
+                    ->openable()
+                    ->downloadable()
+                    ->previewable()
+                    // ->storeFiles(false)
+                    // ->uploadingMessage('Uploading attachment...')
+                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                        return (string) str($file->getClientOriginalName())->prepend('task-');
                     }),
-                // Fieldset::make('Task attachments')->relationship('attachments')->schema([
-                //     FileUpload::make('file_path')
-                //         ->label('Upload file')
-                //         ->columnSpanFull()
-                //         ->imagePreviewHeight('250')
-                //         ->loadingIndicatorPosition('left')
-                //         // ->panelAspectRatio('2:1')
-                //         ->panelLayout('integrated')
-                //         ->removeUploadedFileButtonPosition('right')
-                //         ->uploadButtonPosition('left')
-                //         ->uploadProgressIndicatorPosition('left')
-                //         ->multiple()
-                //         ->panelLayout('grid')
-                //         ->reorderable()
-                //         ->openable()
-                //         ->downloadable()
-                //         ->previewable()
-                //         // ->storeFiles(false)
-                //         // ->uploadingMessage('Uploading attachment...')
-                //         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                //             return (string) str($file->getClientOriginalName())->prepend('task-');
-                //         }),
-                //     Hidden::make('file_name')->default('test'),
-                //     // Hidden::make('file_name')->default('test'),
+                // Hidden::make('file_name')->default('test'),
+                // Hidden::make('file_name')->default('test'),
 
-                //     Hidden::make('created_by')->default(auth()->user()->id),
-                //     Hidden::make('updated_by')->default(auth()->user()->id),
+                Hidden::make('created_by')->default(auth()->user()->id),
+                Hidden::make('updated_by')->default(auth()->user()->id),
 
-                // ]),
 
+                Repeater::make('steps')
+                    ->itemLabel('Steps')
+                    ->columnSpanFull()
+                    ->relationship('steps')
+                    ->columns(1)
+                    ->hiddenOn('edit')
+                    ->schema([
+                        TextInput::make('title')
+                            ->required()
+                            ->live(onBlur: true),
+                    ])
+                    ->collapseAllAction(
+                        fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
+                    )
+                    ->orderColumn('order')
+                    ->reorderable()
+                    ->reorderableWithDragAndDrop()
+                    ->reorderableWithButtons()
+                    ->cloneable()
+                    ->collapsible()
+                    ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
             ]);
     }
 
@@ -154,9 +192,7 @@ class TaskResource extends Resource
                         Task::STATUS_FAILED => Task::COLOR_FAILED,
                         Task::STATUS_COMPLETED => Task::COLOR_COMPLETED,
                         // default => 'gray', // Fallback color in case of unknown status
-                    })
-                    
-                    ,
+                    }),
 
                 // ColumnGroup::make('Visibility', [
                 //     TextColumn::make('task_status'),
@@ -195,44 +231,34 @@ class TaskResource extends Resource
             ])
             ->selectable()
             ->actions([
-                Action::make('TaskMenu')->hidden()
-                    ->button()
-                    ->form(function (Task $record) {
-                        return [
-                            CheckboxList::make('task_menu')
-                                ->relationship(
-                                    titleAttribute: 'name',
-                                    // modifyQueryUsing: fn (Builder $query) => $query->withTrashed(),
-                                )
-                        ];
-                    }),
-                Action::make('AttAttachment')
-                ->hidden()
-                ->form([
-                    FileUpload::make('file_path')
-                        ->label('Upload file')
-                        ->columnSpanFull()
-                        ->imagePreviewHeight('250')
-                        ->loadingIndicatorPosition('left')
-                        ->panelLayout('integrated')
-                        ->removeUploadedFileButtonPosition('right')
-                        ->uploadButtonPosition('left')
-                        ->uploadProgressIndicatorPosition('left')
-                        ->multiple()
-                        ->panelLayout('grid')
-                        ->reorderable()
-                        ->openable()
-                        ->downloadable()
-                        ->previewable()
-                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                            $originalName = $file->getClientOriginalName();
-                            // Ensure the filename is safe and doesn't contain disallowed characters.
-                            $sanitizedFilename = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-                            $extension = pathinfo($originalName, PATHINFO_EXTENSION);
 
-                            return 'task-' . $sanitizedFilename . '.' . $extension;
-                        })
-                ])
+                Action::make('AttAttachment')
+                    ->hidden()
+                    ->form([
+                        FileUpload::make('file_path')
+                            ->label('Upload file')
+                            ->columnSpanFull()
+                            ->imagePreviewHeight('250')
+                            ->loadingIndicatorPosition('left')
+                            ->panelLayout('integrated')
+                            ->removeUploadedFileButtonPosition('right')
+                            ->uploadButtonPosition('left')
+                            ->uploadProgressIndicatorPosition('left')
+                            ->multiple()
+                            ->panelLayout('grid')
+                            ->reorderable()
+                            ->openable()
+                            ->downloadable()
+                            ->previewable()
+                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                $originalName = $file->getClientOriginalName();
+                                // Ensure the filename is safe and doesn't contain disallowed characters.
+                                $sanitizedFilename = Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+                                $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+
+                                return 'task-' . $sanitizedFilename . '.' . $extension;
+                            })
+                    ])
                     ->action(function (array $data, Task $record): void {
                         foreach ($data as  $filepath) {
                             TaskAttachment::create([
@@ -346,7 +372,7 @@ class TaskResource extends Resource
     public static function getRelations(): array
     {
         return [
-            TaskMenuRelationManager::class,
+            StepsRelationManager::class,
         ];
     }
 
@@ -356,6 +382,7 @@ class TaskResource extends Resource
             'index' => Pages\ListTasks::route('/'),
             'create' => Pages\CreateTask::route('/create'),
             'edit' => Pages\EditTask::route('/{record}/edit'),
+            'task_steps' => Pages\TaskStepsPage::route('/{record}/task_steps'),
         ];
     }
     public static function getEloquentQuery(): Builder

@@ -26,7 +26,7 @@ class TasksMenuResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRTasksSystem::class;
+    // protected static ?string $cluster = HRTasksSystem::class;
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;

@@ -30,6 +30,7 @@ class Task extends Model
         'title',
         'description',
         'assigned_to',
+        'assigned_by',
         'task_status',
         'created_by',
         'updated_by',
@@ -118,5 +119,11 @@ class Task extends Model
     public function scopeStatus($query, $status)
     {
         return $query->where('task_status', $status);
+    }
+
+    public function steps(){
+        // return $this->hasMany(TaskStep::class,'task_id');
+        return $this->morphMany(TaskStep::class, 'morphable');
+
     }
 }

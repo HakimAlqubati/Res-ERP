@@ -125,6 +125,6 @@ return [
     'product_approved_by_store'=> 'Updated product by (Store)',
     'ordered_product'=> 'Orderd product from (Branch)',
     'employees' => 'Employees',
-    'tasks_ms' => 'Tasks management system',
+    'tasks_ms' => 'Tasks management',
     'departments_and_employees' => 'Departments and employees',
 ];
