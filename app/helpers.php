@@ -32,6 +32,18 @@ function getCurrentRole()
 }
 
 /**
+ * to check if current user is super admin
+ */
+
+function isSuperAdmin()
+{
+    $currentRole = getCurrentRole();
+    if ($currentRole == 1) {
+        return true;
+    }
+    return false;
+}
+/**
  * to get branch id
  */
 function getBranchId()

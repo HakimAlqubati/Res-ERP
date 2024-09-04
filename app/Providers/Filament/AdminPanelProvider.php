@@ -14,7 +14,9 @@ use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\UserResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Coolsam\Modules\ModulesPlugin;
+use Filament\Enums\ThemeMode;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -41,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+       
         ->brandName('Workbench')
         ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
             $menu =  $builder->items([
@@ -93,17 +96,20 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->path('admin')
             ->login()
+            ->defaultThemeMode(ThemeMode::Dark)
             ->colors([
-                // 'primary' => Color::Green,
+                'primary' => Color::Green,
                 'danger' => Color::Rose,
                 'gray' => Color::Gray,
                 'info' => Color::Blue,
-                'primary' => Color::Indigo,
                 'success' => Color::Emerald,
                 'warning' => Color::Orange,
-                'primary' => 'rgb(99, 102, 241)'
+                'primary' => 'rgb(0, 100, 46)',
+                // 'primary' => 'rgb(99, 102, 241)'
             ])
-            ->font('Inter', provider: GoogleFontProvider::class)
+            // ->font('Inter', provider: GoogleFontProvider::class)
+            ->font('Poppins')
+            // ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -132,6 +138,24 @@ class AdminPanelProvider extends PanelProvider
             // ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
+            ->plugins([
+                    FilamentShieldPlugin::make()
+                    ->gridColumns([
+                        'default' => 1,
+                        'sm' => 2,
+                        'lg' => 3
+                    ])
+                    ->sectionColumnSpan(1)
+                    ->checkboxListColumns([
+                        'default' => 1,
+                        'sm' => 2,
+                        'lg' => 4,
+                    ])
+                    ->resourceCheckboxListColumns([
+                        'default' => 1,
+                        'sm' => 2,
+                    ]),
+            ])
             ;
 
     }

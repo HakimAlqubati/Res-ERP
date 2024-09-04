@@ -11,6 +11,7 @@ use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TasksMenu;
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\CheckboxList;
@@ -36,13 +37,17 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\Toggle;
+use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
 
 use function Laravel\Prompts\form;
 
-class TaskResource extends Resource
+class TaskResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = Task::class;
 
@@ -57,120 +62,133 @@ class TaskResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'view_own',
+            // 'view_assigned_by',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'forse_delete',
+            'publish',
+            'rating',
+            'add_comment',
+            'add_photo',
+            'move_status',
+        ];
+    }
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                Fieldset::make()->schema([
 
-                Grid::make()->columns(3)->schema([
-                    Forms\Components\TextInput::make('title')
-                        ->required()
-                        ->autofocus()
-                        ->columnSpan(1)
-                        ->maxLength(255),
-                    Forms\Components\Select::make('assigned_by')
-                        ->label('Assign by')
-                        ->required()
-                        ->default(auth()->user()->id)
-                        ->columnSpan(1)
-                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                        ->selectablePlaceholder(false),
-                    Forms\Components\Select::make('assigned_to')
-                        ->label('Assign to')
-                        ->required()
-                        ->columnSpan(1)
-                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                        ->selectablePlaceholder(false),
-
-                ]),
-
-                Forms\Components\Textarea::make('description')
-                    ->required()
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-
-                DatePicker::make('due_date')->label('Due date')->required(false),
-                Select::make('task_status')->options(
-                    [
-                        Task::STATUS_PENDING => Task::STATUS_PENDING,
-                        Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
-                        Task::STATUS_REVIEW => Task::STATUS_REVIEW,
-                        Task::STATUS_CANCELLED => Task::STATUS_CANCELLED,
-                        Task::STATUS_FAILED => Task::STATUS_FAILED,
-                        Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
-                    ]
-                )->default(Task::STATUS_PENDING)
-                    ->disabledOn('create'),
-                // CheckboxList::make('menu_tasks')->nullable()->searchable()->options(
-                //     TasksMenu::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id')
-                // ),
-                Hidden::make('created_by')->default(auth()->user()->id),
-                Hidden::make('updated_by')->default(auth()->user()->id),
-
-
-
-                Rating::make('rating')->hidden()->stars(10)->theme(RatingTheme::HalfStars)->helperText('Rate this from 0 to 10')
-                    ->default(0)
-                    ->live()
-                    ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                        $component->helperText("Your rating: $state/10");
-                    })
-                    ->hiddenOn('create'),
-
-
-                FileUpload::make('file_path')
-                    ->label('Add photos')
-                    ->disk('public')
-                    ->directory('tasks')
-                    ->visibility('public')
-                    ->columnSpanFull()
-                    ->imagePreviewHeight('250')
-                    ->image()
-                    ->resize(5)
-                    ->loadingIndicatorPosition('left')
-                    // ->panelAspectRatio('2:1')
-                    ->panelLayout('integrated')
-                    ->removeUploadedFileButtonPosition('right')
-                    ->uploadButtonPosition('left')
-                    ->uploadProgressIndicatorPosition('left')
-                    ->multiple()
-                    ->panelLayout('grid')
-                    ->reorderable()
-                    ->openable()
-                    ->downloadable()
-
-                    ->previewable()
-                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                        return (string) str($file->getClientOriginalName())->prepend('task-');
-                    }),
-                // Hidden::make('file_name')->default('test'),
-                // Hidden::make('file_name')->default('test'),
-
-                Hidden::make('created_by')->default(auth()->user()->id),
-                Hidden::make('updated_by')->default(auth()->user()->id),
-
-
-                Repeater::make('steps')
-                    ->itemLabel('Steps')
-                    ->columnSpanFull()
-                    ->relationship('steps')
-                    ->columns(1)
-                    ->hiddenOn('edit')
-                    ->schema([
-                        TextInput::make('title')
+                    Grid::make()->columns(7)->schema([
+                        Forms\Components\TextInput::make('title')
                             ->required()
-                            ->live(onBlur: true),
-                    ])
-                    ->collapseAllAction(
-                        fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
-                    )
-                    ->orderColumn('order')
-                    ->reorderable()
-                    ->reorderableWithDragAndDrop()
-                    ->reorderableWithButtons()
-                    ->cloneable()
-                    ->collapsible()
-                    ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+                            ->disabledOn('edit')
+                            ->autofocus()
+                            ->columnSpan(2)
+                            ->maxLength(255),
+                        Forms\Components\Select::make('assigned_by')
+                            ->label('Assign by')
+                            ->disabledOn('edit')
+                            ->required()
+                            ->default(auth()->user()->id)
+                            ->columnSpan(2)
+                            ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->selectablePlaceholder(false),
+                        Forms\Components\Select::make('assigned_to')
+                            ->label('Assign to')
+                            ->disabledOn('edit')
+                            ->required()
+                            ->columnSpan(2)
+                            ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->selectablePlaceholder(false),
+                        Toggle::make('is_daily')->default(0)->label('Daily task?'),
+
+                    ]),
+
+                    Forms\Components\Textarea::make('description')
+                        ->required()
+                        ->disabledOn('edit')
+                        ->maxLength(65535)
+                        ->columnSpanFull(),
+
+                    DatePicker::make('due_date')->label('Due date')->required(false),
+                    Select::make('task_status')->options(
+                        [
+                            Task::STATUS_PENDING => Task::STATUS_PENDING,
+                            Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                            Task::STATUS_REVIEW => Task::STATUS_REVIEW,
+                            Task::STATUS_CANCELLED => Task::STATUS_CANCELLED,
+                            Task::STATUS_FAILED => Task::STATUS_FAILED,
+                            Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
+                        ]
+                    )->default(Task::STATUS_PENDING)
+                        ->disabledOn('create'),
+                    Hidden::make('created_by')->default(auth()->user()->id),
+                    Hidden::make('updated_by')->default(auth()->user()->id),
+
+
+
+                    FileUpload::make('file_path')
+                        ->label('Add photos')
+                        ->disk('public')
+                        ->directory('tasks')
+                        ->visibility('public')
+                        ->columnSpanFull()
+                        ->imagePreviewHeight('250')
+                        ->image()
+                        ->resize(5)
+                        ->loadingIndicatorPosition('left')
+                        // ->panelAspectRatio('2:1')
+                        ->panelLayout('integrated')
+                        ->removeUploadedFileButtonPosition('right')
+                        ->uploadButtonPosition('left')
+                        ->uploadProgressIndicatorPosition('left')
+                        ->multiple()
+                        ->panelLayout('grid')
+                        ->reorderable()
+                        ->openable()
+                        ->downloadable()
+
+                        ->previewable()
+                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                            return (string) str($file->getClientOriginalName())->prepend('task-');
+                        }),
+
+
+                    Hidden::make('created_by')->default(auth()->user()->id),
+                    Hidden::make('updated_by')->default(auth()->user()->id),
+                    Repeater::make('steps')
+                        ->itemLabel('Steps')
+                        ->columnSpanFull()
+                        ->relationship('steps')
+                        ->columns(1)
+                        ->hiddenOn('edit')
+                        ->schema([
+                            TextInput::make('title')
+                                ->required()
+                                ->live(onBlur: true),
+                        ])
+                        ->collapseAllAction(
+                            fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
+                        )
+                        ->orderColumn('order')
+                        ->reorderable()
+                        ->reorderableWithDragAndDrop()
+                        ->reorderableWithButtons()
+                        ->cloneable()
+                        ->collapsible()
+                        ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+
+                ])
             ]);
     }
 
@@ -178,11 +196,16 @@ class TaskResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id'),
+                Tables\Columns\TextColumn::make('id')
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 Tables\Columns\TextColumn::make('title')
-                    ->description(fn(Task $record): string => $record->description)
-                    ->searchable(),
+                    ->color(Color::Blue)
+                    ->size(TextColumnSize::Large)
+                    ->weight(FontWeight::ExtraBold)
+                    ->description('Click')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('task_status')->label('Status')
                     ->badge()
                     ->icon('heroicon-m-check-badge')
@@ -194,7 +217,9 @@ class TaskResource extends Resource
                         Task::STATUS_FAILED => Task::COLOR_FAILED,
                         Task::STATUS_COMPLETED => Task::COLOR_COMPLETED,
                         // default => 'gray', // Fallback color in case of unknown status
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
+
 
                 // ColumnGroup::make('Visibility', [
                 //     TextColumn::make('task_status'),
@@ -204,11 +229,13 @@ class TaskResource extends Resource
                 Tables\Columns\TextColumn::make('assigned.name')
                     ->label('Assigned To')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('createdby.name')
                     ->label('Assigned By')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('photos_count'),
                 Tables\Columns\TextColumn::make('created_at')
@@ -235,28 +262,40 @@ class TaskResource extends Resource
             ->selectable()
             ->actions([
 
+                Action::make('viewGallery')
+                ->label('View Photos')
+                // ->icon('heroicon-o-')
+                ->modalHeading('Task Photos')
+                ->modalWidth('xl'),
                 Action::make('AddPhotos')
-                    // ->hidden()
+                    ->hidden(function ($record) {
+                        if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
+                            return true;
+                        }
+                    })
                     ->form([
+                        
                         FileUpload::make('file_path')
-                            ->label('')
-                            ->columnSpanFull()
                             ->disk('public')
+                            ->label('')
                             ->directory('tasks')
+                            ->columnSpanFull()
                             ->image()
-                            ->resize(5)
-                            ->imagePreviewHeight('250')
-                            ->loadingIndicatorPosition('left')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('right')
-                            ->uploadButtonPosition('left')
-                            ->uploadProgressIndicatorPosition('left')
                             ->multiple()
-                            ->panelLayout('grid')
-                            ->reorderable()
-                            ->openable()
+                            ->resize(5)
                             ->downloadable()
                             ->previewable()
+                            // ->imagePreviewHeight('250')
+                            // ->loadingIndicatorPosition('left')
+                            // ->panelLayout('integrated')
+                            // ->removeUploadedFileButtonPosition('right')
+                            // ->uploadButtonPosition('left')
+                            // ->uploadProgressIndicatorPosition('left')
+                            // ->panelLayout('grid')
+                            // ->reorderable()
+                            // ->openable()
+                            // ->downloadable(true)
+                            // ->previewable(true)
                             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                 return (string) str($file->getClientOriginalName())->prepend('task-');
                             })
@@ -279,7 +318,11 @@ class TaskResource extends Resource
                     ->color('success'),
 
                 Action::make('MoveTask')->button()
-                    // ->badge()
+                    ->hidden(function ($record) {
+                        if (!isSuperAdmin() && !auth()->user()->can('move_status_task')) {
+                            return true;
+                        }
+                    })
                     ->form(function ($record) {
                         return [
                             Select::make('task_status')->default(function ($record) {
@@ -305,7 +348,11 @@ class TaskResource extends Resource
                         ]);
                     }),
                 Action::make('AddComment')->button()
-                    // ->badge()
+                    ->hidden(function ($record) {
+                        if (!isSuperAdmin() && !auth()->user()->can('add_comment_task')) {
+                            return true;
+                        }
+                    })
                     ->form(function ($record) {
                         return [
                             Fieldset::make()->schema([
@@ -325,9 +372,12 @@ class TaskResource extends Resource
                 Action::make('Rating')
                     ->button()
                     ->hidden(function ($record) {
-                        if (!in_array(getCurrentRole(), [1, 2])) {
+                        if (!isSuperAdmin() && !auth()->user()->can('rating_task')) {
                             return true;
                         }
+                        // if (!in_array(getCurrentRole(), [1, 2])) {
+                        //     return true;
+                        // }
 
                         // Check if the task status is not 'completed'
                         if ($record->task_status !== Task::STATUS_COMPLETED) {
@@ -346,11 +396,11 @@ class TaskResource extends Resource
                             TextInput::make('task_employee')->disabled()->columnSpanFull(),
                             Fieldset::make('task_rating')->relationship('task_rating')->label('')->schema([
                                 Rating::make('rating_value')
-                                ->theme(RatingTheme::HalfStars)
-                                ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                                    ->helperText(function ($record) { 
-                                     
-                                        if (is_null($record?->rating_value)) { 
+                                    ->theme(RatingTheme::HalfStars)
+                                    ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                                    ->helperText(function ($record) {
+
+                                        if (is_null($record?->rating_value)) {
                                             return 'Rate this from 0 to 10';
                                         } else {
                                             return "Your rating:" . $record->rating_value . "/10";
@@ -413,11 +463,27 @@ class TaskResource extends Resource
         ) {
             static::scopeEloquentQueryToTenant($query, $tenant);
         }
-        if (!in_array(getCurrentRole(), [1, 2])) {
+
+        if (!isSuperAdmin() && !auth()->user()->can('view_own_task')) {
             $query->where('assigned_to', auth()->user()->id)
                 ->orWhere('created_by', auth()->user()->id)
             ;
         }
+
+        // if (!in_array(getCurrentRole(), [1, 2])) {
+        //     $query->where('assigned_to', auth()->user()->id)
+        //         ->orWhere('created_by', auth()->user()->id)
+        //     ;
+        // }
         return $query;
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin() || auth()->user()->can('create_task')) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -36,9 +36,13 @@ class Task extends Model
         'updated_by',
         'due_date',
         'menu_tasks',
+        'is_daily'
     ];
 
 
+    protected $casts = [
+        'photos' => 'array',
+    ];
 
     public function assigned()
     {

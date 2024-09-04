@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
+use App\Models\DailyTasksSettingUp;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -18,5 +19,30 @@ class CreateTask extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function afterCreate(): void
+    {
+        if ($this->record->is_daily == 1) {
+            $dailyTask = DailyTasksSettingUp::create([
+                'title' => $this->record->title,
+                'description' => $this->record->description,
+                'updated_by' => $this->record->updated_by,
+                'created_by' => $this->record->created_by,
+                'assigned_to' => $this->record->assigned_to,
+                'assigned_by' => $this->record->assigned_by,
+                'active' => 1,
+
+            ]);
+
+            foreach ($this->record->steps as $step) {
+                $dailyTask->steps()->create([
+                    'title' => $step->title,
+                    'order' => $step->order,
+                ]);
+            }
+        }
+
+        //    dd($this->data,$this->record);
     }
 }
