@@ -241,9 +241,6 @@ class TaskResource extends Resource
                         FileUpload::make('file_path')
                             ->label('')
                             ->columnSpanFull()
-                            ->default(function ($record) {
-                                return storage_path($record->photos[0]->file_name);
-                            })
                             ->disk('public')
                             ->directory('tasks')
                             ->image()
