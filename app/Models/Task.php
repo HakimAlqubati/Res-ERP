@@ -40,9 +40,6 @@ class Task extends Model
     ];
 
 
-    protected $casts = [
-        'photos' => 'array',
-    ];
 
     public function assigned()
     {

@@ -39,8 +39,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Toggle;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
+use Hugomyb\FilamentMediaAction\Tables\Actions\MediaAction;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
@@ -220,11 +222,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
 
-
-                // ColumnGroup::make('Visibility', [
-                //     TextColumn::make('task_status'),
-                // ]),
-
+ 
 
                 Tables\Columns\TextColumn::make('assigned.name')
                     ->label('Assigned To')
@@ -237,7 +235,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('photos_count'),
+                Tables\Columns\TextColumn::make('photos_count')
+                ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -263,10 +262,20 @@ class TaskResource extends Resource implements HasShieldPermissions
             ->actions([
 
                 Action::make('viewGallery')
-                ->label('View Photos')
-                // ->icon('heroicon-o-')
-                ->modalHeading('Task Photos')
-                ->modalWidth('xl'),
+                    ->hidden(function ($record) {
+                        return $record->photos_count <= 0 ? true : false;
+                    })
+                    ->label('Browse photos')
+                    ->modalHeading('Task photos')
+                    ->modalWidth('lg') // Adjust modal size
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    // ->iconButton()
+                    ->button()
+                    ->icon('heroicon-o-camera')
+                    ->modalContent(function ($record) {
+                        return view('filament.resources.task.gallery', ['photos' => $record->photos]);
+                    }),
                 Action::make('AddPhotos')
                     ->hidden(function ($record) {
                         if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
@@ -274,7 +283,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         }
                     })
                     ->form([
-                        
+
                         FileUpload::make('file_path')
                             ->disk('public')
                             ->label('')

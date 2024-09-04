@@ -12,6 +12,7 @@
         "filament/filament": "^3.2",
         "filament/forms": "^3.2",
         "filament/tables": "^3.2",
+        "hugomyb/filament-media-action": "^3.1",
         "joshembling/image-optimizer": "^1.4",
         "laravel/framework": "^11.9",
         "laravel/passport": "^12.0",
