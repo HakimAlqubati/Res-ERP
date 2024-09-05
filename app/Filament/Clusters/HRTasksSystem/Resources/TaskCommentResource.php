@@ -44,7 +44,7 @@ class TaskCommentResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('task_id')->searchable()->sortable(),
-                TextColumn::make('user.name')->label('Commentor')->searchable()->sortable(),
+                TextColumn::make('employee.name')->label('Commentor')->searchable()->sortable(),
                 TextColumn::make('comment')->searchable(),
                 TextColumn::make('updated_at')->searchable()->sortable(),
                 TextColumn::make('created_at')->searchable()->sortable(),

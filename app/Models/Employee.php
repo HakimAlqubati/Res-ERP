@@ -19,6 +19,7 @@ class Employee extends Model
     protected $table = 'hr_employees';   
     protected $fillable = [
         'name',
+        'position_id',
         'email',
         'phone_number',
         'job_title',
@@ -37,9 +38,14 @@ class Employee extends Model
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
-
+    
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class, 'position_id');
     }
 }

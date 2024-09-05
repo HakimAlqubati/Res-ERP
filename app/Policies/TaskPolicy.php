@@ -13,7 +13,7 @@ class TaskPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_task');
+        return $user->can('view_any_task') || $user->can('view_own_task');
     }
     public function viewOwn(User $user): bool
     {

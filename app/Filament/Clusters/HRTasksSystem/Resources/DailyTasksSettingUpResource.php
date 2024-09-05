@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
 use App\Models\DailyTasksSettingUp;
+use App\Models\Employee;
 use App\Models\TasksMenu;
 use App\Models\User;
 use Filament\Forms\Components\Checkbox;
@@ -60,7 +61,7 @@ class DailyTasksSettingUpResource extends Resource
                         ->label('Assign to')
                         ->required()
                         ->columnSpan(1)
-                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                        ->options(Employee::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
                         ->selectablePlaceholder(false),
                     Toggle::make('active')->default(1)->inline(false)->columnSpan(1),
 

@@ -7,6 +7,7 @@ use App\Filament\Resources\EmployeeResource\Pages;
 use App\Models\Branch;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Position;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
@@ -56,18 +57,21 @@ class EmployeeResource extends Resource
                     ->schema([
                         Grid::make()->columns(3)->schema([
                             TextInput::make('name')->columnSpan(1)->required(),
-                            TextInput::make('email')->columnSpan(1)->email(),
-                            TextInput::make('phone_number')->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
+                            TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
+                            TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
                         ]),
                     ]),
                 Fieldset::make('Employeement')->label('Employeement')
                     ->schema([
                         Grid::make()->columns(4)->schema([
-                            TextInput::make('employee_no')->columnSpan(1)->label('Employee number'),
+                            TextInput::make('employee_no')->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
                             TextInput::make('job_title')->columnSpan(1)->required(),
+                            Select::make('position_id')->columnSpan(1)->label('Position')
+                                ->searchable()
+                                ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id'))->required(),
                             Select::make('department_id')->columnSpan(1)->label('Department')
                                 ->searchable()
-                                ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))->required(),
                             Select::make('branch_id')->columnSpan(1)->label('Branch')
                                 ->searchable()
                                 ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
@@ -85,6 +89,9 @@ class EmployeeResource extends Resource
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
+                    TextColumn::make('position.title')
+                    ->label('Position')
+                    ->searchable(),
                 TextColumn::make('job_title')
                     ->label('Job title')
                     ->sortable()->searchable()

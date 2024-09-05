@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\StepsRelationManager;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\TaskMenuRelationManager;
+use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\TasksMenu;
@@ -41,6 +42,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Actions\ReplicateAction;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Hugomyb\FilamentMediaAction\Tables\Actions\MediaAction;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -110,9 +112,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->disabledOn('edit')
                             ->required()
                             ->columnSpan(2)
-                            ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
-                        Toggle::make('is_daily')->default(0)->label('Daily task?'),
+                        Toggle::make('is_daily')->default(0)->label('Daily task?')->disabledOn('edit'),
 
                     ]),
 
@@ -137,6 +139,33 @@ class TaskResource extends Resource implements HasShieldPermissions
                     Hidden::make('created_by')->default(auth()->user()->id),
                     Hidden::make('updated_by')->default(auth()->user()->id),
 
+
+                    Fieldset::make('task_rating')->relationship('task_rating')
+                        ->hidden(function ($record) {
+                            if (isset($record)) {
+                                if ($record->task_status != Task::STATUS_COMPLETED) {
+                                    return true;
+                                }
+                            }
+                        })
+                        ->hiddenOn('create')
+                        ->label('')->schema([
+                            Rating::make('rating_value')
+                                ->theme(RatingTheme::HalfStars)
+                                ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                                ->helperText(function ($record) {
+
+                                    if (is_null($record?->rating_value)) {
+                                        return 'Rate this from 0 to 10';
+                                    } else {
+                                        return "Your rating:" . $record->rating_value . "/10";
+                                    }
+                                })
+                                ->live()
+                                ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                                    $component->helperText("Your rating: $state/10");
+                                }),
+                        ]),
 
 
                     FileUpload::make('file_path')
@@ -206,8 +235,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->size(TextColumnSize::Large)
                     ->weight(FontWeight::ExtraBold)
                     ->description('Click')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->searchable(),
                 TextColumn::make('task_status')->label('Status')
                     ->badge()
                     ->icon('heroicon-m-check-badge')
@@ -222,7 +250,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
 
- 
+
 
                 Tables\Columns\TextColumn::make('assigned.name')
                     ->label('Assigned To')
@@ -235,8 +263,12 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('photos_count')
-                ->toggleable(isToggledHiddenByDefault: false),
+                // Tables\Columns\TextColumn::make('photos_count')
+                 
+                //     ->icon('heroicon-o-camera')
+                   
+                //     ->toggleable(isToggledHiddenByDefault: false) 
+                //     ,
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -266,6 +298,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return $record->photos_count <= 0 ? true : false;
                     })
                     ->label('Browse photos')
+                    ->label(function($record){
+                        return $record->photos_count;
+                    })
                     ->modalHeading('Task photos')
                     ->modalWidth('lg') // Adjust modal size
                     ->modalSubmitAction(false)
@@ -278,6 +313,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                     }),
                 Action::make('AddPhotos')
                     ->hidden(function ($record) {
+                        if($record->task_status == Task::STATUS_COMPLETED){
+                            return true;
+                        }
                         if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
                             return true;
                         }
@@ -431,6 +469,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->tooltip('Rating the Task for 10 Stars')
                     ->icon('heroicon-m-star')
                     ->color('info'),
+
+                    // ReplicateAction::make(),
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\ViewAction::make(),
@@ -473,7 +513,7 @@ class TaskResource extends Resource implements HasShieldPermissions
             static::scopeEloquentQueryToTenant($query, $tenant);
         }
 
-        if (!isSuperAdmin() && !auth()->user()->can('view_own_task')) {
+        if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
             $query->where('assigned_to', auth()->user()->id)
                 ->orWhere('created_by', auth()->user()->id)
             ;
