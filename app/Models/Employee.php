@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models; 
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,14 +16,14 @@ class Employee extends Model
      *
      * @var array<int, string>
      */
-    protected $table = 'hr_employees';   
+    protected $table = 'hr_employees';
     protected $fillable = [
         'name',
         'position_id',
         'email',
         'phone_number',
         'job_title',
-        'user_id', 
+        'user_id',
         'branch_id',
         'department_id',
         'employee_no',
@@ -38,7 +38,7 @@ class Employee extends Model
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
-    
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -47,5 +47,26 @@ class Employee extends Model
     public function position()
     {
         return $this->belongsTo(Position::class, 'position_id');
+    }
+
+    public function files()
+    {
+        return $this->hasMany(EmployeeFile::class, 'employee_id');
+    }
+
+    // Accessor for required_documents_count
+    public function getRequiredDocumentsCountAttribute()
+    {
+        return $this->files()->whereHas('fileType', function ($query) {
+            $query->where('is_required', true);
+        })->count();
+    }
+
+    // Accessor for unrequired_documents_count
+    public function getUnrequiredDocumentsCountAttribute()
+    {
+        return $this->files()->whereHas('fileType', function ($query) {
+            $query->where('is_required', false);
+        })->count();
     }
 }
