@@ -121,9 +121,10 @@ return [
     'please_type_an_invoice_no_exist' => 'من فضلك قم بإدخال رقم فاتورة صحيح',
     'purchased_orders' => 'الطلبات المشتراة',
     'order_date' => 'تاريخ الطلبية',
-    'product_approved_by_store'=> 'المنتج بعد تعديله من (المخزن)',
-    'ordered_product'=> 'المنتج المطلوب من (الفرع)',
+    'product_approved_by_store' => 'المنتج بعد تعديله من (المخزن)',
+    'ordered_product' => 'المنتج المطلوب من (الفرع)',
     'employees' => 'الموظفين',
     'tasks_ms' => 'نظام إدارة المهام',
     'departments_and_employees' => 'الأقسام والموظفين',
+    'attenance_management' => 'إدارة الحضور والإنصراف',
 ];

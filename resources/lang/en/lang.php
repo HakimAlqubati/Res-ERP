@@ -122,9 +122,10 @@ return [
     'please_type_an_invoice_no_exist' => 'Please type an exist invoice no',
     'purchased_orders' => 'Purchased orders',
     'order_date' => 'Order date',
-    'product_approved_by_store'=> 'Updated product by (Store)',
-    'ordered_product'=> 'Orderd product from (Branch)',
+    'product_approved_by_store' => 'Updated product by (Store)',
+    'ordered_product' => 'Orderd product from (Branch)',
     'employees' => 'Employees',
     'tasks_ms' => 'Task management',
     'departments_and_employees' => 'Departments and employees',
+    'attenance_management' => 'Attenance management',
 ];
