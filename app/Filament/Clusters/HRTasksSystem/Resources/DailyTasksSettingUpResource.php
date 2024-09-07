@@ -6,12 +6,10 @@ use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
 use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
-use App\Models\TasksMenu;
 use App\Models\User;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -46,55 +44,62 @@ class DailyTasksSettingUpResource extends Resource
     {
         return $form
             ->schema([
-                Grid::make()->columns(4)->schema([
-                    TextInput::make('title')
-                        ->required()
-                        ->autofocus()
-                        ->columnSpan(1)
-                        ->maxLength(255),
-                    Select::make('assigned_by')
-                        ->label('Assign by')
-                        ->required()
-                        ->default(auth()->user()->id)
-                        ->columnSpan(1)
-                        ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                        ->selectablePlaceholder(false),
-                    Select::make('assigned_to')
-                        ->label('Assign to')
-                        ->required()
-                        ->columnSpan(1)
-                        ->options(Employee::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                        ->selectablePlaceholder(false),
-                    Toggle::make('active')->default(1)->inline(false)->columnSpan(1),
+                Fieldset::make()->schema([
 
-
-
-                ]),
-
-                Textarea::make('description')
-                    ->required()
-                    ->maxLength(65535)
-                    ->columnSpanFull(),
-                Repeater::make('steps')
-                    ->itemLabel('Steps')
-                    ->columnSpanFull()
-                    ->relationship('steps')
-                    ->columns(1)
-                    ->schema([
+                    Grid::make()->columns(4)->schema([
                         TextInput::make('title')
                             ->required()
-                            ->live(onBlur: true),
-                    ])
-                    ->collapseAllAction(
-                        fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
-                    )
-                    ->orderColumn('order')
-                    ->reorderable()
-                    ->reorderableWithDragAndDrop()
-                    ->reorderableWithButtons()
-                    ->cloneable()
-                    ->collapsible()
-                    ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+                            ->autofocus()
+                            ->columnSpan(1)
+                            ->maxLength(255),
+                        Select::make('assigned_by')
+                            ->label('Assign by')
+                            ->required()
+                            ->default(auth()->user()->id)
+                            ->columnSpan(1)
+                            ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->selectablePlaceholder(false),
+                        Select::make('assigned_to')
+                            ->label('Assign to')
+                            ->required()
+                            ->columnSpan(1)
+                            ->options(Employee::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->selectablePlaceholder(false),
+                        Toggle::make('active')->default(1)->inline(false)->columnSpan(1),
+
+                    ]),
+
+                    Fieldset::make()->label('Set start date and end date for daily task')->schema([
+                        Grid::make()->columns(2)->schema([
+                            DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
+                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+                        ]),
+                    ]),
+                    Textarea::make('description')
+                        ->required()
+                        ->maxLength(65535)
+                        ->columnSpanFull(),
+                    Repeater::make('steps')
+                        ->itemLabel('Steps')
+                        ->columnSpanFull()
+                        ->relationship('steps')
+                        ->columns(1)
+                        ->schema([
+                            TextInput::make('title')
+                                ->required()
+                                ->live(onBlur: true),
+                        ])
+                        ->collapseAllAction(
+                            fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
+                        )
+                        ->orderColumn('order')
+                        ->reorderable()
+                        ->reorderableWithDragAndDrop()
+                        ->reorderableWithButtons()
+                        ->cloneable()
+                        ->collapsible()
+                        ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
+                ]),
             ]);
     }
 
@@ -108,6 +113,8 @@ class DailyTasksSettingUpResource extends Resource
                 TextColumn::make('description'),
                 TextColumn::make('assignedto.name')->label('Assigned to'),
                 TextColumn::make('assignedby.name')->label('Assigned by'),
+                TextColumn::make('start_date')->label('Start date')->sortable(),
+                TextColumn::make('end_date')->label('End date')->sortable(),
                 ToggleColumn::make('active')->label('Active?')->sortable()->disabled(),
 
             ])
@@ -134,7 +141,16 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $query = static::getModel();
+
+        if (!in_array(getCurrentRole(), [1, 3])) {
+            return $query::where('assigned_by', auth()->user()->id)
+                ->orWhere('assigned_to', auth()->user()->id)
+                ->orWhere('assigned_to', auth()->user()?->employee?->id)->count();
+        }
+
+        return $query::count();
+
     }
 
     public static function getPages(): array
@@ -169,7 +185,7 @@ class DailyTasksSettingUpResource extends Resource
                 ->orWhere('assigned_to', auth()->user()?->employee?->id)
                 ->orWhere('assigned_by', auth()->user()?->employee?->id)
                 ->orWhere('assigned_by', auth()->user()->id)
-                // ->orWhere('created_by', auth()->user()->id)
+            // ->orWhere('created_by', auth()->user()->id)
             ;
         }
         return $query;

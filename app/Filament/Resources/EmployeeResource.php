@@ -24,8 +24,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -56,16 +55,47 @@ class EmployeeResource extends Resource
         return $form
             ->schema([
 
-
                 Wizard::make([
                     Wizard\Step::make('Personal & Employeement data')
                         ->schema([
                             Fieldset::make('personal_data')->label('Personal data')
                                 ->schema([
-                                    Grid::make()->columns(3)->schema([
+                                    Grid::make()->columns(4)->schema([
                                         TextInput::make('name')->columnSpan(1)->required(),
                                         TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
                                         TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
+                                        FileUpload::make('avatar')
+                                            ->columnSpan(1)
+                                            ->label('Add avatar')
+                                            ->disk('public')
+                                            ->directory('employees')
+                                            ->visibility('public')
+                                            ->image()
+                                            ->imageEditor()
+                                            ->imageEditorAspectRatios([
+                                                '16:9',
+                                                '4:3',
+                                                '1:1',
+                                            ])
+
+                                            ->imagePreviewHeight('250')
+                                            ->resize(5)
+
+                                            ->loadingIndicatorPosition('left')
+                                        // ->panelAspectRatio('2:1')
+                                            ->panelLayout('integrated')
+                                            ->removeUploadedFileButtonPosition('right')
+                                            ->uploadButtonPosition('left')
+                                            ->uploadProgressIndicatorPosition('left')
+                                            ->panelLayout('grid')
+                                            ->reorderable()
+                                            ->openable()
+                                            ->downloadable()
+                                            ->previewable()
+                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                return (string) str($file->getClientOriginalName())->prepend('employee-');
+                                            }),
+
                                     ]),
                                 ]),
                             Fieldset::make('Employeement')->label('Employeement')
@@ -76,12 +106,12 @@ class EmployeeResource extends Resource
                                         Select::make('position_id')->columnSpan(1)->label('Position')
                                             ->searchable()
                                             ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
-                                        Select::make('department_id')->columnSpan(1)->label('Department')
-                                            ->searchable()
-                                            ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                        Select::make('department_id')->columnSpan(1)->label('Department')
+                                            ->searchable()
+                                            ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                     ]),
                                 ]),
                         ]),
@@ -90,7 +120,7 @@ class EmployeeResource extends Resource
                             Repeater::make('files')
                                 ->relationship()
                                 ->columns(2)
-                                // ->minItems(0)
+                            // ->minItems(0)
                                 ->defaultItems(0)
                                 ->schema([
 
@@ -102,12 +132,10 @@ class EmployeeResource extends Resource
                                                 ->searchable(),
                                             FileUpload::make('attachment')->label('Attach your file')->downloadable()->previewable(),
                                         ]),
-                                    ])
-                                ])
+                                    ]),
+                                ]),
                         ]),
                 ])->columnSpanFull(),
-
-
 
             ]);
     }
@@ -191,7 +219,7 @@ class EmployeeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            // ->where('role_id',8)
+        // ->where('role_id',8)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

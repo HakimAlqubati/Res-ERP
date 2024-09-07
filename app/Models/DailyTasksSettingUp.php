@@ -17,6 +17,8 @@ class DailyTasksSettingUp extends Model
         'active',
         'menu_tasks',
         'assigned_to',
+        'start_date',
+        'end_date'
     ];
 
     public function steps()

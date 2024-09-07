@@ -31,6 +31,8 @@ class CreateTask extends CreateRecord
                 'created_by' => $this->record->created_by,
                 'assigned_to' => $this->record->assigned_to,
                 'assigned_by' => $this->record->assigned_by,
+                'start_date' => $this->record->start_date,
+                'end_date' => $this->record->end_date,
                 'active' => 1,
 
             ]);

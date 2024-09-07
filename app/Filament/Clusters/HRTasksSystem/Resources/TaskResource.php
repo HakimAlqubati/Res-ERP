@@ -2,20 +2,16 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
-use Illuminate\Support\Str;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\StepsRelationManager;
-use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\TaskMenuRelationManager;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskAttachment;
-use App\Models\TasksMenu;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Facades\Filament;
 use Filament\Forms;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -25,31 +21,27 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Columns\ColumnGroup;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use function Laravel\Prompts\form;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
-use Filament\Forms\Components\Toggle;
-use Filament\Support\Colors\Color;
-use Filament\Support\Enums\Alignment;
-use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Actions\ReplicateAction;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
-use Hugomyb\FilamentMediaAction\Tables\Actions\MediaAction;
+use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
-
-use function Laravel\Prompts\form;
 
 class TaskResource extends Resource implements HasShieldPermissions
 {
@@ -64,7 +56,16 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $query = static::getModel();
+
+        if (!in_array(getCurrentRole(), [1, 3])) {
+            return $query::where('assigned_to', auth()->user()->id)
+                ->orWhere('assigned_to', auth()->user()?->employee?->id)
+                ->orWhere('created_by', auth()->user()->id)->count();
+        }
+
+        return $query::count();
+
     }
 
     public static function getPermissionPrefixes(): array
@@ -114,8 +115,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->columnSpan(2)
                             ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
-                        Toggle::make('is_daily')->default(0)->label('Daily task?')->disabledOn('edit'),
+                        Toggle::make('is_daily')->live()->default(0)->label('Daily task?')->disabledOn('edit'),
 
+                    ]),
+                    Fieldset::make()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set start date and end date for daily task')->schema([
+                        Grid::make()->columns(2)->schema([
+                            DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
+                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+                        ]),
                     ]),
 
                     Forms\Components\Textarea::make('description')
@@ -124,7 +131,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ->maxLength(65535)
                         ->columnSpanFull(),
 
-                    DatePicker::make('due_date')->label('Due date')->required(false),
+                    DatePicker::make('due_date')->label('Due date')->required(false)
+                        ->helperText('Set due date for this task')
+                    ,
                     Select::make('task_status')->options(
                         [
                             Task::STATUS_PENDING => Task::STATUS_PENDING,
@@ -139,8 +148,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                     Hidden::make('created_by')->default(auth()->user()->id),
                     Hidden::make('updated_by')->default(auth()->user()->id),
 
-
                     Fieldset::make('task_rating')->relationship('task_rating')
+                    // ->hiddenOn('create')
                         ->hidden(function ($record) {
                             if (isset($record)) {
                                 if ($record->task_status != Task::STATUS_COMPLETED) {
@@ -148,25 +157,32 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 }
                             }
                         })
-                        ->hiddenOn('create')
+                        ->disabled(function ($record) {
+                            if (isset($record)) {
+                                if (($record->assigned_to == auth()?->user()?->id) || ($record->assigned_to == auth()->user()?->employee?->id)) {
+                                    return true;
+                                }
+                                return false;
+                            }
+                        })
+                        ->visibleOn('edit')
                         ->label('')->schema([
-                            Rating::make('rating_value')
-                                ->theme(RatingTheme::HalfStars)
-                                ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                                ->helperText(function ($record) {
+                        Rating::make('rating_value')
+                            ->theme(RatingTheme::HalfStars)
+                            ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                            ->helperText(function ($record) {
 
-                                    if (is_null($record?->rating_value)) {
-                                        return 'Rate this from 0 to 10';
-                                    } else {
-                                        return "Your rating:" . $record->rating_value . "/10";
-                                    }
-                                })
-                                ->live()
-                                ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                                    $component->helperText("Your rating: $state/10");
-                                }),
-                        ]),
-
+                                if (is_null($record?->rating_value)) {
+                                    return 'Rate this from 0 to 10';
+                                } else {
+                                    return "Your rating:" . $record->rating_value . "/10";
+                                }
+                            })
+                            ->live()
+                            ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                                $component->helperText("Your rating: $state/10");
+                            }),
+                    ]),
 
                     FileUpload::make('file_path')
                         ->label('Add photos')
@@ -178,7 +194,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ->image()
                         ->resize(5)
                         ->loadingIndicatorPosition('left')
-                        // ->panelAspectRatio('2:1')
+                    // ->panelAspectRatio('2:1')
                         ->panelLayout('integrated')
                         ->removeUploadedFileButtonPosition('right')
                         ->uploadButtonPosition('left')
@@ -193,7 +209,6 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('task-');
                         }),
-
 
                     Hidden::make('created_by')->default(auth()->user()->id),
                     Hidden::make('updated_by')->default(auth()->user()->id),
@@ -219,13 +234,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ->collapsible()
                         ->itemLabel(fn(array $state): ?string => $state['name'] ?? null),
 
-                ])
+                ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -250,8 +266,6 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
 
-
-
                 Tables\Columns\TextColumn::make('assigned.name')
                     ->label('Assigned To')
                     ->searchable()
@@ -267,7 +281,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                 //     ->icon('heroicon-o-camera')
 
-                //     ->toggleable(isToggledHiddenByDefault: false) 
+                //     ->toggleable(isToggledHiddenByDefault: false)
                 //     ,
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -288,7 +302,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         Task::STATUS_FAILED => Task::STATUS_FAILED,
                         Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
                     ]
-                )
+                ),
             ])
             ->selectable()
             ->actions([
@@ -305,7 +319,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->modalWidth('lg') // Adjust modal size
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
-                    // ->iconButton()
+                // ->iconButton()
                     ->button()
                     ->icon('heroicon-o-camera')
                     ->modalContent(function ($record) {
@@ -345,11 +359,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->previewable(true)
                             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                 return (string) str($file->getClientOriginalName())->prepend('task-');
-                            })
+                            }),
                     ])
                     ->action(function (array $data, Task $record): void {
                         if (isset($data['file_path']) && is_array($data['file_path']) && count($data['file_path']) > 0) {
-                            foreach ($data['file_path'] as  $file) {
+                            foreach ($data['file_path'] as $file) {
                                 TaskAttachment::create([
                                     'task_id' => $record->id,
                                     'file_name' => $file,
@@ -383,7 +397,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                     Task::STATUS_FAILED => Task::STATUS_FAILED,
                                     Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
                                 ]
-                            )
+                            ),
                         ];
                     })
                     ->icon('heroicon-m-arrows-right-left')
@@ -391,7 +405,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->action(function (array $data, Task $record): void {
                         // dd($data);
                         $record->update([
-                            'task_status' => $data['task_status']
+                            'task_status' => $data['task_status'],
                         ]);
                     }),
                 Action::make('AddComment')->button()
@@ -404,7 +418,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return [
                             Fieldset::make()->schema([
                                 Textarea::make('comment')->columnSpanFull()->required(),
-                            ])
+                            ]),
                         ];
                     })
                     ->icon('heroicon-m-chat-bubble-bottom-center-text')
@@ -433,7 +447,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return false;
                     })
                     ->fillForm(
-                        fn(Task $record): array => [
+                        fn(Task $record): array=> [
                             'task_employee' => $record->assigned->name,
                         ]
                     )

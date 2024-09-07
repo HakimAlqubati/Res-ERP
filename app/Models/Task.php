@@ -25,7 +25,6 @@ class Task extends Model
     const COLOR_FAILED = 'gray';
     const COLOR_COMPLETED = 'success';
 
-
     protected $fillable = [
         'title',
         'description',
@@ -36,10 +35,10 @@ class Task extends Model
         'updated_by',
         'due_date',
         'menu_tasks',
-        'is_daily'
+        'is_daily',
+        'start_date',
+        'end_date',
     ];
-
-
 
     public function assigned()
     {
@@ -60,7 +59,6 @@ class Task extends Model
         return $this->hasMany(TaskAttachment::class, 'task_id');
     }
 
-    
     public function getPhotosCountAttribute()
     {
         return $this->photos()->count();
@@ -78,7 +76,7 @@ class Task extends Model
     public function menus()
     {
         return $this->belongsToMany(TasksMenu::class, 'hr_tasks_menus')
-            // ->withPivot('price')
+        // ->withPivot('price')
         ;
     }
 
@@ -100,14 +98,13 @@ class Task extends Model
         ];
     }
 
-
-     // Method to get statuses excluding specific ones
-     public static function getStatusesExcluding(array $excludeStatuses = [])
-     {
-         return array_filter(self::getStatuses(), function ($status) use ($excludeStatuses) {
-             return !in_array($status, $excludeStatuses);
-         });
-     }
+    // Method to get statuses excluding specific ones
+    public static function getStatusesExcluding(array $excludeStatuses = [])
+    {
+        return array_filter(self::getStatuses(), function ($status) use ($excludeStatuses) {
+            return !in_array($status, $excludeStatuses);
+        });
+    }
 
     public static function getStatusColors()
     {
@@ -127,7 +124,8 @@ class Task extends Model
         return $query->where('task_status', $status);
     }
 
-    public function steps(){
+    public function steps()
+    {
         // return $this->hasMany(TaskStep::class,'task_id');
         return $this->morphMany(TaskStep::class, 'morphable');
 
