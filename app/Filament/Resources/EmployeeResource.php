@@ -14,6 +14,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+// use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
@@ -25,7 +26,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -61,43 +61,47 @@ class EmployeeResource extends Resource
                         ->schema([
                             Fieldset::make('personal_data')->label('Personal data')
                                 ->schema([
-                                    Grid::make()->columns(4)->schema([
+                                    Grid::make()->columns(3)->schema([
                                         TextInput::make('name')->columnSpan(1)->required(),
                                         TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
                                         TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
-                                        FileUpload::make('avatar')
-                                            ->columnSpan(1)
-                                            ->label('Add avatar')
-                                            ->disk('public')
-                                            ->directory('employees')
-                                            ->visibility('public')
-                                            ->image()
-                                            ->imageEditor()
-                                            ->imageEditorAspectRatios([
-                                                '16:9',
-                                                '4:3',
-                                                '1:1',
-                                            ])
-
-                                            ->imagePreviewHeight('250')
-                                            ->resize(5)
-
-                                            ->loadingIndicatorPosition('left')
-                                        // ->panelAspectRatio('2:1')
-                                            ->panelLayout('integrated')
-                                            ->removeUploadedFileButtonPosition('right')
-                                            ->uploadButtonPosition('left')
-                                            ->uploadProgressIndicatorPosition('left')
-                                            ->panelLayout('grid')
-                                            ->reorderable()
-                                            ->openable()
-                                            ->downloadable()
-                                            ->previewable()
-                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                return (string) str($file->getClientOriginalName())->prepend('employee-');
-                                            }),
 
                                     ]),
+                                    // Fieldset::make()->label('Upload avatar image')
+                                    //     ->columnSpanFull()
+                                    //     ->schema([
+                                    //         SpatieMediaLibraryFileUpload::make('avatar')
+                                    //             ->image()
+                                    //             ->imageEditor()
+                                    //         // ->columnSpanFull()
+                                    //         // ->label('')
+                                    //         // ->disk('public')
+                                    //         // ->directory('employees')
+                                    //         // ->visibility('public')
+                                    //         // ->imageEditorAspectRatios([
+                                    //         //     '16:9',
+                                    //         //     '4:3',
+                                    //         //     '1:1',
+                                    //         // ])
+
+                                    //         // ->imagePreviewHeight('250')
+                                    //         // ->resize(5)
+
+                                    //         // ->loadingIndicatorPosition('left')
+                                    //         // ->panelLayout('integrated')
+                                    //         // ->removeUploadedFileButtonPosition('right')
+                                    //         // ->uploadButtonPosition('left')
+                                    //         // ->uploadProgressIndicatorPosition('left')
+
+                                    //         // ->openable()
+                                    //         // ->downloadable()
+                                    //             ->default('https://dummyimage.com/900x700')
+                                    //         // ->previewable()
+                                    //             // ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                    //             //     return (string) str($file->getClientOriginalName())->prepend('employee-');
+                                    //             // })
+                                    //             ,
+                                    //     ]),
                                 ]),
                             Fieldset::make('Employeement')->label('Employeement')
                                 ->schema([
