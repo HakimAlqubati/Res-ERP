@@ -20,6 +20,7 @@ use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -145,37 +146,51 @@ class EmployeeResource extends Resource
         return $table
             ->defaultSort('id', 'desc')
             ->columns([
+                ImageColumn::make('avatar_image')->label('')
+                    ->circular(),
                 TextColumn::make('name')
                     ->sortable()->searchable()
+                    ->limit(12)
+                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                ,
+                TextColumn::make('email')->icon('heroicon-m-envelope')
+                    ->sortable()->searchable()->limit(20)
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('position.title')
+
+                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('position.title')->limit(20)
                     ->label('Position')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 TextColumn::make('job_title')
                     ->label('Job title')
                     ->sortable()->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('employee_no')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->label('employee number')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('department.name')
                     ->label('Department')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 TextColumn::make('unrequired_documents_count')->label('Unrequired docs')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['unrequired_count'];
                     }),
                 TextColumn::make('required_documents_count')->label('Required docs')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(function ($state) {
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     })
-
-                // ->default(function ($record) {
-                //     return $record->required_documents_count . ' of ' . 10;
-                // })
                 ,
             ])
             ->filters([

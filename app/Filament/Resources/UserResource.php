@@ -177,21 +177,28 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('id')
                     ->sortable()->searchable()
+
                     ->searchable(isIndividual: true, isGlobal: false),
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('name')
                     ->limit(20)
                     ->sortable()->searchable()
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')
                     ->sortable()->searchable()->limit(20)
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->toggleable(isToggledHiddenByDefault: false),
 
-                TextColumn::make('phone_number')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true),
+                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)
+                    ->toggleable(isToggledHiddenByDefault: false),
 
-                TextColumn::make('owner.name')->searchable(),
-                TextColumn::make('first_role.name')->label('Role'),
+                TextColumn::make('owner.name')->searchable()->label('Manager')
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('first_role.name')->label('Role')
+                    ->toggleable(isToggledHiddenByDefault: false)
+                ,
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
