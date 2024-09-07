@@ -75,10 +75,10 @@ class EmployeeResource extends Resource
                                         TextInput::make('job_title')->columnSpan(1)->required(),
                                         Select::make('position_id')->columnSpan(1)->label('Position')
                                             ->searchable()
-                                            ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id'))->required(),
+                                            ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
                                         Select::make('department_id')->columnSpan(1)->label('Department')
                                             ->searchable()
-                                            ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))->required(),
+                                            ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
@@ -90,6 +90,8 @@ class EmployeeResource extends Resource
                             Repeater::make('files')
                                 ->relationship()
                                 ->columns(2)
+                                // ->minItems(0)
+                                ->defaultItems(0)
                                 ->schema([
 
                                     Fieldset::make()->schema([

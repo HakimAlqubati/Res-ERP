@@ -26,7 +26,7 @@ class DailyTasksSettingUp extends Model
 
     public function assignedto()
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsTo(Employee::class, 'assigned_to');
     }
     public function assignedby()
     {

@@ -8,6 +8,7 @@ use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
 use App\Models\TasksMenu;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
@@ -24,6 +25,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class DailyTasksSettingUpResource extends Resource
 {
@@ -142,5 +144,34 @@ class DailyTasksSettingUpResource extends Resource
             'create' => Pages\CreateDailyTasksSettingUp::route('/create'),
             'edit' => Pages\EditDailyTasksSettingUp::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = static::getModel()::query();
+
+        if (
+            static::isScopedToTenant() &&
+            ($tenant = Filament::getTenant())
+        ) {
+            static::scopeEloquentQueryToTenant($query, $tenant);
+        }
+
+        // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
+        //     $query->where('assigned_to', auth()->user()->id)
+        //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
+        //         ->orWhere('created_by', auth()->user()->id)
+        //     ;
+        // }
+
+        if (!in_array(getCurrentRole(), [1, 3])) {
+            $query->where('assigned_to', auth()->user()->id)
+                ->orWhere('assigned_to', auth()->user()?->employee?->id)
+                ->orWhere('assigned_by', auth()->user()?->employee?->id)
+                ->orWhere('assigned_by', auth()->user()->id)
+                // ->orWhere('created_by', auth()->user()->id)
+            ;
+        }
+        return $query;
     }
 }

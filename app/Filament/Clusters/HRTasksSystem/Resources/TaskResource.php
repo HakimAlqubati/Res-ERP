@@ -188,7 +188,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ->reorderable()
                         ->openable()
                         ->downloadable()
-
+                        ->hiddenOn('create')
                         ->previewable()
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('task-');
@@ -264,9 +264,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 // Tables\Columns\TextColumn::make('photos_count')
-                 
+
                 //     ->icon('heroicon-o-camera')
-                   
+
                 //     ->toggleable(isToggledHiddenByDefault: false) 
                 //     ,
                 Tables\Columns\TextColumn::make('created_at')
@@ -298,7 +298,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return $record->photos_count <= 0 ? true : false;
                     })
                     ->label('Browse photos')
-                    ->label(function($record){
+                    ->label(function ($record) {
                         return $record->photos_count;
                     })
                     ->modalHeading('Task photos')
@@ -313,7 +313,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     }),
                 Action::make('AddPhotos')
                     ->hidden(function ($record) {
-                        if($record->task_status == Task::STATUS_COMPLETED){
+                        if ($record->task_status == Task::STATUS_COMPLETED) {
                             return true;
                         }
                         if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
@@ -470,7 +470,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-m-star')
                     ->color('info'),
 
-                    // ReplicateAction::make(),
+                // ReplicateAction::make(),
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\ViewAction::make(),
@@ -513,17 +513,19 @@ class TaskResource extends Resource implements HasShieldPermissions
             static::scopeEloquentQueryToTenant($query, $tenant);
         }
 
-        if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
-            $query->where('assigned_to', auth()->user()->id)
-                ->orWhere('created_by', auth()->user()->id)
-            ;
-        }
-
-        // if (!in_array(getCurrentRole(), [1, 2])) {
+        // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
         //     $query->where('assigned_to', auth()->user()->id)
+        //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
         //         ->orWhere('created_by', auth()->user()->id)
         //     ;
         // }
+
+        if (!in_array(getCurrentRole(), [1, 3])) {
+            $query->where('assigned_to', auth()->user()->id)
+                ->orWhere('assigned_to', auth()->user()?->employee?->id)
+                ->orWhere('created_by', auth()->user()->id)
+            ;
+        }
         return $query;
     }
 

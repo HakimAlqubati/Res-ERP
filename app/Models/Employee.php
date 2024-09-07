@@ -28,6 +28,7 @@ class Employee extends Model
         'department_id',
         'employee_no',
         'active',
+        'avatar'
     ];
 
     public function branch()

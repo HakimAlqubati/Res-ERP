@@ -3,6 +3,7 @@
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OrderController;
 use App\Jobs\CreateDailyTask;
+use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
@@ -10,6 +11,7 @@ use App\Models\PurchaseInvoiceDetail;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Spatie\Permission\Models\Role;
 
 /*
 |--------------------------------------------------------------------------
@@ -221,5 +223,78 @@ Route::get('/test-tasks-job', function () {
     CreateDailyTask::dispatchSync();
 
     return 'dailly tasks added';
+});
 
+Route::get('/migration_branch_manager_users', function () {
+    $branchManagers = Role::find(7)->users;
+    // dd($branchManagers);
+    foreach ($branchManagers as $branchManager) {
+        Employee::create([
+            'name' => $branchManager->name,
+            'position_id' => 1,
+            'email' => $branchManager->email,
+            'phone_number' => $branchManager->phone_number,
+            'job_title' => 'Branch manager',
+            'user_id' => $branchManager->id,
+            'branch_id' => $branchManager?->branch?->id,
+            'employee_no' => '12005' . $branchManager->id,
+            'active' => 1,
+        ]);
+    }
+
+    dd($branchManagers);
+});
+Route::get('/migration_users_of_branch', function () {
+    $users = Role::find(8)->users;
+    foreach ($users as $user) {
+        Employee::create([
+            'name' => $user->name,
+            'position_id' => 2,
+            'email' => $user?->email,
+            'phone_number' => $user?->phone_number,
+            'job_title' => 'Department employee',
+            'user_id' => $user->id,
+            'branch_id' => $user?->owner?->branch?->id,
+            'employee_no' => '12005' . $user->id,
+            'active' => 1,
+        ]);
+    }
+
+    dd($users);
+});
+Route::get('/migration_store_users', function () {
+    $users = Role::find(5)->users;
+    foreach ($users as $user) {
+        Employee::create([
+            'name' => $user->name,
+            'position_id' => 3,
+            'email' => $user?->email,
+            'phone_number' => $user?->phone_number,
+            'job_title' => 'Store responsiple',
+            'user_id' => $user->id,
+
+            'employee_no' => '12005' . $user->id,
+            'active' => 1,
+        ]);
+    }
+
+    dd($users);
+});
+
+Route::get('/migration_accountants_users', function () {
+    $users = Role::find(9)->users;
+    foreach ($users as $user) {
+        Employee::create([
+            'name' => $user->name,
+            'position_id' => 4,
+            'email' => $user?->email,
+            'phone_number' => $user?->phone_number,
+            'job_title' => 'Accountant',
+            'user_id' => $user->id,
+            'employee_no' => '12005' . $user->id,
+            'active' => 1,
+        ]);
+    }
+
+    dd($users);
 });

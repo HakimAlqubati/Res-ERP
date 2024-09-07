@@ -18,7 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser
 // implements FilamentUser
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes,HasPanelShield;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield;
 
 
     /**
@@ -33,6 +33,9 @@ class User extends Authenticatable implements FilamentUser
         'owner_id',
         'role_id',
         'branch_id',
+        'phone_number',
+        'avatar',
+        'is_employee',
     ];
 
     /**
@@ -76,8 +79,27 @@ class User extends Authenticatable implements FilamentUser
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-     
 
+
+    public function getFirstRoleAttribute()
+    {
+        return $this->roles->first();
+    }
+
+    public function getAvatarImageAttribute()
+    {
+        // $default = 'users/default/avatar.png';
+        // if (is_null($this->avatar) || $this->avatar == $default) {
+        //     return storage_path($default);
+        // }
+        return url('/storage') . '/' . $this->avatar;
+        return storage_path($this->avatar);
+    }
+
+    public function employee()
+    {
+        return $this->hasOne(Employee::class, 'user_id', 'id');
+    }
     // public function canAccessFilament(): bool
     // {
     //     return true;
