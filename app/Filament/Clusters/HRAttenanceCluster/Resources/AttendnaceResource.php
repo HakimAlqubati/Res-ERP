@@ -36,6 +36,7 @@ class AttendnaceResource extends Resource
                 Fieldset::make()->label('Select employee and check type')->schema([
                     Forms\Components\Select::make('employee_id')
                         ->label('Employee')
+                        ->default(auth()->user()->id)
                         ->relationship('employee', 'name')
                         ->required(),
                     Forms\Components\ToggleButtons::make('check_type')
