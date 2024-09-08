@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\RelationManagers;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -37,6 +38,7 @@ class AttendnaceResource extends Resource
                     Forms\Components\Select::make('employee_id')
                         ->label('Employee')
                         ->default(auth()->user()?->employee?->id)
+                        ->disabled()
                         ->relationship('employee', 'name')
                         ->required(),
                     Forms\Components\ToggleButtons::make('check_type')
@@ -130,6 +132,20 @@ class AttendnaceResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::where('employee_id',auth()->user()?->employee?->id)->count();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = static::getModel()::query()->where('employee_id',auth()->user()?->employee?->id);
+
+        if (
+            static::isScopedToTenant() &&
+            ($tenant = Filament::getTenant())
+        ) {
+            static::scopeEloquentQueryToTenant($query, $tenant);
+        }
+
+        return $query;
     }
 }
