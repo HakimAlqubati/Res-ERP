@@ -9,17 +9,24 @@ use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
-class ListReportProductQuantities extends ListRecords
+class ListReportProductQuantities extends ListRecords 
 {
-
     protected static string $resource = ReportProductQuantitiesResource::class;
-    protected static string $view = 'filament.pages.order-reports.report-product-quantities';
+
+    public function getTableRecordKey(Model $record): string
+    {
+        $attributes = $record->getAttributes();
+        return $attributes['product'] . '-' . $attributes['branch'] . '-' . $attributes['unit'];
+    }
+    // protected static string $view = 'filament.pages.order-reports.report-product-quantities';
 
     protected function getTableFilters(): array
     {
@@ -62,8 +69,9 @@ class ListReportProductQuantities extends ListRecords
         $branch_ids = __filament_request_select_multiple('branch_id', [], true);
 
         $start_date = __filament_request_key("date.start_date", null);
+        
         $end_date = __filament_request_key("date.end_date", null);
-
+// dd($product_id,$start_date,$end_date);
         $report_data = $this->getReportData($product_id, $start_date, $end_date, $branch_ids);
 
         if (isset($report_data['total_price'])) {
@@ -88,10 +96,10 @@ class ListReportProductQuantities extends ListRecords
         ];
     }
 
-    protected function getTableFiltersLayout(): ?string
-    {
-        return \Filament\Tables\Enums\FiltersLayout::AboveContent;
-    }
+    // protected function getTableFiltersLayout(): ?string
+    // {
+    //     return \Filament\Tables\Enums\FiltersLayout::AboveContent;
+    // }
 
     public function getReportData($product_id, $start_date, $end_date, $branch_ids)
     {
