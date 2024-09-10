@@ -37,8 +37,9 @@ class AttendnaceResource extends Resource
                 Fieldset::make()->label('Select employee and check type')->schema([
                     Forms\Components\Select::make('employee_id')
                         ->label('Employee')
-                        ->default(auth()->user()?->employee?->id)
-                        ->disabled()
+                        ->searchable()
+                        // ->default(auth()->user()?->employee?->id)
+                        // ->disabled()
                         ->relationship('employee', 'name')
                         ->required(),
                     Forms\Components\ToggleButtons::make('check_type')
@@ -132,12 +133,14 @@ class AttendnaceResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('employee_id',auth()->user()?->employee?->id)->count();
+        // return static::getModel()::where('employee_id',auth()->user()?->employee?->id)->count();
+        return static::getModel()::count();
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $query = static::getModel()::query()->where('employee_id',auth()->user()?->employee?->id);
+        // $query = static::getModel()::query()->where('employee_id',auth()->user()?->employee?->id);
+        $query = static::getModel()::query();
 
         if (
             static::isScopedToTenant() &&

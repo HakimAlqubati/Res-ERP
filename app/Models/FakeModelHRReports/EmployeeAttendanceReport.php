@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Models\FakeModelReports;
+namespace App\Models\FakeModelHRReports;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ReportProductQuantities extends Model
+class EmployeeAttendanceReport extends Model
 {
     use \Sushi\Sushi, HasFactory; 
 

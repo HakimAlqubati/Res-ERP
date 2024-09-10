@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Clusters\HRAttenanceCluster;
+use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\InventoryCluster;
@@ -81,6 +82,7 @@ class AdminPanelProvider extends PanelProvider
                         ...HRCluster::getNavigationItems(), 
                         ...HRTasksSystem::getNavigationItems(), 
                         ...HRAttenanceCluster::getNavigationItems(), 
+                        ...HRAttendanceReport::getNavigationItems(), 
                     ]),
                 NavigationGroup::make(__('lang.user_and_roles'))
                     ->items([

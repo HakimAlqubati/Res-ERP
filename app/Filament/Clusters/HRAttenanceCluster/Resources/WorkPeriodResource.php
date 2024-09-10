@@ -19,6 +19,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Symfony\Component\Yaml\Inline;
+use Filament\Forms\Get;
 
 class WorkPeriodResource extends Resource
 {
@@ -42,18 +43,29 @@ class WorkPeriodResource extends Resource
                             ->required()
                             ->columnSpan(1)
                             ->unique(ignoreRecord: true),
-                        Forms\Components\Select::make('branch_id')
-                            ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                            ->label('Branch')
-                            ->required()
-                            ->searchable()
-                            ->columnSpan(1),
 
+                        Toggle::make('all_branches')
+                            ->default(1)
+                            ->label('For all branches?')
+                            ->helperText('This period will be for all branches')
+                            ->live()
+                            ->columnSpan(1)
+                            ->inline(false)
+                            ->default(true),
                         Toggle::make('active')
                             ->label('Active')
                             ->columnSpan(1)
                             ->inline(false)
                             ->default(true),
+                        Fieldset::make()->label('Choose branch that will period will be for')->schema([
+                            Forms\Components\Select::make('branch_id')
+                                ->hidden(fn(Get $get): bool => $get('all_branches'))
+                                ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                ->label('')
+
+                                ->searchable()
+                                ->columnSpanFull(),
+                        ])->columnSpanFull()->hidden(fn(Get $get): bool => $get('all_branches')),
                     ]),
 
                     Forms\Components\RichEditor::make('description')->columnSpanFull()
@@ -112,10 +124,16 @@ class WorkPeriodResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
-                    ->searchable(), 
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('branch.name')
-                    ->label('Branch'),
+                    ->label('Branch')
+                    ->default(function ($record){
+                        if($record->all_branches){
+                            return 'All branches';
+                        }
+                    })
+                    ,
 
                 Tables\Columns\BooleanColumn::make('active')
                     ->label('Active'),

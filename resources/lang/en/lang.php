@@ -128,4 +128,5 @@ return [
     'tasks_ms' => 'Task management',
     'departments_and_employees' => 'Departments and employees',
     'attenance_management' => 'Attenance management',
+    'attednance_reports' => 'Attednance reports',
 ];

@@ -127,4 +127,5 @@ return [
     'tasks_ms' => 'نظام إدارة المهام',
     'departments_and_employees' => 'الأقسام والموظفين',
     'attenance_management' => 'إدارة الحضور والإنصراف',
+    'attednance_reports' => 'تقارير الحضور',
 ];
