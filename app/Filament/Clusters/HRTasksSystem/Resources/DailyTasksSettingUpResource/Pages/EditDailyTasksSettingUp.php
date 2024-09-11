@@ -36,7 +36,7 @@ class EditDailyTasksSettingUp extends EditRecord
         }
 
         return __('filament-panels::resources/pages/edit-record.title', [
-            'label' => 'Daily task setup',
+            'label' => 'Scheduled task setup',
         ]);
     }
 }

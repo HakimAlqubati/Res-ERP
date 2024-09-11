@@ -26,6 +26,7 @@ class CreateTask extends CreateRecord
         if ($this->record->is_daily == 1) {
             $dailyTask = DailyTasksSettingUp::create([
                 'title' => $this->record->title,
+                'schedule_type' => $this?->record?->schedule_type,
                 'description' => $this->record->description,
                 'updated_by' => $this->record->updated_by,
                 'created_by' => $this->record->created_by,

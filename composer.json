@@ -21,7 +21,8 @@
         "mokhosh/filament-rating": "^1.1",
         "nwidart/laravel-modules": "^11.0",
         "spatie/laravel-permission": "^6.9",
-        "spatie/laravel-translatable": "^6.8"
+        "spatie/laravel-translatable": "^6.8",
+        "ysfkaya/filament-phone-input": "^3.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

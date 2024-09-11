@@ -19,6 +19,6 @@ class ListDailyTasksSettingUps extends ListRecords
 
     public function getModelLabel(): ?string
     {
-        return 'Daily task setup';
+        return 'Scheduled Task';
     }
 }

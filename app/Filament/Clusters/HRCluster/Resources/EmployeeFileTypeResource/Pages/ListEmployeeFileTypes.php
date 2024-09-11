@@ -16,4 +16,9 @@ class ListEmployeeFileTypes extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+
+    public function getModelLabel(): ?string
+    {
+        return 'File type';
+    }
 }

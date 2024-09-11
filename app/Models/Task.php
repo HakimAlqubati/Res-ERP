@@ -38,6 +38,7 @@ class Task extends Model
         'is_daily',
         'start_date',
         'end_date',
+        'schedule_type',
     ];
 
     public function assigned()

@@ -28,9 +28,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Task::observe(TaskObserver::class);
 
-        FilamentAsset::register([
-            Css::make('main', ''),
-        ]);
+        // FilamentAsset::register([
+        //     Css::make('main', ''),
+        // ]);
         FilamentView::registerRenderHook(
             'panels::auth.login.form.after',
             fn(): View => view('filament.login_extra')

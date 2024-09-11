@@ -9,11 +9,14 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\Position;
+use Closure;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 // use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
@@ -26,6 +29,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -52,7 +57,6 @@ class EmployeeResource extends Resource
 
     public static function form(Form $form): Form
     {
-
         return $form
             ->schema([
 
@@ -62,9 +66,69 @@ class EmployeeResource extends Resource
                             Fieldset::make('personal_data')->label('Personal data')
                                 ->schema([
                                     Grid::make()->columns(3)->schema([
-                                        TextInput::make('name')->columnSpan(1)->required(),
+                                        TextInput::make('name')->label('Full name')
+                                            ->rules([
+                                                fn (): Closure => function (string $attribute, $value, Closure $fail) {
+                                                    // dd('dd',$value);
+                                                    if (count(explode(" ", $value)) < 2) {
+                                                        $fail('The :attribute must be two words at least.');
+                                                    }
+                                                },
+                                            ])
+                                            ->columnSpan(1)->required(),
                                         TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
-                                        TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
+                                        // TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
+
+                                        PhoneInput::make('phone_number')
+                                        // ->numeric()
+                                            ->initialCountry('MY')
+                                            ->onlyCountries(['MY', 'YE'])
+                                            ->displayNumberFormat(PhoneInputNumberType::E164)
+                                        // ->useFullscreenPopup()
+                                            ->i18n([
+                                                // Country names
+                                                'YE' => "YEMEN",
+                                                'MY' => "MALAYSIA",
+                                            ])
+                                            ->autoPlaceholder('aggressive')
+                                            ->validateFor(
+                                                country: 'MY',
+
+                                                lenient: true, // default: false
+                                            ),
+                                        // ->countryStatePath(string | Closure $statePath, bool $isStatePathAbsolute)
+                                        // ->validateFor(string | array $country = 'AUTO', int | array | null $type = null, bool $lenient = false)
+                                        // ->defaultCountry(string $value)
+                                        // ->ipLookup(Closure $callback)
+                                        // ->disableIpLookup()
+                                        // ->enableIpLookup(bool | Closure $value = true)
+                                        // ->inputNumberFormat(PhoneInputNumberType | Closure $format)
+                                        // ->displayNumberFormat(PhoneInputNumberType | Closure $format)
+                                        // ->focusNumberFormat(PhoneInputNumberType | Closure $format)
+                                        // ->placeholderNumberType(PhoneInputNumberType | Closure $format)
+                                        // ->disallowDropdown()
+                                        // ->allowDropdown(bool | Closure $value = true)
+                                        // ->autoPlaceholder(string $value = 'polite')
+                                        // ->containerClass(string | Closure $value)
+                                        // ->countryOrder(array | Closure | null $value)
+                                        // ->countrySearch(bool | Closure $value = true)
+                                        // ->customPlaceholder(string | RawJs | Closure | null $value)
+                                        // ->dropdownContainer(string | null | Closure $value)
+                                        // ->excludeCountries(array | Closure $value)
+                                        // ->fixDropdownWidth(bool | Closure $value = true)
+                                        // ->formatAsYouType(bool | Closure $value = true)
+                                        // ->formatOnDisplay(bool | Closure $value = true)
+                                        // ->i18n(array | Closure $value)
+                                        // ->initialCountry(string | Closure $value)
+                                        // ->nationalMode(bool | Closure $value = true)
+                                        // ->onlyCountries(array | Closure $value)
+                                        // ->showFlags(bool | Closure $value = true)
+                                        // ->separateDialCode(bool | Closure $value = true)
+                                        // ->useFullscreenPopup(bool | Closure $value = true)
+                                        // ->strictMode(bool | Closure $value = true)
+                                        // ->cookieName(string | Closure $value)
+                                        // ->locale(string | Closure $value)
+                                        // ->customOptions(array | Closure $value)
 
                                     ]),
                                     // Fieldset::make()->label('Upload avatar image')
@@ -105,20 +169,25 @@ class EmployeeResource extends Resource
                                 ]),
                             Fieldset::make('Employeement')->label('Employeement')
                                 ->schema([
-                                    Grid::make()->columns(4)->schema([
-                                        TextInput::make('employee_no')->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
+                                    Grid::make()->columns(3)->schema([
+                                        TextInput::make('employee_no')->default((Employee::get()->last()->id) + 1)->disabled()->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
                                         TextInput::make('job_title')->columnSpan(1)->required(),
-                                        Select::make('position_id')->columnSpan(1)->label('Position')
+                                        Select::make('position_id')->columnSpan(1)->label('Position type')
                                             ->searchable()
                                             ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
-                                        Select::make('branch_id')->columnSpan(1)->label('Branch')
-                                            ->searchable()
-                                            ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Select::make('department_id')->columnSpan(1)->label('Department')
                                             ->searchable()
                                             ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                        Select::make('branch_id')->columnSpan(1)->label('Branch')
+                                            ->searchable()
+                                            ->required()
+                                            ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                        DatePicker::make('join_date')->columnSpan(1)->label('Start date')->nullable(),
                                     ]),
                                 ]),
+                            Fieldset::make()->label('Employee address')->schema([
+                                Textarea::make('address')->label('')->columnSpanFull(),
+                            ]),
                         ]),
                     Wizard\Step::make('Employee files')
                         ->schema([
@@ -153,8 +222,16 @@ class EmployeeResource extends Resource
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('name')
+
                     ->sortable()->searchable()
                     ->limit(12)
+                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                ,
+                TextColumn::make('name')
+                    ->sortable()->searchable()
+                    ->limit(12)
+                    ->label('Full name')
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
@@ -162,11 +239,16 @@ class EmployeeResource extends Resource
                     ->sortable()->searchable()->limit(20)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false),
+                TextColumn::make('join_date')->sortable()->label('Start date')
+                    ->sortable()->searchable()
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->searchable(isIndividual: true, isGlobal: false),
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
                     ->toggleable(isToggledHiddenByDefault: false),
+
                 TextColumn::make('position.title')->limit(20)
-                    ->label('Position')
+                    ->label('Position type')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(),
                 TextColumn::make('job_title')

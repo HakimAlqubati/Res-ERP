@@ -16,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -38,7 +39,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function getTitleCasePluralModelLabel(): string
     {
-        return 'Daily Task Setup';
+        return 'Scheduled Task Setup';
     }
     public static function form(Form $form): Form
     {
@@ -70,7 +71,18 @@ class DailyTasksSettingUpResource extends Resource
                     ]),
 
                     Fieldset::make()->label('Set start date and end date for daily task')->schema([
-                        Grid::make()->columns(2)->schema([
+                        // Grid::make()->columns(2)->schema([
+                        //     DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
+                        //     DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+                        // ]),
+
+                        Grid::make()->columns(2)->schema([ToggleButtons::make('schedule_type')
+                                ->label('')
+                                ->columnSpanFull()
+                                ->inline()
+                                ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
+                                ->options(DailyTasksSettingUp::getScheduleTypes())]),
+                        Grid::make()->columns(2)->label('Start date and End date')->schema([
                             DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
                             DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
                         ]),

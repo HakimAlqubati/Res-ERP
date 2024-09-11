@@ -9,6 +9,10 @@ class DailyTasksSettingUp extends Model
 {
     use HasFactory;
     protected $table = 'daily_tasks_setting_up';
+
+    const TYPE_SCHEDULE_DAILY = 'daily';
+    const TYPE_SCHEDULE_WEEKLY = 'weekly';
+    const TYPE_SCHEDULE_MONTHLY = 'monthly';
     protected $fillable = [
         'assigned_by',
         'assigned_to_users',
@@ -18,7 +22,8 @@ class DailyTasksSettingUp extends Model
         'menu_tasks',
         'assigned_to',
         'start_date',
-        'end_date'
+        'end_date',
+        'schedule_type',
     ];
 
     public function steps()
@@ -33,5 +38,14 @@ class DailyTasksSettingUp extends Model
     public function assignedby()
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public static function getScheduleTypes()
+    {
+        return [
+            self::TYPE_SCHEDULE_DAILY => self::TYPE_SCHEDULE_DAILY,
+            self::TYPE_SCHEDULE_WEEKLY => self::TYPE_SCHEDULE_WEEKLY,
+            self::TYPE_SCHEDULE_MONTHLY => self::TYPE_SCHEDULE_MONTHLY,
+        ];
     }
 }
