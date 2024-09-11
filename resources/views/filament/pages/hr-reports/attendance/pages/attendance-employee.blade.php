@@ -9,36 +9,67 @@
 
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                        <p>{{ __('lang.general_report_of_products') }}</p>
+                        <p>{{ 'Attendance Employee report' }}</p>
                         <p>({{ isset($employee_id) && is_numeric($employee_id) ? \App\Models\Employee::find($employee_id)->name : __('lang.choose_branch') }})
                         </p>
                     </th>
-                    <th class="no_border_right_left">
+                    <th colspan="4" class="no_border_right_left">
                         <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                         <br>
                         <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
                     </th>
-                    <th style="text-align: center; vertical-align: middle;"
+                    <th colspan="4" style="text-align: center; vertical-align: middle;"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                        <img class="circle-image"
-                            src="https://w7.pngwing.com/pngs/882/726/png-transparent-chef-cartoon-chef-photography-cooking-fictional-character-thumbnail.png"
-                            alt="">
+                        <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
-                    <th>{{ __('Employee') }}</th>
+                    <th rowspan="2">{{ __('Date') }}</th>
+                    <th colspan="2">{{ __('Shift data') }}</th>
 
-                    <th>{{ __('Period One') }}</th>
+                    <th colspan="2">{{ __('Attendance and Departure data') }}</th>
+                    <th colspan="2">{{ __('Count of Hours work') }}</th>
+                    <th rowspan="2">{{ __('Early departure (hour)') }}</th>
+                    <th rowspan="2">{{ __('Delay time (minute)') }}</th>
 
+                </x-filament-tables::row>
+                <x-filament-tables::row>
+                    <th>{{ __('From') }}</th>
+                    <th>{{ __('To') }}</th>
+                    <th>{{ __('Attendance') }}</th>
+                    <th>{{ __('Departure') }}</th>
+                    <th>{{ __('Supposed') }}</th>
+                    <th>{{ __('Actual') }}</th>
                 </x-filament-tables::row>
             </thead>
             <tbody>
 
-                @foreach ($report_data as $data)
+                @foreach ($report_data as $date => $data)
                     <x-filament-tables::row>
 
                         <x-filament-tables::cell>
-                            {{ $data->employee_name }}
+                            {{ $date }}
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+
                         </x-filament-tables::cell>
                         <x-filament-tables::cell>
 

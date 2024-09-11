@@ -50,6 +50,7 @@ class WorkPeriodResource extends Resource
                             ->helperText('This period will be for all branches')
                             ->live()
                             ->columnSpan(1)
+                            ->disabled()
                             ->inline(false)
                             ->default(true),
                         Toggle::make('active')
@@ -126,14 +127,14 @@ class WorkPeriodResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('branch.name')
-                    ->label('Branch')
-                    ->default(function ($record){
-                        if($record->all_branches){
-                            return 'All branches';
-                        }
-                    })
-                    ,
+                // Tables\Columns\TextColumn::make('branch.name')
+                //     ->label('Branch')
+                //     ->default(function ($record){
+                //         if($record->all_branches){
+                //             return 'All branches';
+                //         }
+                //     })
+                //     ,
 
                 Tables\Columns\BooleanColumn::make('active')
                     ->label('Active'),

@@ -14,21 +14,33 @@ class Attendance extends Model
     const CHECKTYPE_CHECKOUT = 'checkout';
     const CHECKTYPE_CHECKIN_LABLE = 'Check in';
     const CHECKTYPE_CHECKOUT_LABLE = 'Checkout';
+
+    const STATUS_EARLY_ARRIVAL = 'early_arrival';
+    const STATUS_LATE_ARRIVAL = 'late_arrival';
+    const STATUS_ON_TIME = 'on_time';
+    const STATUS_EARLY_DEPARTURE = 'early_departure';
+    const STATUS_LATE_DEPARTURE = 'late_departure';
+
     protected $fillable = [
         'employee_id',
         'check_type',
         'check_time',
         'check_date',
+        'period_id',
         'location',
         'is_manual',
         'notes',
         'created_by',
         'updated_by',
         'day',
+        'delay_minutes',
+        'early_arrival_minutes',
+        'late_departure_minutes',
+        'early_departure_minutes',
+        'status',
+        'actual_duration_hourly',
+        'supposed_duration_hourly',
     ];
-
-
-
 
     public static function getCheckTypes()
     {
@@ -52,5 +64,10 @@ class Attendance extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function period()
+    {
+        return $this->belongsTo(WorkPeriod::class, 'id', 'period_id');
     }
 }

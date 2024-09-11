@@ -4,7 +4,6 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\RelationManagers;
 use App\Models\Attendance;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
@@ -13,12 +12,13 @@ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AttendnaceResource extends Resource
 {
@@ -34,23 +34,6 @@ class AttendnaceResource extends Resource
     {
         return $form
             ->schema([
-                Fieldset::make()->label('Select employee and check type')->schema([
-                    Forms\Components\Select::make('employee_id')
-                        ->label('Employee')
-                        ->searchable()
-                        // ->default(auth()->user()?->employee?->id)
-                        // ->disabled()
-                        ->relationship('employee', 'name')
-                        ->required(),
-                    Forms\Components\ToggleButtons::make('check_type')
-                        ->label('Check type')
-                        ->inline()
-                        ->default(Attendance::CHECKTYPE_CHECKIN)
-                        ->options(Attendance::getCheckTypes())
-                        ->required(),
-
-                ]),
-
                 Fieldset::make()->label('Select date & time')->schema([
                     Grid::make()->columns(3)->schema([
 
@@ -68,9 +51,41 @@ class AttendnaceResource extends Resource
                             ->default(now())
                             ->required(),
                         TextInput::make('day')->label('Day')->disabled()->default(Carbon::parse(date('Y-m-d'))->format('l')),
-                    ])
+                    ]),
                 ]),
 
+                Fieldset::make()->label('Select employee and check type')->schema([
+                    Forms\Components\Select::make('employee_id')
+                        ->label('Employee')
+                        ->live()
+                        ->searchable()
+                    // ->default(auth()->user()?->employee?->id)
+                    // ->disabled()
+                        ->relationship('employee', 'name')
+                        ->afterStateUpdated(function (Get $get, Set $set) {
+                            $employee_id = $get('employee_id');
+                            $check_date = $get('check_date');
+                            $check_time = $get('check_time');
+                            $employee_attendance = Attendance::where('employee_id', $employee_id)->where('check_date', $check_date)->select('check_type', 'check_time', 'check_date')->get()->toArray();
+                            if (count($employee_attendance) == 0) {
+                                $set('check_type', Attendance::CHECKTYPE_CHECKIN);
+                            } else if (count($employee_attendance) == 1) {
+                                $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
+                            }
+                        })
+                        ->required(),
+                    Forms\Components\ToggleButtons::make('check_type')
+                        ->label('Check type')
+                        ->inline()
+                        // ->default(function(Get $get,Set $set){
+                        //     $employee_id = $get('employee_id');
+                        //     $set('notes',$employee_id);
+                        //     // dd()
+                        // })
+                        ->options(Attendance::getCheckTypes())
+                        ->required(),
+
+                ]),
 
                 Forms\Components\Textarea::make('notes')
                     ->label('Notes')
