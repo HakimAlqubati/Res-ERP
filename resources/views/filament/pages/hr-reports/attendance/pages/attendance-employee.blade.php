@@ -148,4 +148,5 @@
             <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
         </div>
     @endif
+    <center style="font-weight: bolder;color:red">  {{'The report is still under developing_'.'التقرير لا يزال قيد التطوير'}}</center>
 </x-filament::page>
