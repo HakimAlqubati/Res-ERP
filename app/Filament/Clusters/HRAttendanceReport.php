@@ -9,6 +9,7 @@ class HRAttendanceReport extends Cluster
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
     public static function getNavigationLabel(): string
     {
+        return 'Reports';
         return __('lang.attednance_reports');
     }
 }
