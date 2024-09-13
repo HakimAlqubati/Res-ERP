@@ -27,17 +27,19 @@
                     <th rowspan="2">{{ __('Date') }}</th>
                     <th colspan="2">{{ __('Shift data') }}</th>
 
-                    <th colspan="2">{{ __('Attendance and Departure data') }}</th>
+                    <th colspan="4">{{ __('Attendance and Departure data') }}</th>
                     <th colspan="2">{{ __('Count of Hours work') }}</th>
-                    <th rowspan="2">{{ __('Early departure (hour)') }}</th>
-                    <th rowspan="2">{{ __('Delay time (minute)') }}</th>
+                    {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
+                    <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
                 </x-filament-tables::row>
                 <x-filament-tables::row>
                     <th>{{ __('From') }}</th>
                     <th>{{ __('To') }}</th>
                     <th>{{ __('Attendance') }}</th>
+                    <th>{{ __('Status') }}</th>
                     <th>{{ __('Departure') }}</th>
+                    <th>{{ __('Status') }}</th>
                     <th>{{ __('Supposed') }}</th>
                     <th>{{ __('Actual') }}</th>
                 </x-filament-tables::row>
@@ -46,34 +48,95 @@
 
                 @foreach ($report_data as $date => $data)
                     <x-filament-tables::row>
-
                         <x-filament-tables::cell>
                             {{ $date }}
                         </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+
+                        @if (isset($data[0]->check_type) && count($data) == 1 && $data[0]->check_type == 'Absent')
+                            <x-filament-tables::cell style="background:red;" colspan="8">
+                                <p>{{ 'Absent' }}</p>
+                            </x-filament-tables::cell>
+                        @endif
+                        @if (isset($data[0]->holiday_name) && count($data) == 1 && $data[0]->check_type == 'Holiday')
+                            <x-filament-tables::cell style="background:green;" colspan="8">
+                                <p>{{ $data[0]->holiday_name }}</p>
+                            </x-filament-tables::cell>
+                        @endif
+                        {{-- @if (isset($data[0]->check_type) && count($data) == 1 && $data[0]->check_type == 'Weekend')
+                            <x-filament-tables::cell style="background:green;" colspan="8">
+                                <p>{{ $data[0]->Weekend }}</p>
+                            </x-filament-tables::cell>
+                        @endif   --}}
+                        @if (count($data) >= 2)
+                            <x-filament-tables::cell>
+
+                            </x-filament-tables::cell>
+
+                            <x-filament-tables::cell>
+
+                            </x-filament-tables::cell>
+
+                            <x-filament-tables::cell>
+                                @if (count($data) >= 2)
+                                    @if (isset($data[0]->check_type) && $data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
+                                        {{ $data[0]->check_time }}
+                                    @endif
+                                @endif
+                            </x-filament-tables::cell>
+
+                            <x-filament-tables::cell>
+                                @if (count($data) >= 2)
+                                    @if (isset($data[0]->check_type) && $data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
+                                        {{ $data[0]->status }}
+                                    @endif
+                                @endif
+                            </x-filament-tables::cell>
+
+
+                            <x-filament-tables::cell>
+                                @if (count($data) >= 2)
+                                    @if (isset($data[1]->check_type) && $data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
+                                        {{ $data[1]->check_time }}
+                                    @endif
+                                @endif
+
+                            </x-filament-tables::cell>
+
+                            <x-filament-tables::cell>
+                                @if (count($data) >= 2)
+                                    @if (isset($data[1]->check_type) && $data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
+                                        {{ $data[1]->status }}
+                                    @endif
+                                @endif
+                            </x-filament-tables::cell>
+
+
+
+                            <x-filament-tables::cell>
+                                @if (count($data) >= 2)
+                                    @if (isset($data[1]->check_type) && $data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
+                                        {{ $data[1]->supposed_duration_hourly }}
+                                    @endif
+                                @endif
+                            </x-filament-tables::cell>
+
+                            <x-filament-tables::cell>
+                                @if (count($data) >= 2)
+                                    @if (isset($data[1]->check_type) && $data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
+                                        {{ $data[1]->actual_duration_hourly }}
+                                    @endif
+                                @endif
+                            </x-filament-tables::cell>
+
+
+
+                            {{-- <x-filament-tables::cell>
 
                         </x-filament-tables::cell>
                         <x-filament-tables::cell>
 
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-
-                        </x-filament-tables::cell>
+                        </x-filament-tables::cell> --}}
+                        @endif
                     </x-filament-tables::row>
                 @endforeach
             </tbody>

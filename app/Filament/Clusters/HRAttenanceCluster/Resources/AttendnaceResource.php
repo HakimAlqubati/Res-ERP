@@ -107,6 +107,8 @@ class AttendnaceResource extends Resource
                 Tables\Columns\TextColumn::make('check_type')
                     ->label('Check Type')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('period.name')
+                    ->label('Period'),
 
                 Tables\Columns\TextColumn::make('check_date')
                     ->label('Check Date')

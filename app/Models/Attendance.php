@@ -68,6 +68,6 @@ class Attendance extends Model
 
     public function period()
     {
-        return $this->belongsTo(WorkPeriod::class, 'id', 'period_id');
+        return $this->belongsTo(WorkPeriod::class,'period_id');
     }
 }

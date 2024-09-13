@@ -209,7 +209,7 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
-                ])->columnSpanFull(),
+                ])->columnSpanFull()->clickable(),
 
             ]);
     }
