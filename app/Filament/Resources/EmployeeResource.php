@@ -21,6 +21,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -29,6 +30,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
@@ -68,7 +70,7 @@ class EmployeeResource extends Resource
                                     Grid::make()->columns(3)->schema([
                                         TextInput::make('name')->label('Full name')
                                             ->rules([
-                                                fn (): Closure => function (string $attribute, $value, Closure $fail) {
+                                                fn(): Closure => function (string $attribute, $value, Closure $fail) {
                                                     // dd('dd',$value);
                                                     if (count(explode(" ", $value)) < 2) {
                                                         $fail('The :attribute must be two words at least.');
@@ -96,76 +98,63 @@ class EmployeeResource extends Resource
 
                                                 lenient: true, // default: false
                                             ),
-                                        // ->countryStatePath(string | Closure $statePath, bool $isStatePathAbsolute)
-                                        // ->validateFor(string | array $country = 'AUTO', int | array | null $type = null, bool $lenient = false)
-                                        // ->defaultCountry(string $value)
-                                        // ->ipLookup(Closure $callback)
-                                        // ->disableIpLookup()
-                                        // ->enableIpLookup(bool | Closure $value = true)
-                                        // ->inputNumberFormat(PhoneInputNumberType | Closure $format)
-                                        // ->displayNumberFormat(PhoneInputNumberType | Closure $format)
-                                        // ->focusNumberFormat(PhoneInputNumberType | Closure $format)
-                                        // ->placeholderNumberType(PhoneInputNumberType | Closure $format)
-                                        // ->disallowDropdown()
-                                        // ->allowDropdown(bool | Closure $value = true)
-                                        // ->autoPlaceholder(string $value = 'polite')
-                                        // ->containerClass(string | Closure $value)
-                                        // ->countryOrder(array | Closure | null $value)
-                                        // ->countrySearch(bool | Closure $value = true)
-                                        // ->customPlaceholder(string | RawJs | Closure | null $value)
-                                        // ->dropdownContainer(string | null | Closure $value)
-                                        // ->excludeCountries(array | Closure $value)
-                                        // ->fixDropdownWidth(bool | Closure $value = true)
-                                        // ->formatAsYouType(bool | Closure $value = true)
-                                        // ->formatOnDisplay(bool | Closure $value = true)
-                                        // ->i18n(array | Closure $value)
-                                        // ->initialCountry(string | Closure $value)
-                                        // ->nationalMode(bool | Closure $value = true)
-                                        // ->onlyCountries(array | Closure $value)
-                                        // ->showFlags(bool | Closure $value = true)
-                                        // ->separateDialCode(bool | Closure $value = true)
-                                        // ->useFullscreenPopup(bool | Closure $value = true)
-                                        // ->strictMode(bool | Closure $value = true)
-                                        // ->cookieName(string | Closure $value)
-                                        // ->locale(string | Closure $value)
-                                        // ->customOptions(array | Closure $value)
 
                                     ]),
-                                    // Fieldset::make()->label('Upload avatar image')
-                                    //     ->columnSpanFull()
-                                    //     ->schema([
-                                    //         SpatieMediaLibraryFileUpload::make('avatar')
-                                    //             ->image()
-                                    //             ->imageEditor()
-                                    //         // ->columnSpanFull()
-                                    //         // ->label('')
-                                    //         // ->disk('public')
-                                    //         // ->directory('employees')
-                                    //         // ->visibility('public')
-                                    //         // ->imageEditorAspectRatios([
-                                    //         //     '16:9',
-                                    //         //     '4:3',
-                                    //         //     '1:1',
-                                    //         // ])
+                                    Fieldset::make()->label('Upload avatar image')
+                                        ->columnSpanFull()
+                                        ->schema([
+                                            Grid::make()->columns(2)->schema([FileUpload::make('avatar')
+                                                    ->image()
+                                                    ->label('')
+                                                // ->avatar()
+                                                    ->imageEditor()
+                                                    ->circleCropper()
+                                                    ->disk('public')
+                                                    ->directory('employees')
+                                                    ->visibility('public')
+                                                    ->imageEditorAspectRatios([
+                                                        '16:9',
+                                                        '4:3',
+                                                        '1:1',
+                                                    ])
 
-                                    //         // ->imagePreviewHeight('250')
-                                    //         // ->resize(5)
+                                                // ->imagePreviewHeight('250')
+                                                    ->resize(5)
 
-                                    //         // ->loadingIndicatorPosition('left')
-                                    //         // ->panelLayout('integrated')
-                                    //         // ->removeUploadedFileButtonPosition('right')
-                                    //         // ->uploadButtonPosition('left')
-                                    //         // ->uploadProgressIndicatorPosition('left')
+                                                // ->loadingIndicatorPosition('left')
+                                                // ->panelLayout('integrated')
+                                                // ->removeUploadedFileButtonPosition('right')
+                                                // ->uploadButtonPosition('left')
+                                                // ->uploadProgressIndicatorPosition('left')
 
-                                    //         // ->openable()
-                                    //         // ->downloadable()
-                                    //             ->default('https://dummyimage.com/900x700')
-                                    //         // ->previewable()
-                                    //             // ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                    //             //     return (string) str($file->getClientOriginalName())->prepend('employee-');
-                                    //             // })
-                                    //             ,
-                                    //     ]),
+                                                // ->openable()
+                                                // ->downloadable()
+                                                // ->default('https://dummyimage.com/900x700')
+                                                // ->previewable(false)
+                                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                        return (string) str($file->getClientOriginalName())->prepend('employee-');
+                                                    })
+                                                // ->formatStateUsing(function ($record,Get $get){
+                                                //     dd($get);
+                                                //     return url('/').'/storage/'. $record->avatar;
+                                                // })
+                                                    ->columnSpan(2)
+                                                    ->reactive()
+                                                ,
+                                                // ViewField::make('avatar_view')
+                                                //     ->columnSpan(1)
+
+                                                //     ->view('filament.images.employee-avatar')
+                                                //     ->formatStateUsing(function (Get $get, $record) { //adds the initial state on page load
+
+                                                //       if(count($get('avatar'))> 0){
+                                                //           return url('/') . '/storage/' . array_values($get('avatar'))[0];
+                                                //       }
+                                                //       return '';
+                                                //     })
+                                                // ,
+                                            ]),
+                                        ]),
                                 ]),
                             Fieldset::make('Employeement')->label('Employeement')
                                 ->schema([
@@ -209,7 +198,7 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
-                ])->columnSpanFull()->clickable(),
+                ])->columnSpanFull(),
 
             ]);
     }
