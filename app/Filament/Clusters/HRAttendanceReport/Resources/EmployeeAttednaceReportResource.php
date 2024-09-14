@@ -4,23 +4,15 @@ namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
-use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\RelationManagers;
 use App\Models\Attendance;
-use App\Models\Employee;
-use App\Models\FakeModelHRReports\EmployeeAttendanceReport;
-use Filament\Forms;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class EmployeeAttednaceReportResource extends Resource
 {
@@ -55,15 +47,15 @@ class EmployeeAttednaceReportResource extends Resource
 
             ])
             ->filters([
-                SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
-                    ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                Filter::make('date_range')
-                    ->form([
-                        DatePicker::make('start_date')
-                            ->label('Start Date'),
-                        DatePicker::make('end_date')
-                            ->label('End Date'),
-                    ])
+                // SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
+                //     ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
+                // Filter::make('date_range')
+                //     ->form([
+                //         DatePicker::make('start_date')
+                //             ->label('Start Date'),
+                //         DatePicker::make('end_date')
+                //             ->label('End Date'),
+                //     ])
 
             ], FiltersLayout::AboveContent)
             ->actions([
@@ -87,7 +79,6 @@ class EmployeeAttednaceReportResource extends Resource
     {
         return false;
     }
-
 
     public static function getPages(): array
     {

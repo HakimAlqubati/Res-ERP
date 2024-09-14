@@ -7,26 +7,30 @@ use App\Models\Holiday;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Form;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\DB;
 
-class ListEmployeeAttednaceReports extends ListRecords
+class ListEmployeeAttednaceReports extends ListRecords 
 {
     protected static string $resource = EmployeeAttednaceReportResource::class;
 
-    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
+    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee2';
     protected function getViewData(): array
     {
-        // $updates = request()->input('components.0.updates', []);
-        // $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
-        // $employee_id = $updates['tableFilters.employee_id.value'] ?? null;
-        // $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
+        $updates = request()->input('components.0.updates', []);
+        $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
+        $employee_id = $updates['tableFilters.employee_id.value'] ?? null;
+        $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
 
-        $employee_id = 15;
-        $start_date = '2024-09-10';
+        // $employee_id = 15;
+        $start_date = '2024-09-09';
         $end_date = '2024-09-18';
-        $period_id = 2;
-        $report_data = $this->getReportData($employee_id, $start_date, $end_date);
+// dd($employee_id,$start_date,$end_date);
+        $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
+        // dd($report_data->toArray());
         // dd($report_data);
         return [
             'report_data' => $report_data['data'],
@@ -83,7 +87,7 @@ class ListEmployeeAttednaceReports extends ListRecords
             )
             ->whereBetween('hr_attendances.check_date', [$start_date, $end_date])
             ->where('hr_attendances.employee_id', $employee_id)
-            // ->where('hr_attendances.period_id', $period_id)
+        // ->where('hr_attendances.period_id', $period_id)
             ->orderBy('hr_attendances.check_date')
             ->get()
             ->groupBy('check_date');
@@ -182,139 +186,180 @@ class ListEmployeeAttednaceReports extends ListRecords
         ];
         return $report_data;
     }
+    public function getReportData2($employee_id, $start_date, $end_date)
+    {
 
-    /* public function getReportDataV2($employee_id, $start_date, $end_date)
-{
+        // $updates = request()->input('components.0.updates', []);
+        // $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
+        // $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
+        // $employee_id = $updates['tableFilters.employee_Id.value'] ?? null;
 
-$employee_id = 15;
-$start_date = '2024-09-10';
-$end_date = '2024-09-18';
+        $report_data['data'] = [];
+        $holidays = Holiday::where('active', 1)
+            ->whereBetween('from_date', [$start_date, $end_date])
+            ->orWhereBetween('to_date', [$start_date, $end_date])
+            ->select('from_date', 'to_date', 'count_days', 'name')
+            ->get()
+            ->keyBy('from_date');
 
-$report_data['data'] = [];
+        $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
 
-// Get holidays as before
-$holidays = Holiday::where('active', 1)
-->whereBetween('from_date', [$start_date, $end_date])
-->orWhereBetween('to_date', [$start_date, $end_date])
-->select('from_date', 'to_date', 'count_days', 'name')
-->get()
-->keyBy('from_date');
+        $period = Carbon::parse($start_date)->toPeriod($end_date);
 
-// Fetch weekend days
-$weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
+        // Loop through all dates and check if there is attendance data for each date
+        foreach ($period as $date) {
 
-// Fetch active work periods
-$work_periods = WorkPeriod::where('active', 1)
-->select('name', 'start_at', 'end_at', 'allowed_count_minutes_late', 'days')
-->get()
-->map(function ($period) {
-$period->days = json_decode($period->days); // Decode the days from JSON
-return $period;
-});
+            $formatted_date = $date->format('Y-m-d');
+            $day_of_week = $date->format('l'); // Get the day name (e.g., "Saturday")
 
-// Fetch attendance data for the employee
-$employee_attendances = DB::table('hr_attendances')
-->join('hr_employees', 'hr_attendances.employee_id', '=', 'hr_employees.id')
-->select(
-'hr_attendances.employee_id',
-'hr_employees.employee_no as employee_no',
-'hr_employees.name as employee_name',
-'hr_attendances.check_type',
-'hr_attendances.check_date',
-'hr_attendances.check_time',
-'hr_attendances.day',
-'hr_attendances.supposed_duration_hourly',
-'hr_attendances.actual_duration_hourly',
-'hr_attendances.late_departure_minutes',
-'hr_attendances.early_arrival_minutes',
-'hr_attendances.status',
-)
-->whereBetween('hr_attendances.check_date', [$start_date, $end_date])
-->where('hr_attendances.employee_id', $employee_id)
-->orderBy('hr_attendances.check_date')
-->get()
-->groupBy('check_date');
+            $work_periods = WorkPeriod::where('active', 1)->get()->map(function ($period) {
+                $period->days = json_decode($period->days);
+                return $period;
+            });
 
-// Convert employee attendances to array if it's a collection
-$employee_attendances_array = $employee_attendances->toArray();
+            // Find matching work periods for the given day
+            $matching_periods = $work_periods->filter(function ($period) use ($day_of_week) {
+                return in_array($day_of_week, $period->days);
+            });
+            // dd($formatted_date, $day_of_week,$matching_periods);
+            // Check if the date is a holiday
+            foreach ($matching_periods as $matching_period) {
 
-$period = Carbon::parse($start_date)->toPeriod($end_date);
+                // Fetch attendance data for the employee within the date range
+                $employee_attendances = DB::table('hr_attendances')
+                    ->join('hr_employees', 'hr_attendances.employee_id', '=', 'hr_employees.id')
+                    ->select(
+                        'hr_attendances.employee_id',
+                        'hr_employees.employee_no as employee_no',
+                        'hr_employees.name as employee_name',
+                        'hr_attendances.check_type',
+                        'hr_attendances.check_date',
+                        'hr_attendances.check_time',
+                        'hr_attendances.day',
+                        'hr_attendances.supposed_duration_hourly',
+                        'hr_attendances.actual_duration_hourly',
+                        'hr_attendances.late_departure_minutes',
+                        'hr_attendances.early_arrival_minutes',
+                        'hr_attendances.status',
+                        'hr_attendances.period_id',
+                        'hr_attendances.id',
 
-// Loop through all dates
-foreach ($period as $date) {
-$formatted_date = $date->format('Y-m-d');
-$day_of_week = $date->format('l'); // Get the day name (e.g., "Saturday")
+                    )
+                    ->whereBetween('hr_attendances.check_date', [$start_date, $end_date])
+                    ->where('hr_attendances.employee_id', $employee_id)
+                    ->where('hr_attendances.period_id', $matching_period->id)
+                    ->orderBy('hr_attendances.check_date')
+                    ->get()
+                    ->groupBy('check_date')
+                ;
+                // return $employee_attendances;
 
-// Check if the date is a holiday
-if (isset($holidays[$formatted_date])) {
-$holiday = $holidays[$formatted_date];
-$report_data['data'][$formatted_date][] = (object) [
-'employee_id' => $employee_id,
-'employee_no' => 'N/A',
-'employee_name' => 'N/A',
-'check_type' => 'Holiday',
-'check_date' => $formatted_date,
-'check_time' => null,
-'day' => $day_of_week,
-'holiday_name' => $holiday->name,
-];
-} else {
-// Loop through work periods
-foreach ($work_periods as $period) {
-if (in_array($day_of_week, $period->days)) {
-// Filter attendances for the current date and period
-$attendances_for_period = array_filter($employee_attendances_array, function ($attendances) use ($formatted_date, $period) {
-foreach ($attendances as $attendance) {
-if (
-$attendance->check_date === $formatted_date &&
-$attendance->check_time >= $period->start_at &&
-$attendance->check_time <= $period->end_at
-) {
-return true;
-}
-}
-return false;
-});
+                // Convert employee attendances to array if it's a collection
+                $employee_attendances_array = $employee_attendances->toArray();
 
-if (!empty($attendances_for_period)) {
-// Add rows for the matching attendance and period
-foreach ($attendances_for_period as $attendances) {
-foreach ($attendances as $attendance) {
-$report_data['data'][$formatted_date][] = (object) [
-'employee_id' => $attendance->employee_id,
-'employee_no' => $attendance->employee_no,
-'employee_name' => $attendance->employee_name,
-'check_type' => $attendance->check_type,
-'check_date' => $attendance->check_date,
-'check_time' => $attendance->check_time,
-'day' => $attendance->day,
-'actual_duration_hourly' => $attendance->actual_duration_hourly,
-'supposed_duration_hourly' => $attendance->supposed_duration_hourly,
-'early_arrival_minutes' => $attendance->early_arrival_minutes,
-'late_departure_minutes' => $attendance->late_departure_minutes,
-'status' => $attendance->status,
-'period_name' => $period->name, // Add period details to the report
-];
-}
-}
-} else {
-// If no attendance, mark it as Absent for that period
-$report_data['data'][$formatted_date][] = (object) [
-'employee_id' => $employee_id,
-'employee_no' => 'N/A',
-'employee_name' => 'N/A',
-'check_type' => 'Absent',
-'check_date' => $formatted_date,
-'check_time' => null,
-'day' => $day_of_week,
-'period_name' => $period->name, // Add period details to the report
-];
-}
-}
-}
-}
-}
-return $report_data;
-}
- */
+                if (isset($holidays[$formatted_date])) {
+                    // If the date is a holiday, add it as a holiday
+                    # code...
+
+                    $holiday = $holidays[$formatted_date];
+                    $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
+                        'period_id' => $matching_period->id,
+                        'employee_id' => $employee_id,
+                        'employee_no' => 'N/A', // Adjust accordingly
+                        'employee_name' => 'N/A', // Adjust accordingly
+                        'check_type' => 'Holiday',
+                        'check_date' => $formatted_date,
+                        'check_time' => null,
+                        'day' => $day_of_week, // Add the day for holidays
+                        'holiday_name' => $holiday->name, // Add the holiday name
+                    ];
+
+                } else {
+                    // Filter attendances for the current date
+                    $attendances_for_date = array_filter($employee_attendances_array, function ($attendances) use ($formatted_date) {
+                        // Each attendance date holds an array of attendances (e.g., "checkin" and "checkout")
+                        foreach ($attendances as $attendance) {
+                            // Check if one of the attendance entries matches the date
+                            if ($attendance->check_date === $formatted_date) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                    if (!empty($attendances_for_date)) {
+                        // Loop through all the attendances for the date
+                        foreach ($attendances_for_date as $attendances) {
+                            foreach ($attendances as $attendance) {
+                                if ($attendance->period_id == $matching_period->id) {
+                                    $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
+                                        'employee_id' => $attendance->employee_id,
+                                        'employee_no' => $attendance->employee_no,
+                                        'employee_name' => $attendance->employee_name,
+                                        'check_type' => $attendance->check_type,
+                                        'check_date' => $attendance->check_date,
+                                        'check_time' => $attendance->check_time,
+                                        'day' => $attendance->day,
+                                        'actual_duration_hourly' => $attendance->actual_duration_hourly,
+                                        'supposed_duration_hourly' => $attendance->supposed_duration_hourly,
+                                        'early_arrival_minutes' => $attendance->early_arrival_minutes,
+                                        'late_departure_minutes' => $attendance->late_departure_minutes,
+                                        'status' => $attendance->status,
+                                        'period_id' => $matching_period->id,
+                                        'period_start_at' => $matching_period->start_at,
+                                        'period_end_at' => $matching_period->end_at,
+                                        'id' => $attendance->id,
+                                    ];
+                                }
+                            }
+                        }
+                    } else {
+                        // Check if the day is a weekend
+                        if (in_array($day_of_week, $weekend_days)) {
+                            // Add a row with 'Weekend' status for weekend days
+                            $report_data['data'][$formatted_date][] = (object) [
+                                'employee_id' => $employee_id,
+                                'employee_no' => 'N/A', // Adjust accordingly
+                                'employee_name' => 'N/A', // Adjust accordingly
+                                'check_type' => 'Weekend',
+                                'check_date' => $formatted_date,
+                                'check_time' => null,
+                                'day' => $day_of_week, // Add the day for weekend
+                            ];
+                        } else {
+                            // Add a row with 'Absent' status for missing dates that are not weekends or holidays
+                            $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
+                                'period_id' => $matching_period->id,
+                                'employee_id' => $employee_id,
+                                'employee_no' => 'N/A', // Adjust accordingly
+                                'employee_name' => 'N/A', // Adjust accordingly
+                                'check_type' => 'Absent',
+                                'period_start_at' => $matching_period->start_at,
+                                'period_end_at' => $matching_period->end_at,
+                                'check_date' => $formatted_date,
+                                'check_time' => null,
+                                'day' => $day_of_week, // Add the day for absent days
+                            ];
+                        }
+                    }
+
+                }
+            }
+        }
+        // dd($report_data);
+        return $report_data;
+    }
+
+    public function getTableFiltersForm(): Form
+    {
+        return $form
+            ->schema([
+                Section::make()
+                    ->schema([
+                        DatePicker::make('startDate'),
+                        DatePicker::make('endDate'),
+                        // ...
+                    ])
+                    ->columns(3),
+            ]);
+    }
 }
