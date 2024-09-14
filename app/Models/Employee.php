@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
-    use  HasFactory, SoftDeletes;
-
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -83,4 +82,8 @@ class Employee extends Model
         return storage_path($this->avatar);
     }
 
+    public function approvedLeaveApplications()
+    {
+        return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED);
+    }
 }

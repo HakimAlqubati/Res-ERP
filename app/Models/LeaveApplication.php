@@ -39,8 +39,9 @@ class LeaveApplication extends Model
         'approved_at',
         'rejected_at',
         'from_date',
+        'days_count',
         'to_date',
-        'to_date',
+        'leave_type_id',
     ];
 
     public function employee()
@@ -66,6 +67,10 @@ class LeaveApplication extends Model
     public function rejectedBy()
     {
         return $this->belongsTo(User::class, 'rejected_by');
+    }
+    public function leaveType()
+    {
+        return $this->belongsTo(LeaveType::class, 'leave_type_id');
     }
 
     public function getStatusColorAttribute()

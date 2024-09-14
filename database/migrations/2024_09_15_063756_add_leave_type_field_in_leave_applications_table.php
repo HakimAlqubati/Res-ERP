@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('hr_leave_applications', function (Blueprint $table) {
-            $table->date('from_date')->after('status');
-            $table->date('to_date')->after('status');
-            $table->integer('days_count')->after('status');
+            $table->bigInteger('leave_type_id')->after('status');
         });
     }
 
@@ -24,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('hr_leave_applications', function (Blueprint $table) {
-            $table->dropColumn(['from_date', 'to_date', 'days_count']);
+            $table->dropColumn('leave_type_id');
         });
     }
 };

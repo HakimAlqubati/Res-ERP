@@ -1,5 +1,6 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
+
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty  ">
             <thead>
@@ -59,6 +60,9 @@
                                     @endif
                                     @if (isset($val_data[0]->holiday_name) && count($val_data) == 1 && $val_data[0]->check_type == 'Holiday')
                                         <p>{{ $val_data[0]->holiday_name }}</p>
+                                    @endif
+                                    @if (count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
+                                        <p>{{ 'Approved leave application' }}</p>
                                     @endif
                                 </x-filament-tables::cell>
                             @elseif (count($val_data) >= 2)
@@ -143,6 +147,9 @@
                                         @if (isset($val_data[0]->holiday_name) && count($val_data) == 1 && $val_data[0]->check_type == 'Holiday')
                                             <p>{{ $val_data[0]->holiday_name }}</p>
                                         @endif
+                                        @if (count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
+                                            <p>{{ 'Approved leave application' }}</p>
+                                        @endif
                                     </x-filament-tables::cell>
                                 @elseif (count($val_data) >= 2)
                                     <x-filament-tables::cell>
@@ -224,6 +231,6 @@
         <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
     </div>
 @endif
-<center style="font-weight: bolder;color:red">
-    {{ 'The report is still under developing_' . 'التقرير لا يزال قيد التطوير' }}</center>
+{{-- <center style="font-weight: bolder;color:red">
+    {{ 'The report is still under developing_' . 'التقرير لا يزال قيد التطوير' }}</center> --}}
 </x-filament-panels::page>
