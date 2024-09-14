@@ -1,10 +1,10 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
     {{-- @if (isset($branch_id)) --}}
-    <tables::table class="w-full text-sm text-left pretty  ">
+    <x-filament-tables::table class="w-full text-sm text-left pretty  ">
         <thead>
 
-            <tables::row class="header_report">
+            <x-filament-tables::row class="header_report">
                 <th colspan="2" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                     <p>{{ __('lang.store') }}:
                         ({{ isset($store_id) && is_numeric($store_id) ? \App\Models\Store::find($store_id)->name : __('lang.all_stores') }})
@@ -22,15 +22,15 @@
                         src="https://w7.pngwing.com/pngs/882/726/png-transparent-chef-cartoon-chef-photography-cooking-fictional-character-thumbnail.png"
                         alt="">
                 </th>
-            </tables::row>
-            <tables::row>
+            </x-filament-tables::row>
+            <x-filament-tables::row>
                 <th>{{ __('lang.product_id') }} </th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
                 <th>{{ __('lang.purchased_qty') }}</th>
                 <th>{{ __('lang.qty_sent_to_branches') }}</th>
                 <th>{{ __('lang.qty_in_stock') }}</th>
-            </tables::row>
+            </x-filament-tables::row>
         </thead>
         <tbody>
 
@@ -45,22 +45,22 @@
                     $total_ordered += $report_item?->ordered;
                     $total_remaining += $report_item?->remaining;
                 @endphp
-                <tables::row>
-                    <tables::cell> {{ $report_item?->product_id }} </tables::cell>
-                    <tables::cell> {{ $report_item?->product_name }} </tables::cell>
-                    <tables::cell> {{ $report_item?->unit_name }} </tables::cell>
-                    <tables::cell> {{ $report_item?->income }} </tables::cell>
-                    <tables::cell> {{ $report_item?->ordered }} </tables::cell>
-                    <tables::cell> {{ $report_item?->remaining }} </tables::cell>
-                </tables::row>
+                <x-filament-tables::row>
+                    <x-filament-tables::cell> {{ $report_item?->product_id }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $report_item?->product_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $report_item?->unit_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $report_item?->income }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $report_item?->ordered }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $report_item?->remaining }} </x-filament-tables::cell>
+                </x-filament-tables::row>
             @endforeach
-            <tables::row>
-                <tables::cell colspan="3"> {{ __('lang.total') }} </tables::cell>
-                <tables::cell> {{$total_income}} </tables::cell> 
-                <tables::cell> {{$total_ordered}} </tables::cell> 
-                <tables::cell> {{$total_remaining}} </tables::cell> 
-            </tables::row>
+            <x-filament-tables::row>
+                <x-filament-tables::cell colspan="3"> {{ __('lang.total') }} </x-filament-tables::cell>
+                <x-filament-tables::cell> {{$total_income}} </x-filament-tables::cell> 
+                <x-filament-tables::cell> {{$total_ordered}} </x-filament-tables::cell> 
+                <x-filament-tables::cell> {{$total_remaining}} </x-filament-tables::cell> 
+            </x-filament-tables::row>
         </tbody>
 
-    </tables::table>
+    </x-filament-tables::table>
 </x-filament::page>

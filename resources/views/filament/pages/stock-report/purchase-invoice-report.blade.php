@@ -1,18 +1,18 @@
-<x-filament::page>
+<x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
     {{-- @if (isset($branch_id)) --}}
-    <tables::table class="w-full text-sm text-left pretty  ">
+    <x-filament-tables::table class="w-full text-sm text-left pretty  ">
         <thead>
 
-            <tables::row>
+            <x-filament-tables::row>
                 <th colspan="3">
                     {{ __('lang.store') }}: ({{ $purchase_invoice_data['store_name'] }})
                 </th>
                 <th colspan="{{$show_invoice_no == true ? '4' : '3'}}">
                     {{ __('lang.supplier') }}: ({{ $purchase_invoice_data['supplier_name'] }})
                 </th>
-            </tables::row>
-            <tables::row>
+            </x-filament-tables::row>
+            <x-filament-tables::row>
                 <th>{{ __('lang.product_id') }} </th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
@@ -22,7 +22,7 @@
                 @endif
                 <th>{{ __('lang.unit_price') }}</th>
                 <th>{{ __('lang.total_amount') }}</th>
-            </tables::row>
+            </x-filament-tables::row>
         </thead>
         <tbody>
             @php
@@ -40,27 +40,27 @@
                     // Add the unit_price to the sumUnitPrice variable
                     $sum_unit_price += $unit_price;
                 @endphp
-                <tables::row>
-                    <tables::cell> {{ $invoice_item?->product_id }} </tables::cell>
-                    <tables::cell> {{ $invoice_item?->product_name }} </tables::cell>
-                    <tables::cell> {{ $invoice_item?->unit_name }} </tables::cell>
-                    <tables::cell> {{ $invoice_item?->quantity }} </tables::cell>
+                <x-filament-tables::row>
+                    <x-filament-tables::cell> {{ $invoice_item?->product_id }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $invoice_item?->product_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $invoice_item?->unit_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $invoice_item?->quantity }} </x-filament-tables::cell>
                     @if ($show_invoice_no == true)
-                        <tables::cell>
+                        <x-filament-tables::cell>
                             {{ '(' . $invoice_item->purchase_invoice_id . ') ' . $invoice_item->invoice_no }}
-                        </tables::cell>
+                        </x-filament-tables::cell>
                     @endif
-                    <tables::cell> {{ $unit_price }} </tables::cell>
-                    <tables::cell> {{ $sub_total }} </tables::cell>
-                </tables::row>
+                    <x-filament-tables::cell> {{ $unit_price }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
+                </x-filament-tables::row>
             @endforeach
 
-            <tables::row>
-                <tables::cell colspan="{{$show_invoice_no == true ? '5' : '4'}}"> {{ __('lang.total') }} </tables::cell>
-                <tables::cell> {{ $sum_unit_price }} </tables::cell>
-                <tables::cell> {{ $total_sub_total }} </tables::cell>
-            </tables::row>
+            <x-filament-tables::row>
+                <x-filament-tables::cell colspan="{{$show_invoice_no == true ? '5' : '4'}}"> {{ __('lang.total') }} </x-filament-tables::cell>
+                <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell>
+                <x-filament-tables::cell> {{ $total_sub_total }} </x-filament-tables::cell>
+            </x-filament-tables::row>
         </tbody>
 
-    </tables::table>
-</x-filament::page>
+    </x-filament-tables::table>
+</x-filament-panels::page>

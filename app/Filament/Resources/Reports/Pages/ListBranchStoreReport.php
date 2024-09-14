@@ -29,40 +29,7 @@ class ListBranchStoreReport extends ListRecords
     {
         return __('lang.branch_store_report');
     }
-    protected function getTableFilters(): array
-    {
-        // $current_date = date('Y-m-d');  // Get the current date
-
-        // // Get the start date of the current month
-        // $start_of_month = date('Y-m-01', strtotime($current_date));
-
-        // // Get the end date of the current month
-        // $end_of_month = date('Y-m-t', strtotime($current_date));
-
-        return [
-            SelectFilter::make("branch_id")
-                ->label(__('lang.branch'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Branch::get()->pluck('name', 'id')),
-            Filter::make('date')
-                ->form([
-                    DatePicker::make('start_date')
-                        ->label(__('lang.start_date')),
-                    DatePicker::make('end_date')
-                        ->label(__('lang.end_date')),
-                ])
-                ->query(function (Builder $query, array $data): Builder {
-                    return $query;
-                }),
-            SelectFilter::make("product_id")
-                ->label(__('lang.product'))
-                ->multiple()
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Product::where('active', 1)->get()->pluck('name', 'id')),
-        ];
-    }
+    
 
 
     protected function getViewData(): array
@@ -102,11 +69,7 @@ class ListBranchStoreReport extends ListRecords
         ];
     }
 
-    protected function getTableFiltersLayout(): ?string
-    {
-        return \Filament\Tables\Enums\FiltersLayout::AboveContent;
-    }
-
+   
     public function getBranchStoreReportData($branch_id, $start_date, $end_date, $product_ids)
     {
 

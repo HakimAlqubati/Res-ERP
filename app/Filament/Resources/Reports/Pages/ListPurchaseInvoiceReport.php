@@ -23,39 +23,6 @@ class ListPurchaseInvoiceReport extends ListRecords
     protected static string $view = 'filament.pages.stock-report.purchase-invoice-report';
 
 
-    protected function getTableFilters(): array
-    {
-        return [
-            SelectFilter::make("store_id")
-                ->searchable()
-                ->label(__('lang.store'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Store::get()->pluck('name', 'id')),
-
-            SelectFilter::make("supplier_id")
-                ->searchable()
-                ->label(__('lang.supplier'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Supplier::get()->pluck('name', 'id')),
-            SelectFilter::make("product_id")
-                ->searchable()
-                ->label(__('lang.product'))
-                ->multiple()
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Product::where('active', 1)->get()->pluck('name', 'id')),
-
-            SelectFilter::make("invoice_no")
-                ->searchable()
-                ->label(__('lang.invoice_no'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
-            Filter::make('show_invoice_no')->label(__('lang.show_invoice_no')),
-        ];
-    }
 
 
     protected function getViewData(): array
@@ -75,10 +42,7 @@ class ListPurchaseInvoiceReport extends ListRecords
         ];
     }
 
-    protected function getTableFiltersLayout(): ?string
-    {
-        return \Filament\Tables\Enums\FiltersLayout::AboveContent;
-    }
+ 
 
     public function getPurchasesInvoiceData($product_ids, $store_id, $supplier_id, $invoice_no)
     {

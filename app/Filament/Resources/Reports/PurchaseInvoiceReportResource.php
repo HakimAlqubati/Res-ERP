@@ -2,12 +2,20 @@
 
 namespace App\Filament\Resources\Reports;
 
-use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
-use App\Models\FakeModelReports\PurchaseInvoiceReport;
 use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListPurchaseInvoiceReport;
+use App\Models\FakeModelReports\PurchaseInvoiceReport;
+use App\Models\Product;
+use App\Models\PurchaseInvoice;
+use App\Models\Store;
+use App\Models\Supplier;
 use Filament\Pages\SubNavigationPosition;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PurchaseInvoiceReportResource extends Resource
 {
@@ -42,4 +50,40 @@ class PurchaseInvoiceReportResource extends Resource
             'index' => ListPurchaseInvoiceReport::route('/'),
         ];
     }
+
+    public static function table(Table $table): Table
+    {
+        return $table->filters([
+            SelectFilter::make("store_id")
+                ->searchable()
+                ->label(__('lang.store'))
+                ->query(function (Builder $q, $data) {
+                    return $q;
+                })->options(Store::get()->pluck('name', 'id')),
+
+            SelectFilter::make("supplier_id")
+                ->searchable()
+                ->label(__('lang.supplier'))
+                ->query(function (Builder $q, $data) {
+                    return $q;
+                })->options(Supplier::get()->pluck('name', 'id')),
+            SelectFilter::make("product_id")
+                ->searchable()
+                ->label(__('lang.product'))
+                ->multiple()
+                ->query(function (Builder $q, $data) {
+                    return $q;
+                })->options(Product::where('active', 1)->get()->pluck('name', 'id')),
+
+            SelectFilter::make("invoice_no")
+                ->searchable()
+                ->label(__('lang.invoice_no'))
+                ->query(function (Builder $q, $data) {
+                    return $q;
+                })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
+            Filter::make('show_invoice_no')->label(__('lang.show_invoice_no'))
+            ,
+        ], FiltersLayout::AboveContent);
+    }
+
 }

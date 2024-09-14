@@ -1,13 +1,8 @@
-<x-filament::page>
-    {{-- {{ $this->getTableFiltersForm() }} --}}
-    {{-- {{ $this->filtersForm }} --}}
+<x-filament-panels::page>
+    {{ $this->getTableFiltersForm() }}
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty  ">
             <thead>
-
-
-
-
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance Employee report' }}</p>
@@ -231,6 +226,4 @@
 @endif
 <center style="font-weight: bolder;color:red">
     {{ 'The report is still under developing_' . 'التقرير لا يزال قيد التطوير' }}</center>
-</x-filament::page>
-
-
+</x-filament-panels::page>
