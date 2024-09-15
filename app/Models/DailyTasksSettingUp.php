@@ -43,9 +43,9 @@ class DailyTasksSettingUp extends Model
     public static function getScheduleTypes()
     {
         return [
-            self::TYPE_SCHEDULE_DAILY => self::TYPE_SCHEDULE_DAILY,
-            self::TYPE_SCHEDULE_WEEKLY => self::TYPE_SCHEDULE_WEEKLY,
-            self::TYPE_SCHEDULE_MONTHLY => self::TYPE_SCHEDULE_MONTHLY,
+            self::TYPE_SCHEDULE_DAILY => 'Daily',
+            self::TYPE_SCHEDULE_WEEKLY => 'Weekly',
+            self::TYPE_SCHEDULE_MONTHLY => 'Monthly',
         ];
     }
 }
