@@ -30,6 +30,9 @@ class Employee extends Model
         'avatar',
         'join_date',
         'address',
+        'salary',
+        'discount_exception_if_attendance_late',
+        'discount_exception_if_absent',
     ];
 
     public function branch()

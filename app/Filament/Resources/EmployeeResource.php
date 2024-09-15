@@ -19,6 +19,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 // use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -172,6 +173,7 @@ class EmployeeResource extends Resource
                                             ->required()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         DatePicker::make('join_date')->columnSpan(1)->label('Start date')->nullable(),
+
                                     ]),
                                 ]),
                             Fieldset::make()->label('Employee address')->schema([
@@ -197,6 +199,26 @@ class EmployeeResource extends Resource
                                         ]),
                                     ]),
                                 ]),
+                        ]),
+                    Wizard\Step::make('Salary data')
+                        ->schema([
+                            Fieldset::make()->label('Set salary data and its config')->schema([
+                                Grid::make()->label('')->columns(4)->schema([
+                                    TextInput::make('salary')
+                                        ->numeric()->columnSpan(1)
+                                        ->columnSpan(2)
+                                        ->inputMode('decimal')
+                                        ->label('Salary')->nullable(),
+                                    Toggle::make('discount_exception_if_absent')->columnSpan(1)
+                                        ->label('Exempt from salary deduction when absent')->default(0)
+                                    // ->isInline(false)
+                                    ,
+                                    Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
+                                        ->label('Exempted from salary deduction for late attendance')->default(0)
+                                    // ->isInline(false)
+                                    ,
+                                ]),
+                            ]),
                         ]),
                 ])->columnSpanFull(),
 
@@ -232,6 +254,13 @@ class EmployeeResource extends Resource
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false),
+                TextColumn::make('salary')->sortable()->label('Salary')
+                    ->sortable()->searchable()
+                    ->numeric(decimalPlaces: 0)
+                    ->money('MYR')
+                    ->default(0)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true),
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
                     ->toggleable(isToggledHiddenByDefault: false),
