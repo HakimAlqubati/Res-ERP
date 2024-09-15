@@ -25,6 +25,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
@@ -125,7 +126,17 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->columnSpanFull()
                                 ->inline()
                                 ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
-                                ->options(DailyTasksSettingUp::getScheduleTypes())]),
+                                ->options(DailyTasksSettingUp::getScheduleTypes())])
+                            ->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                if ($state['schedule_type'] == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                    $set('end_date', date('Y-m-d', strtotime('+29 days')));
+                                }else{
+                                    
+                                    $set('end_date', date('Y-m-d', strtotime('+7 days')));
+                                }
+                            })
+                        ,
                         Grid::make()->columns(2)->label('Start date and End date')->schema([
                             DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
                             DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
