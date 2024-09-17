@@ -3,8 +3,8 @@
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport;
-use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 use App\Models\Attendance;
+use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
@@ -18,16 +18,16 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class EmployeeAttednaceReportResource extends Resource
+class EmployeesAttednaceReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
+    protected static ?string $slug = 'employees-attendance-report';
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Employee attendance report';
+    protected static ?string $label = 'Employees attendance report';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
     public static function form(Form $form): Form
     {
         return $form
@@ -41,34 +41,25 @@ class EmployeeAttednaceReportResource extends Resource
         return $table
             ->emptyStateHeading('No data')
             ->columns([
-                TextColumn::make('employee.employee_no')->label('Employee no')->searchable(isIndividual: true, isGlobal: true),
-                TextColumn::make('employee.name')->label('Employee name')->searchable(isIndividual: true, isGlobal: true),
-                TextColumn::make('employee.department.name')->label('Department'),
-                TextColumn::make('check_date')->sortable(),
-                TextColumn::make('check_time')->sortable(),
-                TextColumn::make('check_type')->sortable(),
-                TextColumn::make('day')->sortable(),
-
+                TextColumn::make('employee_name')->label('Employee name'),
+                TextColumn::make('employee_no')->label('Employee number'),
+                TextColumn::make('department_name')->label('Department'),
             ])
             ->filters([
-                SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
+                SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                Filter::make('date_range')
-                    ->form([
-                        DatePicker::make('start_date')
-                            ->label('Start Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
-                        DatePicker::make('end_date')
-                            ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
-                            ->label('End Date'),
-                    ]),
+                Filter::make('filter_date')->label('')->form([
+                    DatePicker::make('date')
+                        ->label('Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
+                ]),
 
             ], FiltersLayout::AboveContent)
             ->actions([
-                Tables\Actions\EditAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+
                 ]),
             ]);
     }
@@ -88,16 +79,19 @@ class EmployeeAttednaceReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployeeAttednaceReports::route('/'),
-            // 'create' => Pages\CreateEmployeeAttednaceReport::route('/create'),
-            // 'edit' => Pages\EditEmployeeAttednaceReport::route('/{record}/edit'),
+            'index' => ListEmployeesAttednaceReport::route('/'),
         ];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $query = static::getModel()::query();
-
+        // $query = static::getModel()::query();
+        // $query->select('employee_id');
+        // return $query;
+        $query = Employee::query();
+        $query->select('hr_employees.id as employee_id','hr_employees.name as employee_name','hr_employees.employee_no as employee_no','departments.name as department_name')
+        ->join('departments','hr_employees.department_id','=','departments.id')
+        ;
         return $query;
     }
 

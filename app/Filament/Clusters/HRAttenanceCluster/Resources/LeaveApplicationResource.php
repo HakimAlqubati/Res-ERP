@@ -96,7 +96,7 @@ class LeaveApplicationResource extends Resource
                         ]),
                     ]),
                     Fieldset::make()->label('')->schema([
-                        Textarea::make('leave_reason')->required()->columnSpanFull(),
+                        Textarea::make('leave_reason')->label('Notes')->required()->columnSpanFull(),
                     ])
                 ]),
             ]);

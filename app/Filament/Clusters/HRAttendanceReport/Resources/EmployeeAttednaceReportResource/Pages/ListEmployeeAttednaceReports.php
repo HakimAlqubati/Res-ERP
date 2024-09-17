@@ -17,7 +17,7 @@ class ListEmployeeAttednaceReports extends ListRecords
 {
     protected static string $resource = EmployeeAttednaceReportResource::class;
 
-    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee2';
+    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
     {
 
@@ -53,26 +53,28 @@ class ListEmployeeAttednaceReports extends ListRecords
                 $query->whereBetween('from_date', [$start_date, $end_date])
                     ->orWhereBetween('to_date', [$start_date, $end_date]);
             })
-            ->select('from_date', 'to_date')
+            ->select('from_date', 'to_date', 'leave_type_id')
             ->get();
 
         // Initialize an array to store all leave dates
         $leaveDates = [];
         if ($employee) {
             foreach ($leaveApplications as $leave) {
+
                 $fromDate = Carbon::parse($leave->from_date);
                 $toDate = Carbon::parse($leave->to_date);
 
                 // Create a loop to generate the list of dates
                 for ($date = $fromDate; $date->lte($toDate); $date->addDay()) {
-                    $leaveDates[$date->format('Y-m-d')] = $date->format('Y-m-d'); // Add date to the array
+                    // $leaveDates[$date->format('Y-m-d')] = $date->format('Y-m-d'); // Add date to the array
+                    $leaveDates[$date->format('Y-m-d')] = 'Leave application approved for (' . $leave?->leaveType?->name . ')'; // Add date to the array
                 }
             }
         }
         // Loop through each leave application and generate dates between 'from_date' and 'to_date'
         // if (is_array($leaveApplications) && count($leaveApplications) > 0) {
         // }
-
+        // dd($leaveApplications, $leaveDates);
         $report_data['data'] = [];
         $holidays = Holiday::where('active', 1)
             ->whereBetween('from_date', [$start_date, $end_date])
@@ -149,12 +151,12 @@ class ListEmployeeAttednaceReports extends ListRecords
                         'check_date' => $formatted_date,
                         'check_time' => null,
                         'day' => $day_of_week, // Add the day for holidays
-                        'holiday_name' => $holiday->name, // Add the holiday name
+                        'holiday_name' => 'Holiday of (' . $holiday->name . ')', // Add the holiday name
                     ];
 
                 } else if (isset($leaveDates[$formatted_date])) {
                     // If the date is a approved leave application, add it as a approved leave application
-
+// dd($leaveDates,array_values($leaveDates));
                     $leave_date = $leaveDates[$formatted_date];
                     $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
                         'period_id' => $matching_period->id,
@@ -165,7 +167,7 @@ class ListEmployeeAttednaceReports extends ListRecords
                         'check_date' => $formatted_date,
                         'check_time' => null,
                         'day' => $day_of_week,
-                        'holiday_name' => $leave_date,
+                        'leave_type_name' => $leave_date,
                     ];
 
                 } else {

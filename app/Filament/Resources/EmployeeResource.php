@@ -85,14 +85,22 @@ class EmployeeResource extends Resource
                                         PhoneInput::make('phone_number')
                                         // ->numeric()
                                             ->initialCountry('MY')
-                                            ->onlyCountries(['MY', 'YE'])
+                                            ->onlyCountries([
+                                                'MY',
+                                                'US',
+                                                'YE',
+                                                'AE',
+                                                'SA',
+                                            ])
                                             ->displayNumberFormat(PhoneInputNumberType::E164)
                                         // ->useFullscreenPopup()
-                                            ->i18n([
-                                                // Country names
-                                                'YE' => "YEMEN",
-                                                'MY' => "MALAYSIA",
-                                            ])
+                                        // ->i18n([
+                                        //     // Country names
+                                        //     'YE' => "YEMEN",
+                                        //     'MY' => "MALAYSIA",
+                                        //     'KSA' => "SAUDIA",
+                                        //     'UAE' => "EMARAT",
+                                        // ])
                                             ->autoPlaceholder('aggressive')
                                             ->validateFor(
                                                 country: 'MY',
@@ -100,6 +108,9 @@ class EmployeeResource extends Resource
                                                 lenient: true, // default: false
                                             ),
 
+                                    ]),
+                                    Fieldset::make()->label('Employee address')->schema([
+                                        Textarea::make('address')->label('')->columnSpanFull(),
                                     ]),
                                     Fieldset::make()->label('Upload avatar image')
                                         ->columnSpanFull()
@@ -176,9 +187,6 @@ class EmployeeResource extends Resource
 
                                     ]),
                                 ]),
-                            Fieldset::make()->label('Employee address')->schema([
-                                Textarea::make('address')->label('')->columnSpanFull(),
-                            ]),
                         ]),
                     Wizard\Step::make('Employee files')
                         ->schema([
@@ -210,11 +218,11 @@ class EmployeeResource extends Resource
                                         ->inputMode('decimal')
                                         ->label('Salary')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
-                                        ->label('Exempt from salary deduction when absent')->default(0)
+                                        ->label('No salary deduction for absences')->default(0)
                                     // ->isInline(false)
                                     ,
                                     Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
-                                        ->label('Exempted from salary deduction for late attendance')->default(0)
+                                        ->label('Exempt from late attendance deduction')->default(0)
                                     // ->isInline(false)
                                     ,
                                 ]),

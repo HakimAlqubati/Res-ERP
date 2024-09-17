@@ -87,6 +87,6 @@ class Employee extends Model
 
     public function approvedLeaveApplications()
     {
-        return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED);
+        return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED)->with('leaveType');
     }
 }

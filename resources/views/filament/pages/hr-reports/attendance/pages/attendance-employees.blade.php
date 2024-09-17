@@ -1,13 +1,13 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
 
-    @if (isset($employee_id) && is_numeric($employee_id))
+    {{-- @if (isset($employee_id) && is_numeric($employee_id)) --}}
         <x-filament-tables::table class="w-full text-sm text-left pretty  ">
             <thead>
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                        <p>{{ 'Attendance Employee report' }}</p>
-                        <p>({{ isset($employee_id) && is_numeric($employee_id) ? \App\Models\Employee::find($employee_id)->name : __('lang.choose_branch') }})
+                        <p>{{ 'Attendance employees report' }}</p>
+                        
                         </p>
                     </th>
                     <th colspan="4" class="no_border_right_left">
@@ -225,12 +225,12 @@
         </tbody>
 
     </x-filament-tables::table>
-@else
+{{-- @else
     <div class="please_select_message_div" style="text-align: center;">
 
         <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
     </div>
-@endif
+@endif --}}
 {{-- <center style="font-weight: bolder;color:red">
     {{ 'The report is still under developing_' . 'التقرير لا يزال قيد التطوير' }}</center> --}}
 </x-filament-panels::page>
