@@ -1,236 +1,94 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
 
-    {{-- @if (isset($employee_id) && is_numeric($employee_id)) --}}
-        <x-filament-tables::table class="w-full text-sm text-left pretty  ">
-            <thead>
-                <x-filament-tables::row class="header_report">
-                    <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                        <p>{{ 'Attendance employees report' }}</p>
-                        
-                        </p>
-                    </th>
-                    <th colspan="4" class="no_border_right_left">
-                        <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
-                        <br>
-                        <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
-                    </th>
-                    <th colspan="4" style="text-align: center; vertical-align: middle;"
-                        class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                        <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
-                    </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
-                    <th rowspan="2">{{ __('Date') }}</th>
-                    <th colspan="2">{{ __('Shift data') }}</th>
+    {{-- @if (isset($branch_id) && is_numeric($branch_id)) --}}
+    <x-filament-tables::table class="w-full text-sm text-left pretty  ">
+        <thead>
+            <x-filament-tables::row class="header_report">
+                <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+                    <p>{{ 'Attendance employees report' }}</p>
 
-                    <th colspan="4">{{ __('Attendance and Departure data') }}</th>
-                    <th colspan="2">{{ __('Count of Hours work') }}</th>
-                    {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
-                    <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
+                    <p> Branch:
+                        {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
+                    </p>
+                </th>
+                <th colspan="4" class="no_border_right_left">
+                    {{-- <p>{{ 'Date' . ': ' . $date }}</p> --}}
 
-                </x-filament-tables::row>
-                <x-filament-tables::row>
-                    <th>{{ __('From') }}</th>
-                    <th>{{ __('To') }}</th>
-                    <th>{{ __('Attendance') }}</th>
-                    <th>{{ __('Status') }}</th>
-                    <th>{{ __('Departure') }}</th>
-                    <th>{{ __('Status') }}</th>
-                    <th>{{ __('Supposed') }}</th>
-                    <th>{{ __('Actual') }}</th>
-                </x-filament-tables::row>
-            </thead>
-            <tbody>
+                </th>
+                <th colspan="4" style="text-align: center; vertical-align: middle;"
+                    class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
+                    <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
+                </th>
+            </x-filament-tables::row>
+            <x-filament-tables::row>
+                <th rowspan="2">{{ __('Employee') }}</th>
+                @foreach ($work_periods as $work_period)
+                    <th colspan="2"> {{ $work_period['name'] }} </th>
+                @endforeach
+            </x-filament-tables::row>
 
-                @foreach ($report_data as $date => $data)
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell rowspan="{{ count($data) }}">
-                            {{ $date }}
-                        </x-filament-tables::cell>
+            <x-filament-tables::row>
+                @if ($work_periods)
 
-
-
-
-                        @foreach ($data as $val_data)
-                            @if (count($val_data) == 1)
-                                <x-filament-tables::cell colspan="8">
-                                    @if (isset($val_data[0]->check_type) && count($val_data) == 1 && $val_data[0]->check_type == 'Absent')
-                                        <p class="absent">{{ 'Absent' }}</p>
-                                    @endif
-                                    @if (isset($val_data[0]->holiday_name) && count($val_data) == 1 && $val_data[0]->check_type == 'Holiday')
-                                        <p>{{ $val_data[0]->holiday_name }}</p>
-                                    @endif
-                                    @if (count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
-                                        <p>{{ 'Approved leave application' }}</p>
-                                    @endif
-                                </x-filament-tables::cell>
-                            @elseif (count($val_data) >= 2)
-                                <x-filament-tables::cell>
-                                    {{ $val_data[0]->period_start_at }}
-                                </x-filament-tables::cell>
-
-                                <x-filament-tables::cell>
-                                    {{ $val_data[0]->period_end_at }}
-
-                                </x-filament-tables::cell>
-
-                                <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
-                                        @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
-                                            {{ $val_data[0]->check_time }}
-                                        @endif
-                                    @endif
-                                </x-filament-tables::cell>
-
-                                <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
-                                        @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
-                                            {{ $val_data[0]->status }}
-                                        @endif
-                                    @endif
-                                </x-filament-tables::cell>
-
-
-                                <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
-                                        @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                            {{ $val_data[1]->check_time }}
-                                        @endif
-                                    @endif
-
-                                </x-filament-tables::cell>
-
-                                <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
-                                        @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                            {{ $val_data[1]->status }}
-                                        @endif
-                                    @endif
-                                </x-filament-tables::cell>
-
-
-
-                                <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
-                                        @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                            {{ $val_data[1]->supposed_duration_hourly }}
-                                        @endif
-                                    @endif
-                                </x-filament-tables::cell>
-
-                                <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
-                                        @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                            {{ $val_data[1]->actual_duration_hourly }}
-                                        @endif
-                                    @endif
-                                </x-filament-tables::cell>
-                            @endif
-                        @break
+                    @foreach ($work_periods as $work_period)
+                        <th>
+                            {{ $work_period['start_at'] }}
+                        </th>
+                        <th>
+                            {{ $work_period['end_at'] }}
+                        </th>
                     @endforeach
-
-                </x-filament-tables::row>
-                @if (count($data) > 1)
-                    @php
-                        $index = 0;
-                    @endphp
-                    {{-- @for ($i = 1; $i < count($data); $i++) --}}
-                    @foreach ($data as $val_data)
-                        @if ($index > 0)
-                            <x-filament-tables::row>
-                                @if (count($val_data) == 1)
-                                    <x-filament-tables::cell colspan="8">
-                                        @if (isset($val_data[0]->check_type) && count($val_data) == 1 && $val_data[0]->check_type == 'Absent')
-                                            <p class="absent">{{ 'Absent' }}</p>
-                                        @endif
-                                        @if (isset($val_data[0]->holiday_name) && count($val_data) == 1 && $val_data[0]->check_type == 'Holiday')
-                                            <p>{{ $val_data[0]->holiday_name }}</p>
-                                        @endif
-                                        @if (count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
-                                            <p>{{ 'Approved leave application' }}</p>
-                                        @endif
-                                    </x-filament-tables::cell>
-                                @elseif (count($val_data) >= 2)
-                                    <x-filament-tables::cell>
-                                        {{ $val_data[0]->period_start_at }}
-                                    </x-filament-tables::cell>
-
-                                    <x-filament-tables::cell>
-                                        {{ $val_data[0]->period_end_at }}
-
-                                    </x-filament-tables::cell>
-
-                                    <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
-                                            @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
-                                                {{ $val_data[0]->check_time }}
-                                            @endif
-                                        @endif
-                                    </x-filament-tables::cell>
-
-                                    <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
-                                            @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
-                                                {{ $val_data[0]->status }}
-                                            @endif
-                                        @endif
-                                    </x-filament-tables::cell>
-
-
-                                    <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
-                                            @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                                {{ $val_data[1]->check_time }}
-                                            @endif
-                                        @endif
-
-                                    </x-filament-tables::cell>
-
-                                    <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
-                                            @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                                {{ $val_data[1]->status }}
-                                            @endif
-                                        @endif
-                                    </x-filament-tables::cell>
-
-
-
-                                    <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
-                                            @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                                {{ $val_data[1]->supposed_duration_hourly }}
-                                            @endif
-                                        @endif
-                                    </x-filament-tables::cell>
-
-                                    <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
-                                            @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
-                                                {{ $val_data[1]->actual_duration_hourly }}
-                                            @endif
-                                        @endif
-                                    </x-filament-tables::cell>
-                                @endif
-                            </x-filament-tables::row>
-                        @endif
-                        @php
-                            $index += 1;
-                        @endphp
-                    @endforeach
-                    {{-- @endfor --}}
+                @else
+                    <th colspan="100%"> <p style="color: red;">{{ 'No periods for choosen date' }}</p> </th>
                 @endif
+            </x-filament-tables::row>
+        </thead>
+
+        <tbody>
+            @foreach ($report_data as $key_emp_name => $item_data)
+                <x-filament-tables::row>
+                    <x-filament-tables::cell>
+                        {{ $key_emp_name }}
+                    </x-filament-tables::cell>
+
+                    @foreach ($work_periods as $work_period)
+                        @php
+                            // dd($item_data);
+                        @endphp
+                        @if (count($item_data[$work_period['id']]) == 1)
+                            <x-filament-tables::cell colspan="2">
+                                @if (isset($item_data[$work_period['id']][0]->check_type) && $item_data[$work_period['id']][0]->check_type == 'Absent')
+                                    <p class="absent">{{ 'Absent' }}</p>
+                                @endif
+                                @if (isset($item_data[$work_period['id']][0]->holiday_name) &&
+                                        $item_data[$work_period['id']][0]->check_type == 'Holiday')
+                                    <p class="absent">{{ 'Absent' }}</p>
+                                @endif
+                            </x-filament-tables::cell>
+                        @elseif (count($item_data[$work_period['id']]) >= 2)
+                            @foreach ($item_data[$work_period['id']] as $item)
+                                <x-filament-tables::cell>
+                                    @if (isset($item->check_type) && $item->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
+                                        {{ $item->check_time }}
+                                    @elseif (isset($item->check_type) && $item->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
+                                        {{ $item->check_time }}
+                                    @endif
+                                </x-filament-tables::cell>
+                            @endforeach
+                        @endif
+                    @endforeach
+                </x-filament-tables::row>
             @endforeach
         </tbody>
 
     </x-filament-tables::table>
-{{-- @else
-    <div class="please_select_message_div" style="text-align: center;">
+    {{-- @else
+        <div class="please_select_message_div" style="text-align: center;">
 
-        <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
-    </div>
-@endif --}}
-{{-- <center style="font-weight: bolder;color:red">
+            <h1 class="please_select_message_text">{{ __('Please select an Branch') }}</h1>
+        </div>
+    @endif --}}
+    {{-- <center style="font-weight: bolder;color:red">
     {{ 'The report is still under developing_' . 'التقرير لا يزال قيد التطوير' }}</center> --}}
 </x-filament-panels::page>
