@@ -53,19 +53,25 @@
 
 
                         @foreach ($data as $val_data)
-                            @if (count($val_data) == 1)
+                            @if (is_array($val_data) && count($val_data) == 1)
                                 <x-filament-tables::cell colspan="8">
-                                    @if (isset($val_data[0]->check_type) && count($val_data) == 1 && $val_data[0]->check_type == 'Absent')
+                                    @if (isset($val_data[0]->check_type) &&
+                                            is_array($val_data) &&
+                                            count($val_data) == 1 &&
+                                            $val_data[0]->check_type == 'Absent')
                                         <p class="absent">{{ 'Absent' }}</p>
                                     @endif
-                                    @if (isset($val_data[0]->holiday_name) && count($val_data) == 1 && $val_data[0]->check_type == 'Holiday')
+                                    @if (isset($val_data[0]->holiday_name) &&
+                                            is_array($val_data) &&
+                                            count($val_data) == 1 &&
+                                            $val_data[0]->check_type == 'Holiday')
                                         <p>{{ $val_data[0]->holiday_name }}</p>
                                     @endif
-                                    @if (count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
+                                    @if (is_array($val_data) && count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
                                         <p>{{ $val_data[0]->leave_type_name }}</p>
                                     @endif
                                 </x-filament-tables::cell>
-                            @elseif (count($val_data) >= 2)
+                            @elseif (is_array($val_data) && count($val_data) >= 2)
                                 <x-filament-tables::cell>
                                     {{ $val_data[0]->period_start_at }}
                                 </x-filament-tables::cell>
@@ -76,7 +82,7 @@
                                 </x-filament-tables::cell>
 
                                 <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
+                                    @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                             {{ $val_data[0]->check_time }}
                                         @endif
@@ -84,7 +90,7 @@
                                 </x-filament-tables::cell>
 
                                 <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
+                                    @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                             {{ $val_data[0]->status }}
                                         @endif
@@ -93,7 +99,7 @@
 
 
                                 <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
+                                    @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->check_time }}
                                         @endif
@@ -102,7 +108,7 @@
                                 </x-filament-tables::cell>
 
                                 <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
+                                    @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->status }}
                                         @endif
@@ -112,7 +118,7 @@
 
 
                                 <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
+                                    @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->supposed_duration_hourly }}
                                         @endif
@@ -120,7 +126,7 @@
                                 </x-filament-tables::cell>
 
                                 <x-filament-tables::cell>
-                                    @if (count($val_data) >= 2)
+                                    @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->actual_duration_hourly }}
                                         @endif
@@ -139,19 +145,25 @@
                     @foreach ($data as $val_data)
                         @if ($index > 0)
                             <x-filament-tables::row>
-                                @if (count($val_data) == 1)
+                                @if (is_array($val_data) && count($val_data) == 1)
                                     <x-filament-tables::cell colspan="8">
-                                        @if (isset($val_data[0]->check_type) && count($val_data) == 1 && $val_data[0]->check_type == 'Absent')
+                                        @if (isset($val_data[0]->check_type) &&
+                                                is_array($val_data) &&
+                                                count($val_data) == 1 &&
+                                                $val_data[0]->check_type == 'Absent')
                                             <p class="absent">{{ 'Absent' }}</p>
                                         @endif
-                                        @if (isset($val_data[0]->holiday_name) && count($val_data) == 1 && $val_data[0]->check_type == 'Holiday')
+                                        @if (isset($val_data[0]->holiday_name) &&
+                                                is_array($val_data) &&
+                                                count($val_data) == 1 &&
+                                                $val_data[0]->check_type == 'Holiday')
                                             <p>{{ $val_data[0]->holiday_name }}</p>
                                         @endif
-                                        @if (count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
+                                        @if (is_array($val_data) && count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
                                             <p>{{ $val_data[0]->leave_type_name }}</p>
                                         @endif
                                     </x-filament-tables::cell>
-                                @elseif (count($val_data) >= 2)
+                                @elseif (is_array($val_data) && count($val_data) >= 2)
                                     <x-filament-tables::cell>
                                         {{ $val_data[0]->period_start_at }}
                                     </x-filament-tables::cell>
@@ -162,7 +174,7 @@
                                     </x-filament-tables::cell>
 
                                     <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
+                                        @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                                 {{ $val_data[0]->check_time }}
                                             @endif
@@ -170,7 +182,7 @@
                                     </x-filament-tables::cell>
 
                                     <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
+                                        @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                                 {{ $val_data[0]->status }}
                                             @endif
@@ -179,7 +191,7 @@
 
 
                                     <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
+                                        @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->check_time }}
                                             @endif
@@ -188,7 +200,7 @@
                                     </x-filament-tables::cell>
 
                                     <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
+                                        @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->status }}
                                             @endif
@@ -198,7 +210,7 @@
 
 
                                     <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
+                                        @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->supposed_duration_hourly }}
                                             @endif
@@ -206,7 +218,7 @@
                                     </x-filament-tables::cell>
 
                                     <x-filament-tables::cell>
-                                        @if (count($val_data) >= 2)
+                                        @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->actual_duration_hourly }}
                                             @endif
