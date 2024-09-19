@@ -13,6 +13,7 @@ class HRTasksSystem extends Cluster
 
     public static function getNavigationLabel(): string
     {
+        return 'Task Management';
         return __('lang.tasks_ms');
     }
 }

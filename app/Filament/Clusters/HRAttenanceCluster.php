@@ -10,6 +10,7 @@ class HRAttenanceCluster extends Cluster
     
     public static function getNavigationLabel(): string
     {
+        return 'Attendance Management';
         return __('lang.attenance_management');
     }
 }

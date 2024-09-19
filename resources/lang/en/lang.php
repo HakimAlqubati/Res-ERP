@@ -126,7 +126,7 @@ return [
     'ordered_product' => 'Orderd product from (Branch)',
     'employees' => 'Employees',
     'tasks_ms' => 'Task management',
-    'departments_and_employees' => 'Departments and employees',
+    'departments_and_employees' => 'Humen Resource',
     'attenance_management' => 'Attenance management',
     'attednance_reports' => 'Attednance reports',
 ];
