@@ -294,3 +294,20 @@ function getEnableUserOrdersToStore()
 {
     return SystemSetting::select('enable_user_orders_to_store')?->first()?->enable_user_orders_to_store;
 }
+
+/**
+ * to return days as static with array
+ */
+function getDays()
+{
+    return [
+        'Monday' => 'Monday',
+        'Tuesday' => 'Tuesday',
+        'Wednesday' => 'Wednesday',
+        'Thursday' => 'Thursday',
+        'Friday' => 'Friday',
+        'Saturday' => 'Saturday',
+        'Sunday' => 'Sunday',
+    ];
+}
+

@@ -34,4 +34,8 @@ class Branch extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    public function areas(){
+        return $this->hasMany(BranchArea::class);
+    }
 }

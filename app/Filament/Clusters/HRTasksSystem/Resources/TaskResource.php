@@ -18,11 +18,13 @@ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -121,25 +123,68 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                     ]),
                     Fieldset::make()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
-                        Grid::make()->columns(2)->schema([Forms\Components\ToggleButtons::make('schedule_type')
+                        Grid::make()->columns(4)->schema([
+                            Forms\Components\ToggleButtons::make('schedule_type')
                                 ->label('')
-                                ->columnSpanFull()
+                                ->columnSpan(2)
                                 ->inline()
                                 ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
-                                ->options(DailyTasksSettingUp::getScheduleTypes())])
+                                ->options(DailyTasksSettingUp::getScheduleTypes()),
+                            DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
+                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+
+                        ])
                             ->live()
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                 if ($state['schedule_type'] == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
                                     $set('end_date', date('Y-m-d', strtotime('+29 days')));
-                                }else{
-                                    
+                                } else {
+
                                     $set('end_date', date('Y-m-d', strtotime('+7 days')));
                                 }
                             })
                         ,
-                        Grid::make()->columns(2)->label('Start date and End date')->schema([
-                            DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
-                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+                        Fieldset::make()->label('Recurrence pattern')->schema([
+                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
+                                Grid::make()->label('')->columns(2)->schema([
+                                    Radio::make('set_days')->label('')
+                                        ->options([
+                                            'specific_days' => 'Every',
+                                            'every_day' => 'Every weekday',
+                                        ])->live(),
+                                    TextInput::make('recurrence_each_day')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('set_days') == 'every_day'))->label('Day(s)'),
+                                ]),
+                            ]),
+                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
+                                Grid::make()->label('')->columns(2)->schema([
+                                    TextInput::make('recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')
+                                    ,
+                                    ToggleButtons::make('weekly_days')->label('')->inline()->options(getDays())->multiple(),
+                                ]),
+                            ]),
+                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
+                                Grid::make()->label('')->columns(3)->schema([
+                                    Radio::make('monthly_status')->label('')
+                                        ->columnSpan(1)
+                                        ->options([
+                                            'day' => 'Day',
+                                            'the' => 'The',
+                                        ])->live()->default('day'),
+                                    Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('monthly_status') == 'day'))->schema([
+                                        TextInput::make('the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
+                                        TextInput::make('months')->label('')->default(1)->numeric()->helperText('Month(s)'),
+                                    ]),
+                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('monthly_status') == 'the'))->columnSpan(2)->schema([
+                                        Select::make('order_name')->label('')->options([
+                                            'first' => 'first',
+                                            'second' => 'second',
+                                            'third' => 'third',
+                                            'fourth' => 'fourth',
+                                            'fifth' => 'fifth'])->default('first'),
+                                        Select::make('order_day')->label('')->options(getDays())->default('Saturday'),
+                                    ]),
+                                ]),
+                            ]),
                         ]),
                     ]),
 

@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRCluster;
+use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
@@ -13,6 +14,7 @@ use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
+use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\UserResource;
@@ -81,6 +83,7 @@ class AdminPanelProvider extends PanelProvider
                     ->items([
                         ...HRCluster::getNavigationItems(), 
                         ...HRTasksSystem::getNavigationItems(), 
+                        ...HRServiceRequestCluster::getNavigationItems(), 
                         ...HRAttenanceCluster::getNavigationItems(), 
                         ...HRAttendanceReport::getNavigationItems(), 
                     ]),
@@ -88,6 +91,10 @@ class AdminPanelProvider extends PanelProvider
                     ->items([
                         ...UserResource::getNavigationItems(),
                         ...RoleResource::getNavigationItems(),
+                    ]),
+                NavigationGroup::make(__('lang.branches'))
+                    ->items([
+                        ...BranchResource::getNavigationItems(),
                     ]),
                 NavigationGroup::make(__('lang.system_settings'))
                     ->items([
