@@ -129,20 +129,66 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->columnSpan(2)
                                 ->inline()
                                 ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
-                                ->options(DailyTasksSettingUp::getScheduleTypes()),
-                            DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
-                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+                                ->options(DailyTasksSettingUp::getScheduleTypes())
+                                ->live()
+                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    if ($state == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                        $set('end_date', date('Y-m-d', strtotime('+1 months')));
+                                        $set('recur_count', 1);
+                                    } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                        $set('end_date', date('Y-m-d', strtotime('+2 weeks')));
+                                        $set('recur_count', 2);
+                                    } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        $set('end_date', date('Y-m-d', strtotime('+7 days')));
+                                        $set('recur_count', 7);
+                                    }
+                                })
+                            ,
+                            Grid::make()->columns(1)->columnSpan(1)->schema([
+                                DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1)->minDate(date('Y-m-d'))->live()
+                                ,
+                                TextInput::make('recur_count')->label(function (Get $get) {
+                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        return 'Count days';
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                        return 'Count weeks';
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                        return 'Count months';
+                                    }
 
-                        ])
-                            ->live()
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                if ($state['schedule_type'] == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                    $set('end_date', date('Y-m-d', strtotime('+29 days')));
-                                } else {
+                                })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                        $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                        $set('end_date', date('Y-m-d', strtotime("+$state months")));
+                                    }
 
-                                    $set('end_date', date('Y-m-d', strtotime('+7 days')));
+                                }),
+                            ]),
+                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
+                                ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                
+                                $date1 = new \DateTime($get('start_date'));
+                                $date2 = new \DateTime($state);
+
+                                $interval = $date1->diff($date2);
+                                
+                                if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                    $set('recur_count', $interval->days);
+                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                    $weeks = floor($interval->days / 7);
+                                    $set('recur_count', $weeks);
+                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                    $months = ($interval->y * 12) + $interval->m;
+                                    $set('recur_count', $months);
                                 }
                             })
+                            ,
+
+                        ])
+
                         ,
                         Fieldset::make()->label('Recurrence pattern')->schema([
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([

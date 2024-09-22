@@ -5,6 +5,7 @@ use App\Models\Store;
 use App\Models\SystemSetting;
 use App\Models\UnitPrice;
 use App\Models\User;
+use App\Models\UserType;
 
 function getName()
 {
@@ -311,3 +312,18 @@ function getDays()
     ];
 }
 
+/**
+ * to get user types as pluck(name,id)
+ */
+function getUserTypes(){
+    return UserType::select('name','id')->get()->pluck('name','id');
+}
+/**
+ * to get roles based on user_type_id
+ */
+function getRolesByTypeId($id)
+{
+    $user_types = UserType::find($id)?->role_ids;
+    return $user_types;
+
+}

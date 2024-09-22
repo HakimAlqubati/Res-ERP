@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttendanceReport;
+use App\Filament\Clusters\HRCircularCluster;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRTasksSystem;
@@ -14,6 +15,7 @@ use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
+use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
@@ -86,6 +88,8 @@ class AdminPanelProvider extends PanelProvider
                         ...HRServiceRequestCluster::getNavigationItems(), 
                         ...HRAttenanceCluster::getNavigationItems(), 
                         ...HRAttendanceReport::getNavigationItems(), 
+                        ...HRCircularCluster::getNavigationItems(), 
+                    
                     ]),
                 NavigationGroup::make(__('lang.user_and_roles'))
                     ->items([
@@ -124,12 +128,13 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                // Pages\Dashboard::class,
+                PagesDashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                // Widgets\AccountWidget::class,
+                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

@@ -33,7 +33,11 @@ class Employee extends Model
         'salary',
         'discount_exception_if_attendance_late',
         'discount_exception_if_absent',
+        'rfid',
     ];
+
+    public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED = 'added';
+    public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED = 'removed';
 
     public function branch()
     {
@@ -89,4 +93,19 @@ class Employee extends Model
     {
         return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED)->with('leaveType');
     }
+
+    public function periods()
+    {
+        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id');
+    }
+
+     // Log changes to periods
+     public function logPeriodChange(array $periodIds, $action)
+     {
+         EmployeePeriodLog::create([
+             'employee_id' => $this->id,
+             'period_ids' => json_encode($periodIds), // Store as JSON
+             'action' => $action,
+         ]);
+     }
 }

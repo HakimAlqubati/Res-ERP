@@ -6,6 +6,8 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\User;
+use App\Models\UserType;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
@@ -23,6 +25,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -94,18 +99,47 @@ class UserResource extends Resource
                         Grid::make()->columns(3)->schema([
                             TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                             TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email(),
-                            TextInput::make('phone_number')->disabled()->unique(ignoreRecord: true)->numeric(),
+                            PhoneInput::make('phone_number')
+                            // ->numeric()
+                                ->initialCountry('MY')
+                                ->onlyCountries([
+                                    'MY',
+                                    'US',
+                                    'YE',
+                                    'AE',
+                                    'SA',
+                                ])
+                                ->displayNumberFormat(PhoneInputNumberType::E164)
+                                ->autoPlaceholder('aggressive')
+                                ->validateFor(
+                                    country: 'MY',
+                                    lenient: true, // default: false
+                                ),
 
                         ]),
-                        Grid::make()->columns(2)->schema([
-                            Select::make('roles')
-                                ->label('Role')
-                                ->relationship('roles', 'name')
-                                ->multiple()
-                                ->maxItems(1)
-                                ->preload()
-                                ->searchable(),
+                        Fieldset::make()->columns(3)->label('Set user type, role and manager')->schema([
+                            Select::make('user_type')
+                                ->label('User type')
+                                ->options(getUserTypes())
+                                ->live()
+                                ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 
+                                    //  dd($roles,$state);
+                                })
+                            ,
+                            CheckboxList::make('roles')
+                                ->label('Role')
+                                ->relationship('roles')
+                                ->maxItems(1)
+                                ->options(function (Get $get) {
+                                    // dd($get('user_type'),'hi');
+                                    if ($get('user_type')) {
+                                        $roles = getRolesByTypeId($get('user_type'));
+                                        // dd($roles,gettype($roles));
+                                        return Role::select('name', 'id')->whereIn('id', $roles)->get()->pluck('name', 'id');
+                                    }
+                                })
+                            ,
                             Select::make('owner_id')
                                 ->label('Manager')
                                 ->searchable()
@@ -132,39 +166,89 @@ class UserResource extends Resource
                 Fieldset::make()->visible(fn(Get $get): bool => !$get('is_exist_employee'))->schema([
 
                     Grid::make()->columns(3)->schema([
-                        TextInput::make('name')->required()->unique(ignoreRecord: true),
-                        TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-                        TextInput::make('phone_number')->unique(ignoreRecord: true)->numeric(),
+                        Fieldset::make()->label('Personal data')->schema([
+                            TextInput::make('name')->required()->unique(ignoreRecord: true),
+                            TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+                            PhoneInput::make('phone_number')
+                            // ->numeric()
+                                ->initialCountry('MY')
+                                ->onlyCountries([
+                                    'MY',
+                                    'US',
+                                    'YE',
+                                    'AE',
+                                    'SA',
+                                ])
+                                ->required()
+                                ->displayNumberFormat(PhoneInputNumberType::E164)
+                                ->autoPlaceholder('aggressive')
+                                ->validateFor(
+                                    country: 'MY',
+                                    lenient: true, // default: false
+                                ),
+                            Select::make('branch_id')
+                                ->label('Branch')
+                                ->required()
+                                ->searchable()
+                                ->options(function () {
+                                    return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
+                                }),
+                        ]),
 
                     ]),
 
-                    Grid::make()->columns(2)->schema([
-                        Select::make('roles')
+                    Fieldset::make()->label('Set user type and role')->schema([
+                        Select::make('user_type')
+                            ->label('User type')
+                            ->options(getUserTypes())
+                            ->live()
+                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+
+                                //  dd($roles,$state);
+                            })
+                        ,
+                        CheckboxList::make('roles')
                             ->label('Role')
-                            ->relationship('roles', 'name')
-                            ->multiple()
+                            ->relationship('roles')
                             ->maxItems(1)
-                            ->preload()
-                            ->searchable(),
+                            ->options(function (Get $get) {
+                                // dd($get('user_type'),'hi');
+                                if ($get('user_type')) {
+                                    $roles = getRolesByTypeId($get('user_type'));
+                                    // dd($roles,gettype($roles));
+                                    return Role::select('name', 'id')->whereIn('id', $roles)->get()->pluck('name', 'id');
+                                }
+                            })
+                        ,
+                    ]),
+                    Grid::make()->columns(2)->schema([
 
                         Select::make('owner_id')
-                            ->label('Owner')
+                            ->visible(function (Get $get) {
+                                if (in_array($get('user_type'), [3, 4])) {
+                                    return true;
+                                }
+                            })
+                            ->label('Manager')
                             ->searchable()
                             ->options(function () {
                                 return DB::table('users')->pluck('name', 'id');
                             }),
+
                     ]),
-                    Grid::make()->columns(2)->schema([
-                        TextInput::make('password')
-                            ->password()
-                            ->required(fn(string $context) => $context === 'create')
-                            ->reactive()
-                            ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                        TextInput::make('password_confirmation')
-                            ->password()
-                            ->required(fn(string $context) => $context === 'create')
-                            ->same('password')
-                            ->label('Confirm Password'),
+                    Fieldset::make()->label('')->schema([
+                        Grid::make()->columns(2)->schema([
+                            TextInput::make('password')
+                                ->password()
+                                ->required(fn(string $context) => $context === 'create')
+                                ->reactive()
+                                ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+                            TextInput::make('password_confirmation')
+                                ->password()
+                                ->required(fn(string $context) => $context === 'create')
+                                ->same('password')
+                                ->label('Confirm Password'),
+                        ]),
                     ]),
                 ]),
             ]);

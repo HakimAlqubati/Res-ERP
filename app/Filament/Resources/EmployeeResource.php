@@ -10,6 +10,7 @@ use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\Position;
 use Closure;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -92,19 +93,10 @@ class EmployeeResource extends Resource
                                                 'AE',
                                                 'SA',
                                             ])
-                                            ->displayNumberFormat(PhoneInputNumberType::E164)
-                                        // ->useFullscreenPopup()
-                                        // ->i18n([
-                                        //     // Country names
-                                        //     'YE' => "YEMEN",
-                                        //     'MY' => "MALAYSIA",
-                                        //     'KSA' => "SAUDIA",
-                                        //     'UAE' => "EMARAT",
-                                        // ])
+                                            ->displayNumberFormat(PhoneInputNumberType::E164) 
                                             ->autoPlaceholder('aggressive')
                                             ->validateFor(
                                                 country: 'MY',
-
                                                 lenient: true, // default: false
                                             ),
 
@@ -208,7 +200,7 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
-                    Wizard\Step::make('Salary data')
+                    Wizard\Step::make('Salary & Shift data')
                         ->schema([
                             Fieldset::make()->label('Set salary data and its config')->schema([
                                 Grid::make()->label('')->columns(4)->schema([
@@ -225,6 +217,29 @@ class EmployeeResource extends Resource
                                         ->label('Exempt from late attendance deduction')->default(0)
                                     // ->isInline(false)
                                     ,
+                                ]),
+                                Fieldset::make()->label('Shift - RFID')->schema([
+                                    Grid::make()->columns(2)->schema([
+                                        // ToggleButtons::make('employee_periods')->multiple()->options(
+                                        //     WorkPeriod::where('active', 1)->get()->pluck('name', 'id'),
+                                        // )->inline(),
+
+                                        CheckboxList::make('periods') // Refers to the 'periods' relationship in the Employee model
+                                            ->label('Work Periods')
+                                            ->relationship('periods', 'name') // Specify the relationship and the display column
+                                        // ->options(WorkPeriod::where('active', 1)->get()->pluck('name', 'id'))
+                                            ->columns(2)
+                                            ->helperText('Select the employee\'s work periods.')
+                                        // ->afterStateHydrated(function ($component, $state, $record) {
+
+                                        //     if (!filled($state) && count($record->periods->pluck('id')->toArray()) > 0) {
+                                        //         $component->state($record->periods->pluck('id')->toArray());
+                                        //     }
+                                        // })
+                                        ,
+
+                                        TextInput::make('rfid')->label('Employee RFID'),
+                                    ]),
                                 ]),
                             ]),
                         ]),

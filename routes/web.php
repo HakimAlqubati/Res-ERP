@@ -31,15 +31,7 @@ Route::get('/totestpdf', function () {
 });
 Route::get('/totest', function () {
 
-    $units_prices = UnitPrice::get();
-    foreach ($units_prices as $key => $value) {
-        $product_id = $value->product_id;
-        $unit_id = $value->unit_id;
-        $price = $value->price;
-        OrderDetails::where('product_id', $product_id)->where('unit_id', $unit_id)->update(['price' => $price]);
-    }
-
-    // return redirect(url('/admin'));
+    return getRolesByTypeId(50);
 });
 Route::get('/toviewrepeated', function () {
     /**
