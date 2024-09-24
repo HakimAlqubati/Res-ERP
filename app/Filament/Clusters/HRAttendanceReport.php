@@ -6,7 +6,7 @@ use Filament\Clusters\Cluster;
 
 class HRAttendanceReport extends Cluster
 {
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static ?string $navigationIcon = 'heroicon-o-newspaper';
     public static function getNavigationLabel(): string
     {
         return 'Reports';

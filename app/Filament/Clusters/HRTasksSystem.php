@@ -7,7 +7,7 @@ use Filament\Pages\SubNavigationPosition;
 
 class HRTasksSystem extends Cluster
 {
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static ?string $navigationIcon = 'heroicon-o-document-arrow-up';
     
 
 
