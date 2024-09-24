@@ -22,7 +22,7 @@ class EmployeeRatingReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Employee rating report';
+    protected static ?string $label = 'Task performance rating';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     public static function form(Form $form): Form

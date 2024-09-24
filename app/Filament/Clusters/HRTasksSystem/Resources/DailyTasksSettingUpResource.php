@@ -11,6 +11,7 @@ use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -18,6 +19,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -25,6 +28,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class DailyTasksSettingUpResource extends Resource
 {
@@ -70,21 +74,124 @@ class DailyTasksSettingUpResource extends Resource
 
                     ]),
 
-                    Fieldset::make()->label('Set start date and end date for daily task')->schema([
-                        // Grid::make()->columns(2)->schema([
-                        //     DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
-                        //     DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
-                        // ]),
-
-                        Grid::make()->columns(2)->schema([ToggleButtons::make('schedule_type')
+                    Fieldset::make()->label('Set schedule task type and start date of scheduele task')->schema([
+                        Grid::make()->columns(4)->schema([
+                            ToggleButtons::make('schedule_type')
                                 ->label('')
-                                ->columnSpanFull()
+                                ->columnSpan(2)
                                 ->inline()
                                 ->default(DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
-                                ->options(DailyTasksSettingUp::getScheduleTypes())]),
-                        Grid::make()->columns(2)->label('Start date and End date')->schema([
-                            DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1),
-                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1),
+                                ->options(DailyTasksSettingUp::getScheduleTypes())
+                                ->live()
+                                ->afterStateUpdated(function (Get $get, Set $set, $state, ?Model $record = null) {
+                                    if (isset($record) && !is_null($record) && !is_null($record->taskScheduleRequrrencePattern)) {
+                                        $pattern = $record->taskScheduleRequrrencePattern;
+                                        $set('recur_count', $pattern->recur_count);
+                                        $set('end_date', $pattern->end_date);
+                                        $set('start_date', $pattern->start_date);
+
+                                    } else {
+
+                                        if ($state == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            $set('end_date', date('Y-m-d', strtotime('+1 months')));
+                                            $set('recur_count', 1);
+                                        } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            $set('end_date', date('Y-m-d', strtotime('+2 weeks')));
+                                            $set('recur_count', 2);
+                                        } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                            $set('end_date', date('Y-m-d', strtotime('+7 days')));
+                                            $set('recur_count', 7);
+                                        }
+                                    }
+                                })
+                            ,
+                            Grid::make()->columns(1)->columnSpan(1)->schema([
+                                DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1)->minDate(date('Y-m-d'))->live()
+                                ,
+                                TextInput::make('recur_count')->label(function (Get $get) {
+                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        return 'Count days';
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                        return 'Count weeks';
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                        return 'Count months';
+                                    }
+
+                                })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                        $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                        $set('end_date', date('Y-m-d', strtotime("+$state months")));
+                                    }
+
+                                }),
+                            ]),
+                            DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
+                                ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+
+                                $date1 = new \DateTime($get('start_date'));
+                                $date2 = new \DateTime($state);
+
+                                $interval = $date1->diff($date2);
+
+                                if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                    $set('recur_count', $interval->days);
+                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                    $weeks = floor($interval->days / 7);
+                                    $set('recur_count', $weeks);
+                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                    $months = ($interval->y * 12) + $interval->m;
+                                    $set('recur_count', $months);
+                                }
+                            })
+                            ,
+
+                        ])
+
+                        ,
+                        Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
+                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
+                                Grid::make()->label('')->columns(2)->schema([
+                                    Radio::make('requr_pattern_set_days')->label('')
+                                        ->options([
+                                            'specific_days' => 'Every',
+                                            'every_day' => 'Every weekday',
+                                        ])->live(),
+                                    TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)'),
+                                ]),
+                            ]),
+                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
+                                Grid::make()->label('')->columns(2)->schema([
+                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')
+                                    ,
+                                    ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
+                                ]),
+                            ]),
+                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
+                                Grid::make()->label('')->columns(3)->schema([
+                                    Radio::make('requr_pattern_monthly_status')->label('')
+                                        ->columnSpan(1)
+                                        ->options([
+                                            'day' => 'Day',
+                                            'the' => 'The',
+                                        ])->live()->default('day'),
+                                    Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
+                                        TextInput::make('the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
+                                        TextInput::make('months')->label('')->default(1)->numeric()->helperText('Month(s)'),
+                                    ]),
+                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
+                                        Select::make('requr_pattern_order_name')->label('')->options([
+                                            'first' => 'first',
+                                            'second' => 'second',
+                                            'third' => 'third',
+                                            'fourth' => 'fourth',
+                                            'fifth' => 'fifth'])->default('first'),
+                                        Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
+                                    ]),
+                                ]),
+                            ]),
                         ]),
                     ]),
                     Textarea::make('description')

@@ -48,4 +48,9 @@ class DailyTasksSettingUp extends Model
             self::TYPE_SCHEDULE_MONTHLY => 'Monthly',
         ];
     }
+
+    public function taskScheduleRequrrencePattern()
+    {
+        return $this->hasOne(TaskScheduleRequrrencePattern::class, 'task_id');
+    }
 }

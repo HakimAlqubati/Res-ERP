@@ -28,7 +28,7 @@ class AttendnaceResource extends Resource
 
     protected static ?string $cluster = HRAttenanceCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     protected static ?int $navigationSort = 2;
     public static function form(Form $form): Form
     {

@@ -19,4 +19,18 @@ class CreateServiceRequest extends CreateRecord
         $data['created_by'] = auth()->user()->id;
         return $data;
     }
+
+    public function afterCreate(): void
+    {
+        if (is_array($this->data['file_path']) && count($this->data['file_path']) > 0) {
+            foreach ($this->data['file_path'] as $key => $image) {
+                $this->record->photos()->create([
+                    'image_name' => $image,
+                    'image_path' => $image,
+                    'created_by' => auth()->user()->id,
+                ]);
+            }
+        }
+
+    }
 }

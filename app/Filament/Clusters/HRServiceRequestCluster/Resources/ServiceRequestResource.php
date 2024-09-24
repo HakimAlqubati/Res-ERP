@@ -25,7 +25,6 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -102,7 +101,35 @@ class ServiceRequestResource extends Resource
                             ])->disabled()
                             ->required(),
                     ]),
+                    Fieldset::make()->label('ِAdd photos')->schema([
 
+                        FileUpload::make('file_path')
+                            ->label('')
+                            ->disk('public')
+                            ->directory('service_requests')
+                            ->visibility('public')
+                            ->columnSpanFull()
+                            ->imagePreviewHeight('250')
+                            ->image()
+                            ->resize(5)
+                            ->loadingIndicatorPosition('left')
+                        // ->panelAspectRatio('2:1')
+                            ->panelLayout('integrated')
+                            ->removeUploadedFileButtonPosition('right')
+                            ->uploadButtonPosition('left')
+                            ->uploadProgressIndicatorPosition('left')
+                            ->multiple()
+                            ->panelLayout('grid')
+                            ->reorderable()
+                            ->openable()
+                            ->downloadable()
+                        // ->hiddenOn('create')
+                            ->previewable()
+                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                return (string) str($file->getClientOriginalName())->prepend('service-request-');
+                            }),
+
+                    ]),
                 ]),
             ]);
     }

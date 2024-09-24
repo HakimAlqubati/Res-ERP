@@ -190,44 +190,44 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ])
 
                         ,
-                        Fieldset::make()->label('Recurrence pattern')->schema([
+                        Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
                                 Grid::make()->label('')->columns(2)->schema([
-                                    Radio::make('set_days')->label('')
+                                    Radio::make('requr_pattern_set_days')->label('')
                                         ->options([
                                             'specific_days' => 'Every',
                                             'every_day' => 'Every weekday',
                                         ])->live(),
-                                    TextInput::make('recurrence_each_day')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('set_days') == 'every_day'))->label('Day(s)'),
+                                    TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)'),
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
                                 Grid::make()->label('')->columns(2)->schema([
-                                    TextInput::make('recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')
+                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')
                                     ,
-                                    ToggleButtons::make('weekly_days')->label('')->inline()->options(getDays())->multiple(),
+                                    ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
                                 Grid::make()->label('')->columns(3)->schema([
-                                    Radio::make('monthly_status')->label('')
+                                    Radio::make('requr_pattern_monthly_status')->label('')
                                         ->columnSpan(1)
                                         ->options([
                                             'day' => 'Day',
                                             'the' => 'The',
                                         ])->live()->default('day'),
-                                    Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('monthly_status') == 'day'))->schema([
+                                    Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
                                         TextInput::make('the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
                                         TextInput::make('months')->label('')->default(1)->numeric()->helperText('Month(s)'),
                                     ]),
-                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('monthly_status') == 'the'))->columnSpan(2)->schema([
-                                        Select::make('order_name')->label('')->options([
+                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
+                                        Select::make('requr_pattern_order_name')->label('')->options([
                                             'first' => 'first',
                                             'second' => 'second',
                                             'third' => 'third',
                                             'fourth' => 'fourth',
                                             'fifth' => 'fifth'])->default('first'),
-                                        Select::make('order_day')->label('')->options(getDays())->default('Saturday'),
+                                        Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
                                     ]),
                                 ]),
                             ]),
@@ -580,9 +580,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                                         $component->helperText("Your rating: $state/10");
                                     }),
                                 // TextInput::make('user')->default($record->assigned->name)->disabled()->label('Task employee'),
-                                Hidden::make('task_user_id_assigned')->default($record->assigned_to),
+                                
                                 Textarea::make('comment')->columnSpanFull(),
-                                Hidden::make('created_by')->default(auth()->user()->id),
+                                
                                 // Hidden::
                             ]),
                         ];
@@ -661,5 +661,15 @@ class TaskResource extends Resource implements HasShieldPermissions
         }
 
         return false;
+    }
+
+    public static function getRequrPatternKeysAndValues(array $data)
+    {
+        // Use array_filter to get the keys starting with 'requr_pattern_'
+        $filteredData = array_filter($data, function ($value, $key) {
+            return Str::startsWith($key, 'requr_pattern_');
+        }, ARRAY_FILTER_USE_BOTH);
+
+        return $filteredData;
     }
 }

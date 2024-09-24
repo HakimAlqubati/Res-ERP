@@ -25,7 +25,7 @@ class EmployeeAttednaceReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Employee attendance report';
+    protected static ?string $label = 'Attendance by employee';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function form(Form $form): Form
