@@ -26,7 +26,7 @@ class EditDailyTasksSettingUp extends EditRecord
         foreach ($recur_pattern_details as $key => $value) {
             $data[$key] = $value;
         }
-
+// dd($data['requr_pattern_monthly_status']);
         // dd(TaskResource::getRequrPatternKeysAndValues($recur_pattern));
         $data['recur_count'] = $recur_pattern?->recur_count;
         return $data;

@@ -49,6 +49,15 @@ class DailyTasksSettingUp extends Model
         ];
     }
 
+    public static function getScheduleTypesKeys()
+    {
+        return [
+            self::TYPE_SCHEDULE_DAILY,
+            self::TYPE_SCHEDULE_WEEKLY,
+            self::TYPE_SCHEDULE_MONTHLY,
+        ];
+    }
+
     public function taskScheduleRequrrencePattern()
     {
         return $this->hasOne(TaskScheduleRequrrencePattern::class, 'task_id');

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\TestController;
 use App\Jobs\CreateDailyTask;
 use App\Models\Employee;
 use App\Models\Order;
@@ -22,22 +23,19 @@ use Spatie\Permission\Models\Role;
 | routes are loaded by the RouteServiceProvider within a group which
 | contains the "web" middleware group. Now create something great!
 |
-*/
+ */
 
 Route::get('/totestpdf', function () {
     $order = Order::find(52);
     $orderDetails = $order?->orderDetails;
     return view('export.order_pdf', compact('order', 'orderDetails'));
 });
-Route::get('/totest', function () {
-
-    return getRolesByTypeId(50);
-});
+Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
 Route::get('/toviewrepeated', function () {
     /**
      * order IDs
      * (71,82,84,86,89,90,91,92,95,103,104,106,107,110,111,112,115)
-     * 
+     *
      */
     $repeated_order_details = DB::table('orders_details')->select(
         'order_id',
@@ -92,7 +90,7 @@ Route::get('/tomodifypricinginpurchaseinvoices', function () {
     $purchase_invoice_details = PurchaseInvoiceDetail::get();
     // return $purchase_invoice_details;
     foreach ($purchase_invoice_details as $key => $value) {
-        $val = (object)$value;
+        $val = (object) $value;
         $unit_price = UnitPrice::where('product_id', $val->product_id)->where('unit_id', $val->unit_id)?->first()?->price;
 
         // $res[] = [
@@ -110,7 +108,7 @@ Route::get('/tomodifypricinginpurchaseinvoices', function () {
             $res['nullable'][] = [
                 'id' => $val->id,
                 'product_id' => $val->product_id,
-                'product_name' =>  Product::find($val->product_id)->name,
+                'product_name' => Product::find($val->product_id)->name,
                 'unit_id' => $val->unit_id,
                 'quantity' => $val->quantity,
                 'price' => $val->price,
@@ -121,7 +119,7 @@ Route::get('/tomodifypricinginpurchaseinvoices', function () {
             $res['have'][] = [
                 'id' => $val->id,
                 'product_id' => $val->product_id,
-                'product_name' =>  Product::find($val->product_id)->name,
+                'product_name' => Product::find($val->product_id)->name,
                 'unit_id' => $val->unit_id,
                 'quantity' => $val->quantity,
                 'price' => $val->price,
@@ -159,9 +157,9 @@ Route::get('/tomodifypricinginpurchaseinvoices', function () {
         // }
     }
     return $res2;
-    return  $res['nullable'];
-    return  $res;
-    return  $res['have'];
+    return $res['nullable'];
+    return $res;
+    return $res['have'];
     return $purchase_invoice_details;
 });
 Route::get('/', function () {
@@ -172,43 +170,41 @@ Route::get('/', function () {
 Route::get('orders/export/{id}', [OrderController::class, 'export']);
 Route::get('orders/export-transfer/{id}', [OrderController::class, 'exportTransfer']);
 
-
 Route::get('/import_page_units', [ImportController::class, 'import_units_view']);
 Route::post('/import_units', [
     ImportController::class,
-    'importUnits'
+    'importUnits',
 ])->name('import_units');
 
 Route::get('/import_page_products', [ImportController::class, 'import_products_view']);
 Route::post('/import_products', [
     ImportController::class,
-    'importProducts'
+    'importProducts',
 ])->name('import_products');
 
 Route::get('/import_page_purchase_invoice_details', [ImportController::class, 'import_purchase_invoice_details_view']);
 Route::post('/import_purchase_invoice_details', [
     ImportController::class,
-    'importpurchaseInvoiceDetails'
+    'importpurchaseInvoiceDetails',
 ])->name('import_purchase_invoice_details');
 
 Route::get('/import_page_item_types', [ImportController::class, 'import_item_types_view']);
 Route::post('/import_item_types', [
     ImportController::class,
-    'importItemTypes'
+    'importItemTypes',
 ])->name('import_item_types');
 
 Route::get('/import_page_categories', [ImportController::class, 'import_categories_view']);
 Route::post('/import_categories', [
     ImportController::class,
-    'importCategories'
+    'importCategories',
 ])->name('import_categories');
 
 Route::get('/import_page_unit_prices', [ImportController::class, 'import_unit_prices_view']);
 Route::post('/import_unit_prices', [
     ImportController::class,
-    'importUnitPrices'
+    'importUnitPrices',
 ])->name('import_unit_prices');
-
 
 Route::get('/test-tasks-job', function () {
 

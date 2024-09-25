@@ -176,10 +176,12 @@ class DailyTasksSettingUpResource extends Resource
                                         ->options([
                                             'day' => 'Day',
                                             'the' => 'The',
-                                        ])->live()->default('day'),
+                                        ])->live()
+                                        // ->default('day')
+                                        ,
                                     Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
-                                        TextInput::make('the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
-                                        TextInput::make('months')->label('')->default(1)->numeric()->helperText('Month(s)'),
+                                        TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
+                                        TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
                                     ]),
                                     Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
                                         Select::make('requr_pattern_order_name')->label('')->options([
@@ -227,8 +229,9 @@ class DailyTasksSettingUpResource extends Resource
         return $table
             ->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->searchable(),
+                // TextColumn::make('id')->searchable()->sortable(),
                 TextColumn::make('title')->searchable(),
+                TextColumn::make('schedule_type')->searchable()->sortable()->alignCenter(true),
                 TextColumn::make('description'),
                 TextColumn::make('assignedto.name')->label('Assigned to'),
                 TextColumn::make('assignedby.name')->label('Assigned by'),

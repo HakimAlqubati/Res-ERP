@@ -158,7 +158,8 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                                 })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                        // dd($state);
+                                        $set('end_date', date('Y-m-d', strtotime("+10 days")));
                                     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
                                         $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
                                     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
@@ -217,8 +218,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                                             'the' => 'The',
                                         ])->live()->default('day'),
                                     Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
-                                        TextInput::make('the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
-                                        TextInput::make('months')->label('')->default(1)->numeric()->helperText('Month(s)'),
+                                        TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
+                                        TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
                                     ]),
                                     Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
                                         Select::make('requr_pattern_order_name')->label('')->options([
