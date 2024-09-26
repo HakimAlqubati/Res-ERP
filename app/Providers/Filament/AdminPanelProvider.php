@@ -51,6 +51,9 @@ class AdminPanelProvider extends PanelProvider
         return $panel
        
         ->brandName('Workbench')
+        ->favicon(asset('storage/logo/default.png'))
+        ->brandLogo(asset('storage/logo/default.png'))
+        ->brandLogoHeight('3.5rem')
         ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
             $menu =  $builder->items([
                 NavigationItem::make(__('lang.dashboard'))

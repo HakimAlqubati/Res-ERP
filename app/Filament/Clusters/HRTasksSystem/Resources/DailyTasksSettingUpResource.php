@@ -312,4 +312,12 @@ class DailyTasksSettingUpResource extends Resource
         }
         return $query;
     }
+
+    public static function canViewAny(): bool
+    {
+        if(in_array(getCurrentRole(),[1,3])){
+            return true;
+        }
+        return false;
+    }
 }

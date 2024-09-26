@@ -189,5 +189,4 @@ class CircularWidget extends BaseWidget
         ;
     }
 
-    
 }

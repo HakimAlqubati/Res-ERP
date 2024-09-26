@@ -22,7 +22,7 @@ class HolidayResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-
+    protected static ?string $label = 'Public Holidays';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     protected static ?int $navigationSort = 5;
 

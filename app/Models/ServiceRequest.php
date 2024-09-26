@@ -24,6 +24,7 @@ class ServiceRequest extends Model
         'updated_by',
     ];
 
+    
     // Status constants
     const STATUS_NEW = 'New';
     const STATUS_PENDING = 'Pending';
@@ -100,5 +101,9 @@ class ServiceRequest extends Model
     public function getPhotosCountAttribute()
     {
         return $this->photos()->count();
+    }
+    public function logs()
+    {
+        return $this->hasMany(ServiceRequestLog::class, 'service_request_id');
     }
 }

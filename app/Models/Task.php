@@ -11,19 +11,19 @@ class Task extends Model
 
     protected $table = 'hr_tasks';
 
+    const STATUS_NEW = 'new';
     const STATUS_PENDING = 'pending';
     const STATUS_IN_PROGRESS = 'in_progress';
-    const STATUS_REVIEW = 'review';
-    const STATUS_CANCELLED = 'cancelled';
-    const STATUS_FAILED = 'failed';
-    const STATUS_COMPLETED = 'completed';
-
+    const STATUS_CLOSED = 'closed';    
+    
+    
+    
+    const COLOR_NEW = 'primary';
     const COLOR_PENDING = 'warning';
     const COLOR_IN_PROGRESS = 'info';
-    const COLOR_REVIEW = 'primary';
-    const COLOR_CANCELLED = 'danger';
-    const COLOR_FAILED = 'gray';
-    const COLOR_COMPLETED = 'success';
+    const COLOR_CLOSED = 'success';
+    
+    
 
     protected $fillable = [
         'title',
@@ -90,12 +90,10 @@ class Task extends Model
     public static function getStatuses()
     {
         return [
+            self::STATUS_NEW,
             self::STATUS_PENDING,
             self::STATUS_IN_PROGRESS,
-            self::STATUS_REVIEW,
-            self::STATUS_CANCELLED,
-            self::STATUS_FAILED,
-            self::STATUS_COMPLETED,
+            self::STATUS_CLOSED,
         ];
     }
 
@@ -111,11 +109,9 @@ class Task extends Model
     {
         return [
             self::STATUS_PENDING => self::COLOR_PENDING,
+            self::STATUS_NEW => self::COLOR_NEW,
             self::STATUS_IN_PROGRESS => self::COLOR_IN_PROGRESS,
-            self::STATUS_REVIEW => self::COLOR_REVIEW,
-            self::STATUS_CANCELLED => self::COLOR_CANCELLED,
-            self::STATUS_FAILED => self::COLOR_FAILED,
-            self::STATUS_COMPLETED => self::COLOR_COMPLETED,
+            self::STATUS_CLOSED => self::COLOR_CLOSED,
         ];
     }
 

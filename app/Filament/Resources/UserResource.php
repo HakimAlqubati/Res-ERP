@@ -6,7 +6,6 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\User;
-use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -136,7 +135,9 @@ class UserResource extends Resource
                                     if ($get('user_type')) {
                                         $roles = getRolesByTypeId($get('user_type'));
                                         // dd($roles,gettype($roles));
-                                        return Role::select('name', 'id')->whereIn('id', $roles)->get()->pluck('name', 'id');
+                                        return Role::select('name', 'id')->whereIn('id', $roles)
+                                            ->orderBy('name', 'asc')
+                                            ->get()->pluck('name', 'id');
                                     }
                                 })
                             ,
@@ -216,7 +217,10 @@ class UserResource extends Resource
                                 if ($get('user_type')) {
                                     $roles = getRolesByTypeId($get('user_type'));
                                     // dd($roles,gettype($roles));
-                                    return Role::select('name', 'id')->whereIn('id', $roles)->get()->pluck('name', 'id');
+                                    return Role::select('name', 'id')
+                                        ->whereIn('id', $roles)
+                                        ->orderBy('name', 'asc')
+                                        ->get()->pluck('name', 'id');
                                 }
                             })
                         ,

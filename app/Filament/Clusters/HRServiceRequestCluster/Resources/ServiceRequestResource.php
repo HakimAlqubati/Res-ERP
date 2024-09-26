@@ -5,10 +5,12 @@ namespace App\Filament\Clusters\HrServiceRequestCluster\Resources;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CommentsRelationManager;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\LogsRelationManager;
 use App\Models\Branch;
 use App\Models\BranchArea;
 use App\Models\Employee;
 use App\Models\ServiceRequest;
+use App\Models\ServiceRequestLog;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -25,6 +27,8 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -41,6 +45,7 @@ class ServiceRequestResource extends Resource
 
     public static function form(Form $form): Form
     {
+
         return $form
             ->schema([
                 Fieldset::make()->schema([
@@ -50,15 +55,36 @@ class ServiceRequestResource extends Resource
                             ->required()
                             ->maxLength(255),
                         Select::make('branch_id')->label('Branch')
-                            ->options(Branch::query()->where('active', 1)
-                                    ->select('id', 'name')->pluck('name', 'id'))
+                            ->options(function () {
+                                $query = Branch::query();
+                                if (auth()->user()->is_branch_manager) {
+                                    $query->where('id', auth()->user()->branch->id);
+                                }
+                                $query = $query->where('active', 1)
+                                    ->select('id', 'name')->pluck('name', 'id');
+                                return $query;
+                            }
+                            )->default(function () {
+                            if (auth()->user()->is_branch_manager) {
+                                return auth()->user()->branch->id;
+                            }
+                        })
                             ->live()
                             ->required(),
 
                         Select::make('branch_area_id')->label('Branch area')->required()
-                            ->options(fn(Get $get): Collection => BranchArea::query()
+                            ->options(function (Get $get) {
+                                if (auth()->user()->is_branch_manager) {
+                                    return BranchArea::query()
+                                        ->where('branch_id', auth()->user()->branch->id)
+                                        ->pluck('name', 'id');
+
+                                }
+                                return BranchArea::query()
                                     ->where('branch_id', $get('branch_id'))
-                                    ->pluck('name', 'id')),
+                                    ->pluck('name', 'id');
+                            })
+                        ,
                     ]),
                     Fieldset::make()->label('Descripe your service request')->schema([
                         Textarea::make('description')->label('')->required()
@@ -75,6 +101,12 @@ class ServiceRequestResource extends Resource
                                     ->where('branch_id', $get('branch_id'))
                                     ->pluck('name', 'id'))
                             ->searchable()
+                            ->disabledOn('edit')
+                            ->helperText(function(Model $record = null){
+                                if($record){
+                                    return 'To reassign, go to table page ';
+                                }
+                            })
                             ->nullable(),
                         Select::make('urgency')
                             ->options([
@@ -99,6 +131,11 @@ class ServiceRequestResource extends Resource
                                 ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
                                 ServiceRequest::STATUS_CLOSED => 'Closed',
                             ])->disabled()
+                            ->helperText(function(Model $record = null){
+                                if($record){
+                                    return 'To change status, go to table page ';
+                                }
+                            })
                             ->required(),
                     ]),
                     Fieldset::make()->label('ِAdd photos')->schema([
@@ -227,16 +264,58 @@ class ServiceRequestResource extends Resource
                     ->color('success')
                     ->action(function (array $data, $record): void {
                         // dd($data);
-                        $record->update([
+                        $prevStatus = $record->status;
+                        $move = $record->update([
                             'status' => $data['status'],
                         ]);
+                        if ($move) {
+                            $record->logs()->create([
+                                'created_by' => auth()->user()->id,
+                                'description' => 'status changed from ' . $prevStatus . ' to ' . $record->status,
+                                'log_type' => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
+                            ]);
+                        }
+                    }),
+                Action::make('ReAssign')->button()
+                    ->form(function ($record) {
+                        return [
+                            Fieldset::make()->schema([
+                                Select::make('assigned_to')->label('')->columnSpanFull()
+                                    ->options(Employee::query()
+                                            ->where('active', 1)
+                                            ->where('branch_id', $record->branch_id)
+                                            ->pluck('name', 'id'))
+                                    ->searchable()
+                                    ->nullable(),
+                            ]),
+                        ];
+                    })
+                    ->icon('heroicon-m-arrows-right-left')
+                    ->color('info')
+                    ->action(function (array $data, $record): void {
+
+                        $prevAssigned = null;
+                        if (!is_null($record?->assigned_to)) {
+                            $prevAssigned = $record?->assignedTo?->name;
+                        }
+                        $newAssigned = Employee::find($data['assigned_to'])?->name;
+                        $reassign = $record->update([
+                            'assigned_to' => $data['assigned_to'],
+                        ]);
+
+                        if ($reassign) {
+                            $description = 'Assigned to ' . $newAssigned;
+                            if (!is_null($prevAssigned)) {
+                                $description = 'Reassigned from ' . $prevAssigned . ' to ' . $newAssigned;
+                            }
+                            $record->logs()->create([
+                                'created_by' => auth()->user()->id,
+                                'description' => $description,
+                                'log_type' => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
+                            ]);
+                        }
                     }),
                 Action::make('AddComment')->button()
-                // ->hidden(function ($record) {
-                //     if (!isSuperAdmin() && !auth()->user()->can('add_comment_task')) {
-                //         return true;
-                //     }
-                // })
                     ->form(function ($record) {
                         return [
                             Fieldset::make()->schema([
@@ -279,6 +358,13 @@ class ServiceRequestResource extends Resource
                             'created_by' => auth()->user()->id,
                         ]);
 
+                        if ($comment) {
+                            $record->logs()->create([
+                                'created_by' => auth()->user()->id,
+                                'description' => 'Comment added: ' . $data['comment'],
+                                'log_type' => ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
+                            ]);
+                        }
                         // If there are photos, save them after the comment is created
                         if (isset($data['image_path']) && is_array($data['image_path']) && count($data['image_path']) > 0) {
                             foreach ($data['image_path'] as $file) {
@@ -336,6 +422,11 @@ class ServiceRequestResource extends Resource
                                     'created_by' => auth()->user()->id,
                                 ]);
                             }
+                            $record->logs()->create([
+                                'created_by' => auth()->user()->id,
+                                'description' => 'Images added',
+                                'log_type' => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
+                            ]);
                         }
                     })
                     ->button()
@@ -373,6 +464,7 @@ class ServiceRequestResource extends Resource
     {
         return [
             CommentsRelationManager::class,
+            LogsRelationManager::class,
         ];
     }
 
@@ -387,6 +479,21 @@ class ServiceRequestResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
+        if (auth()->user()->is_branch_manager) {
+            return static::getModel()::where('branch_id', auth()->user()->branch->id)->count();
+        }
         return static::getModel()::count();
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = static::getModel();
+        if (auth()->user()->is_branch_manager) {
+            // $query = $query::where('branch_id', auth()->user()->branch->id);
+            return $query::query()->where('branch_id', auth()->user()->branch->id);
+        }
+        return $query::query();
+
+    }
+
 }

@@ -23,7 +23,7 @@ class WeeklyHolidayResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-
+    protected static ?string $label = 'Weekend';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     protected static ?int $navigationSort = 3;
     public static function form(Form $form): Form

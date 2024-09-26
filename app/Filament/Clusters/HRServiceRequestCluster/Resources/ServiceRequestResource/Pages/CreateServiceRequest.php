@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequest
 
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource;
 use App\Models\ServiceRequest;
+use App\Models\ServiceRequestLog;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateServiceRequest extends CreateRecord
@@ -32,5 +33,10 @@ class CreateServiceRequest extends CreateRecord
             }
         }
 
+        $this->record->logs()->create([
+            'created_by' => auth()->user()->id,
+            'description' => 'Service request has been created',
+            'log_type' => ServiceRequestLog::LOG_TYPE_CREATED,
+        ]);
     }
 }

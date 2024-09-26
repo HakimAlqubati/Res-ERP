@@ -5,15 +5,18 @@ namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\ListEmployeeRatingReports2;
 use App\Models\Attendance;
-use App\Models\Employee;
+use App\Models\TaskRating;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeRatingReportResource extends Resource
 {
@@ -36,14 +39,13 @@ class EmployeeRatingReportResource extends Resource
     public static function table(Table $table): Table
     {
 
-      
         return $table
             ->emptyStateHeading('No data')
             ->columns([
-                TextColumn::make('employee_no')->label('Employee no')->searchable(isIndividual: true, isGlobal: true)->alignCenter(true),
+                TextColumn::make('employee_no')->label('Employee no')->searchable(isIndividual: true, isGlobal: true)->alignCenter(false),
                 TextColumn::make('employee_name')->label('Employee name')->searchable(isIndividual: true, isGlobal: true),
-                TextColumn::make('branch_name')->label('Branch')->alignCenter(true),
-                TextColumn::make('task_id')->label('Task id')->alignCenter(true),
+                TextColumn::make('count_task')->label('Number of tasks')->alignCenter(true),
+
                 TextColumn::make('rating_value')->label('Rating value')->alignCenter(true),
 
             ])
@@ -92,29 +94,30 @@ class EmployeeRatingReportResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $query = TaskRating::select('hr_employees.id as employee_id', DB::raw('SUM(hr_task_rating.rating_value) as rating_value')
+            , DB::raw('count(hr_task_rating.task_id) as count_task')
+            , 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no')
+            ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id')
+            ->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no');
+        return $query;
         // $query = static::getModel()::query();
-        $query = Employee::query()
+        $query = TaskRating::query()
             ->select(
                 'hr_employees.id AS employee_id',
                 'hr_employees.name AS employee_name',
                 'hr_employees.employee_no AS employee_no',
-                'branches.name AS branch_name',
                 'hr_tasks.id AS task_id',
-                'hr_task_rating.rating_value AS rating_value',
-                // 'products.id AS product_id',
-                // 'branches.name AS branch',
-                // 'units.name AS unit',
-                // DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-
+                'hr_task_rating.rating_value AS rating_value'
             )
-            ->join('branches', 'hr_employees.branch_id', '=', 'branches.id')
-            ->join('hr_tasks', 'hr_employees.id', '=', 'hr_tasks.assigned_to')
-            ->join('hr_task_rating', 'hr_employees.id', '=', 'hr_task_rating.task_user_id_assigned')
-
-        // ->whereNull('hr_employees.deleted_at')
-        // ->where('products.id', $product_id)
-        // ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
-        ;
+            ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id')
+            ->join('hr_tasks', 'hr_tasks.assigned_to', '=', 'hr_employees.id')
+            ->groupBy(
+                'hr_employees.id',
+                'hr_tasks.id',
+                'hr_task_rating.rating_value',
+                'hr_employees.name',
+                'hr_employees.employee_no',
+            );
         return $query;
 
     }

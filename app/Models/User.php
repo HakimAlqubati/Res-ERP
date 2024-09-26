@@ -6,7 +6,6 @@ namespace App\Models;
 
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Concerns\IsFilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -17,9 +16,9 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 // implements FilamentUser
+
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield;
-
 
     /**
      * The attributes that are mass assignable.
@@ -65,7 +64,6 @@ class User extends Authenticatable implements FilamentUser
 
     public static $filamentRolesColumn = 'filament_roles';
 
-
     public function canAccessPanel(Panel $panel): bool
     {
         return true;
@@ -80,8 +78,6 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
-
-
 
     public function getFirstRoleAttribute()
     {
@@ -101,6 +97,14 @@ class User extends Authenticatable implements FilamentUser
     public function employee()
     {
         return $this->hasOne(Employee::class, 'user_id', 'id');
+    }
+    public function getIsBranchManagerAttribute()
+    {
+        if (getCurrentRole() == 7) {
+            return true;
+        }
+
+        return false;
     }
     // public function canAccessFilament(): bool
     // {

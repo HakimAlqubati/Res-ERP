@@ -33,6 +33,11 @@ class EmployeeOvertimeResource extends Resource
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
+
+    protected static ?string $label = 'Employees Overtime';
+    protected static ?string $pluralModelLabel = 'Employees Overtime';
+    protected static ?string $pluralLabel = 'Employees Overtime';
+
     protected static ?int $navigationSort = 10;
     public static function form(Form $form): Form
     {
@@ -142,27 +147,26 @@ class EmployeeOvertimeResource extends Resource
 
                                     })
                                 ,
-                                TextInput::make('hours_as_default')->label('Hours count'),
-                            ]),
-                            Grid::make()->columns(2)->schema([
-                                TextInput::make('reason_as_default')
-                                    ->label('Reason')
+                                TextInput::make('hours_as_default')->label('Overtime Hours')
                                     ->live()
                                     ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                         // Get the current repeater data
                                         $employees = $get('employees') ?? [];
                                         // dd($employees,$state);
-                                        // Loop through the repeater items and set the 'reason' for each
+                                        // Loop through the repeater items and set the 'notes' for each
                                         foreach ($employees as $index => $employee) {
-                                            $employees[$index]['reason'] = $state;
+                                            $employees[$index]['hours'] = $state;
                                         }
 
                                         // Set the updated repeater data back to the 'employees' field
                                         $set('employees', $employees);
                                     })
-                                    ->nullable(),
+                                ,
+                            ]),
+                            Grid::make()->columns(2)->schema([
                                 TextInput::make('notes_as_default')
                                     ->label('Notes')
+                                    ->columnSpan(2)
                                     ->live()
                                     ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                         // Get the current repeater data
@@ -202,7 +206,7 @@ class EmployeeOvertimeResource extends Resource
                                             // Set the result in the hours_as_default field
                                             $set('hours', $hours);
                                         })
-                                        ->required(),
+                                    ,
 
                                     TimePicker::make('end_time')
                                         ->label('End Time')
@@ -217,15 +221,12 @@ class EmployeeOvertimeResource extends Resource
                                             // Set the result in the hours_as_default field
                                             $set('hours', $hours);
                                         })
-                                        ->required(),
-                                    TextInput::make('hours')->label('Hours count'),
+                                    ,
+                                    TextInput::make('hours')->label('Overtime Hours')->required(),
                                 ]),
                                 Grid::make()->columns(2)->schema([
-                                    TextInput::make('reason')
-                                        ->label('Reason')
-                                        ->nullable(),
                                     TextInput::make('notes')
-                                        ->label('Notes')
+                                        ->label('Notes')->columnSpanFull()
                                         ->nullable(),
                                 ]),
                             ])

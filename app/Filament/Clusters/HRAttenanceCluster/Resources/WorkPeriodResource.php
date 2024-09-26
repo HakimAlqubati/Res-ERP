@@ -10,6 +10,7 @@ use App\Models\WorkPeriod;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
@@ -50,7 +51,7 @@ class WorkPeriodResource extends Resource
                             ->helperText('This period will be for all branches')
                             ->live()
                             ->columnSpan(1)
-                            ->disabled()
+                            // ->disabled()
                             ->inline(false)
                             ->default(true),
                         Toggle::make('active')
@@ -69,7 +70,7 @@ class WorkPeriodResource extends Resource
                         ])->columnSpanFull()->hidden(fn(Get $get): bool => $get('all_branches')),
                     ]),
 
-                    Forms\Components\RichEditor::make('description')->columnSpanFull()
+                    Textarea::make('description')->columnSpanFull()
                         ->label('Description'),
 
 
@@ -108,7 +109,7 @@ class WorkPeriodResource extends Resource
                             ->required(),
 
                         Forms\Components\TextInput::make('allowed_count_minutes_late')
-                            ->label('Number of minutes allowed for delay')->required()->default(0)
+                            ->label('Allowed Delay (Minutes)')->required()->default(0)
                             ->columnSpan(1)
                             ->numeric(),
                     ]),

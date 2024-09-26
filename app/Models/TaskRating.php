@@ -9,6 +9,6 @@ class TaskRating extends Model
 {
     use HasFactory;
     protected $table = 'hr_task_rating';
-    protected $fillable = ['task_id','comment', 'created_by', 'task_user_id_assigned', 'rating_value', 'status'];
+    protected $fillable = ['task_id','comment', 'created_by', 'employee_id','task_user_id_assigned', 'rating_value', 'status'];
 
 }
