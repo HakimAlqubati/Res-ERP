@@ -168,4 +168,12 @@ class AttendnaceResource extends Resource
 
         return $query;
     }
+
+    public static function canViewAny(): bool
+    {
+        if(isSystemManager() || isSuperAdmin()){
+            return true;
+        }
+        return false;
+    }
 }

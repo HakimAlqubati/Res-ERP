@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
 
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource;
+use App\Models\Employee;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
@@ -13,6 +14,10 @@ class CreateDailyTasksSettingUp extends CreateRecord
     protected static string $resource = DailyTasksSettingUpResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $employee = Employee::find($data['assigned_to']);
+        if ($employee->branch()->exists()) {
+            $data['branch_id'] = $employee->branch->id;
+        }
         return $data;
     }
 

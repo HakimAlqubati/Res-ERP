@@ -42,6 +42,7 @@ class LeaveApplication extends Model
         'days_count',
         'to_date',
         'leave_type_id',
+        'branch_id',
     ];
 
     public function employee()
@@ -111,5 +112,14 @@ class LeaveApplication extends Model
             self::STATUS_CANCEL => self::STATUS_LABEL_CANCEL,
             self::STATUS_APPROVED => self::STATUS_LABEL_APPROVED,
             self::STATUS_REJECTED => self::STATUS_LABEL_REJECTED];
+    }
+
+    protected static function booted()
+    {
+        if (isBranchManager()) {
+            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            });
+        }
     }
 }

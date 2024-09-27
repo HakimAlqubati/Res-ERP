@@ -23,7 +23,8 @@ class EmployeeOvertime extends Model
         'approved_by',
         'notes',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'branch_id',
     ];
 
     // Relationships
@@ -49,5 +50,20 @@ class EmployeeOvertime extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    protected static function booted()
+    {
+        if (auth()->check()) {
+            if (isBranchManager()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+                });
+            } elseif (isStuff()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
+                });
+            }
+        }
     }
 }

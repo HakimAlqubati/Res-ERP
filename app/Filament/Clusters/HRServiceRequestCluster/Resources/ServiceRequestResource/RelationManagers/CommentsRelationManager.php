@@ -2,7 +2,9 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers;
 
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -15,13 +17,42 @@ class CommentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'comments';
 
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {return $ownerRecord->comments->count();}
+
     public function form(Form $form): Form
     {
         return $form
             ->schema([
-                // Forms\Components\TextInput::make('comment')
-                //     ->required()
-                //     ->maxLength(255),
+                Fieldset::make()->schema([
+                    Textarea::make('comment')->columnSpanFull()->required(),
+                    // FileUpload::make('image_path')
+                    //     ->disk('public')
+                    //     ->label('')
+                    //     ->directory('service_comments')
+                    //     ->columnSpanFull()
+                    //     ->image()
+                    //     ->multiple()
+                    //     ->resize(5)
+                    //     ->downloadable()
+                    //     ->previewable()
+                    //     ->imagePreviewHeight('250')
+                    //     ->loadingIndicatorPosition('left')
+                    //     ->panelLayout('integrated')
+                    //     ->removeUploadedFileButtonPosition('right')
+                    //     ->uploadButtonPosition('left')
+                    //     ->uploadProgressIndicatorPosition('left')
+                    //     ->panelLayout('grid')
+                    //     ->reorderable()
+                    //     ->openable()
+                    //     ->downloadable(true)
+                    //     ->previewable(true)
+                    //     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                    //         return (string) str($file->getClientOriginalName())->prepend('comment-');
+                    //     })
+                    // ,
+
+                ]),
             ]);
     }
 
@@ -38,7 +69,33 @@ class CommentsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()->label('New')
+                // ->action(function (Model $ownerRecord,array $data, $record): void {
+
+                //     $comment = $record->comments()->create([
+                //         'comment' => $data['comment'],
+                //         'created_by' => auth()->user()->id,
+                //     ]);
+
+                //     if ($comment) {
+                //         $record->logs()->create([
+                //             'created_by' => auth()->user()->id,
+                //             'description' => 'Comment added: ' . $data['comment'],
+                //             'log_type' => ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
+                //         ]);
+                //     }
+                //     // If there are photos, save them after the comment is created
+                //     if (isset($data['image_path']) && is_array($data['image_path']) && count($data['image_path']) > 0) {
+                //         foreach ($data['image_path'] as $file) {
+                //             $comment->photos()->create([
+                //                 'image_name' => $file,
+                //                 'image_path' => $file,
+                //                 'created_by' => auth()->user()->id,
+                //             ]);
+                //         }
+                //     }
+                // })
+                ,
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -119,10 +176,10 @@ class CommentsRelationManager extends RelationManager
         return false;
     }
 
-    protected function canCreate(): bool
-    {
-        return false;
-    }
+    // protected function canCreate(): bool
+    // {
+    //     return false;
+    // }
 
     protected function canDelete(Model $record): bool
     {

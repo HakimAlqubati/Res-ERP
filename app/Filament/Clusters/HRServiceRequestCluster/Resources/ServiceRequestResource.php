@@ -55,31 +55,13 @@ class ServiceRequestResource extends Resource
                             ->required()
                             ->maxLength(255),
                         Select::make('branch_id')->label('Branch')
-                            ->options(function () {
-                                $query = Branch::query();
-                                if (auth()->user()->is_branch_manager) {
-                                    $query->where('id', auth()->user()->branch->id);
-                                }
-                                $query = $query->where('active', 1)
-                                    ->select('id', 'name')->pluck('name', 'id');
-                                return $query;
-                            }
-                            )->default(function () {
-                            if (auth()->user()->is_branch_manager) {
-                                return auth()->user()->branch->id;
-                            }
-                        })
+                            ->options(Branch::select('name', 'id')->pluck('name', 'id'))
+                            
                             ->live()
                             ->required(),
 
                         Select::make('branch_area_id')->label('Branch area')->required()
                             ->options(function (Get $get) {
-                                if (auth()->user()->is_branch_manager) {
-                                    return BranchArea::query()
-                                        ->where('branch_id', auth()->user()->branch->id)
-                                        ->pluck('name', 'id');
-
-                                }
                                 return BranchArea::query()
                                     ->where('branch_id', $get('branch_id'))
                                     ->pluck('name', 'id');
@@ -102,8 +84,8 @@ class ServiceRequestResource extends Resource
                                     ->pluck('name', 'id'))
                             ->searchable()
                             ->disabledOn('edit')
-                            ->helperText(function(Model $record = null){
-                                if($record){
+                            ->helperText(function (Model $record = null) {
+                                if ($record) {
                                     return 'To reassign, go to table page ';
                                 }
                             })
@@ -131,8 +113,8 @@ class ServiceRequestResource extends Resource
                                 ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
                                 ServiceRequest::STATUS_CLOSED => 'Closed',
                             ])->disabled()
-                            ->helperText(function(Model $record = null){
-                                if($record){
+                            ->helperText(function (Model $record = null) {
+                                if ($record) {
                                     return 'To change status, go to table page ';
                                 }
                             })

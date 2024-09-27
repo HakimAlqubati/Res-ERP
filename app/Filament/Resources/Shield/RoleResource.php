@@ -399,4 +399,13 @@ class RoleResource extends Resource implements HasShieldPermissions
     {
         return FilamentShieldPlugin::get();
     }
+
+    public static function canViewAny(): bool
+    {
+        if(isSystemManager() || isSuperAdmin()){
+            return true;
+        }
+        return false;
+        return static::can('viewAny');
+    }
 }

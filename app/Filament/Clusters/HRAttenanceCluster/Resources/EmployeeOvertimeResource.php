@@ -50,7 +50,7 @@ class EmployeeOvertimeResource extends Resource
                         ->label('Set branch employees & the Date')
                         ->schema([
 
-                            Select::make('branch')->label('Branch')
+                            Select::make('branch_id')->label('Branch')
                                 ->helperText('Select to populate the branch employees')
                                 ->required()
                                 ->live()
@@ -229,16 +229,7 @@ class EmployeeOvertimeResource extends Resource
                                         ->label('Notes')->columnSpanFull()
                                         ->nullable(),
                                 ]),
-                            ])
-                    // ->default(function (Get $get) {
-                    //     $employees = [];
-                    //     // dd($get,$get('branch_id'),is_null($get('branch_id')));
-                    //     if (!is_null($get('branch_id'))) {
-                    //         $employees = Employee::where('branch_id', )->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
-                    //     }
-
-                    //     return $employees;
-                    // })
+                            ]) 
 
                     ,
                 ]

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class ServiceRequestComment extends Model
 {
@@ -36,5 +37,17 @@ class ServiceRequestComment extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            // Set 'created_by' to the authenticated user's ID, if available
+            if (Auth::check()) {
+                $model->created_by = Auth::id();
+            }
+        });
     }
 }

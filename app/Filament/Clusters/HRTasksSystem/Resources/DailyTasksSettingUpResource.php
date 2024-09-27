@@ -177,8 +177,8 @@ class DailyTasksSettingUpResource extends Resource
                                             'day' => 'Day',
                                             'the' => 'The',
                                         ])->live()
-                                        // ->default('day')
-                                        ,
+                                    // ->default('day')
+                                    ,
                                     Grid::make()->columns(2)->columnSpan(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'day'))->schema([
                                         TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
                                         TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
@@ -286,6 +286,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        return static::getModel()::query();
         $query = static::getModel()::query();
 
         if (
@@ -315,7 +316,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if(in_array(getCurrentRole(),[1,3])){
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
             return true;
         }
         return false;

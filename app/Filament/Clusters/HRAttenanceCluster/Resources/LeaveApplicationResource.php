@@ -91,7 +91,7 @@ class LeaveApplicationResource extends Resource
                             Select::make('status')->options(LeaveApplication::getStatus())
                                 ->default(LeaveApplication::STATUS_PENDING)->disabledOn('create'),
                             Select::make('leave_type_id')->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->label('Leave type')
+                                ->label('Leave type')->required()
                             ,
                         ]),
                     ]),

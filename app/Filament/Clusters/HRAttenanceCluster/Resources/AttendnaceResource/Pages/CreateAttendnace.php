@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\
 
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource;
 use App\Models\Attendance;
+use App\Models\Employee;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
 use Filament\Resources\Pages\CreateRecord;
@@ -18,6 +19,12 @@ class CreateAttendnace extends CreateRecord
         $data['day'] = \Carbon\Carbon::parse($data['check_date'])->format('l');
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
+        
+        $employee = Employee::find($data['employee_id']);
+        if ($employee->branch()->exists()) {
+            $data['branch_id'] = $employee->branch->id;
+        }
+        
 
         // Fetch work periods and convert days JSON to arrays
         $work_periods = WorkPeriod::where('active', 1)->get()->map(function ($period) {

@@ -3,13 +3,13 @@
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TestController;
-use App\Jobs\CreateDailyTask;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\UnitPrice;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Role;
@@ -207,10 +207,64 @@ Route::post('/import_unit_prices', [
 ])->name('import_unit_prices');
 
 Route::get('/test-tasks-job', function () {
-
-    CreateDailyTask::dispatchSync();
-
+ 
     return 'dailly tasks added';
+});
+
+Route::get('/updated_user_type_for_branch_managers', function () {
+    $branchManagers = Role::find(7)->users;
+    $arr = [];
+    foreach ($branchManagers as $branchManager) {
+        $user = User::find($branchManager['id']);
+        $user->update(['user_type' => 2]);
+        if ($user->employee()->exists()) {
+            $user->employee()->update(['employee_type' => 2]);
+        }
+        $arr[] = $user;
+    }
+    return $arr;
+});
+
+Route::get('/updated_user_type_for_managers', function () {
+    $managers = Role::find(3)->users;
+    $arr = [];
+    foreach ($managers as $manager) {
+        $user = User::find($manager['id']);
+        $user->update(['user_type' => 3]);
+        if ($user->employee()->exists()) {
+            $user->employee()->update(['employee_type' => 3]);
+        }
+        $arr[] = $user;
+    }
+    return $arr;
+});
+Route::get('/updated_user_type_for_stuff_branches_users', function () {
+    $stuffManagers = Role::find(8)->users;
+    $arr = [];
+    foreach ($stuffManagers as $stuffManager) {
+        $user = User::find($stuffManager['id']);
+        $user->update(['user_type' => 4]);
+        if ($user->employee()->exists()) {
+            
+            $user->employee()->update(['employee_type' => 4]);
+        }
+        $arr[] = $user;
+    }
+    return $arr;
+});
+
+Route::get('/updated_user_type_for_top_management_users', function () {
+    $maintenanceManagers = Role::find(14)->users;
+    $arr = [];
+    foreach ($maintenanceManagers as $maintenanceManager) {
+        $user = User::find($maintenanceManager['id']);
+        $user->update(['user_type' => 1]);
+        if ($user->employee()->exists()) {
+            $user->employee()->update(['employee_type' => 1]);
+        }
+        $arr[] = $user;
+    }
+    return $arr;
 });
 
 Route::get('/migration_branch_manager_users', function () {
@@ -250,6 +304,7 @@ Route::get('/migration_users_of_branch', function () {
 
     dd($users);
 });
+
 Route::get('/migration_store_users', function () {
     $users = Role::find(5)->users;
     foreach ($users as $user) {
@@ -285,4 +340,38 @@ Route::get('/migration_accountants_users', function () {
     }
 
     dd($users);
+});
+
+Route::get('/update_user_branch_id_for_all_users', function () {
+    $users = User::whereNull('branch_id')->withTrashed()->get();
+    $branchUsers = [];
+    foreach ($users as $user) {
+        // Check if the user has an owner
+        $owner = $user->owner()->exists(); // Check if the owner relationship exists
+        $branch = $user->branch()->exists(); // Check if the branch relationship exists
+        $branchId = 0;
+        if ($owner && (!is_null($user?->owner?->branch?->id))) {
+            $branchId = $user->owner->branch->id;
+            $branchUsers[] = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'branch_id' => $branchId,
+
+            ];
+        } else if ($branch && (!is_null($user?->branch?->id))) {
+            $branchId = $user?->branch?->id;
+            $branchUsers[] = [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'branch_id' => $branchId,
+
+            ];
+        }
+    }
+    foreach ($branchUsers as $branchUser) {
+
+        $userObj = User::find($branchUser['user_id']);
+        $userObj->update(['branch_id' => $branchUser['branch_id']]);
+    }
+    return $branchUsers;
 });

@@ -28,7 +28,7 @@ class CreateEmployeeOvertime extends CreateRecord
         $employeeCount = count($employees);
 
         foreach ($employees as $index => $employee) {
-            
+
             // Check if this is the last employee
             if ($index === $employeeCount - 1) {
                 continue; // Skip the last element
@@ -41,6 +41,7 @@ class CreateEmployeeOvertime extends CreateRecord
                 'hours' => $employee['hours'],
                 'reason' => $employee['reason'],
                 'notes' => $employee['notes'],
+                'branch_id' => $data['branch_id'],
                 'created_by' => auth()->user()->id,
 
             ]);
@@ -52,6 +53,7 @@ class CreateEmployeeOvertime extends CreateRecord
         $data['hours'] = $employee['hours'];
         $data['reason'] = $employee['reason'];
         $data['notes'] = $employee['notes'];
+        $data['branch_id'] = $data['branch_id'];
         $data['created_by'] = auth()->user()->id;
         return $data;
     }

@@ -63,27 +63,27 @@ class AdminPanelProvider extends PanelProvider
                 
             ])
             ->groups([
-                NavigationGroup::make(__('menu.order_ms'))
-                    ->items([
-                        ...MainOrdersCluster::getNavigationItems(),
-                        ...ReportOrdersCluster::getNavigationItems(),
-                        // NavigationItem::make('test')
-                        // ->icon('heroicon-o-home')
-                        // ->childItems([
-                        //     ...OrderResource::getNavigationItems(),
+                // NavigationGroup::make(__('menu.order_ms'))
+                //     ->items([
+                //         ...MainOrdersCluster::getNavigationItems(),
+                //         ...ReportOrdersCluster::getNavigationItems(),
+                //         // NavigationItem::make('test')
+                //         // ->icon('heroicon-o-home')
+                //         // ->childItems([
+                //         //     ...OrderResource::getNavigationItems(),
                             
 
-                        // ])
-                        // ,
+                //         // ])
+                //         // ,
                         
-                    ])
-                    ,
-                NavigationGroup::make(__('menu.inventory_ms'))
-                    ->items([
-                        ...ProductUnitCluster::getNavigationItems(),
-                        ...InventoryCluster::getNavigationItems(),
-                        ...InventoryReportsCluster::getNavigationItems(),
-                    ]),
+                //     ])
+                //     ,
+                // NavigationGroup::make(__('menu.inventory_ms'))
+                //     ->items([
+                //         ...ProductUnitCluster::getNavigationItems(),
+                //         ...InventoryCluster::getNavigationItems(),
+                //         ...InventoryReportsCluster::getNavigationItems(),
+                //     ]),
                 NavigationGroup::make(__('menu.hr_ms'))
                     ->items([
                         ...HRCluster::getNavigationItems(), 
@@ -95,18 +95,20 @@ class AdminPanelProvider extends PanelProvider
                     
                     ]),
                 NavigationGroup::make(__('lang.user_and_roles'))
-                    ->items([
-                        ...UserResource::getNavigationItems(),
-                        ...RoleResource::getNavigationItems(),
-                    ]),
+                ->items(array_merge(
+                    (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems(): [],
+                    isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
+                ))
+                    ,
                 NavigationGroup::make(__('lang.branches'))
-                    ->items([
-                        ...BranchResource::getNavigationItems(),
-                    ]),
+                    ->items(array_merge(
+                     (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems(): [] ,
+                    ))
+                    ,
                 NavigationGroup::make(__('lang.system_settings'))
-                    ->items([
-                        ...SystemSettingResource::getNavigationItems()
-                    ]),
+                    ->items( array_merge(
+                        isSuperAdmin() || isSystemManager() ? SystemSettingResource::getNavigationItems(): [],
+                    )),
                 ]);
                return $menu;
         })

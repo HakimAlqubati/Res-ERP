@@ -23,12 +23,10 @@ class EditTask extends EditRecord
                         return $record->task_status;
                     })->columnSpanFull()->options(
                         [
+                            Task::STATUS_NEW => Task::STATUS_NEW,
                             Task::STATUS_PENDING => Task::STATUS_PENDING,
                             Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
-                            Task::STATUS_REVIEW => Task::STATUS_REVIEW,
-                            Task::STATUS_CANCELLED => Task::STATUS_CANCELLED,
-                            Task::STATUS_FAILED => Task::STATUS_FAILED,
-                            Task::STATUS_COMPLETED => Task::STATUS_COMPLETED,
+                            Task::STATUS_CLOSED => Task::STATUS_CLOSED,
                         ]
                     )
                 ];

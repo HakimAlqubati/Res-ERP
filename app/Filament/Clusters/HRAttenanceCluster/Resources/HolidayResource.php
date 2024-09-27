@@ -131,4 +131,12 @@ class HolidayResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function canViewAny(): bool
+    {
+        if(isSystemManager() || isSuperAdmin()){
+            return true;
+        }
+        return false;
+    }
 }

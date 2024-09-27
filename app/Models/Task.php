@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class Task extends Model
 {
@@ -14,16 +16,12 @@ class Task extends Model
     const STATUS_NEW = 'new';
     const STATUS_PENDING = 'pending';
     const STATUS_IN_PROGRESS = 'in_progress';
-    const STATUS_CLOSED = 'closed';    
-    
-    
-    
+    const STATUS_CLOSED = 'closed';
+
     const COLOR_NEW = 'primary';
     const COLOR_PENDING = 'warning';
     const COLOR_IN_PROGRESS = 'info';
     const COLOR_CLOSED = 'success';
-    
-    
 
     protected $fillable = [
         'title',
@@ -39,6 +37,7 @@ class Task extends Model
         'start_date',
         'end_date',
         'schedule_type',
+        'branch_id',
     ];
 
     public function assigned()
@@ -126,5 +125,27 @@ class Task extends Model
         // return $this->hasMany(TaskStep::class,'task_id');
         return $this->morphMany(TaskStep::class, 'morphable');
 
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    protected static function booted()
+    { 
+        // parent::boot();
+       
+        if (auth()->check()) {
+            if (isBranchManager()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+                });
+            } elseif (isStuff()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('assigned_to', auth()->user()->employee->id); // Add your default query here
+                });
+            }
+        }
     }
 }

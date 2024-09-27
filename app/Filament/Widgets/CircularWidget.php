@@ -34,6 +34,12 @@ class CircularWidget extends BaseWidget
             ->headerActions([
                 // CreateAction::make('create')
                 CreateAction::make()->label('New memo')
+                    ->hidden(function () {
+                        if (isSuperAdmin() || isSystemManager()) {
+                            return false;
+                        }
+                        return true;
+                    })
                     ->form([
                         Wizard::make([
                             Step::make('Basic data')

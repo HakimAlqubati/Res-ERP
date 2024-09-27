@@ -2,8 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\Task;
-use App\Observers\TaskObserver;
+use App\Models\Task; 
 use Filament\Support\Assets\Css;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
@@ -26,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Task::observe(TaskObserver::class);
+        
 
         FilamentAsset::register([
             Css::make('main', ''),
@@ -37,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
-        Gate::policy(Task::class, \App\Policies\TaskPolicy::class);
+        // Gate::policy(Task::class, \App\Policies\TaskPolicy::class);
 
     }
 }

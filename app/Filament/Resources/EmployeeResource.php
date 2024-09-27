@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
 use App\Models\Position;
+use App\Models\UserType;
 use Closure;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
@@ -162,12 +163,15 @@ class EmployeeResource extends Resource
                                 ]),
                             Fieldset::make('Employeement')->label('Employeement')
                                 ->schema([
-                                    Grid::make()->columns(3)->schema([
+                                    Grid::make()->columns(4)->schema([
                                         TextInput::make('employee_no')->default((Employee::get()->last()->id) + 1)->disabled()->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
                                         TextInput::make('job_title')->columnSpan(1)->required(),
                                         Select::make('position_id')->columnSpan(1)->label('Position type')
                                             ->searchable()
                                             ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
+                                        Select::make('employee_type')->columnSpan(1)->label('Employee type')
+                                            ->searchable()
+                                            ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Select::make('department_id')->columnSpan(1)->label('Department')
                                             ->searchable()
                                             ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),

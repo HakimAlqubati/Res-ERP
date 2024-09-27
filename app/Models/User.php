@@ -98,16 +98,65 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(Employee::class, 'user_id', 'id');
     }
-    public function getIsBranchManagerAttribute()
+
+    public function isBranchManager()
     {
         if (getCurrentRole() == 7) {
             return true;
         }
-
         return false;
+    }
+    public function isSuperAdmin()
+    {
+        if (getCurrentRole() == 1) {
+            return true;
+        }
+        return false;
+    }
+    public function isSystemManager()
+    {
+        if (getCurrentRole() == 3) {
+            return true;
+        }
+        return false;
+    }
+    public function isStoreManager()
+    {
+        if (getCurrentRole() == 5) {
+            return true;
+        }
+        return false;
+    }
+    public function isMaintenanceManager()
+    {
+        if (getCurrentRole() == 7) {
+            return true;
+        }
+        return false;
+    }
+    public function isStuff()
+    {
+
+        if (in_array(getCurrentRole(), [8, 9, 10,6])) {
+            return true;
+        }
+        return false;
+    }
+
+    public function getIsBranchManagerAttribute()
+    {
     }
     // public function canAccessFilament(): bool
     // {
     //     return true;
     // }
+
+    protected static function booted()
+    {
+        if (isBranchManager()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            });
+        }
+    }
 }

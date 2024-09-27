@@ -34,6 +34,7 @@ class Employee extends Model
         'discount_exception_if_attendance_late',
         'discount_exception_if_absent',
         'rfid',
+        'employee_type',
     ];
 
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED = 'added';
@@ -99,13 +100,27 @@ class Employee extends Model
         return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id');
     }
 
-     // Log changes to periods
-     public function logPeriodChange(array $periodIds, $action)
-     {
-         EmployeePeriodLog::create([
-             'employee_id' => $this->id,
-             'period_ids' => json_encode($periodIds), // Store as JSON
-             'action' => $action,
-         ]);
-     }
+    // Log changes to periods
+    public function logPeriodChange(array $periodIds, $action)
+    {
+        EmployeePeriodLog::create([
+            'employee_id' => $this->id,
+            'period_ids' => json_encode($periodIds), // Store as JSON
+            'action' => $action,
+        ]);
+    }
+
+    // Apply the global scope
+    protected static function booted()
+    {
+        if (isBranchManager()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            });
+        } elseif (isStuff()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('id', auth()->user()->id); // Add your default query here
+            });
+        }
+    }
 }

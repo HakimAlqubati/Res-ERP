@@ -40,6 +40,7 @@ class Attendance extends Model
         'status',
         'actual_duration_hourly',
         'supposed_duration_hourly',
+        'branch_id',
     ];
 
     public static function getCheckTypes()
@@ -69,5 +70,14 @@ class Attendance extends Model
     public function period()
     {
         return $this->belongsTo(WorkPeriod::class,'period_id');
+    }
+
+    protected static function booted()
+    { 
+        if (isBranchManager()) {
+            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            });
+        }
     }
 }

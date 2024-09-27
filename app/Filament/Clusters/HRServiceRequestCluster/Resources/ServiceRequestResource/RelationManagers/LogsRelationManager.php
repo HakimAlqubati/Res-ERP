@@ -8,12 +8,16 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class LogsRelationManager extends RelationManager
 {
     protected static string $relationship = 'logs';
     protected static ?string $label = 'Activity Logs';
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {return $ownerRecord->logs->count();}
+
     public function form(Form $form): Form
     {
         return $form

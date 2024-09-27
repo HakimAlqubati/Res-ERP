@@ -47,7 +47,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
 
-class TaskResource extends Resource implements HasShieldPermissions
+class TaskResource extends Resource 
+implements HasShieldPermissions
 {
     protected static ?string $model = Task::class;
 
@@ -60,6 +61,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
+        return static::getModel()::count();
         $query = static::getModel();
 
         if (!in_array(getCurrentRole(), [1, 3])) {
@@ -574,11 +576,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                             TextInput::make('task_employee')->disabled()->columnSpanFull(),
                             Fieldset::make('task_rating')->relationship('task_rating')->label('')->schema([
 
-                                Hidden::make('employee_id')->default(function()use($record){
-                                   return $record->assigned_to;
+                                Hidden::make('employee_id')->default(function () use ($record) {
+                                    return $record->assigned_to;
                                 }),
-                                Hidden::make('created_by')->default(function()use($record){
-                                   return auth()->user()->id;
+                                Hidden::make('created_by')->default(function () use ($record) {
+                                    return auth()->user()->id;
                                 }),
                                 Rating::make('rating_value')
                                     ->theme(RatingTheme::HalfStars)
@@ -644,6 +646,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     }
     public static function getEloquentQuery(): Builder
     {
+        return static::getModel()::query();
         $query = static::getModel()::query();
 
         if (
@@ -693,9 +696,18 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function getLabel(): ?string
     {
-        if (!in_array(getCurrentRole(), [1, 3])) {
+        // if (!in_array(getCurrentRole(), [1, 3])) {
+        if (isStuff()) {
             return 'My Tasks';
         }
         return static::$label;
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+            return true;
+        }
+        return false;
     }
 }

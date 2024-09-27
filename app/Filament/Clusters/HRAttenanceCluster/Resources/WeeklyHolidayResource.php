@@ -109,4 +109,12 @@ class WeeklyHolidayResource extends Resource
         }
         return static::can('create');
     }
+
+    public static function canViewAny(): bool
+    {
+        if(isSystemManager() || isSuperAdmin()){
+            return true;
+        }
+        return false;
+    }
 }

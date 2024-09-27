@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use App\Models\DailyTasksSettingUp;
+use App\Models\Employee;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTask extends CreateRecord
@@ -12,6 +13,10 @@ class CreateTask extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['created_by'] = auth()->user()->id;
+        $employee = Employee::find($data['assigned_to']);
+        if ($employee->branch()->exists()) {
+            $data['branch_id'] = $employee->branch->id;
+        }
         return $data;
     }
 
@@ -33,6 +38,7 @@ class CreateTask extends CreateRecord
                 'assigned_by' => $this->record->assigned_by,
                 'start_date' => $this->record->start_date,
                 'end_date' => $this->record->end_date,
+                'branch_id' => !is_null($this?->record?->branch_id) ? $this->record->branch_id : null,
                 'active' => 1,
 
             ]);

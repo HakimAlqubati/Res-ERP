@@ -35,4 +35,14 @@ class Circular extends Model
     public function group(){
         return $this->belongsTo(UserType::class,'group_id');
     }
+
+    protected static function booted()
+    {
+    
+        if (!isSuperAdmin() || !isSystemManager()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_ids', auth()->user()->branch_id); // Add your default query here
+            });
+        } 
+    }
 }

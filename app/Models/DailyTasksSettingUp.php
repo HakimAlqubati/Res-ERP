@@ -24,6 +24,7 @@ class DailyTasksSettingUp extends Model
         'start_date',
         'end_date',
         'schedule_type',
+        'branch_id',
     ];
 
     public function steps()
@@ -61,5 +62,17 @@ class DailyTasksSettingUp extends Model
     public function taskScheduleRequrrencePattern()
     {
         return $this->hasOne(TaskScheduleRequrrencePattern::class, 'task_id');
+    }
+
+    protected static function booted()
+    {
+        
+        if (auth()->check()) {
+            if (isBranchManager()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+                });
+            }
+        }
     }
 }

@@ -42,6 +42,7 @@
         "files": [
             "app/helpers.php",
             "app/fifo_helpers.php",
+            "app/auth_helpers.php",
             "app/Overrides/CustomChartWidget.php"
         ]
     },

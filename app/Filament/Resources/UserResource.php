@@ -333,4 +333,9 @@ class UserResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
+
+    public static function canViewAny(): bool
+    {
+        return true;
+    }
 }
