@@ -137,7 +137,7 @@ class User extends Authenticatable implements FilamentUser
     public function isStuff()
     {
 
-        if (in_array(getCurrentRole(), [8, 9, 10,6])) {
+        if (in_array(getCurrentRole(), [8, 9, 10, 6])) {
             return true;
         }
         return false;
@@ -153,10 +153,12 @@ class User extends Authenticatable implements FilamentUser
 
     protected static function booted()
     {
-        if (auth()->check() && isBranchManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            });
+        if (auth()->check()) {
+            if (isBranchManager()) {
+                static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+                });
+            }
         }
     }
 }
