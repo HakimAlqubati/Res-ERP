@@ -63,8 +63,8 @@ class Branch extends Model
 
     // Apply the global scope
     protected static function booted()
-    { 
-        if (isBranchManager()) {
+    {
+        if (auth()->check() && isBranchManager()) {
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('id', auth()->user()->branch_id); // Add your default query here
             });
