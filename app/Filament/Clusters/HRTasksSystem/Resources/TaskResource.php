@@ -42,13 +42,13 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use function Laravel\Prompts\form;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
 
-class TaskResource extends Resource 
-implements HasShieldPermissions
+class TaskResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = Task::class;
 
@@ -549,13 +549,13 @@ implements HasShieldPermissions
                         ]);
                     }),
                 Action::make('Rating')
-                ->label(function($record){
-                    if($record->task_rating()->exists()){
-                        return 'Rating done';
-                    }else{
-                        return 'Rating';
-                    }
-                })
+                    ->label(function ($record) {
+                        if ($record->task_rating()->exists()) {
+                            return 'Rating done';
+                        } else {
+                            return 'Rating';
+                        }
+                    })
                     ->button()
                     ->hidden(function ($record) {
                         if (!isSuperAdmin() && !auth()->user()->can('rating_task')) {
@@ -692,6 +692,13 @@ implements HasShieldPermissions
         return false;
     }
 
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
     public static function getRequrPatternKeysAndValues(array $data)
     {
         // Use array_filter to get the keys starting with 'requr_pattern_'

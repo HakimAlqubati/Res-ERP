@@ -96,6 +96,7 @@ class EmployeeResource extends Resource
                                             ])
                                             ->displayNumberFormat(PhoneInputNumberType::E164) 
                                             ->autoPlaceholder('aggressive')
+                                            ->unique(ignoreRecord: true)
                                             ->validateFor(
                                                 country: 'MY',
                                                 lenient: true, // default: false
