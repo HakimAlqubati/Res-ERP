@@ -74,6 +74,9 @@ class BranchResource extends Resource
                     Repeater::make('branch_areas')
                         ->minItems(1)
                         ->maxItems(1)
+                        ->disableItemCreation(true)
+                        ->disableItemDeletion(true)
+                        
                         ->schema([
                             TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
                             Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
@@ -109,7 +112,7 @@ class BranchResource extends Resource
         return [
             'index' => Pages\ManageBranches::route('/'),
             'edit' => Pages\EditBranch::route('/{record}/edit'),
-            
+
         ];
     }
 
@@ -139,7 +142,7 @@ class BranchResource extends Resource
 
     public static function canCreate(): bool
     {
-        if (isSuperAdmin()  || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;

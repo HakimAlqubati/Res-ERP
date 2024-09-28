@@ -7,9 +7,7 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StepsRelationManager extends RelationManager
 {
@@ -32,7 +30,15 @@ class StepsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('order')->sortable(),
                 Tables\Columns\TextColumn::make('title')->searchable(),
-                Tables\Columns\ToggleColumn::make('done'),
+                Tables\Columns\ToggleColumn::make('done')
+                    ->disabled(function ($record) {
+                        if (($record?->morphable?->assigned_to == auth()->user()->id) || isSuperAdmin()) {
+                            return false;
+                        }
+                        return true;
+
+                    })
+                ,
             ])
             ->filters([
                 //
@@ -61,10 +67,10 @@ class StepsRelationManager extends RelationManager
     }
     protected function canEdit(Model $record): bool
     {
-       return false;
+        return false;
     }
     protected function canCreate(): bool
     {
-       return false;
+        return false;
     }
 }
