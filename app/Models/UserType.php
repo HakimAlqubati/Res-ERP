@@ -14,4 +14,16 @@ class UserType extends Model
     protected $casts = [
         'role_ids' => 'array',
     ];
+
+    protected static function booted()
+    {
+        // dd(auth()->check());
+        if (auth()->check()) {
+            if (isBranchManager()) {
+                static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->whereIn('id',[3,4] );
+                });
+            }
+        }
+    }
 }

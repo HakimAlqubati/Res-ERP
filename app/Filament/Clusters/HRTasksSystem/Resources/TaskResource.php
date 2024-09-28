@@ -549,6 +549,13 @@ implements HasShieldPermissions
                         ]);
                     }),
                 Action::make('Rating')
+                ->label(function($record){
+                    if($record->task_rating()->exists()){
+                        return 'Rating done';
+                    }else{
+                        return 'Rating';
+                    }
+                })
                     ->button()
                     ->hidden(function ($record) {
                         if (!isSuperAdmin() && !auth()->user()->can('rating_task')) {
@@ -677,7 +684,8 @@ implements HasShieldPermissions
 
     public static function canCreate(): bool
     {
-        if (isSuperAdmin() || auth()->user()->can('create_task')) {
+        // if (isSuperAdmin() || auth()->user()->can('create_task')) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
             return true;
         }
 

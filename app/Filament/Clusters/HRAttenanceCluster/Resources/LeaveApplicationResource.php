@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationResource\Pages;
+use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Models\LeaveType;
 use Filament\Forms\Components\DatePicker;
@@ -83,11 +84,10 @@ class LeaveApplicationResource extends Resource
                         Grid::make()->label('')->columns(3)->schema([
                             Select::make('employee_id')
                                 ->label('Employee')
-                            // ->live()
                                 ->searchable()
-                            // ->default(auth()->user()?->employee?->id)
-                            // ->disabled()
-                                ->relationship('employee', 'name'),
+                                ->options(Employee::select('name', 'id')
+                                        ->get()->plucK('name', 'id'))
+                            ,
                             Select::make('status')->options(LeaveApplication::getStatus())
                                 ->default(LeaveApplication::STATUS_PENDING)->disabledOn('create'),
                             Select::make('leave_type_id')->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
@@ -97,7 +97,7 @@ class LeaveApplicationResource extends Resource
                     ]),
                     Fieldset::make()->label('')->schema([
                         Textarea::make('leave_reason')->label('Notes')->required()->columnSpanFull(),
-                    ])
+                    ]),
                 ]),
             ]);
     }
@@ -161,5 +161,13 @@ class LeaveApplicationResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isStuff()) {
+            return false;
+        }
+        return true;
     }
 }

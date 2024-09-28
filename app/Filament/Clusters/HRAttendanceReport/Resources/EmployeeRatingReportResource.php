@@ -3,10 +3,13 @@
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport;
+use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeRatingReportResource\Pages\ViewDetails;
 use App\Filament\Clusters\HRAttendanceReport\Resources\ListEmployeeRatingReports2;
 use App\Models\Attendance;
+use App\Models\Branch;
 use App\Models\TaskRating;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -14,6 +17,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -46,27 +50,33 @@ class EmployeeRatingReportResource extends Resource
                 TextColumn::make('employee_name')->label('Employee name')->searchable(isIndividual: true, isGlobal: true),
                 TextColumn::make('count_task')->label('Number of tasks')->alignCenter(true),
 
-                TextColumn::make('rating_value')->label('Rating value')->alignCenter(true),
-
+                TextColumn::make('rating_value')->label('Rating value')->alignCenter(true)->action(function () {
+                    dd('hi');
+                }),
             ])
             ->filters([
-                // SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
-                //     ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                // Filter::make('date_range')
-                //     ->form([
-                //         DatePicker::make('start_date')
-                //             ->label('Start Date'),
-                //         DatePicker::make('end_date')
-                //             ->label('End Date'),
-                //     ])
+                SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
+                        ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
+                // SelectFilter::make('employee_id')->label('Employee')
+                // // ->options(Employee::where('active', 1)
+                // //         ->select('name', 'id')->get()->pluck('name', 'id'))
+                //     ->options(fn(Get $get): Collection => Employee::query()
+                //             ->where('active', 1)
+                //             ->where('branch_id', $get('branch_id'))
+                //             ->pluck('name', 'id'))
+                //     ->searchable(),
 
             ], FiltersLayout::AboveContent)
             ->actions([
+                Action::make('ViewDetails')->url(function ($record) {
+
+                    return 'rating-report/view?employee_id=' . $record->employee_id;
+                }),
                 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -89,6 +99,9 @@ class EmployeeRatingReportResource extends Resource
             'index' => ListEmployeeRatingReports2::route('/'),
             // 'create' => Pages\CreateEmployeeAttednaceReport::route('/create'),
             // 'edit' => Pages\EditEmployeeAttednaceReport::route('/{record}/edit'),
+            'view' => ViewDetails::route('/view'),
+            // 'view-detail' => ViewReportDetail::route('/{record}/detail'),
+
         ];
     }
 
@@ -96,9 +109,9 @@ class EmployeeRatingReportResource extends Resource
     {
         $query = TaskRating::select('hr_employees.id as employee_id', DB::raw('SUM(hr_task_rating.rating_value) as rating_value')
             , DB::raw('count(hr_task_rating.task_id) as count_task')
-            , 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no')
+            , 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no', 'hr_employees.branch_id as branch_id')
             ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id')
-            ->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no');
+            ->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id');
         return $query;
         // $query = static::getModel()::query();
         $query = TaskRating::query()

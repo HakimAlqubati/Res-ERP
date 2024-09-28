@@ -39,7 +39,7 @@ class CreateEmployeeOvertime extends CreateRecord
                 'start_time' => $employee['start_time'],
                 'end_time' => $employee['end_time'],
                 'hours' => $employee['hours'],
-                'reason' => $employee['reason'],
+                // 'reason' => $employee['reason'],
                 'notes' => $employee['notes'],
                 'branch_id' => $data['branch_id'],
                 'created_by' => auth()->user()->id,
@@ -51,7 +51,7 @@ class CreateEmployeeOvertime extends CreateRecord
         $data['start_time'] = $employee['start_time'];
         $data['end_time'] = $employee['end_time'];
         $data['hours'] = $employee['hours'];
-        $data['reason'] = $employee['reason'];
+        // $data['reason'] = $employee['reason'];
         $data['notes'] = $employee['notes'];
         $data['branch_id'] = $data['branch_id'];
         $data['created_by'] = auth()->user()->id;

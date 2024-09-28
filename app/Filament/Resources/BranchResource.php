@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\BranchResource\Pages;
+use App\Filament\Resources\BranchResource\RelationManagers\AreasRelationManager;
 use App\Models\Branch;
 use App\Models\User;
 use Filament\Forms\Components\Checkbox;
@@ -17,13 +18,14 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class BranchResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationGroup = 'Branches';
     public static function getNavigationLabel(): string
     {
@@ -69,12 +71,15 @@ class BranchResource extends Resource
                     ->button()
                     ->icon('heroicon-o-plus')
                     ->label('Add area')->form([
-                    Repeater::make('branch_areas')->schema([
-                        TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
-                        Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
-                    ])
+                    Repeater::make('branch_areas')
+                        ->minItems(1)
+                        ->maxItems(1)
+                        ->schema([
+                            TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
+                            Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
+                        ])
                         ->afterStateUpdated(function ($state, $record) {
-                            
+
                             // Custom logic to handle saving without deleting existing records
                             $branch = $record; // Get the branch being updated
                             $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
@@ -83,7 +88,7 @@ class BranchResource extends Resource
                                 if (!isset($areaData['id'])) {
                                     // If it's a new area, create it
                                     $branch->areas()->create($areaData);
-                                }else{
+                                } else {
 
                                 }
                             }
@@ -103,6 +108,8 @@ class BranchResource extends Resource
     {
         return [
             'index' => Pages\ManageBranches::route('/'),
+            'edit' => Pages\EditBranch::route('/{record}/edit'),
+            
         ];
     }
 
@@ -110,6 +117,14 @@ class BranchResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function getRelations(): array
+    {
+        return [
+            AreasRelationManager::class,
+        ];
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -120,5 +135,29 @@ class BranchResource extends Resource
     public static function canViewAny(): bool
     {
         return true;
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin()  || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
     }
 }

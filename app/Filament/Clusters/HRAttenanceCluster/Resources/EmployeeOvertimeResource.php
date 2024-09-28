@@ -21,9 +21,18 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\ActionSize;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Collection;
 
 class EmployeeOvertimeResource extends Resource
 {
@@ -64,7 +73,7 @@ class EmployeeOvertimeResource extends Resource
                                             'employee_id' => $employee['employee_id'],
                                             'start_time' => null, // Optionally set default start time
                                             'end_time' => null, // Optionally set default end time
-                                            'reason' => null,
+                                            // 'reason' => null,
                                             'notes' => null,
                                         ];
                                     }, $employees));
@@ -229,7 +238,7 @@ class EmployeeOvertimeResource extends Resource
                                         ->label('Notes')->columnSpanFull()
                                         ->nullable(),
                                 ]),
-                            ]) 
+                            ])
 
                     ,
                 ]
@@ -297,17 +306,89 @@ class EmployeeOvertimeResource extends Resource
                 TextColumn::make('hours')
                     ->label('Hours')
                     ->sortable(),
+                IconColumn::make('approved')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark'),
 
             ])
+            ->selectable()
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('branch_id')
+                    ->label('Branch')
+                    ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
+                SelectFilter::make('employee_id')
+                    ->searchable()
+                    ->multiple()
+                    ->label('Employee')
+                    ->options(function (Get $get) {
+                        return Employee::query()
+                        // ->where('branch_id', $get('branch_id'))
+                            ->pluck('name', 'id');
+                    }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
+                Action::make('Approve')
+                    ->label(function ($record) {
+                        if ($record->approved == 1) {
+                            return 'Rollback approved';
+                        } else {
+                            return 'Approve';
+                        }
+                    })
+                    ->icon(function ($record) {
+                        if ($record->approved == 1) {
+                            return 'heroicon-o-x-mark';
+                        } else {
+                            return 'heroicon-o-check-badge';
+                        }
+                    })->color(function ($record) {
+                    if ($record->approved == 1) {
+                        return 'gray';
+                    } else {
+                        return 'info';
+                    }
+                })
+                    ->button()
+                    ->requiresConfirmation()
+                    ->size(ActionSize::Small)
+                    ->hidden(function ($record) {
+                        // if ($record->approved == 1) {
+                        //     return true;
+                        // }
+                        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+                            return false;
+                        }
+                        return true;
+                    })
+                    ->action(function (Model $record) {
+                        if ($record->approved == 1) {
+                            $record->update(['approved' => 0]);
+                        } else {
+                            $record->update(['approved' => 1]);
+                        }
+                    }),
+                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    // Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
+                    BulkAction::make('Approve')
+                        ->requiresConfirmation()
+                        ->icon('heroicon-o-check-badge')
+                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1]))
+                        ->hidden(function () {
+                            if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+                                return false;
+                            }
+                            return true;
+                        })
+                    ,
                 ]),
             ]);
     }
@@ -324,7 +405,7 @@ class EmployeeOvertimeResource extends Resource
         return [
             'index' => Pages\ListEmployeeOvertimes::route('/'),
             'create' => Pages\CreateEmployeeOvertime::route('/create'),
-            'edit' => Pages\EditEmployeeOvertime::route('/{record}/edit'),
+            // 'edit' => Pages\EditEmployeeOvertime::route('/{record}/edit'),
         ];
     }
 
@@ -333,4 +414,11 @@ class EmployeeOvertimeResource extends Resource
         return static::getModel()::count();
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
 }

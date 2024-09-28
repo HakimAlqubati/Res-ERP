@@ -22,7 +22,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
@@ -33,7 +32,7 @@ use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'User & Roles';
     // protected static ?string $cluster = UserCluster::class;
     public static function getNavigationLabel(): string
@@ -59,6 +58,7 @@ class UserResource extends Resource
                             ->getSearchResultsUsing(
                                 fn(string $search): array=>
                                 Employee::where('active', 1)
+                                    ->whereDoesntHave('user')
                                     ->where(function ($query) use ($search) {
                                         $query->where('name', 'like', "%{$search}%")
                                             ->orWhere('email', 'like', "%{$search}%")
@@ -81,6 +81,7 @@ class UserResource extends Resource
                                     $set('name', $employee->name);
                                     $set('email', $employee->email);
                                     $set('phone_number', $employee->phone_number);
+                                    $set('branch_id', $employee->branch_id);
                                     $positionId = $employee?->position_id;
                                     if ($positionId == 2) {
                                         if (isset($employee?->branch_id)) {
@@ -98,7 +99,7 @@ class UserResource extends Resource
                         Grid::make()->columns(3)->schema([
                             TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                             TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email(),
-                            PhoneInput::make('phone_number')
+                            PhoneInput::make('phone_number')->disabled()
                             // ->numeric()
                                 ->initialCountry('MY')
                                 ->onlyCountries([
@@ -145,7 +146,14 @@ class UserResource extends Resource
                                 ->label('Manager')
                                 ->searchable()
                                 ->options(function () {
-                                    return DB::table('users')->pluck('name', 'id');
+                                    return User::query()->select('name', 'id')->get()->pluck('name', 'id');
+                                }),
+                            Select::make('branch_id')
+                                ->label('Branch')
+                                ->searchable()
+                                ->disabled()
+                                ->options(function () {
+                                    return Branch::query()->get()->pluck('name', 'id');
                                 }),
                         ]),
                         Grid::make()->columns(2)->schema([
@@ -236,7 +244,7 @@ class UserResource extends Resource
                             ->label('Manager')
                             ->searchable()
                             ->options(function () {
-                                return DB::table('users')->pluck('name', 'id');
+                                return User::query()->select('name', 'id')->get()->pluck('name', 'id');
                             }),
 
                     ]),
