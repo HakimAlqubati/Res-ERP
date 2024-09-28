@@ -694,7 +694,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) {
             return true;
         }
         return false;
@@ -720,7 +720,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff()) {
             return true;
         }
         return false;

@@ -118,9 +118,17 @@ class Employee extends Model
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         } elseif (isStuff()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('id', auth()->user()->id); // Add your default query here
+            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+                // $builder->where('id', auth()->user()->employee->id); // Add your default query here
             });
         }
+    }
+
+    public function getHasUserAttribute()
+    {
+        if ($this->user()->exists()) {
+            return true;
+        }
+        return false;
     }
 }

@@ -17,6 +17,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -295,6 +296,10 @@ class UserResource extends Resource
                 TextColumn::make('first_role.name')->label('Role')
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
+                IconColumn::make('has_employee')->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')

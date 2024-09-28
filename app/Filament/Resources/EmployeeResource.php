@@ -28,6 +28,7 @@ use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -94,7 +95,7 @@ class EmployeeResource extends Resource
                                                 'AE',
                                                 'SA',
                                             ])
-                                            ->displayNumberFormat(PhoneInputNumberType::E164) 
+                                            ->displayNumberFormat(PhoneInputNumberType::E164)
                                             ->autoPlaceholder('aggressive')
                                             ->unique(ignoreRecord: true)
                                             ->validateFor(
@@ -324,6 +325,11 @@ class EmployeeResource extends Resource
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     })
                 ,
+                IconColumn::make('has_user')->boolean()
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ,
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
@@ -374,4 +380,12 @@ class EmployeeResource extends Resource
     // public function canCreate(){
     //     return false;
     // }
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+            return true;
+        }
+        return false;
+    }
 }

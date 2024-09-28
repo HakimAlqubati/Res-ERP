@@ -135,7 +135,8 @@ class Task extends Model
     protected static function booted()
     { 
         // parent::boot();
-       
+      
+    //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
         if (auth()->check()) {
             if (isBranchManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {

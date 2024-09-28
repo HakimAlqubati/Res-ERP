@@ -85,15 +85,25 @@ class AdminPanelProvider extends PanelProvider
                 //         ...InventoryReportsCluster::getNavigationItems(),
                 //     ]),
                 NavigationGroup::make(__('menu.hr_ms'))
-                    ->items([
-                        ...HRCluster::getNavigationItems(), 
-                        ...HRTasksSystem::getNavigationItems(), 
-                        ...HRServiceRequestCluster::getNavigationItems(), 
-                        ...HRAttenanceCluster::getNavigationItems(), 
-                        ...HRAttendanceReport::getNavigationItems(), 
-                        ...HRCircularCluster::getNavigationItems(), 
+                        // ->icon('heroicon-o-user-group')
+                        ->items(array_merge(
+                         (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  HRCluster::getNavigationItems(): [], 
+                          HRTasksSystem::getNavigationItems(), 
+                          HRServiceRequestCluster::getNavigationItems(), 
+                          HRAttenanceCluster::getNavigationItems(), 
+                          HRAttendanceReport::getNavigationItems(), 
+                          HRCircularCluster::getNavigationItems(), 
+                        ))
+                    // ->items([
+                    //     ...HRCluster::getNavigationItems(), 
+                    //     ...HRTasksSystem::getNavigationItems(), 
+                    //     ...HRServiceRequestCluster::getNavigationItems(), 
+                    //     ...HRAttenanceCluster::getNavigationItems(), 
+                    //     ...HRAttendanceReport::getNavigationItems(), 
+                    //     ...HRCircularCluster::getNavigationItems(), 
                     
-                    ]),
+                    // ])
+                    ,
                 NavigationGroup::make(__('lang.user_and_roles'))
                 ->items(array_merge(
                     (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems(): [],

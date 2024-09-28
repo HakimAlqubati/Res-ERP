@@ -136,7 +136,6 @@ class User extends Authenticatable implements FilamentUser
     }
     public function isStuff()
     {
-
         if (in_array(getCurrentRole(), [8, 9, 10, 6])) {
             return true;
         }
@@ -161,5 +160,13 @@ class User extends Authenticatable implements FilamentUser
                 });
             }
         }
+    }
+
+    public function getHasEmployeeAttribute()
+    {
+        if ($this->employee()->exists()) {
+            return true;
+        }
+        return false;
     }
 }
