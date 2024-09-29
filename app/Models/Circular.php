@@ -39,10 +39,10 @@ class Circular extends Model
     protected static function booted()
     {
     
-        if (!isSuperAdmin() || !isSystemManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('branch_ids', auth()->user()->branch_id); // Add your default query here
-            });
-        } 
+        // if (!isSuperAdmin() || !isSystemManager()) {
+        //     static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+        //         $builder->where('branch_ids', auth()->user()->branch_id); // Add your default query here
+        //     });
+        // } 
     }
 }
