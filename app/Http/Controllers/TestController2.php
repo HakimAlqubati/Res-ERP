@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Attendance;
 use App\Models\Employee;
-use App\Models\Holiday;
-use App\Models\WeeklyHoliday;
 
 class TestController2 extends Controller
 {
@@ -22,15 +19,25 @@ class TestController2 extends Controller
         $checkDate = $_GET['checkDate'];
         $checkType = $_GET['checkType'];
         $employee = Employee::find($empId);
-        $workTimePeriods = attendanceEmployee($employee, $time, $day, $checkType,$checkDate);
+        $workTimePeriods = attendanceEmployee($employee, $time, $day, $checkType, $checkDate);
         return $workTimePeriods;
     }
 
-    public function to_get_employee_attendances(){        
+    public function to_get_employee_attendances()
+    {
         $empId = $_GET['empId'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
- 
-        return employeeAttendances($empId,$startDate,$endDate);
+
+        return employeeAttendances($empId, $startDate, $endDate);
     }
+
+    public function to_get_multi_employees_attendances()
+    {
+        $empIds = explode(',', $_GET['empIds']);
+        $date = $_GET['date'];
+
+        return employeeAttendancesByDate($empIds, $date);
+    }
+
 }

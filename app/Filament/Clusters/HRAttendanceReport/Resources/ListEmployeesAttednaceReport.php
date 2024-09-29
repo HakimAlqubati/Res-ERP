@@ -30,8 +30,32 @@ class ListEmployeesAttednaceReport extends ListRecords
         $date = $this->getTable()->getFilters()['filter_date']->getState()['date'];
 
         $report_data = [];
-        // $work_periods = WorkPeriod::where('active', 1)->select('id', 'name', 'start_at', 'end_at')->get()->toArray();
-        // Fetch active work periods and decode the days array
+
+        $query = Employee::query();
+        $employees = $query->select('id');
+        if ($branch_id != '') {
+            $employees = $query->where('branch_id', $branch_id);
+        }
+        // $query->where('id',6);
+        
+        $employees = $query->get()->pluck('id')->toArray();
+
+        $report_data = employeeAttendancesByDate($employees, $date);
+        $data = array_values($report_data);
+
+// dd($data[0][$date]['employee_name']);
+        return [
+            'report_data' => $report_data,
+            'branch_id' => $branch_id,
+            'date' => $date,
+        ];
+    }
+    public function getViewData_backup(): array
+    {
+        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'];
+        $date = $this->getTable()->getFilters()['filter_date']->getState()['date'];
+
+        $report_data = [];
         $work_periods = WorkPeriod::where('active', 1)->select('id',
             'name',
             'start_at',
@@ -55,10 +79,9 @@ class ListEmployeesAttednaceReport extends ListRecords
             $employees = $query->where('branch_id', $branch_id);
         }
         $employees = $query->get();
-// dd($employees);
+
         $report_data = $this->getEmployeeAttendance($employees, $date);
 
-        // dd($report_data,$employees, $date,$branch_id,$work_day_periods);
         return [
             'report_data' => $report_data['data'],
             'branch_id' => $branch_id,
