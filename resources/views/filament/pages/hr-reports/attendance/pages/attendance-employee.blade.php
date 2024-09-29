@@ -82,7 +82,11 @@
                                                     {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }}
                                                 </x-filament-tables::cell>
                                             @endif
-
+                                            @if (isset($item['attendances']['checkin']) && !isset($item['attendances']['checkout']))
+                                                <x-filament-tables::cell colspan="4" class="internal_cell">
+                                                    {{ 'There is no checkout' }}
+                                                </x-filament-tables::cell>
+                                            @endif
                                             @if ($item['attendances'] == 'absent')
                                                 <x-filament-tables::cell colspan="6">
                                                     {{ 'Absent' }}
