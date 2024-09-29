@@ -45,9 +45,9 @@ class Circular extends Model
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $userType = auth()->user()->user_type;
                 $branchId = auth()->user()->branch_id;
-// dd($branchId,$userType);
-                $builder->where('group_id', $userType);
-                // ->whereJsonContains('branch_ids', $branchId); // Search within the branch_ids array
+                // dd($branchId,$userType);
+                $builder->where('group_id', $userType)
+                    ->whereJsonContains('branch_ids', (string) $branchId); // Search within the branch_ids as a JSON array
 
             });
         }
