@@ -822,6 +822,7 @@ function attendanceEmployee($employee, $time, $day, $checkType, $checkDate)
 
     // Fetch leave applications within the date range
     $employee = Employee::find($employeeId);
+    
     $leaveApplications = $employee?->approvedLeaveApplications()
         ->where(function ($query) use ($startDate, $endDate) {
             $query->whereBetween('from_date', [$startDate, $endDate])
@@ -858,13 +859,15 @@ function attendanceEmployee($employee, $time, $day, $checkType, $checkDate)
         }
 
         // Check if the current date falls within any leave applications
-        foreach ($leaveApplications as $leave) {
-            if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
-                $result[$date->toDateString()]['leave'] = [
-                    'leave_type_id' => $leave->leave_type_id,
-                    'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
-                ];
-                continue 2; // Skip to the next date if it's a leave day
+        if(is_array($leaveApplications)){
+            foreach ($leaveApplications as $leave) {
+                if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
+                    $result[$date->toDateString()]['leave'] = [
+                        'leave_type_id' => $leave->leave_type_id,
+                        'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
+                    ];
+                    continue 2; // Skip to the next date if it's a leave day
+                }
             }
         }
 

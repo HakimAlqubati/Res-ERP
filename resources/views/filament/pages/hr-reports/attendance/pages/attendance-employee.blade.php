@@ -44,7 +44,6 @@
             <tbody>
 
                 @foreach ($report_data as $date => $data)
-            
                     <x-filament-tables::row>
                         <x-filament-tables::cell>
                             {{ $date }}
@@ -55,14 +54,40 @@
                                 <x-filament-tables::table style="width: 100%">
                                     @foreach ($data['periods'] as $item)
                                         <x-filament-tables::row>
-                                            <x-filament-tables::cell class="internal_cell">{{ $item['start_at'] }}</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">{{ $item['end_at'] }}</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">3</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">4</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">1</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">2</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">3</x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">4</x-filament-tables::cell>
+                                            <x-filament-tables::cell
+                                                class="internal_cell">{{ $item['start_at'] }}</x-filament-tables::cell>
+                                            <x-filament-tables::cell
+                                                class="internal_cell">{{ $item['end_at'] }}</x-filament-tables::cell>
+
+                                            @if (isset($item['attendances']['checkin']))
+                                                <x-filament-tables::cell class="internal_cell">
+                                                    {{ $item['attendances']['checkin'][0]['check_time'] }}
+                                                </x-filament-tables::cell>
+                                                <x-filament-tables::cell class="internal_cell">
+                                                    {{ $item['attendances']['checkin'][0]['status'] }}
+                                                </x-filament-tables::cell>
+                                            @endif
+                                            @if (isset($item['attendances']['checkout']))
+                                                <x-filament-tables::cell class="internal_cell">
+                                                    {{ $item['attendances']['checkout'][0]['check_time'] }}
+                                                </x-filament-tables::cell>
+                                                <x-filament-tables::cell class="internal_cell">
+                                                    {{ $item['attendances']['checkout'][0]['status'] }}
+                                                </x-filament-tables::cell>
+                                                <x-filament-tables::cell class="internal_cell">
+                                                    {{ $item['attendances']['checkout'][0]['supposed_duration_hourly'] }}
+                                                </x-filament-tables::cell>
+
+                                                <x-filament-tables::cell class="internal_cell">
+                                                    {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }}
+                                                </x-filament-tables::cell>
+                                            @endif
+
+                                            @if ($item['attendances'] == 'absent')
+                                                <x-filament-tables::cell colspan="6">
+                                                    {{ 'Absent' }}
+                                                </x-filament-tables::cell>
+                                            @endif
                                         </x-filament-tables::row>
                                     @endforeach
                                 </x-filament-tables::table>
