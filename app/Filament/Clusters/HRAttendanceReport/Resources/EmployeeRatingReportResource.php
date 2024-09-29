@@ -108,12 +108,15 @@ class EmployeeRatingReportResource extends Resource
     {
         $query = TaskRating::select(
             DB::raw('SUM(hr_task_rating.rating_value) as rating_value'),
-             DB::raw('count(hr_task_rating.task_id) as count_task'),
+            DB::raw('count(hr_task_rating.task_id) as count_task'),
             'hr_employees.id as employee_id', 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no', 'hr_employees.branch_id as branch_id')
-            ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id')
-            ->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id')
-            
-            ;
+            ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id');
+        if (isBranchManager()) {
+            $query->where('hr_employees.branch_id', auth()->user()->branch_id);
+        }
+        $query = $query->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id')
+
+        ;
 // dd($query->get());
         return $query;
         // $query = static::getModel()::query();

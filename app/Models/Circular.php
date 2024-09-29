@@ -41,9 +41,14 @@ class Circular extends Model
     {
 
         if (!isSuperAdmin() && !isSystemManager()) {
-            
+
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('group_id', auth()->user()->user_type); // Add your default query here
+                $userType = auth()->user()->user_type;
+                $branchId = auth()->user()->branch_id;
+// dd($branchId,$userType);
+                $builder->where('group_id', $userType);
+                // ->whereJsonContains('branch_ids', $branchId); // Search within the branch_ids array
+
             });
         }
     }
