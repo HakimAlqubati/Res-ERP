@@ -43,6 +43,7 @@ use Filament\Tables\Table;
 use function Laravel\Prompts\form;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
@@ -653,34 +654,41 @@ class TaskResource extends Resource implements HasShieldPermissions
     }
     public static function getEloquentQuery(): Builder
     {
-        return static::getModel()::query();
-        $query = static::getModel()::query();
-
-        if (
-            static::isScopedToTenant() &&
-            ($tenant = Filament::getTenant())
-        ) {
-            static::scopeEloquentQueryToTenant($query, $tenant);
-        }
-
-        // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
-        //     $query->where('assigned_to', auth()->user()->id)
-        //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
-        //         ->orWhere('created_by', auth()->user()->id)
-        //     ;
-        // }
-
-        if (!in_array(getCurrentRole(), [1, 3])) {
-            // $query->where('assigned_to', auth()->user()->id)
-            //     ->orWhere('assigned_to', auth()->user()?->employee?->id)
-            //         ->orWhere('created_by', auth()->user()->id)
-            $query->Where('created_by', auth()->user()->id)->orWhere('assigned_to', auth()->user()?->employee?->id);
-            // $query->Where('assigned_to', auth()->user()->id)
-            // $query->Where('created_by', auth()->user()->id)
-            ;
-        }
-        return $query;
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     return static::getModel()::query();
+    //     $query = static::getModel()::query();
+
+    //     if (
+    //         static::isScopedToTenant() &&
+    //         ($tenant = Filament::getTenant())
+    //     ) {
+    //         static::scopeEloquentQueryToTenant($query, $tenant);
+    //     }
+
+    //     // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
+    //     //     $query->where('assigned_to', auth()->user()->id)
+    //     //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
+    //     //         ->orWhere('created_by', auth()->user()->id)
+    //     //     ;
+    //     // }
+
+    //     if (!in_array(getCurrentRole(), [1, 3])) {
+    //         // $query->where('assigned_to', auth()->user()->id)
+    //         //     ->orWhere('assigned_to', auth()->user()?->employee?->id)
+    //         //         ->orWhere('created_by', auth()->user()->id)
+    //         $query->Where('created_by', auth()->user()->id)->orWhere('assigned_to', auth()->user()?->employee?->id);
+    //         // $query->Where('assigned_to', auth()->user()->id)
+    //         // $query->Where('created_by', auth()->user()->id)
+    //         ;
+    //     }
+    //     return $query;
+    // }
 
     public static function canCreate(): bool
     {

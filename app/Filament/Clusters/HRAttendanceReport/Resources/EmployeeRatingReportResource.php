@@ -14,7 +14,6 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -72,7 +71,7 @@ class EmployeeRatingReportResource extends Resource
 
                     return 'rating-report/view?employee_id=' . $record->employee_id;
                 }),
-                
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -107,11 +106,15 @@ class EmployeeRatingReportResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = TaskRating::select('hr_employees.id as employee_id', DB::raw('SUM(hr_task_rating.rating_value) as rating_value')
-            , DB::raw('count(hr_task_rating.task_id) as count_task')
-            , 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no', 'hr_employees.branch_id as branch_id')
+        $query = TaskRating::select(
+            DB::raw('SUM(hr_task_rating.rating_value) as rating_value'),
+             DB::raw('count(hr_task_rating.task_id) as count_task'),
+            'hr_employees.id as employee_id', 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no', 'hr_employees.branch_id as branch_id')
             ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id')
-            ->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id');
+            ->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id')
+            
+            ;
+// dd($query->get());
         return $query;
         // $query = static::getModel()::query();
         $query = TaskRating::query()
@@ -131,6 +134,7 @@ class EmployeeRatingReportResource extends Resource
                 'hr_employees.name',
                 'hr_employees.employee_no',
             );
+        dd($query);
         return $query;
 
     }
