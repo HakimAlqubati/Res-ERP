@@ -55,8 +55,18 @@ class ServiceRequestResource extends Resource
                             ->required()
                             ->maxLength(255),
                         Select::make('branch_id')->label('Branch')
+                            ->disabled(function () {
+                                if (isStuff()) {
+                                    return true;
+                                }
+                                return false;
+                            })
                             ->options(Branch::select('name', 'id')->pluck('name', 'id'))
-                            
+                            ->default(function () {
+                                if (isStuff()) {
+                                    return auth()->user()->branch_id;
+                                }
+                            })
                             ->live()
                             ->required(),
 

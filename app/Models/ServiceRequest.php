@@ -114,5 +114,10 @@ class ServiceRequest extends Model
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         } 
+        if (isStuff()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('assigned_to', auth()->user()->employee->id); // Add your default query here
+            });
+        } 
     }
 }
