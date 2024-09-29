@@ -118,7 +118,7 @@ class Employee extends Model
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         } elseif (isStuff()) {
-            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                 // $builder->where('id', auth()->user()->employee->id); // Add your default query here
             });
         }
@@ -131,4 +131,26 @@ class Employee extends Model
         }
         return false;
     }
+
+    public function monthlyIncentives()
+    {
+        return $this->hasMany(EmployeeMonthlyIncentive::class);
+    }
+
+    public function allowances()
+    {
+        return $this->hasMany(EmployeeAllowance::class);
+    }
+
+    public function deductions()
+    {
+        return $this->hasMany(EmployeeDeduction::class);
+    }
+
+    public function overtimes()
+    {
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1);
+    }
+ 
+
 }

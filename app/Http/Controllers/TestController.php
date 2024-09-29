@@ -293,4 +293,5 @@ class TestController extends Controller
 
         return array_values($uniqueDates); // Return values as an indexed array
     }
+
 }

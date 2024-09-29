@@ -4,10 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Models\Allowance;
 use App\Models\Branch;
+use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
+use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
 use Closure;
@@ -206,7 +209,7 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
-                    Wizard\Step::make('Salary & Shift data')
+                    Wizard\Step::make('Finance  & Shift data')
                         ->schema([
                             Fieldset::make()->label('Set salary data and its config')->schema([
                                 Grid::make()->label('')->columns(4)->schema([
@@ -226,10 +229,6 @@ class EmployeeResource extends Resource
                                 ]),
                                 Fieldset::make()->label('Shift - RFID')->schema([
                                     Grid::make()->columns(2)->schema([
-                                        // ToggleButtons::make('employee_periods')->multiple()->options(
-                                        //     WorkPeriod::where('active', 1)->get()->pluck('name', 'id'),
-                                        // )->inline(),
-
                                         CheckboxList::make('periods') // Refers to the 'periods' relationship in the Employee model
                                             ->label('Work Periods')
                                             ->relationship('periods', 'name') // Specify the relationship and the display column
@@ -247,6 +246,50 @@ class EmployeeResource extends Resource
                                         TextInput::make('rfid')->label('Employee RFID'),
                                     ]),
                                 ]),
+                                Fieldset::make()->columns(3)->label('Finance')->schema([
+                                    Repeater::make('Monthly deductions')
+                                        ->relationship('deductions')
+                                        ->maxItems(Deduction::where('active', 1)->where('is_monthly', 1)->count())
+                                        ->schema([
+
+                                            Select::make('deduction_id')
+                                                ->options(Deduction::where('active', 1)->where('is_monthly', 1)->get()->pluck('name', 'id'))
+                                                ->required(),
+                                            TextInput::make('amount')
+                                                ->default(0)->minValue(0)
+                                                ->numeric(),
+
+                                        ]),
+                                    Repeater::make('Monthly allowances')
+                                        ->relationship('allowances')
+                                        ->maxItems(Allowance::where('active', 1)->where('is_monthly', 1)->count())
+                                        ->schema([
+
+                                            Select::make('allowance_id')
+                                                ->options(Allowance::where('active', 1)->where('is_monthly', 1)->get()->pluck('name', 'id'))
+                                                ->required(),
+                                            TextInput::make('amount')
+                                                ->default(0)->minValue(0)
+                                                ->numeric(),
+
+                                        ]),
+                                    Repeater::make('Monthly incentives')
+                                        ->relationship('monthlyIncentives')
+                                        ->maxItems(MonthlyIncentive::where('active', 1)->count())
+                                        ->schema([
+
+                                            Select::make('monthly_incentive_id')
+                                                ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
+                                                ->required(),
+                                            TextInput::make('amount')
+                                                ->default(0)->minValue(0)
+                                                ->numeric(),
+
+                                        ]),
+
+                                ])
+
+                                ,
                             ]),
                         ]),
                 ])->columnSpanFull()->skippable(),
@@ -329,7 +372,7 @@ class EmployeeResource extends Resource
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ,
+                ,
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
@@ -383,7 +426,7 @@ class EmployeeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
             return true;
         }
         return false;

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\TestController2;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
@@ -31,6 +32,9 @@ Route::get('/totestpdf', function () {
     return view('export.order_pdf', compact('order', 'orderDetails'));
 });
 Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
+Route::get('/to_test_calculate_salary/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary']);
+Route::get('/to_test_emplployee_attendance_time', [TestController2::class, 'to_test_emplployee_attendance_time']);
+Route::get('/to_get_employee_attendances', [TestController2::class, 'to_get_employee_attendances']);
 Route::get('/toviewrepeated', function () {
     /**
      * order IDs

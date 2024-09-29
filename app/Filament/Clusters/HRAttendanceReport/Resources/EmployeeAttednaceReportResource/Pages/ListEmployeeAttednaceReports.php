@@ -19,30 +19,18 @@ class ListEmployeeAttednaceReports extends ListRecords
 
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
-    {
-
-        // $updates = request()->input('components.0.updates', []);
-        // $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
-        // $employee_id = $updates['tableFilters.employee_id.value'] ?? null;
-        // $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
-        $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
+    {$employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
-        // dd($this->getTable()->getFilters()['employee_id']->getState(), $this->table->getFilters(), $employee_id);
-        // $employee_id = 15;
-        // $start_date = '2024-09-09';
-        // $end_date = '2024-09-18';
-// dd($employee_id,$start_date,$end_date);
-        $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
-        // dd($report_data->toArray());
-        // dd($report_data);
+
+        // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
+        $data = employeeAttendances($employee_id, $start_date, $end_date);
         return [
-            'report_data' => $report_data['data'],
+            'report_data' => $data,
             'employee_id' => $employee_id,
             'start_date' => $start_date,
             'end_date' => $end_date,
-        ];
-    }
+        ];}
 
     public function getReportData2($employee_id, $start_date, $end_date)
     {

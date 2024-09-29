@@ -187,3 +187,7 @@ html::-webkit-scrollbar {
     color: #c98108;
     letter-spacing: 2.5px;
 }
+
+.internal_cell{
+    width: 110px !important;
+}
