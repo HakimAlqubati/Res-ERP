@@ -44,6 +44,7 @@ class EmployeeRatingReportResource extends Resource
 
         return $table
             ->emptyStateHeading('No data')
+            ->recordAction(null)
             ->columns([
                 TextColumn::make('employee_no')->label('Employee no')->searchable(isIndividual: true, isGlobal: true)->alignCenter(false),
                 TextColumn::make('employee_name')->label('Employee name')->searchable(isIndividual: true, isGlobal: true),
