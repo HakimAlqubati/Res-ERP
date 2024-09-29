@@ -21,7 +21,7 @@ class UserType extends Model
         if (auth()->check()) {
             if (isBranchManager()) {
                 static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    $builder->whereIn('id',[3,4] );
+                    $builder->whereIn('id',[2,3,4] );
                 });
             }
         }
