@@ -32,7 +32,7 @@ class StepsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('title')->searchable(),
                 Tables\Columns\ToggleColumn::make('done')
                     ->disabled(function ($record) {
-                        if (($record?->morphable?->assigned_to == auth()->user()->employee->id) || isSuperAdmin()) {
+                        if ((isStuff() && ($record?->morphable?->assigned_to == auth()->user()->employee->id)) || isSuperAdmin()) {
                             return false;
                         }
                         return true;
