@@ -559,7 +559,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->button()
                     ->hidden(function ($record) {
-                        if (!isSuperAdmin() && !auth()->user()->can('rating_task')) {
+                        if (!isSystemManager() && !isSuperAdmin() && !isBranchManager() ) {
                             return true;
                         }
                         // if (!in_array(getCurrentRole(), [1, 2])) {
