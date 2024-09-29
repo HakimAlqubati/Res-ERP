@@ -121,5 +121,11 @@ class LeaveApplication extends Model
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }
+
+        if(isStuff()){
+            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
+            });
+        }
     }
 }

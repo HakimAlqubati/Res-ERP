@@ -5,7 +5,6 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationRes
 use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationResource;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateLeaveApplication extends CreateRecord
@@ -21,12 +20,17 @@ class CreateLeaveApplication extends CreateRecord
             $data['days_count'] = 0;
         }
 
-        $employee = Employee::find($data['employee_id']);
-        if ($employee->branch()->exists()) {
-            $data['branch_id'] = $employee->branch->id;
+        if (!isStuff()) {
+            $employee = Employee::find($data['employee_id']);
+            if ($employee->branch()->exists()) {
+                $data['branch_id'] = $employee->branch->id;
+            }
         }
-        
 
+        if (isStuff()) {
+            $data['employee_id'] = auth()->user()->employee->id;
+            $data['branch_id'] = auth()->user()->branch_id;
+        }
         $data['created_by'] = auth()->user()->id;
         $data['status'] = LeaveApplication::STATUS_PENDING;
 
@@ -38,5 +42,4 @@ class CreateLeaveApplication extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-    
 }

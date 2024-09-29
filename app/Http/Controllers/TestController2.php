@@ -28,7 +28,7 @@ class TestController2 extends Controller
         $empId = $_GET['empId'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
-
+       return  calculateAbsentDaysAndDeductSalary($empId,$startDate,$endDate);
         return employeeAttendances($empId, $startDate, $endDate);
     }
 

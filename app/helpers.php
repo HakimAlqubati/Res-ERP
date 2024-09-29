@@ -1069,3 +1069,67 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
     return $result;
 }
+
+
+function calculateAbsentDaysAndDeductSalary($employeeId, $startDate, $endDate)
+{
+    // Get employee attendance data from the employeeAttendances function
+    $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+
+    // If no periods are found, the employee has no working schedule
+    if ($attendances === 'no_periods') {
+        return 'No working periods defined for the employee!';
+    }
+
+    // Count total days in the given month
+    $totalDaysInMonth = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+
+    // Initialize absent days counter
+    $absentDays = 0;
+
+    // Loop through each date in the attendance result to count absent days
+    foreach ($attendances as $date => $attendance) {
+        // If the day is marked as a holiday or weekend, skip it
+        if (isset($attendance['holiday']) || isset($attendance['leave']) || isset($attendance['weekend'])) {
+            continue; // Skip holidays, leave, and weekends
+        }
+
+        // Check if the day has any attendance data (marked as "absent" if no attendances)
+        $isAbsent = true;
+        if (isset($attendance['periods'])) {
+            foreach ($attendance['periods'] as $period) {
+                if ($period['attendances'] !== 'absent') {
+                    $isAbsent = false;
+                    break;
+                }
+            }
+        }
+
+        // If no attendance for the entire day, count as an absence
+        if ($isAbsent) {
+            $absentDays++;
+        }
+    }
+
+    // Get the basic salary of the employee
+    $employee = Employee::find($employeeId);
+    if (!$employee) {
+        return 'Employee not found!';
+    }
+    
+    // Calculate daily salary
+    $basicSalary = $employee->salary;
+    $dailySalary = calculateDailySalary($employeeId, $startDate);
+
+    // Calculate the deduction amount based on absent days
+    $totalDeductionForAbsence = $absentDays * $dailySalary;
+
+    // Return details including absent days, deduction, and the net salary after deduction
+    return [
+        'total_absent_days' => $absentDays,
+        'total_days_in_month' => $totalDaysInMonth,
+        'total_deduction_for_absence' => $totalDeductionForAbsence,
+        'net_salary_after_absence_deduction' => $basicSalary - $totalDeductionForAbsence,
+        'daily_salary' => $dailySalary,
+    ];
+}

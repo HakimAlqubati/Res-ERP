@@ -85,11 +85,30 @@ class LeaveApplicationResource extends Resource
                             Select::make('employee_id')
                                 ->label('Employee')
                                 ->searchable()
+                                ->disabled(function () {
+                                    if (isStuff()) {
+                                        return true;
+                                    }
+                                    return false;
+                                })
+                                ->default(function () {
+                                    if (isStuff()) {
+                                        return auth()->user()->employee->id;
+                                    }
+                                })
                                 ->options(Employee::select('name', 'id')
+
                                         ->get()->plucK('name', 'id'))
                             ,
                             Select::make('status')->options(LeaveApplication::getStatus())
-                                ->default(LeaveApplication::STATUS_PENDING)->disabledOn('create'),
+                                ->default(LeaveApplication::STATUS_PENDING)->disabledOn('create')
+                                ->hidden(function () {
+                                    if (isStuff()) {
+                                        return true;
+                                    }
+                                    return false;
+                                })
+                            ,
                             Select::make('leave_type_id')->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
                                 ->label('Leave type')->required()
                             ,
@@ -165,6 +184,7 @@ class LeaveApplicationResource extends Resource
 
     public static function canCreate(): bool
     {
+        return true;
         if (isStuff()) {
             return false;
         }
