@@ -66,11 +66,25 @@ class AttendnaceResource extends Resource
                             $employee_id = $get('employee_id');
                             $check_date = $get('check_date');
                             $check_time = $get('check_time');
+                            // $employee_periods = Employee::find($employee_id)?->periods->select('id')->pluck('id')->toArray();
+                            // dd( $employee_periods);
                             $employee_attendance = Attendance::where('employee_id', $employee_id)->where('check_date', $check_date)->select('check_type', 'check_time', 'check_date')->get()->toArray();
                             if (count($employee_attendance) == 0) {
                                 $set('check_type', Attendance::CHECKTYPE_CHECKIN);
                             } else if (count($employee_attendance) == 1) {
                                 $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
+                            } else if (count($employee_attendance) == 2) {
+                                $set('check_type', Attendance::CHECKTYPE_CHECKIN);
+
+                            } else if (count($employee_attendance) == 3) {
+                                $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
+
+                            } else if (count($employee_attendance) == 4) {
+                                $set('check_type', Attendance::CHECKTYPE_CHECKIN);
+
+                            } else if (count($employee_attendance) == 5) {
+                                $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
+
                             }
                         })
                         ->required(),
@@ -171,7 +185,7 @@ class AttendnaceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if(isSystemManager() || isSuperAdmin()){
+        if (isSystemManager() || isSuperAdmin()) {
             return true;
         }
         return false;

@@ -73,7 +73,7 @@ class ServiceRequestResource extends Resource
                         Select::make('branch_area_id')->label('Branch area')->required()
                             ->options(function (Get $get) {
                                 return BranchArea::query()
-                                    ->where('branch_id', $get('branch_id'))
+                                    ->where('branch_id', $get('branch_id')) 
                                     ->pluck('name', 'id');
                             })
                         ,
