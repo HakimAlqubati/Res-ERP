@@ -44,7 +44,12 @@ class EmployeeRatingReportResource extends Resource
 
         return $table
             ->emptyStateHeading('No data')
-            ->recordAction(null)
+            // ->recordAction(function($record){
+            //     return 'rating-report/view?employee_id=' . $record->employee_id;
+            // })
+            ->recordUrl(function($record){
+                return 'rating-report/view?employee_id=' . $record->employee_id;
+            })
             ->columns([
                 TextColumn::make('employee_no')->label('Employee no')->searchable(isIndividual: true, isGlobal: true)->alignCenter(false),
                 TextColumn::make('employee_name')->label('Employee name')->searchable(isIndividual: true, isGlobal: true),
