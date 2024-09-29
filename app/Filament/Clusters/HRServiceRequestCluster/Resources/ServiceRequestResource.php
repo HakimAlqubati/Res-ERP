@@ -494,4 +494,12 @@ class ServiceRequestResource extends Resource
 
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        if (isMaintenanceManager() || isSystemManager() || isSuperAdmin() || isBranchManager()) {
+            return true;
+        }
+        return false;
+        return static::can('delete', $record);
+    }
 }
