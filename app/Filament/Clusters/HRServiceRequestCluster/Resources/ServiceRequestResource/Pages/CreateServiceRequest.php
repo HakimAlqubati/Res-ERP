@@ -17,6 +17,9 @@ class CreateServiceRequest extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['status'] = ServiceRequest::STATUS_NEW;
+        if(isStuff()){
+            $data['branch_id'] = auth()->user()->branch_id;
+        }
         $data['created_by'] = auth()->user()->id;
         return $data;
     }

@@ -116,7 +116,9 @@ class ServiceRequest extends Model
         } 
         if (isStuff()) {
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('assigned_to', auth()->user()->employee->id); // Add your default query here
+                $builder->where('assigned_to', auth()->user()->employee->id)
+                ->orWhere('created_by',auth()->user()->id)
+                ; // Add your default query here
             });
         } 
     }
