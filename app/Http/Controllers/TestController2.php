@@ -6,6 +6,10 @@ use App\Models\Employee;
 
 class TestController2 extends Controller
 {
+    public function to_test_calculate_salary_with_attendances_deducations($empId,$date){
+
+        return  calculateAbsentDaysAndDeductSalary($empId,$date);
+    }
     public function to_test_calculate_salary($empId, $date)
     {
         return calculateMonthlySalary($empId, $date);
@@ -28,7 +32,7 @@ class TestController2 extends Controller
         $empId = $_GET['empId'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
-       return  calculateAbsentDaysAndDeductSalary($empId,$startDate,$endDate);
+       
         return employeeAttendances($empId, $startDate, $endDate);
     }
 

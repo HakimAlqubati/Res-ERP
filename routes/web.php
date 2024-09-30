@@ -33,6 +33,7 @@ Route::get('/totestpdf', function () {
 });
 Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
 Route::get('/to_test_calculate_salary/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary']);
+Route::get('/to_test_calculate_salary_with_attendances_deducations/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary_with_attendances_deducations']);
 Route::get('/to_test_emplployee_attendance_time', [TestController2::class, 'to_test_emplployee_attendance_time']);
 Route::get('/to_get_employee_attendances', [TestController2::class, 'to_get_employee_attendances']);
 Route::get('/to_get_multi_employees_attendances', [TestController2::class, 'to_get_multi_employees_attendances']);

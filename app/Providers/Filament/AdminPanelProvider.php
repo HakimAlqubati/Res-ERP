@@ -54,6 +54,7 @@ class AdminPanelProvider extends PanelProvider
         ->brandName('Workbench')
         ->favicon(asset('storage/logo/default.png'))
         ->brandLogo(asset('storage/logo/default.png'))
+        ->darkModeBrandLogo(asset('storage/logo/default-wb.png'))
         ->brandLogoHeight('3.5rem')
         ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
             $menu =  $builder->items([
