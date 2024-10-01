@@ -368,12 +368,30 @@ function calculateMonthlySalary($employeeId, $date)
     $dailySalary = calculateDailySalary($employeeId, $date);
     $hourlySalary = calculateHourlySalary($employeeId, $date);
 
+    $date = Carbon::parse($date);
+    // Get the start of the month
+    $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
+
+    // Get the end of the month
+    $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
+    $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+
+    $totalAbsentDays = calculateTotalAbsentDays($attendances);
+    $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
+
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * 2;
 
     // Calculate net salary including overtime
-    $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
+    // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
+
+    // Calculate deductions for absences and lateness
+    $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
+    $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+
+    // Calculate net salary including deductions for absences and lateness, plus overtime
+    $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions - $deductionForAbsentDays - $deductionForLateHours;
 
     // Return the details and net salary breakdown
     return [
@@ -385,6 +403,10 @@ function calculateMonthlySalary($employeeId, $date)
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
+            'deduction_for_absent_days' => $deductionForAbsentDays,
+            'deduction_for_late_hours' => $deductionForLateHours,
+            'total_absent_days' => $totalAbsentDays,
+            'total_late_hours' => $totalLateHours,
             'another_details' => [
                 'daily_salary' => $dailySalary,
                 'hourly_salary' => $hourlySalary,
@@ -393,6 +415,86 @@ function calculateMonthlySalary($employeeId, $date)
         ],
     ];
 }
+
+
+function calculateMonthlySalary2($employeeId, $date)
+{
+    // Retrieve the employee model with relations to deductions, allowances, and incentives
+    $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
+
+    if (!$employee) {
+        return 'Employee not found!';
+    }
+
+    // Basic salary from the employee model
+    $basicSalary = $employee->salary;
+
+    // Calculate total deductions
+    $totalDeductions = $employee->deductions->sum(function ($deduction) {
+        return $deduction->amount;
+    });
+
+    // Calculate total allowances
+    $totalAllowances = $employee->allowances->sum(function ($allowance) {
+        return $allowance->amount;
+    });
+
+    // Calculate total monthly incentives
+    $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
+        return $incentive->amount;
+    });
+
+    // Calculate daily and hourly salary
+    $dailySalary = calculateDailySalary($employeeId, $date);
+    $hourlySalary = calculateHourlySalary($employeeId, $date);
+
+    $date = Carbon::parse($date);
+    // Get the start of the month
+    $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
+    
+    // Get the end of the month
+    $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
+    
+    $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+    
+    // Calculate total absent days and late hours
+    $totalAbsentDays = calculateTotalAbsentDays($attendances);
+    $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
+    
+    $overtimeHours = getEmployeeOvertimes($date, $employee);
+    // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
+    $overtimePay = $overtimeHours * $hourlySalary * 2;
+
+    // Calculate deductions for absences and lateness
+    $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
+    $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+
+    // Calculate net salary including deductions for absences and lateness, plus overtime
+    $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions - $deductionForAbsentDays - $deductionForLateHours;
+
+    // Return the details and net salary breakdown
+    return [
+        'net_salary' => $netSalary,
+        'details' => [
+            'basic_salary' => $basicSalary,
+            'total_deductions' => $totalDeductions,
+            'total_allowances' => $totalAllowances,
+            'total_monthly_incentives' => $totalMonthlyIncentives,
+            'overtime_hours' => $overtimeHours,
+            'overtime_pay' => $overtimePay,
+            'deduction_for_absent_days' => $deductionForAbsentDays,
+            'deduction_for_late_hours' => $deductionForLateHours,
+            'total_absent_days' => $totalAbsentDays,
+            'total_late_hours' => $totalLateHours,
+            'another_details' => [
+                'daily_salary' => $dailySalary,
+                'hourly_salary' => $hourlySalary,
+                'days_in_month' => getDaysInMonth($date),
+            ],
+        ],
+    ];
+}
+
 
 /**
  * to calculate the daily salary
@@ -463,7 +565,6 @@ function getEmployeeOvertimes($date, $employee)
         return \Carbon\Carbon::parse($overtime->date)->month == $month;
     });
 
-// Sum the 'hours' field for the filtered overtimes
     $totalHours = $overtimesForMonth->sum(function ($overtime) {
         return (float) $overtime->hours; // Ensure the 'hours' value is cast to float
     });
@@ -552,128 +653,6 @@ function searchEmployeePeriod($employee, $time, $day, $checkType)
  * to attendance employee
  */
 // function attendanceEmployee($employee, $time, $day, $checkType,$checkDate)
-// {
-//     // Decode the days array for each period
-//     $workTimePeriods = $employee->periods->map(function ($period) {
-//         $period->days = json_decode($period->days); // Ensure days are decoded
-//         return $period;
-//     });
-
-//     // Filter periods by the day
-//     $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-//         return in_array($day, $period->days);
-//     });
-
-//     // Check if no periods are found for the given day
-//     if ($periodsForDay->isEmpty()) {
-//         return "There is no period for today.";
-//     }
-
-//     // Convert the input time to a Carbon instance
-//     $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
-
-//     // Sort periods based on proximity to check-in or check-out
-//     $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
-//         $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
-//         $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
-
-//         if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
-//             // For check-in, find the nearest start time
-//             return abs($checkTime->diffInMinutes($startTime, false));
-//         } elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
-//             // For check-out, find the nearest end time
-//             return abs($checkTime->diffInMinutes($endTime, false));
-//         }
-
-//         return PHP_INT_MAX;
-//     })->first();
-
-//     // If no period is found based on proximity
-//     if (!$nearestPeriod) {
-//         return "There is no period that matches your check-in/check-out time.";
-//     }
-
-//     // Prepare data array
-//     $data = [];
-//     $data['period_id'] = $nearestPeriod->id;
-//     $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
-//     $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-//     $endTime = \Carbon\Carbon::parse($nearestPeriod->end_at);
-
-//     // Handle check-in scenario
-//     if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
-//         if ($checkTime->gt($startTime)) {
-//             // Employee is late
-//             $data['delay_minutes'] = $startTime->diffInMinutes($checkTime);
-//             $data['early_arrival_minutes'] = 0;
-//             if ($allowedLateMinutes > 0) {
-//                 $data['status'] = ($data['delay_minutes'] <= $allowedLateMinutes) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_LATE_ARRIVAL;
-//             } else {
-//                 $data['status'] = Attendance::STATUS_LATE_ARRIVAL;
-//             }
-//         } else {
-//             // Employee is early
-//             $data['delay_minutes'] = 0;
-//             $data['early_arrival_minutes'] = $checkTime->diffInMinutes($startTime);
-//             $data['status'] = ($data['early_arrival_minutes'] == 0) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_EARLY_ARRIVAL;
-//         }
-//         $data['late_departure_minutes'] = 0;
-//     }
-
-//     // Handle check-out scenario
-//     elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
-//         // Find the corresponding check-in record
-//         $checkinRecord = Attendance::where('employee_id', $employee->id)
-//             ->where('period_id', $data['period_id'])
-//             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-//             ->whereDate('check_date', $checkDate)
-//             ->first();
-
-//         if ($checkinRecord) {
-//             $checkinTime = \Carbon\Carbon::parse($checkinRecord->check_time);
-
-//             // Calculate the actual duration (from check-in to check-out)
-//             $actualDuration = $checkinTime->diff($checkTime);
-//             $hoursActual = $actualDuration->h;
-//             $minutesActual = $actualDuration->i;
-
-//             // Calculate the supposed duration (from period start to end)
-//             $supposedDuration = $startTime->diff($endTime);
-//             $hoursSupposed = $supposedDuration->h;
-//             $minutesSupposed = $supposedDuration->i;
-
-//             // Store both durations in a format like "hours:minutes"
-//             $data['actual_duration_hourly'] = sprintf('%02d:%02d', $hoursActual, $minutesActual);
-//             $data['supposed_duration_hourly'] = sprintf('%02d:%02d', $hoursSupposed, $minutesSupposed);
-//         }
-
-//         // Calculate late departure or early departure
-//         if ($checkTime->gt($endTime)) {
-//             // Late departure
-//             $data['late_departure_minutes'] = $endTime->diffInMinutes($checkTime);
-//             $data['early_departure_minutes'] = 0;
-//             $data['status'] = Attendance::STATUS_LATE_DEPARTURE;
-//         } else {
-//             // Early departure
-//             $data['late_departure_minutes'] = 0;
-//             $data['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
-//             $data['status'] = Attendance::STATUS_EARLY_DEPARTURE;
-//         }
-//         $data['delay_minutes'] = 0;
-//     }
-
-//     // Handle case where no matching period is found
-//     else {
-//         $data['period_id'] = 0;
-//         $data['delay_minutes'] = 0;
-//         $data['early_arrival_minutes'] = 0;
-//         $data['late_departure_minutes'] = 0;
-//         $data['early_departure_minutes'] = 0;
-//     }
-
-//     // Return the processed data
-//     return $data;
-// }
 function attendanceEmployee($employee, $time, $day, $checkType, $checkDate)
 {
     // Decode the days array for each period
@@ -1070,657 +1049,65 @@ function employeeAttendancesByDate(array $employeeIds, $date)
     return $result;
 }
 
-/**
- * to calculate the month salary and deducate the absent days
- */
-function calculateAbsentDaysAndDeductSalary($employeeId, $date)
+function calculateTotalAbsentDays($attendanceData)
 {
-    $date = Carbon::parse($date);
-    // Get the start of the current month
-    $startDate = $date->startOfMonth()->toDateString(); // 2024-09-01
+    $totalAbsentDays = 0;
 
-    // Get the end of the current month
-    $endDate = $date->endOfMonth()->toDateString(); // 2024-09-30
+    foreach ($attendanceData as $date => $data) {
+        // Check if periods exist for the date
+        if (isset($data['periods']) && !empty($data['periods'])) {
+            $allAbsent = true; // Assume all are absent initially
 
-    // Get employee attendance data from the employeeAttendances function
-    $attendances = employeeAttendancesToCalSalary4($employeeId, $startDate, $endDate);
-    return $attendances;
-    // If no periods are found, the employee has no working schedule
-    if ($attendances === 'no_periods') {
-        return 'No working periods defined for the employee!';
-    }
-
-    // Count total days in the given month
-    $totalDaysInMonth = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
-
-    // Initialize absent days counter
-    $absentDays = 0;
-
-    // Loop through each date in the attendance result to count absent days
-    foreach ($attendances as $date => $attendance) {
-        // If the day is marked as a holiday or weekend, skip it
-        if (isset($attendance['holiday']) || isset($attendance['leave']) || isset($attendance['weekend'])) {
-            continue; // Skip holidays, leave, and weekends
-        }
-
-        // Check if the day has any attendance data (marked as "absent" if no attendances)
-        $isAbsent = true;
-        if (isset($attendance['periods'])) {
-            foreach ($attendance['periods'] as $period) {
-                if ($period['attendances'] !== 'absent') {
-                    $isAbsent = false;
-                    break;
+            // Loop through each period to check attendance
+            foreach ($data['periods'] as $period) {
+                if (isset($period['attendances']) && $period['attendances'] !== 'absent') {
+                    $allAbsent = false; // Found a period that is not absent
+                    break; // No need to check further
                 }
             }
-        }
 
-        // If no attendance for the entire day, count as an absence
-        if ($isAbsent) {
-            $absentDays++;
-        }
-    }
-
-    // Get the basic salary of the employee
-    $employee = Employee::find($employeeId);
-    if (!$employee) {
-        return 'Employee not found!';
-    }
-
-    // Calculate daily salary
-    $basicSalary = $employee->salary;
-    $dailySalary = calculateDailySalary($employeeId, $startDate);
-
-    // Calculate the deduction amount based on absent days
-    $totalDeductionForAbsence = $absentDays * $dailySalary;
-
-    // Return details including absent days, deduction, and the net salary after deduction
-    return [
-        'total_absent_days' => $absentDays,
-        'total_days_in_month' => $totalDaysInMonth,
-        'total_deduction_for_absence' => $totalDeductionForAbsence,
-        'net_salary_after_absence_deduction' => $basicSalary - $totalDeductionForAbsence,
-        'daily_salary' => $dailySalary,
-    ];
-}
-
-/**
- * to get the monthly attendances to calculate the salary
- *
- */
-function employeeAttendancesToCalSalary($employeeId, $startDate, $endDate)
-{
-    // Convert the dates to Carbon instances for easier manipulation
-    $startDate = Carbon::parse($startDate);
-    $endDate = Carbon::parse($endDate);
-
-    // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
-
-    // Fetch holidays within the date range
-    $holidays = Holiday::where('active', 1)
-        ->whereBetween('from_date', [$startDate, $endDate])
-        ->orWhereBetween('to_date', [$startDate, $endDate])
-        ->select('from_date', 'to_date', 'count_days', 'name')
-        ->get()
-        ->keyBy('from_date');
-
-    // Fetch leave applications within the date range
-    $employee = Employee::find($employeeId);
-
-    $leaveApplications = $employee?->approvedLeaveApplications()
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('from_date', [$startDate, $endDate])
-                ->orWhereBetween('to_date', [$startDate, $endDate]);
-        })
-        ->select('from_date', 'to_date', 'leave_type_id')
-        ->with('leaveType:id,name') // Assuming you have a relationship defined
-        ->get();
-
-    // Initialize an array to hold the results
-    $result = [];
-
-    // Loop through each date in the date range
-    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
-        // Check if the current date is a weekend
-        if (in_array($date->format('l'), $weekend_days)) {
-            continue; // Skip weekends
-        }
-
-        // Initialize the result for the current date
-        $result[$date->toDateString()] = [
-            'date' => $date->toDateString(),
-            'day' => $date->format('l'),
-            'periods' => [],
-        ];
-
-        // Check if the current date is a holiday
-        if ($holidays->has($date->toDateString())) {
-            $holiday = $holidays->get($date->toDateString());
-            $result[$date->toDateString()]['holiday'] = [
-                'name' => $holiday->name,
-            ];
-            continue; // Skip to the next date if it's a holiday
-        }
-
-        // Check if the current date falls within any leave applications
-        if ($leaveApplications) {
-            foreach ($leaveApplications as $leave) {
-                if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
-                    $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leave->leave_type_id,
-                        'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
-                    ];
-                    continue 2; // Skip to the next date if it's a leave day
-                }
-            }
-        }
-
-        // Get the employee periods for the current date
-        $employeePeriods = DB::table('hr_work_periods as wp')
-            ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-            ->where('ep.employee_id', $employeeId)
-            ->get();
-
-        if (count($employeePeriods) == 0) {
-            $result[$date->toDateString()]['no_periods'] = true;
-        }
-        // Loop through each period
-        foreach ($employeePeriods as $period) {
-            // Get attendances for the current period and date
-            $attendances = DB::table('hr_attendances as a')
-                ->where('a.employee_id', '=', $employeeId)
-                ->whereDate('a.check_date', '=', $date)
-                ->where('a.period_id', '=', $period->period_id)
-                ->select('a.*') // Adjust selection as needed
-                ->get();
-
-            // Structure for the current period
-            $periodData = [
-                'start_at' => $period->start_at,
-                'end_at' => $period->end_at,
-                'attendances' => [],
-            ];
-
-            // Group attendances by check_type
-            if ($attendances->isNotEmpty()) {
-                foreach ($attendances as $attendance) {
-                    if ($attendance->check_type === 'checkin') {
-                        $periodData['attendances']['checkin'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                            'delay_minutes' => $attendance->delay_minutes ?? 0,
-                            'status' => $attendance->status ?? 'unknown',
-                        ];
-                    } elseif ($attendance->check_type === 'checkout') {
-                        $periodData['attendances']['checkout'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                        ];
-                    }
-                }
-            } else {
-                // If there are no attendances, mark as 'absent'
-                $periodData['attendances'] = 'absent';
-            }
-
-            // Add the period data to the result for the current date
-            $result[$date->toDateString()]['periods'][] = $periodData;
-        }
-    }
-    if (count($employeePeriods) == 0) {
-        return 'no_periods';
-    }
-    return $result;
-}
-
-function employeeAttendancesToCalSalary2($employeeId, $startDate, $endDate)
-{
-    // Convert the dates to Carbon instances for easier manipulation
-    $startDate = Carbon::parse($startDate);
-    $endDate = Carbon::parse($endDate);
-
-    // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
-
-    // Fetch holidays within the date range
-    $holidays = Holiday::where('active', 1)
-        ->whereBetween('from_date', [$startDate, $endDate])
-        ->orWhereBetween('to_date', [$startDate, $endDate])
-        ->select('from_date', 'to_date', 'count_days', 'name')
-        ->get()
-        ->keyBy('from_date');
-
-    // Fetch leave applications within the date range
-    $employee = Employee::find($employeeId);
-
-    $leaveApplications = $employee?->approvedLeaveApplications()
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('from_date', [$startDate, $endDate])
-                ->orWhereBetween('to_date', [$startDate, $endDate]);
-        })
-        ->select('from_date', 'to_date', 'leave_type_id')
-        ->with('leaveType:id,name') // Assuming you have a relationship defined
-        ->get();
-
-    // Initialize an array to hold the results
-    $result = [];
-
-    // Loop through each date in the date range
-    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
-        // Check if the current date is a weekend
-        if (in_array($date->format('l'), $weekend_days)) {
-            continue; // Skip weekends
-        }
-
-        // Initialize the result for the current date
-        $result[$date->toDateString()] = [
-            'date' => $date->toDateString(),
-            'day' => $date->format('l'),
-            'periods' => [],
-        ];
-
-        // Check if the current date is a holiday
-        if ($holidays->has($date->toDateString())) {
-            $holiday = $holidays->get($date->toDateString());
-            $result[$date->toDateString()]['holiday'] = [
-                'name' => $holiday->name,
-            ];
-            continue; // Skip to the next date if it's a holiday
-        }
-
-        // Check if the current date falls within any leave applications
-        if ($leaveApplications) {
-            foreach ($leaveApplications as $leave) {
-                if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
-                    $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leave->leave_type_id,
-                        'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
-                    ];
-                    continue 2; // Skip to the next date if it's a leave day
-                }
-            }
-        }
-
-        // Get the employee periods for the current date
-        $employeePeriods = DB::table('hr_work_periods as wp')
-            ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-            ->where('ep.employee_id', $employeeId)
-            ->get();
-
-        if (count($employeePeriods) == 0) {
-            $result[$date->toDateString()]['no_periods'] = true;
-        }
-
-        // Loop through each period
-        foreach ($employeePeriods as $period) {
-            // Get attendances for the current period and date
-            $attendances = DB::table('hr_attendances as a')
-                ->where('a.employee_id', '=', $employeeId)
-                ->whereDate('a.check_date', '=', $date)
-                ->where('a.period_id', '=', $period->period_id)
-                ->select('a.*') // Adjust selection as needed
-                ->get();
-
-            // Structure for the current period
-            $periodData = [
-                'start_at' => $period->start_at,
-                'end_at' => $period->end_at,
-                'attendances' => [],
-            ];
-
-            // Group attendances by check_type
-            if ($attendances->isNotEmpty()) {
-                foreach ($attendances as $attendance) {
-                    if ($attendance->check_type === 'checkin') {
-                        $periodData['attendances']['checkin'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                            'delay_minutes' => $attendance->delay_minutes ?? 0,
-                            'status' => $attendance->status ?? 'unknown',
-                        ];
-                    } elseif ($attendance->check_type === 'checkout') {
-                        $periodData['attendances']['checkout'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                        ];
-                    }
-                }
-            } else {
-                // If there are no attendances, mark as 'absent'
-                $periodData['attendances'] = 'absent';
-            }
-
-            // Add the period data to the result for the current date
-            $result[$date->toDateString()]['periods'][] = $periodData;
-        }
-    }
-
-    // Identify absent days (days with all periods marked as 'absent')
-    $absentDays = [];
-    foreach ($result as $date => $attendanceData) {
-        if (isset($attendanceData['periods']) && count($attendanceData['periods']) > 0) {
-            $allAbsent = true;
-            foreach ($attendanceData['periods'] as $period) {
-                if ($period['attendances'] !== 'absent') {
-                    $allAbsent = false;
-                    break;
-                }
-            }
+            // If all periods were absent, increment the count
             if ($allAbsent) {
-                $absentDays[] = $date;
+                $totalAbsentDays++;
             }
         }
     }
 
-    // Return absent days and other results if needed
+    return $totalAbsentDays;
+}
+
+function calculateTotalLateArrival($attendanceData)
+{
+    $totalDelayMinutes = 0;
+
+    // Loop through each date in the attendance data
+    foreach ($attendanceData as $date => $data) {
+        if (isset($data['periods'])) {
+            // Loop through each period for the date
+            foreach ($data['periods'] as $period) {
+                if (isset($period['attendances']['checkin'])) {
+                    // Loop through each checkin record
+                    foreach ($period['attendances']['checkin'] as $checkin) {
+                        // Check if the status is 'late_arrival'
+                        if (isset($checkin['status']) && $checkin['status'] === 'late_arrival') {
+                            // Add the delay minutes to the total
+                            $totalDelayMinutes += $checkin['delay_minutes'];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Calculate total hours as a float
+    $totalHoursFloat = $totalDelayMinutes / 60;
+
     return [
-        'absent_days' => $absentDays,
-        'attendance_data' => $result,
+        'totalMinutes' => $totalDelayMinutes,
+        'totalHoursFloat' => round($totalHoursFloat, 1),
     ];
 }
 
-
-function employeeAttendancesToCalSalary3($employeeId, $startDate, $endDate)
+function calculateAbsentDaysAndDeductSalary($empId, $date)
 {
-    // Convert the dates to Carbon instances for easier manipulation
-    $startDate = Carbon::parse($startDate);
-    $endDate = Carbon::parse($endDate);
-
-    // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
-
-    // Fetch holidays within the date range
-    $holidays = Holiday::where('active', 1)
-        ->whereBetween('from_date', [$startDate, $endDate])
-        ->orWhereBetween('to_date', [$startDate, $endDate])
-        ->select('from_date', 'to_date', 'count_days', 'name')
-        ->get()
-        ->keyBy('from_date');
-
-    // Fetch leave applications within the date range
-    $employee = Employee::find($employeeId);
-
-    $leaveApplications = $employee?->approvedLeaveApplications()
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('from_date', [$startDate, $endDate])
-                ->orWhereBetween('to_date', [$startDate, $endDate]);
-        })
-        ->select('from_date', 'to_date', 'leave_type_id')
-        ->with('leaveType:id,name')
-        ->get();
-
-    // Initialize an array to hold the results and a variable for total late minutes
-    $result = [];
-    $totalLateMinutes = 0;
-
-    // Loop through each date in the date range
-    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
-        // Check if the current date is a weekend
-        if (in_array($date->format('l'), $weekend_days)) {
-            continue; // Skip weekends
-        }
-
-        // Initialize the result for the current date
-        $result[$date->toDateString()] = [
-            'date' => $date->toDateString(),
-            'day' => $date->format('l'),
-            'periods' => [],
-            'total_late_minutes' => 0, // Initialize late minutes for the day
-        ];
-
-        // Check if the current date is a holiday
-        if ($holidays->has($date->toDateString())) {
-            $holiday = $holidays->get($date->toDateString());
-            $result[$date->toDateString()]['holiday'] = [
-                'name' => $holiday->name,
-            ];
-            continue; // Skip to the next date if it's a holiday
-        }
-
-        // Check if the current date falls within any leave applications
-        if ($leaveApplications) {
-            foreach ($leaveApplications as $leave) {
-                if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
-                    $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leave->leave_type_id,
-                        'leave_type_name' => $leave->leaveType->name ?? 'Unknown',
-                    ];
-                    continue 2; // Skip to the next date if it's a leave day
-                }
-            }
-        }
-
-        // Get the employee periods for the current date
-        $employeePeriods = DB::table('hr_work_periods as wp')
-            ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-            ->where('ep.employee_id', $employeeId)
-            ->get();
-
-        if (count($employeePeriods) == 0) {
-            $result[$date->toDateString()]['no_periods'] = true;
-        }
-
-        // Loop through each period
-        foreach ($employeePeriods as $period) {
-            // Get attendances for the current period and date
-            $attendances = DB::table('hr_attendances as a')
-                ->where('a.employee_id', '=', $employeeId)
-                ->whereDate('a.check_date', '=', $date)
-                ->where('a.period_id', '=', $period->period_id)
-                ->select('a.*')
-                ->get();
-
-            // Structure for the current period
-            $periodData = [
-                'start_at' => $period->start_at,
-                'end_at' => $period->end_at,
-                'attendances' => [],
-            ];
-
-            // Group attendances by check_type and calculate late minutes
-            if ($attendances->isNotEmpty()) {
-                foreach ($attendances as $attendance) {
-                    if ($attendance->check_type === 'checkin') {
-                        $lateArrivalMinutes = $attendance->delay_minutes ?? 0;
-                        
-                        // Add late minutes to the total for the day
-                        $result[$date->toDateString()]['total_late_minutes'] += $lateArrivalMinutes;
-
-                        $periodData['attendances']['checkin'][] = [
-                            'check_time' => $attendance->check_time ?? null,
-                            'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                            'delay_minutes' => $lateArrivalMinutes,
-                            'status' => $attendance->status ?? 'unknown',
-                        ];
-                    } elseif ($attendance->check_type === 'checkout') {
-                        $periodData['attendances']['checkout'][] = [
-                            'check_time' => $attendance->check_time ?? null,
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                        ];
-                    }
-                }
-            } else {
-                // If there are no attendances, mark as 'absent'
-                $periodData['attendances'] = 'absent';
-            }
-
-            // Add the period data to the result for the current date
-            $result[$date->toDateString()]['periods'][] = $periodData;
-        }
-
-        // Add the total late minutes for the current date to the global total
-        $totalLateMinutes += $result[$date->toDateString()]['total_late_minutes'];
-    }
-
-    // Calculate total late hours from total late minutes
-    $totalLateHours = round($totalLateMinutes / 60, 2); // Rounding to 2 decimal places
-
-    // Return the result array and the total late hours
-    return [
-        'attendance' => $result,
-        'total_late_minutes' => $totalLateMinutes,
-        'total_late_hours' => $totalLateHours,
-    ];
-}
-
-function employeeAttendancesToCalSalary4($employeeId, $startDate, $endDate)
-{
-    // Convert the dates to Carbon instances for easier manipulation
-    $startDate = Carbon::parse($startDate);
-    $endDate = Carbon::parse($endDate);
-
-    // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
-
-    // Fetch holidays within the date range
-    $holidays = Holiday::where('active', 1)
-        ->whereBetween('from_date', [$startDate, $endDate])
-        ->orWhereBetween('to_date', [$startDate, $endDate])
-        ->select('from_date', 'to_date', 'count_days', 'name')
-        ->get()
-        ->keyBy('from_date');
-
-    // Fetch leave applications within the date range
-    $employee = Employee::find($employeeId);
-
-    $leaveApplications = $employee?->approvedLeaveApplications()
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('from_date', [$startDate, $endDate])
-                ->orWhereBetween('to_date', [$startDate, $endDate]);
-        })
-        ->select('from_date', 'to_date', 'leave_type_id')
-        ->with('leaveType:id,name')
-        ->get();
-
-    // Initialize an array to hold the results and a variable for total late minutes
-    $result = [];
-    $totalLateMinutes = 0;
-
-    // Loop through each date in the date range
-    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
-        // Check if the current date is a weekend
-        if (in_array($date->format('l'), $weekend_days)) {
-            continue; // Skip weekends
-        }
-
-        // Initialize the result for the current date
-        $result[$date->toDateString()] = [
-            'date' => $date->toDateString(),
-            'day' => $date->format('l'),
-            'periods' => [],
-            'total_late_minutes' => 0, // Initialize late minutes for the day
-        ];
-
-        // Check if the current date is a holiday
-        if ($holidays->has($date->toDateString())) {
-            $holiday = $holidays->get($date->toDateString());
-            $result[$date->toDateString()]['holiday'] = [
-                'name' => $holiday->name,
-            ];
-            continue; // Skip to the next date if it's a holiday
-        }
-
-        // Check if the current date falls within any leave applications
-        if ($leaveApplications) {
-            foreach ($leaveApplications as $leave) {
-                if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
-                    $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leave->leave_type_id,
-                        'leave_type_name' => $leave->leaveType->name ?? 'Unknown',
-                    ];
-                    continue 2; // Skip to the next date if it's a leave day
-                }
-            }
-        }
-
-        // Get the employee periods for the current date
-        $employeePeriods = DB::table('hr_work_periods as wp')
-            ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-            ->where('ep.employee_id', $employeeId)
-            ->get();
-
-        if (count($employeePeriods) == 0) {
-            $result[$date->toDateString()]['no_periods'] = true;
-        }
-
-        // Loop through each period
-        foreach ($employeePeriods as $period) {
-            // Get attendances for the current period and date
-            $attendances = DB::table('hr_attendances as a')
-                ->where('a.employee_id', '=', $employeeId)
-                ->whereDate('a.check_date', '=', $date)
-                ->where('a.period_id', '=', $period->period_id)
-                ->select('a.*')
-                ->get();
-
-            // Structure for the current period
-            $periodData = [
-                'start_at' => $period->start_at,
-                'end_at' => $period->end_at,
-                'attendances' => [],
-            ];
-
-            // Group attendances by check_type and calculate late minutes
-            if ($attendances->isNotEmpty()) {
-                foreach ($attendances as $attendance) {
-                    if ($attendance->check_type === 'checkin') {
-                        $lateArrivalMinutes = $attendance->delay_minutes ?? 0;
-
-                        // Add late minutes to the total for the day
-                        $result[$date->toDateString()]['total_late_minutes'] += $lateArrivalMinutes;
-
-                        $periodData['attendances']['checkin'][] = [
-                            'check_time' => $attendance->check_time ?? null,
-                            'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                            'delay_minutes' => $lateArrivalMinutes,
-                            'status' => $attendance->status ?? 'unknown',
-                        ];
-                    } elseif ($attendance->check_type === 'checkout') {
-                        $periodData['attendances']['checkout'][] = [
-                            'check_time' => $attendance->check_time ?? null,
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                        ];
-                    }
-                }
-            } else {
-                // If there are no attendances, mark as 'absent'
-                $periodData['attendances'] = 'absent';
-            }
-
-            // Add the period data to the result for the current date
-            $result[$date->toDateString()]['periods'][] = $periodData;
-        }
-
-        // Add the total late minutes for the current date to the global total
-        $totalLateMinutes += $result[$date->toDateString()]['total_late_minutes'];
-    }
-
-    // Calculate total late hours
-    $totalLateHours = round($totalLateMinutes / 60, 2);
-
-    return [
-        'attendance_data' => $result,
-        'total_late_minutes' => $totalLateMinutes,
-        'total_late_hours' => $totalLateHours,
-    ];
+    return calculateMonthlySalary($empId, $date);
 }
