@@ -454,7 +454,7 @@ function calculateMonthlySalary2($employeeId, $date)
     
     // Get the end of the month
     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
-    
+        
     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
     
     // Calculate total absent days and late hours
@@ -474,16 +474,16 @@ function calculateMonthlySalary2($employeeId, $date)
 
     // Return the details and net salary breakdown
     return [
-        'net_salary' => $netSalary,
+        'net_salary' => round($netSalary,2),
         'details' => [
-            'basic_salary' => $basicSalary,
+            'basic_salary' => round($basicSalary,2),
             'total_deductions' => $totalDeductions,
             'total_allowances' => $totalAllowances,
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
-            'deduction_for_absent_days' => $deductionForAbsentDays,
-            'deduction_for_late_hours' => $deductionForLateHours,
+            'deduction_for_absent_days' => round($deductionForAbsentDays,2),
+            'deduction_for_late_hours' => round($deductionForLateHours,2),
             'total_absent_days' => $totalAbsentDays,
             'total_late_hours' => $totalLateHours,
             'another_details' => [
