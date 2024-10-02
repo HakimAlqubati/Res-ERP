@@ -11,18 +11,28 @@ class MonthSalary extends Model
     protected $table = 'hr_month_salaries';
 
     protected $fillable = [
-        'name',
-        'month',
+        'name', 
         'start_month',
         'end_month',
         'notes',
         'payment_date',
         'approved',
+        'created_by',
+        'branch_id',
     ];
 
     // Relationship: One month salary has many details
     public function details()
     {
         return $this->hasMany(MonthSalaryDetail::class, 'month_salary_id');
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class,'created_by');
     }
 }

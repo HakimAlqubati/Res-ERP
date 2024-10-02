@@ -375,7 +375,10 @@ function calculateMonthlySalary($employeeId, $date)
     // Get the end of the month
     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
-
+ 
+    if($attendances == 'no_periods'){
+        return 'no_periods';
+    }
     $totalAbsentDays = calculateTotalAbsentDays($attendances);
     $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
 
@@ -395,7 +398,7 @@ function calculateMonthlySalary($employeeId, $date)
 
     // Return the details and net salary breakdown
     return [
-        'net_salary' => $netSalary,
+        'net_salary' => round($netSalary, 2),
         'details' => [
             'basic_salary' => $basicSalary,
             'total_deductions' => $totalDeductions,
@@ -403,8 +406,8 @@ function calculateMonthlySalary($employeeId, $date)
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_hours' => $overtimeHours,
             'overtime_pay' => $overtimePay,
-            'deduction_for_absent_days' => $deductionForAbsentDays,
-            'deduction_for_late_hours' => $deductionForLateHours,
+            'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
+            'deduction_for_late_hours' => round($deductionForLateHours, 2),
             'total_absent_days' => $totalAbsentDays,
             'total_late_hours' => $totalLateHours,
             'another_details' => [
@@ -416,85 +419,83 @@ function calculateMonthlySalary($employeeId, $date)
     ];
 }
 
+// function calculateMonthlySalary2($employeeId, $date)
+// {
+//     // Retrieve the employee model with relations to deductions, allowances, and incentives
+//     $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
 
-function calculateMonthlySalary2($employeeId, $date)
-{
-    // Retrieve the employee model with relations to deductions, allowances, and incentives
-    $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
+//     if (!$employee) {
+//         return 'Employee not found!';
+//     }
 
-    if (!$employee) {
-        return 'Employee not found!';
-    }
+//     // Basic salary from the employee model
+//     $basicSalary = $employee->salary;
 
-    // Basic salary from the employee model
-    $basicSalary = $employee->salary;
+//     // Calculate total deductions
+//     $totalDeductions = $employee->deductions->sum(function ($deduction) {
+//         return $deduction->amount;
+//     });
 
-    // Calculate total deductions
-    $totalDeductions = $employee->deductions->sum(function ($deduction) {
-        return $deduction->amount;
-    });
+//     // Calculate total allowances
+//     $totalAllowances = $employee->allowances->sum(function ($allowance) {
+//         return $allowance->amount;
+//     });
 
-    // Calculate total allowances
-    $totalAllowances = $employee->allowances->sum(function ($allowance) {
-        return $allowance->amount;
-    });
+//     // Calculate total monthly incentives
+//     $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
+//         return $incentive->amount;
+//     });
 
-    // Calculate total monthly incentives
-    $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
-        return $incentive->amount;
-    });
+//     // Calculate daily and hourly salary
+//     $dailySalary = calculateDailySalary($employeeId, $date);
+//     $hourlySalary = calculateHourlySalary($employeeId, $date);
 
-    // Calculate daily and hourly salary
-    $dailySalary = calculateDailySalary($employeeId, $date);
-    $hourlySalary = calculateHourlySalary($employeeId, $date);
+//     $date = Carbon::parse($date);
+//     // Get the start of the month
+//     $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
 
-    $date = Carbon::parse($date);
-    // Get the start of the month
-    $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
-    
-    // Get the end of the month
-    $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
-        
-    $attendances = employeeAttendances($employeeId, $startDate, $endDate);
-    
-    // Calculate total absent days and late hours
-    $totalAbsentDays = calculateTotalAbsentDays($attendances);
-    $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
-    
-    $overtimeHours = getEmployeeOvertimes($date, $employee);
-    // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
-    $overtimePay = $overtimeHours * $hourlySalary * 2;
+//     // Get the end of the month
+//     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
 
-    // Calculate deductions for absences and lateness
-    $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
-    $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+//     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
 
-    // Calculate net salary including deductions for absences and lateness, plus overtime
-    $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions - $deductionForAbsentDays - $deductionForLateHours;
+//     // Calculate total absent days and late hours
+//     $totalAbsentDays = calculateTotalAbsentDays($attendances);
+//     $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
 
-    // Return the details and net salary breakdown
-    return [
-        'net_salary' => round($netSalary,2),
-        'details' => [
-            'basic_salary' => round($basicSalary,2),
-            'total_deductions' => $totalDeductions,
-            'total_allowances' => $totalAllowances,
-            'total_monthly_incentives' => $totalMonthlyIncentives,
-            'overtime_hours' => $overtimeHours,
-            'overtime_pay' => $overtimePay,
-            'deduction_for_absent_days' => round($deductionForAbsentDays,2),
-            'deduction_for_late_hours' => round($deductionForLateHours,2),
-            'total_absent_days' => $totalAbsentDays,
-            'total_late_hours' => $totalLateHours,
-            'another_details' => [
-                'daily_salary' => $dailySalary,
-                'hourly_salary' => $hourlySalary,
-                'days_in_month' => getDaysInMonth($date),
-            ],
-        ],
-    ];
-}
+//     $overtimeHours = getEmployeeOvertimes($date, $employee);
+//     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
+//     $overtimePay = $overtimeHours * $hourlySalary * 2;
 
+//     // Calculate deductions for absences and lateness
+//     $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
+//     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+
+//     // Calculate net salary including deductions for absences and lateness, plus overtime
+//     $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions - $deductionForAbsentDays - $deductionForLateHours;
+
+//     // Return the details and net salary breakdown
+//     return [
+//         'net_salary' => round($netSalary, 2),
+//         'details' => [
+//             'basic_salary' => round($basicSalary, 2),
+//             'total_deductions' => $totalDeductions,
+//             'total_allowances' => $totalAllowances,
+//             'total_monthly_incentives' => $totalMonthlyIncentives,
+//             'overtime_hours' => $overtimeHours,
+//             'overtime_pay' => $overtimePay,
+//             'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
+//             'deduction_for_late_hours' => round($deductionForLateHours, 2),
+//             'total_absent_days' => $totalAbsentDays,
+//             'total_late_hours' => $totalLateHours,
+//             'another_details' => [
+//                 'daily_salary' => $dailySalary,
+//                 'hourly_salary' => $hourlySalary,
+//                 'days_in_month' => getDaysInMonth($date),
+//             ],
+//         ],
+//     ];
+// }
 
 /**
  * to calculate the daily salary
@@ -1110,4 +1111,73 @@ function calculateTotalLateArrival($attendanceData)
 function calculateAbsentDaysAndDeductSalary($empId, $date)
 {
     return calculateMonthlySalary($empId, $date);
+}
+
+/**
+ * to get months
+ */
+function getMonthsArray()
+{
+    return [
+        'January' => [
+            'name' => __('lang.month.january'), // English Translation
+            'start_month' => '2024-01-01',
+            'end_month' => '2024-01-31',
+        ],
+        'February' => [
+            'name' => __('lang.month.february'), // English Translation
+            'start_month' => '2024-02-01',
+            'end_month' => '2024-02-29', // Adjust for leap years as needed
+        ],
+        'March' => [
+            'name' => __('lang.month.march'), // English Translation
+            'start_month' => '2024-03-01',
+            'end_month' => '2024-03-31',
+        ],
+        'April' => [
+            'name' => __('lang.month.april'), // English Translation
+            'start_month' => '2024-04-01',
+            'end_month' => '2024-04-30',
+        ],
+        'May' => [
+            'name' => __('lang.month.may'), // English Translation
+            'start_month' => '2024-05-01',
+            'end_month' => '2024-05-31',
+        ],
+        'June' => [
+            'name' => __('lang.month.june'), // English Translation
+            'start_month' => '2024-06-01',
+            'end_month' => '2024-06-30',
+        ],
+        'July' => [
+            'name' => __('lang.month.july'), // English Translation
+            'start_month' => '2024-07-01',
+            'end_month' => '2024-07-31',
+        ],
+        'August' => [
+            'name' => __('lang.month.august'), // English Translation
+            'start_month' => '2024-08-01',
+            'end_month' => '2024-08-31',
+        ],
+        'September' => [
+            'name' => __('lang.month.september'), // English Translation
+            'start_month' => '2024-09-01',
+            'end_month' => '2024-09-30',
+        ],
+        'October' => [
+            'name' => __('lang.month.october'), // English Translation
+            'start_month' => '2024-10-01',
+            'end_month' => '2024-10-31',
+        ],
+        'November' => [
+            'name' => __('lang.month.november'), // English Translation
+            'start_month' => '2024-11-01',
+            'end_month' => '2024-11-30',
+        ],
+        'December' => [
+            'name' => __('lang.month.december'), // English Translation
+            'start_month' => '2024-12-01',
+            'end_month' => '2024-12-31',
+        ],
+    ];
 }

@@ -446,7 +446,7 @@ class ServiceRequestResource extends Resource
                     ->button()
                     ->icon('heroicon-o-camera')
                     ->modalContent(function ($record) {
-                        return view('filament.resources.service_requests.gallery', ['photos' => $record->photos]);
+                        return view('filament.resources.service_requests.gallery', ['photos' => $record->photos()->orderBy('id', 'desc')->get()]);
                     }),
                 Tables\Actions\EditAction::make(),
             ])

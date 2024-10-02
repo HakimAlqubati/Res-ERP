@@ -28,4 +28,9 @@ class MonthSalaryDetail extends Model
     {
         return $this->belongsTo(MonthSalary::class, 'month_salary_id');
     }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
 }

@@ -129,4 +129,18 @@ return [
     'departments_and_employees' => 'Humen Resource',
     'attenance_management' => 'Attenance management',
     'attednance_reports' => 'Attednance reports',
+    'month' => [
+        'january' => 'January',
+        'february' => 'February',
+        'march' => 'March',
+        'april' => 'April',
+        'may' => 'May',
+        'june' => 'June',
+        'july' => 'July',
+        'august' => 'August',
+        'september' => 'September',
+        'october' => 'October',
+        'november' => 'November',
+        'december' => 'December',
+    ],
 ];

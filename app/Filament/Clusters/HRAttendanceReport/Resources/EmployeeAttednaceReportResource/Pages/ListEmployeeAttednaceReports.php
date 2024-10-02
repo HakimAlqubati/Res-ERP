@@ -25,6 +25,7 @@ class ListEmployeeAttednaceReports extends ListRecords
 
         // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
         $data = employeeAttendances($employee_id, $start_date, $end_date);
+        // dd($data);
         return [
             'report_data' => $data,
             'employee_id' => $employee_id,

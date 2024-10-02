@@ -29,11 +29,13 @@ use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -380,6 +382,10 @@ class EmployeeResource extends Resource
                 Tables\Filters\Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('branch_id')
+                    ->searchable()
+                    ->multiple()
+                    ->label(__('lang.branch'))->options([Branch::get()->pluck('name','id')->toArray()]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -407,6 +413,15 @@ class EmployeeResource extends Resource
             'create' => Pages\CreateEmployee::route('/create'),
             'edit' => Pages\EditEmployee::route('/{record}/edit'),
         ];
+    }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListEmployees::class,
+            Pages\CreateEmployee::class,
+            Pages\EditEmployee::class
+        ]);
     }
 
     public static function getNavigationBadge(): ?string

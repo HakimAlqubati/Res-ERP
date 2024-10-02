@@ -12,6 +12,8 @@ use Filament\Pages\BasePage;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 class AttendanecEmployee extends BasePage
 // implements HasForms
@@ -21,18 +23,10 @@ class AttendanecEmployee extends BasePage
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.attendanec-employee';
-    private $date = '2024-10-02';
+    private $date = '';
     // private $date ;
-    private $time = '08:10:00';
+    private $time = '';
     // private $time ;
-
-    // public function __construct()
-    // {
-    //     // Ensure to check if 'date' exists in $_GET to avoid undefined index errors
-    //     dd($_GET['date']);
-    //     $this->date = isset($_GET['date']) ? $_GET['date'] : null;
-    //     $this->time = isset($_GET['time']) ? $_GET['time'] : null;
-    // }
 
     public ?array $data = [];
     public function hasLogo(): bool
@@ -57,6 +51,7 @@ class AttendanecEmployee extends BasePage
 
     public function form(Form $form): Form
     {
+
         app()->setLocale('ar');
         return $form
             ->schema([
@@ -70,26 +65,27 @@ class AttendanecEmployee extends BasePage
             ])->statePath('data');
     }
 
-    public function mount(): void
-    {
-        // if (Filament::auth()->check()) {
-        //     redirect()->intended(Filament::getUrl());
-        // }
-
-        // $this->form->fill();
-    }
-
     public function submit()
     {
+
+        // Get the previous URL
+        $previousUrl = url()->previous();
+
+        // Create a request object from the previous URL
+        $request = Request::create($previousUrl);
+
+        // Retrieve the route name and parameters
+        $route = Route::getRoutes()->match($request);
+
+        $date = $route->parameters['date'] ?? null;
+        $time = $route->parameters['time'] ?? null;
+
         $formData = $this->form->getState();
-        $this->storeAttendanceEmployee($formData);
+        $this->storeAttendanceEmployee($formData, $date, $time);
     }
 
-    public function storeAttendanceEmployee($data)
+    public function storeAttendanceEmployee($data, $date, $time)
     {
-
-        $date = $this->date;
-        $time = $this->time;
 
         $rfid = $data['rfid'];
         $employee = Employee::where('rfid', $rfid)->first();
