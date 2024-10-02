@@ -191,3 +191,86 @@ html::-webkit-scrollbar {
 .internal_cell{
     width: 110px !important;
 }
+
+/**
+*/
+  /* Card Styling */
+  .custom-card {
+    background: linear-gradient(135deg, #f3f4f6, #fff);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.custom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Button Styling */
+.custom-btn {
+    background-color: #4A90E2;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    box-shadow: 0 8px 15px rgba(74, 144, 226, 0.3);
+    display: inline-block;
+    margin-top: 20px;
+}
+
+.custom-btn:hover {
+    background-color: #357ABD;
+    transform: translateY(-3px);
+}
+
+.custom-btn:active {
+    transform: translateY(1px);
+}
+
+/* Form Input Styling */
+.custom-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.custom-card input,
+.custom-card select,
+.custom-card textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.custom-card input:focus,
+.custom-card select:focus,
+.custom-card textarea:focus {
+    border-color: #4A90E2;
+    outline: none;
+}
+
+/* Custom Card Header (Optional) */
+.custom-card-header {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+
+.btn_fingerprint svg{
+    height: 112px  !important;
+    width: 253px !important;
+}

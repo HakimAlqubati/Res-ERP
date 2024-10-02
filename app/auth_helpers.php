@@ -23,7 +23,7 @@ if (!function_exists('isBranchManager')) {
 if (!function_exists('isSystemManager')) {
     function isSystemManager()
     {
-        return auth()->user()->isSystemManager();
+        return auth()?->user()?->isSystemManager();
     }
 }
 
@@ -44,6 +44,6 @@ if (!function_exists('isMaintenanceManager')) {
 if (!function_exists('isStuff')) {
     function isStuff()
     {
-        return auth()->user()->isStuff();
+        return auth()?->user()?->isStuff();
     }
 }

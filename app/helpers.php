@@ -31,8 +31,8 @@ function formatMoney($amount, $currency = '$')
 function getCurrentRole()
 {
     $roleId = 0;
-    if (count(auth()->user()?->roles) > 0) {
-        $roleId = auth()->user()?->roles[0]?->id;
+    if (isset(auth()?->user()?->roles) && count(auth()?->user()?->roles) > 0) {
+        $roleId = auth()?->user()?->roles[0]?->id;
     }
     return $roleId;
 }

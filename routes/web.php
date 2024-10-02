@@ -1,5 +1,7 @@
 <?php
 
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\EmployeeAttendance;
+use App\Filament\Pages\AttendanecEmployee;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\TestController;
@@ -381,3 +383,6 @@ Route::get('/update_user_branch_id_for_all_users', function () {
     }
     return $branchUsers;
 });
+
+Route::get('/attendance', AttendanecEmployee::class)
+    ->name('attendance');

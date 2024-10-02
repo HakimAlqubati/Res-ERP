@@ -159,6 +159,7 @@ class AttendnaceResource extends Resource
             'index' => Pages\ListAttendnaces::route('/'),
             'create' => Pages\CreateAttendnace::route('/create'),
             'edit' => Pages\EditAttendnace::route('/{record}/edit'),
+            // 'employee-attendance' => Pages\EmployeeAttendance::route('/employee-attendance'),
         ];
     }
 

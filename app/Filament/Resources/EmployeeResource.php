@@ -243,7 +243,9 @@ class EmployeeResource extends Resource
                                         // })
                                         ,
 
-                                        TextInput::make('rfid')->label('Employee RFID'),
+                                        TextInput::make('rfid')->label('Employee RFID')
+                                            ->unique(ignoreRecord: true)
+                                        ,
                                     ]),
                                 ]),
                                 Fieldset::make()->columns(3)->label('Finance')->schema([

@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use App\Models\Task; 
+use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use Filament\Support\Assets\Css;
+use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\Support\Facades\FilamentView;
 use Illuminate\Support\Facades\Gate;
@@ -25,10 +26,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        
+        LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
+            $switch
+                ->locales(['ar', 'en']); // also accepts a closure
+        });
 
         FilamentAsset::register([
+            // Js::make('custom-script', __DIR__ . '/../../tune.js'),
+            Js::make('custom-script', ''),
             Css::make('main', ''),
+            Js::make('example-local-script', asset('js/tune.js')),
         ]);
         FilamentView::registerRenderHook(
             'panels::auth.login.form.after',

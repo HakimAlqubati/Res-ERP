@@ -42,25 +42,23 @@ class EditEmployee extends EditRecord
         $employee = Employee::find($this->record->id);
 
         // Get previous and current period IDs
-        $previousPeriods = $employee->periods->pluck('id')->toArray();
-        $currentPeriods = $this->data['periods'] ?? [];
+        $previousPeriods = $employee?->periods?->pluck('id')->toArray();
+        $currentPeriods = $this?->data['periods'] ?? [];
+        if (count($currentPeriods)) {
 
-        // Determine added and removed periods
-        $addedPeriods = array_diff($currentPeriods, $previousPeriods);
-        $removedPeriods = array_diff($previousPeriods, $currentPeriods);
-        // dd($addedPeriods, $removedPeriods);
-        // Log added periods
-        // foreach ($addedPeriods as $period_id) {
-        //     $employee->periods()->create(['period_id', $period_id]);
-        // }
-        if (!empty($addedPeriods)) {
-            $employee->logPeriodChange($addedPeriods, Employee::TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED);
-        }
+            // Determine added and removed periods
+            $addedPeriods = array_diff($currentPeriods, $previousPeriods);
+            $removedPeriods = array_diff($previousPeriods, $currentPeriods);
+            
+            // Log added periods
+            if (!empty($addedPeriods)) {
+                $employee->logPeriodChange($addedPeriods, Employee::TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED);
+            }
 
-        // $employee->periods()->whereIn('period_id',$removedPeriods)->delete();
-        // Log removed periods
-        if (!empty($removedPeriods)) {
-            $employee->logPeriodChange($removedPeriods, Employee::TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED);
+            // Log removed periods
+            if (!empty($removedPeriods)) {
+                $employee->logPeriodChange($removedPeriods, Employee::TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED);
+            }
         }
     }
 }
