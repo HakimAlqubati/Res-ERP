@@ -10,6 +10,8 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\BasePage;
 use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\IconPosition;
+use Filament\Support\Enums\IconSize;
 
 class AttendanecEmployee extends BasePage
 // implements HasForms
@@ -21,7 +23,7 @@ class AttendanecEmployee extends BasePage
     protected static string $view = 'filament.pages.attendanec-employee';
     private $date = '2024-10-02';
     // private $date ;
-    private $time = '02:10:00';
+    private $time = '08:10:00';
     // private $time ;
 
     // public function __construct()
@@ -37,7 +39,7 @@ class AttendanecEmployee extends BasePage
     {
         return true;
     }
-  
+
     public static function alignFormActionsStart(): void
     {
         static::$formActionsAlignment = Alignment::Start;
@@ -55,10 +57,11 @@ class AttendanecEmployee extends BasePage
 
     public function form(Form $form): Form
     {
+        app()->setLocale('ar');
         return $form
             ->schema([
                 TextInput::make('rfid')
-                
+                    ->autocomplete(false)
                     ->label('Employee RFID')
                     ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
                     ->required()
@@ -81,12 +84,12 @@ class AttendanecEmployee extends BasePage
         $formData = $this->form->getState();
         $this->storeAttendanceEmployee($formData);
     }
-    
+
     public function storeAttendanceEmployee($data)
     {
 
         $date = $this->date;
-        $time = $this->time; 
+        $time = $this->time;
 
         $rfid = $data['rfid'];
         $employee = Employee::where('rfid', $rfid)->first();
@@ -109,31 +112,34 @@ class AttendanecEmployee extends BasePage
             // Check if no periods are found for the given day
             if ($periodsForDay->isEmpty()) {
                 return Notification::make()
-                    ->title('Sorry ' . $employee->name)
-                    ->body('There is no period for today (' . $day . ')')
-                    ->icon('heroicon-o-document-text')
+                    ->title(' معذرة  ' . $employee->name)
+                    ->body('لا يوجد لديك فترات فهذا اليوم  (' . $day . ')')
+                    ->icon('heroicon-o-exclamation-triangle')
                     ->iconColor('warning')
                     ->warning()
+                    ->duration(10000)
                     ->send();
             }
             $this->handleAttendance($employee, $time, $date, $day, $periodsForDay);
 
         } elseif (!is_null($employee) && count($employeePeriods) == 0) {
             return Notification::make()
-                ->title('Hi ' . $employee->name)
-                ->body('Sorry, but you are without any periods, please cummincuate with your manager to add periods for you!')
-                ->icon('heroicon-o-document-text')
+                ->title(' مرحباً  ' . $employee->name)
+                ->body('نأسف, لم يتم إضافة أي فترات دوام إليك, يرجى التواصل مع الإدارة!')
+                ->icon('heroicon-o-exclamation-triangle')
                 ->iconColor('warning')
                 ->warning()
+                ->duration(10000)
                 ->send();
 
         } else {
             return Notification::make()
-                ->title('Not employee!')
-                ->body('No employee found with ' . $data['rfid'])
-                ->icon('heroicon-o-document-text')
+                ->title('خطأ!')
+                ->body(' لا يوجد موظف بهذا الرقم  ' . $data['rfid'])
+                ->icon('heroicon-o-exclamation-triangle')
                 ->iconColor('warning')
                 ->warning()
+                ->duration(10000)
                 ->send();
 
         }
@@ -209,11 +215,12 @@ class AttendanecEmployee extends BasePage
         } else {
             // Two or more attendance records, nothing to do
             return Notification::make()
-                ->title('Hi ' . $employee->name)
-                ->body('You are already have checked in and out for current period')
-                ->icon('heroicon-o-document-text')
+                ->title('مرحباً ' . $employee->name)
+                ->body('تم تسجيل حضور وانصراف لهذه الفترة')
+                ->icon('heroicon-o-exclamation-triangle')
                 ->iconColor('warning')
                 ->warning()
+                ->duration(10000)
                 ->send();
         }
 
@@ -305,10 +312,18 @@ class AttendanecEmployee extends BasePage
 
         Attendance::create($data2);
 
+        if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
+            $checkType = 'الحضور';
+        } else {
+            $checkType = 'الانصراف';
+        }
         return Notification::make()
-            ->title($checkType . ' done  successfully')
-            ->body('Employee ' . $employee->name)
-            ->icon('heroicon-o-document-text')
+            ->title(' مرحباً موظفنا العزيز  ' . $employee->name)
+            ->body(' لقد تم تسجيل ' . $checkType)
+            ->icon('heroicon-o-check-circle')
+            ->iconSize(IconSize::Large)
+            ->iconPosition(IconPosition::Before)
+            ->duration(10000)
             ->iconColor('success')
             ->success()
             ->send();
@@ -323,5 +338,13 @@ class AttendanecEmployee extends BasePage
             ->where('day', $day)
             ->select('check_type', 'check_date')
             ->get();
+    }
+
+    /**
+     * to create notification
+     */
+    private function createNotification($checkType, $employee)
+    {
+
     }
 }
