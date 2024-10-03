@@ -384,5 +384,5 @@ Route::get('/update_user_branch_id_for_all_users', function () {
     return $branchUsers;
 });
 
-Route::get('/attendance/{date}/{time}', AttendanecEmployee::class)
+Route::get('/attendance', AttendanecEmployee::class)
     ->name('attendance');

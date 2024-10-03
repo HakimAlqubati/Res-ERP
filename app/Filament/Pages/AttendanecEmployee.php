@@ -4,6 +4,8 @@ namespace App\Filament\Pages;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use Carbon\Carbon;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Form;
@@ -12,8 +14,6 @@ use Filament\Pages\BasePage;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 class AttendanecEmployee extends BasePage
 // implements HasForms
@@ -55,9 +55,17 @@ class AttendanecEmployee extends BasePage
         app()->setLocale('ar');
         return $form
             ->schema([
+                DateTimePicker::make('date_time')
+                    ->label('التاريخ والوقت')
+                    ->timezone('Asia/Kuala_Lumpur')
+                    ->prefixIcon('heroicon-m-check-circle')
+                    ->prefixIconColor('success')
+                    ->required()->seconds(false),
                 TextInput::make('rfid')
                     ->autocomplete(false)
                     ->label('Employee RFID')
+                    ->prefixIcon('heroicon-m-check-circle')
+                    ->prefixIconColor('success')
                     ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
                     ->required()
                     ->placeholder('RFID')
@@ -68,24 +76,35 @@ class AttendanecEmployee extends BasePage
     public function submit()
     {
 
-        // Get the previous URL
-        $previousUrl = url()->previous();
+        // // Get the previous URL
+        // $previousUrl = url()->previous();
 
-        // Create a request object from the previous URL
-        $request = Request::create($previousUrl);
+        // // Create a request object from the previous URL
+        // $request = Request::create($previousUrl);
 
-        // Retrieve the route name and parameters
-        $route = Route::getRoutes()->match($request);
+        // // Retrieve the route name and parameters
+        // $route = Route::getRoutes()->match($request);
 
-        $date = $route->parameters['date'] ?? null;
-        $time = $route->parameters['time'] ?? null;
+        // $date = $route->parameters['date'] ?? null;
+        // $time = $route->parameters['time'] ?? null;
 
+ 
         $formData = $this->form->getState();
-        $this->storeAttendanceEmployee($formData, $date, $time);
+
+        $this->storeAttendanceEmployee($formData);
     }
 
-    public function storeAttendanceEmployee($data, $date, $time)
-    {
+    public function storeAttendanceEmployee($data)
+    { 
+        
+        $dateTime = $data['date_time'];
+
+// Create a Carbon instance
+        $carbonDateTime = Carbon::parse($dateTime);
+
+// Get the date and time separately
+        $date = $carbonDateTime->toDateString(); // Output: 2024-10-01
+        $time = $carbonDateTime->toTimeString();
 
         $rfid = $data['rfid'];
         $employee = Employee::where('rfid', $rfid)->first();
