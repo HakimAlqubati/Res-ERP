@@ -171,7 +171,7 @@ class EmployeeResource extends Resource
                             Fieldset::make('Employeement')->label('Employeement')
                                 ->schema([
                                     Grid::make()->columns(4)->schema([
-                                        TextInput::make('employee_no')->default((Employee::get()->last()->id) + 1)->disabled()->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
+                                        TextInput::make('employee_no')->default((Employee::withTrashed()->latest()->first()?->id) + 1)->disabled()->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
                                         TextInput::make('job_title')->columnSpan(1)->required(),
                                         Select::make('position_id')->columnSpan(1)->label('Position type')
                                             ->searchable()
@@ -257,8 +257,11 @@ class EmployeeResource extends Resource
                                         ->schema([
 
                                             Select::make('deduction_id')
+                                                ->label('Deducation')
                                                 ->options(Deduction::where('active', 1)->where('is_monthly', 1)->get()->pluck('name', 'id'))
-                                                ->required(),
+                                                ->required()
+                                                ->default(Deduction::where('active', 1)->where('is_monthly', 1)?->first()?->id)
+                                            ,
                                             TextInput::make('amount')
                                                 ->default(0)->minValue(0)
                                                 ->numeric(),
@@ -270,8 +273,11 @@ class EmployeeResource extends Resource
                                         ->schema([
 
                                             Select::make('allowance_id')
+                                                ->label('Allowance')
                                                 ->options(Allowance::where('active', 1)->where('is_monthly', 1)->get()->pluck('name', 'id'))
-                                                ->required(),
+                                                ->required()
+                                                ->default(Allowance::where('active', 1)->where('is_monthly', 1)?->first()?->id)
+                                            ,
                                             TextInput::make('amount')
                                                 ->default(0)->minValue(0)
                                                 ->numeric(),
@@ -283,8 +289,11 @@ class EmployeeResource extends Resource
                                         ->schema([
 
                                             Select::make('monthly_incentive_id')
+                                                ->label('Monthly incentive')
                                                 ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
-                                                ->required(),
+                                                ->required()
+                                                ->default(MonthlyIncentive::where('active', 1)?->first()?->id)
+                                            ,
                                             TextInput::make('amount')
                                                 ->default(0)->minValue(0)
                                                 ->numeric(),
@@ -385,7 +394,7 @@ class EmployeeResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->options([Branch::get()->pluck('name','id')->toArray()]),
+                    ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -420,7 +429,7 @@ class EmployeeResource extends Resource
         return $page->generateNavigationItems([
             Pages\ListEmployees::class,
             Pages\CreateEmployee::class,
-            Pages\EditEmployee::class
+            Pages\EditEmployee::class,
         ]);
     }
 

@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
 use App\Models\Attendance;
+use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Forms;
@@ -17,8 +18,11 @@ use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AttendnaceResource extends Resource
 {
@@ -134,14 +138,23 @@ class AttendnaceResource extends Resource
                     ->label('Day'),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('employee_id')->label('Employee')->options(function (Get $get) {
+                    return Employee::query()
+                        ->pluck('name', 'id');
+                }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -171,17 +184,42 @@ class AttendnaceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        // $query = static::getModel()::query()->where('employee_id',auth()->user()?->employee?->id);
-        $query = static::getModel()::query();
+        return parent::getEloquentQuery()
+        ->withoutGlobalScopes([
+            SoftDeletingScope::class,
+        ]);
+    }
 
-        if (
-            static::isScopedToTenant() &&
-            ($tenant = Filament::getTenant())
-        ) {
-            static::scopeEloquentQueryToTenant($query, $tenant);
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
         }
+        return false;
+    }
 
-        return $query;
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 
     public static function canViewAny(): bool
