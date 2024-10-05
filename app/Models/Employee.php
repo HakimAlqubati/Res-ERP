@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Employee extends Model
 {
@@ -82,10 +83,14 @@ class Employee extends Model
 
     public function getAvatarImageAttribute()
     {
-        if(!$this->avatar){
-            return url('/storage'). '/'. 'employees/default/avatar.png';
+        $filePath = 'public/' . $this->avatar;
+        if (!$this->avatar) {
+            return url('/storage') . '/' . 'employees/default/avatar.png';
         }
-        return url('/storage') . '/' . $this->avatar;
+        if (Storage::exists($filePath)) {
+            return url('/storage') . '/' . $this->avatar;
+        }
+        return  url('/storage') . '/' . 'employees/default/avatar.png';
     }
 
     public function approvedLeaveApplications()
@@ -149,6 +154,5 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1);
     }
- 
 
 }
