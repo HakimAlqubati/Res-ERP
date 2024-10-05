@@ -41,6 +41,9 @@ class Attendance extends Model
         'actual_duration_hourly',
         'supposed_duration_hourly',
         'branch_id',
+        'checkinrecord_id',
+        'total_actual_duration_hourly',
+        'is_from_previous_day',
     ];
 
     public static function getCheckTypes()
@@ -69,15 +72,27 @@ class Attendance extends Model
 
     public function period()
     {
-        return $this->belongsTo(WorkPeriod::class,'period_id');
+        return $this->belongsTo(WorkPeriod::class, 'period_id');
     }
 
     protected static function booted()
-    { 
+    {
         if (isBranchManager()) {
-            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }
+    }
+
+    // Define the self-referencing relationship for check-in
+    public function checkinRecord()
+    {
+        return $this->belongsTo(Attendance::class, 'checkinrecord_id');
+    }
+
+    // Define the relationship to get the checkout record associated with a check-in
+    public function checkoutRecord()
+    {
+        return $this->hasOne(Attendance::class, 'checkinrecord_id');
     }
 }

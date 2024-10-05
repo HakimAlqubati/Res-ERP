@@ -38,7 +38,7 @@
                     <th class="internal_cell">{{ __('Departure') }}</th>
                     <th class="internal_cell">{{ __('Status') }}</th>
                     <th class="internal_cell">{{ __('Supposed') }}</th>
-                    <th class="internal_cell">{{ __('Actual') }}</th>
+                    <th class="internal_cell">{{ __('Total duration hourly') }}</th>
                 </x-filament-tables::row>
             </thead>
             <tbody>
@@ -76,17 +76,22 @@
                                                 @endif
                                                 @if (isset($item['attendances']['checkout']))
                                                     <x-filament-tables::cell class="internal_cell">
-                                                        {{ $item['attendances']['checkout'][0]['check_time'] }}
+                                                        {{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}
                                                     </x-filament-tables::cell>
                                                     <x-filament-tables::cell class="internal_cell">
-                                                        {{ $item['attendances']['checkout'][0]['status'] }}
+                                                        {{ $item['attendances']['checkout']['lastcheckout']['status'] }}
                                                     </x-filament-tables::cell>
                                                     <x-filament-tables::cell class="internal_cell">
-                                                        {{ $item['attendances']['checkout'][0]['supposed_duration_hourly'] }}
+                                                        {{ $item['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] }}
                                                     </x-filament-tables::cell>
 
                                                     <x-filament-tables::cell class="internal_cell">
-                                                        {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }}
+                                                        <button
+                                                            wire:click="showDetails('{{ $date }}', {{ $employee_id }},{{$item['period_id']}})"
+                                                            class="text-blue-500 hover:underline">
+
+                                                            {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }}
+                                                        </button>
                                                     </x-filament-tables::cell>
                                                 @endif
                                                 {{-- @if (isset($item['attendances']['checkin']) && !isset($item['attendances']['checkout']))

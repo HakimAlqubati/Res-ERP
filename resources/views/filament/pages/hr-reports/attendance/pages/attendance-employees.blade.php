@@ -22,20 +22,41 @@
                 </th>
             </x-filament-tables::row>
 
+            <x-filament-tables::row>
+                <th rowspan="2">{{ __('Employee') }}</th>
+                <th colspan="2">{{ __('Shift data') }}</th>
+
+                <th colspan="4">{{ __('Attendance and Departure data') }}</th>
+                <th colspan="2">{{ __('Count of Hours work') }}</th>
+                {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
+                <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
+
+            </x-filament-tables::row>
+            <x-filament-tables::row>
+                <th class="internal_cell">{{ __('From') }}</th>
+                <th class="internal_cell">{{ __('To') }}</th>
+                <th class="internal_cell">{{ __('Attendance') }}</th>
+                <th class="internal_cell">{{ __('Status') }}</th>
+                <th class="internal_cell">{{ __('Departure') }}</th>
+                <th class="internal_cell">{{ __('Status') }}</th>
+                <th class="internal_cell">{{ __('Supposed') }}</th>
+                <th class="internal_cell">{{ __('Total duration hourly') }}</th>
+            </x-filament-tables::row>
 
         </thead>
 
         <tbody>
-            @foreach ($report_data as $date =>   $data_)
-            @php
-                $data = array_values($data_);
-                // dd($data[0]['employee_name']);
-            @endphp
             
+            @foreach ($report_data as $date => $data_)
+                @php
+                    $data = array_values($data_);
+                    // dd($data[0]['employee_name']);
+                @endphp
+
                 <x-filament-tables::row>
                     <x-filament-tables::cell>
-                      
-                    {{ $data[0]['employee_name'] }}
+
+                        {{ $data[0]['employee_name'] }}
                     </x-filament-tables::cell>
 
                     @if (count($data[0]['periods']) > 0)
@@ -68,7 +89,8 @@
                                             </x-filament-tables::cell>
 
                                             <x-filament-tables::cell class="internal_cell">
-                                                {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }}
+                                                {{-- {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }} --}}
+                                                {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }}
                                             </x-filament-tables::cell>
                                         @endif
                                         @if (isset($item['attendances']['checkin']) && !isset($item['attendances']['checkout']))
@@ -93,7 +115,7 @@
                         <x-filament-tables::cell colspan="9">
                             {{ $data['leave']['leave_type_name'] }}
                         </x-filament-tables::cell>
-                    {{-- @elseif (isset($data[0]['no_periods']) && $data['no_periods']) --}}
+                        {{-- @elseif (isset($data[0]['no_periods']) && $data['no_periods']) --}}
                     @elseif (isset($data[0]['no_periods']) && !empty($data[0]['no_periods']))
                         <x-filament-tables::cell colspan="9">
                             {{ 'No any period for employee' }}

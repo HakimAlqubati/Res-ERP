@@ -36,6 +36,15 @@ class TestController2 extends Controller
         return employeeAttendances($empId, $startDate, $endDate);
     }
 
+    public function to_get_employee_attendance_period_details()
+    {
+        $empId = $_GET['empId'];
+        $date = $_GET['date'];
+        $periodId = $_GET['periodId'];
+       
+        return getEmployeePeriodAttendnaceDetails($empId, $periodId, $date);
+    }
+
     public function to_get_multi_employees_attendances()
     {
         $empIds = explode(',', $_GET['empIds']);

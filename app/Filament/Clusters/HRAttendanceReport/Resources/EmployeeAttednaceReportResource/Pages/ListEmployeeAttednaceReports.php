@@ -17,6 +17,14 @@ class ListEmployeeAttednaceReports extends ListRecords
 {
     protected static string $resource = EmployeeAttednaceReportResource::class;
 
+    public function showDetails($date, $employeeId, $periodId)
+    {
+        $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        return dd($AttendanceDetails->toArray());
+        return $this->dispatch('open-modal', id: 'edit-user');
+      
+    }
+
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
     {$employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];

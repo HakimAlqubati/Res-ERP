@@ -375,8 +375,8 @@ function calculateMonthlySalary($employeeId, $date)
     // Get the end of the month
     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
- 
-    if($attendances == 'no_periods'){
+
+    if ($attendances == 'no_periods') {
         return 'no_periods';
     }
     $totalAbsentDays = calculateTotalAbsentDays($attendances);
@@ -853,8 +853,9 @@ function employeeAttendances($employeeId, $startDate, $endDate)
         // Get the employee periods for the current date
         $employeePeriods = DB::table('hr_work_periods as wp')
             ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
+            ->select('wp.start_at', 'wp.end_at', 'ep.period_id', 'ep.period_id')
             ->where('ep.employee_id', $employeeId)
+            ->orderBy('wp.start_at', 'asc')
             ->get();
 
         if (count($employeePeriods) == 0) {
@@ -874,20 +875,45 @@ function employeeAttendances($employeeId, $startDate, $endDate)
             $periodData = [
                 'start_at' => $period->start_at,
                 'end_at' => $period->end_at,
+                'period_id' => $period->period_id,
                 'attendances' => [],
             ];
 
             // Group attendances by check_type
             if ($attendances->isNotEmpty()) {
+                $firstCheckin = null; // Variable to store the first check-in
+                $lastCheckout = null; // Variable to store the last check-out
+                $totalActualDuration = 0;
+                $totalActualDurationMinutes = 0;
                 foreach ($attendances as $attendance) {
                     if ($attendance->check_type === 'checkin') {
+                        if ($firstCheckin === null) {
+                            $firstCheckin = [
+                                'check_time' => $attendance->check_time ?? null, // Include check_time
+                                'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
+                                'delay_minutes' => $attendance->delay_minutes ?? 0,
+                                'status' => $attendance->status ?? 'unknown',
+                            ];
+                        }
+                        $periodData['attendances']['checkin']['firstcheckout'] = $firstCheckin;
                         $periodData['attendances']['checkin'][] = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
                             'delay_minutes' => $attendance->delay_minutes ?? 0,
                             'status' => $attendance->status ?? 'unknown',
                         ];
+
                     } elseif ($attendance->check_type === 'checkout') {
+
+                        $lastCheckout = [
+                            'check_time' => $attendance->check_time ?? null, // Include check_time
+                            'status' => $attendance->status ?? 'unknown',
+                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
+                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                            'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
+                        ];
                         $periodData['attendances']['checkout'][] = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',
@@ -895,7 +921,10 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                            'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
                         ];
+
+                        $periodData['attendances']['checkout']['lastcheckout'] = $lastCheckout;
                     }
                 }
             } else {
@@ -913,6 +942,21 @@ function employeeAttendances($employeeId, $startDate, $endDate)
     return $result;
 }
 
+/**
+ * to get employee attendace details of period []
+ */
+function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
+{
+    // dd($employeeId,$periodId);
+    $attenance = Attendance::where('employee_id', $employeeId)
+        ->where('period_id', $periodId)
+        ->where('check_date', $date)
+        ->select('check_time', 'check_type', 'period_id')
+        ->orderBy('id', 'asc')
+    // ->groupBy('period_id')
+        ->get();
+    return $attenance;
+}
 /**
  * get employees attendances
  */
@@ -938,112 +982,139 @@ function employeeAttendancesByDate(array $employeeIds, $date)
     // Loop through each employee ID
     foreach ($employeeIds as $employeeId) {
         // Fetch the employee by ID
-        $employee = Employee::find($employeeId);
-        if (!$employee) {
-            // Skip if the employee doesn't exist
-            $result[$employeeId] = ['error' => 'Employee not found'];
-            continue;
-        }
 
-        // Initialize the result for the current employee and date
-        $result[$employeeId][$date->toDateString()] = [
-            'employee_id' => $employeeId,
-            'employee_name' => $employee->name,
-            'date' => $date->toDateString(),
-            'day' => $date->format('l'),
-            'periods' => [],
-        ];
+        $employee = Employee::where('id', $employeeId)->whereHas('periods')->first();
+        if ($employee) {
 
-        // Skip if the date is a weekend
-        if (in_array($date->format('l'), $weekend_days)) {
-            $result[$employeeId][$date->toDateString()]['status'] = 'weekend';
-            continue; // Skip weekends
-        }
+            // if (!$employee) {
+            //     // Skip if the employee doesn't exist or doesn't have periods
+            //     $result[$employeeId] = ['error' => 'Employee not found or has no periods'];
+            //     continue;
+            // }
 
-        // Check if the current date is a holiday
-        if ($holiday) {
-            $result[$employeeId][$date->toDateString()]['holiday'] = [
-                'name' => $holiday->name,
-            ];
-            continue; // Skip to the next employee if it's a holiday
-        }
+            // $employee = Employee::find($employeeId)->wherehas('periods');
+            // if (!$employee) {
+            //     // Skip if the employee doesn't exist
+            //     $result[$employeeId] = ['error' => 'Employee not found'];
+            //     continue;
+            // }
 
-        // Fetch leave applications for the specific date
-        $leave = $employee->approvedLeaveApplications()
-            ->whereDate('from_date', '<=', $date)
-            ->whereDate('to_date', '>=', $date)
-            ->select('from_date', 'to_date', 'leave_type_id')
-            ->with('leaveType:id,name') // Assuming you have a relationship defined
-            ->first();
-
-        // Check if the current date falls within any leave applications
-        if ($leave) {
-            $result[$employeeId][$date->toDateString()]['leave'] = [
-                'leave_type_id' => $leave->leave_type_id,
-                'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
-            ];
-            continue; // Skip to the next employee if it's a leave day
-        }
-
-        // Get the employee's work periods for the current date
-        $employeePeriods = DB::table('hr_work_periods as wp')
-            ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-            ->where('ep.employee_id', $employeeId)
-            ->get();
-
-        if ($employeePeriods->isEmpty()) {
-            // If no periods are assigned to the employee, mark with a message
-            $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
-            $result[$employeeId][$date->toDateString()]['no_periods'] = true;
-            continue; // Skip further processing for this employee
-        }
-
-        // Loop through each period for the employee
-        foreach ($employeePeriods as $period) {
-            // Get attendances for the current period and date
-            $attendances = DB::table('hr_attendances as a')
-                ->where('a.employee_id', '=', $employeeId)
-                ->whereDate('a.check_date', '=', $date)
-                ->where('a.period_id', '=', $period->period_id)
-                ->select('a.*') // Adjust selection as needed
-                ->get();
-
-            // Structure for the current period
-            $periodData = [
-                'start_at' => $period->start_at,
-                'end_at' => $period->end_at,
-                'attendances' => [],
+            // Initialize the result for the current employee and date
+            $result[$employeeId][$date->toDateString()] = [
+                'employee_id' => $employeeId,
+                'employee_name' => $employee->name,
+                'date' => $date->toDateString(),
+                'day' => $date->format('l'),
+                'periods' => [],
             ];
 
-            // Group attendances by check_type
-            if ($attendances->isNotEmpty()) {
-                foreach ($attendances as $attendance) {
-                    if ($attendance->check_type === 'checkin') {
-                        $periodData['attendances']['checkin'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                            'delay_minutes' => $attendance->delay_minutes ?? 0,
-                            'status' => $attendance->status ?? 'unknown',
-                        ];
-                    } elseif ($attendance->check_type === 'checkout') {
-                        $periodData['attendances']['checkout'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                        ];
-                    }
-                }
-            } else {
-                // If there are no attendances, mark the period as "absent"
-                $periodData['attendances'] = 'absent';
+            // Skip if the date is a weekend
+            if (in_array($date->format('l'), $weekend_days)) {
+                $result[$employeeId][$date->toDateString()]['status'] = 'weekend';
+                continue; // Skip weekends
             }
 
-            // Add the period data to the result for the current employee and date
-            $result[$employeeId][$date->toDateString()]['periods'][] = $periodData;
+            // Check if the current date is a holiday
+            if ($holiday) {
+                $result[$employeeId][$date->toDateString()]['holiday'] = [
+                    'name' => $holiday->name,
+                ];
+                continue; // Skip to the next employee if it's a holiday
+            }
+
+            // Fetch leave applications for the specific date
+            $leave = $employee->approvedLeaveApplications()
+                ->whereDate('from_date', '<=', $date)
+                ->whereDate('to_date', '>=', $date)
+                ->select('from_date', 'to_date', 'leave_type_id')
+                ->with('leaveType:id,name') // Assuming you have a relationship defined
+                ->first();
+
+            // Check if the current date falls within any leave applications
+            if ($leave) {
+                $result[$employeeId][$date->toDateString()]['leave'] = [
+                    'leave_type_id' => $leave->leave_type_id,
+                    'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
+                ];
+                continue; // Skip to the next employee if it's a leave day
+            }
+
+            // Get the employee's work periods for the current date
+            $employeePeriods = DB::table('hr_work_periods as wp')
+                ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
+                ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
+                ->where('ep.employee_id', $employeeId)
+                ->orderBy('wp.start_at', 'asc')
+                ->get()
+
+            ;
+
+            if ($employeePeriods->isEmpty()) {
+                // If no periods are assigned to the employee, mark with a message
+                $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
+                $result[$employeeId][$date->toDateString()]['no_periods'] = true;
+                continue; // Skip further processing for this employee
+            }
+
+            // Loop through each period for the employee
+            foreach ($employeePeriods as $period) {
+                // Get attendances for the current period and date
+                $attendances = DB::table('hr_attendances as a')
+                    ->where('a.employee_id', '=', $employeeId)
+                    ->whereDate('a.check_date', '=', $date)
+                    ->where('a.period_id', '=', $period->period_id)
+                    ->select('a.*') // Adjust selection as needed
+                    ->get();
+
+                // Structure for the current period
+                $periodData = [
+                    'start_at' => $period->start_at,
+                    'end_at' => $period->end_at,
+                    'period_id' => $period->period_id,
+                    'attendances' => [],
+                ];
+
+                // Group attendances by check_type
+                if ($attendances->isNotEmpty()) {
+                    foreach ($attendances as $attendance) {
+                        if ($attendance->check_type === 'checkin') {
+                            $periodData['attendances']['checkin'][] = [
+                                'check_time' => $attendance->check_time ?? null, // Include check_time
+                                'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
+                                'delay_minutes' => $attendance->delay_minutes ?? 0,
+                                'status' => $attendance->status ?? 'unknown',
+                            ];
+                        } elseif ($attendance->check_type === 'checkout') {
+
+                            $lastCheckout = [
+                                'check_time' => $attendance->check_time ?? null, // Include check_time
+                                'status' => $attendance->status ?? 'unknown',
+                                'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                                'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
+                                'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                                'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
+                                'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                            ];
+                            $periodData['attendances']['checkout'][] = [
+                                'check_time' => $attendance->check_time ?? null, // Include check_time
+                                'status' => $attendance->status ?? 'unknown',
+                                'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                                'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
+                                'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                                'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
+                                'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                            ];
+                            $periodData['attendances']['checkout']['lastcheckout'] = $lastCheckout;
+                        }
+                    }
+                } else {
+                    // If there are no attendances, mark the period as "absent"
+                    $periodData['attendances'] = 'absent';
+                }
+
+                // Add the period data to the result for the current employee and date
+                $result[$employeeId][$date->toDateString()]['periods'][] = $periodData;
+            }
         }
     }
 
