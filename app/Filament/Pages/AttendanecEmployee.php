@@ -185,7 +185,7 @@ class AttendanecEmployee extends BasePage
 
         // Check if attendance exists for this period, date, and day
         $existAttendance = $this->getExistingAttendance($employee, $closestPeriod, $date, $day, $time);
- 
+
         if (isset($existAttendance['in_previous'])) {
             if ($existAttendance['in_previous']['check_type'] == Attendance::CHECKTYPE_CHECKIN) {
                 return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKOUT, $existAttendance);
@@ -255,7 +255,6 @@ class AttendanecEmployee extends BasePage
             $notificationMessage = 'لقد تم تسجيل الانصراف';
         }
 
-        
         // Try to create the attendance record
         try {
             Attendance::create($attendanceData);
@@ -277,11 +276,11 @@ class AttendanecEmployee extends BasePage
             ->where('day', $day)
             ->select('check_type', 'check_date')
             ->get();
-            if ($attendances->count() === 0) {
-                
-                $previousDate = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
-                $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
-                $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
+        if ($attendances->count() === 0) {
+
+            $previousDate = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
+            $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
+            $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
                 ->where('period_id', $closestPeriod->id)
                 ->where('check_date', $previousDate)
             // ->select('id', 'check_type', 'check_date')
@@ -289,14 +288,15 @@ class AttendanecEmployee extends BasePage
             // ->where('check_type','<',$closestPeriod->end_at)
             // ->where('check_type',Attendance::CHECKTYPE_CHECKIN)
                 ->latest('id')
-                ->first();                
+                ->first();
+
             if ($attendanceInPreviousDay) {
                 $isLatestSamePeriod = $this->checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate, $currentCheckTime);
 
-                
                 if (!$isLatestSamePeriod) {
                     return $attendances;
                 }
+
                 if (($attendanceInPreviousDay->check_type == Attendance::CHECKTYPE_CHECKIN)) {
                     return ['in_previous' => $attendanceInPreviousDay,
                         'previous_day_name' => $previousDayName,
@@ -420,6 +420,7 @@ class AttendanecEmployee extends BasePage
             $data['check_date'] = $previousCheckInRecord?->check_date;
             $data['day'] = $previousDayName;
             $data['is_from_previous_day'] = 1;
+
             $hasCheckoutForDate = $this->checkHasCheckoutInDate($nearestPeriod, $employeeId, $previousCheckInRecord?->check_date);
             if ($hasCheckoutForDate) {
                 $totalDurationFormatted = $this->totalActualDurationHourly($previousCheckInRecord?->check_date, $nearestPeriod, $employeeId);
@@ -495,7 +496,7 @@ class AttendanecEmployee extends BasePage
      */
     private function totalActualDurationHourly($date, $nearestPeriod, $employeeId)
     {
-        
+
         $previousActualDurationHours = Attendance::where('check_date', $date)
             ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
             ->where('period_id', $nearestPeriod->id)
@@ -561,7 +562,7 @@ class AttendanecEmployee extends BasePage
         $currentDateTimeString = $currentDate . ' ' . $currentCheckTime;
         // $currentCheckTime = \Carbon\Carbon::parse($currentCheckTime);
         $currentCheckDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $currentDateTimeString);
-     
+
         if ($lastCheckTime->gt($carbonPeriodEndTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
             return true;
         }
@@ -572,7 +573,7 @@ class AttendanecEmployee extends BasePage
     {
 
         $latstAttendance = Attendance::where('employee_id', $employeeId)
-            // ->where('check_date', $date)
+        // ->where('check_date', $date)
             ->select('id', 'check_type', 'check_date', 'check_time', 'period_id')
         // ->where('check_type', '<', $closestPeriod->end_at)
             ->latest('id')
