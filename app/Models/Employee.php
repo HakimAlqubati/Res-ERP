@@ -82,12 +82,10 @@ class Employee extends Model
 
     public function getAvatarImageAttribute()
     {
-        // $default = 'users/default/avatar.png';
-        // if (is_null($this->avatar) || $this->avatar == $default) {
-        //     return storage_path($default);
-        // }
+        if(!$this->avatar){
+            return url('/storage'). '/'. 'employees/default/avatar.png';
+        }
         return url('/storage') . '/' . $this->avatar;
-        return storage_path($this->avatar);
     }
 
     public function approvedLeaveApplications()
