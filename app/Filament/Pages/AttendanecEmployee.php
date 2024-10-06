@@ -291,7 +291,7 @@ class AttendanecEmployee extends BasePage
                 ->first();
 
             if ($attendanceInPreviousDay) {
-                $isLatestSamePeriod = $this->checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate,$date, $currentCheckTime);
+                $isLatestSamePeriod = $this->checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate, $date, $currentCheckTime);
 
                 if (!$isLatestSamePeriod) {
                     return $attendances;
@@ -535,7 +535,7 @@ class AttendanecEmployee extends BasePage
     /**
      * check if attendanceInPreviousDay is completed
      */
-    private function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate,$currentDateTrue)
+    private function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate, $currentDateTrue)
     {
 
         $date = $attendanceInPreviousDay?->check_date;
@@ -546,32 +546,34 @@ class AttendanecEmployee extends BasePage
         $latstAttendance = Attendance::where('employee_id', $employeId)
             ->where('period_id', $periodId)
             ->where('check_date', $date)
-            ->select('id', 'check_type', 'check_date', 'check_time','is_from_previous_day')
+            ->select('id', 'check_type', 'check_date', 'check_time', 'is_from_previous_day')
         // ->where('check_type', '<', $closestPeriod->end_at)
             ->latest('id')
             ->first()
         ;
         $lastCheckType = $latstAttendance->check_type;
 
-        $dateTimeString = $currentDateTrue . ' ' . $latstAttendance->check_time;
+        $dateTimeString = $attendanceInPreviousDay->check_date . ' ' . $latstAttendance->check_time;
         $lastCheckTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
-        $dateTimeString = $latstAttendance->check_date . ' ' . $periodEndTime;
+        $dateTimeString = $currentDateTrue . ' ' . $periodEndTime;
         $carbonPeriodEndTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
         $currentDateTimeString = $currentDate . ' ' . $currentCheckTime;
         // $currentCheckTime = \Carbon\Carbon::parse($currentCheckTime);
         $currentCheckDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $currentDateTimeString);
-        
-        
+// dd( $lastCheckTime->gt($carbonPeriodEndTime),$lastCheckTime,$carbonPeriodEndTime );
+        // dd($lastCheckTime->gt($carbonPeriodEndTime),$lastCheckTime,$carbonPeriodEndTime);
 // dd($lastCheckTime->gt($carbonPeriodEndTime) , $lastCheckType == Attendance::CHECKTYPE_CHECKOUT,$latstAttendance ,$latstAttendance->is_from_previous_day);
-        if ($lastCheckTime->gt($carbonPeriodEndTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
+        if ($period->start_at > $period->end_at && $lastCheckTime->gt($carbonPeriodEndTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
+            return true;
+        } else if ($period->start_at < $period->end_at && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT) {
             return true;
         }
         return false;
     }
 
-    private function checkIfSamePeriod($employeeId, $attendanceInPreviousDay, $period, $date,$currentDate, $checkTime)
+    private function checkIfSamePeriod($employeeId, $attendanceInPreviousDay, $period, $date, $currentDate, $checkTime)
     {
 
         $latstAttendance = Attendance::where('employee_id', $employeeId)
@@ -583,8 +585,8 @@ class AttendanecEmployee extends BasePage
         ;
 
         if ($latstAttendance && $latstAttendance->period_id == $period->id) {
-            $isPreviousCompleted = $this->checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime, $date,$currentDate);
-
+            $isPreviousCompleted = $this->checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime, $date, $currentDate);
+// dd($isPreviousCompleted);
             if (!$isPreviousCompleted) {
                 return true;
             }
