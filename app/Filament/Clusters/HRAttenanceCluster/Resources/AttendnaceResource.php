@@ -145,7 +145,7 @@ class AttendnaceResource extends Resource
                 }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
@@ -171,7 +171,8 @@ class AttendnaceResource extends Resource
         return [
             'index' => Pages\ListAttendnaces::route('/'),
             'create' => Pages\CreateAttendnace::route('/create'),
-            'edit' => Pages\EditAttendnace::route('/{record}/edit'),
+            // 'edit' => Pages\EditAttendnace::route('/{record}/edit'),
+            'view' => Pages\ViewAttendnace::route('/{record}'),
             // 'employee-attendance' => Pages\EmployeeAttendance::route('/employee-attendance'),
         ];
     }
