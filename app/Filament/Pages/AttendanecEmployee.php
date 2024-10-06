@@ -562,10 +562,11 @@ class AttendanecEmployee extends BasePage
         $currentDateTimeString = $currentDate . ' ' . $currentCheckTime;
         // $currentCheckTime = \Carbon\Carbon::parse($currentCheckTime);
         $currentCheckDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $currentDateTimeString);
-// dd( $lastCheckTime->gt($carbonPeriodEndTime),$lastCheckTime,$carbonPeriodEndTime );
+// dd( $carbonPeriodEndTime->gt($lastCheckTime),$lastCheckTime,$carbonPeriodEndTime,$latstAttendance->check_time );
         // dd($lastCheckTime->gt($carbonPeriodEndTime),$lastCheckTime,$carbonPeriodEndTime);
 // dd($lastCheckTime->gt($carbonPeriodEndTime) , $lastCheckType == Attendance::CHECKTYPE_CHECKOUT,$latstAttendance ,$latstAttendance->is_from_previous_day);
-        if ($period->start_at > $period->end_at && $lastCheckTime->gt($carbonPeriodEndTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
+        // dd($period->start_at > $period->end_at, $carbonPeriodEndTime->gt($lastCheckTime), $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day);
+        if ($period->start_at > $period->end_at && $carbonPeriodEndTime->gt($lastCheckTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
             return true;
         } else if ($period->start_at < $period->end_at && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT) {
             return true;
