@@ -291,7 +291,7 @@ class AttendanecEmployee extends BasePage
                 ->first();
 
             if ($attendanceInPreviousDay) {
-                $isLatestSamePeriod = $this->checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate, $currentCheckTime);
+                $isLatestSamePeriod = $this->checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate,$date, $currentCheckTime);
 
                 if (!$isLatestSamePeriod) {
                     return $attendances;
@@ -535,7 +535,7 @@ class AttendanecEmployee extends BasePage
     /**
      * check if attendanceInPreviousDay is completed
      */
-    private function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate)
+    private function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate,$currentDateTrue)
     {
 
         $date = $attendanceInPreviousDay?->check_date;
@@ -546,14 +546,14 @@ class AttendanecEmployee extends BasePage
         $latstAttendance = Attendance::where('employee_id', $employeId)
             ->where('period_id', $periodId)
             ->where('check_date', $date)
-            ->select('id', 'check_type', 'check_date', 'check_time')
+            ->select('id', 'check_type', 'check_date', 'check_time','is_from_previous_day')
         // ->where('check_type', '<', $closestPeriod->end_at)
             ->latest('id')
             ->first()
         ;
         $lastCheckType = $latstAttendance->check_type;
 
-        $dateTimeString = $latstAttendance->check_date . ' ' . $latstAttendance->check_time;
+        $dateTimeString = $currentDateTrue . ' ' . $latstAttendance->check_time;
         $lastCheckTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
         $dateTimeString = $latstAttendance->check_date . ' ' . $periodEndTime;
@@ -562,14 +562,16 @@ class AttendanecEmployee extends BasePage
         $currentDateTimeString = $currentDate . ' ' . $currentCheckTime;
         // $currentCheckTime = \Carbon\Carbon::parse($currentCheckTime);
         $currentCheckDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $currentDateTimeString);
-
+        
+        
+// dd($lastCheckTime->gt($carbonPeriodEndTime) , $lastCheckType == Attendance::CHECKTYPE_CHECKOUT,$latstAttendance ,$latstAttendance->is_from_previous_day);
         if ($lastCheckTime->gt($carbonPeriodEndTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
             return true;
         }
         return false;
     }
 
-    private function checkIfSamePeriod($employeeId, $attendanceInPreviousDay, $period, $date, $checkTime)
+    private function checkIfSamePeriod($employeeId, $attendanceInPreviousDay, $period, $date,$currentDate, $checkTime)
     {
 
         $latstAttendance = Attendance::where('employee_id', $employeeId)
@@ -581,7 +583,7 @@ class AttendanecEmployee extends BasePage
         ;
 
         if ($latstAttendance && $latstAttendance->period_id == $period->id) {
-            $isPreviousCompleted = $this->checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime, $date);
+            $isPreviousCompleted = $this->checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime, $date,$currentDate);
 
             if (!$isPreviousCompleted) {
                 return true;
