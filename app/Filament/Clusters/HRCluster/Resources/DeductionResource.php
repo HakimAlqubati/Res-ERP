@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Models\Deduction;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -26,16 +27,29 @@ class DeductionResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
+        ->schema([
+            Fieldset::make()->columns(3)->label('')->schema([
                 Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\Textarea::make('description'),
+                Forms\Components\TextInput::make('description')->columnSpan(2),
+            ]),
+            Fieldset::make()->label('')->columns(5)->schema([
                 Forms\Components\Toggle::make('is_penalty')->default(false),
-                Forms\Components\Toggle::make('is_specific')->default(false),
+                Forms\Components\Toggle::make('is_specific')->default(false)
+                ->helperText('This means for specific employee or for general')
+                ,
                 Forms\Components\Toggle::make('active')->default(true),
-                Forms\Components\Toggle::make('is_percentage')->live()->default(true),
-                TextInput::make('amount')->numeric(),
+                Forms\Components\Toggle::make('is_percentage')->live()->default(true)
+                    ->helperText('Set allowance as a salary percentage or fixed amount')
+                ,
+                TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
+                    ->suffixIcon('heroicon-o-calculator')
+                    ->suffixIconColor('success')
+                ,
                 TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
-            ]);
+                    ->suffixIcon('heroicon-o-percent-badge')
+                    ->suffixIconColor('success'),
+            ]),
+        ]);
     }
 
     public static function table(Table $table): Table

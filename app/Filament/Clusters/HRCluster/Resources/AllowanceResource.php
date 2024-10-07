@@ -2,12 +2,11 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
-use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages;
-use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\RelationManagers;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Models\Allowance;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -15,8 +14,6 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AllowanceResource extends Resource
 {
@@ -32,13 +29,26 @@ class AllowanceResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\Textarea::make('description'),
-                Forms\Components\Toggle::make('is_specific')->default(false),
-                Forms\Components\Toggle::make('active')->default(true),
-                Forms\Components\Toggle::make('is_percentage')->live()->default(true),
-                TextInput::make('amount')->numeric(),
-                TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                Fieldset::make()->columns(3)->label('')->schema([
+                    Forms\Components\TextInput::make('name')->required(),
+                    Forms\Components\TextInput::make('description')->columnSpan(2),
+                ]),
+                Fieldset::make()->label('')->columns(4)->schema([
+                    Forms\Components\Toggle::make('is_specific')->default(false)
+                    ->helperText('This means for specific employee or for general')
+                    ,
+                    Forms\Components\Toggle::make('active')->default(true),
+                    Forms\Components\Toggle::make('is_percentage')->live()->default(true)
+                        ->helperText('Set allowance as a salary percentage or fixed amount')
+                    ,
+                    TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
+                        ->suffixIcon('heroicon-o-calculator')
+                        ->suffixIconColor('success')
+                    ,
+                    TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                        ->suffixIcon('heroicon-o-percent-badge')
+                        ->suffixIconColor('success'),
+                ]),
             ]);
     }
 
@@ -87,7 +97,7 @@ class AllowanceResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
             return true;
         }
         return false;
