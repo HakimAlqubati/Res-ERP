@@ -11,16 +11,22 @@ class SalariesExport implements FromView
      * @return \Illuminate\Support\Collection
      */
     private $data = [];
-    public function __construct($data)
+    private $deducationTypes = [];
+    private $allowanceTypes = [];
+    public function __construct($data,$deducationTypes,$allowanceTypes)
     {
         $this->data = $data;
+        $this->deducationTypes = $deducationTypes;
+        $this->allowanceTypes = $allowanceTypes;
     }
     public function view(): View
     {
        $data = $this->data;
+       $deducationTypes = $this->deducationTypes;
+       $allowanceTypes = $this->allowanceTypes;
         return view(
             'export.reports.hr.salaries.salaries-excel',
-            compact('data')
+            compact('data','deducationTypes','allowanceTypes')
         );
     }
 }

@@ -6,7 +6,9 @@ use App\Exports\SalariesExport;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\RelationManagers\DetailsRelationManager;
+use App\Models\Allowance;
 use App\Models\Branch;
+use App\Models\Deduction;
 use App\Models\MonthSalary;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
@@ -132,7 +134,9 @@ class MonthSalaryResource extends Resource
         $branch = $record?->branch?->name;
         $fileName = ('Salaries of' . '-(' . $branch . ')');
         $details = $record?->details;
-        
+        $deducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+
         $data = [];
         foreach ($details as $key => $value) {
             $data[] = [
@@ -147,9 +151,10 @@ class MonthSalaryResource extends Resource
                 'total_incentives' => $value?->total_incentives,
                 'total_allowances' => $value?->total_allowances,
                 'total_deductions' => $value?->total_deductions,
+
             ];
         }
 
-        return Excel::download(new SalariesExport($data), $fileName . '.xlsx');
+        return Excel::download(new SalariesExport($data, $deducationTypes, $allowanceTypes), $fileName . '.xlsx');
     }
 }

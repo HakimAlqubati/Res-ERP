@@ -19,6 +19,12 @@
             <th>
                 {{ 'House Allowance' }}
             </th>
+            @foreach ($deducationTypes as $deducationId => $deducationName)
+                <th>{{ $deducationName }}</th>
+            @endforeach
+            @foreach ($allowanceTypes as $allowanceId => $allowanceName)
+                <th>{{ $allowanceName }}</th>
+            @endforeach
             <th>
                 {{ 'Absent' }}
             </th>
@@ -53,6 +59,12 @@
                 <td>
                     {{-- {{$item['basic_salary']}} --}}
                 </td>
+                @foreach ($deducationTypes as $deducationId => $deducationName)
+                    <td>{{ $deducationId }}</td>
+                @endforeach
+                @foreach ($allowanceTypes as $allowanceId => $allowanceName)
+                    <td>{{ $allowanceId }}</td>
+                @endforeach
                 <td>
                     {{-- {{$item['basic_salary']}} --}}
                 </td>
@@ -69,7 +81,7 @@
                     {{-- {{$item['basic_salary']}} --}}
                 </td>
                 <td>
-                    {{$item['overtime_hours']}}
+                    {{ $item['overtime_hours'] }}
                 </td>
             </tr>
         @endforeach
