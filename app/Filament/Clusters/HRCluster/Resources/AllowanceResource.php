@@ -5,9 +5,12 @@ namespace App\Filament\Clusters\HRCluster\Resources;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\RelationManagers;
+use App\Filament\Clusters\HRSalaryCluster;
 use App\Models\Allowance;
 use Filament\Forms;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -21,7 +24,7 @@ class AllowanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRCluster::class;
+    protected static ?string $cluster = HRSalaryCluster::class;
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
@@ -31,8 +34,11 @@ class AllowanceResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('name')->required(),
                 Forms\Components\Textarea::make('description'),
-                Forms\Components\Toggle::make('is_monthly')->default(false),
+                Forms\Components\Toggle::make('is_specific')->default(false),
                 Forms\Components\Toggle::make('active')->default(true),
+                Forms\Components\Toggle::make('is_percentage')->live()->default(true),
+                TextInput::make('amount')->numeric(),
+                TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
             ]);
     }
 
@@ -42,7 +48,7 @@ class AllowanceResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\ToggleColumn::make('is_monthly'),
+                Tables\Columns\ToggleColumn::make('is_specific'),
                 Tables\Columns\ToggleColumn::make('active'),
             ])
             ->filters([

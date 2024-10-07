@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRCluster\Resources;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\RelationManagers;
+use App\Filament\Clusters\HRSalaryCluster;
 use App\Models\MonthlyIncentive;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -21,7 +22,7 @@ class MonthlyIncentiveResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRCluster::class;
+    protected static ?string $cluster = HRSalaryCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 7;
     public static function form(Form $form): Form

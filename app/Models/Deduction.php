@@ -9,5 +9,5 @@ class Deduction extends Model
 {
     use HasFactory, SoftDeletes;
     protected $table = 'hr_deductions';
-    protected $fillable = ['name', 'description', 'is_monthly', 'active'];
+    protected $fillable = ['name', 'description', 'is_monthly', 'active', 'is_penalty', 'is_specific', 'amount', 'percentage','is_percentage'];
 }
