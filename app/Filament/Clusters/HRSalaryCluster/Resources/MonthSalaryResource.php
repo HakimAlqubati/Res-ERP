@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
+use App\Exports\SalariesExport;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\RelationManagers\DetailsRelationManager;
@@ -15,8 +16,10 @@ use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MonthSalaryResource extends Resource
 {
@@ -42,7 +45,7 @@ class MonthSalaryResource extends Resource
                     // ->color(Color::Red)
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
-                    ->disabledOn('edit')
+                        ->disabledOn('edit')
                         ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
                         ->required()
                         ->helperText('Please, choose a branch'),
@@ -84,11 +87,14 @@ class MonthSalaryResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Action::make('excel_download')->action(function ($record) {
+                    return static::exportExcel($record);
+                }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -105,7 +111,8 @@ class MonthSalaryResource extends Resource
         return [
             'index' => Pages\ListMonthSalaries::route('/'),
             'create' => Pages\CreateMonthSalary::route('/create'),
-            'edit' => Pages\EditMonthSalary::route('/{record}/edit'),
+            // 'edit' => Pages\EditMonthSalary::route('/{record}/edit'),
+            'view' => Pages\ViewMonthSalary::route('/{record}'),
         ];
     }
 
@@ -114,9 +121,35 @@ class MonthSalaryResource extends Resource
         return false;
     }
 
-
     public static function canDeleteAny(): bool
     {
         return false;
+    }
+
+    private static function exportExcel($record)
+    {
+
+        $branch = $record?->branch?->name;
+        $fileName = ('Salaries of' . '-(' . $branch . ')');
+        $details = $record?->details;
+        
+        $data = [];
+        foreach ($details as $key => $value) {
+            $data[] = [
+                'employee_id' => $value->employee_id,
+                'employee_no' => $value->employee_no,
+                'employee_name' => $value?->employee?->name,
+                'job_title' => $value?->employee?->job_title,
+                'branch' => $branch,
+                'basic_salary' => $value?->basic_salary,
+                'net_salary' => $value?->net_salary,
+                'overtime_hours' => $value?->overtime_hours,
+                'total_incentives' => $value?->total_incentives,
+                'total_allowances' => $value?->total_allowances,
+                'total_deductions' => $value?->total_deductions,
+            ];
+        }
+
+        return Excel::download(new SalariesExport($data), $fileName . '.xlsx');
     }
 }

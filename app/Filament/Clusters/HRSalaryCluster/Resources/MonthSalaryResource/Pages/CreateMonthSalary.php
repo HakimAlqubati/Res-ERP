@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pa
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\Employee;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Contracts\Support\Htmlable;
 
 class CreateMonthSalary extends CreateRecord
 {
@@ -51,5 +52,16 @@ class CreateMonthSalary extends CreateRecord
             }
         }
 
+    }
+
+    public function getTitle(): string | Htmlable
+    {
+        if (filled(static::$title)) {
+            return static::$title;
+        }
+
+        return __('filament-panels::resources/pages/create-record.title', [
+            'label' => 'Generate',
+        ]);
     }
 }

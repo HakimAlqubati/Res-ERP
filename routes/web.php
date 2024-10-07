@@ -29,6 +29,7 @@ use Spatie\Permission\Models\Role;
  */
 
 Route::get('/totestpdf', function () {
+    return view('export.reports.hr.salaries.salary-slip');
     $order = Order::find(52);
     $orderDetails = $order?->orderDetails;
     return view('export.order_pdf', compact('order', 'orderDetails'));
@@ -387,3 +388,6 @@ Route::get('/update_user_branch_id_for_all_users', function () {
 
 Route::get('/attendance', AttendanecEmployee::class)
     ->name('attendance');
+
+
+    

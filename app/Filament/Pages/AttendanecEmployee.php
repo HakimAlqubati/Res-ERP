@@ -225,6 +225,7 @@ class AttendanecEmployee extends BasePage
 
     private function createAttendance($employee, $nearestPeriod, $date, $checkTime, $day, $checkType, $previousRecord = null)
     {
+        $checkTimeStr = $checkTime;
         // Ensure that $checkTime is a Carbon instance
         $checkTime = \Carbon\Carbon::parse($checkTime);
 
@@ -243,6 +244,21 @@ class AttendanecEmployee extends BasePage
         // Handle check-in and check-out scenarios
         if ($checkType === Attendance::CHECKTYPE_CHECKIN) {
 
+            $periodEndTime = $nearestPeriod->end_at;
+            $periodStartTime = $nearestPeriod->start_at;
+
+            
+            if ($periodStartTime > $periodEndTime
+                && ($checkTimeStr >= '00:00:00' && $checkTimeStr < $periodEndTime) && $previousRecord == null
+
+            ) {
+                $minusDate = strtotime("$date -1 day");
+                $prevDayName = date('l', $minusDate);
+                $prevDate = date('Y-m-d', $minusDate);
+                $attendanceData['check_date'] = $prevDate;
+                $attendanceData['day'] = $prevDayName;
+            }
+
             if ($previousRecord) {
                 $attendanceData['is_from_previous_day'] = 1;
                 $attendanceData['check_date'] = $previousRecord['in_previous']?->check_date;
@@ -254,7 +270,7 @@ class AttendanecEmployee extends BasePage
             $attendanceData = array_merge($attendanceData, $this->storeCheckOut($nearestPeriod, $employee->id, $date, $checkTime, $previousRecord));
             $notificationMessage = 'لقد تم تسجيل الانصراف';
         }
-
+        
         // Try to create the attendance record
         try {
             Attendance::create($attendanceData);
@@ -283,16 +299,11 @@ class AttendanecEmployee extends BasePage
             $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
                 ->where('period_id', $closestPeriod->id)
                 ->where('check_date', $previousDate)
-            // ->select('id', 'check_type', 'check_date')
-            // ->doesntHave('checkoutRecord')
-            // ->where('check_type','<',$closestPeriod->end_at)
-            // ->where('check_type',Attendance::CHECKTYPE_CHECKIN)
                 ->latest('id')
                 ->first();
 
             if ($attendanceInPreviousDay) {
                 $isLatestSamePeriod = $this->checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate, $date, $currentCheckTime);
-                // dd($isLatestSamePeriod, $attendanceInPreviousDay);
                 if (!$isLatestSamePeriod) {
                     return $attendances;
                 }
@@ -548,7 +559,6 @@ class AttendanecEmployee extends BasePage
             ->where('period_id', $periodId)
             ->where('check_date', $previousDate)
             ->select('id', 'check_type', 'check_date', 'check_time', 'is_from_previous_day')
-        // ->where('check_type', '<', $closestPeriod->end_at)
             ->latest('id')
             ->first()
         ;
@@ -559,12 +569,6 @@ class AttendanecEmployee extends BasePage
         $lastCheckTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
         $dateTimeString = $currentDateTrue . ' ' . $periodEndTime;
-        $carbonPeriodEndTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
-
-        $currentDateTimeString = $previousDate . ' ' . $currentCheckTime;
-        // $currentCheckTime = \Carbon\Carbon::parse($currentCheckTime);
-        $currentCheckDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $currentDateTimeString);
-        // dd($lastCheckTime, $carbonPeriodEndTime, $currentCheckTime, $periodStartTime);
 
         if ($periodStartTime > $periodEndTime) {
 
@@ -573,8 +577,6 @@ class AttendanecEmployee extends BasePage
                     return true;
                 }
             } else {
-                // dd($periodStartTime, $periodEndTime, $currentCheckTime,$currentCheckTime >= $periodStartTime);
-
                 if ($currentCheckTime >= $periodStartTime) {
                     return true;
                 }
@@ -586,21 +588,10 @@ class AttendanecEmployee extends BasePage
                     return true;
                 }
             } else {
-             if($currentCheckTime >= $periodStartTime){
-                return true;
-             }
+                if ($currentCheckTime >= $periodStartTime) {
+                    return true;
+                }
             }
-        }
-        return false;
-        // dd( $carbonPeriodEndTime->gt($lastCheckTime),$lastCheckTime,$carbonPeriodEndTime,$latstAttendance->check_time );
-        // dd($lastCheckTime->gt($carbonPeriodEndTime),$lastCheckTime,$carbonPeriodEndTime);
-// dd($lastCheckTime->gt($carbonPeriodEndTime) , $lastCheckType == Attendance::CHECKTYPE_CHECKOUT,$latstAttendance ,$latstAttendance->is_from_previous_day);
-        dd($period->start_at > $period->end_at, $carbonPeriodEndTime->gt($lastCheckTime), $carbonPeriodEndTime, $lastCheckTime);
-        // if ($period->start_at > $period->end_at && $carbonPeriodEndTime->gt($lastCheckTime) && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT && $latstAttendance->is_from_previous_day) {
-        if ($period->start_at > $period->end_at && $carbonPeriodEndTime->gt($lastCheckTime)) {
-            return true;
-        } else if ($period->start_at < $period->end_at && $lastCheckType == Attendance::CHECKTYPE_CHECKOUT) {
-            return true;
         }
         return false;
     }
@@ -609,16 +600,13 @@ class AttendanecEmployee extends BasePage
     {
 
         $latstAttendance = Attendance::where('employee_id', $employeeId)
-        // ->where('check_date', $date)
             ->select('id', 'check_type', 'check_date', 'check_time', 'period_id')
-        // ->where('check_type', '<', $closestPeriod->end_at)
             ->latest('id')
             ->first()
         ;
 
         if ($latstAttendance && $latstAttendance->period_id == $period->id) {
             $isPreviousCompleted = $this->checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime, $date, $currentDate);
-            // dd($isPreviousCompleted);
             if (!$isPreviousCompleted) {
                 return true;
             }
