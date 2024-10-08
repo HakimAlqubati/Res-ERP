@@ -34,6 +34,7 @@ Route::get('/totestpdf', function () {
     $orderDetails = $order?->orderDetails;
     return view('export.order_pdf', compact('order', 'orderDetails'));
 });
+Route::get('/to_test_salary_slip/{empId}/{date}', [TestController2::class, 'to_test_salary_slip']);
 Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
 Route::get('/to_test_calculate_salary/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary']);
 Route::get('/to_test_calculate_salary_with_attendances_deducations/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary_with_attendances_deducations']);

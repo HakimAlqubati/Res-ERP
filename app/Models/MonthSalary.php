@@ -19,6 +19,7 @@ class MonthSalary extends Model
         'approved',
         'created_by',
         'branch_id',
+        'month',
     ];
 
     // Relationship: One month salary has many details

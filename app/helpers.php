@@ -5,6 +5,7 @@ use App\Models\Attendance;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\Holiday;
+use App\Models\MonthSalaryDetail;
 use App\Models\Order;
 use App\Models\Store;
 use App\Models\SystemSetting;
@@ -339,7 +340,7 @@ function getRolesByTypeId($id)
 /**
  * to calculate the salary
  */
- 
+
 function calculateMonthlySalaryV2($employeeId, $date)
 {
     // Retrieve the employee model with relations to deductions, allowances, and incentives
@@ -384,7 +385,6 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
         return $incentive->amount;
     });
-    
 
     // Calculate daily and hourly salary
     $dailySalary = calculateDailySalary($employeeId, $date);
@@ -407,7 +407,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * 2;
-    
+
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
@@ -448,7 +448,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
                 'specific_allowances' => $specificAlloanceCalculated,
                 'general_allowances' => $generalAllowanceResultCalculated,
             ],
-            
+
             'another_details' => [
                 'daily_salary' => $dailySalary,
                 'hourly_salary' => $hourlySalary,
@@ -1208,7 +1208,6 @@ function calculateTotalLateArrival($attendanceData)
     // Calculate total hours as a float
     $totalHoursFloat = $totalDelayMinutes / 60;
 
-     
     return [
         'totalMinutes' => $totalDelayMinutes,
         'totalHoursFloat' => round($totalHoursFloat, 1),
@@ -1287,4 +1286,19 @@ function getMonthsArray()
             'end_month' => '2024-12-31',
         ],
     ];
+}
+
+/**
+ * to get data of salary slip
+ */
+
+function employeeSalarySlip($employeeId, $yearMonth)
+{
+    $salaryDetail = MonthSalaryDetail::where('employee_id', $employeeId)
+        ->whereHas('monthSalary', function ($query) use ($yearMonth) {
+            $query->where('month', $yearMonth);
+        })
+        ->get()->first();
+    return $salaryDetail;
+
 }

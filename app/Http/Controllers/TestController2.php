@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Allowance;
+use App\Models\Deduction;
 use App\Models\Employee;
+use App\Models\MonthlySalaryDeductionsDetail;
+use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
 class TestController2 extends Controller
 {
-    public function to_test_calculate_salary_with_attendances_deducations($empId,$date){
+    public function to_test_calculate_salary_with_attendances_deducations($empId, $date)
+    {
 
-        return  calculateAbsentDaysAndDeductSalary($empId,$date);
+        return calculateAbsentDaysAndDeductSalary($empId, $date);
     }
     public function to_test_calculate_salary($empId, $date)
     {
@@ -32,7 +37,7 @@ class TestController2 extends Controller
         $empId = $_GET['empId'];
         $startDate = $_GET['startDate'];
         $endDate = $_GET['endDate'];
-       
+
         return employeeAttendances($empId, $startDate, $endDate);
     }
 
@@ -41,7 +46,7 @@ class TestController2 extends Controller
         $empId = $_GET['empId'];
         $date = $_GET['date'];
         $periodId = $_GET['periodId'];
-       
+
         return getEmployeePeriodAttendnaceDetails($empId, $periodId, $date);
     }
 
@@ -53,4 +58,44 @@ class TestController2 extends Controller
         return employeeAttendancesByDate($empIds, $date);
     }
 
+    public function to_test_salary_slip($empId, $yearMonth)
+    {
+
+        $data = employeeSalarySlip($empId, $yearMonth);
+        $monthSalary = $data->monthSalary;
+        $employee = $data->employee;
+        $branch = $employee->branch;
+        $deducationDetail = $monthSalary?->deducationDetails->where('employee_id', $empId);
+        $increaseDetails = $monthSalary?->increaseDetails->where('employee_id', $empId);
+        // dd($increaseDetails,$deducationDetail);
+        $deducationTypes = Deduction::where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+
+        $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
+        $allDeductionTypes = $deducationTypes + $constDeducationTypes;
+
+        $allowanceTypes = Allowance::where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        // dd($specificDeducationTypes);
+        // dd($specificAllowanceTypes);
+        // dd($data, $employee, $branch, $monthSalary);
+        
+        return view('export.reports.hr.salaries.salary-slip', compact('data', 'employee', 'branch',
+            'monthSalary', 'allDeductionTypes',
+            'allowanceTypes',
+            'deducationDetail', 'increaseDetails'));
+
+            // $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip', [
+        //     'data' => $data,
+        //     'employee' => $employee,
+        //     'branch' => $branch,
+        //     'monthSalary' => $monthSalary,
+        //     'allDeductionTypes' => $allDeductionTypes,
+        //     'allowanceTypes' => $allowanceTypes,
+        //     'deducationDetail' => $deducationDetail,
+        //     'increaseDetails' => $increaseDetails,
+        // ]);
+        // return response()->streamDownload(function () use ($pdf) {
+        //     $pdf->stream('abc.pdf');
+        // }, "abc"   . '.pdf');
+        // return $pdf->stream('document.pdf');
+    }
 }

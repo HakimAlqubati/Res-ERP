@@ -12,31 +12,43 @@
     <div class="salary-slip">
         <header>
             <div class="company-info">
-                <img src="http://127.0.0.1:7000/storage/logo/default.png" alt="Company Logo">
+                <img src="{{ url('/') . '/storage/logo/default.png' }}" alt="Company Logo">
                 <h1>AL ROMANSIAH SDN BHD</h1>
-                <p>Office: No 64 Jalan Damai, 55000 Kuala Lumpur</p>
-                <p>03 – 2181 7161</p>
+                {{-- <p>Office: No 64 Jalan Damai, 55000 Kuala Lumpur</p> --}}
+                {{-- <p>03 – 2181 7161</p> --}}
             </div>
             <h2>SALARY SLIP</h2>
-            <p class="month">August 2024</p>
+            <p class="month">{{ $monthSalary?->month }}</p>
         </header>
 
         <section class="employee-info">
             <div class="info">
-                <span>Name:</span> GIRI BHAIYA
+                <span>Name:</span> {{ $employee?->name }}
             </div>
             <div class="info">
-                <span>ID No:</span> 0
+                <span>ID No:</span> {{ $employee?->employee_no }}
             </div>
             <div class="info">
-                <span>Job:</span> SYRIA DISHES
+                <span>Job:</span> {{ $employee?->job_title }}
             </div>
             <div class="info">
-                <span>Branch:</span> YAHALA AMPANG
+                <span>Branch:</span> {{ $branch?->name }}
             </div>
         </section>
 
         <section class="earnings-deductions">
+            @php
+                // Calculate total earnings
+                $basicSalary = $data?->basic_salary ?? 0;
+                $totalAllowances = $increaseDetails->whereIn('type_id', array_keys($allowanceTypes))->sum('amount');
+                $totalEarnings = $basicSalary + $totalAllowances;
+
+                // Calculate total deductions
+                $totalDeductions = $deducationDetail
+                    ->whereIn('deduction_id', array_keys($allDeductionTypes))
+                    ->sum('deduction_amount');
+            @endphp
+
             <table>
                 <thead>
                     <tr>
@@ -48,48 +60,29 @@
                 <tbody>
                     <tr>
                         <td>Basic Salary</td>
-                        <td>3000</td>
-                        <td>0</td>
+                        <td>{{ number_format($basicSalary, 2) }}</td>
+                        <td></td>
                     </tr>
-                    <tr>
-                        <td>House Allowance</td>
-                        <td>100</td>
-                        <td>0</td>
-                    </tr>
-                    <tr>
-                        <td>Overtime 1 day/s</td>
-                        <td>41.67</td>
-                        <td>0</td>
-                    </tr>
-                    <tr>
-                        <td>Overtime 5 hour/s</td>
-                        <td>440</td>
-                        <td>0</td>
-                    </tr>
-                    <tr>
-                        <td>Bonus</td>
-                        <td>0</td>
-                        <td>0</td>
-                    </tr>
-                    <tr>
-                        <td>Deduction From Manager</td>
-                        <td>0</td>
-                        <td>0</td>
-                    </tr>
-                    <tr>
-                        <td>EPF</td>
-                        <td>0</td>
-                        <td>36.90</td>
-                    </tr>
-                    <tr>
-                        <td>Monthly Tax Deduction (MTD)</td>
-                        <td>0</td>
-                        <td>0</td>
-                    </tr>
+                    @foreach ($allowanceTypes as $detailId => $detailName)
+                        <tr>
+                            <td>{{ $detailName }}</td>
+                            <td>{{ number_format(optional($increaseDetails->firstWhere('type_id', $detailId))->amount ?? 0, 2) }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    @endforeach
+                    @foreach ($allDeductionTypes as $deducationId => $deducationName)
+                        <tr>
+                            <td>{{ $deducationName }}</td>
+                            <td></td>
+                            <td>{{ number_format(optional($deducationDetail->firstWhere('deduction_id', $deducationId))->deduction_amount ?? 0, 2) }}
+                            </td>
+                        </tr>
+                    @endforeach
                     <tr>
                         <th>Total</th>
-                        <th>3581.67</th>
-                        <th>36.90</th>
+                        <th>{{ number_format($totalEarnings, 2) }}</th>
+                        <th>{{ number_format($totalDeductions, 2) }}</th>
                     </tr>
                 </tbody>
             </table>
@@ -97,7 +90,7 @@
 
         <footer>
             <div class="net-salary">
-                <p>Net Salary (RM): 3544.77</p>
+                <p>Net Salary (RM): {{ $data?->net_salary }}</p>
             </div>
             <div class="signature">
                 <p>Employee Signature:</p>

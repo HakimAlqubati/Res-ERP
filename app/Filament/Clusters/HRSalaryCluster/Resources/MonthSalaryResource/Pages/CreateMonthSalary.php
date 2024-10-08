@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
+use Carbon\Carbon;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,14 @@ class CreateMonthSalary extends CreateRecord
 
         $monthsArray = getMonthsArray();
 
+       
         if (array_key_exists($data['name'], $monthsArray)) {
             $data['start_month'] = $monthsArray[$data['name']]['start_month'];
+            $monthYear = Carbon::parse($data['start_month'])->format('Y-m');
+
             $data['end_month'] = $monthsArray[$data['name']]['end_month'];
             $data['name'] = 'Salary of month (' . $monthsArray[$data['name']]['name'] . ')';
+            $data['month'] = $monthYear;
         }
 
         $data['created_by'] = auth()->user()->id;

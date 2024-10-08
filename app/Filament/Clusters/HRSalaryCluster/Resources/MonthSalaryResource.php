@@ -9,10 +9,12 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Relation
 use App\Models\Allowance;
 use App\Models\Branch;
 use App\Models\Deduction;
+use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthSalary;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -95,6 +97,29 @@ class MonthSalaryResource extends Resource
                 Action::make('excel_download')->action(function ($record) {
                     return static::exportExcel($record);
                 }),
+                Action::make('salary_slip')
+                    ->form(function ($record) {
+                        $employeeIds = $record?->details->pluck('employee_id')->toArray();
+
+                        return [
+                            Hidden::make('month')->default($record?->month),
+                            Select::make('employee_id')
+                                ->label('Employee')
+                                ->helperText('Search employee to get his payslip')
+                                ->options(Employee::whereIn('id', $employeeIds)->select('name', 'id')->pluck('name', 'id')),
+                        ];
+                    })
+                    ->action(function ($record, $data) {
+                        $month = $data['month'];
+                        $employeeId = $data['employee_id'];
+
+                        // Generate the URL using the route with parameters
+                        $url = url("/to_test_salary_slip/{$employeeId}/{$month}");
+
+                        // Redirect to the generated URL
+                        return redirect()->away($url);
+                        dd($data);
+                    }) ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -201,7 +226,7 @@ class MonthSalaryResource extends Resource
                 'net_salary' => $value->net_salary,
             ];
         }
-        
+
         return Excel::download(new SalariesExport($data, $allDeductionTypes, $allowanceTypes), $fileName . '.xlsx');
     }
 }
