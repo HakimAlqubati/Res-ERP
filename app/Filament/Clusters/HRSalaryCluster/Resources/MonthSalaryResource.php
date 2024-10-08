@@ -77,19 +77,6 @@ class MonthSalaryResource extends Resource
 
     public static function table(Table $table): Table
     {
-
-        $recorddd = MonthSalary::find(24);
-        $details = $recorddd?->details;
-        $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
-        $res = [];
-        foreach ($details as $value) {
-            $increaseDetails = $recorddd->increaseDetails->where('employee_id', $value->employee_id);
-            $empId = $value->employee_id;
-            foreach ($allowanceTypes as $key => $value) {
-                $res[$empId . '_' . $key] = optional($increaseDetails->firstWhere('type_id', $key))->amount ?? 00;
-            }
-        }
-
         return $table
             ->defaultSort('id', 'desc')
             ->columns([
