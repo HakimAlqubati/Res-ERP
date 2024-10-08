@@ -9,15 +9,18 @@ class MonthlySalaryIncreaseDetail extends Model
 {
     use HasFactory;
 
-    // Specify the table name if it doesn't follow Laravel's convention
     protected $table = 'hr_monthly_salary_increases_details';
-// 'bonus', 'incentive', 'allowance' type fields
-    // Specify the fillable fields
+
+    public const TYPE_BONUS = 'bonus';
+    public const TYPE_INCENTIVE = 'incentive';
+    public const TYPE_ALLOWANCE = 'allowance';
+
     protected $fillable = [
         'month_salary_id',
         'employee_id',
         'is_specific_employee',
         'type',
+        'type_id',
         'name',
         'amount',
     ];
@@ -26,11 +29,6 @@ class MonthlySalaryIncreaseDetail extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
-    }
-
-    public function allowance()
-    {
-        return $this->belongsTo(Allowance::class, 'allowance_id');
     }
 
     public function monthSalary()

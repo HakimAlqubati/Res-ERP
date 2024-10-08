@@ -9,6 +9,7 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Relation
 use App\Models\Allowance;
 use App\Models\Branch;
 use App\Models\Deduction;
+use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthSalary;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
@@ -62,7 +63,7 @@ class MonthSalaryResource extends Resource
                                 return [$key => $month['name']]; // Using month key as the option key
                             });
                         })
-                        ->searchable()
+                    // ->searchable()
                         ->default(now()->format('F'))
                     ,
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
@@ -76,6 +77,19 @@ class MonthSalaryResource extends Resource
 
     public static function table(Table $table): Table
     {
+
+        $recorddd = MonthSalary::find(24);
+        $details = $recorddd?->details;
+        $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        $res = [];
+        foreach ($details as $value) {
+            $increaseDetails = $recorddd->increaseDetails->where('employee_id', $value->employee_id);
+            $empId = $value->employee_id;
+            foreach ($allowanceTypes as $key => $value) {
+                $res[$empId . '_' . $key] = optional($increaseDetails->firstWhere('type_id', $key))->amount ?? 00;
+            }
+        }
+
         return $table
             ->defaultSort('id', 'desc')
             ->columns([
@@ -135,14 +149,41 @@ class MonthSalaryResource extends Resource
         $branch = $record?->branch?->name;
         $fileName = ('Salaries of' . '-(' . $branch . ')');
         $details = $record?->details;
-        $deducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+
         $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+
+        $deducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
+
+        $allDeductionTypes = $deducationTypes + $constDeducationTypes;
+
+        $deducationDetails = $record?->deducationDetails;
+        $increaseDetails = $record->increaseDetails;
 
         $data = [];
         foreach ($details as $key => $value) {
+            $employee = $value->employee;
+            $empId = $employee->id;
+
+            $employeeDeductions = $deducationDetails->where('employee_id', $empId);
+            $employeeIncrease = $increaseDetails->where('employee_id', $empId);
+
+            $resDeducation = [];
+            foreach ($allDeductionTypes as $deductionId => $deductionType) {
+                // Find the deduction amount for the current deduction type, or return null if not found
+                $deductionAmount = optional($employeeDeductions->firstWhere('deduction_id', $deductionId))->deduction_amount ?? 00;
+                // Store the result, using a unique key format based on employee ID and deduction ID
+                $resDeducation[$deductionId] = $deductionAmount;
+            }
+
+            $resAllowances = [];
+            foreach ($allowanceTypes as $keyId => $val) {
+                $resAllowances[$keyId] = optional($employeeIncrease->firstWhere('type_id', $keyId))->amount ?? 00;
+            }
+
             $data[] = [
-                'employee_id' => $value->employee_id,
-                'employee_no' => $value->employee_no,
+                'employee_id' => $employee?->id,
+                'employee_no' => $employee?->employee_no,
                 'employee_name' => $value?->employee?->name,
                 'job_title' => $value?->employee?->job_title,
                 'branch' => $branch,
@@ -152,10 +193,11 @@ class MonthSalaryResource extends Resource
                 'total_incentives' => $value?->total_incentives,
                 'total_allowances' => $value?->total_allowances,
                 'total_deductions' => $value?->total_deductions,
-
+                'res_deducation' => $resDeducation,
+                'res_allowances' => $resAllowances,
             ];
         }
 
-        return Excel::download(new SalariesExport($data, $deducationTypes, $allowanceTypes), $fileName . '.xlsx');
+        return Excel::download(new SalariesExport($data, $allDeductionTypes, $allowanceTypes), $fileName . '.xlsx');
     }
 }

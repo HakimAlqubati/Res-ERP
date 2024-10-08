@@ -339,86 +339,7 @@ function getRolesByTypeId($id)
 /**
  * to calculate the salary
  */
-function calculateMonthlySalary($employeeId, $date)
-{
-    // Retrieve the employee model with relations to deductions, allowances, and incentives
-    $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
-    if (!$employee) {
-        return 'Employee not found!';
-    }
-
-    // Basic salary from the employee model
-    $basicSalary = $employee->salary;
-
-    // Calculate total deductions
-    $totalDeductions = $employee->deductions->sum(function ($deduction) {
-        return $deduction->amount;
-    });
-
-    // Calculate total allowances
-    $totalAllowances = $employee->allowances->sum(function ($allowance) {
-        return $allowance->amount;
-    });
-
-    // Calculate total monthly incentives
-    $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
-        return $incentive->amount;
-    });
-
-    // Calculate daily and hourly salary
-    $dailySalary = calculateDailySalary($employeeId, $date);
-    $hourlySalary = calculateHourlySalary($employeeId, $date);
-
-    $date = Carbon::parse($date);
-    // Get the start of the month
-    $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
-
-    // Get the end of the month
-    $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
-    $attendances = employeeAttendances($employeeId, $startDate, $endDate);
-
-    if ($attendances == 'no_periods') {
-        return 'no_periods';
-    }
-    $totalAbsentDays = calculateTotalAbsentDays($attendances);
-    $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
-
-    $overtimeHours = getEmployeeOvertimes($date, $employee);
-    // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
-    $overtimePay = $overtimeHours * $hourlySalary * 2;
-
-    // Calculate net salary including overtime
-    // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
-
-    // Calculate deductions for absences and lateness
-    $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
-    $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
-
-    // Calculate net salary including deductions for absences and lateness, plus overtime
-    $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions - $deductionForAbsentDays - $deductionForLateHours;
-
-    // Return the details and net salary breakdown
-    return [
-        'net_salary' => round($netSalary, 2),
-        'details' => [
-            'basic_salary' => $basicSalary,
-            'total_deductions' => $totalDeductions,
-            'total_allowances' => $totalAllowances,
-            'total_monthly_incentives' => $totalMonthlyIncentives,
-            'overtime_hours' => $overtimeHours,
-            'overtime_pay' => $overtimePay,
-            'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
-            'deduction_for_late_hours' => round($deductionForLateHours, 2),
-            'total_absent_days' => $totalAbsentDays,
-            'total_late_hours' => $totalLateHours,
-            'another_details' => [
-                'daily_salary' => $dailySalary,
-                'hourly_salary' => $hourlySalary,
-                'days_in_month' => getDaysInMonth($date),
-            ],
-        ],
-    ];
-}
+ 
 function calculateMonthlySalaryV2($employeeId, $date)
 {
     // Retrieve the employee model with relations to deductions, allowances, and incentives
@@ -463,7 +384,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
         return $incentive->amount;
     });
-    $totalMonthlyIncentives = 0;
+    
 
     // Calculate daily and hourly salary
     $dailySalary = calculateDailySalary($employeeId, $date);
@@ -486,7 +407,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * 2;
-    $overtimeHours = 0;
+    
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
@@ -517,6 +438,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_pay' => $overtimePay,
             'overtime_hours' => $overtimeHours,
+            'total_absent_days' => $totalAbsentDays,
+            'total_late_hours' => $totalLateHours,
             'deducation_details' => [
                 'specific_deducation' => $specificDeducationCalculated,
                 'general_deducation' => $generalDedeucationResultCalculated,
@@ -525,8 +448,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
                 'specific_allowances' => $specificAlloanceCalculated,
                 'general_allowances' => $generalAllowanceResultCalculated,
             ],
-            'total_absent_days' => $totalAbsentDays,
-            'total_late_hours' => $totalLateHours,
+            
             'another_details' => [
                 'daily_salary' => $dailySalary,
                 'hourly_salary' => $hourlySalary,
@@ -1274,7 +1196,7 @@ function calculateTotalLateArrival($attendanceData)
                     // Loop through each checkin record
                     foreach ($period['attendances']['checkin'] as $checkin) {
                         // Check if the status is 'late_arrival'
-                        if (isset($checkin['status']) && $checkin['status'] === 'late_arrival') {
+                        if (isset($checkin['status']) && $checkin['status'] === Attendance::STATUS_LATE_ARRIVAL) {
                             // Add the delay minutes to the total
                             $totalDelayMinutes += $checkin['delay_minutes'];
                         }
@@ -1286,6 +1208,7 @@ function calculateTotalLateArrival($attendanceData)
     // Calculate total hours as a float
     $totalHoursFloat = $totalDelayMinutes / 60;
 
+     
     return [
         'totalMinutes' => $totalDelayMinutes,
         'totalHoursFloat' => round($totalHoursFloat, 1),

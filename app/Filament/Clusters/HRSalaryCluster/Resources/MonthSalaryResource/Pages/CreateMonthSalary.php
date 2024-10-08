@@ -4,6 +4,8 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pa
 
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\Employee;
+use App\Models\MonthlySalaryDeductionsDetail;
+use App\Models\MonthlySalaryIncreaseDetail;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +79,24 @@ class CreateMonthSalary extends CreateRecord
                 $this->createDeductionDetails($specificDeducation, $employee, true);
                 $this->createDeductionDetails($generalDeducation, $employee, false);
 
+                if(isset($calculateSalary['details']['deduction_for_absent_days']) && $calculateSalary['details']['deduction_for_absent_days'] > 0){
+                    $this->record->deducationDetails()->create([
+                        'employee_id' => $employee->id,
+                        
+                        'deduction_id' => MonthlySalaryDeductionsDetail::ABSENT_DAY_DEDUCTIONS,
+                        'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::ABSENT_DAY_DEDUCTIONS],
+                        'deduction_amount' => $calculateSalary['details']['deduction_for_absent_days'],
+                    ]);
+                }
+                if(isset($calculateSalary['details']['deduction_for_late_hours']) && $calculateSalary['details']['deduction_for_late_hours'] > 0){
+                    $this->record->deducationDetails()->create([
+                        'employee_id' => $employee->id,
+                        
+                        'deduction_id' => MonthlySalaryDeductionsDetail::LATE_HOUR_DEDUCTIONS,
+                        'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::LATE_HOUR_DEDUCTIONS],
+                        'deduction_amount' => $calculateSalary['details']['deduction_for_late_hours'],
+                    ]);
+                }
                 // Commit the transaction if all is successful
                 DB::commit();
 
@@ -95,7 +115,8 @@ class CreateMonthSalary extends CreateRecord
                 if ($allowances['result'] > 0) {
                     $this->record->increaseDetails()->create([
                         'employee_id' => $employee->id,
-                        'type' => 'allowance',
+                        'type' => MonthlySalaryIncreaseDetail::TYPE_ALLOWANCE,
+                        'type_id' => $value['id'],
                         'is_specific_employee' => $isSpecific ? 1 : 0,
                         'name' => $value['name'],
                         'amount' => $value['allowance_amount'],
