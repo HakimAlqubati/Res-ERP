@@ -104,6 +104,7 @@ class MonthSalaryResource extends Resource
                         return [
                             Hidden::make('month')->default($record?->month),
                             Select::make('employee_id')
+                            ->required()
                                 ->label('Employee')
                                 ->helperText('Search employee to get his payslip')
                                 ->options(Employee::whereIn('id', $employeeIds)->select('name', 'id')->pluck('name', 'id')),
