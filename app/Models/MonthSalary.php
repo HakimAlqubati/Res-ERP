@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MonthSalary extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_month_salaries';
 
     protected $fillable = [

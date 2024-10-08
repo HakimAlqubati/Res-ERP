@@ -93,6 +93,7 @@ class MonthSalaryResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ViewAction::make(),
                 Action::make('excel_download')->action(function ($record) {
                     return static::exportExcel($record);
@@ -104,7 +105,7 @@ class MonthSalaryResource extends Resource
                         return [
                             Hidden::make('month')->default($record?->month),
                             Select::make('employee_id')
-                            ->required()
+                                ->required()
                                 ->label('Employee')
                                 ->helperText('Search employee to get his payslip')
                                 ->options(Employee::whereIn('id', $employeeIds)->select('name', 'id')->pluck('name', 'id')),
@@ -119,12 +120,12 @@ class MonthSalaryResource extends Resource
 
                         // Redirect to the generated URL
                         return redirect()->away($url);
-                        dd($data);
-                    }) ,
+                        
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -146,15 +147,15 @@ class MonthSalaryResource extends Resource
         ];
     }
 
-    public static function canDelete(Model $record): bool
-    {
-        return false;
-    }
+    // public static function canDelete(Model $record): bool
+    // {
+    //     return false;
+    // }
 
-    public static function canDeleteAny(): bool
-    {
-        return false;
-    }
+    // public static function canDeleteAny(): bool
+    // {
+    //     return false;
+    // }
 
     private static function exportExcel($record)
     {
