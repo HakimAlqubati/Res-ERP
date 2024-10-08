@@ -40,7 +40,7 @@ class MonthSalaryResource extends Resource
             ->schema([
 
                 Fieldset::make()->label('Set Branch, Month and payment date')->columns(3)->schema([
-                    TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('edit')
+                    TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
                         ->disabled()
                     // ->extraAttributes(['class' => 'text-red-600'])
                         ->suffixIcon('heroicon-o-exclamation-triangle')
