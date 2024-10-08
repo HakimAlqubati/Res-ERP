@@ -32,6 +32,7 @@ class DetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('total_allowances'),
                 Tables\Columns\TextColumn::make('total_incentives'),
                 Tables\Columns\TextColumn::make('overtime_pay'),
+                Tables\Columns\TextColumn::make('total_absent_days'),
                 Tables\Columns\TextColumn::make('net_salary'),
             ])
             ->filters([
