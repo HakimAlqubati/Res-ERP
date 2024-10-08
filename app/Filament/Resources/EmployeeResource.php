@@ -219,6 +219,7 @@ class EmployeeResource extends Resource
                                         ->numeric()->columnSpan(1)
                                         ->columnSpan(2)
                                         ->inputMode('decimal')
+                                        ->required()
                                         ->label('Salary')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                         ->label('No salary deduction for absences')->default(0)
@@ -262,9 +263,16 @@ class EmployeeResource extends Resource
                                                 ->required()
                                                 ->default(Deduction::where('active', 1)->where('is_specific', 1)?->first()?->id)
                                             ,
-                                            TextInput::make('amount')
-                                                ->default(0)->minValue(0)
-                                                ->numeric(),
+                                            Toggle::make('is_percentage')->live()->default(true)
+                                            // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                            ,
+                                            TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
+                                                ->suffixIcon('heroicon-o-calculator')
+                                                ->suffixIconColor('success')
+                                            ,
+                                            TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                ->suffixIcon('heroicon-o-percent-badge')
+                                                ->suffixIconColor('success'),
 
                                         ]),
                                     Repeater::make('Monthly allowances')
@@ -278,9 +286,16 @@ class EmployeeResource extends Resource
                                                 ->required()
                                                 ->default(Allowance::where('active', 1)->where('is_specific', 1)?->first()?->id)
                                             ,
-                                            TextInput::make('amount')
-                                                ->default(0)->minValue(0)
-                                                ->numeric(),
+                                            Toggle::make('is_percentage')->live()->default(true)
+                                            // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                            ,
+                                            TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
+                                                ->suffixIcon('heroicon-o-calculator')
+                                                ->suffixIconColor('success')
+                                            ,
+                                            TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                ->suffixIcon('heroicon-o-percent-badge')
+                                                ->suffixIconColor('success'),
 
                                         ]),
                                     Repeater::make('Monthly incentives')

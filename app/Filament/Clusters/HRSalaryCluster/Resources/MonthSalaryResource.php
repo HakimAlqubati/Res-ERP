@@ -77,6 +77,7 @@ class MonthSalaryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Title')->searchable(),
                 Tables\Columns\TextColumn::make('notes'),

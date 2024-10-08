@@ -9,7 +9,7 @@ class EmployeeDeduction extends Model
 {
     use HasFactory;
     protected $table = 'hr_employee_deductions';
-    protected $fillable = ['employee_id', 'deduction_id', 'amount'];
+    protected $fillable = ['employee_id', 'deduction_id', 'amount', 'is_percentage', 'percentage'];
 
     public function employee()
     {

@@ -9,7 +9,7 @@ class EmployeeAllowance extends Model
 {
     use HasFactory;
     protected $table = 'hr_employee_allowances';
-    protected $fillable = ['employee_id', 'allowance_id', 'amount'];
+    protected $fillable = ['employee_id', 'allowance_id', 'amount', 'is_percentage', 'percentage'];
 
     public function employee()
     {

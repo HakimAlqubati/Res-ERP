@@ -13,6 +13,8 @@ use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
 class AllowanceResource extends Resource
@@ -59,6 +61,9 @@ class AllowanceResource extends Resource
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('description'),
                 Tables\Columns\ToggleColumn::make('is_specific'),
+                ToggleColumn::make('is_percentage')->disabled(),
+                TextColumn::make('amount'),
+                TextColumn::make('precentage'),
                 Tables\Columns\ToggleColumn::make('active'),
             ])
             ->filters([

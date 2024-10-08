@@ -6,6 +6,8 @@ use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\Employee;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CreateMonthSalary extends CreateRecord
 {
@@ -27,31 +29,108 @@ class CreateMonthSalary extends CreateRecord
         return $data;
     }
 
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
-
     protected function afterCreate(): void
     {
-        $branchEmployees = Employee::where('active', 1)->where('branch_id', $this->record->branch_id)->select('id')->get();
+        $branchEmployees = Employee::where('active', 1)
+            ->where('branch_id', $this->record->branch_id)
+            ->select('id')
+            ->get();
 
         foreach ($branchEmployees as $employee) {
-            $calculateSalary = calculateMonthlySalary($employee->id, $this->record->end_month);
-            if ($calculateSalary != 'no_periods') {
+            // Begin a transaction
+            DB::beginTransaction();
+
+            try {
+                $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month);
+                $specificDeducation = $generalDeducation = $specificAllowances = $generalAllowances = [];
+
+                if ($calculateSalary === 'no_periods') {
+                    Log::warning("No periods found for employee ID: {$employee->id}");
+                    DB::rollBack();
+                    continue;
+                }
+
+                // Set deductions and allowances if available
+                $specificDeducation = $calculateSalary['details']['deducation_details']['specific_deducation'] ?? [];
+                $generalDeducation = $calculateSalary['details']['deducation_details']['general_deducation'] ?? [];
+                $specificAllowances = $calculateSalary['details']['adding_details']['specific_allowances'] ?? [];
+                $generalAllowances = $calculateSalary['details']['adding_details']['general_allowances'] ?? [];
+
+                // Try to create salary details
                 $this->record->details()->create([
                     'employee_id' => $employee->id,
                     'basic_salary' => $calculateSalary['details']['basic_salary'],
-                    'total_deductions' => $calculateSalary['details']['total_deductions'],
+                    'total_deductions' => $calculateSalary['details']['total_deducation'],
                     'total_allowances' => $calculateSalary['details']['total_allowances'],
                     'total_incentives' => $calculateSalary['details']['total_monthly_incentives'],
+                    'total_other_adding' => $calculateSalary['details']['total_other_adding'],
+                    'net_salary' => $calculateSalary['net_salary'],
+                    'total_absent_days' => $calculateSalary['details']['total_absent_days'],
+                    'total_late_hours' => $calculateSalary['details']['total_late_hours'],
                     'overtime_hours' => $calculateSalary['details']['overtime_hours'],
-                    'overtime_pay' => $calculateSalary['details']['overtime_hours'],
-                    'net_salary' => $calculateSalary['details']['overtime_hours'],
+                    'overtime_pay' => $calculateSalary['net_salary']['overtime_pay'] ?? 0,
                 ]);
+
+                // Create allowance and deduction details
+                $this->createAllowanceDetails($generalAllowances, $employee, false);
+                $this->createAllowanceDetails($specificAllowances, $employee, true);
+                $this->createDeductionDetails($specificDeducation, $employee, true);
+                $this->createDeductionDetails($generalDeducation, $employee, false);
+
+                // Commit the transaction if all is successful
+                DB::commit();
+
+            } catch (\Exception $e) {
+                // Rollback the transaction on any failure
+                DB::rollBack();
+                Log::error("Transaction failed for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
             }
         }
+    }
 
+    private function createAllowanceDetails(array $allowances, $employee, bool $isSpecific): void
+    {
+        foreach ($allowances as $value) {
+            try {
+                if ($allowances['result'] > 0) {
+                    $this->record->increaseDetails()->create([
+                        'employee_id' => $employee->id,
+                        'type' => 'allowance',
+                        'is_specific_employee' => $isSpecific ? 1 : 0,
+                        'name' => $value['name'],
+                        'amount' => $value['allowance_amount'],
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to create allowance details for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
+            }
+        }
+    }
+
+    private function createDeductionDetails(array $deductions, $employee, bool $isSpecific): void
+    {
+        foreach ($deductions as $value) {
+            try {
+                if ($deductions['result'] > 0) {
+                    $this->record->deducationDetails()->create([
+                        'employee_id' => $employee->id,
+                        'is_specific_employee' => $isSpecific ? 1 : 0,
+                        'deduction_id' => $value['id'],
+                        'deduction_name' => $value['name'],
+                        'deduction_amount' => $value['deduction_amount'],
+                        'is_percentage' => $value['is_percentage'],
+                        'amount_value' => $value['amount_value'],
+                        'percentage_value' => $value['percentage_value'],
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to create deduction details for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
+            }
+        }
+    }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 
     public function getTitle(): string | Htmlable
@@ -65,3 +144,99 @@ class CreateMonthSalary extends CreateRecord
         ]);
     }
 }
+
+// protected function afterCreate_old(): void
+// {
+//     $branchEmployees = Employee::where('active', 1)->where('branch_id', $this->record->branch_id)->select('id')->get();
+
+//     foreach ($branchEmployees as $employee) {
+//         $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month);
+//         $specificDeducation = [];
+//         $generalDeducation = [];
+//         $specificAllowances = [];
+//         $generalAllowances = [];
+
+//         if (isset($calculateSalary['details']['deducation_details']['specific_deducation']) && count($calculateSalary['details']['deducation_details']['specific_deducation']) > 0) {
+//             $specificDeducation = $calculateSalary['details']['deducation_details']['specific_deducation'];
+//         }
+//         if (isset($calculateSalary['details']['deducation_details']['general_deducation']) && count($calculateSalary['details']['deducation_details']['general_deducation']) > 0) {
+//             $generalDeducation = $calculateSalary['details']['deducation_details']['general_deducation'];
+//         }
+//         if (isset($calculateSalary['details']['adding_details']['specific_allowances']) && count($calculateSalary['details']['adding_details']['specific_allowances']) > 0) {
+//             $specificAllowances = $calculateSalary['details']['adding_details']['specific_allowances'];
+//         }
+//         if (isset($calculateSalary['details']['adding_details']['general_allowances']) && count($calculateSalary['details']['adding_details']['general_allowances']) > 0) {
+//             $generalAllowances = $calculateSalary['details']['adding_details']['general_allowances'];
+//         }
+//         if ($calculateSalary != 'no_periods') {
+//             $this->record->details()->create([
+//                 'employee_id' => $employee->id,
+//                 'basic_salary' => $calculateSalary['details']['basic_salary'],
+//                 'total_deductions' => $calculateSalary['details']['total_deducation'],
+//                 'total_allowances' => $calculateSalary['details']['total_allowances'],
+//                 'total_incentives' => $calculateSalary['details']['total_monthly_incentives'],
+//                 'total_other_adding' => $calculateSalary['details']['total_other_adding'],
+//                 'net_salary' => $calculateSalary['net_salary'],
+//                 'total_absent_days' => $calculateSalary['details']['total_absent_days'],
+//                 'total_late_hours' => $calculateSalary['details']['total_late_hours'],
+//                 'overtime_hours' => $calculateSalary['details']['overtime_hours'],
+//                 'overtime_pay' => $calculateSalary['net_salary']['overtime_pay'] ?? 0,
+//             ]);
+
+//             if (count($generalAllowances)) {
+//                 foreach ($generalAllowances as $value) {
+//                     $this->record->increaseDetails()->create([
+//                         'employee_id' => $employee->id,
+//                         'type' => 'allowance',
+//                         'name' => $value['name'],
+//                         'amount' => $value['allowance_amount'],
+//                     ]);
+
+//                 }
+//             }
+//             if (count($specificAllowances)) {
+//                 foreach ($specificAllowances as $value) {
+//                     $this->record->increaseDetails()->create([
+//                         'employee_id' => $employee->id,
+//                         'type' => 'allowance',
+//                         'is_specific_employee' => 1,
+//                         'name' => $value['name'],
+//                         'amount' => $value['allowance_amount'],
+//                     ]);
+
+//                 }
+//             }
+//             if (count($specificDeducation)) {
+//                 foreach ($specificDeducation as $value) {
+//                     $this->record->deducationDetails()->create([
+//                         'employee_id' => $employee->id,
+//                         'is_specific_employee' => 1,
+//                         'deduction_id' => $value['id'],
+//                         'deduction_name' => $value['name'],
+//                         'deduction_amount' => $value['deduction_amount'],
+//                         'is_percentage' => $value['is_percentage'],
+//                         'amount_value' => $value['amount_value'],
+//                         'percentage_value' => $value['percentage_value'],
+//                     ]);
+
+//                 }
+//             }
+//             if (count($generalDeducation)) {
+//                 foreach ($generalDeducation as $value) {
+//                     $this->record->deducationDetails()->create([
+//                         'employee_id' => $employee->id,
+//                         // 'is_specific_employee' => 1,
+//                         'deduction_id' => $value['id'],
+//                         'deduction_name' => $value['name'],
+//                         'deduction_amount' => $value['deduction_amount'],
+//                         'is_percentage' => $value['is_percentage'],
+//                         'amount_value' => $value['amount_value'],
+//                         'percentage_value' => $value['percentage_value'],
+//                     ]);
+
+//                 }
+//             }
+//         }
+//     }
+
+// }

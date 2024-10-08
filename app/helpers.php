@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Allowance;
 use App\Models\Attendance;
+use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Order;
@@ -341,7 +343,6 @@ function calculateMonthlySalary($employeeId, $date)
 {
     // Retrieve the employee model with relations to deductions, allowances, and incentives
     $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
-
     if (!$employee) {
         return 'Employee not found!';
     }
@@ -418,84 +419,196 @@ function calculateMonthlySalary($employeeId, $date)
         ],
     ];
 }
+function calculateMonthlySalaryV2($employeeId, $date)
+{
+    // Retrieve the employee model with relations to deductions, allowances, and incentives
+    $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
+    if (!$employee) {
+        return 'Employee not found!';
+    }
 
-// function calculateMonthlySalary2($employeeId, $date)
-// {
-//     // Retrieve the employee model with relations to deductions, allowances, and incentives
-//     $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
+    $generalAllowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'is_percentage', 'amount', 'percentage', 'id')->get()->toArray();
+    $generalDeducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'is_percentage', 'amount', 'percentage', 'id')->get()->toArray();
 
-//     if (!$employee) {
-//         return 'Employee not found!';
-//     }
+    // Basic salary from the employee model
+    $basicSalary = $employee->salary;
 
-//     // Basic salary from the employee model
-//     $basicSalary = $employee->salary;
+    $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
+    $generalDedeucationResultCalculated = calculateDeductions($generalDeducationTypes, $basicSalary);
+    // Calculate total deductions
+    $specificDeductions = $employee->deductions->map(function ($deduction) {
+        return [
+            'is_percentage' => $deduction->is_percentage,
+            'amount' => $deduction->amount,
+            'percentage' => $deduction->percentage,
+            'id' => $deduction->deduction_id,
+            'name' => $deduction->deduction->name,
+        ];
+    })->toArray();
 
-//     // Calculate total deductions
-//     $totalDeductions = $employee->deductions->sum(function ($deduction) {
-//         return $deduction->amount;
-//     });
+    // Calculate total allowances
+    $specificAllowances = $employee->allowances->map(function ($allowance) {
+        return [
+            'is_percentage' => $allowance->is_percentage,
+            'amount' => $allowance->amount,
+            'percentage' => $allowance->percentage,
+            'id' => $allowance->allowance_id,
+            'name' => $allowance->allowance->name, // Accessing the name from the Allowance model
+        ];
+    })->toArray();
 
-//     // Calculate total allowances
-//     $totalAllowances = $employee->allowances->sum(function ($allowance) {
-//         return $allowance->amount;
-//     });
+    $specificAlloanceCalculated = calculateAllowances($specificAllowances, $basicSalary);
+    $specificDeducationCalculated = calculateDeductions($specificDeductions, $basicSalary);
 
-//     // Calculate total monthly incentives
-//     $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
-//         return $incentive->amount;
-//     });
+    $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
+        return $incentive->amount;
+    });
+    $totalMonthlyIncentives = 0;
 
-//     // Calculate daily and hourly salary
-//     $dailySalary = calculateDailySalary($employeeId, $date);
-//     $hourlySalary = calculateHourlySalary($employeeId, $date);
+    // Calculate daily and hourly salary
+    $dailySalary = calculateDailySalary($employeeId, $date);
+    $hourlySalary = calculateHourlySalary($employeeId, $date);
 
-//     $date = Carbon::parse($date);
-//     // Get the start of the month
-//     $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
+    $date = Carbon::parse($date);
+    // Get the start of the month
+    $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
 
-//     // Get the end of the month
-//     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
+    // Get the end of the month
+    $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
+    $attendances = employeeAttendances($employeeId, $startDate, $endDate);
 
-//     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+    if ($attendances == 'no_periods') {
+        return 'no_periods';
+    }
+    $totalAbsentDays = calculateTotalAbsentDays($attendances);
+    $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
 
-//     // Calculate total absent days and late hours
-//     $totalAbsentDays = calculateTotalAbsentDays($attendances);
-//     $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
+    $overtimeHours = getEmployeeOvertimes($date, $employee);
+    // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
+    $overtimePay = $overtimeHours * $hourlySalary * 2;
+    $overtimeHours = 0;
+    // Calculate net salary including overtime
+    // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
-//     $overtimeHours = getEmployeeOvertimes($date, $employee);
-//     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
-//     $overtimePay = $overtimeHours * $hourlySalary * 2;
+    // Calculate deductions for absences and lateness
+    $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
+    $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
 
-//     // Calculate deductions for absences and lateness
-//     $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
-//     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForAbsentDays);
+    $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result']);
+    $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
-//     // Calculate net salary including deductions for absences and lateness, plus overtime
-//     $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions - $deductionForAbsentDays - $deductionForLateHours;
+    $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
 
-//     // Return the details and net salary breakdown
-//     return [
-//         'net_salary' => round($netSalary, 2),
-//         'details' => [
-//             'basic_salary' => round($basicSalary, 2),
-//             'total_deductions' => $totalDeductions,
-//             'total_allowances' => $totalAllowances,
-//             'total_monthly_incentives' => $totalMonthlyIncentives,
-//             'overtime_hours' => $overtimeHours,
-//             'overtime_pay' => $overtimePay,
-//             'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
-//             'deduction_for_late_hours' => round($deductionForLateHours, 2),
-//             'total_absent_days' => $totalAbsentDays,
-//             'total_late_hours' => $totalLateHours,
-//             'another_details' => [
-//                 'daily_salary' => $dailySalary,
-//                 'hourly_salary' => $hourlySalary,
-//                 'days_in_month' => getDaysInMonth($date),
-//             ],
-//         ],
-//     ];
-// }
+    // Return the details and net salary breakdown
+    return [
+        'net_salary' => round($netSalary, 2),
+        'details' => [
+            'basic_salary' => $basicSalary,
+            'total_deducation' => round($totalDeducations, 2),
+            'total_allowances' => round($totalAllowances, 2),
+            'total_other_adding' => round($totalOtherAdding, 2),
+            'specific_deducation_result' => round($specificDeducationCalculated['result'], 2),
+            'specific_allowances_result' => round($specificAlloanceCalculated['result'], 2),
+            'general_deducation_result' => round($generalDedeucationResultCalculated['result'], 2),
+            'general_allowances_result' => round($generalAllowanceResultCalculated['result'], 2),
+            'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
+            'deduction_for_late_hours' => round($deductionForLateHours, 2),
+            'total_monthly_incentives' => $totalMonthlyIncentives,
+            'overtime_pay' => $overtimePay,
+            'overtime_hours' => $overtimeHours,
+            'deducation_details' => [
+                'specific_deducation' => $specificDeducationCalculated,
+                'general_deducation' => $generalDedeucationResultCalculated,
+            ],
+            'adding_details' => [
+                'specific_allowances' => $specificAlloanceCalculated,
+                'general_allowances' => $generalAllowanceResultCalculated,
+            ],
+            'total_absent_days' => $totalAbsentDays,
+            'total_late_hours' => $totalLateHours,
+            'another_details' => [
+                'daily_salary' => $dailySalary,
+                'hourly_salary' => $hourlySalary,
+                'days_in_month' => getDaysInMonth($date),
+            ],
+        ],
+    ];
+}
+
+/**
+ * to calcaulte deducations
+ */
+function calculateDeductions(array $deductions, float $basicSalary): array
+{
+    $finalDeductions = [];
+    $totalDeductions = 0.0; // Initialize total deductions
+
+    foreach ($deductions as $deduction) {
+        if ($deduction['is_percentage']) {
+            // Calculate the deduction based on the percentage
+            $deductionAmount = ($basicSalary * $deduction['percentage']) / 100;
+        } else {
+            // Use the fixed amount directly
+            $deductionAmount = (float) $deduction['amount'];
+        }
+
+        // Add to total deductions
+        $totalDeductions += $deductionAmount;
+
+        // Store the result
+        $finalDeductions[] = [
+            'id' => $deduction['id'],
+            'name' => $deduction['name'],
+            'deduction_amount' => $deductionAmount,
+            'is_percentage' => $deduction['is_percentage'],
+            'amount_value' => $deduction['amount'],
+            'percentage_value' => $deduction['percentage'],
+        ];
+    }
+
+    // Add the total deductions to the result
+    $finalDeductions['result'] = $totalDeductions;
+
+    return $finalDeductions;
+}
+
+/**
+ * to calculate allowances
+ */
+function calculateAllowances(array $allowances, float $basicSalary): array
+{
+    $finalAllowances = [];
+    $totalAllowances = 0.0; // Initialize total allowances
+
+    foreach ($allowances as $allowance) {
+        if ($allowance['is_percentage']) {
+            // Calculate the allowance based on the percentage
+            $allowanceAmount = ($basicSalary * $allowance['percentage']) / 100;
+        } else {
+            // Use the fixed amount directly
+            $allowanceAmount = (float) $allowance['amount'];
+        }
+
+        // Add to total allowances
+        $totalAllowances += $allowanceAmount;
+
+        // Store the result
+        $finalAllowances[] = [
+            'id' => $allowance['id'],
+            'name' => $allowance['name'],
+            'allowance_amount' => $allowanceAmount,
+            'is_percentage' => $allowance['is_percentage'],
+            'amount_value' => $allowance['amount'],
+            'percentage_value' => $allowance['percentage'],
+        ];
+    }
+
+    // Add the total allowances to the result
+    $finalAllowances['result'] = $totalAllowances;
+
+    return $finalAllowances;
+}
 
 /**
  * to calculate the daily salary
@@ -1181,7 +1294,7 @@ function calculateTotalLateArrival($attendanceData)
 
 function calculateAbsentDaysAndDeductSalary($empId, $date)
 {
-    return calculateMonthlySalary($empId, $date);
+    return calculateMonthlySalaryV2($empId, $date);
 }
 
 /**

@@ -26,6 +26,14 @@ class MonthSalary extends Model
     {
         return $this->hasMany(MonthSalaryDetail::class, 'month_salary_id');
     }
+    public function deducationDetails()
+    {
+        return $this->hasMany(MonthlySalaryDeductionsDetail::class, 'month_salary_id');
+    }
+    public function increaseDetails()
+    {
+        return $this->hasMany(MonthlySalaryIncreaseDetail::class, 'month_salary_id');
+    }
 
     public function branch()
     {

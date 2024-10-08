@@ -21,6 +21,9 @@ class MonthSalaryDetail extends Model
         'overtime_hours',
         'overtime_pay',
         'net_salary',
+        'total_other_adding',
+        'total_absent_days',
+        'total_late_hours'
     ];
 
     // Relationship: Each salary detail belongs to a month salary
