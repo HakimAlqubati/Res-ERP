@@ -20,10 +20,12 @@
             @foreach ($deducationTypes as $deducationId => $deducationName)
                 <th>{{ $deducationName }}</th>
             @endforeach
+            <th>{{'Other deducation'}}</th>
             @foreach ($allowanceTypes as $allowanceId => $allowanceName)
                 <th>{{ $allowanceName }}</th>
             @endforeach
-           
+           <th>{{'Other allowances'}}</th>
+           <th>{{'Net salary'}}</th>
         </tr>
     </thead>
     <tbody>
@@ -38,10 +40,12 @@
                 @foreach ($deducationTypes as $deducationId => $deducationName)
                     <td>{{ $item['res_deducation'][$deducationId] }}</td>
                 @endforeach
+                <td> {{$item['res_specific_deducation']}} </td>
                 @foreach ($allowanceTypes as $allowanceId => $allowanceName)
-                    <td>{{ $item['res_allowances'][$allowanceId] }}</td>
+                <td>{{ $item['res_allowances'][$allowanceId] }}</td>
                 @endforeach
-               
+                <td> {{$item['res_specific_allowances']}} </td>
+               <th> {{$item['net_salary']}} </th>
             </tr>
         @endforeach
     </tbody>

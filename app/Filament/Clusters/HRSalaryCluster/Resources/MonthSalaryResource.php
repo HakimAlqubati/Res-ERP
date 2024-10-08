@@ -48,11 +48,11 @@ class MonthSalaryResource extends Resource
                     // ->color(Color::Red)
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
-                        ->disabledOn('edit')
+                        ->disabledOn('view')
                         ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
                         ->required()
                         ->helperText('Please, choose a branch'),
-                    Select::make('name')->label('Month')->hiddenOn('edit')
+                    Select::make('name')->label('Month')->hiddenOn('view')
                         ->required()
                         ->options(function () {
                             // Get the array of months
@@ -138,8 +138,10 @@ class MonthSalaryResource extends Resource
         $details = $record?->details;
 
         $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        $specificAllowanceTypes = Allowance::where('is_specific', 1)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
 
         $deducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        $specificDeducationTypes = Deduction::where('is_specific', 1)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
         $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
 
         $allDeductionTypes = $deducationTypes + $constDeducationTypes;
@@ -162,10 +164,22 @@ class MonthSalaryResource extends Resource
                 // Store the result, using a unique key format based on employee ID and deduction ID
                 $resDeducation[$deductionId] = $deductionAmount;
             }
+            $resSpecificDeducation = 0;
+            foreach ($specificDeducationTypes as $sDeductionId => $sDeductionType) {
+                // Find the deduction amount for the current deduction type, or return null if not found
+                $sDeductionAmount = optional($employeeDeductions->firstWhere('deduction_id', $sDeductionId))->deduction_amount ?? 00;
+                // Store the result, using a unique key format based on employee ID and deduction ID
+                $resSpecificDeducation += $sDeductionAmount;
+            }
 
             $resAllowances = [];
             foreach ($allowanceTypes as $keyId => $val) {
                 $resAllowances[$keyId] = optional($employeeIncrease->firstWhere('type_id', $keyId))->amount ?? 00;
+            }
+
+            $resSpecificAllowances = 0;
+            foreach ($specificAllowanceTypes as $sKeyId => $val) {
+                $resSpecificAllowances += optional($employeeIncrease->firstWhere('type_id', $sKeyId))->amount ?? 00;
             }
 
             $data[] = [
@@ -182,9 +196,12 @@ class MonthSalaryResource extends Resource
                 'total_deductions' => $value?->total_deductions,
                 'res_deducation' => $resDeducation,
                 'res_allowances' => $resAllowances,
+                'res_specific_deducation' => $resSpecificDeducation,
+                'res_specific_allowances' => $resSpecificAllowances,
+                'net_salary' => $value->net_salary,
             ];
         }
-
+        
         return Excel::download(new SalariesExport($data, $allDeductionTypes, $allowanceTypes), $fileName . '.xlsx');
     }
 }
