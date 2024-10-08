@@ -116,6 +116,7 @@ class AttendnaceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->defaultSort('id','desc')
             ->columns([
                 Tables\Columns\TextColumn::make('employee.name')
                     ->label('Employee')
@@ -139,7 +140,7 @@ class AttendnaceResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
-                SelectFilter::make('employee_id')->label('Employee')->options(function (Get $get) {
+                SelectFilter::make('employee_id')->searchable()->label('Employee')->options(function (Get $get) {
                     return Employee::query()
                         ->pluck('name', 'id');
                 }),
