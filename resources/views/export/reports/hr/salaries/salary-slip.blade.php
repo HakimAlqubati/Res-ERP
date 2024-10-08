@@ -12,7 +12,7 @@
     <div class="salary-slip">
         <header>
             <div class="company-info">
-                <img src="{{ url('/') . '/storage/logo/default.png' }}" alt="Company Logo">
+                <img src="{{ url('/') . '/storage/logo/romansia.png' }}" alt="Company Logo">
                 <h1>AL ROMANSIAH SDN BHD</h1>
                 {{-- <p>Office: No 64 Jalan Damai, 55000 Kuala Lumpur</p> --}}
                 {{-- <p>03 – 2181 7161</p> --}}
