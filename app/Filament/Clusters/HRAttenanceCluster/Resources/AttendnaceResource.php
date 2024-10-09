@@ -231,4 +231,10 @@ class AttendnaceResource extends Resource
         }
         return false;
     }
+
+    public static function canCreate(): bool
+    {
+        return false;
+        return static::can('create');
+    }
 }
