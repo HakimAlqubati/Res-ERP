@@ -14,7 +14,7 @@ class CreateEmployee extends CreateRecord
  
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['employee_no']= (Employee::get()->last()->id) + 1;
+        $data['employee_no']= Employee::withTrashed()->latest()->first()?->id + 1;
         return $data;
     }
 
