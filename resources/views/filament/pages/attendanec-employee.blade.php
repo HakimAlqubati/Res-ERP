@@ -7,14 +7,20 @@
     {{-- <script>
         playTone();
     </script> --}}
+
+
+
     <form wire:submit.prevent="submit">
+    
+
         <div class="flex justify-center items-center h-full">
             <x-filament::section>
                 {{ $this->form }}
 
                 <div class="flex justify-center items-center h-full" style="padding: 5px;">
-                    <x-filament::icon-button id="play-tone-btn" class="btn_fingerprint" icon="heroicon-o-finger-print" tag="button" label="Submit" type="submit"
-                        size="xl" style="height: 9.5rem; width: 100%;" color="success" />
+                    <x-filament::icon-button id="play-tone-btn" class="btn_fingerprint" icon="heroicon-o-finger-print"
+                        tag="button" label="Submit" type="submit" size="xl" style="height: 9.5rem; width: 100%;"
+                        color="success" />
                 </div>
             </x-filament::section>
         </div>
@@ -22,3 +28,5 @@
 
     </form>
 </x-filament::card>
+
+

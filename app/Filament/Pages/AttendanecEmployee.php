@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Forms\Components\KeyPadTest;
 use App\Models\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
@@ -49,35 +50,57 @@ class AttendanecEmployee extends BasePage
         static::$formActionsAlignment = Alignment::End;
     }
 
+    public string $rfid = ''; // Bind this to the input
+
+    public function appendToDisplay(string $value)
+    {
+        // Only append if input length is acceptable, reducing unnecessary operations
+        if (strlen($this->rfid) < 10) {
+            $this->rfid .= $value; // Append the value to the RFID input
+        }
+    }
+    
+    public function clearDisplay()
+    {
+        $this->rfid = ''; // Clear the RFID input
+    }
+
     public function form(Form $form): Form
     {
 
         app()->setLocale('ar');
         return $form
             ->schema([
+                
                 DateTimePicker::make('date_time')
                     ->label('التاريخ والوقت')
                 // ->timezone('Asia/Kuala_Lumpur')
                     ->prefixIcon('heroicon-o-clock')
                     ->prefixIconColor('success')
-                    ->required()->seconds(false),
-                TextInput::make('rfid')
-                    ->autocomplete(false)
-                    ->label('Employee RFID')
-                    ->prefixIcon('heroicon-m-identification')
-                    ->prefixIconColor('success')
-                    ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
-                    ->required()
-                    ->placeholder('RFID')
-                    ->maxLength(255),
+                    // ->required()
+                    ->seconds(false),
+                    KeyPadTest::make('rfid')->default($this->rfid),
+                // TextInput::make('rfid')
+                //     ->autocomplete(false)
+                //     ->label('Employee RFID')
+                //     ->prefixIcon('heroicon-m-identification')
+                //     ->prefixIconColor('success')
+                //     ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
+                //     ->required()
+                //     ->placeholder('RFID')
+                //     ->maxLength(255),
             ])->statePath('data');
     }
 
     public function submit()
     {
 
-        $formData = $this->form->getState();
-
+          // Only handle submission if input is valid
+          $formData = $this->form->getState();
+          
+          $rfid = $this->rfid;
+          $formData['rfid'] = $rfid;
+          
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
