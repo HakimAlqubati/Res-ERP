@@ -7,7 +7,6 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -59,7 +58,7 @@ class AttendanecEmployee extends BasePage
             $this->rfid .= $value; // Append the value to the RFID input
         }
     }
-    
+
     public function clearDisplay()
     {
         $this->rfid = ''; // Clear the RFID input
@@ -71,15 +70,15 @@ class AttendanecEmployee extends BasePage
         app()->setLocale('ar');
         return $form
             ->schema([
-                
+
                 DateTimePicker::make('date_time')
                     ->label('التاريخ والوقت')
                 // ->timezone('Asia/Kuala_Lumpur')
                     ->prefixIcon('heroicon-o-clock')
                     ->prefixIconColor('success')
-                    // ->required()
+                // ->required()
                     ->seconds(false),
-                    KeyPadTest::make('rfid')->default($this->rfid),
+                KeyPadTest::make('rfid')->default($this->rfid),
                 // TextInput::make('rfid')
                 //     ->autocomplete(false)
                 //     ->label('Employee RFID')
@@ -95,12 +94,12 @@ class AttendanecEmployee extends BasePage
     public function submit()
     {
 
-          // Only handle submission if input is valid
-          $formData = $this->form->getState();
-          
-          $rfid = $this->rfid;
-          $formData['rfid'] = $rfid;
-          
+        // Only handle submission if input is valid
+        $formData = $this->form->getState();
+
+        $rfid = $this->rfid;
+        $formData['rfid'] = $rfid;
+
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
@@ -252,6 +251,18 @@ class AttendanecEmployee extends BasePage
         // Ensure that $checkTime is a Carbon instance
         $checkTime = \Carbon\Carbon::parse($checkTime);
 
+        // Check if the user has created a record within the last minute
+        
+
+        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinute())->where('employee_id',$employee->id)->first();
+
+        if ($lastRecord) {
+            // Calculate the remaining seconds until a new record can be created
+            $timeLeft = round(Carbon::parse($lastRecord->created_at)->addMinute()->diffInSeconds(Carbon::now()),0);
+
+            $timeLeft *= -1;
+            return $this->sendWarningNotification( 'يرجى الانتظار لمدة ' . $timeLeft . ' ثانية');
+        }
         // Prepare attendance data
         $attendanceData = [
             'employee_id' => $employee->id,
@@ -270,7 +281,6 @@ class AttendanecEmployee extends BasePage
             $periodEndTime = $nearestPeriod->end_at;
             $periodStartTime = $nearestPeriod->start_at;
 
-            
             if ($periodStartTime > $periodEndTime
                 && ($checkTimeStr >= '00:00:00' && $checkTimeStr < $periodEndTime) && $previousRecord == null
 
@@ -293,7 +303,7 @@ class AttendanecEmployee extends BasePage
             $attendanceData = array_merge($attendanceData, $this->storeCheckOut($nearestPeriod, $employee->id, $date, $checkTime, $previousRecord));
             $notificationMessage = 'لقد تم تسجيل الانصراف';
         }
-        
+
         // Try to create the attendance record
         try {
             Attendance::create($attendanceData);
@@ -301,9 +311,66 @@ class AttendanecEmployee extends BasePage
             return $this->sendAttendanceNotification($employee->name, $notificationMessage);
         } catch (\Exception $e) {
             // Send warning notification in case of failure
-            return $this->sendWarningNotification($employee->name, $e->getMessage());
+            return $this->sendWarningNotification($e->getMessage());
         }
     }
+    // private function createAttendance($employee, $nearestPeriod, $date, $checkTime, $day, $checkType, $previousRecord = null)
+    // {
+    //     $checkTimeStr = $checkTime;
+    //     // Ensure that $checkTime is a Carbon instance
+    //     $checkTime = \Carbon\Carbon::parse($checkTime);
+
+    //     // Prepare attendance data
+    //     $attendanceData = [
+    //         'employee_id' => $employee->id,
+    //         'period_id' => $nearestPeriod->id,
+    //         'check_date' => $date,
+    //         'check_time' => $checkTime,
+    //         'day' => $day,
+    //         'check_type' => $checkType,
+    //         'branch_id' => $employee?->branch?->id,
+    //         'created_by' => 0, // Consider changing this to use the authenticated user ID if applicable
+    //     ];
+
+    //     // Handle check-in and check-out scenarios
+    //     if ($checkType === Attendance::CHECKTYPE_CHECKIN) {
+
+    //         $periodEndTime = $nearestPeriod->end_at;
+    //         $periodStartTime = $nearestPeriod->start_at;
+
+    //         if ($periodStartTime > $periodEndTime
+    //             && ($checkTimeStr >= '00:00:00' && $checkTimeStr < $periodEndTime) && $previousRecord == null
+
+    //         ) {
+    //             $minusDate = strtotime("$date -1 day");
+    //             $prevDayName = date('l', $minusDate);
+    //             $prevDate = date('Y-m-d', $minusDate);
+    //             $attendanceData['check_date'] = $prevDate;
+    //             $attendanceData['day'] = $prevDayName;
+    //         }
+
+    //         if ($previousRecord) {
+    //             $attendanceData['is_from_previous_day'] = 1;
+    //             $attendanceData['check_date'] = $previousRecord['in_previous']?->check_date;
+    //         }
+
+    //         $attendanceData = array_merge($attendanceData, $this->storeCheckIn($nearestPeriod, $checkTime));
+    //         $notificationMessage = 'لقد تم تسجيل الحضور';
+    //     } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
+    //         $attendanceData = array_merge($attendanceData, $this->storeCheckOut($nearestPeriod, $employee->id, $date, $checkTime, $previousRecord));
+    //         $notificationMessage = 'لقد تم تسجيل الانصراف';
+    //     }
+
+    //     // Try to create the attendance record
+    //     try {
+    //         Attendance::create($attendanceData);
+    //         // Send success notification
+    //         return $this->sendAttendanceNotification($employee->name, $notificationMessage);
+    //     } catch (\Exception $e) {
+    //         // Send warning notification in case of failure
+    //         return $this->sendWarningNotification($employee->name, $e->getMessage());
+    //     }
+    // }
     /**
      * get existing attendance
      */
