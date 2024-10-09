@@ -388,7 +388,7 @@ Route::get('/update_user_branch_id_for_all_users', function () {
 });
 
 Route::get('/attendance', AttendanecEmployee::class)
-    ->name('attendance');
+    ->name('attendance')->middleware("auth");
 
 
     
