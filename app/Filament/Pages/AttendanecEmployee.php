@@ -268,8 +268,9 @@ class AttendanecEmployee extends BasePage
             // Convert seconds to minutes and seconds
             $remainingMinutes = floor($remainingSeconds / 60);
             $remainingSeconds = $remainingSeconds % 60;
-            $remainingMinutes = $remainingMinutes * -1;
-            return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
+            $remainingMinutes *=  -1;
+            $remainingSeconds *=  -1;
+            // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
             return $this->sendWarningNotification('يرجى الانتظار لمدة ' . $remainingMinutes . ' دقيقة و ' . $remainingSeconds . ' ثانية');
 
         }
