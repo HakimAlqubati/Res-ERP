@@ -255,14 +255,13 @@ class EmployeeResource extends Resource
                                 Fieldset::make()->columns(3)->label('Finance')->schema([
                                     Repeater::make('Monthly deductions')
                                         ->relationship('deductions')
-                                        ->maxItems(Deduction::where('active', 1)->where('is_specific', 1)->count())
                                         ->schema([
 
                                             Select::make('deduction_id')
                                                 ->label('Deducation')
                                                 ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                 ->required()
-                                                ->default(Deduction::where('active', 1)->where('is_specific', 1)?->first()?->id)
+                                                
                                             ,
                                             Toggle::make('is_percentage')->live()->default(true)
                                             // ->helperText('Set allowance as a salary percentage or fixed amount')
@@ -278,14 +277,13 @@ class EmployeeResource extends Resource
                                         ]),
                                     Repeater::make('Monthly allowances')
                                         ->relationship('allowances')
-                                        ->maxItems(Allowance::where('active', 1)->where('is_specific', 1)->count())
                                         ->schema([
 
                                             Select::make('allowance_id')
                                                 ->label('Allowance')
                                                 ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                 ->required()
-                                                ->default(Allowance::where('active', 1)->where('is_specific', 1)?->first()?->id)
+                                                
                                             ,
                                             Toggle::make('is_percentage')->live()->default(true)
                                             // ->helperText('Set allowance as a salary percentage or fixed amount')
@@ -301,14 +299,13 @@ class EmployeeResource extends Resource
                                         ]),
                                     Repeater::make('Monthly incentives')
                                         ->relationship('monthlyIncentives')
-                                        ->maxItems(MonthlyIncentive::where('active', 1)->count())
                                         ->schema([
 
                                             Select::make('monthly_incentive_id')
                                                 ->label('Monthly incentive')
                                                 ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
                                                 ->required()
-                                                ->default(MonthlyIncentive::where('active', 1)?->first()?->id)
+                                                
                                             ,
                                             TextInput::make('amount')
                                                 ->default(0)->minValue(0)
