@@ -204,9 +204,10 @@ class EmployeeResource extends Resource
                                         Grid::make()->columns(2)->schema([
                                             Select::make('file_type_id')
                                                 ->label('File type')
+                                                ->required()
                                                 ->options(EmployeeFileType::select('id', 'name')->where('active', 1)->get()->pluck('name', 'id'))
                                                 ->searchable(),
-                                            FileUpload::make('attachment')->label('Attach your file')->downloadable()->previewable(),
+                                            FileUpload::make('attachment')->label('Attach your file')->downloadable()->previewable()->required(),
                                         ]),
                                     ]),
                                 ]),

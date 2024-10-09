@@ -252,16 +252,26 @@ class AttendanecEmployee extends BasePage
         $checkTime = \Carbon\Carbon::parse($checkTime);
 
         // Check if the user has created a record within the last minute
-        
 
-        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinute())->where('employee_id',$employee->id)->first();
+        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(15))->where('employee_id', $employee->id)->first();
 
         if ($lastRecord) {
-            // Calculate the remaining seconds until a new record can be created
-            $timeLeft = round(Carbon::parse($lastRecord->created_at)->addMinute()->diffInSeconds(Carbon::now()),0);
+            // // Calculate the remaining seconds until a new record can be created
+            // $timeLeft = round(Carbon::parse($lastRecord->created_at)->addMinute()->diffInSeconds(Carbon::now()),0);
 
-            $timeLeft *= -1;
-            return $this->sendWarningNotification( 'يرجى الانتظار لمدة ' . $timeLeft . ' ثانية');
+            // $timeLeft *= -1;
+            // return $this->sendWarningNotification( 'يرجى الانتظار لمدة ' . $timeLeft . ' ثانية');
+            // Calculate the remaining time in seconds until a new record can be created
+            // Calculate the remaining time in seconds until a new record can be created
+            $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(15)->diffInSeconds(Carbon::now());
+
+            // Convert seconds to minutes and seconds
+            $remainingMinutes = floor($remainingSeconds / 60);
+            $remainingSeconds = $remainingSeconds % 60;
+            $remainingMinutes = $remainingMinutes * -1;
+            return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
+            return $this->sendWarningNotification('يرجى الانتظار لمدة ' . $remainingMinutes . ' دقيقة و ' . $remainingSeconds . ' ثانية');
+
         }
         // Prepare attendance data
         $attendanceData = [
