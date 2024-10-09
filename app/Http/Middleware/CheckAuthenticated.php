@@ -17,7 +17,7 @@ class CheckAuthenticated
     public function handle($request, Closure $next)
     {
         // Check if the user is authenticated
-        if (!Auth::check() || !(isSystemManager() || isSuperAdmin() || !isBranchManager())) {
+        if (!Auth::check() || !(isSystemManager() || isSuperAdmin() || isBranchManager())) {
             // If the request expects JSON, return a custom message
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthorized access. Please log in to continue.'], 401);
