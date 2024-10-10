@@ -77,11 +77,11 @@ class AttendanecEmployee extends BasePage
                     ->prefixIcon('heroicon-o-clock')
                     ->prefixIconColor('success')
                 // ->required()
-                    ->seconds(false) 
-                    // ->hidden(function(){
-                    //    return isSuperAdmin() ? false : true;
-                    // })
-                    ,
+                    ->seconds(false)
+                    ->hidden(function () {
+                        return isSuperAdmin() ? false : true;
+                    })
+                ,
                 KeyPadTest::make('rfid')->default($this->rfid),
                 // TextInput::make('rfid')
                 //     ->autocomplete(false)
@@ -112,8 +112,11 @@ class AttendanecEmployee extends BasePage
 
     public function handleEmployeePeriodData($data)
     {
+        $dateTime = now();
 
-        $dateTime = $data['date_time'];
+        if (isSuperAdmin()) {
+            $dateTime = $data['date_time'];
+        }
 
         // Create a Carbon instance
         $carbonDateTime = Carbon::parse($dateTime);
@@ -272,8 +275,8 @@ class AttendanecEmployee extends BasePage
             // Convert seconds to minutes and seconds
             $remainingMinutes = floor($remainingSeconds / 60);
             $remainingSeconds = $remainingSeconds % 60;
-            $remainingMinutes *=  -1;
-            $remainingSeconds *=  -1;
+            $remainingMinutes *= -1;
+            $remainingSeconds *= -1;
             // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
             return $this->sendWarningNotification('يرجى الانتظار لمدة ' . $remainingMinutes . ' دقيقة و ' . $remainingSeconds . ' ثانية');
 
