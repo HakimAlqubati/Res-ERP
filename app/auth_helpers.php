@@ -4,6 +4,12 @@
  * check current user if branch manager
  */
 
+if (!function_exists('isAttendance')) {
+    function isAttendance()
+    {
+        return auth()->user()->isAttendance();
+    }
+}
 if (!function_exists('isSuperAdmin')) {
     function isSuperAdmin()
     {

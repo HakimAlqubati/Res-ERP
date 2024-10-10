@@ -113,6 +113,13 @@ class User extends Authenticatable implements FilamentUser
         }
         return false;
     }
+    public function isAttendance()
+    {
+        if (getCurrentRole() == 17) {
+            return true;
+        }
+        return false;
+    }
     public function isSystemManager()
     {
         if (getCurrentRole() == 3) {
