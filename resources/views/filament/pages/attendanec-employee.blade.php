@@ -9,6 +9,7 @@
 
          {{-- Fingerprint Button Section --}}
          <div class="flex items-center">
+             <form wire:submit.prevent="submit">
             <x-filament::icon-button 
                 id="play-tone-btn" 
                 class="btn_fingerprint" 
@@ -23,7 +24,6 @@
         </div>
 
         {{-- Form Section --}}
-        <form wire:submit.prevent="submit">
             <x-filament::section>
                 {{ $this->form }}
             </x-filament::section>
