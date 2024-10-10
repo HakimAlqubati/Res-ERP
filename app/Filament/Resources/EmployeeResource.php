@@ -254,6 +254,7 @@ class EmployeeResource extends Resource
                                 ]),
                                 Fieldset::make()->columns(3)->label('Finance')->schema([
                                     Repeater::make('Monthly deductions')
+                                    ->maxItems(0)
                                         ->relationship('deductions')
                                         ->schema([
 
@@ -276,6 +277,7 @@ class EmployeeResource extends Resource
 
                                         ]),
                                     Repeater::make('Monthly allowances')
+                                    ->maxItems(0)
                                         ->relationship('allowances')
                                         ->schema([
 
@@ -298,6 +300,7 @@ class EmployeeResource extends Resource
 
                                         ]),
                                     Repeater::make('Monthly incentives')
+                                    ->maxItems(0)
                                         ->relationship('monthlyIncentives')
                                         ->schema([
 
