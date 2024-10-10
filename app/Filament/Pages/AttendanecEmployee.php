@@ -77,7 +77,9 @@ class AttendanecEmployee extends BasePage
                     ->prefixIcon('heroicon-o-clock')
                     ->prefixIconColor('success')
                 // ->required()
-                    ->seconds(false),
+                    ->seconds(false)->hidden(function () {
+                    return isSuperAdmin() ? false : true;
+                }),
                 KeyPadTest::make('rfid')->default($this->rfid),
                 // TextInput::make('rfid')
                 //     ->autocomplete(false)
@@ -268,8 +270,8 @@ class AttendanecEmployee extends BasePage
             // Convert seconds to minutes and seconds
             $remainingMinutes = floor($remainingSeconds / 60);
             $remainingSeconds = $remainingSeconds % 60;
-            $remainingMinutes *=  -1;
-            $remainingSeconds *=  -1;
+            $remainingMinutes *= -1;
+            $remainingSeconds *= -1;
             // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
             return $this->sendWarningNotification('يرجى الانتظار لمدة ' . $remainingMinutes . ' دقيقة و ' . $remainingSeconds . ' ثانية');
 
