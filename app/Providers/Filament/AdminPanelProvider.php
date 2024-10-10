@@ -58,7 +58,12 @@ class AdminPanelProvider extends PanelProvider
         ->brandLogoHeight('3.5rem')
         ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
             $menu =  $builder->items([
-                NavigationItem::make(__('lang.dashboard'))
+                NavigationItem::make(__('lang.dashboard'))->hidden(function(){
+                    if(getCurrentRole() == 17){
+                        return true;
+                    }
+                    return false;
+                })
                     ->icon('heroicon-o-home')
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'))
                     ->url(fn (): string => Dashboard::getUrl()), 
@@ -90,11 +95,11 @@ class AdminPanelProvider extends PanelProvider
                         // ->icon('heroicon-o-user-group')
                         ->items(array_merge(
                          (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  HRCluster::getNavigationItems(): [], 
-                          HRTasksSystem::getNavigationItems(), 
-                          HRServiceRequestCluster::getNavigationItems(), 
-                          HRAttenanceCluster::getNavigationItems(), 
+                        (getCurrentRole() != 17) ?  HRTasksSystem::getNavigationItems(): [], 
+                         (getCurrentRole() != 17) ? HRServiceRequestCluster::getNavigationItems(): [], 
+                         (getCurrentRole() != 17) ? HRAttenanceCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager()) ? HRAttendanceReport::getNavigationItems(): [], 
-                          HRCircularCluster::getNavigationItems(), 
+                         (getCurrentRole() != 17) ? HRCircularCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager()) ? HRSalaryCluster::getNavigationItems(): [], 
                         ))
                     // ->items([

@@ -12,5 +12,5 @@ class HRCluster extends Cluster
     {
         return __('lang.departments_and_employees');
     }
-
+ 
 }
