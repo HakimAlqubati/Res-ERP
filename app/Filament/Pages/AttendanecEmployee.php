@@ -104,6 +104,7 @@ class AttendanecEmployee extends BasePage
         $rfid = $this->rfid;
         $formData['rfid'] = $rfid;
 
+        $this->clearDisplay();
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
