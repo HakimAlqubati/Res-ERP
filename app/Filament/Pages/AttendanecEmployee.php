@@ -148,7 +148,7 @@ class AttendanecEmployee extends BasePage
                 return
                     [
                     'success' => false,
-                    'message' => 'لا يوجد لديك فترات فهذا اليوم  (' . $day . ')',
+                    'message' =>  __('notifications.you_dont_have_periods_today') .' (' . $day . ')',
                 ]
                 ;
             }
@@ -159,14 +159,14 @@ class AttendanecEmployee extends BasePage
             return
                 [
                 'success' => false,
-                'message' => 'نأسف, لم يتم إضافة أي فترات دوام إليك, يرجى التواصل مع الإدارة!',
+                'message' => __('notifications.sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration'),
             ]
             ;
         } else {
             return
                 [
                 'success' => false,
-                'message' => ' لا يوجد موظف بهذا الرقم  ' . $data['rfid'],
+                'message' => __('notifications.there_is_no_employee_at_this_number'). $data['rfid'],
             ]
             ;
 
@@ -209,7 +209,7 @@ class AttendanecEmployee extends BasePage
 
         if (!$closestPeriod) {
             // No period found, so we return with an error or handle accordingly
-            return $this->sendWarningNotification('لم يتم العثور على فترة صالحة للوقت المحدد. ' . $time);
+            return $this->sendWarningNotification( __('notifications.no_valid_period_found_for_the_specified_time') . $time);
         }
 
         // Check if attendance exists for this period, date, and day
@@ -229,7 +229,7 @@ class AttendanecEmployee extends BasePage
 
                     return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKIN, $existAttendance);
                 } else {
-                    return $this->sendWarningNotification('وقت الحضور أكبر من وقت نهاية الفترة الحالية :(' . $closestPeriod?->name . ')');
+                    return $this->sendWarningNotification(__('notifications.attendance_time_is_greater_than_current_period_end_time') . ':(' . $closestPeriod?->name . ')');
 
                 }
             }
@@ -278,7 +278,7 @@ class AttendanecEmployee extends BasePage
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
             // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
-            return $this->sendWarningNotification('يرجى الانتظار لمدة ' . $remainingMinutes . ' دقيقة و ' . $remainingSeconds . ' ثانية');
+            return $this->sendWarningNotification(__('notifications.please_wait_for_a') . $remainingMinutes . __('notifications.minutue_&') . $remainingSeconds . __('notifications.second'));
 
         }
         // Prepare attendance data
@@ -316,10 +316,10 @@ class AttendanecEmployee extends BasePage
             }
 
             $attendanceData = array_merge($attendanceData, $this->storeCheckIn($nearestPeriod, $checkTime));
-            $notificationMessage = 'لقد تم تسجيل الحضور';
+            $notificationMessage = __('notifications.the_attendance_has_been_recorded');
         } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
             $attendanceData = array_merge($attendanceData, $this->storeCheckOut($nearestPeriod, $employee->id, $date, $checkTime, $previousRecord));
-            $notificationMessage = 'لقد تم تسجيل الانصراف';
+            $notificationMessage = __('notifications.the_departure_has_been_recorded');
         }
 
         // Try to create the attendance record
@@ -585,7 +585,7 @@ class AttendanecEmployee extends BasePage
     private function sendAttendanceNotification($employeeName, $message)
     {
         return Notification::make()
-            ->title('مرحبا موظفنا العزيز ' . $employeeName)
+            ->title(__('notifications.welcome_employee').' ' . $employeeName)
             ->body($message)
             ->icon('heroicon-o-check-circle')
             ->iconSize(IconSize::Large)
