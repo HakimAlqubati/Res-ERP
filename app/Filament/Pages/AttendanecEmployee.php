@@ -279,7 +279,7 @@ class AttendanecEmployee extends BasePage
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
             // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
-            return $this->sendWarningNotification(__('notifications.please_wait_for_a') . $remainingMinutes . __('notifications.minutue_&') . $remainingSeconds . __('notifications.second'));
+            return $this->sendWarningNotification(__('notifications.please_wait_for_a') . $remainingMinutes . __('notifications.minutue') . $remainingSeconds . __('notifications.second'));
 
         }
         // Prepare attendance data
