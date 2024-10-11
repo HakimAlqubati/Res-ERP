@@ -4,7 +4,7 @@ return [
     'the_attendance_has_been_recorded' => 'The attendance has been recorded',
     'the_departure_has_been_recorded' => 'The departure has been recorded',
     'please_wait_for_a' => 'Please wait for ',
-    'minutue' => 'minutue',
+    'minutue' => 'minutues',
     'second' => 'second',
     'attendance_time_is_greater_than_current_period_end_time' => 'Attendance time is greater than current period end time',
     'no_valid_period_found_for_the_specified_time' => 'No valid period found for the specified time.',
