@@ -11,4 +11,5 @@ return [
     'you_dont_have_periods_today' => 'You don t have periods today.',
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'Sorry, no working hours have been added to you, please contact the administration!',
     'there_is_no_employee_at_this_number' => 'There is no employee at this number',
+    'notify' => 'Notify',
 ];

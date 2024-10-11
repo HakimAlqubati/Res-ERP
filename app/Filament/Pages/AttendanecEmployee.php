@@ -600,7 +600,7 @@ class AttendanecEmployee extends BasePage
     private function sendWarningNotification($message)
     {
         return Notification::make()
-            ->title('تنبيه')
+            ->title(__('notifications.notify'))
             ->body($message)
             ->icon('heroicon-o-exclamation-triangle')
             ->iconSize(IconSize::Large)

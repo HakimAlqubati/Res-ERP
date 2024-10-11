@@ -11,4 +11,5 @@ return [
     'you_dont_have_periods_today' => 'ليس لديك فترات اليوم.',
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'عذرًا، لم يتم إضافة ساعات العمل الخاصة بك، يرجى التواصل مع الإدارة!',
     'there_is_no_employee_at_this_number' => 'لا يوجد موظف بهذا الرقم',
+    'notify' => 'تنبيه',
 ];
