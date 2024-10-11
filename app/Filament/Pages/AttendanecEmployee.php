@@ -67,7 +67,7 @@ class AttendanecEmployee extends BasePage
     public function form(Form $form): Form
     {
 
-        app()->setLocale('ar');
+        app()->setLocale('en');
         return $form
             ->schema([
 
