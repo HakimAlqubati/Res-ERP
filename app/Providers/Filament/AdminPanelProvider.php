@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRCircularCluster;
@@ -18,6 +19,7 @@ use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Resources\BranchResource;
+use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\UserResource;
@@ -101,6 +103,7 @@ class AdminPanelProvider extends PanelProvider
                           (isSuperAdmin() || isSystemManager() || isBranchManager()) ? HRAttendanceReport::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRCircularCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager()) ? HRSalaryCluster::getNavigationItems(): [], 
+                          (isSuperAdmin() || isSystemManager() || isBranchManager()) ? HRApplicationsCluster::getNavigationItems(): [], 
                         ))
                     // ->items([
                     //     ...HRCluster::getNavigationItems(), 
@@ -123,10 +126,15 @@ class AdminPanelProvider extends PanelProvider
                      (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems(): [] ,
                     ))
                     ,
-                NavigationGroup::make(__('lang.system_settings'))
+                    NavigationGroup::make(__('lang.system_settings'))
                     ->items( array_merge(
                         isSuperAdmin() || isSystemManager() ? SystemSettingResource::getNavigationItems(): [],
                     )),
+                    NavigationGroup::make('System settings')
+                        ->items(array_merge(
+                         (isSuperAdmin() || isSystemManager()) ? SettingResource::getNavigationItems(): [] ,
+                        ))
+                        ,
                 ]);
                return $menu;
         })

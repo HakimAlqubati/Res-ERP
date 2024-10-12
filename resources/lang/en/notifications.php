@@ -1,6 +1,6 @@
 <?php
 return [
-    'welcome_employee' => 'Welcome employee',
+    'welcome_employee' => 'Welcome',
     'the_attendance_has_been_recorded' => 'The attendance has been recorded',
     'the_departure_has_been_recorded' => 'The departure has been recorded',
     'please_wait_for_a' => 'Please wait for ',
@@ -12,4 +12,6 @@ return [
     'sorry_no_working_hours_have_been_added_to_you_please_contact_the_administration' => 'Sorry, no working hours have been added to you, please contact the administration!',
     'there_is_no_employee_at_this_number' => 'There is no employee at this number',
     'notify' => 'Notify',
+    'you_cannot_attendance_before' => 'You can not checkin before',
+    'hours' => 'Hours',
 ];

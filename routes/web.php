@@ -1,11 +1,11 @@
 <?php
 
-use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\EmployeeAttendance;
 use App\Filament\Pages\AttendanecEmployee;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestController2;
+use App\Http\Controllers\TestController;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
@@ -218,7 +218,7 @@ Route::post('/import_unit_prices', [
 ])->name('import_unit_prices');
 
 Route::get('/test-tasks-job', function () {
- 
+
     return 'dailly tasks added';
 });
 
@@ -256,7 +256,7 @@ Route::get('/updated_user_type_for_stuff_branches_users', function () {
         $user = User::find($stuffManager['id']);
         $user->update(['user_type' => 4]);
         if ($user->employee()->exists()) {
-            
+
             $user->employee()->update(['employee_type' => 4]);
         }
         $arr[] = $user;
@@ -390,5 +390,5 @@ Route::get('/update_user_branch_id_for_all_users', function () {
 Route::get('/attendance', AttendanecEmployee::class)
     ->name('attendance')->middleware('check');
 
-
-    
+Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
+Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
