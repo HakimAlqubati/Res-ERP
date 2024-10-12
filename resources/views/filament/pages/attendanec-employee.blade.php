@@ -1,6 +1,6 @@
 <x-filament::card class="flex justify-center items-center h-full">
     <audio id="notification-tone" src="{{ asset('audio/notify.mp3') }}" preload="auto"></audio>
-    {{ dd(request()->session()->all()) }}
+    {{-- {{ dd(request()->session()->all()) }} --}}
     <div class="flex justify-center items-center h-full">
         <img src="{{ asset('storage/logo/default.png') }}" style="height: 9.5rem;" alt="">
     </div>
