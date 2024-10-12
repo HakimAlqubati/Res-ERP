@@ -73,6 +73,11 @@
                                                     <x-filament-tables::cell class="internal_cell">
                                                         {{ $item['attendances']['checkin'][0]['status'] }}
                                                     </x-filament-tables::cell>
+                                                    @if (!isset($item['attendances']['checkout']))
+                                                        <x-filament-tables::cell class="internal_cell" colspan="4">
+                                                            {{'There is no checkout'}}
+                                                        </x-filament-tables::cell>
+                                                    @endif
                                                 @endif
                                                 @if (isset($item['attendances']['checkout']))
                                                     <x-filament-tables::cell class="internal_cell">
@@ -87,7 +92,7 @@
 
                                                     <x-filament-tables::cell class="internal_cell">
                                                         <button
-                                                            wire:click="showDetails('{{ $date }}', {{ $employee_id }},{{$item['period_id']}})"
+                                                            wire:click="showDetails('{{ $date }}', {{ $employee_id }},{{ $item['period_id'] }})"
                                                             class="text-blue-500 hover:underline">
 
                                                             {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }}
