@@ -852,7 +852,8 @@ function employeeAttendances($employeeId, $startDate, $endDate)
     // Loop through each date in the date range
     for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
         // Check if the current date is a weekend
-        if (in_array($date->format('l'), $weekend_days)) {
+        
+        if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
             continue; // Skip weekends
         }
 
@@ -1002,7 +1003,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
     $date = Carbon::parse($date);
 
     // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
+    $weekend_days = json_decode(WeeklyHoliday::select('days')?->first()?->days);
 
     // Fetch holidays on the specific date
     $holiday = Holiday::where('active', 1)
@@ -1044,7 +1045,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             ];
 
             // Skip if the date is a weekend
-            if (in_array($date->format('l'), $weekend_days)) {
+            if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
                 $result[$employeeId][$date->toDateString()]['status'] = 'weekend';
                 continue; // Skip weekends
             }
