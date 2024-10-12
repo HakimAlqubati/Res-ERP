@@ -824,7 +824,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
     $endDate = Carbon::parse($endDate);
 
     // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')->first()->days);
+    $weekend_days = json_decode(WeeklyHoliday::select('days')?->first()?->days);
 
     // Fetch holidays within the date range
     $holidays = Holiday::where('active', 1)
