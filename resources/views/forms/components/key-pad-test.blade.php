@@ -18,7 +18,7 @@
 <div x-data="{ inputValue: @entangle('rfid') }" class="keypad-container">
     <!-- Display the input value -->
     <input type="text" x-model="inputValue" class="keypad-display"
-           placeholder="رقم RFID"
+           placeholder="RFID"
            style="color: black !important" {{ $applyStateBindingModifiers('wire:model') }}="{{ $getStatePath() }}" readonly />
 
     <!-- Keypad buttons -->
