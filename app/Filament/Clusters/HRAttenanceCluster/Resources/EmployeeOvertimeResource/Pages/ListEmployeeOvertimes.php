@@ -13,7 +13,13 @@ class ListEmployeeOvertimes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->label('Manage Staff Overtime')
+            ,
         ];
     }
+    // public function getModelLabel(): ?string
+    // {
+    //     return 'Manage Staff Overtime';
+    // }
 }

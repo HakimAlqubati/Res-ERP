@@ -31,6 +31,8 @@ class AttendnaceResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
+    protected static ?string $modelLabel = 'Attendance Log';
+    protected static ?string $pluralLabel = 'Attendance Logs';
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     protected static ?int $navigationSort = 2;

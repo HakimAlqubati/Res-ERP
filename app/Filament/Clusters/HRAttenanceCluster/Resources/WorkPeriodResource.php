@@ -29,6 +29,7 @@ class WorkPeriodResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
+    protected static ?string $label = 'Shifts';
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     protected static ?int $navigationSort = 1;
@@ -123,6 +124,10 @@ class WorkPeriodResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label('id')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable()

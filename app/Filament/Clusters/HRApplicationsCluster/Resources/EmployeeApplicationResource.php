@@ -9,15 +9,19 @@ use App\Models\ApplicationTransaction;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -34,7 +38,6 @@ class EmployeeApplicationResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected ?bool $hasDatabaseTransactions = true;
 
-
     protected static ?string $cluster = HRApplicationsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
@@ -42,10 +45,15 @@ class EmployeeApplicationResource extends Resource
     {
         return $form
             ->schema([
-                Fieldset::make()->label('')->columns(3)->schema([
+                Fieldset::make()->label('')->columns(2)->schema([
                     Select::make('employee_id')
                         ->label('Employee')
                         ->searchable()
+                        ->live()
+                    // ->afterStateUpdated(function ($get, $set, $state) {
+                    //     $employee = Employee::find($state);
+                    //     $set('basic_salary', $employee?->salary);
+                    // })
                         ->disabled(function () {
                             if (isStuff()) {
                                 return true;
@@ -66,32 +74,191 @@ class EmployeeApplicationResource extends Resource
                         ->label('Application date')
                         ->default('Y-m-d')
                         ->required(),
-                    Select::make('application_type')
+                    // Select::make('application_type')
+                    //     ->label('Application type')
+                    //     ->hiddenOn('edit')
+                    //     ->searchable()
+                    //     ->live()
+                    //     ->options(EmployeeApplication::APPLICATION_TYPES)
+                    ToggleButtons::make('application_type')
+                        ->columnSpan(2)
                         ->label('Application type')
                         ->hiddenOn('edit')
-                        ->searchable()
+                    // ->searchable()
                         ->live()
                         ->options(EmployeeApplication::APPLICATION_TYPES)
+                        ->icons([
+                            EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'heroicon-o-banknotes',
+                            EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'heroicon-o-clock',
+                            EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
+                            EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
+                        ])->inline()
+                        ->colors([
+                            EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'info',
+                            EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'warning',
+                            EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'success',
+                            EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'danger',
+                        ])
                     ,
                 ]),
                 Fieldset::make('')
                     ->label(fn(Get $get): string => EmployeeApplication::APPLICATION_TYPES[$get('application_type')])
 
-                    ->columns(2)
-                    ->visible(fn(Get $get): bool => in_array($get('application_type')
+                    ->columns(1)
+                // ->visible(fn(Get $get): bool => in_array($get('application_type')
 
-                        , [
+                //     , [
+                //         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+                //         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
+                //     ]))
+                    ->visible(fn(Get $get): bool => is_numeric($get('application_type')))
+
+                    ->schema(function ($get, $set) {
+
+                        $form = [];
+                        if (in_array($get('application_type'), [
                             EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
                             EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
-                        ]))
-                // ->visibleOn('edit')
-                    ->schema([
-                        DatePicker::make('detail_date')
-                            ->label('date')
-                            ->default('Y-m-d'),
-                        TimePicker::make('detail_time')
-                            ->label('Time'),
-                    ]),
+                        ])) {
+                            $form = [
+                                DatePicker::make('detail_date')
+                                    ->label('date')
+                                    ->default('Y-m-d'),
+                                TimePicker::make('detail_time')
+                                    ->label('Time'),
+                            ];
+
+                        }
+                        if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST) {
+                            $employee = Employee::find($get('employee_id'));
+                            $set('basic_salary', $employee?->salary);
+                            return [
+                                Fieldset::make()->label('')->schema([
+                                    Grid::make()->columns(3)->schema([
+                                        DatePicker::make('detail_date')
+                                            ->label('date')
+                                            ->live()
+                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                // Parse the state as a Carbon date, add one month, and set it to the end of the month
+                                                $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
+                                                $set('detail_deduction_starts_from', $endNextMonth);
+                                            })
+                                            ->default('Y-m-d'),
+                                        TextInput::make('detail_advance_amount')->numeric()
+                                            ->label('Amount'),
+                                        TextInput::make('basic_salary')->numeric()->disabled()
+                                            ->default(0)
+                                            ->label('Basic salary')->helperText('Employee basic salary')
+                                        ,
+
+                                    ]),
+                                    Grid::make()->columns(3)->schema([
+                                        TextInput::make('detail_monthly_deduction_amount')
+                                            ->numeric()
+                                            ->label('Monthly deduction amount')
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                $advancedAmount = $get('detail_advance_amount');
+                                                if ($advancedAmount > 0) {
+                                                    $res = $advancedAmount / $state;
+
+                                                    $set('detail_number_of_months_of_deduction', $res);
+                                                    $toMonth = Carbon::now()->addMonths($res)->endOfMonth()->format('Y-m-d');
+                                                    $set('detail_deduction_ends_at', $toMonth);
+                                                }
+                                            })
+                                        ,
+                                        Fieldset::make()->columnSpan(1)->columns(1)->schema([
+                                            DatePicker::make('detail_deduction_starts_from')
+                                                ->label('Deduction starts from')
+                                                ->default('Y-m-d')
+                                                ->live()
+                                                ->afterStateUpdated(function ($get, $set, $state) {
+
+                                                    $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
+
+                                                    // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
+                                                    $endNextMonth = Carbon::parse($state)->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
+                                                    $set('detail_deduction_ends_at', $endNextMonth);
+                                                })
+                                            ,
+                                            DatePicker::make('detail_deduction_ends_at')
+                                                ->label('Deduction ends at')->disabled()
+                                                ->default('Y-m-d'),
+                                        ]),
+                                        TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
+                                            ->numeric()
+                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                $advancedAmount = $get('detail_advance_amount');
+
+                                                $res = $advancedAmount / $state;
+                                                // dd($res,$state);
+                                                $set('detail_monthly_deduction_amount', round($res, 2));
+                                                $state = (int) $state;
+                                                $toMonth = Carbon::now()->addMonths($state)->endOfMonth()->format('Y-m-d');
+
+                                                $set('detail_deduction_ends_at', $toMonth);
+                                            })
+                                            ->label('Number of months of deduction'),
+
+                                    ]),
+                                    Textarea::make('detail_advanced_purpose')->columnSpanFull()->label('Advance purpose')->required(),
+                                ]),
+                            ];
+                        }
+                        if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
+                            $form = [
+                                DatePicker::make('detail_from_date')
+                                    ->label('From Date')
+                                    ->reactive()
+                                    ->default(date('Y-m-d'))
+                                    ->required()
+                                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                                        $fromDate = $get('detail_from_date');
+                                        $toDate = $get('detail_to_date');
+
+                                        if ($fromDate && $toDate) {
+                                            $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+                                            $set('days_count', $daysDiff); // Set the days_count automatically
+                                        } else {
+                                            $set('days_count', 0); // Reset if no valid dates are selected
+                                        }
+                                    }),
+
+                                DatePicker::make('detail_to_date')
+                                    ->label('To Date')
+                                    ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                                    ->reactive()
+                                    ->required()
+                                    ->afterStateUpdated(function ($state, callable $set, $get) {
+                                        $fromDate = $get('detail_from_date');
+                                        $toDate = $get('detail_to_date');
+
+                                        if ($fromDate && $toDate) {
+                                            $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+                                            $set('days_count', $daysDiff); // Set the days_count automatically
+                                        } else {
+                                            $set('days_count', 0); // Reset if no valid dates are selected
+                                        }
+                                    }),
+
+                                TextInput::make('days_count')->disabled()
+                                    ->label('Number of Days')
+                                    ->helperText('Type how many days this leave will be')
+                                    ->numeric()
+                                    ->default(2)
+                                    ->required(),
+
+                            ];
+                        }
+
+                        return [
+                            Fieldset::make()->columns(count($form))->schema(
+                                $form
+                            ),
+                        ];
+                    })
+                ,
                 Fieldset::make()->label('')->schema([
                     Textarea::make('notes') // Add the new details field
                         ->label('Notes')
@@ -117,7 +284,39 @@ class EmployeeApplicationResource extends Resource
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('detail_date')->label('Date'),
-                TextColumn::make('detail_time')->label('Time'),
+                TextColumn::make('detail_time')->label('Time')
+                // ->toggledHiddenByDefault(false)
+                // ->toggleable(function(){
+                //     return false;
+                //     // return (isToggledHiddenByDefault: true);
+                // })
+                // ->label(function($record){
+                //     dd(static::$recordTitleAttribute);
+                // })
+                    ->state(function ($record) {
+                        // dd($record);
+                    })
+                // ->getStateUsing(function ($record) {
+                //     // dd($record);
+                //     return $record;
+                //     // return $record->productDescriptions()->first()?->name;
+                // })
+                    ->hidden(fn($record): bool => ($record?->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
+                    ->visible(function () {
+                        // dd($record);
+                        // if($record ){
+                        //     dd($record);
+
+                        // }
+                        return true;
+                        // if (in_array($record->application_type_id, [EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
+                        //     , EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+                        // ])) {
+                        //     return true;
+                        // }
+                        // return false;
+                    })
+                ,
                 TextColumn::make('status')->label('Status')
                     ->badge()
                     ->icon('heroicon-m-check-badge')
@@ -135,16 +334,16 @@ class EmployeeApplicationResource extends Resource
                 //
             ])
             ->actions([
-                Action::make('test')->action(function(){
+                Action::make('test')->action(function () {
                     $recipient = auth()->user();
- 
+
                     Notification::make()
                         ->title('Saved successfully')
                         ->sendToDatabase($recipient, isEventDispatched: true)
                         ->broadcast($recipient)
                         ->send()
-                        ;
-                   
+                    ;
+
                 }),
                 // Tables\Actions\EditAction::make(),
                 Action::make('approveDepatureRequest')->label('Approve')->button()
@@ -264,5 +463,15 @@ class EmployeeApplicationResource extends Resource
         }, ARRAY_FILTER_USE_BOTH);
 
         return $filteredData;
+    }
+
+    public static function getTitleCasePluralModelLabel(): string
+    {
+        return 'Applications';
+    }
+
+    public static function getTitleCaseModelLabel(): string
+    {
+        return 'Application';
     }
 }

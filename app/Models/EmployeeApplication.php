@@ -29,22 +29,22 @@ class EmployeeApplication extends Model
     // Constants for application types
     const APPLICATION_TYPES = [
         1 => 'Leave request',
-        2 => 'Attendance fingerprint request',
+        2 => 'Check-in Requests',
         3 => 'Advance request',
-        4 => 'Departure fingerprint request',
+        4 => 'Check-out Requests',
     ];
 
     // Constants for application types
-    // const APPLICATION_TYPE_LEAVE_REQUEST = 1;
+    const APPLICATION_TYPE_LEAVE_REQUEST = 1;
     const APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST = 2;
-    // const APPLICATION_TYPE_ADVANCE_REQUEST = 3;
+    const APPLICATION_TYPE_ADVANCE_REQUEST = 3;
     const APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST = 4;
 
 
     const APPLICATION_TYPE_NAMES = [
-        // self::APPLICATION_TYPE_LEAVE_REQUEST => 'Leave request',
-        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Attendance fingerprint request',
-        // self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
+        self::APPLICATION_TYPE_LEAVE_REQUEST => 'Leave request',
+        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Check-in Requests',
+        self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Departure fingerprint request',
     ];
 

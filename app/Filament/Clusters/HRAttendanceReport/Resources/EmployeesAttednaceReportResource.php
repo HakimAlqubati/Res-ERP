@@ -50,7 +50,7 @@ class EmployeesAttednaceReportResource extends Resource
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
                 Filter::make('filter_date')->label('')->form([
                     DatePicker::make('date')
-                        ->label('Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
+                        ->label('Date')->default(date('Y-m-d')),
                 ]),
 
             ], FiltersLayout::AboveContent)
