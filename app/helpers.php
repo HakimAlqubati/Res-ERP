@@ -905,6 +905,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 ->whereDate('a.check_date', '=', $date)
                 ->where('a.period_id', '=', $period->period_id)
                 ->select('a.*') // Adjust selection as needed
+                ->whereNull('a.deleted_at')
                 ->get();
 
             // Structure for the current period
