@@ -45,7 +45,7 @@ class EmployeeApplication extends Model
         self::APPLICATION_TYPE_LEAVE_REQUEST => 'Leave request',
         self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Check-in Requests',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
-        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Departure fingerprint request',
+        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Check-out Requests',
     ];
 
     // Constants for status
