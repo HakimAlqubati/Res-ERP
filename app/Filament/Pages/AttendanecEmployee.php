@@ -6,6 +6,7 @@ use App\Forms\Components\KeyPadTest;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Setting;
+use App\Notifications\NotificationAttendance;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -280,7 +281,7 @@ class AttendanecEmployee extends BasePage
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
             // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
-            // return $this->sendWarningNotification(__('notifications.please_wait_for_a') .' ' . $remainingMinutes . __('notifications.minutue') . $remainingSeconds.' ' . __('notifications.second'));
+            return $this->sendWarningNotification(__('notifications.please_wait_for_a') .' ' . $remainingMinutes .' '. __('notifications.minutue') .' '. $remainingSeconds.' ' . __('notifications.second'));
 
         }
         // Prepare attendance data

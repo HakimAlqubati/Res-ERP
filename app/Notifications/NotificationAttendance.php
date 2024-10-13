@@ -3,11 +3,13 @@
 namespace App\Notifications;
  
 use Filament\Notifications\Notification as BaseNotification;
- 
-class Notification extends BaseNotification
+use Filament\Support\Enums\Alignment;
+
+class NotificationAttendance extends BaseNotification
 {
     protected string $size = 'md';
  
+    public static Alignment $alignment = Alignment::Center;
     public function toArray(): array
     {
         return [
@@ -15,7 +17,6 @@ class Notification extends BaseNotification
             'size' => $this->getSize(),
         ];
     }
- 
     public static function fromArray(array $data): static
     {
         return parent::fromArray($data)->size($data['size']);
@@ -27,6 +28,8 @@ class Notification extends BaseNotification
  
         return $this;
     }
+
+
  
     public function getSize(): string
     {
