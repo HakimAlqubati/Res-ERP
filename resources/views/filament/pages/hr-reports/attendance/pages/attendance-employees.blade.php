@@ -16,7 +16,7 @@
                     {{-- <p>{{ 'Date' . ': ' . $date }}</p> --}}
 
                 </th>
-                <th colspan="4" style="text-align: center; vertical-align: middle;"
+                <th colspan="4" style="text-align: center; vertical-align: middle; padding:12px;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                     <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                 </th>

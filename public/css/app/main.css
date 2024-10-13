@@ -146,8 +146,8 @@ html::-webkit-scrollbar {
 }
 
 .circle-image {
-    border: 2px solid #000;
-    border-radius: 50%;
+    /* border: 2px solid #000; */
+    border-radius: 0%;
     display: inline-block;
     overflow: hidden;
     max-height: 70px;
