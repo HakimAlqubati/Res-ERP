@@ -1096,7 +1096,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             // Loop through each period for the employee
             foreach ($employeePeriods as $period) {
                 // Get attendances for the current period and date
-                $attendances = DB::table('hr_attendances_backup2 as a')
+                $attendances = DB::table('hr_attendances as a')
                     ->where('a.employee_id', '=', $employeeId)
                     ->whereDate('a.check_date', '=', $date)
                     ->where('a.period_id', '=', $period->period_id)
