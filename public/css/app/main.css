@@ -276,5 +276,6 @@ html::-webkit-scrollbar {
 }
 
 tbody tr:nth-child(even) {
-    background-color: #263636;
+    background-color: #0d7c66;
+    color: white;
   }
