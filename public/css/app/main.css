@@ -274,3 +274,7 @@ html::-webkit-scrollbar {
     height: 112px  !important;
     width: 253px !important;
 }
+
+tbody tr:nth-child(even) {
+    background-color: #263636;
+  }

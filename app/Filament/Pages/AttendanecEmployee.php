@@ -604,7 +604,7 @@ class AttendanecEmployee extends BasePage
 
     private function sendAttendanceNotification($employeeName, $message)
     {
-        return Notification::make()
+        return NotificationAttendance::make()
             ->title(__('notifications.welcome_employee') . ' ' . $employeeName)
             ->body($message)
             ->icon('heroicon-o-check-circle')
@@ -619,7 +619,7 @@ class AttendanecEmployee extends BasePage
     private function sendWarningNotification($message)
     {
 
-        return Notification::make()
+        return NotificationAttendance::make()
             ->title(__('notifications.notify'))
             ->body($message)
             ->icon('heroicon-o-exclamation-triangle')

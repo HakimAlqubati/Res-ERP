@@ -28,9 +28,9 @@ class EmployeeApplication extends Model
 
     // Constants for application types
     const APPLICATION_TYPES = [
-        // 1 => 'Leave request',
+        1 => 'Leave request',
         2 => 'Attendance fingerprint request',
-        // 3 => 'Advance request',
+        3 => 'Advance request',
         4 => 'Departure fingerprint request',
     ];
 

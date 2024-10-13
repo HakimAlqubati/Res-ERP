@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Notifications\Notification as NotificationsNotification;
+use App\Notifications\NotificationAttendance;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
+use Filament\Livewire\DatabaseNotifications;
 use Filament\Notifications\Livewire\Notifications;
+use Filament\Notifications\Notification;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Enums\Alignment;
@@ -29,8 +33,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Notifications::alignment(Alignment::Center);
-        Notifications::verticalAlignment(VerticalAlignment::Center);
+        DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
+
+
+        // NotificationAttendance::configureUsing(function (NotificationAttendance $notification): void {
+        //     $notification->view('filament.notifications.notification');
+        // });
+        
+        $this->app->bind(BaseNotification::class, Notification::class);
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
             $switch
                 ->locales(['ar', 'en']); // also accepts a closure

@@ -21,6 +21,7 @@ class Attendance extends Model
     const STATUS_ON_TIME = 'on_time';
     const STATUS_EARLY_DEPARTURE = 'early_departure';
     const STATUS_LATE_DEPARTURE = 'late_departure';
+    const STATUS_TEST = 'status_test';
 
     protected $fillable = [
         'employee_id',

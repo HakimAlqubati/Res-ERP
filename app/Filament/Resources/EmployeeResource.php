@@ -254,8 +254,8 @@ class EmployeeResource extends Resource
                                 ]),
                                 Fieldset::make()->columns(3)->label('Finance')->schema([
                                     Repeater::make('Monthly deductions')
-                                    
-                                    ->defaultItems(0)
+
+                                        ->defaultItems(0)
                                         ->relationship('deductions')
                                         ->schema([
 
@@ -263,7 +263,7 @@ class EmployeeResource extends Resource
                                                 ->label('Deducation')
                                                 ->options(Deduction::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                 ->required()
-                                                
+
                                             ,
                                             Toggle::make('is_percentage')->live()->default(true)
                                             // ->helperText('Set allowance as a salary percentage or fixed amount')
@@ -278,7 +278,7 @@ class EmployeeResource extends Resource
 
                                         ]),
                                     Repeater::make('Monthly allowances')
-                                    ->defaultItems(0)
+                                        ->defaultItems(0)
                                         ->relationship('allowances')
                                         ->schema([
 
@@ -286,7 +286,7 @@ class EmployeeResource extends Resource
                                                 ->label('Allowance')
                                                 ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
                                                 ->required()
-                                                
+
                                             ,
                                             Toggle::make('is_percentage')->live()->default(true)
                                             // ->helperText('Set allowance as a salary percentage or fixed amount')
@@ -301,7 +301,7 @@ class EmployeeResource extends Resource
 
                                         ]),
                                     Repeater::make('Monthly incentives')
-                                    ->defaultItems(0)
+                                        ->defaultItems(0)
                                         ->relationship('monthlyIncentives')
                                         ->schema([
 
@@ -309,7 +309,7 @@ class EmployeeResource extends Resource
                                                 ->label('Monthly incentive')
                                                 ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
                                                 ->required()
-                                                
+
                                             ,
                                             TextInput::make('amount')
                                                 ->default(0)->minValue(0)
@@ -334,10 +334,14 @@ class EmployeeResource extends Resource
             ->columns([
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
-                TextColumn::make('name')
-
+                TextColumn::make('employee_no')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Employee No.')
                     ->sortable()->searchable()
-                    ->limit(12)
+                    ->searchable(isIndividual: true, isGlobal: false),
+                TextColumn::make('name')
+                    ->sortable()->searchable()
+                    ->limit(20)
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
@@ -376,11 +380,7 @@ class EmployeeResource extends Resource
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('employee_no')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('employee number')
-                    ->sortable()->searchable()
-                    ->searchable(isIndividual: true, isGlobal: false),
+
                 TextColumn::make('department.name')
                     ->label('Department')
                     ->toggleable(isToggledHiddenByDefault: true)

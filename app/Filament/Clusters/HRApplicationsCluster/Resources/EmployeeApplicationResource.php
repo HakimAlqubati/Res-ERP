@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
 use App\Filament\Pages\AttendanecEmployee;
+use App\Models\ApplicationTransaction;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
@@ -17,6 +18,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -29,9 +32,12 @@ class EmployeeApplicationResource extends Resource
     protected static ?string $model = EmployeeApplication::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected ?bool $hasDatabaseTransactions = true;
+
 
     protected static ?string $cluster = HRApplicationsCluster::class;
-
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 1;
     public static function form(Form $form): Form
     {
         return $form
@@ -129,6 +135,17 @@ class EmployeeApplicationResource extends Resource
                 //
             ])
             ->actions([
+                Action::make('test')->action(function(){
+                    $recipient = auth()->user();
+ 
+                    Notification::make()
+                        ->title('Saved successfully')
+                        ->sendToDatabase($recipient, isEventDispatched: true)
+                        ->broadcast($recipient)
+                        ->send()
+                        ;
+                   
+                }),
                 // Tables\Actions\EditAction::make(),
                 Action::make('approveDepatureRequest')->label('Approve')->button()
                     ->visible(fn($record): bool => $record->status == EmployeeApplication::STATUS_PENDING)
@@ -143,6 +160,7 @@ class EmployeeApplicationResource extends Resource
                             'approved_by' => auth()->user()->id,
                             'approved_at' => now(),
                         ]);
+                        ApplicationTransaction::createTransactionFromApplication($record);
 
                     })
                     ->disabledForm()

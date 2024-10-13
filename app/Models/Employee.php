@@ -155,4 +155,7 @@ class Employee extends Model
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1);
     }
 
+    public function attendances(){
+        return $this->hasMany(Attendance::class);
+    }
 }
