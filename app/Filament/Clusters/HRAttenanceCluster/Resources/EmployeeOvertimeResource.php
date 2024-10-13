@@ -43,9 +43,9 @@ class EmployeeOvertimeResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
 
-    protected static ?string $label = 'Employees Overtime';
-    protected static ?string $pluralModelLabel = 'Employees Overtime';
-    protected static ?string $pluralLabel = 'Employees Overtime';
+    protected static ?string $label = 'Stuff Overtime';
+    protected static ?string $pluralModelLabel = 'Stuff Overtime';
+    protected static ?string $pluralLabel = 'Stuff Overtime';
 
     protected static ?int $navigationSort = 10;
     public static function form(Form $form): Form
