@@ -26,10 +26,10 @@ class LeaveApplicationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRAttenanceCluster::class;
+    // protected static ?string $cluster = HRAttenanceCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
-    protected static ?int $navigationSort = 7;
+    // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
+    // protected static ?int $navigationSort = 7;
 
     public static function form(Form $form): Form
     {

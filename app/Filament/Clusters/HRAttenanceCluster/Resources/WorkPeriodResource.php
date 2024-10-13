@@ -29,7 +29,7 @@ class WorkPeriodResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-    protected static ?string $label = 'Shifts';
+    protected static ?string $label = 'Work shifts';
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     protected static ?int $navigationSort = 1;
