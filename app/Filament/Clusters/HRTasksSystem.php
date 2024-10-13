@@ -9,7 +9,7 @@ class HRTasksSystem extends Cluster
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-arrow-up';
     
-
+    protected static ?string $clusterBreadcrumb = 'HR';
 
     public static function getNavigationLabel(): string
     {
