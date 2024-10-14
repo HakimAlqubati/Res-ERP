@@ -41,7 +41,7 @@ class EmployeeOvertimeResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?string $label = 'Staff Overtime';
     protected static ?string $pluralModelLabel = 'Staff Overtime';

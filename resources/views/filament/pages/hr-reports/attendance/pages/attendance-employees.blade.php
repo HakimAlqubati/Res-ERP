@@ -2,7 +2,7 @@
     {{ $this->getTableFiltersForm() }}
 
     {{-- @if (isset($branch_id) && is_numeric($branch_id)) --}}
-    <x-filament-tables::table class="w-full text-sm text-left pretty  ">
+    <x-filament-tables::table class="w-full text-sm text-left pretty  reports">
         <thead>
             <x-filament-tables::row class="header_report">
                 <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">

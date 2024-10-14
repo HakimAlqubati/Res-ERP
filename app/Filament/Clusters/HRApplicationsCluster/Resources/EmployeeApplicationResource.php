@@ -22,12 +22,12 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
@@ -183,7 +183,7 @@ class EmployeeApplicationResource extends Resource
                                                 })
                                             ,
                                             DatePicker::make('detail_deduction_ends_at')
-                                                ->label('Deduction ends at')->disabled()
+                                                ->label('Deduction ends at')
                                                 ->default('Y-m-d'),
                                         ]),
                                         TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
@@ -283,40 +283,10 @@ class EmployeeApplicationResource extends Resource
                 TextColumn::make('createdBy.name')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('detail_date')->label('Date'),
-                TextColumn::make('detail_time')->label('Time')
-                // ->toggledHiddenByDefault(false)
-                // ->toggleable(function(){
-                //     return false;
-                //     // return (isToggledHiddenByDefault: true);
-                // })
-                // ->label(function($record){
-                //     dd(static::$recordTitleAttribute);
-                // })
-                    ->state(function ($record) {
-                        // dd($record);
-                    })
-                // ->getStateUsing(function ($record) {
-                //     // dd($record);
-                //     return $record;
-                //     // return $record->productDescriptions()->first()?->name;
-                // })
-                    ->hidden(fn($record): bool => ($record?->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
-                    ->visible(function () {
-                        // dd($record);
-                        // if($record ){
-                        //     dd($record);
-
-                        // }
-                        return true;
-                        // if (in_array($record->application_type_id, [EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
-                        //     , EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
-                        // ])) {
-                        //     return true;
-                        // }
-                        // return false;
-                    })
+                TextColumn::make('application_date')->label('Application date')
+                    ->sortable()
                 ,
+
                 TextColumn::make('status')->label('Status')
                     ->badge()
                     ->icon('heroicon-m-check-badge')
@@ -326,33 +296,43 @@ class EmployeeApplicationResource extends Resource
                         EmployeeApplication::STATUS_APPROVED => 'success',
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
-                // TextColumn::make('rejectedBy.name')->label('Rejected by'),
-                // TextColumn::make('rejected_at')->label('Rejected at'),
-                // TextColumn::make('rejected_reason')->label('Rejected reason'),
             ])
             ->filters([
-                //
+                SelectFilter::make('status')->options([
+                    EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
+                    EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
+                    EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED]),
             ])
             ->actions([
-                Action::make('test')->action(function () {
-                    $recipient = auth()->user();
+                // Action::make('test')->action(function () {
+                //     $recipient = auth()->user();
 
-                    Notification::make()
-                        ->title('Saved successfully')
-                        ->sendToDatabase($recipient, isEventDispatched: true)
-                        ->broadcast($recipient)
-                        ->send()
-                    ;
+                //     Notification::make()
+                //         ->title('Saved successfully')
+                //         ->sendToDatabase($recipient, isEventDispatched: true)
+                //         ->broadcast($recipient)
+                //         ->send()
+                //     ;
 
-                }),
-                // Tables\Actions\EditAction::make(),
+                // }),
+                // Action::make('details')->label('Details')->button()
+                //     ->color('success')
+                //     ->icon('heroicon-o-book-open')
+                //     ->disabledForm()
+                //     ->form(function ($record) {
+                //         // $applicationType = $record?->application_type_id;
+                //         // if($applicationType == EmployeeApplication::)
+                //         return [
+
+                //         ];
+                //     })
+                // ,
+
                 Action::make('approveDepatureRequest')->label('Approve')->button()
-                    ->visible(fn($record): bool => $record->status == EmployeeApplication::STATUS_PENDING)
+                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
                     ->color('success')
                     ->icon('heroicon-o-check')
                     ->action(function ($record, $data) {
-                        // dd($record,$data);
-
                         (new AttendanecEmployee())->createAttendance($record->employee, $data['period'], $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT);
                         $record->update([
                             'status' => EmployeeApplication::STATUS_APPROVED,
@@ -382,6 +362,52 @@ class EmployeeApplicationResource extends Resource
                             Fieldset::make()->label('Request data')->columns(2)->schema([
                                 DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
                                 TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                            ]),
+                        ];
+                    }),
+                Action::make('approveAdvanceRequest')->label('Approve')->button()
+                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
+                    ->color('success')
+                    ->icon('heroicon-o-check')
+                    ->action(function ($record, $data) {
+                        //    ApplicationTransaction::createTransactionFromApplication();
+                        $record->update([
+                            'status' => EmployeeApplication::STATUS_APPROVED,
+                            'approved_by' => auth()->user()->id,
+                            'approved_at' => now(),
+                        ]);
+                        ApplicationTransaction::createTransactionFromApplication($record);
+
+                    })
+                    ->disabledForm()
+                    ->form(function ($record) {
+                        // $details= json_decode($record->details) ;
+                      
+                        $detailDate = $record?->detail_date;
+                        $monthlyDeductionAmount = $record?->detail_monthly_deduction_amount;
+                        $advanceAmount = $record?->detail_advance_amount;
+                        $deductionStartsFrom = $record?->detail_deduction_starts_from;
+                        $deductionEndsAt = $record?->detail_deduction_ends_at;
+                        $numberOfMonthsOfDeduction = $record?->detail_number_of_months_of_deduction;
+                        $advancedPurpose = $record?->detail_advanced_purpose;
+
+                        // $details = EmployeeApplicationResource::getDetailsKeysAndValues(json_decode($record->details));
+                        // dd($details);
+                        return [
+                            Fieldset::make()->label('Request data')->columns(3)->schema([
+                                TextInput::make('employee')->default($record?->employee?->name),
+                                DatePicker::make('date')->default($detailDate)->label('Advance date'),
+                                TextInput::make('advance_amount')->default($advanceAmount),
+                                TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
+                                TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
+                                TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
+                                TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
+                                TextInput::make('advancedPurpose')->label('advancedPurpose')->default($advancedPurpose),
+                                
+                            ]),
+                            Fieldset::make()->label('Request data')->columns(2)->schema([
+                                // DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                                // TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
                             ]),
                         ];
                     }),

@@ -275,7 +275,7 @@ html::-webkit-scrollbar {
     width: 253px !important;
 }
 
-tbody tr:nth-child(even) {
+.reports tbody tr:nth-child(even) {
     background-color: #0d7c66;
     color: white;
   }

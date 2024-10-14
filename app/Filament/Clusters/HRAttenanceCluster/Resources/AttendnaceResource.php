@@ -34,7 +34,7 @@ class AttendnaceResource extends Resource
     protected static ?string $modelLabel = 'Attendance Log';
     protected static ?string $pluralLabel = 'Attendance Logs';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function form(Form $form): Form
     {
@@ -119,6 +119,7 @@ class AttendnaceResource extends Resource
     {
         return $table
         ->defaultSort('id','desc')
+        ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('employee.name')
                     ->label('Employee')

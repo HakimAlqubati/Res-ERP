@@ -31,7 +31,7 @@ class WorkPeriodResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?string $label = 'Work shifts';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     public static function form(Form $form): Form
     {
@@ -123,6 +123,7 @@ class WorkPeriodResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->defaultSort('id','desc')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('id')
