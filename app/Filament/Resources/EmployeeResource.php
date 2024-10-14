@@ -403,6 +403,11 @@ class EmployeeResource extends Resource
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)
                 ,
+                IconColumn::make('rfid')
+                    ->label('RFID')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                ,
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
