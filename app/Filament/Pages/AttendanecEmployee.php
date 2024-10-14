@@ -106,7 +106,7 @@ class AttendanecEmployee extends BasePage
         $rfid = $this->rfid;
         $formData['rfid'] = $rfid;
 
-        // $this->clearDisplay();
+        $this->clearDisplay();
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
@@ -280,8 +280,8 @@ class AttendanecEmployee extends BasePage
             $remainingSeconds = $remainingSeconds % 60;
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
-            // return $this->sendWarningNotification('تم التسجيل  من  '. $remainingMinutes . ' دقيقة ');
-            // return $this->sendWarningNotification(__('notifications.please_wait_for_a') .' ' . $remainingMinutes .' '. __('notifications.minutue') .' '. $remainingSeconds.' ' . __('notifications.second'));
+            
+            return $this->sendWarningNotification(__('notifications.please_wait_for_a') .' ' . $remainingMinutes .' '. __('notifications.minutue') .' '. $remainingSeconds.' ' . __('notifications.second'));
 
         }
         // Prepare attendance data
