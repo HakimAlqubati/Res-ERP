@@ -90,8 +90,8 @@
 
                                             <x-filament-tables::cell class="internal_cell">
                                                 {{-- {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }} --}}
-                                                {{-- {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }} --}}
-                                                {{ $item['total_hours'] }}
+                                                {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }}
+                                                {{-- {{ $item['total_hours'] }} --}}
                                             </x-filament-tables::cell>
                                         @endif
                                         @if (isset($item['attendances']['checkin']) && !isset($item['attendances']['checkout']))
