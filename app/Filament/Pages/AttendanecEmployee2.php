@@ -26,9 +26,9 @@ class AttendanecEmployee2 extends BasePage
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.attendanec-employee';
-    private $date = '';
+    // private $date = '';
     // private $date ;
-    private $time = '';
+    // private $time = '';
     // private $time ;
 
     public ?array $data = [];
@@ -113,11 +113,10 @@ class AttendanecEmployee2 extends BasePage
 
     public function handleEmployeePeriodData($data)
     {
-        $dateTime = now();
+        // $dateTime = now();
 
-        if (isSuperAdmin()) {
-            $dateTime = $data['date_time'];
-        }
+        $dateTime = $data['date_time'];
+        
 
         // Create a Carbon instance
         $carbonDateTime = Carbon::parse($dateTime);

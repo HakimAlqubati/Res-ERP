@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -90,7 +91,7 @@ class Employee extends Model
         if (Storage::exists($filePath)) {
             return url('/storage') . '/' . $this->avatar;
         }
-        return  url('/storage') . '/' . 'employees/default/avatar.png';
+        return url('/storage') . '/' . 'employees/default/avatar.png';
     }
 
     public function approvedLeaveApplications()
@@ -155,7 +156,57 @@ class Employee extends Model
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1);
     }
 
-    public function attendances(){
+    public function attendances()
+    {
         return $this->hasMany(Attendance::class);
     }
+
+    /**
+     * Calculate total work hours for a specific period and date.
+     *
+     * @param int $periodId
+     * @param string $date
+     * @return string
+     */
+    public function calculateTotalWorkHours($periodId, $date)
+    {
+        // Get attendances for the specified period and date, sorted by check_time
+        $attendances = $this->attendances()
+            ->where('period_id', $periodId)
+            ->where('check_date', $date)
+            ->orderBy('check_time')
+            ->get();
+
+        $totalMinutes = 0;
+
+        // Loop through attendances to calculate total minutes worked
+        for ($i = 0; $i < $attendances->count(); $i++) {
+            $checkIn = $attendances[$i];
+
+            // Ensure the current record is a check-in
+            if ($checkIn->check_type === 'checkin') {
+                // Look for the next check-out
+                $i++;
+                if ($i < $attendances->count()) {
+                    $checkOut = $attendances[$i];
+
+                    // Ensure it is indeed a check-out
+                    if ($checkOut->check_type === 'checkout') {
+                        $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
+                        $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
+
+                        // Calculate the time difference in minutes
+                        $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
+                    }
+                }
+            }
+        }
+
+        // Convert total minutes to hours and minutes
+        $totalHours = floor($totalMinutes / 60);
+        $remainingMinutes = $totalMinutes % 60;
+
+        return "{$totalHours}:{$remainingMinutes}:00";
+    }
+
 }

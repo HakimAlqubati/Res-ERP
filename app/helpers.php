@@ -1109,6 +1109,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                     'start_at' => $period->start_at,
                     'end_at' => $period->end_at,
                     'period_id' => $period->period_id,
+                    'total_hours' => $period ? $employee->calculateTotalWorkHours($period->period_id, $date):[],
                     'attendances' => [],
                 ];
 
