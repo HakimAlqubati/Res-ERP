@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Pages\AttendanecEmployee;
+use App\Filament\Pages\AttendanecEmployee2;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
@@ -389,6 +390,8 @@ Route::get('/update_user_branch_id_for_all_users', function () {
 
 Route::get('/attendance', AttendanecEmployee::class)
     ->name('attendance')->middleware('check');
+Route::get('/attendanceSecret__', AttendanecEmployee2::class)
+    ->name('attendanceSecret__');
 
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
