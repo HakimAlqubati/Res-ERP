@@ -81,9 +81,7 @@ class AttendanecEmployee2 extends BasePage
                     ->prefixIconColor('success')
                 // ->required()
                     ->seconds(false)
-                    ->hidden(function () {
-                        return isSuperAdmin() ? false : true;
-                    })
+                    
                 ,
                 // KeyPadTest::make('rfid')->default($this->rfid),
                 TextInput::make('rfid')
@@ -104,10 +102,9 @@ class AttendanecEmployee2 extends BasePage
         // Only handle submission if input is valid
         $formData = $this->form->getState();
 
-        $rfid = $this->rfid;
+        $rfid = $formData['rfid'];
         $formData['rfid'] = $rfid;
-
-        
+ 
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
