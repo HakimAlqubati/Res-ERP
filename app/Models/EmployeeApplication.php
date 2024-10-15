@@ -29,9 +29,9 @@ class EmployeeApplication extends Model
     // Constants for application types
     const APPLICATION_TYPES = [
         1 => 'Leave request',
-        2 => 'Missed Check-in Requests',
+        2 => 'Missed Check-in',
         3 => 'Advance request',
-        4 => 'Missed Check-out Requests',
+        4 => 'Missed Check-out',
     ];
 
     // Constants for application types
@@ -42,9 +42,9 @@ class EmployeeApplication extends Model
 
     const APPLICATION_TYPE_NAMES = [
         self::APPLICATION_TYPE_LEAVE_REQUEST => 'Leave request',
-        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Missed Check-in Requests',
+        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Missed Check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
-        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed Check-out Requests',
+        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed Check-out',
     ];
 
     // Constants for status
