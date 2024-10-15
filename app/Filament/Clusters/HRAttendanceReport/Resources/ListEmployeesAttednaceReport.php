@@ -16,6 +16,7 @@ class ListEmployeesAttednaceReport extends ListRecords
 {
     protected static string $resource = EmployeesAttednaceReportResource::class;
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees';
+    // protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed';
 
     public function getTableRecordKey(Model $record): string
     {

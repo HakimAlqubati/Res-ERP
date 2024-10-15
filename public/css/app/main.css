@@ -279,3 +279,20 @@ html::-webkit-scrollbar {
     background-color: #0d7c66;
     color: white;
   }
+
+
+  .table-container {
+    max-height: 400px; /* Adjust the height as needed */
+    overflow-y: auto;  /* Enables vertical scrolling */
+}
+
+.fixed-header {
+    position: sticky; /* Use sticky positioning */
+    top: 0;          /* Stick to the top */
+    background-color: rgb(0, 0, 0); 
+    z-index: 10;     /* Ensure it appears above other elements */
+}
+
+.fixed-header th {
+    border-bottom: 2px solid #ddd; /* Optional: Add border to the header */
+}

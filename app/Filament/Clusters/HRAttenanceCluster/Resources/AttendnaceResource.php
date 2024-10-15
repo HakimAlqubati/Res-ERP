@@ -32,7 +32,7 @@ class AttendnaceResource extends Resource
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?string $modelLabel = 'Attendance Log';
-    protected static ?string $pluralLabel = 'Attendance Logs';
+    protected static ?string $pluralLabel = 'Attendance Log';
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
@@ -127,7 +127,7 @@ class AttendnaceResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('check_type')
-                    ->label('Check Type')
+                    ->label('Check')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('period.name')
                     ->label('Period'),
