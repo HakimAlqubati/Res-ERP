@@ -31,4 +31,8 @@ class LeaveType extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function leaveBalances()
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
 }

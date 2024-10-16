@@ -205,21 +205,35 @@ class EmployeeApplicationResource extends Resource
                         }
                         if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
 
+                            $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
+                            $set('from_to_date',date('Y-m-d'));
+                            // Get the leave types that are active and have a balance for the employee
+                            $leaveTypes = LeaveType::where('active', 1)
+                                ->whereIn('id', $leaveBalances)
+                                ->whereHas('leaveBalances', function ($query) use ($get) {
+                                    $query->where('employee_id', $get('employee_id'))
+                                        ->where('balance', '>', 0); // Ensure the balance is greater than 0
+                                })
+                                ->select('name', 'id')
+                                ->get()
+                                ->pluck('name', 'id');
                             return [
                                 Fieldset::make()->schema(
 
                                     [
                                         Grid::make()->columns(2)->schema([
                                             Select::make('detail_leave_type_id')->label('Leave type')
-                                            // ->required()
+                                                ->requiredIf('application_type', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
                                                 ->live()
-                                                ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                                ->options(
+                                                    $leaveTypes
+                                                )
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state);
                                                     $set('detail_balance', $leaveBalance?->balance);
-
+                                                    // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
                                                 }),
-                                            TextInput::make('detail_balance')->label('Leave balance'),
+                                            TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 
                                         ]),
                                         Grid::make()->columns(3)->schema([
@@ -234,9 +248,9 @@ class EmployeeApplicationResource extends Resource
 
                                                     if ($fromDate && $toDate) {
                                                         $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                                        $set('days_count', $daysDiff); // Set the days_count automatically
+                                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
                                                     } else {
-                                                        $set('days_count', 0); // Reset if no valid dates are selected
+                                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
                                                     }
                                                 }),
 
@@ -244,25 +258,39 @@ class EmployeeApplicationResource extends Resource
                                                 ->label('To Date')
                                                 ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                                                 ->reactive()
-                                                ->required()
+                                                ->required()    
                                                 ->afterStateUpdated(function ($state, callable $set, $get) {
                                                     $fromDate = $get('detail_from_date');
                                                     $toDate = $get('detail_to_date');
 
                                                     if ($fromDate && $toDate) {
                                                         $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                                        $set('days_count', $daysDiff); // Set the days_count automatically
+                                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
                                                     } else {
-                                                        $set('days_count', 0); // Reset if no valid dates are selected
+                                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
                                                     }
                                                 }),
 
-                                            TextInput::make('detail_days_count')->disabled()
+                                            TextInput::make('detail_days_count')
+                                            // ->disabled()
                                                 ->label('Number of Days')
+                                            // ->helperText('Type how many days this leave will be')
                                                 ->helperText('Type how many days this leave will be')
                                                 ->numeric()
-                                                ->default(2)
-                                                ->required(),
+                                            // ->default(2)
+                                                ->live()
+                                                ->required()
+                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                    // Parse the state as a Carbon date, add one month, and set it to the end of the month
+                                                    $state = (int) $state;
+                                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays($state)->format('Y-m-d');
+                                                    $set('detail_to_date', $nextDate);
+                                                })
+                                                ->maxValue(function ($get) {
+                                                    $balance = $get('detail_balance') ?? 0;
+                                                    return $balance;
+                                                })->validationAttribute('ddddd')
+                                            ,
 
                                         ]),
                                     ]
@@ -291,7 +319,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')
                     ->sortable()
@@ -503,7 +531,7 @@ class EmployeeApplicationResource extends Resource
                             'approved_by' => auth()->user()->id,
                             'approved_at' => now(),
                         ]);
-                      $transaction=  ApplicationTransaction::createTransactionFromApplicationV2(
+                        $transaction = ApplicationTransaction::createTransactionFromApplicationV2(
                             $applicationId = $record->id,
                             $transactionTypeId = 1,
                             $amount = 0,
@@ -518,12 +546,10 @@ class EmployeeApplicationResource extends Resource
                             $details = json_encode('Approved leave'),
                             $branchId = $record->branch_id,
                             $value = $data['days_count'],
-                            
+
                         );
 
                         // Step 3: Calculate the number of leave days and update the leave balance
-                       
-                        
 
                         // Fetch the leave balance for the employee and specific leave type
                         $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
