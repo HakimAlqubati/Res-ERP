@@ -1,4 +1,6 @@
-<h3 id="slogan">Together we achieve exceptional goodness!</h3>
+<h3 id="slogan">Empowering Growth with
+    <br>
+    Enterprise-Level Solutions for All</h3>
 
 <style>
 body {
