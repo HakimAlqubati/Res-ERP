@@ -135,6 +135,10 @@ class LeaveBalanceResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
+                SelectFilter::make('leave_type_id')
+                    ->searchable()
+                    ->multiple()
+                    ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
