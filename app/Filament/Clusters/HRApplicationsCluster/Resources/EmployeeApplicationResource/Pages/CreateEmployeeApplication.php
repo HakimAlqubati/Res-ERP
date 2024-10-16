@@ -10,6 +10,7 @@ use Illuminate\Contracts\Support\Htmlable;
 
 class CreateEmployeeApplication extends CreateRecord
 {
+    protected ?bool $hasDatabaseTransactions = true;
     protected static string $resource = EmployeeApplicationResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {

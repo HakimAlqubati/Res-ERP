@@ -243,41 +243,6 @@ class EmployeeOvertimeResource extends Resource
                     ,
                 ]
             )
-            // ->schema([
-            //     $d,
-
-            //     // DatePicker::make('date')
-            //     //     ->label('Overtime Date')
-            //     //     ->required(),
-
-            //     // Select::make('employee_id')
-            //     //     ->relationship('employee', 'name')
-            //     //     ->required(),
-            //     // TimePicker::make('start_time')
-            //     //     ->label('Start Time')
-            //     //     ->required(),
-
-            //     // TimePicker::make('end_time')
-            //     //     ->label('End Time')
-            //     //     ->required(),
-            //     // TextInput::make('reason')
-            //     //     ->label('Reason')
-            //     //     ->nullable(),
-            //     // TextInput::make('notes')
-            //     //     ->label('Notes')
-            //     //     ->nullable(),
-
-            //     // TextInput::make('hours')
-            //     //     ->label('Total Hours')
-            //     //     ->numeric()
-            //     //     ->required(),
-
-            //     // TextInput::make('rate')
-            //     //     ->label('Rate')
-            //     //     ->numeric()
-            //     //     ->nullable(),
-
-            // ])
         ;
     }
 

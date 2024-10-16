@@ -148,4 +148,36 @@ class EmployeeApplication extends Model
         }
         return null;
     }
+    public function getDetailFromDateAttribute()
+    {
+        if ($this->application_type_id == 1) {
+            $details = json_decode($this->details, true);
+            return $details['detail_from_date'] ?? null;
+        }
+        return null;
+    }
+    public function getDetailToDateAttribute()
+    {
+        if ($this->application_type_id == 1) {
+            $details = json_decode($this->details, true);
+            return $details['detail_to_date'] ?? null;
+        }
+        return null;
+    }
+    public function getDetailLeaveTypeIdAttribute()
+    {
+        if ($this->application_type_id == 1) {
+            $details = json_decode($this->details, true);
+            return $details['detail_leave_type_id'] ?? null;
+        }
+        return null;
+    }
+    public function getDetailDaysCountAttribute()
+    {
+        if ($this->application_type_id == 1) {
+            $details = json_decode($this->details, true);
+            return $details['detail_days_count'] ?? null;
+        }
+        return null;
+    }
 }

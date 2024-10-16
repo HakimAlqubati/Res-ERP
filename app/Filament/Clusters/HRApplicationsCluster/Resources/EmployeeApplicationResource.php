@@ -9,6 +9,8 @@ use App\Models\ApplicationTransaction;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
+use App\Models\LeaveBalance;
+use App\Models\LeaveType;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -49,6 +51,7 @@ class EmployeeApplicationResource extends Resource
                     Select::make('employee_id')
                         ->label('Employee')
                         ->searchable()
+                        ->required()
                         ->live()
                     // ->afterStateUpdated(function ($get, $set, $state) {
                     //     $employee = Employee::find($state);
@@ -72,19 +75,13 @@ class EmployeeApplicationResource extends Resource
 
                     DatePicker::make('application_date')
                         ->label('Application date')
-                        ->default('Y-m-d')
+                        ->default(date('Y-m-d'))
                         ->required(),
-                    // Select::make('application_type')
-                    //     ->label('Application type')
-                    //     ->hiddenOn('edit')
-                    //     ->searchable()
-                    //     ->live()
-                    //     ->options(EmployeeApplication::APPLICATION_TYPES)
+
                     ToggleButtons::make('application_type')
                         ->columnSpan(2)
                         ->label('Application type')
                         ->hiddenOn('edit')
-                    // ->searchable()
                         ->live()
                         ->options(EmployeeApplication::APPLICATION_TYPES)
                         ->icons([
@@ -207,48 +204,70 @@ class EmployeeApplicationResource extends Resource
                             ];
                         }
                         if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
-                            $form = [
-                                DatePicker::make('detail_from_date')
-                                    ->label('From Date')
-                                    ->reactive()
-                                    ->default(date('Y-m-d'))
-                                    ->required()
-                                    ->afterStateUpdated(function ($state, callable $set, $get) {
-                                        $fromDate = $get('detail_from_date');
-                                        $toDate = $get('detail_to_date');
 
-                                        if ($fromDate && $toDate) {
-                                            $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                            $set('days_count', $daysDiff); // Set the days_count automatically
-                                        } else {
-                                            $set('days_count', 0); // Reset if no valid dates are selected
-                                        }
-                                    }),
+                            return [
+                                Fieldset::make()->schema(
 
-                                DatePicker::make('detail_to_date')
-                                    ->label('To Date')
-                                    ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
-                                    ->reactive()
-                                    ->required()
-                                    ->afterStateUpdated(function ($state, callable $set, $get) {
-                                        $fromDate = $get('detail_from_date');
-                                        $toDate = $get('detail_to_date');
+                                    [
+                                        Grid::make()->columns(2)->schema([
+                                            Select::make('detail_leave_type_id')->label('Leave type')
+                                            // ->required()
+                                                ->live()
+                                                ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                    $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state);
+                                                    $set('detail_balance', $leaveBalance?->balance);
 
-                                        if ($fromDate && $toDate) {
-                                            $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                            $set('days_count', $daysDiff); // Set the days_count automatically
-                                        } else {
-                                            $set('days_count', 0); // Reset if no valid dates are selected
-                                        }
-                                    }),
+                                                }),
+                                            TextInput::make('detail_balance')->label('Leave balance'),
 
-                                TextInput::make('days_count')->disabled()
-                                    ->label('Number of Days')
-                                    ->helperText('Type how many days this leave will be')
-                                    ->numeric()
-                                    ->default(2)
-                                    ->required(),
+                                        ]),
+                                        Grid::make()->columns(3)->schema([
+                                            DatePicker::make('detail_from_date')
+                                                ->label('From Date')
+                                                ->reactive()
+                                                ->default(date('Y-m-d'))
+                                                ->required()
+                                                ->afterStateUpdated(function ($state, callable $set, $get) {
+                                                    $fromDate = $get('detail_from_date');
+                                                    $toDate = $get('detail_to_date');
 
+                                                    if ($fromDate && $toDate) {
+                                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+                                                        $set('days_count', $daysDiff); // Set the days_count automatically
+                                                    } else {
+                                                        $set('days_count', 0); // Reset if no valid dates are selected
+                                                    }
+                                                }),
+
+                                            DatePicker::make('detail_to_date')
+                                                ->label('To Date')
+                                                ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                                                ->reactive()
+                                                ->required()
+                                                ->afterStateUpdated(function ($state, callable $set, $get) {
+                                                    $fromDate = $get('detail_from_date');
+                                                    $toDate = $get('detail_to_date');
+
+                                                    if ($fromDate && $toDate) {
+                                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+                                                        $set('days_count', $daysDiff); // Set the days_count automatically
+                                                    } else {
+                                                        $set('days_count', 0); // Reset if no valid dates are selected
+                                                    }
+                                                }),
+
+                                            TextInput::make('detail_days_count')->disabled()
+                                                ->label('Number of Days')
+                                                ->helperText('Type how many days this leave will be')
+                                                ->numeric()
+                                                ->default(2)
+                                                ->required(),
+
+                                        ]),
+                                    ]
+
+                                ),
                             ];
                         }
 
@@ -382,7 +401,7 @@ class EmployeeApplicationResource extends Resource
                     ->disabledForm()
                     ->form(function ($record) {
                         // $details= json_decode($record->details) ;
-                      
+
                         $detailDate = $record?->detail_date;
                         $monthlyDeductionAmount = $record?->detail_monthly_deduction_amount;
                         $advanceAmount = $record?->detail_advance_amount;
@@ -403,7 +422,7 @@ class EmployeeApplicationResource extends Resource
                                 TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
                                 TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
                                 TextInput::make('advancedPurpose')->label('advancedPurpose')->default($advancedPurpose),
-                                
+
                             ]),
                             Fieldset::make()->label('Request data')->columns(2)->schema([
                                 // DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
@@ -422,10 +441,26 @@ class EmployeeApplicationResource extends Resource
                             'rejected_by' => auth()->user()->id,
                             'rejected_at' => now(),
                         ]);
+
+                        // Step 2: Create a transaction
+                        ApplicationTransaction::createTransactionFromApplication($record);
+
+                        // Step 3: Calculate the number of leave days and update the leave balance
+                        $fromDate = $record->detail_from_date;
+                        $toDate = $record->detail_to_date;
+                        $daysRequested = $fromDate->diffInDays($toDate) + 1; // Assuming inclusive of the last day
+
+                        // Fetch the leave balance for the employee and specific leave type
+                        $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
+                            ->where('leave_type_id', $record->detail_leave_type_id)
+                            ->first();
+
+                        // Update the balance if found
+                        if ($leaveBalance) {
+                            $leaveBalance->decrement('balance', $daysRequested);
+                        }
                     })
 
-                // ->requiresConfirmation()
-                // ->disabledForm()
                     ->form(function ($record) {
                         $attendance = Attendance::where('employee_id', $record?->employee_id)
                             ->where('check_date', $record?->detail_date)
@@ -453,6 +488,69 @@ class EmployeeApplicationResource extends Resource
                                 ,
                             ]),
 
+                        ];
+                    })
+                , Action::make('approveLeaveRequest')
+                    ->databaseTransaction(true)
+                    ->label('Approve')->button()
+                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
+                    ->color('success')
+                    ->icon('heroicon-o-check')
+                    ->action(function ($record, $data) {
+
+                        $record->update([
+                            'status' => EmployeeApplication::STATUS_APPROVED,
+                            'approved_by' => auth()->user()->id,
+                            'approved_at' => now(),
+                        ]);
+                      $transaction=  ApplicationTransaction::createTransactionFromApplicationV2(
+                            $applicationId = $record->id,
+                            $transactionTypeId = 1,
+                            $amount = 0,
+                            $remaining = 0,
+                            $fromDate = $data['from_date'],
+                            $toDate = $data['to_date'],
+                            $createdBy = auth()->user()->id,
+                            $employeeId = $record->employee_id,
+                            $isCanceled = false,
+                            $canceledAt = null,
+                            $cancelReason = null,
+                            $details = json_encode('Approved leave'),
+                            $branchId = $record->branch_id,
+                            $value = $data['days_count'],
+                            
+                        );
+
+                        // Step 3: Calculate the number of leave days and update the leave balance
+                       
+                        
+
+                        // Fetch the leave balance for the employee and specific leave type
+                        $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
+                            ->where('leave_type_id', $record->detail_leave_type_id)
+                            ->first();
+
+                        // Update the balance if found
+                        if ($leaveBalance) {
+                            $leaveBalance->decrement('balance', $transaction->value);
+                        }
+                    })
+                    ->disabledForm()
+                    ->form(function ($record) {
+                        $leaveTypeId = $record?->detail_leave_type_id;
+                        $toDate = $record?->detail_to_date;
+                        $fromDate = $record?->detail_from_date;
+                        $daysCount = $record?->detail_days_count;
+                        $leaveType = LeaveType::find($leaveTypeId)->name;
+
+                        return [
+                            Fieldset::make()->label('Request data')->columns(3)->schema([
+                                TextInput::make('employee')->default($record?->employee?->name),
+                                TextInput::make('leave')->default($leaveType),
+                                DatePicker::make('from_date')->default($fromDate)->label('From date'),
+                                DatePicker::make('to_date')->default($toDate)->label('To date'),
+                                TextInput::make('days_count')->default($daysCount),
+                            ]),
                         ];
                     })
 
