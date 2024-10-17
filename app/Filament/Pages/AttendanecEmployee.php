@@ -424,7 +424,7 @@ class AttendanecEmployee extends BasePage
             $data['delay_minutes'] = 0;
             $data['early_arrival_minutes'] = $checkTime->diffInMinutes($startTime);
             // $data['status'] = ($data['early_arrival_minutes'] == 0) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_EARLY_ARRIVAL;
-            $data['status'] = $checkTime->diffInMinutes($nearestPeriod?->start_at) >= Settings::getSetting('early_attendance_minutes') ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME;
+            $data['status'] = $checkTime->diffInMinutes($nearestPeriod?->start_at) >= Setting::getSetting('early_attendance_minutes') ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME;
 
         }
 
@@ -434,7 +434,7 @@ class AttendanecEmployee extends BasePage
             $nearestPeriodStart = Carbon::parse($nearestPeriod->start_at)->addDay(); // Add a day to handle the transition to midnight
             $data['check_date'] = Carbon::parse($date)->addDay()->format('Y-m-d');
             $data['day'] = Carbon::parse($date)->addDay()->format('l');
-            $data['status'] = $checkTime->diffInMinutes($nearestPeriodStart) >= Settings::getSetting('early_attendance_minutes') ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME;
+            $data['status'] = $checkTime->diffInMinutes($nearestPeriodStart) >= Setting::getSetting('early_attendance_minutes') ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME;
             $data['early_arrival_minutes'] = $checkTime->diffInMinutes($nearestPeriodStart);
             $data['delay_minutes'] = 0;
         }

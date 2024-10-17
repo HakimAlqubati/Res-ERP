@@ -1157,9 +1157,11 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                             $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
                             $approvedOvertime = 0;
+                            dd($employee->overtimes,getEmployeeOvertimes($date,$employee));
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
 
                                 $approvedOvertime = $employee->calculateTotalWorkHours($period->period_id, $date);
+                                dd($approvedOvertime);
                             }
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
                                 $approvedOvertime = $formattedSupposedActualDuration;
