@@ -985,7 +985,6 @@ function employeeAttendances($employeeId, $startDate, $endDate)
  */
 function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
 {
-    // dd($employeeId,$periodId);
     $attenance = Attendance::where('employee_id', $employeeId)
         ->where('period_id', $periodId)
         ->where('check_date', $date)
@@ -1005,8 +1004,7 @@ function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
  */
 function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
 {
-
-    // dd($supposedDuration,$actualDuration);
+    
     // Convert $supposedDuration ("HH:MM") to total minutes
     list($supposedHours, $supposedMinutes) = explode(':', $supposedDuration);
     $supposedTotalMinutes = ($supposedHours * 60) + $supposedMinutes;
@@ -1015,9 +1013,36 @@ function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
     $actualHours = isset($matches[1]) ? (int) $matches[1] : 0;
     $actualMinutes = isset($matches[2]) ? (int) $matches[2] : 0;
     $actualTotalMinutes = ($actualHours * 60) + $actualMinutes;
-// dd($actualTotalMinutes,$supposedTotalMinutes);
+
     // Compare the total minutes
     return  $actualTotalMinutes > $supposedTotalMinutes ;
+}
+ 
+
+/**
+ * Adds hours to a given time duration string in the format "X h Y m".
+ *
+ * @param string $duration The initial time duration (e.g., "12 h 0 m").
+ * @param int $additionalHours The number of hours to add.
+ * @return string The updated time duration string.
+ */
+function addHoursToDuration($duration, $additionalHours) {
+    // Extract hours and minutes from the duration string
+    preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches);
+
+    if ($matches) {
+        $hours = (int)$matches[1];
+        $minutes = (int)$matches[2];
+        
+        // Add the additional hours
+        $totalHours = $hours + $additionalHours;
+
+        // Format the new duration
+        return "{$totalHours} h {$minutes} m";
+    }
+
+    // Return the original duration if the format is incorrect
+    return $duration;
 }
 
 /**
@@ -1153,15 +1178,14 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
                             $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
                             $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
-                            // dd($periodObject,$formattedSupposedActualDuration);
+                            
                             $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
-                            $approvedOvertime = 0;
-                            dd($employee->overtimes,getEmployeeOvertimes($date,$employee));
+                            $approvedOvertime = getEmployeeOvertimes($date,$employee);
+                         
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
-
-                                $approvedOvertime = $employee->calculateTotalWorkHours($period->period_id, $date);
-                                dd($approvedOvertime);
+                               $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
+                                
                             }
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
                                 $approvedOvertime = $formattedSupposedActualDuration;
@@ -1169,8 +1193,8 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                             if(!$isActualLargerThanSupposed){
                                 $approvedOvertime = $periodData['total_hours'];
                             }
-                            // dd($period, $approvedOvertime, $formattedSupposedActualDuration,$periodData);
 
+                            
                             $lastCheckout = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
                                 'status' => $attendance->status ?? 'unknown',
