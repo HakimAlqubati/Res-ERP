@@ -8,13 +8,25 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attendance extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_attendances';
 
     const CHECKTYPE_CHECKIN = 'checkin';
     const CHECKTYPE_CHECKOUT = 'checkout';
     const CHECKTYPE_CHECKIN_LABLE = 'Check in';
     const CHECKTYPE_CHECKOUT_LABLE = 'Checkout';
+
+    const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR = 'quarter_period';
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR = 'half_period';
+    const PERIOD_ALLOWED_OVERTIME_HOUR = 'hour';
+
+    const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_MINUTES = 15;
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_MINUTES = 30;
+    const PERIOD_ALLOWED_OVERTIME_HOUR_MINUTES = 60;
+
+    const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL = 'Quarter period';
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL = 'Half period';
+    const PERIOD_ALLOWED_OVERTIME_HOUR_LABEL = 'Hour';
 
     const STATUS_EARLY_ARRIVAL = 'early_arrival';
     const STATUS_LATE_ARRIVAL = 'late_arrival';
@@ -48,6 +60,17 @@ class Attendance extends Model
         'is_from_previous_day',
     ];
 
+    public static function getMinutesByConstant($constantName)
+    {
+        switch ($constantName) {
+            case self::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR:
+                return self::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_MINUTES;
+            case self::PERIOD_ALLOWED_OVERTIME_HALF_HOUR:
+                return self::PERIOD_ALLOWED_OVERTIME_HALF_HOUR_MINUTES;
+            case self::PERIOD_ALLOWED_OVERTIME_HOUR:
+                return self::PERIOD_ALLOWED_OVERTIME_HOUR_MINUTES;
+        }
+    }
     public static function getCheckTypes()
     {
         return [

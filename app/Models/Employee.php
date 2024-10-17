@@ -168,101 +168,6 @@ class Employee extends Model
      * @param string $date
      * @return string
      */
-    public function calculateTotalWorkHoursV1($periodId, $date)
-    {
-        // Get attendances for the specified period and date, sorted by check_time
-        $attendances = $this->attendances()
-            ->where('period_id', $periodId)
-            ->where('check_date', $date)
-            ->orderBy('id')
-            ->get();
-
-        dd($attendances->toArray());
-        $totalMinutes = 0;
-
-        // Loop through attendances to calculate total minutes worked
-        for ($i = 0; $i < $attendances->count(); $i++) {
-            $checkIn = $attendances[$i];
-            // Ensure the current record is a check-in
-            // dd('dd',$checkIn->check_type);
-            if ($checkIn->check_type === 'checkin') {
-                // dd($attendances->count());
-                // Look for the next check-out
-                $i++;
-                if ($i < $attendances->count()) {
-                    $checkOut = $attendances[$i];
-
-                    // Ensure it is indeed a check-out
-                    if ($checkOut->check_type === 'checkout') {
-                        $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
-                        $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
-                        // Calculate the time difference in minutes
-                        $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
-                    }
-                }
-            }
-        }
-
-        // Convert total minutes to hours and minutes
-        $totalHours = floor($totalMinutes / 60);
-        $remainingMinutes = $totalMinutes % 60;
-
-        // Convert to positive if negative
-        $totalHours = abs($totalHours);
-        $remainingMinutes = abs($remainingMinutes);
-        return "{$totalHours}:{$remainingMinutes}:00";
-    }
-
-    public function calculateTotalWorkHours_new1($periodId, $date)
-    {
-        // Get attendances for the specified period and date, sorted by check_time
-        $attendances = $this->attendances()
-            ->where('period_id', $periodId)
-            ->where('check_date', $date)
-            ->orderBy('id')
-            ->get();
-
-        $totalMinutes = 0;
-
-        // Loop through attendances to calculate total minutes worked
-        for ($i = 0; $i < $attendances->count(); $i++) {
-            $checkIn = $attendances[$i];
-
-            // Ensure the current record is a check-in
-            if ($checkIn->check_type === 'checkin') {
-                // Look for the next check-out
-                $i++;
-                if ($i < $attendances->count()) {
-                    $checkOut = $attendances[$i];
-
-                    // Ensure it is indeed a check-out
-                    if ($checkOut->check_type === 'checkout') {
-                        $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
-                        $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
-
-                        // Adjust for midnight crossing
-                        if ($checkOutTime < $checkInTime) {
-                            $checkOutTime->addDay(); // Add 24 hours
-                        }
-
-                        // Calculate the time difference in minutes
-                        $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
-                    }
-                }
-            }
-        }
-
-        // Convert total minutes to hours and minutes
-        $totalHours = floor($totalMinutes / 60);
-        $remainingMinutes = $totalMinutes % 60;
-
-        // Ensure positive values (in case of unexpected negatives)
-        $totalHours = abs($totalHours);
-        $remainingMinutes = abs($remainingMinutes);
-
-        // Format the output with leading zeros for single digits
-        return sprintf("%02d:%02d:00", $totalHours, $remainingMinutes);
-    }
 
     public function calculateTotalWorkHours($periodId, $date)
     {
@@ -272,7 +177,6 @@ class Employee extends Model
             ->where('check_date', $date)
             ->orderBy('id')
             ->get();
-
         $totalMinutes = 0;
 
         // Loop through attendances to calculate total minutes worked
@@ -314,5 +218,94 @@ class Employee extends Model
         // Format the output as "X h Y minutes"
         return "{$totalHours} h {$remainingMinutes} m";
     }
-
+    public function calculateEmployeeOvertime($employee, $date)
+    {
+        // Check if the employee has periods
+        if ($employee === null || $employee->periods->isEmpty()) {
+            return []; // Return an empty array if no periods exist
+        }
+    
+        // Initialize an array to store results
+        $results = [];
+    
+        // Loop through each period
+        foreach ($employee->periods as $period) {
+            // Get attendances for the specified employee and date within the current period
+            $attendances = $this->attendances()
+                ->where('employee_id', $employee->id)
+                ->where('period_id', $period->id)
+                ->where('check_date', $date)
+                ->orderBy('id')
+                ->get();
+    
+            $totalMinutes = 0;
+            $checkOutTime = null; // To store checkout time
+    
+            // Loop through attendances to calculate total minutes worked
+            for ($i = 0; $i < $attendances->count(); $i++) {
+                $checkIn = $attendances[$i];
+    
+                // Ensure the current record is a check-in
+                if ($checkIn->check_type === 'checkin') {
+                    // Look for the next check-out
+                    $i++;
+                    if ($i < $attendances->count()) {
+                        $checkOut = $attendances[$i];
+    
+                        // Ensure it is indeed a check-out
+                        if ($checkOut->check_type === 'checkout') {
+                            $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
+                            $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
+    
+                            // Adjust for midnight crossing
+                            if ($checkOutTime < $checkInTime) {
+                                $checkOutTime->addDay(); // Add 24 hours
+                            }
+    
+                            // Calculate the time difference in minutes
+                            $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
+                        }
+                    }
+                }
+            }
+    
+            // Convert the supposed duration string "HH:MM" to total minutes
+            list($hours, $minutes) = explode(':', $period->supposed_duration);
+            $supposedDurationMinutes = ($hours * 60) + $minutes; // Convert to total minutes
+            
+            if ($totalMinutes > ($supposedDurationMinutes + Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime')))) {
+                // Calculate the overtime minutes
+                $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
+    
+                // Format the overtime into hours and minutes
+                $overtimeHours = floor($overtimeMinutes / 60);
+                $remainingMinutes = $overtimeMinutes % 60;
+    
+                // Format as "X h Y m"
+                $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
+    
+                // Determine the start time (end of the supposed period) and end time (checkout time)
+                // $supposedEndTime = Carbon::parse("{$period->end_time}"); // Assuming you have supposed_end_time in your period
+              
+                $overtimeStartTime = $period->end_at;
+                $overtimeEndTime = $checkOutTime; // End of overtime is the checkout time
+    
+                if (Setting::getSetting('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR && Setting::getSetting('calculating_overtime_with_half_hour_after_hour')) {
+                    $overtimeHours = round($overtimeHours, 2);
+                }
+                $results[] = [
+                    'employee_id' => $employee->id,
+                    'period_id' => $period->id,
+                    'supposed_duration_minutes' => (int) $overtimeMinutes,
+                    'overtime_hours' => $overtimeHours,
+                    'overtime' => $formattedOvertime,
+                    'overtime_start_time' => $overtimeStartTime, // Return as "HH:MM:SS"
+                    'overtime_end_time' => $overtimeEndTime->toTimeString(), // Return as "HH:MM:SS"
+                ];
+            }
+        }
+    
+        return $results; // Return the results
+    }
+    
 }

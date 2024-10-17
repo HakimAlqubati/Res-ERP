@@ -3,18 +3,24 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SettingResource\Pages;
+use App\Models\Attendance;
 use App\Models\Setting;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+
 class SettingResource extends Resource
 {
     protected static ?string $model = Setting::class;
@@ -29,11 +35,11 @@ class SettingResource extends Resource
                     ->tabs([
                         Tab::make('Site Settings')
                             ->schema([
-                                Grid::make()->schema([                                     
+                                Grid::make()->schema([
                                     TextInput::make("site_name")
                                         ->label('Site Name')
                                         ->columnSpan(2)
-                                        ->required(), 
+                                        ->required(),
 
                                     FileUpload::make('site_logo')
                                         ->label('Site Logo')
@@ -47,17 +53,31 @@ class SettingResource extends Resource
 
                         Tab::make('HR Settings')
                             ->schema([
-                                Grid::make()->schema([
+                                Grid::make()->columns(3)->schema([
                                     TextInput::make("hours_count_after_period_before")
-                                        ->label('Hours before period')
-                                        ->columnSpan(2)
+                                        ->label('Hours allowed before period')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("hours_count_after_period_after")
-                                        ->label('Hours after period')
-                                        ->columnSpan(2)
+                                        ->label('Hours allowed after period')
                                         ->numeric()
                                         ->required(),
+
+                                    Fieldset::make()->columns(1)->columnSpan(1)->schema([
+                                        Select::make("period_allowed_to_calculate_overtime")
+                                            ->label('Overtime calculation period')
+                                            ->options([
+                                                Attendance::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL,
+                                                Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL,
+                                                Attendance::PERIOD_ALLOWED_OVERTIME_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_HOUR_LABEL,
+                                            ])
+                                            ->live()
+                                            ->required(),
+                                        Toggle::make('calculating_overtime_with_half_hour_after_hour')
+                                            ->visible(fn(Get $get): bool => $get('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR)
+                                        ,
+
+                                    ]),
                                 ]),
                             ]),
                     ]),

@@ -61,22 +61,46 @@ class EmployeeOvertimeResource extends Resource
 
                             Select::make('branch_id')->label('Branch')
                                 ->helperText('Select to populate the branch employees')
-                                ->required()
+                                ->required()->searchable()
                                 ->live()
                                 ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     $employees = Employee::where('branch_id', $state)->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
+                                    $employeesWithOvertime = [];
+                                    foreach ($employees as $employeeData) {
+                                        // Fetch the employee using the employee_id from the provided data
+                                        $employee = Employee::find($employeeData['employee_id']);
+
+                                        // Ensure the employee exists before calling the overtime calculation
+                                        if ($employee) {
+                                            // Calculate overtime for the specified date
+                                            $overtimeResults = $employee->calculateEmployeeOvertime($employee, $get('date'));
+
+                                            // Only add to the results if there are overtime records
+                                            if (!empty($overtimeResults)) {
+                                                $employeesWithOvertime[] = [
+                                                    'employee_id' => $employee->id,
+                                                    'overtime_details' => $overtimeResults,
+                                                    'overtime_hours' => $overtimeResults[0]['overtime_hours'],
+                                                    'start_time' => $overtimeResults[0]['overtime_start_time'],
+                                                    'end_time' => $overtimeResults[0]['overtime_end_time'],
+                                                ];
+                                            }
+                                        }
+                                    }
 
                                     // Populate the Repeater with employees
                                     $set('employees', array_map(function ($employee) {
                                         return [
                                             'employee_id' => $employee['employee_id'],
-                                            'start_time' => null, // Optionally set default start time
-                                            'end_time' => null, // Optionally set default end time
-                                            // 'reason' => null,
+
+                                            'start_time' => $employee['start_time'],
+                                            'end_time' => $employee['end_time'],
+
                                             'notes' => null,
+                                            'hours' => $employee['overtime_hours'],
                                         ];
-                                    }, $employees));
+                                    }, $employeesWithOvertime));
                                 })
                             ,
                             DatePicker::make('date')
@@ -84,8 +108,10 @@ class EmployeeOvertimeResource extends Resource
                                 ->default(date('Y-m-d'))
                                 ->required(),
                             Toggle::make('show_default_values')->label('Set default values?')
-                                ->helperText('Check if you want to set default values')
+                            // ->helperText('Check if you want to set default values')
+                                ->helperText('Disalbed temporary to remove it')
                                 ->live()
+                                ->disabled()
                             // ->disabled(fn(Get $get) => is_numeric($get('branch_id')))
                                 ->inline(false)->default(0),
                         ]),
@@ -251,7 +277,7 @@ class EmployeeOvertimeResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('employee.name')
-                    ->label('Employee')
+                    ->label('Employee')->limit(20)
                     ->sortable()
                     ->searchable(),
 
@@ -275,6 +301,9 @@ class EmployeeOvertimeResource extends Resource
                     ->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
+                TextColumn::make('approvedBy.name')
+                    ->label('Approved by')
+                ,
 
             ])
             ->selectable()
@@ -296,6 +325,7 @@ class EmployeeOvertimeResource extends Resource
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 Action::make('Approve')
+                    ->databaseTransaction()
                     ->label(function ($record) {
                         if ($record->approved == 1) {
                             return 'Rollback approved';
@@ -330,23 +360,23 @@ class EmployeeOvertimeResource extends Resource
                     })
                     ->action(function (Model $record) {
                         if ($record->approved == 1) {
-                            $record->update(['approved' => 0]);
+                            $record->update(['approved' => 0, 'approved_by' => null]);
                         } else {
-                            $record->update(['approved' => 1]);
+                            $record->update(['approved' => 1, 'approved_by' => auth()->user()->id]);
                         }
                     }),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\RestoreAction::make(),
+                // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\RestoreBulkAction::make(),
                     BulkAction::make('Approve')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-check-badge')
-                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1]))
+                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id]))
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;

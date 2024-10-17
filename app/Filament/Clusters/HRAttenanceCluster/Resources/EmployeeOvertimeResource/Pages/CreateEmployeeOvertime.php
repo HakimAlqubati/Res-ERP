@@ -9,7 +9,7 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateEmployeeOvertime extends CreateRecord
 {
     protected static string $resource = EmployeeOvertimeResource::class;
-
+    protected ?bool $hasDatabaseTransactions = true;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // dd($data);

@@ -13,6 +13,7 @@ use App\Models\UnitPrice;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\WeeklyHoliday;
+use App\Models\WorkPeriod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 function getName()
@@ -852,7 +853,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
     // Loop through each date in the date range
     for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
         // Check if the current date is a weekend
-        
+
         if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
             continue; // Skip weekends
         }
@@ -994,10 +995,34 @@ function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
         ->get();
     return $attenance;
 }
+
+/**
+ * Compare formatted duration strings to check if the actual duration is larger than the supposed duration.
+ *
+ * @param string $supposedDuration The supposed duration in "HH:MM" format.
+ * @param string $actualDuration The actual duration in "H h M m" format.
+ * @return bool Returns true if the actual duration is larger than the supposed duration, false otherwise.
+ */
+function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
+{
+
+    // dd($supposedDuration,$actualDuration);
+    // Convert $supposedDuration ("HH:MM") to total minutes
+    list($supposedHours, $supposedMinutes) = explode(':', $supposedDuration);
+    $supposedTotalMinutes = ($supposedHours * 60) + $supposedMinutes;
+    // Convert $actualDuration ("H h M m") to total minutes
+    preg_match('/(\d+) h (\d+) m/', $actualDuration, $matches);
+    $actualHours = isset($matches[1]) ? (int) $matches[1] : 0;
+    $actualMinutes = isset($matches[2]) ? (int) $matches[2] : 0;
+    $actualTotalMinutes = ($actualHours * 60) + $actualMinutes;
+// dd($actualTotalMinutes,$supposedTotalMinutes);
+    // Compare the total minutes
+    return  $actualTotalMinutes > $supposedTotalMinutes ;
+}
+
 /**
  * get employees attendances
  */
-
 function employeeAttendancesByDate(array $employeeIds, $date)
 {
     // Convert the date to a Carbon instance for easier manipulation
@@ -1021,6 +1046,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
         // Fetch the employee by ID
 
         $employee = Employee::where('id', $employeeId)->whereHas('periods')->first();
+
         if ($employee) {
 
             // if (!$employee) {
@@ -1109,7 +1135,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                     'start_at' => $period->start_at,
                     'end_at' => $period->end_at,
                     'period_id' => $period->period_id,
-                    'total_hours' => $period ? $employee->calculateTotalWorkHours($period->period_id, $date):[],
+                    'total_hours' => $employee->calculateTotalWorkHours($period->period_id, $date),
                     'attendances' => [],
                 ];
 
@@ -1124,8 +1150,25 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'status' => $attendance->status ?? 'unknown',
                             ];
                         } elseif ($attendance->check_type === 'checkout') {
-                            
+
+                            $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
                             $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
+                            // dd($periodObject,$formattedSupposedActualDuration);
+                            $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
+
+                            $approvedOvertime = 0;
+                            if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
+
+                                $approvedOvertime = $employee->calculateTotalWorkHours($period->period_id, $date);
+                            }
+                            if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
+                                $approvedOvertime = $formattedSupposedActualDuration;
+                            }
+                            if(!$isActualLargerThanSupposed){
+                                $approvedOvertime = $periodData['total_hours'];
+                            }
+                            // dd($period, $approvedOvertime, $formattedSupposedActualDuration,$periodData);
+
                             $lastCheckout = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
                                 'status' => $attendance->status ?? 'unknown',
@@ -1134,6 +1177,9 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'supposed_duration_hourly' => $formattedSupposedActualDuration,
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                                'approved_overtime' => $approvedOvertime,
+                                'is' => $isActualLargerThanSupposed,
+
                             ];
                             $periodData['attendances']['checkout'][] = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
@@ -1312,7 +1358,7 @@ function formatDuration($duration)
 {
     // Split the duration string by colon
     list($hours, $minutes, $seconds) = explode(':', $duration);
-    
+
     // Return the formatted string
-    return "{$hours} h " . (int)$minutes . " m"; // Cast minutes to int to avoid any zero-padding
+    return "{$hours} h " . (int) $minutes . " m"; // Cast minutes to int to avoid any zero-padding
 }

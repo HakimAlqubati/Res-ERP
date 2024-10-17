@@ -215,5 +215,11 @@ class ListEmployeesAttednaceReport extends ListRecords
 
         return $leaveDates;
     }
-     
+
+    public function showDetails($date, $employeeId, $periodId)
+    {
+        $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        dd($AttendanceDetails,$periodId,$date,$employeeId);
+        return dd($AttendanceDetails->toArray());
+    }
 }
