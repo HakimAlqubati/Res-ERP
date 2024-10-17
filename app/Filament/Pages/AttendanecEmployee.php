@@ -267,12 +267,6 @@ class AttendanecEmployee extends BasePage
 
         if ($lastRecord) {
             // // Calculate the remaining seconds until a new record can be created
-            // $timeLeft = round(Carbon::parse($lastRecord->created_at)->addMinute()->diffInSeconds(Carbon::now()),0);
-
-            // $timeLeft *= -1;
-            // return $this->sendWarningNotification( 'يرجى الانتظار لمدة ' . $timeLeft . ' ثانية');
-            // Calculate the remaining time in seconds until a new record can be created
-            // Calculate the remaining time in seconds until a new record can be created
             $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(15)->diffInSeconds(Carbon::now());
 
             // Convert seconds to minutes and seconds
@@ -304,7 +298,7 @@ class AttendanecEmployee extends BasePage
 
             $diff = $this->calculateTimeDifference($checkTime->toTimeString(), $periodStartTime, true);
 
-            // if ($diff > Setting::getSetting('hours_count_after_period_after') && $previousRecord == null) {
+            
             if ($checkTime->toTimeString() < $periodStartTime && $diff > Setting::getSetting('hours_count_after_period_after')) {
                 return $this->sendWarningNotification(__('notifications.you_cannot_attendance_before') . ' ' . $diff . ' ' . __('notifications.hours'));
             }
@@ -324,19 +318,14 @@ class AttendanecEmployee extends BasePage
                 $attendanceData['check_date'] = $previousRecord['in_previous']?->check_date;
             }
 
-            // dd(
-            //     $periodStartTime < $allowedTimeBeforePeriod&&
-            //     $checkTime->toTimeString() > $allowedTimeBeforePeriod &&
-            //     $periodStartTime < $checkTime->toTimeString()
-            // );
+            
 
             $attendanceData = array_merge($attendanceData, $this->storeCheckIn($nearestPeriod, $checkTime, $date));
             $notificationMessage = __('notifications.the_attendance_has_been_recorded');
         } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
 
             $periodEndTime = $nearestPeriod->end_at;
-            // $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
-            // dd($checkTime->toTimeString(), $periodEndTime,$diff);
+            
             if ($checkTime->toTimeString() > $periodEndTime) {
                 $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
 
@@ -422,8 +411,7 @@ class AttendanecEmployee extends BasePage
 
         $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
         $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-        // dd($nearestPeriod?->start_at,$nearestPeriod?->end_at,$checkTime?->toTimeString());
-// dd($nearestPeriod->start_at);
+        
         if ($checkTime->gt($startTime) && $nearestPeriod?->start_at) {
             // Employee is late
             $data['delay_minutes'] = $startTime->diffInMinutes($checkTime);
