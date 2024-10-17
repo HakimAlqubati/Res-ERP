@@ -289,9 +289,10 @@ html::-webkit-scrollbar {
 .fixed-header {
     position: sticky; /* Use sticky positioning */
     top: 0;          /* Stick to the top */
-    background-color: rgb(0, 0, 0); 
-    color: white;
-    z-index: 10;     /* Ensure it appears above other elements */
+    background-color: white; 
+    color: #0d7c66;
+    z-index: 1;     /* Ensure it appears above other elements */
+
 }
 
 .fixed-header th {
