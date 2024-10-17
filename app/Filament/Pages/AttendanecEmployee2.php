@@ -311,8 +311,8 @@ class AttendanecEmployee2 extends BasePage
 
             $periodEndTime = $nearestPeriod->end_at;
             // $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
-            // dd($checkTime->toTimeString(), $periodEndTime,$diff);
-            if ($checkTime->toTimeString() > $periodEndTime) {
+            // dd($checkTime->toTimeString() > $periodEndTime);
+            if ($checkTime->toTimeString() > $periodEndTime && $periodEndTime != '00:00:00') {
                 $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
 
                 if ($diff >= Setting::getSetting('hours_count_after_period_after')) {
