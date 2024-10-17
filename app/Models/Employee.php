@@ -213,7 +213,7 @@ class Employee extends Model
         return "{$totalHours}:{$remainingMinutes}:00";
     }
 
-    public function calculateTotalWorkHours($periodId, $date)
+    public function calculateTotalWorkHours_new1($periodId, $date)
     {
         // Get attendances for the specified period and date, sorted by check_time
         $attendances = $this->attendances()
@@ -262,6 +262,57 @@ class Employee extends Model
 
         // Format the output with leading zeros for single digits
         return sprintf("%02d:%02d:00", $totalHours, $remainingMinutes);
+    }
+
+    public function calculateTotalWorkHours($periodId, $date)
+    {
+        // Get attendances for the specified period and date, sorted by check_time
+        $attendances = $this->attendances()
+            ->where('period_id', $periodId)
+            ->where('check_date', $date)
+            ->orderBy('id')
+            ->get();
+
+        $totalMinutes = 0;
+
+        // Loop through attendances to calculate total minutes worked
+        for ($i = 0; $i < $attendances->count(); $i++) {
+            $checkIn = $attendances[$i];
+
+            // Ensure the current record is a check-in
+            if ($checkIn->check_type === 'checkin') {
+                // Look for the next check-out
+                $i++;
+                if ($i < $attendances->count()) {
+                    $checkOut = $attendances[$i];
+
+                    // Ensure it is indeed a check-out
+                    if ($checkOut->check_type === 'checkout') {
+                        $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
+                        $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
+
+                        // Adjust for midnight crossing
+                        if ($checkOutTime < $checkInTime) {
+                            $checkOutTime->addDay(); // Add 24 hours
+                        }
+
+                        // Calculate the time difference in minutes
+                        $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
+                    }
+                }
+            }
+        }
+
+        // Convert total minutes to hours and minutes
+        $totalHours = floor($totalMinutes / 60);
+        $remainingMinutes = $totalMinutes % 60;
+
+        // Ensure positive values (in case of unexpected negatives)
+        $totalHours = abs($totalHours);
+        $remainingMinutes = abs($remainingMinutes);
+
+        // Format the output as "X h Y minutes"
+        return "{$totalHours} h {$remainingMinutes} minutes";
     }
 
 }
