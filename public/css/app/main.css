@@ -290,6 +290,7 @@ html::-webkit-scrollbar {
     position: sticky; /* Use sticky positioning */
     top: 0;          /* Stick to the top */
     background-color: rgb(0, 0, 0); 
+    color: white;
     z-index: 10;     /* Ensure it appears above other elements */
 }
 
