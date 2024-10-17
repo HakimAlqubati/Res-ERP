@@ -312,7 +312,7 @@ class Employee extends Model
         $remainingMinutes = abs($remainingMinutes);
 
         // Format the output as "X h Y minutes"
-        return "{$totalHours} h {$remainingMinutes} minutes";
+        return "{$totalHours} h {$remainingMinutes} m";
     }
 
 }
