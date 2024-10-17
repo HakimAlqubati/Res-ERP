@@ -941,11 +941,11 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                         ];
 
                     } elseif ($attendance->check_type === 'checkout') {
-
+                        $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                            'actual_duration_hourly' => $formattedSupposedActualDuration,
                             'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
@@ -954,7 +954,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                         $periodData['attendances']['checkout'][] = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                            'actual_duration_hourly' => $formattedSupposedActualDuration,
                             'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
@@ -1124,13 +1124,14 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'status' => $attendance->status ?? 'unknown',
                             ];
                         } elseif ($attendance->check_type === 'checkout') {
-
+                            
+                            $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
                             $lastCheckout = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
                                 'status' => $attendance->status ?? 'unknown',
                                 'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
                                 'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
-                                'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                                'supposed_duration_hourly' => $formattedSupposedActualDuration,
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             ];
@@ -1139,7 +1140,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'status' => $attendance->status ?? 'unknown',
                                 'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
                                 'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
-                                'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                                'supposed_duration_hourly' => $formattedSupposedActualDuration,
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             ];
@@ -1305,4 +1306,13 @@ function employeeSalarySlip($employeeId, $yearMonth)
         ->get()->first();
     return $salaryDetail;
 
+}
+
+function formatDuration($duration)
+{
+    // Split the duration string by colon
+    list($hours, $minutes, $seconds) = explode(':', $duration);
+    
+    // Return the formatted string
+    return "{$hours} h " . (int)$minutes . " m"; // Cast minutes to int to avoid any zero-padding
 }
