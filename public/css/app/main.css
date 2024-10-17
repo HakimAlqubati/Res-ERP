@@ -282,7 +282,7 @@ html::-webkit-scrollbar {
 
 
   .table-container {
-    max-height: 400px; /* Adjust the height as needed */
+    max-height: 300px; /* Adjust the height as needed */
     overflow-y: auto;  /* Enables vertical scrolling */
 }
 

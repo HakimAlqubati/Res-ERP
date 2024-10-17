@@ -3,7 +3,7 @@
 
     <div class="table-container">
         <x-filament-tables::table class="w-full text-sm text-left pretty  reports">
-            <thead class="fixed-header">
+            <thead class="fixed-headerr">
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance employees report' }}</p>
@@ -22,8 +22,8 @@
                     </th>
                 </x-filament-tables::row>
 
-                <x-filament-tables::row>
-                    <th rowspan="2">{{ __('Employee') }}</th>
+                <x-filament-tables::row class="fixed-header">
+                    <th rowspan="2" >{{ __('Employee') }}</th>
                     <th colspan="2">{{ __('Shift data') }}</th>
 
                     <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
@@ -32,7 +32,7 @@
                 <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
                 </x-filament-tables::row>
-                <x-filament-tables::row>
+                <x-filament-tables::row class="fixed-header">
                     <th class="internal_cell">{{ __('From') }}</th>
                     <th class="internal_cell">{{ __('To') }}</th>
                     <th class="internal_cell">{{ __('Check-in') }}</th>
