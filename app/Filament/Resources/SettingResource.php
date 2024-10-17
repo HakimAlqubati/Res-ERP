@@ -53,7 +53,7 @@ class SettingResource extends Resource
 
                         Tab::make('HR Settings')
                             ->schema([
-                                Grid::make()->columns(3)->schema([
+                                Fieldset::make()->columns(3)->schema([
                                     TextInput::make("hours_count_after_period_before")
                                         ->label('Hours allowed before period')
                                         ->numeric()
@@ -62,6 +62,7 @@ class SettingResource extends Resource
                                         ->label('Hours allowed after period')
                                         ->numeric()
                                         ->required(),
+                                    
 
                                     Fieldset::make()->columns(1)->columnSpan(1)->schema([
                                         Select::make("period_allowed_to_calculate_overtime")
@@ -78,6 +79,11 @@ class SettingResource extends Resource
                                         ,
 
                                     ]),
+                                    TextInput::make("early_attendance_minutes")
+                                    ->label('Minutes counted as early arrival for attendance')
+                                    ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                    ->numeric()
+                                    ->required(),
                                 ]),
                             ]),
                     ]),

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Clusters\Settings;
 use App\Forms\Components\KeyPadTest;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -274,8 +275,8 @@ class AttendanecEmployee extends BasePage
             $remainingSeconds = $remainingSeconds % 60;
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
-            
-            return $this->sendWarningNotification(__('notifications.please_wait_for_a') .' ' . $remainingMinutes .' '. __('notifications.minutue') .' '. $remainingSeconds.' ' . __('notifications.second'));
+
+            return $this->sendWarningNotification(__('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second'));
 
         }
         // Prepare attendance data
@@ -298,7 +299,6 @@ class AttendanecEmployee extends BasePage
 
             $diff = $this->calculateTimeDifference($checkTime->toTimeString(), $periodStartTime, true);
 
-            
             if ($checkTime->toTimeString() < $periodStartTime && $diff > Setting::getSetting('hours_count_after_period_after')) {
                 return $this->sendWarningNotification(__('notifications.you_cannot_attendance_before') . ' ' . $diff . ' ' . __('notifications.hours'));
             }
@@ -318,14 +318,12 @@ class AttendanecEmployee extends BasePage
                 $attendanceData['check_date'] = $previousRecord['in_previous']?->check_date;
             }
 
-            
-
             $attendanceData = array_merge($attendanceData, $this->storeCheckIn($nearestPeriod, $checkTime, $date));
             $notificationMessage = __('notifications.the_attendance_has_been_recorded');
         } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
 
             $periodEndTime = $nearestPeriod->end_at;
-            
+
             if ($checkTime->toTimeString() > $periodEndTime) {
                 $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
 
@@ -411,7 +409,7 @@ class AttendanecEmployee extends BasePage
 
         $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
         $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-        
+
         if ($checkTime->gt($startTime) && $nearestPeriod?->start_at) {
             // Employee is late
             $data['delay_minutes'] = $startTime->diffInMinutes($checkTime);
@@ -425,7 +423,8 @@ class AttendanecEmployee extends BasePage
             // Employee is early
             $data['delay_minutes'] = 0;
             $data['early_arrival_minutes'] = $checkTime->diffInMinutes($startTime);
-            $data['status'] = ($data['early_arrival_minutes'] == 0) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_EARLY_ARRIVAL;
+            // $data['status'] = ($data['early_arrival_minutes'] == 0) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_EARLY_ARRIVAL;
+            $data['status'] = $checkTime->diffInMinutes($nearestPeriod?->start_at) >= Settings::getSetting('early_attendance_minutes') ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME;
 
         }
 
@@ -435,7 +434,7 @@ class AttendanecEmployee extends BasePage
             $nearestPeriodStart = Carbon::parse($nearestPeriod->start_at)->addDay(); // Add a day to handle the transition to midnight
             $data['check_date'] = Carbon::parse($date)->addDay()->format('Y-m-d');
             $data['day'] = Carbon::parse($date)->addDay()->format('l');
-            $data['status'] = Attendance::STATUS_EARLY_ARRIVAL;
+            $data['status'] = $checkTime->diffInMinutes($nearestPeriodStart) >= Settings::getSetting('early_attendance_minutes') ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME;
             $data['early_arrival_minutes'] = $checkTime->diffInMinutes($nearestPeriodStart);
             $data['delay_minutes'] = 0;
         }
@@ -561,9 +560,8 @@ class AttendanecEmployee extends BasePage
             $checkTime->toTimeString() < $nearestPeriod->end_at &&
             $allowedTimeAfterPeriod > $checkTime->toTimeString()) {
 
-                
             $nearestPeriodEnd = Carbon::parse($nearestPeriod->end_at)->subDay(); // Add a day to handle the transition to midnight
-        //   dd($nearestPeriodEnd,$checkTime);
+            //   dd($nearestPeriodEnd,$checkTime);
             // $data['check_date'] = Carbon::parse($date)->addDay()->format('Y-m-d');
             // $data['day'] = Carbon::parse($date)->addDay()->format('l');
             $data['status'] = Attendance::STATUS_LATE_DEPARTURE;
@@ -571,7 +569,7 @@ class AttendanecEmployee extends BasePage
             $data['early_arrival_minutes'] = 0;
             $data['early_departure_minutes'] = 0;
         }
-       
+
         return $data;
     }
 
