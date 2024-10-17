@@ -30,6 +30,9 @@ class CircularResource extends Resource
 
     protected static ?string $cluster = HRCircularCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?string $modelLabel = 'Engagement';
+    protected static ?string $pluralLabel = 'Engagement';
+
     protected static ?int $navigationSort = 1;
     public static function form(Form $form): Form
     {

@@ -10,6 +10,6 @@ class HRCircularCluster extends Cluster
     protected static ?string $clusterBreadcrumb = 'HR';
     public static function getNavigationLabel(): string
     {
-        return 'Circulars';
+        return 'Engagement';
     }
 }

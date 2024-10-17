@@ -198,8 +198,8 @@ class EmployeeApplicationResource extends Resource
                                             })
                                             ->label('Number of months of deduction'),
 
-                                    ]),
-                                    Textarea::make('detail_advanced_purpose')->columnSpanFull()->label('Advance purpose')->required(),
+                                    ])
+                                   
                                 ]),
                             ];
                         }
@@ -309,7 +309,7 @@ class EmployeeApplicationResource extends Resource
                 Fieldset::make()->label('')->schema([
                     Textarea::make('notes') // Add the new details field
                         ->label('Notes')
-                        ->placeholder('Enter application notes...')
+                        ->placeholder('Notes...')
                     // ->rows(5)
                         ->columnSpanFull()
                     ,
@@ -436,7 +436,7 @@ class EmployeeApplicationResource extends Resource
                         $deductionStartsFrom = $record?->detail_deduction_starts_from;
                         $deductionEndsAt = $record?->detail_deduction_ends_at;
                         $numberOfMonthsOfDeduction = $record?->detail_number_of_months_of_deduction;
-                        $advancedPurpose = $record?->detail_advanced_purpose;
+
 
                         // $details = EmployeeApplicationResource::getDetailsKeysAndValues(json_decode($record->details));
                         // dd($details);
@@ -449,7 +449,7 @@ class EmployeeApplicationResource extends Resource
                                 TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
                                 TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
                                 TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
-                                TextInput::make('advancedPurpose')->label('advancedPurpose')->default($advancedPurpose),
+                                
 
                             ]),
                             Fieldset::make()->label('Request data')->columns(2)->schema([
@@ -624,4 +624,10 @@ class EmployeeApplicationResource extends Resource
     {
         return 'Application';
     }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
 }

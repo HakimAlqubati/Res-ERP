@@ -2,8 +2,8 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
-use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
+use App\Filament\Clusters\HRAttenanceCluster;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
@@ -28,7 +28,9 @@ class LeaveBalanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRApplicationsCluster::class;
+    protected static ?string $cluster = HRAttenanceCluster::class;
+    protected static ?string $modelLabel = 'Leave balance';
+    protected static ?string $pluralLabel = 'Leave balance';
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
@@ -38,7 +40,7 @@ class LeaveBalanceResource extends Resource
             ->schema(
                 [
 
-                    Fieldset::make()
+                    Fieldset::make('basic')
                         ->columns(3)
                         ->label('Set branch employees, the Leave type and Year')
                         ->schema([
@@ -63,13 +65,12 @@ class LeaveBalanceResource extends Resource
                                 ->required()
                                 ->live()
                                 ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    $employees = Employee::where('branch_id', $state)->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
+                                ->afterStateUpdated(function (Get $get, Set $set, $state,$livewire) {
+                                    $employees = Employee::where('branch_id', $get('branch_id'))->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
                                     $leaveType = LeaveType::find($state);
                                     foreach ($employees as $index => $employee) {
                                         $employees[$index]['balance'] = $leaveType->count_days;
                                     }
-
                                     // Set the updated repeater data back to the 'employees' field
                                     $set('employees', $employees);
                                 })
@@ -78,7 +79,7 @@ class LeaveBalanceResource extends Resource
                                 2024 => 2024,
                                 2026 => 2026,
                                 2027 => 2027,
-                            ]),
+                            ])->required(),
                         ]),
 
                     Repeater::make('employees')
@@ -91,10 +92,20 @@ class LeaveBalanceResource extends Resource
                                         ->relationship('employee', 'name')
                                         ->required(),
 
-                                    TextInput::make('balance')->label('Balance')->default(0)->numeric()
-                                    // ->maxValue(0)
-                                        ->required(),
-                                ]),
+                                    TextInput::make('balance')->label('Balance')
+                                        ->numeric()
+                                        ->live()
+                                        ->required()
+                                        // ->maxValue(function (Get $get) {
+                                        //     dd($get('leave_type_id'),$get('employee_id'),$get('basic.branch_id'));
+                                        //     $max = LeaveType::find($get('leave_type_id'))?->count_days ?? 0;
+                                        //     // dd($max);
+                                        //     return $max;
+                                        // })
+                                        ,
+                                ])
+
+                                ,
 
                             ])
 
@@ -135,10 +146,10 @@ class LeaveBalanceResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
-                SelectFilter::make('leave_type_id')
-                    ->searchable()
-                    ->multiple()
-                    ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
+                // SelectFilter::make('leave_type_id')
+                //     ->searchable()
+                //     ->multiple()
+                //     ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),

@@ -42,9 +42,9 @@ class EmployeeApplication extends Model
 
     const APPLICATION_TYPE_NAMES = [
         self::APPLICATION_TYPE_LEAVE_REQUEST => 'Leave request',
-        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Missed Check-in',
+        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'Missed check-in',
         self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
-        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed Check-out',
+        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed check-out',
     ];
 
     // Constants for status
@@ -140,14 +140,7 @@ class EmployeeApplication extends Model
         }
         return null;
     }
-    public function getDetailAdvancedPurposeAttribute()
-    {
-        if ($this->application_type_id == 3) {
-            $details = json_decode($this->details, true);
-            return $details['detail_advanced_purpose'] ?? null;
-        }
-        return null;
-    }
+    
     public function getDetailFromDateAttribute()
     {
         if ($this->application_type_id == 1) {
