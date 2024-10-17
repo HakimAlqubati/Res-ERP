@@ -345,7 +345,10 @@ function getRolesByTypeId($id)
 function calculateMonthlySalaryV2($employeeId, $date)
 {
     // Retrieve the employee model with relations to deductions, allowances, and incentives
-    $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])->find($employeeId);
+    $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])
+    ->whereNotNull('salary')
+    ->find($employeeId)
+    ;
     if (!$employee) {
         return 'Employee not found!';
     }

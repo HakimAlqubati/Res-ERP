@@ -220,7 +220,7 @@ class EmployeeResource extends Resource
                                         ->numeric()->columnSpan(1)
                                         ->columnSpan(2)
                                         ->inputMode('decimal')
-                                        ->required()
+                                        ->required()->minValue(1000)
                                         ->label('Salary')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                         ->label('No salary deduction for absences')->default(0)

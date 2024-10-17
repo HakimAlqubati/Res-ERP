@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 class CreateMonthSalary extends CreateRecord
 {
     protected static string $resource = MonthSalaryResource::class;
+    protected ?bool $hasDatabaseTransactions = true;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -62,21 +63,22 @@ class CreateMonthSalary extends CreateRecord
                 $generalDeducation = $calculateSalary['details']['deducation_details']['general_deducation'] ?? [];
                 $specificAllowances = $calculateSalary['details']['adding_details']['specific_allowances'] ?? [];
                 $generalAllowances = $calculateSalary['details']['adding_details']['general_allowances'] ?? [];
-
+               if(isset($calculateSalary['details'])){
+                   $this->record->details()->create([
+                       'employee_id' => $employee->id,
+                       'basic_salary' => $calculateSalary['details']['basic_salary'],
+                       'total_deductions' => $calculateSalary['details']['total_deducation'],
+                       'total_allowances' => $calculateSalary['details']['total_allowances'],
+                       'total_incentives' => $calculateSalary['details']['total_monthly_incentives'],
+                       'total_other_adding' => $calculateSalary['details']['total_other_adding'],
+                       'net_salary' => $calculateSalary['net_salary'],
+                       'total_absent_days' => $calculateSalary['details']['total_absent_days'],
+                       'total_late_hours' => $calculateSalary['details']['total_late_hours'],
+                       'overtime_hours' => $calculateSalary['details']['overtime_hours'],
+                       'overtime_pay' => $calculateSalary['net_salary']['overtime_pay'] ?? 0,
+                   ]);
+               }
                 // Try to create salary details
-                $this->record->details()->create([
-                    'employee_id' => $employee->id,
-                    'basic_salary' => $calculateSalary['details']['basic_salary'],
-                    'total_deductions' => $calculateSalary['details']['total_deducation'],
-                    'total_allowances' => $calculateSalary['details']['total_allowances'],
-                    'total_incentives' => $calculateSalary['details']['total_monthly_incentives'],
-                    'total_other_adding' => $calculateSalary['details']['total_other_adding'],
-                    'net_salary' => $calculateSalary['net_salary'],
-                    'total_absent_days' => $calculateSalary['details']['total_absent_days'],
-                    'total_late_hours' => $calculateSalary['details']['total_late_hours'],
-                    'overtime_hours' => $calculateSalary['details']['overtime_hours'],
-                    'overtime_pay' => $calculateSalary['net_salary']['overtime_pay'] ?? 0,
-                ]);
 
                 // Create allowance and deduction details
                 $this->createAllowanceDetails($generalAllowances, $employee, false);
