@@ -48,12 +48,13 @@
 
             <tbody>
 
-                @foreach ($report_data as $data_)
+                @foreach ($report_data as $empId => $data_)
                     @php
 
                         $date = array_keys($data_)[0];
 
                         $data = array_values($data_);
+
                     @endphp
 
                     <x-filament-tables::row>
@@ -61,8 +62,13 @@
 
                             {{ $data[0]['employee_name'] }}
                         </x-filament-tables::cell>
-
-                        @if (count($data[0]['periods']) > 0)
+                        @if (count($data[0]['periods']) > 0 &&
+                                isset($data[0]['periods'][0]['attendances']) &&
+                                //  &&
+                                // is_array($data[0]['periods'][0]['attendances'])
+                                // &&
+                                // count($data[0]['periods'][0]['attendances']) > 0
+                                !isset($data[0]['leave']))
                             <x-filament-tables::cell colspan="9" style="padding: 0;">
                                 <x-filament-tables::table style="width: 100%">
                                     @foreach ($data[0]['periods'] as $item)
@@ -100,7 +106,7 @@
                                                         {{ $item['total_hours'] }}
                                                     </button>
                                                 </x-filament-tables::cell>
-                                                
+
                                                 <x-filament-tables::cell class="internal_cell">
                                                     {{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}
                                                 </x-filament-tables::cell>
@@ -123,9 +129,10 @@
                             <x-filament-tables::cell colspan="9">
                                 {{ $data['holiday']['name'] }}
                             </x-filament-tables::cell>
-                        @elseif (count($data[0]['periods']) == 0 && isset($data['leave']))
+                        @elseif (count($data[0]['periods']) > 0 && isset($data[0]['leave']))
                             <x-filament-tables::cell colspan="9">
-                                {{ $data['leave']['leave_type_name'] }}
+                                123
+                                {{ $data[0]['leave']['transaction_description'] }}
                             </x-filament-tables::cell>
                             {{-- @elseif (isset($data[0]['no_periods']) && $data['no_periods']) --}}
                         @elseif (isset($data[0]['no_periods']) && !empty($data[0]['no_periods']))
@@ -133,7 +140,6 @@
                                 {{ 'No any period for employee' }}
 
                             </x-filament-tables::cell>
-                            
                         @endif
 
 

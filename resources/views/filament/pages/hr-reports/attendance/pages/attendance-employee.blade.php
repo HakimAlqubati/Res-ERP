@@ -3,7 +3,7 @@
 
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty reports">
-            <thead>
+            <thead class="fixed-header">
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance employee report' }}</p>
@@ -24,8 +24,8 @@
                     <th rowspan="2">{{ __('Date') }}</th>
                     <th colspan="2">{{ __('Shift data') }}</th>
 
-                    <th colspan="4">{{ __('Attendance and Departure data') }}</th>
-                    <th colspan="2">{{ __('Count of Hours work') }}</th>
+                    <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
+                    <th colspan="2">{{ __('Work Hours Summary') }}</th>
                     {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
                     <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
@@ -33,12 +33,12 @@
                 <x-filament-tables::row>
                     <th class="internal_cell">{{ __('From') }}</th>
                     <th class="internal_cell">{{ __('To') }}</th>
-                    <th class="internal_cell">{{ __('Attendance') }}</th>
+                    <th class="internal_cell">{{ __('Check-in') }}</th>
                     <th class="internal_cell">{{ __('Status') }}</th>
-                    <th class="internal_cell">{{ __('Departure') }}</th>
+                    <th class="internal_cell">{{ __('Check-out') }}</th>
                     <th class="internal_cell">{{ __('Status') }}</th>
                     <th class="internal_cell">{{ __('Supposed') }}</th>
-                    <th class="internal_cell">{{ __('Total duration hourly') }}</th>
+                    <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                 </x-filament-tables::row>
             </thead>
             <tbody>
@@ -121,7 +121,7 @@
                             @endif
                             @if (count($data['periods']) == 0 && isset($data['leave']))
                                 <x-filament-tables::cell colspan="9">
-                                    {{ $data['leave']['leave_type_name'] }}
+                                    {{ $data['leave']['transaction_description'] }}
                                 </x-filament-tables::cell>
                             @endif
 

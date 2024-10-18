@@ -99,6 +99,12 @@ class Employee extends Model
         return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED)->with('leaveType');
     }
 
+
+    public function transactions()
+    {
+        return $this->hasMany(ApplicationTransaction::class, 'employee_id');
+    }
+
     public function periods()
     {
         return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id');
@@ -307,5 +313,6 @@ class Employee extends Model
     
         return $results; // Return the results
     }
+
     
 }

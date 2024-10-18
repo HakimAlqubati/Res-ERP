@@ -353,7 +353,7 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
                 TextColumn::make('email')->icon('heroicon-m-envelope')
-                    ->sortable()->searchable()->limit(20)
+                    ->sortable()->searchable()->limit(20)->default('@')
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('join_date')->sortable()->label('Start date')

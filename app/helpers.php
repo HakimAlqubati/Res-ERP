@@ -346,8 +346,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
 {
     // Retrieve the employee model with relations to deductions, allowances, and incentives
     $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])
-    ->whereNotNull('salary')
-    ->find($employeeId)
+        ->whereNotNull('salary')
+        ->find($employeeId)
     ;
     if (!$employee) {
         return 'Employee not found!';
@@ -840,6 +840,18 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
     // Fetch leave applications within the date range
     $employee = Employee::find($employeeId);
+    $leaveTransactions = $employee->transactions()
+        ->where('transaction_type_id', 1) // 1 represents "Leave request"
+        ->where('is_canceled', false) // Ensure the transaction is not canceled
+        ->where(function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('from_date', [$startDate, $endDate]) // Overlap with start date
+                ->orWhereBetween('to_date', [$startDate, $endDate]) // Overlap with end date
+                ->orWhere(function ($subQuery) use ($startDate, $endDate) {
+                    $subQuery->where('from_date', '<=', $startDate)
+                        ->where('to_date', '>=', $endDate); // Fully contains the range
+                });
+        })
+        ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_description']);
 
     $leaveApplications = $employee?->approvedLeaveApplications()
         ->where(function ($query) use ($startDate, $endDate) {
@@ -884,6 +896,18 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                     $result[$date->toDateString()]['leave'] = [
                         'leave_type_id' => $leave->leave_type_id,
                         'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
+                    ];
+                    continue 2; // Skip to the next date if it's a leave day
+                }
+            }
+        }
+        // Check if the current date falls within any leave applications
+        if ($leaveTransactions) {
+            foreach ($leaveTransactions as $leaveTransaction) {
+                if ($date->isBetween($leaveTransaction->from_date, $leaveTransaction->to_date, true)) {
+                    $result[$date->toDateString()]['leave'] = [
+                        'leave_type_id' => $leaveTransaction->leave_type_id,
+                        'transaction_description' => $leaveTransaction->transaction_description, // Include leave type name
                     ];
                     continue 2; // Skip to the next date if it's a leave day
                 }
@@ -1007,7 +1031,7 @@ function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
  */
 function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
 {
-    
+
     // Convert $supposedDuration ("HH:MM") to total minutes
     list($supposedHours, $supposedMinutes) = explode(':', $supposedDuration);
     $supposedTotalMinutes = ($supposedHours * 60) + $supposedMinutes;
@@ -1018,9 +1042,8 @@ function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
     $actualTotalMinutes = ($actualHours * 60) + $actualMinutes;
 
     // Compare the total minutes
-    return  $actualTotalMinutes > $supposedTotalMinutes ;
+    return $actualTotalMinutes > $supposedTotalMinutes;
 }
- 
 
 /**
  * Adds hours to a given time duration string in the format "X h Y m".
@@ -1029,14 +1052,15 @@ function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
  * @param int $additionalHours The number of hours to add.
  * @return string The updated time duration string.
  */
-function addHoursToDuration($duration, $additionalHours) {
+function addHoursToDuration($duration, $additionalHours)
+{
     // Extract hours and minutes from the duration string
     preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches);
 
     if ($matches) {
-        $hours = (int)$matches[1];
-        $minutes = (int)$matches[2];
-        
+        $hours = (int) $matches[1];
+        $minutes = (int) $matches[2];
+
         // Add the additional hours
         $totalHours = $hours + $additionalHours;
 
@@ -1121,6 +1145,13 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                 ->with('leaveType:id,name') // Assuming you have a relationship defined
                 ->first();
 
+            $leaveTransactions = $employee->transactions()
+                ->where('transaction_type_id', 1) // 1 represents "Leave request"
+                ->where('is_canceled', false) // Ensure the transaction is not canceled
+                ->whereDate('from_date', '<=', $date)
+                ->whereDate('to_date', '>=', $date)
+                ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_type_id', 'transaction_description'])->first();
+            
             // Check if the current date falls within any leave applications
             if ($leave) {
                 $result[$employeeId][$date->toDateString()]['leave'] = [
@@ -1128,6 +1159,15 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                     'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
                 ];
                 continue; // Skip to the next employee if it's a leave day
+            }
+
+            if ($leaveTransactions) {
+
+                $result[$employeeId][$date->toDateString()]['leave'] = [
+                    'transaction_type_id' => $leaveTransactions->transaction_type_id,
+                    'transaction_description' => $leaveTransactions->transaction_description,
+                ];
+                // continue; // Skip to the next employee if it's a leave day
             }
 
             // Get the employee's work periods for the current date
@@ -1139,7 +1179,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                 ->get()
 
             ;
-
+// dd($employeePeriods);
             if ($employeePeriods->isEmpty()) {
                 // If no periods are assigned to the employee, mark with a message
                 $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
@@ -1181,23 +1221,22 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
                             $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
                             $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
-                            
+
                             $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
-                            $approvedOvertime = getEmployeeOvertimes($date,$employee);
-                         
+                            $approvedOvertime = getEmployeeOvertimes($date, $employee);
+
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
-                               $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
-                                
+                                $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
+
                             }
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
                                 $approvedOvertime = $formattedSupposedActualDuration;
                             }
-                            if(!$isActualLargerThanSupposed){
+                            if (!$isActualLargerThanSupposed) {
                                 $approvedOvertime = $periodData['total_hours'];
                             }
 
-                            
                             $lastCheckout = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
                                 'status' => $attendance->status ?? 'unknown',

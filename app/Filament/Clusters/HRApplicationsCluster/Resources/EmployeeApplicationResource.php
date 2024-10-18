@@ -283,7 +283,7 @@ class EmployeeApplicationResource extends Resource
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     // Parse the state as a Carbon date, add one month, and set it to the end of the month
                                                     $state = (int) $state;
-                                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays($state)->format('Y-m-d');
+                                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state-1))->format('Y-m-d');
                                                     $set('detail_to_date', $nextDate);
                                                 })
                                                 ->maxValue(function ($get) {
