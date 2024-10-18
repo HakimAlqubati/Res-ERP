@@ -840,7 +840,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
     // Fetch leave applications within the date range
     $employee = Employee::find($employeeId);
-    $leaveTransactions = $employee->transactions()
+    $leaveTransactions = $employee?->transactions()
         ->where('transaction_type_id', 1) // 1 represents "Leave request"
         ->where('is_canceled', false) // Ensure the transaction is not canceled
         ->where(function ($query) use ($startDate, $endDate) {
