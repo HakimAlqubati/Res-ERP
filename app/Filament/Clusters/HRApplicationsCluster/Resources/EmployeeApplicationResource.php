@@ -119,7 +119,7 @@ class EmployeeApplicationResource extends Resource
                         ])) {
                             $form = [
                                 DatePicker::make('detail_date')
-                                    ->label('date')
+                                    ->label('Date')
                                     ->default('Y-m-d'),
                                 TimePicker::make('detail_time')
                                     ->label('Time'),
@@ -133,7 +133,7 @@ class EmployeeApplicationResource extends Resource
                                 Fieldset::make()->label('')->schema([
                                     Grid::make()->columns(3)->schema([
                                         DatePicker::make('detail_date')
-                                            ->label('date')
+                                            ->label('Date')
                                             ->live()
                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                 // Parse the state as a Carbon date, add one month, and set it to the end of the month
@@ -198,15 +198,15 @@ class EmployeeApplicationResource extends Resource
                                             })
                                             ->label('Number of months of deduction'),
 
-                                    ])
-                                   
+                                    ]),
+
                                 ]),
                             ];
                         }
                         if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
 
                             $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
-                            $set('from_to_date',date('Y-m-d'));
+                            $set('from_to_date', date('Y-m-d'));
                             // Get the leave types that are active and have a balance for the employee
                             $leaveTypes = LeaveType::where('active', 1)
                                 ->whereIn('id', $leaveBalances)
@@ -258,7 +258,7 @@ class EmployeeApplicationResource extends Resource
                                                 ->label('To Date')
                                                 ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                                                 ->reactive()
-                                                ->required()    
+                                                ->required()
                                                 ->afterStateUpdated(function ($state, callable $set, $get) {
                                                     $fromDate = $get('detail_from_date');
                                                     $toDate = $get('detail_to_date');
@@ -283,7 +283,7 @@ class EmployeeApplicationResource extends Resource
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     // Parse the state as a Carbon date, add one month, and set it to the end of the month
                                                     $state = (int) $state;
-                                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state-1))->format('Y-m-d');
+                                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state - 1))->format('Y-m-d');
                                                     $set('detail_to_date', $nextDate);
                                                 })
                                                 ->maxValue(function ($get) {
@@ -345,12 +345,15 @@ class EmployeeApplicationResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('status')->options([
                     EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
                     EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
                     EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED]),
             ])
             ->actions([
+                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\DeleteAction::make(),
                 // Action::make('test')->action(function () {
                 //     $recipient = auth()->user();
 
@@ -412,6 +415,7 @@ class EmployeeApplicationResource extends Resource
                             ]),
                         ];
                     }),
+
                 Action::make('approveAdvanceRequest')->label('Approve')->button()
                     ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
                     ->color('success')
@@ -437,7 +441,6 @@ class EmployeeApplicationResource extends Resource
                         $deductionEndsAt = $record?->detail_deduction_ends_at;
                         $numberOfMonthsOfDeduction = $record?->detail_number_of_months_of_deduction;
 
-
                         // $details = EmployeeApplicationResource::getDetailsKeysAndValues(json_decode($record->details));
                         // dd($details);
                         return [
@@ -449,7 +452,6 @@ class EmployeeApplicationResource extends Resource
                                 TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
                                 TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
                                 TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
-                                
 
                             ]),
                             Fieldset::make()->label('Request data')->columns(2)->schema([
@@ -585,6 +587,7 @@ class EmployeeApplicationResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
