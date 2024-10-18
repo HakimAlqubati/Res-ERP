@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Forms\Components\KeyPadTest;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Setting;
@@ -81,7 +80,7 @@ class AttendanecEmployee2 extends BasePage
                     ->prefixIconColor('success')
                 // ->required()
                     ->seconds(false)
-                    
+
                 ,
                 // KeyPadTest::make('rfid')->default($this->rfid),
                 TextInput::make('rfid')
@@ -104,7 +103,7 @@ class AttendanecEmployee2 extends BasePage
 
         $rfid = $formData['rfid'];
         $formData['rfid'] = $rfid;
- 
+
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
@@ -116,7 +115,6 @@ class AttendanecEmployee2 extends BasePage
         // $dateTime = now();
 
         $dateTime = $data['date_time'];
-        
 
         // Create a Carbon instance
         $carbonDateTime = Carbon::parse($dateTime);
@@ -258,7 +256,6 @@ class AttendanecEmployee2 extends BasePage
         // Ensure that $checkTime is a Carbon instance
         $checkTime = \Carbon\Carbon::parse($checkTime);
 
-        
         // Prepare attendance data
         $attendanceData = [
             'employee_id' => $employee->id,
@@ -310,9 +307,11 @@ class AttendanecEmployee2 extends BasePage
         } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
 
             $periodEndTime = $nearestPeriod->end_at;
-            // $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
-            // dd($checkTime->toTimeString() > $periodEndTime);
-            if ($checkTime->toTimeString() > $periodEndTime && $periodEndTime != '00:00:00') {
+         
+          
+            if ($checkTime->toTimeString() > $periodEndTime 
+            &&
+             ($periodEndTime > $nearestPeriod->start_at && $periodEndTime != '12:00:00')) {
                 $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
 
                 if ($diff >= Setting::getSetting('hours_count_after_period_after')) {
@@ -548,9 +547,8 @@ class AttendanecEmployee2 extends BasePage
             $checkTime->toTimeString() < $nearestPeriod->end_at &&
             $allowedTimeAfterPeriod > $checkTime->toTimeString()) {
 
-                
             $nearestPeriodEnd = Carbon::parse($nearestPeriod->end_at)->subDay(); // Add a day to handle the transition to midnight
-        //   dd($nearestPeriodEnd,$checkTime);
+            //   dd($nearestPeriodEnd,$checkTime);
             // $data['check_date'] = Carbon::parse($date)->addDay()->format('Y-m-d');
             // $data['day'] = Carbon::parse($date)->addDay()->format('l');
             $data['status'] = Attendance::STATUS_LATE_DEPARTURE;
@@ -558,7 +556,7 @@ class AttendanecEmployee2 extends BasePage
             $data['early_arrival_minutes'] = 0;
             $data['early_departure_minutes'] = 0;
         }
-       
+
         return $data;
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Clusters\Settings;
 use App\Forms\Components\KeyPadTest;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -323,8 +322,10 @@ class AttendanecEmployee extends BasePage
         } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
 
             $periodEndTime = $nearestPeriod->end_at;
-
-            if ($checkTime->toTimeString() > $periodEndTime && $periodEndTime != '00:00:00') {
+            
+            if ($checkTime->toTimeString() > $periodEndTime 
+            &&
+             ($periodEndTime > $nearestPeriod->start_at && $periodEndTime != '12:00:00')) {
                 $diff = $this->calculateTimeDifference($periodEndTime, $checkTime->toTimeString(), true);
 
                 if ($diff >= Setting::getSetting('hours_count_after_period_after')) {
