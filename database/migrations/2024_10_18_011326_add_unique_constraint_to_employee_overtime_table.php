@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return;
         Schema::table('hr_employee_overtime', function (Blueprint $table) {
             $table->unique(['employee_id', 'date'], 'employee_date_unique');
         });
@@ -21,6 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        return;
         Schema::table('hr_employee_overtime', function (Blueprint $table) {
             $table->dropUnique('employee_date_unique');
         });
