@@ -48,10 +48,28 @@ class TestImageRecoResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->defaultSort('id','desc')
             ->columns([
                 TextColumn::make('title')->label('Result'),
-                // TextColumn::make('description')->sortable()->searchable(),
+                TextColumn::make('details')->sortable()->searchable()
+                ->getStateUsing(function ($record) {
+                    // Decode JSON to an associative array
+                    $detailsArray = json_decode($record?->details, true);
+                    
+                    // Handle case where details is null or not valid JSON
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        return 'Invalid JSON'; // or handle the error as needed
+                    }
+                
+                    // Check if the decoded array is not empty and has the expected structure
+                    if (isset($detailsArray[0]['similarity'])) {
+                        // Return the similarity with its key
+                        return 'Similarity: ' . round( $detailsArray[0]['similarity'],2) . '%';
+                    }
+                    
+                    // If the expected key doesn't exist, return a fallback message
+                    return 'No similarity value available';
+                }),
                 ImageColumn::make('image_1')->label('Image'),
                 ImageColumn::make('image_3')->label('Target image'),
             ])
@@ -80,7 +98,7 @@ class TestImageRecoResource extends Resource
         return [
             'index' => Pages\ListTestImageRecos::route('/'),
             'create' => Pages\CreateTestImageReco::route('/create'),
-            'edit' => Pages\EditTestImageReco::route('/{record}/edit'),
+            // 'edit' => Pages\EditTestImageReco::route('/{record}/edit'),
         ];
     }
 }
