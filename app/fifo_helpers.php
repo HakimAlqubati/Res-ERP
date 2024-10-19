@@ -5,6 +5,8 @@ use App\Models\OrderDetails;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\SystemSetting;
+use Aws\Exception\AwsException;
+use Aws\Rekognition\RekognitionClient;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -26,11 +28,11 @@ function getSumQtyOfProductFromPurchases($product_id, $unit_id, $latest = false)
             'purchase_invoices.id'
         )
         ->where('product_id', $product_id)
-        // ->where('purchase_invoices.active', 1)
+    // ->where('purchase_invoices.active', 1)
         ->where('unit_id', $unit_id)
         ->groupBy('price', 'purchase_invoice_id')
         ->orderBy('purchase_invoice_id', 'asc');
-        $query->whereNull('purchase_invoices.deleted_at');
+    $query->whereNull('purchase_invoices.deleted_at');
     if (!$latest) {
         $result = $query->get();
     } else {
@@ -48,11 +50,11 @@ function getSumQtyOfProductFromOrders($product_id, $unit_id, $purchase_invoic_id
 
     $orderdQty = DB::table('orders_details')
         ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-        // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+    // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
         ->where('orders_details.product_id', $product_id)
         ->where('orders_details.unit_id', $unit_id)
-        // ->where('orders.active', 1)
-        // ->where('orders.active', 1)
+    // ->where('orders.active', 1)
+    // ->where('orders.active', 1)
         ->whereNull('orders.deleted_at')
         ->where('orders_details.purchase_invoice_id', $purchase_invoic_id)
         ->select(DB::raw('SUM(available_quantity) as total_available_quantity'))
@@ -63,8 +65,6 @@ function getSumQtyOfProductFromOrders($product_id, $unit_id, $purchase_invoic_id
     return $orderdQty;
 }
 
-
-
 /**
  * to compare purchased quantities with orderd quantities
  */
@@ -72,7 +72,6 @@ function comparePurchasedWithOrderdQties($product_id, $unit_id)
 {
     $fdata = [];
     $data = getSumQtyOfProductFromPurchases($product_id, $unit_id, false);
-
 
     foreach ($data as $i => $value) {
         $purchased_qty = $value->total_quantity;
@@ -130,12 +129,12 @@ function calculateFifoMethod($req_array, $orderId)
 {
     $orderDetailsData = [];
     $finalOrderDetailData = [];
-    foreach ($req_array as  $req_val) {
-        $comparedData =  comparePurchasedWithOrderdQties($req_val['product_id'], $req_val['unit_id']);
+    foreach ($req_array as $req_val) {
+        $comparedData = comparePurchasedWithOrderdQties($req_val['product_id'], $req_val['unit_id']);
 
         if (count($comparedData) == 1 && $comparedData[0]['purchased_qty'] == 0 && isOrderCompletedIfQtyLessThanZero()) {
 
-            $orderDetailsData  = [
+            $orderDetailsData = [
                 'order_id' => $orderId,
                 'product_id' => $comparedData[0]['product_id'],
                 'unit_id' => $comparedData[0]['unit_id'],
@@ -143,7 +142,7 @@ function calculateFifoMethod($req_array, $orderId)
                 'available_quantity' => $req_val['quantity'],
                 'created_by' => auth()?->user()?->id,
                 'purchase_invoice_id' => $comparedData[0]['purchase_invoice_id'],
-                'price' =>  $comparedData[0]['price'],
+                'price' => $comparedData[0]['price'],
                 'negative_inventory_quantity' => true,
             ];
             $finalOrderDetailData[] = $orderDetailsData;
@@ -156,7 +155,7 @@ function calculateFifoMethod($req_array, $orderId)
             $remaning_qty = $value['remaning_qty'];
             $already_ordered_qty = $req_val['quantity'];
             if ($already_ordered_qty <= $remaning_qty) {
-                $orderDetailsData  = [
+                $orderDetailsData = [
                     'order_id' => $orderId,
                     'product_id' => $value['product_id'],
                     'unit_id' => $value['unit_id'],
@@ -164,7 +163,7 @@ function calculateFifoMethod($req_array, $orderId)
                     'available_quantity' => $already_ordered_qty,
                     'created_by' => auth()?->user()?->id,
                     'purchase_invoice_id' => $purchase_invoice_id,
-                    'price' =>  $price,
+                    'price' => $price,
                     'negative_inventory_quantity' => false,
                 ];
                 break;
@@ -176,12 +175,11 @@ function calculateFifoMethod($req_array, $orderId)
         $finalOrderDetailData[] = $orderDetailsData;
     }
 
-
     return fixResultOfCalculating($finalOrderDetailData);
 }
 
 /**
- * function does that 
+ * function does that
  * calculate the price if already ordered quantity is bigger than remaning quantity
  */
 function calculateIfAlreadyQtyBiggerThanRemaning($comparedData, $already_ordered_qty, $product_id, $unit_id, $orderId)
@@ -189,14 +187,11 @@ function calculateIfAlreadyQtyBiggerThanRemaning($comparedData, $already_ordered
     $orderDetailsData = [];
     for ($i = 0; $i < count($comparedData); $i++) {
 
-
         if ($already_ordered_qty > $comparedData[$i]['remaning_qty']) {
             $qty = ($comparedData[$i]['purchased_qty'] - $comparedData[$i]['orderd_qty']);
         } else if ($already_ordered_qty <= $comparedData[$i]['remaning_qty']) {
             $qty = $already_ordered_qty;
         }
-
-
 
         $orderDetailsData[] = [
             'order_id' => $orderId,
@@ -211,7 +206,7 @@ function calculateIfAlreadyQtyBiggerThanRemaning($comparedData, $already_ordered
         ];
         $already_ordered_qty = ($already_ordered_qty - $qty);
 
-        if ($already_ordered_qty > 0  && $i == count($comparedData) - 1 && isOrderCompletedIfQtyLessThanZero()) {
+        if ($already_ordered_qty > 0 && $i == count($comparedData) - 1 && isOrderCompletedIfQtyLessThanZero()) {
             $orderDetailsData[] = [
                 'order_id' => $orderId,
                 'product_id' => $product_id,
@@ -235,7 +230,6 @@ function calculateIfAlreadyQtyBiggerThanRemaning($comparedData, $already_ordered
     return $orderDetailsData;
 }
 
-
 /**
  * fixing the result of calculating function
  */
@@ -255,7 +249,6 @@ function fixResultOfCalculating($finalOrderDetailData)
     return $mergedArray;
 }
 
-
 /**
  * complete order if the quantities less than zero
  * that means the prices will be equal the last products
@@ -263,9 +256,8 @@ function fixResultOfCalculating($finalOrderDetailData)
 function isOrderCompletedIfQtyLessThanZero()
 {
 
-    return   SystemSetting::select('completed_order_if_not_qty')->first()->completed_order_if_not_qty;
+    return SystemSetting::select('completed_order_if_not_qty')->first()->completed_order_if_not_qty;
 }
-
 
 /**
  * handle pending order details
@@ -329,43 +321,42 @@ function getProductPriceByProductUnitPurchaseInvoiceId($productId, $unitId, $pur
     return $price;
 }
 
-
 function getProductQuantities($productId, $unitId, $orderDetailId, $purchaseInvoiceId)
 {
     $result = [];
     $checkIfPurchaseInvoiceId = PurchaseInvoice::find($purchaseInvoiceId);
     if ($checkIfPurchaseInvoiceId) {
         $data = DB::select("
-        SELECT 
+        SELECT
         (
-            SELECT SUM(od.available_quantity) 
+            SELECT SUM(od.available_quantity)
             FROM orders_details AS od
-            JOIN orders AS o ON od.order_id = o.id 
+            JOIN orders AS o ON od.order_id = o.id
             WHERE od.product_id = $productId
-            AND o.deleted_at IS NULL 
+            AND o.deleted_at IS NULL
             AND od.unit_id = $unitId
             and od.id <= $orderDetailId
             and od.purchase_invoice_id = $purchaseInvoiceId
         ) AS total_ordered_qty,
-        
+
         (
-            SELECT SUM(pd.quantity) 
+            SELECT SUM(pd.quantity)
             FROM purchase_invoice_details AS pd
-            JOIN purchase_invoices AS p ON pd.purchase_invoice_id = p.id 
+            JOIN purchase_invoices AS p ON pd.purchase_invoice_id = p.id
             WHERE pd.product_id = $productId
-            AND p.deleted_at IS NULL 
+            AND p.deleted_at IS NULL
             AND pd.unit_id = $unitId
             and pd.purchase_invoice_id = $purchaseInvoiceId
         ) AS total_purchased_qty
-        
-        
-    FROM 
+
+
+    FROM
         orders_details AS ord_dts
-    WHERE 
+    WHERE
         ord_dts.product_id = $productId
       and   ord_dts.unit_id  = $unitId
       and purchase_invoices.deleted_at is null
-    GROUP BY 
+    GROUP BY
         ord_dts.product_id
         ;
         ");
@@ -378,4 +369,154 @@ function getProductQuantities($productId, $unitId, $orderDetailId, $purchaseInvo
         }
     }
     return $result;
+}
+
+/**
+ *
+ */
+function awsClient()
+{
+    return new RekognitionClient([
+        'version' => 'latest',
+        'region' => 'ap-southeast-1', // Example: us-west-2
+        'credentials' => [
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        ],
+    ]);
+
+}
+
+function detectLabels($client)
+{
+
+    try {
+        // Load the image from file path
+        $imageData = file_get_contents('storage/to_compare/omar4.jpeg');
+
+        // Call the detectLabels API
+        $result = $client->detectLabels([
+            'Image' => [
+                'Bytes' => $imageData,
+            ],
+            'MaxLabels' => 10, // Maximum number of labels to return
+            'MinConfidence' => 80, // Minimum confidence level (optional)
+        ]);
+
+        // Output the labels detected
+        if (isset($result['Labels']) && count($result['Labels']) > 0) {
+            echo "Detected Labels:\n";
+            foreach ($result['Labels'] as $label) {
+                echo "Label: " . $label['Name'] . "\n";
+                echo "Confidence: " . $label['Confidence'] . "%\n";
+            }
+        } else {
+            echo "No labels detected.\n";
+        }
+    } catch (AwsException $e) {
+        // Output error message if fails
+        echo "Error: " . $e->getMessage() . "\n";
+    }
+}
+
+function compareImages_($client)
+{
+    $sourceImage = file_get_contents('storage/to_compare/omar4.jpeg'); // Replace with your source image path
+    $targetImage = file_get_contents('storage/to_compare/omar2.jpeg'); // Replace with your target image path
+
+    try {
+        // Call the CompareFaces API
+        $result = $client->compareFaces([
+            'SourceImage' => [
+                'Bytes' => $sourceImage,
+            ],
+            'TargetImage' => [
+                'Bytes' => $targetImage,
+            ],
+            'SimilarityThreshold' => 80, // Set the similarity threshold (e.g., 80%)
+        ]);
+
+        // Output the result
+        if (isset($result['FaceMatches']) && count($result['FaceMatches']) > 0) {
+            foreach ($result['FaceMatches'] as $match) {
+                $similarity = $match['Similarity'];
+                $face = $match['Face'];
+                $messageTitle = "Match found with {$similarity}% similarity.";
+                $messageBody = "BoundingBox: " . json_encode($face['BoundingBox']);
+                dd($messageTitle, json_encode($messageBody), $messageBody);
+
+            }
+        } else {
+            echo 'no match';
+        }
+    } catch (AwsException $e) {
+        // Output error message if fails
+        echo $e->getMessage();
+        echo "\n";
+    }
+}
+
+
+if (!function_exists('compareImages')) {
+    /**
+     * Compare two images using AWS Rekognition's CompareFaces API.
+     *
+     * @param RekognitionClient $client
+     * @param string $sourceImagePath
+     * @param string $targetImagePath
+     * @return array
+     */
+    function compareImages(RekognitionClient $client, string $sourceImagePath, string $targetImagePath): array
+    {
+        // Load the source and target images
+        $sourceImage = file_get_contents($sourceImagePath);
+        $targetImage = file_get_contents($targetImagePath);
+
+        try {
+            // Call the CompareFaces API
+            $result = $client->compareFaces([
+                'SourceImage' => [
+                    'Bytes' => $sourceImage,
+                ],
+                'TargetImage' => [
+                    'Bytes' => $targetImage,
+                ],
+                'SimilarityThreshold' => 80, // Set the similarity threshold (e.g., 80%)
+            ]);
+
+            // Prepare the response
+            $response = [
+                'title' => '',
+                'details' => '',
+            ];
+
+            // Check for matches
+            if (isset($result['FaceMatches']) && count($result['FaceMatches']) > 0) {
+                $matches = [];
+                foreach ($result['FaceMatches'] as $match) {
+                    $similarity = $match['Similarity'];
+                    $face = $match['Face'];
+                    $matches[] = [
+                        'similarity' => $similarity,
+                        'boundingBox' => $face['BoundingBox'],
+                    ];
+                }
+
+                // Set title and details based on the matches found
+                $response['title'] = 'Match found';
+                $response['details'] = json_encode($matches); // You can modify this as needed
+            } else {
+                $response['title'] = 'No match found';
+                $response['details'] = 'No face matches were detected.';
+            }
+
+            return $response;
+        } catch (AwsException $e) {
+            // Output error message if fails
+            return [
+                'title' => 'Error',
+                'details' => 'Error: ' . $e->getMessage(),
+            ];
+        }
+    }
 }
