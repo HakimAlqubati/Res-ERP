@@ -70,8 +70,8 @@ class TestImageRecoResource extends Resource
                     // If the expected key doesn't exist, return a fallback message
                     return 'No similarity value available';
                 }),
-                ImageColumn::make('image_1')->label('Image'),
-                ImageColumn::make('image_3')->label('Target image'),
+                ImageColumn::make('image_1')->label('Image')->width(200)->height(200)->circular(),
+                ImageColumn::make('image_3')->label('Target image')->width(200)->height(200)->circular(),
             ])
             ->filters([
                 //
