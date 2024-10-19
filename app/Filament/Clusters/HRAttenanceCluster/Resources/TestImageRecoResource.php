@@ -49,6 +49,7 @@ class TestImageRecoResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->defaultSort('id','desc')
+        ->striped()
             ->columns([
                 TextColumn::make('title')->label('Result'),
                 TextColumn::make('details')->sortable()->searchable()
@@ -70,8 +71,8 @@ class TestImageRecoResource extends Resource
                     // If the expected key doesn't exist, return a fallback message
                     return 'No similarity value available';
                 }),
-                ImageColumn::make('image_1')->label('Image')->width(200)->height(200)->circular(),
-                ImageColumn::make('image_3')->label('Target image')->width(200)->height(200)->circular(),
+                ImageColumn::make('image_1')->label('Image')->width(180)->height(180)->circular(),
+                ImageColumn::make('image_3')->label('Target image')->width(180)->height(180)->circular(),
             ])
             ->filters([
                 //
