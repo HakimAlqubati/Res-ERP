@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 class PeriodHistoriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'periodHistories';
-    protected static ?string $title = 'Shift histories';
+    protected static ?string $title = 'Shift history';
     public function form(Form $form): Form
     {
         return $form
