@@ -416,6 +416,66 @@ class EmployeeApplicationResource extends Resource
                         ];
                     }),
 
+                // Approve missed checkin request
+                Action::make('approveMissedCheckinRequest')->label('Approve')->button()
+                    ->databaseTransaction()
+                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
+                    ->color('success')
+                    ->icon('heroicon-o-check')
+                    ->action(function ($record, $data) {
+
+                        $employeePeriods = $record->employee?->periods;
+
+                        if (!is_null($record->employee) && count($employeePeriods) > 0) {
+                            $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+
+                            // Decode the days array for each period
+                            $workTimePeriods = $employeePeriods->map(function ($period) {
+                                $period->days = json_decode($period->days); // Ensure days are decoded
+                                return $period;
+                            });
+
+                            // Filter periods by the day
+                            $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+                                return in_array($day, $period->days);
+                            });
+                            
+                            $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+                           
+                            (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
+                            $record->update([
+                                'status' => EmployeeApplication::STATUS_APPROVED,
+                                'approved_by' => auth()->user()->id,
+                                'approved_at' => now(),
+                            ]);
+                        }
+                        // ApplicationTransaction::createTransactionFromApplication($record);
+
+                    })
+                    ->disabledForm()
+                    ->form(function ($record) {
+                        // $attendance = Attendance::where('employee_id', $record?->employee_id)
+                        //     ->where('check_date', $record?->detail_date)
+                        //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                        //     ->first();
+
+                        return [
+                            // Fieldset::make()->label('Attendance data')->columns(3)->schema([
+                            //     TextInput::make('employee')->default($record?->employee?->name),
+                            //     DatePicker::make('check_date')->default($attendance?->check_date),
+                            //     TimePicker::make('check_time')->default($attendance?->check_time),
+                            //     TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
+                            //     TextInput::make('start_at')->default($attendance?->period?->start_at),
+                            //     TextInput::make('end_at')->default($attendance?->period?->end_at),
+                            //     Hidden::make('period')->default($attendance?->period),
+                            // ]),
+                            Fieldset::make()->label('Request data')->columns(2)->schema([
+                                DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                                TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                            ]),
+                        ];
+                    }),
+
                 Action::make('approveAdvanceRequest')->label('Approve')->button()
                     ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
                     ->color('success')
