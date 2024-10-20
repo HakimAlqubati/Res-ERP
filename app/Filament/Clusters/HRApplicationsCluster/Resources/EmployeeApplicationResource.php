@@ -633,4 +633,17 @@ class EmployeeApplicationResource extends Resource
         return static::getModel()::count();
     }
 
+    public static function canCreate(): bool
+    {
+        return true;
+        return static::can('create');
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff()) {
+            return true;
+        }
+        return false;
+    }
 }
