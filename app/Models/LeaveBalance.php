@@ -47,4 +47,22 @@ class LeaveBalance extends Model
                     ->where('leave_type_id', $leaveTypeId)
                     ->first();
     }
+
+    protected static function booted()
+    { 
+        // parent::boot();
+      
+    //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
+        if (auth()->check()) {
+            if (isBranchManager()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+                });
+            } elseif (isStuff()) {
+                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
+                });
+            }
+        }
+    }
 }

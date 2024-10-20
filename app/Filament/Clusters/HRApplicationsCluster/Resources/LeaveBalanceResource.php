@@ -32,6 +32,14 @@ class LeaveBalanceResource extends Resource
     protected static ?string $modelLabel = 'Leave balance';
     protected static ?string $pluralLabel = 'Leave balance';
 
+    public static function getModelLabel(): string
+    {
+        return isStuff() ? 'My leave balance': static::$modelLabel;
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return isStuff() ? 'My leave balance': static::$modelLabel;static::$pluralLabel;
+    }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function form(Form $form): Form
@@ -65,7 +73,7 @@ class LeaveBalanceResource extends Resource
                                 ->required()
                                 ->live()
                                 ->options(LeaveType::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->afterStateUpdated(function (Get $get, Set $set, $state,$livewire) {
+                                ->afterStateUpdated(function (Get $get, Set $set, $state, $livewire) {
                                     $employees = Employee::where('branch_id', $get('branch_id'))->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
                                     $leaveType = LeaveType::find($state);
                                     foreach ($employees as $index => $employee) {
@@ -96,13 +104,13 @@ class LeaveBalanceResource extends Resource
                                         ->numeric()
                                         ->live()
                                         ->required()
-                                        // ->maxValue(function (Get $get) {
-                                        //     dd($get('leave_type_id'),$get('employee_id'),$get('basic.branch_id'));
-                                        //     $max = LeaveType::find($get('leave_type_id'))?->count_days ?? 0;
-                                        //     // dd($max);
-                                        //     return $max;
-                                        // })
-                                        ,
+                                    // ->maxValue(function (Get $get) {
+                                    //     dd($get('leave_type_id'),$get('employee_id'),$get('basic.branch_id'));
+                                    //     $max = LeaveType::find($get('leave_type_id'))?->count_days ?? 0;
+                                    //     // dd($max);
+                                    //     return $max;
+                                    // })
+                                    ,
                                 ])
 
                                 ,
@@ -176,4 +184,27 @@ class LeaveBalanceResource extends Resource
             // 'edit' => Pages\EditLeaveBalance::route('/{record}/edit'),
         ];
     }
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    public static function canCreate(): bool
+    {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
+            return true;
+        }
+        return false;
+        return static::can('create');
+    }
+
+    // public static function getLabel(): ?string
+    // {
+    //     // if (!in_array(getCurrentRole(), [1, 3])) {
+    //     if (isStuff()) {
+    //         return 'My leave balance';
+    //     }
+    //     return static::$label;
+    // }
+
 }

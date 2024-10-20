@@ -95,4 +95,11 @@ class EmployeesAttednaceReportResource extends Resource
         return $query;
     }
 
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+            return true;
+        }
+        return false;
+    }
 }

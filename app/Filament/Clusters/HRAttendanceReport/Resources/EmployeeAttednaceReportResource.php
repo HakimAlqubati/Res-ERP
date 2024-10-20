@@ -26,6 +26,10 @@ class EmployeeAttednaceReportResource extends Resource
 
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label = 'Attendance by employee';
+    public static function getModelLabel(): string
+    {
+        return isStuff() ? 'My attendance' : 'Attendance by employee';
+    }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function form(Form $form): Form
@@ -52,7 +56,16 @@ class EmployeeAttednaceReportResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
-                        ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
+                        ->select('name', 'id')
+
+                        ->get()->pluck('name', 'id'))
+                
+                    ->default(function () {
+                        if (isStuff()) {
+                            return auth()->user()->employee->id;
+                        }
+                    })
+                    ->searchable(),
                 Filter::make('date_range')
                     ->form([
                         DatePicker::make('start_date')

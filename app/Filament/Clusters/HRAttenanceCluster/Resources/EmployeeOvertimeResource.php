@@ -415,4 +415,13 @@ class EmployeeOvertimeResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
+
+    public static function canCreate(): bool
+    {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
+            return true;
+        }
+        return false;
+        return static::can('create');
+    }
 }
