@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\HRCluster;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Models\Allowance;
 use App\Models\Branch;
@@ -233,19 +235,14 @@ class EmployeeResource extends Resource
                                 ]),
                                 Fieldset::make()->label('Shift - RFID')->schema([
                                     Grid::make()->columns(2)->schema([
-                                        CheckboxList::make('periods') // Refers to the 'periods' relationship in the Employee model
-                                            ->label('Work Periods')
-                                            ->relationship('periods', 'name') // Specify the relationship and the display column
-                                        // ->options(WorkPeriod::where('active', 1)->get()->pluck('name', 'id'))
-                                            ->columns(2)
-                                            ->helperText('Select the employee\'s work periods.')
-                                        // ->afterStateHydrated(function ($component, $state, $record) {
-
-                                        //     if (!filled($state) && count($record->periods->pluck('id')->toArray()) > 0) {
-                                        //         $component->state($record->periods->pluck('id')->toArray());
-                                        //     }
-                                        // })
-                                        ,
+                                        // CheckboxList::make('periods') 
+                                        //     ->label('Work Periods')
+                                        //     ->relationship('periods', 'name') 
+                                        
+                                        //     ->columns(2)
+                                        //     ->helperText('Select the employee\'s work periods.')
+                                        
+                                        // ,
 
                                         TextInput::make('rfid')->label('Employee RFID')
                                             ->unique(ignoreRecord: true)
@@ -434,7 +431,8 @@ class EmployeeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            PeriodHistoriesRelationManager::class,
+            PeriodRelationManager::class,
         ];
     }
 

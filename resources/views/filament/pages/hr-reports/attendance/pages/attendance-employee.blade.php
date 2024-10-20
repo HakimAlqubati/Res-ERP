@@ -54,8 +54,13 @@
                         <x-filament-tables::row>
                             <x-filament-tables::cell>
                                 {{ $date }}
+                                {{-- {{ dd($data['no_periods']) }} --}}
                             </x-filament-tables::cell>
-
+                            @if (isset($data['no_periods']) && $data['no_periods'] == true)
+                                <x-filament-tables::cell colspan="100%">
+                                    {{ 'No periods in this date ('. $date.')' }}
+                                </x-filament-tables::cell>
+                            @endif
                             @if (count($data['periods']) > 0)
                                 <x-filament-tables::cell colspan="9" style="padding: 0;">
                                     <x-filament-tables::table style="width: 100%">
@@ -75,7 +80,7 @@
                                                     </x-filament-tables::cell>
                                                     @if (!isset($item['attendances']['checkout']))
                                                         <x-filament-tables::cell class="internal_cell" colspan="4">
-                                                            {{'There is no checkout'}}
+                                                            {{ 'There is no checkout' }}
                                                         </x-filament-tables::cell>
                                                     @endif
                                                 @endif

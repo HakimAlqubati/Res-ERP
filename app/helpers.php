@@ -15,6 +15,7 @@ use App\Models\UserType;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 function getName()
 {
@@ -864,6 +865,10 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
     // Initialize an array to hold the results
     $result = [];
+    $employeeHistoryPeriods = getPeriodsForDateRange($employeeId, $startDate, $endDate);
+    // foreach ($variable as $key => $value) {
+    //     # code...
+    // }
 
     // Loop through each date in the date range
     for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
@@ -914,19 +919,25 @@ function employeeAttendances($employeeId, $startDate, $endDate)
             }
         }
 
-        // Get the employee periods for the current date
-        $employeePeriods = DB::table('hr_work_periods as wp')
-            ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            ->select('wp.start_at', 'wp.end_at', 'ep.period_id', 'ep.period_id')
-            ->where('ep.employee_id', $employeeId)
-            ->orderBy('wp.start_at', 'asc')
-            ->get();
+        // // Get the employee periods for the current date
+        // $employeePeriods = DB::table('hr_work_periods as wp')
+        //     ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
+        //     ->select('wp.start_at', 'wp.end_at', 'ep.period_id', 'ep.period_id')
+        //     ->where('ep.employee_id', $employeeId)
+        //     ->orderBy('wp.start_at', 'asc')
+        //     ->get();
+        // $employeePeriods = getEmployeePeriods($employeeId, $startDate, $endDate);
+        
+        $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
+        
+        // dd($employeePeriods,$employeePeriods2);
 
         if (count($employeePeriods) == 0) {
             $result[$date->toDateString()]['no_periods'] = true;
         }
-        // Loop through each period
         foreach ($employeePeriods as $period) {
+            $period = (object) $period;
+            // dd($period);
             // Get attendances for the current period and date
             $attendances = DB::table('hr_attendances as a')
                 ->where('a.employee_id', '=', $employeeId)
@@ -938,6 +949,8 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
             // Structure for the current period
             $periodData = [
+                'start_date' => $period->start_date,
+                'end_date' => $period->end_date,
                 'start_at' => $period->start_at,
                 'end_at' => $period->end_at,
                 'period_id' => $period->period_id,
@@ -999,10 +1012,12 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
             // Add the period data to the result for the current date
             $result[$date->toDateString()]['periods'][] = $periodData;
+
+            if (count($employeePeriods) == 0) {
+                return 'no_periods';
+            }
         }
-    }
-    if (count($employeePeriods) == 0) {
-        return 'no_periods';
+
     }
     return $result;
 }
@@ -1151,7 +1166,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                 ->whereDate('from_date', '<=', $date)
                 ->whereDate('to_date', '>=', $date)
                 ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_type_id', 'transaction_description'])->first();
-            
+
             // Check if the current date falls within any leave applications
             if ($leave) {
                 $result[$employeeId][$date->toDateString()]['leave'] = [
@@ -1429,4 +1444,66 @@ function formatDuration($duration)
 
     // Return the formatted string
     return "{$hours} h " . (int) $minutes . " m"; // Cast minutes to int to avoid any zero-padding
+}
+
+/**
+ * to get employee periods based on history
+ */
+function getEmployeePeriods($employeeId, $startDate, $endDate): Collection
+{
+    // Fetch periods from hr_employee_period_histories based on employee_id and date range
+    $periods = DB::table('hr_employee_period_histories')
+        ->select(
+            DB::raw("TIME(start_date) as start_at"), // Extract time from start_date
+            DB::raw("TIME(end_date) as end_at"), // Extract time from end_date
+            'period_id'
+        )
+        ->where('employee_id', $employeeId)
+        ->whereBetween('start_date', [$startDate, $endDate])
+        ->get();
+
+    // Format the results to match the specified structure
+    return $periods->map(function ($period) {
+        return (object) [
+            'start_at' => $period->start_at,
+            'end_at' => $period->end_at,
+            'period_id' => $period->period_id,
+        ];
+    });
+}
+
+function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate): Collection
+{
+    // Initialize a collection to hold the results, grouped by date
+    $groupedPeriods = collect();
+
+    // Loop through each date in the date range
+    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
+        // Fetch periods that include the current date
+        $periods = DB::table('hr_employee_period_histories')
+            ->select('period_id', 'start_date', 'end_date','start_time','end_time')
+            ->where('employee_id', $employeeId)
+            ->where(function ($query) use ($date) {
+                $query->where('start_date', '<=', $date) // Period starts before or on the date
+                    ->where(function ($subQuery) use ($date) {
+                        $subQuery->where('end_date', '>=', $date) // Period ends after or on the date
+                            ->orWhereNull('end_date'); // Active periods without an end date
+                    });
+            })
+            ->get();
+
+        // If there are periods for the current date, group them under that date
+        if ($periods->isNotEmpty()) {
+            $groupedPeriods->put($date->toDateString(), $periods->map(function ($period) {
+                return [
+                    'period_id' => $period->period_id,
+                    'start_date' => $period->start_date,
+                    'end_date' => $period->end_date,
+                    'start_at' => $period->start_time,
+                    'end_at' => $period->end_time,
+                ];
+            }));
+        }
+    }
+    return $groupedPeriods;
 }

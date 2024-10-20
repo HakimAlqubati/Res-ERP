@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class Employee extends Model
@@ -108,6 +110,10 @@ class Employee extends Model
     public function periods()
     {
         return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id');
+    }
+    public function periodHistories()
+    {
+        return $this->hasMany(EmployeePeriodHistory::class,);
     }
 
     // Log changes to periods
@@ -313,6 +319,9 @@ class Employee extends Model
     
         return $results; // Return the results
     }
+
+
+    
 
     
 }

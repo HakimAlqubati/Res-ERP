@@ -36,6 +36,7 @@ class LogsRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('log_type')
+            ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('log_type'),
                 Tables\Columns\TextColumn::make('description'),
