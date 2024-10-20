@@ -4,7 +4,7 @@ namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
-use App\Filament\Pages\AttendanecEmployee;
+use App\Filament\Pages\AttendanecEmployee2 as AttendanecEmployee;
 use App\Models\ApplicationTransaction;
 use App\Models\Attendance;
 use App\Models\Employee;
