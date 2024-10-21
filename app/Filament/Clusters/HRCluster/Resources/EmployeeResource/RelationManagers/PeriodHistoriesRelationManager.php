@@ -36,7 +36,7 @@ class PeriodHistoriesRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('workPeriod.id')->label('Shift id')->alignCenter(true)->sortable(),
                 TextColumn::make('workPeriod.name')->label('Shift name'),
-                TextColumn::make('start_date')->label('Start Date')->sortable(),
+                TextColumn::make('start_date')->label('Start date')->sortable(),
                 TextColumn::make('end_date')->label('End date')->default('At now'),
                 TextColumn::make('start_time')->label('Start time'),
                 TextColumn::make('end_time')->label('End time'),
@@ -49,7 +49,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                // Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()),
+                Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()),
                 Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
                     ->requiresConfirmation()->databaseTransaction()
                    ->button()
