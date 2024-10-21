@@ -21,6 +21,7 @@ class PeriodHistoriesRelationManager extends RelationManager
     {
         return $form
             ->schema([
+                DatePicker::make('start_date'),
                 DatePicker::make('end_date'),
                 TimePicker::make('start_time'),
                 TimePicker::make('end_time'),
