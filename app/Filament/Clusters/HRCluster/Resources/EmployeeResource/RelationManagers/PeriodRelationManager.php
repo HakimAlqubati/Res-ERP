@@ -69,6 +69,9 @@ class PeriodRelationManager extends RelationManager
                                 )->default(function () {
                                 return $this->ownerRecord?->periods?->plucK('id')?->toArray();
                             })
+                            // ->disabled(function(){
+                            //     return [1,2,3,4];
+                            // })
                                 ->helperText('Select the employee\'s work periods.'),
                         ])]
                     )
@@ -87,6 +90,10 @@ class PeriodRelationManager extends RelationManager
 
                             // Insert new periods into hr_employee_periods table
                             foreach ($result as $value) {
+                                $workPeriod = WorkPeriod::find($value);
+                                $periodStartAt = $workPeriod?->start_at;
+                                $periodEndAt = $workPeriod?->end_at;
+
                                 // Insert into hr_employee_periods
                                 DB::table('hr_employee_periods')->insert([
                                     'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
@@ -97,8 +104,10 @@ class PeriodRelationManager extends RelationManager
                                 DB::table('hr_employee_period_histories')->insert([
                                     'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
                                     'period_id' => $value,
-                                    'start_date' => now(), // You can set this to the current time or adjust as needed
-                                    'end_date' => null, // Set to null if the period is currently active
+                                    'start_date' => now(), 
+                                    'end_date' => null, 
+                                    'start_time' => $periodStartAt,
+                                    'end_time' => $periodEndAt,
                                 ]);
                             }
 

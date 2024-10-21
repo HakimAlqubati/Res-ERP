@@ -3,6 +3,8 @@
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -17,9 +19,9 @@ class PeriodHistoriesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('period_id')
-                    ->required()
-                    ->maxLength(255),
+                DatePicker::make('end_date'),
+                TimePicker::make('start_time'),
+                TimePicker::make('end_time'),
             ]);
     }
 
@@ -33,7 +35,9 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.id')->label('Shift id')->alignCenter(true)->sortable(),
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start Date')->sortable(),
-                TextColumn::make('end_date')->label('End Date')->default('At now'),
+                TextColumn::make('end_date')->label('End date')->default('At now'),
+                TextColumn::make('start_time')->label('Start time'),
+                TextColumn::make('end_time')->label('End time'),
             ])
             ->filters([
                 //
@@ -42,7 +46,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                // Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()) ,
                 // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
