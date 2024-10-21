@@ -108,7 +108,7 @@
                                                     <x-filament-tables::cell class="internal_cell">
                                                         
 
-                                                            {{ $item['total_hours'] }}
+                                                    {{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}
                                                         
                                                     </x-filament-tables::cell>
                                                 @endif

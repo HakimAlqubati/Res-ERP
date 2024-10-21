@@ -937,7 +937,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
         }
         foreach ($employeePeriods as $period) {
             $period = (object) $period;
-            // dd($period);
+
             // Get attendances for the current period and date
             $attendances = DB::table('hr_attendances as a')
                 ->where('a.employee_id', '=', $employeeId)
@@ -960,6 +960,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
             // Group attendances by check_type
             if ($attendances->isNotEmpty()) {
+
                 $firstCheckin = null; // Variable to store the first check-in
                 $lastCheckout = null; // Variable to store the last check-out
                 $totalActualDuration = 0;
@@ -983,7 +984,27 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                         ];
 
                     } elseif ($attendance->check_type === 'checkout') {
+
+                        $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
+                      
+
+                      
+
                         $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
+                        $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
+
+                        $approvedOvertime = getEmployeeOvertimes($date, $employee);
+
+                        if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
+                            $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
+
+                        }
+                        if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
+                            $approvedOvertime = $formattedSupposedActualDuration;
+                        }
+                        if (!$isActualLargerThanSupposed) {
+                            $approvedOvertime = $periodData['total_hours'];
+                        }
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',
@@ -992,6 +1013,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
+                            'approved_overtime'=> $approvedOvertime,
                         ];
                         $periodData['attendances']['checkout'][] = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
@@ -1194,12 +1216,11 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             //     ->orderBy('wp.start_at', 'asc')
             //     ->get();
 
-                
-            $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()]?? [];
+            $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()] ?? [];
             // dd($employeePeriods, $employeePeriods2);
-            
+
             // if ( $employeePeriods->isEmpty()) {
-            if ( is_array($employeePeriods) && count($employeePeriods) == 0) {
+            if (is_array($employeePeriods) && count($employeePeriods) == 0) {
                 // If no periods are assigned to the employee, mark with a message
                 $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
                 $result[$employeeId][$date->toDateString()]['no_periods'] = true;
@@ -1209,7 +1230,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             // Loop through each period for the employee
             foreach ($employeePeriods as $period) {
                 $period = (object) $period;
-                
+
                 // Get attendances for the current period and date
                 $attendances = DB::table('hr_attendances as a')
                     ->where('a.employee_id', '=', $employeeId)
