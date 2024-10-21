@@ -2,12 +2,14 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
-use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -38,6 +40,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('end_date')->label('End date')->default('At now'),
                 TextColumn::make('start_time')->label('Start time'),
                 TextColumn::make('end_time')->label('End time'),
+
             ])
             ->filters([
                 //
@@ -46,7 +49,23 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()) ,
+                // Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()),
+                Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
+                    ->requiresConfirmation()->databaseTransaction()
+                   ->button()
+                    ->color(Color::Red)
+                    ->action(function ($record) {
+                        $record->update(['active' => 0]);
+                        Notification::make()->title('Done')->send();
+                    }),
+                Action::make('enable')->label('Enable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 0))
+                    ->requiresConfirmation()->databaseTransaction()
+                    ->button()
+                    ->color(Color::Green)
+                    ->action(function ($record) {
+                        $record->update(['active' => 1]);
+                        Notification::make()->title('Done')->send();
+                    }),
                 // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

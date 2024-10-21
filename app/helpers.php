@@ -1483,6 +1483,7 @@ function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate)
         $periods = DB::table('hr_employee_period_histories')
             ->select('period_id', 'start_date', 'end_date','start_time','end_time')
             ->where('employee_id', $employeeId)
+            ->where('active',1)
             ->where(function ($query) use ($date) {
                 $query->where('start_date', '<=', $date) // Period starts before or on the date
                     ->where(function ($subQuery) use ($date) {

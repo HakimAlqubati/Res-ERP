@@ -16,7 +16,8 @@ class EmployeePeriodHistory extends Model
         'start_date',
         'end_date',
         'start_time',
-        'end_time'
+        'end_time',
+        'active',
     ];
 
     // Define the relationship with Employee

@@ -188,14 +188,14 @@ html::-webkit-scrollbar {
     letter-spacing: 2.5px;
 }
 
-.internal_cell{
+.internal_cell {
     width: 110px !important;
 }
 
 /**
 */
-  /* Card Styling */
-  .custom-card {
+/* Card Styling */
+.custom-card {
     background: linear-gradient(135deg, #f3f4f6, #fff);
     border-radius: 15px;
     padding: 30px;
@@ -270,31 +270,64 @@ html::-webkit-scrollbar {
 }
 
 
-.btn_fingerprint svg{
-    height: 112px  !important;
+.btn_fingerprint svg {
+    height: 112px !important;
     width: 253px !important;
 }
 
 .reports tbody tr:nth-child(even) {
     background-color: #0d7c66;
     color: white;
-  }
+}
 
 
-  .table-container {
-    max-height: 300px; /* Adjust the height as needed */
-    overflow-y: auto;  /* Enables vertical scrolling */
+.table-container {
+    max-height: 300px;
+    /* Adjust the height as needed */
+    overflow-y: auto;
+    /* Enables vertical scrolling */
 }
 
 .fixed-header {
-    position: sticky; /* Use sticky positioning */
-    top: 0;          /* Stick to the top */
-    background-color: white; 
+    position: sticky;
+    /* Use sticky positioning */
+    top: 0;
+    /* Stick to the top */
+    background-color: white;
     color: #0d7c66;
-    z-index: 1;     /* Ensure it appears above other elements */
+    z-index: 1;
+    /* Ensure it appears above other elements */
 
 }
 
 .fixed-header th {
-    border-bottom: 2px solid #ddd; /* Optional: Add border to the header */
+    border-bottom: 2px solid #ddd;
+    /* Optional: Add border to the header */
+}
+
+
+/**
+for scrollbar
+*/
+::-webkit-scrollbar {
+    width: 10px;
+    height: 7px;
+    transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #4a5568;
+    border-radius: 10px;
+    border: 1px solid #edf2f7;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #edf2f7;
+    border-radius: 10px;
+}
+
+/* Hover effect for the scrollbar */
+::-webkit-scrollbar:hover {
+    width: 12px; /* Increase the width on hover */
+    height: 12px;
 }
