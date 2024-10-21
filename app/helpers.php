@@ -1187,16 +1187,19 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             }
 
             // Get the employee's work periods for the current date
-            $employeePeriods = DB::table('hr_work_periods as wp')
-                ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-                ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-                ->where('ep.employee_id', $employeeId)
-                ->orderBy('wp.start_at', 'asc')
-                ->get()
+            // $employeePeriods = DB::table('hr_work_periods as wp')
+            //     ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
+            //     ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
+            //     ->where('ep.employee_id', $employeeId)
+            //     ->orderBy('wp.start_at', 'asc')
+            //     ->get();
 
-            ;
-// dd($employeePeriods);
-            if ($employeePeriods->isEmpty()) {
+                
+            $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()]?? [];
+            // dd($employeePeriods, $employeePeriods2);
+            
+            // if ( $employeePeriods->isEmpty()) {
+            if ( is_array($employeePeriods) && count($employeePeriods) == 0) {
                 // If no periods are assigned to the employee, mark with a message
                 $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
                 $result[$employeeId][$date->toDateString()]['no_periods'] = true;
@@ -1205,6 +1208,8 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
             // Loop through each period for the employee
             foreach ($employeePeriods as $period) {
+                $period = (object) $period;
+                
                 // Get attendances for the current period and date
                 $attendances = DB::table('hr_attendances as a')
                     ->where('a.employee_id', '=', $employeeId)
