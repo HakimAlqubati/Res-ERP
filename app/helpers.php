@@ -927,9 +927,9 @@ function employeeAttendances($employeeId, $startDate, $endDate)
         //     ->orderBy('wp.start_at', 'asc')
         //     ->get();
         // $employeePeriods = getEmployeePeriods($employeeId, $startDate, $endDate);
-        
+
         $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
-        
+
         // dd($employeePeriods,$employeePeriods2);
 
         if (count($employeePeriods) == 0) {
@@ -954,6 +954,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 'start_at' => $period->start_at,
                 'end_at' => $period->end_at,
                 'period_id' => $period->period_id,
+                'total_hours' => $employee->calculateTotalWorkHours($period->period_id, $date),
                 'attendances' => [],
             ];
 
@@ -1481,9 +1482,9 @@ function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate)
     for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
         // Fetch periods that include the current date
         $periods = DB::table('hr_employee_period_histories')
-            ->select('period_id', 'start_date', 'end_date','start_time','end_time')
+            ->select('period_id', 'start_date', 'end_date', 'start_time', 'end_time')
             ->where('employee_id', $employeeId)
-            ->where('active',1)
+            ->where('active', 1)
             ->where(function ($query) use ($date) {
                 $query->where('start_date', '<=', $date) // Period starts before or on the date
                     ->where(function ($subQuery) use ($date) {

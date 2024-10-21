@@ -15,7 +15,7 @@
                         <br>
                         <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
                     </th>
-                    <th colspan="4" style="text-align: center; vertical-align: middle; padding:12px;"
+                    <th colspan="5" style="text-align: center; vertical-align: middle; padding:12px;"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                         <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                     </th>
@@ -25,7 +25,8 @@
                     <th colspan="2">{{ __('Shift data') }}</th>
 
                     <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
-                    <th colspan="2">{{ __('Work Hours Summary') }}</th>
+                    <th colspan="3">{{ __('Work Hours Summary') }}</th>
+                    
                     {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
                     <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
@@ -39,6 +40,7 @@
                     <th class="internal_cell">{{ __('Status') }}</th>
                     <th class="internal_cell">{{ __('Supposed') }}</th>
                     <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
+                    <th class="internal_cell">{{ __('Approved') }}</th>
                 </x-filament-tables::row>
             </thead>
             <tbody>
@@ -102,6 +104,12 @@
 
                                                             {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }}
                                                         </button>
+                                                    </x-filament-tables::cell>
+                                                    <x-filament-tables::cell class="internal_cell">
+                                                        
+
+                                                            {{ $item['total_hours'] }}
+                                                        
                                                     </x-filament-tables::cell>
                                                 @endif
                                                 {{-- @if (isset($item['attendances']['checkin']) && !isset($item['attendances']['checkout']))
