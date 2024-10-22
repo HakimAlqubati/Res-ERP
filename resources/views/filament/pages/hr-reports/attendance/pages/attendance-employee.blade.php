@@ -102,7 +102,8 @@
                                                             wire:click="showDetails('{{ $date }}', {{ $employee_id }},{{ $item['period_id'] }})"
                                                             class="text-blue-500 hover:underline">
 
-                                                            {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }}
+                                                            {{-- {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }} --}}
+                                                            {{$item['total_hours']}}
                                                         </button>
                                                     </x-filament-tables::cell>
                                                     <x-filament-tables::cell class="internal_cell">
