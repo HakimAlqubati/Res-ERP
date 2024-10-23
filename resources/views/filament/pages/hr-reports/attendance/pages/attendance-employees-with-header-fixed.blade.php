@@ -2,8 +2,8 @@
     {{ $this->getTableFiltersForm() }}
 
     {{-- <div class="table-container"> --}}
-        <x-filament-tables::table class="w-full text-sm text-left pretty  reports">
-            <thead class="fixed-header">
+        <x-filament-tables::table class="w-full text-sm text-left pretty  reports" style="padding-top: 200px;">
+            <thead class="fixed-header" style="padding-top: 200px;;top:64px;">
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance employees report' }}</p>

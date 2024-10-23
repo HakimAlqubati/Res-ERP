@@ -3,7 +3,7 @@
 
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty reports">
-            <thead class="fixed-header">
+            <thead class="fixed-header" style="top:64px;">
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance employee report' }}</p>
