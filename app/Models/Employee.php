@@ -179,6 +179,11 @@ class Employee extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    public function attendancesByDate($date)
+    {
+        return $this->hasMany(Attendance::class)->where('check_date',$date);
+    }
+
     /**
      * Calculate total work hours for a specific period and date.
      *

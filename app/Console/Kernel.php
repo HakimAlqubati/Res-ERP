@@ -17,6 +17,8 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('inspire')->hourly();
         $schedule->command('app:schedule-task')->dailyAt('06:00');
+        $schedule->command('report:send-absent-employees')->dailyAt('10:00');
+
 
     }
 
