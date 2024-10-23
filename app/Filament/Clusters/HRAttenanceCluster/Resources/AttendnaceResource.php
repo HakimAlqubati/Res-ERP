@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
 use App\Models\Attendance;
+use App\Models\Branch;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
@@ -127,7 +128,7 @@ class AttendnaceResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('check_type')
-                    ->label('Check')
+                    ->label('Type')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('period.name')
                     ->label('Period'),
@@ -145,6 +146,11 @@ class AttendnaceResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('employee_id')->searchable()->label('Employee')->options(function (Get $get) {
                     return Employee::query()
+                        ->pluck('name', 'id');
+                }),
+                SelectFilter::make('branch_id')->searchable()->label('Branch')
+                ->options(function (Get $get) {
+                    return Branch::query()
                         ->pluck('name', 'id');
                 }),
             ])

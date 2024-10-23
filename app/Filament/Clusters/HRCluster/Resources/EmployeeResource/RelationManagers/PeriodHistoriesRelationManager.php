@@ -23,8 +23,8 @@ class PeriodHistoriesRelationManager extends RelationManager
             ->schema([
                 DatePicker::make('start_date'),
                 DatePicker::make('end_date'),
-                TimePicker::make('start_time'),
-                TimePicker::make('end_time'),
+                // TimePicker::make('start_time'),
+                // TimePicker::make('end_time'),
             ]);
     }
 
@@ -38,9 +38,9 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.id')->label('Shift id')->alignCenter(true)->sortable(),
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),
-                TextColumn::make('end_date')->label('End date')->default('At now'),
-                TextColumn::make('start_time')->label('Start time'),
-                TextColumn::make('end_time')->label('End time'),
+                TextColumn::make('end_date')->label('End date')->default('Current date'),
+                // TextColumn::make('start_time')->label('Start time'),
+                // TextColumn::make('end_time')->label('End time'),
 
             ])
             ->filters([
@@ -51,22 +51,22 @@ class PeriodHistoriesRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()),
-                Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
-                    ->requiresConfirmation()->databaseTransaction()
-                   ->button()
-                    ->color(Color::Red)
-                    ->action(function ($record) {
-                        $record->update(['active' => 0]);
-                        Notification::make()->title('Done')->send();
-                    }),
-                Action::make('enable')->label('Enable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 0))
-                    ->requiresConfirmation()->databaseTransaction()
-                    ->button()
-                    ->color(Color::Green)
-                    ->action(function ($record) {
-                        $record->update(['active' => 1]);
-                        Notification::make()->title('Done')->send();
-                    }),
+                // Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
+                //     ->requiresConfirmation()->databaseTransaction()
+                //    ->button()
+                //     ->color(Color::Red)
+                //     ->action(function ($record) {
+                //         $record->update(['active' => 0]);
+                //         Notification::make()->title('Done')->send();
+                //     }),
+                // Action::make('enable')->label('Enable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 0))
+                //     ->requiresConfirmation()->databaseTransaction()
+                //     ->button()
+                //     ->color(Color::Green)
+                //     ->action(function ($record) {
+                //         $record->update(['active' => 1]);
+                //         Notification::make()->title('Done')->send();
+                //     }),
                 // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

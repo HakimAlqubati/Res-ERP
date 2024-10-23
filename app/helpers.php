@@ -602,6 +602,22 @@ function getEmployeeOvertimes($date, $employee)
     $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
 
 // Filter the overtimes to only include those that match the same month
+        $overtimesForMonth = $employee->overtimesByDate($date)
+        ->get()  // Retrieve the collection first
+        ->filter(function ($overtime) use ($month) {
+            return \Carbon\Carbon::parse($overtime->date)->month == $month;
+        });
+
+    $totalHours = $overtimesForMonth->sum(function ($overtime) {
+        return (float) $overtime->hours; // Ensure the 'hours' value is cast to float
+    });
+    return $totalHours;
+}
+function getEmployeeOvertimesV2($date, $employee)
+{
+    $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
+
+// Filter the overtimes to only include those that match the same month
     $overtimesForMonth = $employee->overtimes->filter(function ($overtime) use ($month) {
         return \Carbon\Carbon::parse($overtime->date)->month == $month;
     });
@@ -610,7 +626,7 @@ function getEmployeeOvertimes($date, $employee)
         return (float) $overtime->hours; // Ensure the 'hours' value is cast to float
     });
 
-    return $totalHours;
+    return [$totalHours,$date];
 }
 
 /**
@@ -993,18 +1009,22 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                         $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
                         $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
+                        
+                        
                         $approvedOvertime = getEmployeeOvertimes($date, $employee);
-
-                        if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
+                        if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() > 0) {
+                            // if ($isActualLargerThanSupposed &&  $employee->overtimes->count() > 0) {
                             $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
 
                         }
-                        if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
+                        if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
                             $approvedOvertime = $formattedSupposedActualDuration;
                         }
                         if (!$isActualLargerThanSupposed) {
                             $approvedOvertime = $periodData['total_hours'];
                         }
+
+                        // dd($approvedOvertime,$date);
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',

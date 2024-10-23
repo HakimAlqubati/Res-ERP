@@ -167,6 +167,12 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1);
     }
+    public function overtimesByDate($date)
+    {
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+                    ->where('approved', 1)
+                    ->where('date', $date);
+    }
 
     public function attendances()
     {

@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\DB;
 class CreateEmployee extends CreateRecord
 {
     protected static string $resource = EmployeeResource::class;
- 
+    protected static bool $canCreateAnother = false;
+
+    protected ?bool $hasDatabaseTransactions = true;
+    
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['employee_no']= Employee::withTrashed()->latest()->first()?->id + 1;
@@ -23,4 +26,5 @@ class CreateEmployee extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
 }

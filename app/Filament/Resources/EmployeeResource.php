@@ -406,6 +406,12 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                 ,
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                ,
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
@@ -431,8 +437,8 @@ class EmployeeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            PeriodHistoriesRelationManager::class,
             PeriodRelationManager::class,
+            PeriodHistoriesRelationManager::class,
         ];
     }
 

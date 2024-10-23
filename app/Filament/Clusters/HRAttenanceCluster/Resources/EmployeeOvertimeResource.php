@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeOvertime;
 use Carbon\Carbon;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\Rules\Unique;
 
 class EmployeeOvertimeResource extends Resource
 {
@@ -106,7 +108,47 @@ class EmployeeOvertimeResource extends Resource
                             DatePicker::make('date')
                                 ->label('Overtime Date')
                                 ->default(date('Y-m-d'))
-                                ->required(),
+                                ->required()
+                                ->live()
+                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    $employees = Employee::where('branch_id', $get('branch_id'))->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
+                                    $employeesWithOvertime = [];
+                                    foreach ($employees as $employeeData) {
+                                        // Fetch the employee using the employee_id from the provided data
+                                        $employee = Employee::find($employeeData['employee_id']);
+
+                                        // Ensure the employee exists before calling the overtime calculation
+                                        if ($employee) {
+                                            // Calculate overtime for the specified date
+                                            $overtimeResults = $employee->calculateEmployeeOvertime($employee, $state);
+
+                                            // Only add to the results if there are overtime records
+                                            if (!empty($overtimeResults)) {
+                                                $employeesWithOvertime[] = [
+                                                    'employee_id' => $employee->id,
+                                                    'overtime_details' => $overtimeResults,
+                                                    'overtime_hours' => $overtimeResults[0]['overtime_hours'],
+                                                    'start_time' => $overtimeResults[0]['overtime_start_time'],
+                                                    'end_time' => $overtimeResults[0]['overtime_end_time'],
+                                                ];
+                                            }
+                                        }
+                                    }
+
+                                    // Populate the Repeater with employees
+                                    $set('employees', array_map(function ($employee) {
+                                        return [
+                                            'employee_id' => $employee['employee_id'],
+
+                                            'start_time' => $employee['start_time'],
+                                            'end_time' => $employee['end_time'],
+
+                                            'notes' => null,
+                                            'hours' => $employee['overtime_hours'],
+                                        ];
+                                    }, $employeesWithOvertime));
+                                })
+                                ,
                             Toggle::make('show_default_values')->label('Set default values?')
                             // ->helperText('Check if you want to set default values')
                                 ->helperText('Disalbed temporary to remove it')
@@ -220,12 +262,21 @@ class EmployeeOvertimeResource extends Resource
                         ]),
                     Repeater::make('employees')
                         ->label('')
+                        ->required()
                         ->columnSpanFull()
                         ->schema(
 
                             [
                                 Grid::make()->columns(4)->schema([
-                                    Select::make('employee_id')
+                                    Select::make('employee_id')->live()
+                                    ->unique(
+                                        ignoreRecord: true,
+                                        modifyRuleUsing: function (Unique $rule,  Get $get,$state) {
+                                            return $rule->where('employee_id',$state)
+                                        ->where('date',$get('../../date'))
+                                        ;
+                                        }
+                                        )
                                         ->relationship('employee', 'name')
                                         ->required(),
                                     TimePicker::make('start_time')

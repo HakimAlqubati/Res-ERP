@@ -4,16 +4,18 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeRes
 
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource;
 use App\Models\EmployeeOvertime;
+use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Validation\ValidationException;
 
 class CreateEmployeeOvertime extends CreateRecord
 {
     protected static string $resource = EmployeeOvertimeResource::class;
     protected ?bool $hasDatabaseTransactions = true;
+    
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // dd($data);
-
         unset(
             $data['show_default_values'],
             $data['start_time_as_default'],
@@ -62,4 +64,12 @@ class CreateEmployeeOvertime extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    // protected function onValidationError(ValidationException $exception): void
+    // {
+    //     Notification::make()
+    //         ->title($exception->getMessage())
+    //         ->danger()
+    //         ->send();
+    // }
 }
