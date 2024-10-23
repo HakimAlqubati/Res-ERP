@@ -6,6 +6,7 @@ use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
+use Carbon\Carbon;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
 class TestController2 extends Controller
@@ -98,4 +99,21 @@ class TestController2 extends Controller
         // }, "abc"   . '.pdf');
         // return $pdf->stream('document.pdf');
     }
+public function reportAbsentEmployees($date,$branchId){
+    // $date = Carbon::now()->format('Y-m-d');
+        
+    // Get all employees
+    $employees = Employee::where('branch_id',$branchId)->get();
+    $absentEmployees = [];
+
+    // Loop through employees and check if they have attendance for the date
+    foreach ($employees as $employee) {
+        $attendance = $employee->attendancesByDate($date)->exists();
+        if (!$attendance) {
+            $absentEmployees[] = $employee;
+        }
+    }
+    return $absentEmployees;
+}
+
 }

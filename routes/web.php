@@ -399,11 +399,15 @@ Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::cla
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
 
 Route::get('/send-test-email', function () {
-    $sampleEmployees = [
-        (object)['name' => 'John Doe'],
-        (object)['name' => 'Jane Smith']
-    ];
+    
+   
+    // $sampleEmployees = [
+    //     (object)['name' => 'John Doe'],
+    //     (object)['name' => 'Jane Smith']
+    // ];
 
-    \Illuminate\Support\Facades\Mail::to('hakimahmed123321@gmail.com')->send(new \App\Mail\AbsentEmployeesMail($sampleEmployees, '2024-10-22'));
-    return 'Email sent!';
+    // \Illuminate\Support\Facades\Mail::to('hakimahmed123321@gmail.com')->send(new \App\Mail\AbsentEmployeesMail($sampleEmployees, '2024-10-22'));
+    // return 'Email sent!';
 });
+
+Route::get('/reportAbsentEmployees/{date}/{branchId}',[TestController2::class,'reportAbsentEmployees']);
