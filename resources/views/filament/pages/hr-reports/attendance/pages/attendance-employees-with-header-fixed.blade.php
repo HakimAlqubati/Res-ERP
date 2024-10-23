@@ -1,9 +1,9 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
 
-    <div class="table-container">
+    {{-- <div class="table-container"> --}}
         <x-filament-tables::table class="w-full text-sm text-left pretty  reports">
-            <thead class="fixed-headerr">
+            <thead class="fixed-header">
                 <x-filament-tables::row class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance employees report' }}</p>
@@ -148,5 +148,5 @@
             </tbody>
 
         </x-filament-tables::table>
-    </div>
+    {{-- </div> --}}
 </x-filament-panels::page>

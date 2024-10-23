@@ -8,22 +8,61 @@ use App\Models\Holiday;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Form;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
-class ListEmployeeAttednaceReports extends ListRecords
+class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 {
+    use InteractsWithForms;
     protected static string $resource = EmployeeAttednaceReportResource::class;
-
+ public $attendanceDetails = [];
     public function showDetails($date, $employeeId, $periodId)
     {
-        $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        return dd($AttendanceDetails->toArray());
-        return $this->dispatch('open-modal', id: 'edit-user');
-
+        
+        $attendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        $this->attendanceDetails = $attendanceDetails;
+        return $this->dispatch('open-modal', id: 'show-details');
     }
+
+ 
+
+    
+    protected function getForms(): array
+    {
+
+        return array_merge(
+            parent::getForms(),
+            
+            [
+            //merge your own form with default ones
+            'customForm' => $this->makeForm()->disabled()
+            ->fill([
+                'hi'=> 'drgin'
+            ])
+                ->schema([
+                    TextInput::make('hi'),
+                ])
+                ->model(EmployeeAttednaceReportResource::class),
+            ]
+        );
+    }
+
+
+    // public function mount(): void
+
+    // {
+    
+    // $this->form->fill();
+    
+    // }
 
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array

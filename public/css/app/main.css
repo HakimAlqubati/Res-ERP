@@ -3,20 +3,20 @@ table.pretty {
 }
 
 table.pretty tbody tr td {
-    border-top: 1px solid;
+    border-top: 0.5px solid;
     text-align: center;
 }
 
 table.pretty tfoot tr th {
-    border-bottom: 2px solid;
-    border-top: 2px solid;
+    border-bottom: 0.5px solid;
+    border-top: 0.5px solid;
     font-weight: bold;
     text-align: center;
 }
 
 table.pretty th,
 table.pretty td {
-    border: 1px solid gainsboro;
+    border: 0.5px solid gainsboro;
     padding: 0.2em;
 }
 
@@ -64,15 +64,15 @@ table.pretty caption {
 }
 
 table.pretty thead tr th {
-    border-bottom: 2px solid;
+    border-bottom: 0.5px solid;
     font-weight: bold;
     text-align: center;
 }
 
 
 table.pretty tfoot tr th {
-    border-bottom: 2px solid;
-    border-top: 2px solid;
+    border-bottom: 0.5px solid;
+    border-top: 0.5px solid;
     font-weight: bold;
     text-align: center;
 }
@@ -93,36 +93,36 @@ table.pretty tbody tr.even td {
 table.pretty thead tr th.highlightcol {
     border-color: #2E6E9E #2E6E9E gainsboro;
     border-style: solid;
-    border-width: 2px 2px 1px;
+    border-width: 0.0px 0.0px 1px;
 }
 
 table.pretty tfoot tr th.highlightcol {
-    border-left: 2px solid #2E6E9E;
-    border-right: 2px solid #2E6E9E;
+    border-left: 0.5px solid #2E6E9E;
+    border-right: 0.5px solid #2E6E9E;
 }
 
 table.pretty thead tr th.lefthighlightcol,
 table.pretty tbody tr td.lefthighlightcol,
 table.pretty tfoot tr th.lefthighlightcol {
-    border-left: 2px solid #2E6E9E;
+    border-left: 0.5px solid #2E6E9E;
 }
 
 table.pretty thead tr th.righthighlightcol,
 table.pretty tbody tr td.righthighlightcol,
 table.pretty tfoot tr th.righthighlightcol {
-    border-right: 2px solid #2E6E9E;
+    border-right: 0.5px solid #2E6E9E;
 }
 
 table.pretty thead tr th.lefthighlightcolheader,
 table.pretty tbody tr td.lefthighlightcolheader,
 table.pretty tfoot tr th.lefthighlightcolheader {
-    border-left: 2px solid #2E6E9E;
+    border-left: 0.5px solid #2E6E9E;
 }
 
 table.pretty thead tr th.righthighlightcolheader,
 table.pretty tbody tr td.righthighlightcolheader,
 table.pretty tfoot tr th.righthighlightcolheader {
-    border-right: 2px solid #2E6E9E;
+    border-right: 0.5px solid #2E6E9E;
 }
 
 .filament-sidebar-nav::-webkit-scrollbar {
@@ -146,7 +146,7 @@ html::-webkit-scrollbar {
 }
 
 .circle-image {
-    /* border: 2px solid #000; */
+    /* border: 0.5px solid #000; */
     border-radius: 0%;
     display: inline-block;
     overflow: hidden;
@@ -177,7 +177,7 @@ html::-webkit-scrollbar {
     padding-bottom: 40px;
     background: #e1e1e1;
     border-radius: 25px;
-    border: 2px solid #c98108;
+    border: 0.5px solid #c98108;
 }
 
 .please_select_message_text {
@@ -300,10 +300,6 @@ html::-webkit-scrollbar {
 
 }
 
-.fixed-header th {
-    border-bottom: 2px solid #ddd;
-    /* Optional: Add border to the header */
-}
 
 
 /**

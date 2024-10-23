@@ -26,7 +26,7 @@
 
                     <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
                     <th colspan="3">{{ __('Work Hours Summary') }}</th>
-                    
+
                     {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
                     <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
@@ -60,7 +60,7 @@
                             </x-filament-tables::cell>
                             @if (isset($data['no_periods']) && $data['no_periods'] == true)
                                 <x-filament-tables::cell colspan="100%">
-                                    {{ 'No periods in this date ('. $date.')' }}
+                                    {{ 'No periods in this date (' . $date . ')' }}
                                 </x-filament-tables::cell>
                             @endif
                             @if (count($data['periods']) > 0)
@@ -102,15 +102,17 @@
                                                             wire:click="showDetails('{{ $date }}', {{ $employee_id }},{{ $item['period_id'] }})"
                                                             class="text-blue-500 hover:underline">
 
+                                                            {{-- <button
+                                                            x-on:click="$dispatch('open-modal', { id: 'show-details',date:{{ $date }},employee_id:{{ $employee_id }},period_id:{{ $item['period_id'] }} })"> --}}
                                                             {{-- {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }} --}}
-                                                            {{$item['total_hours']}}
+                                                            {{ $item['total_hours'] }}
                                                         </button>
                                                     </x-filament-tables::cell>
                                                     <x-filament-tables::cell class="internal_cell">
-                                                        
 
-                                                    {{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}
-                                                        
+
+                                                        {{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}
+
                                                     </x-filament-tables::cell>
                                                 @endif
                                                 {{-- @if (isset($item['attendances']['checkin']) && !isset($item['attendances']['checkout']))
@@ -152,6 +154,10 @@
             <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
         </div>
     @endif
-    {{-- <center style="font-weight: bolder;color:red">
-    {{ 'The report is still under developing_' . 'التقرير لا يزال قيد التطوير' }}</center> --}}
+    <x-filament::modal id="show-details" icon="heroicon-o-information-circle">
+        <x-slot name="heading">
+            Modal heading
+        </x-slot>
+        {{-- {{ $this->form }} --}}
+    </x-filament::modal>
 </x-filament-panels::page>
