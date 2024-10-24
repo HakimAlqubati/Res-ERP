@@ -87,6 +87,11 @@
                                                     @endif
                                                 @endif
                                                 @if (isset($item['attendances']['checkout']))
+                                                    @if (!isset($item['attendances']['checkin']))
+                                                        <x-filament-tables::cell colspan="2" class="internal_cell">
+                                                            {{ 'There is no checkin' }}
+                                                        </x-filament-tables::cell>
+                                                    @endif
                                                     <x-filament-tables::cell class="internal_cell">
                                                         {{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}
                                                     </x-filament-tables::cell>
@@ -153,11 +158,11 @@
 
             <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
         </div>
-        @endif
-        <x-filament::modal id="show-details" icon="heroicon-o-information-circle">
-            <x-slot name="heading">
-                Modal heading
-            </x-slot>
-            {{-- {{ $this->form }} --}}
-        </x-filament::modal>
+    @endif
+    <x-filament::modal id="show-details" icon="heroicon-o-information-circle">
+        <x-slot name="heading">
+            Modal heading
+        </x-slot>
+        {{-- {{ $this->form }} --}}
+    </x-filament::modal>
 </x-filament-panels::page>

@@ -1282,7 +1282,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                         } elseif ($attendance->check_type === 'checkout') {
 
                             $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
-                            $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
+                            $formattedSupposedActualDuration = formatDuration($attendance?->supposed_duration_hourly);
 
                             $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
@@ -1486,12 +1486,18 @@ function employeeSalarySlip($employeeId, $yearMonth)
 
 function formatDuration($duration)
 {
+    // Check if the duration is null or an empty string
+    if (is_null($duration) || $duration === '') {
+        return '0 h 0 m'; // Default value for null duration
+    }
+
     // Split the duration string by colon
     list($hours, $minutes, $seconds) = explode(':', $duration);
 
     // Return the formatted string
     return "{$hours} h " . (int) $minutes . " m"; // Cast minutes to int to avoid any zero-padding
 }
+
 
 /**
  * to get employee periods based on history

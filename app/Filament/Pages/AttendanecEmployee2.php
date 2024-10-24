@@ -271,7 +271,7 @@ class AttendanecEmployee2 extends BasePage
         if ($attendanceCount === 0) {
             //    get difference between current time (checktime) & the end of period
             $diff= $this->calculateTimeDifference( $time, $closestPeriod->end_at);
-            // dd($diff);
+            
             if($diff <= 1){
                 if($this->typeHidden){
                     $this->typeHidden = false;
