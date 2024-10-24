@@ -153,11 +153,11 @@
 
             <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>
         </div>
-    @endif
-    <x-filament::modal id="show-details" icon="heroicon-o-information-circle">
-        <x-slot name="heading">
-            Modal heading
-        </x-slot>
-        {{-- {{ $this->form }} --}}
-    </x-filament::modal>
+        @endif
+        <x-filament::modal id="show-details" icon="heroicon-o-information-circle">
+            <x-slot name="heading">
+                Modal heading
+            </x-slot>
+            {{-- {{ $this->form }} --}}
+        </x-filament::modal>
 </x-filament-panels::page>

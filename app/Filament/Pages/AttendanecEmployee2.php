@@ -9,10 +9,13 @@ use App\Notifications\NotificationAttendance;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\BasePage;
+use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
@@ -30,6 +33,8 @@ class AttendanecEmployee2 extends BasePage
     // private $time = '';
     // private $time ;
 
+    public bool $typeHidden = true;
+    public string $type = '';
     public ?array $data = [];
     public function hasLogo(): bool
     {
@@ -92,17 +97,45 @@ class AttendanecEmployee2 extends BasePage
                     ->required()
                     ->placeholder('RFID')
                     ->maxLength(255),
+                    ToggleButtons::make('type')
+                    ->required()
+                    ->hidden(function(){
+                        if($this->typeHidden){
+                            return true;
+                        }
+                        return false;
+                    })
+                    ->live()
+                    ->reactive()
+                    ->options([
+                      Attendance::CHECKTYPE_CHECKIN => Attendance::CHECKTYPE_CHECKIN_LABLE,
+                      Attendance::CHECKTYPE_CHECKOUT=> Attendance::CHECKTYPE_CHECKOUT_LABLE,
+                    ])->inline()
+                    ->icons(
+                    [
+                        Attendance::CHECKTYPE_CHECKIN => 'heroicon-o-banknotes',
+                        Attendance::CHECKTYPE_CHECKOUT => 'heroicon-o-clock',
+                    ])
+                    ->colors([
+                        Attendance::CHECKTYPE_CHECKIN => 'info',
+                        Attendance::CHECKTYPE_CHECKOUT => Color::Red,
+                    ]),
             ])->statePath('data');
     }
 
     public function submit()
     {
-
+        // return redirect(request()->header('Referer'));
         // Only handle submission if input is valid
         $formData = $this->form->getState();
-
+        
         $rfid = $formData['rfid'];
         $formData['rfid'] = $rfid;
+        // dd($formData['type']);
+        
+        if(!$this->typeHidden && $formData['type'] != ''){
+            $this->type = $formData['type'];
+        }
 
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
@@ -236,6 +269,22 @@ class AttendanecEmployee2 extends BasePage
         // Determine the action based on attendance count
         $attendanceCount = $existAttendance->count();
         if ($attendanceCount === 0) {
+            //    get difference between current time (checktime) & the end of period
+            $diff= $this->calculateTimeDifference( $time, $closestPeriod->end_at);
+            // dd($diff);
+            if($diff <= 1){
+                if($this->typeHidden){
+                    $this->typeHidden = false;
+                    return $this->sendWarningNotification('please specify type ') ;
+                }else if(!$this->typeHidden && $this->type != ''){
+                    $this->typeHidden = true;
+                    return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, $this->type);
+                }else{
+
+                    return $this->sendWarningNotification('please specify type also') ;
+                }
+            }
+            
             $checkType = Attendance::CHECKTYPE_CHECKIN;
         } elseif ($attendanceCount > 0) {
             // تحقق مما إذا كان العدد زوجي أو فردي
@@ -537,7 +586,7 @@ class AttendanecEmployee2 extends BasePage
 
         }
         $data['delay_minutes'] = 0; // Initialize for check-out
-        $data['total_actual_duration_hourly'] = $sumDurationFormatted;
+        $data['total_actual_duration_hourly'] = $sumDurationFormatted ?? 0;
         $allowedTimeAfterPeriod = Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'))->format('H:i:s');
 
         // dd($nearestPeriod->end_at , $allowedTimeAfterPeriod ,
