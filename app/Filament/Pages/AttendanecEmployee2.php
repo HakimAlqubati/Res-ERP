@@ -585,21 +585,15 @@ class AttendanecEmployee2 extends BasePage
             $data['status'] = Attendance::STATUS_ON_TIME;
 
         }
-        $data['delay_minutes'] = 0; // Initialize for check-out
+        $data['delay_minutes'] = 0; 
         $data['total_actual_duration_hourly'] = $sumDurationFormatted ?? 0;
         $allowedTimeAfterPeriod = Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'))->format('H:i:s');
-
-        // dd($nearestPeriod->end_at , $allowedTimeAfterPeriod ,
-        //     $checkTime->toTimeString() , $nearestPeriod->end_at ,
-        //     $allowedTimeAfterPeriod , $checkTime->toTimeString());
         if ($nearestPeriod->end_at > $allowedTimeAfterPeriod &&
             $checkTime->toTimeString() < $nearestPeriod->end_at &&
             $allowedTimeAfterPeriod > $checkTime->toTimeString()) {
 
-            $nearestPeriodEnd = Carbon::parse($nearestPeriod->end_at)->subDay(); // Add a day to handle the transition to midnight
-            //   dd($nearestPeriodEnd,$checkTime);
-            // $data['check_date'] = Carbon::parse($date)->addDay()->format('Y-m-d');
-            // $data['day'] = Carbon::parse($date)->addDay()->format('l');
+            $nearestPeriodEnd = Carbon::parse($nearestPeriod->end_at)->subDay(); 
+
             $data['status'] = Attendance::STATUS_LATE_DEPARTURE;
             $data['delay_minutes'] = $nearestPeriodEnd->diffInMinutes($checkTime);
             $data['early_arrival_minutes'] = 0;
