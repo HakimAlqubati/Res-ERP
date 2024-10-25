@@ -1584,7 +1584,7 @@ function reportAbsentEmployees($date, $branchId,$currentTime)
         
         // Check if any of the periods' end time is less than the current time
         foreach ($employee->periods as $period) {
-            if ($period->start_at > $currentTime) {
+                 if ($currentTime> $period->start_at) {
                 $isPeriodEnded = true;
                 break;
             }
@@ -1608,12 +1608,4 @@ function reportAbsentEmployees($date, $branchId,$currentTime)
     }
 
     return $absentEmployees;
-}
-
-
-if (!function_exists('ordinal')) {
-    function ordinal($number) {
-        $suffixes = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
-        return $number . ($suffixes[($number % 100 >= 11 && $number % 100 <= 13) ? 0 : $number % 10]);
-    }
 }
