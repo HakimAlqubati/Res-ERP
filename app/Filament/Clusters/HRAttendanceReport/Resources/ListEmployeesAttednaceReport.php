@@ -11,13 +11,15 @@ use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ListEmployeesAttednaceReport extends ListRecords
 {
     protected static string $resource = EmployeesAttednaceReportResource::class;
-    // protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees';
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed';
 
+    public $showDetailsModal = false;
+    public $modalData = [];
     public function getTableRecordKey(Model $record): string
     {
         $attributes = $record->getAttributes();
@@ -216,10 +218,28 @@ class ListEmployeesAttednaceReport extends ListRecords
         return $leaveDates;
     }
 
+    // public function showDetails($date, $employeeId, $periodId)
+    // {
+    //     $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+    //     dd($AttendanceDetails,$periodId,$date,$employeeId);
+    //     return dd($AttendanceDetails->toArray());
+    // }
+
+
+    // Add a method to handle showing the modal with data
+   
     public function showDetails($date, $employeeId, $periodId)
-    {
-        $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        dd($AttendanceDetails,$periodId,$date,$employeeId);
-        return dd($AttendanceDetails->toArray());
-    }
+{
+    // Replace with your actual data-fetching logic if needed
+    $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+    $this->modalData = $AttendanceDetails->toArray();
+//  dd($this->modalData);
+    $this->showDetailsModal = true; // This opens the modal
+}
+
+public function mount(): void
+{
+    $this->showDetailsModal = false;
+}
+
 }

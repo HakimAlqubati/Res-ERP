@@ -28,23 +28,12 @@ class EmployeesAttednaceReportResource extends Resource
     protected static ?string $label = 'Attendance by branch';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                //
-            ]);
-    }
+    
 
     public static function table(Table $table): Table
     {
         return $table
             ->emptyStateHeading('No data')
-            ->columns([
-                TextColumn::make('employee_name')->label('Employee name'),
-                TextColumn::make('employee_no')->label('Employee number'),
-                TextColumn::make('department_name')->label('Department'),
-            ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
@@ -53,24 +42,9 @@ class EmployeesAttednaceReportResource extends Resource
                         ->label('Date')->default(date('Y-m-d')),
                 ]),
 
-            ], FiltersLayout::AboveContent)
-            ->actions([
-
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-
-                ]),
-            ]);
+            ], FiltersLayout::AboveContent);
     }
-
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-
+ 
     public static function canCreate(): bool
     {
         return false;
@@ -83,18 +57,7 @@ class EmployeesAttednaceReportResource extends Resource
         ];
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        // $query = static::getModel()::query();
-        // $query->select('employee_id');
-        // return $query;
-        $query = Employee::query();
-        $query->select('hr_employees.id as employee_id','hr_employees.name as employee_name','hr_employees.employee_no as employee_no','departments.name as department_name')
-        ->join('departments','hr_employees.department_id','=','departments.id')
-        ;
-        return $query;
-    }
-
+    
     public static function canViewAny(): bool
     {
         if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {

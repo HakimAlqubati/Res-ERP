@@ -1609,3 +1609,11 @@ function reportAbsentEmployees($date, $branchId,$currentTime)
 
     return $absentEmployees;
 }
+
+
+if (!function_exists('ordinal')) {
+    function ordinal($number) {
+        $suffixes = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
+        return $number . ($suffixes[($number % 100 >= 11 && $number % 100 <= 13) ? 0 : $number % 10]);
+    }
+}
