@@ -270,7 +270,7 @@ class AttendanecEmployee2 extends BasePage
         $attendanceCount = $existAttendance->count();
         if ($attendanceCount === 0) {
             //    get difference between current time (checktime) & the end of period
-            $diff= $this->calculateTimeDifference( $time, $closestPeriod->end_at);
+            $diff= $this->calculateTimeDifferenceV2( $time, $closestPeriod->end_at);
             
             if($diff <= 1){
                 if($this->typeHidden){
@@ -781,5 +781,42 @@ class AttendanecEmployee2 extends BasePage
 
         return round($totalHours, 2); // Round to two decimal places for clarity
     }
+
+    public function calculateTimeDifferenceV2(string $currentTime, string $endTime): float
+{
+    // Create DateTime objects for each time
+    $currentDateTime = new \DateTime($currentTime);
+    $periodEndDateTime = new \DateTime($endTime);
+
+    // Check if the period spans to the next day
+    if ($this->isNextDayPeriod($currentTime, $endTime)) {
+        // Period ends the next day
+        $midnight = new \DateTime('00:00:00');
+        $endOfDay = new \DateTime('24:00:00'); // Treat end of day as 24:00 for easier math
+        
+        // Hours remaining until midnight + hours from midnight to the period end
+        $hoursUntilMidnight = $currentDateTime->diff($endOfDay)->h + ($currentDateTime->diff($endOfDay)->i / 60);
+        $hoursAfterMidnight = $midnight->diff($periodEndDateTime)->h + ($midnight->diff($periodEndDateTime)->i / 60);
+        
+        // Total hours including the span into the next day
+        $totalHours = $hoursUntilMidnight + $hoursAfterMidnight;
+    } else {
+        // Regular case, calculate the difference
+        $diff = $currentDateTime->diff($periodEndDateTime);
+        $totalHours = $diff->h + ($diff->i / 60); // Include minutes as a fraction of an hour
+    }
+
+    return round($totalHours, 2); // Round to two decimal places for clarity
+}
+
+// New function to check if the period ends on the next day
+public function isNextDayPeriod(string $startTime, string $endTime): bool
+{
+    $startDateTime = new \DateTime($startTime);
+    $endDateTime = new \DateTime($endTime);
+
+    // If the start time is greater than the end time, it means the period crosses over to the next day
+    return $startDateTime > $endDateTime;
+}
 
 }
