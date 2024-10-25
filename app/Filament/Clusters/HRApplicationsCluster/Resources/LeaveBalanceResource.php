@@ -34,7 +34,7 @@ class LeaveBalanceResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My leave balance': static::$modelLabel;
+        return isStuff() ? 'My leaves': static::$modelLabel;
     }
     public static function getPluralLabel(): ?string
     {

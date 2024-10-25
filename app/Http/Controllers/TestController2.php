@@ -99,11 +99,11 @@ class TestController2 extends Controller
         // }, "abc"   . '.pdf');
         // return $pdf->stream('document.pdf');
     }
-public function reportAbsentEmployees($date,$branchId){
+public function reportAbsentEmployees_old($date,$branchId){
     // $date = Carbon::now()->format('Y-m-d');
         
     // Get all employees
-    $employees = Employee::where('branch_id',$branchId)->get();
+    $employees = Employee::where('branch_id',$branchId)->with('periods')->get();
     $absentEmployees = [];
 
     // Loop through employees and check if they have attendance for the date
@@ -114,6 +114,12 @@ public function reportAbsentEmployees($date,$branchId){
         }
     }
     return $absentEmployees;
+}
+
+
+
+public function reportAbsentEmployees($date,$branchId,$currentTime){
+    return reportAbsentEmployees($date,$branchId,$currentTime);
 }
 
 }

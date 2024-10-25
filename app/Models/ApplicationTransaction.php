@@ -121,7 +121,8 @@ class ApplicationTransaction extends Model
         // Get transaction type name and description
         $transactionTypeName = static::APPLICATION_TYPES[$transactionTypeId];
         $transactionDescription = match ($transactionTypeId) {
-            1 => "Leave request submitted for dates $fromDate to $toDate",
+            // 1 => "Leave request submitted for  dates $fromDate to $toDate",
+            1 => "Approved Leave",
             2 => 'Missed check-in request processed',
             3 => "Advance request for an amount of $amount",
             4 => 'Missed check-out request processed',

@@ -410,4 +410,4 @@ Route::get('/send-test-email', function () {
     // return 'Email sent!';
 });
 
-Route::get('/reportAbsentEmployees/{date}/{branchId}',[TestController2::class,'reportAbsentEmployees']);
+Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}',[TestController2::class,'reportAbsentEmployees']);

@@ -1561,3 +1561,51 @@ function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate)
     }
     return $groupedPeriods;
 }
+
+/**
+ * to return the employees that absent in specific day, or maybe forget checkin
+ */
+function reportAbsentEmployees($date, $branchId,$currentTime)
+{
+    $employees = Employee::where('branch_id', $branchId)
+    ->with(['periods' => function($query) {
+        $query->select('hr_work_periods.id', 'hr_work_periods.name', 'hr_work_periods.start_at', 'hr_work_periods.end_at')
+              ->whereNull('hr_work_periods.deleted_at');
+    }])
+    ->select('id', 'name', 'employee_no', 'branch_id')
+    ->get();
+
+    $absentEmployees = [];
+
+    // Loop through employees and check if they have attendance for the date
+    foreach ($employees as $employee) {
+        $attendance = $employee->attendancesByDate($date)->exists();
+        $isPeriodEnded = false;
+        
+        // Check if any of the periods' end time is less than the current time
+        foreach ($employee->periods as $period) {
+            if ($period->end_at < $currentTime) {
+                $isPeriodEnded = true;
+                break;
+            }
+        }
+
+        // If the employee is absent and period has ended, add to absentEmployees
+        if (!$attendance && $isPeriodEnded) {
+            $absentEmployees[] = [
+                'name' => $employee->name,
+                'employee_no' => $employee->employee_no,
+                'periods' => $employee->periods->map(function($period) {
+                    return [
+                        'id' => $period->id,
+                        'name' => $period->name,
+                        'start_at' => $period->start_at,
+                        'end_at' => $period->end_at,
+                    ];
+                })
+            ];
+        }
+    }
+
+    return $absentEmployees;
+}
