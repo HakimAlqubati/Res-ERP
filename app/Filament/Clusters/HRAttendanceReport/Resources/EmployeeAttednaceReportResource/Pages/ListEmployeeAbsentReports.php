@@ -22,6 +22,7 @@ class ListEmployeeAbsentReports extends ListRecords {
         // dd($data);
         return [
             'report_data' => $data,
+            'branch_id' => $branchId,
             'date' => $date,
             
         ];}
