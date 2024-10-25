@@ -8,16 +8,15 @@
             <thead class="fixed-header" style="top:64px;">
                 <x-filament-tables::row class="header_report">
                     <th colspan="2" class="no_border_right_left">
-                        <p>{{ __('Employee Attendance Report') }}</p>
+                        <p>{{ __('Employee Absence Report') }}</p>
                     </th>
-                    <th colspan="3" class="no_border_right_left">
+                    <th colspan="2" class="no_border_right_left">
                         <p>{{ __('Date: ') . now()->format('Y-m-d') }}</p>
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
                     <th>{{ __('No.') }}</th>
                     <th>{{ __('Employee Name') }}</th>
-                    <th>{{ __('Period Name') }}</th>
                     <th>{{ __('Start Time') }}</th>
                     <th>{{ __('End Time') }}</th>
                 </x-filament-tables::row>
@@ -29,7 +28,6 @@
                         <x-filament-tables::row>
                             <x-filament-tables::cell>{{ $rowNumber++ }}</x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $employee['name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $period['name'] }}</x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $period['start_at'] }}</x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $period['end_at'] }}</x-filament-tables::cell>
                         </x-filament-tables::row>
