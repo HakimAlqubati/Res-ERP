@@ -267,12 +267,14 @@ class AttendanecEmployee2 extends BasePage
         }
 
         // Determine the action based on attendance count
-        $attendanceCount = $existAttendance->count();
-        if ($attendanceCount === 0) {
+         $attendanceCount = $existAttendance->count();
+         if ($attendanceCount === 0) {
+
             //    get difference between current time (checktime) & the end of period
-            $diff= $this->calculateTimeDifferenceV2( $time, $closestPeriod->end_at);
+            $diff= $this->calculateTimeDifferenceV2( $time,$date, $closestPeriod);
             
-            if($diff <= 1){
+            dd($diff,Setting::getSetting('hours_count_after_period_after'),$time,$closestPeriod->end_at);
+            if($diff){
                 if($this->typeHidden){
                     $this->typeHidden = false;
                     return $this->sendWarningNotification('please specify type ') ;
@@ -781,42 +783,67 @@ class AttendanecEmployee2 extends BasePage
 
         return round($totalHours, 2); // Round to two decimal places for clarity
     }
-
-    public function calculateTimeDifferenceV2(string $currentTime, string $endTime): float
-{
-    // Create DateTime objects for each time
-    $currentDateTime = new \DateTime($currentTime);
-    $periodEndDateTime = new \DateTime($endTime);
-
-    // Check if the period spans to the next day
-    if ($this->isNextDayPeriod($currentTime, $endTime)) {
-        // Period ends the next day
-        $midnight = new \DateTime('00:00:00');
-        $endOfDay = new \DateTime('24:00:00'); // Treat end of day as 24:00 for easier math
+ 
+    public function calculateTimeDifferenceV2(string $currentTime, string $date, $period): bool
+    {
+        // Retrieve the setting for additional hours
+        $additionalHours = (float) Setting::getSetting('hours_count_after_period_after');
         
-        // Hours remaining until midnight + hours from midnight to the period end
-        $hoursUntilMidnight = $currentDateTime->diff($endOfDay)->h + ($currentDateTime->diff($endOfDay)->i / 60);
-        $hoursAfterMidnight = $midnight->diff($periodEndDateTime)->h + ($midnight->diff($periodEndDateTime)->i / 60);
+        // Ensure the period's times are just time strings
+        $periodStartTime = $period->start_at; // Expected to be just "HH:MM:SS"
+        $periodEndTime = $period->end_at;     // Expected to be just "HH:MM:SS"
         
-        // Total hours including the span into the next day
-        $totalHours = $hoursUntilMidnight + $hoursAfterMidnight;
-    } else {
-        // Regular case, calculate the difference
-        $diff = $currentDateTime->diff($periodEndDateTime);
-        $totalHours = $diff->h + ($diff->i / 60); // Include minutes as a fraction of an hour
+        // Create DateTime objects by combining $date with the period's start and end times
+        $currentDateTime = Carbon::parse($date . ' ' . $currentTime);
+        $periodStartDateTime = Carbon::parse($date . ' ' . $periodStartTime);
+        $periodEndDateTime = Carbon::parse($date . ' ' . $periodEndTime);
+        // Add the additional hours to the period end time
+        $adjustedEndDateTime = (Carbon::parse($date . ' ' . $period->end_at))->addHours($additionalHours);
+        // dd($periodStartDateTime,$periodEndDateTime);
+// dd($currentDateTime,$periodEndDateTime,$periodStartTime,$periodEndTime,$adjustedEndDateTime);        
+        // Condition 1: If $currentTime is less than $endTime and the difference is <= 1 hour
+        if ($currentDateTime < $periodEndDateTime) {
+            $diff = $currentDateTime->diff($periodEndDateTime);
+            $hoursDifference = $diff->h + ($diff->i / 60); // Calculate the difference in hours
+    
+            if ($hoursDifference <= 1) {
+                return true;
+            }
+        }
+        // dd($adjustedEndDateTime->toTimeString());
+        // dd($periodEndTime<$periodStartTime ,$periodEndTime,$periodStartTime );
+        if($periodEndTime>$periodStartTime ){
+            
+            if($adjustedEndDateTime->toTimeString()< $periodEndTime){
+                if( $currentTime < $adjustedEndDateTime->toTimeString()){
+                    return true;
+                }
+            }
+        }else{
+            if($currentTime> $periodEndTime){
+
+            }
+        }
+    // dd($currentDateTime , $periodEndDateTime,$currentDateTime >= $periodEndDateTime , $currentDateTime <= $adjustedEndDateTime);
+        // Condition 2: If $currentTime is greater than $endTime and less than $adjustedEndDateTime
+        // Account for the possibility that the period spans the next day
+        if ($currentDateTime >= $periodEndDateTime && $currentDateTime <= $adjustedEndDateTime) {
+            return true;
+        }
+    
+        // If neither condition is met, return false
+        return false;
     }
+    
 
-    return round($totalHours, 2); // Round to two decimal places for clarity
-}
-
-// New function to check if the period ends on the next day
-public function isNextDayPeriod(string $startTime, string $endTime): bool
-{
-    $startDateTime = new \DateTime($startTime);
-    $endDateTime = new \DateTime($endTime);
-
-    // If the start time is greater than the end time, it means the period crosses over to the next day
-    return $startDateTime > $endDateTime;
-}
-
+    // New function to check if the period ends on the next day
+    public function isNextDayPeriod(string $startTime, string $endTime): bool
+    {
+        $startDateTime = new \DateTime($startTime);
+        $endDateTime = new \DateTime($endTime);
+    
+        // If the start time is greater than the end time, it means the period crosses over to the next day
+        return $startDateTime > $endDateTime;
+    }
+    
 }
