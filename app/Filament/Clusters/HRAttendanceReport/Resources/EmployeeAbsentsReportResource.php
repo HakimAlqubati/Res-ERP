@@ -66,7 +66,8 @@ class EmployeeAbsentsReportResource extends Resource
                             ->label('Date')->default(date('Y-m-d')),
                         TimePicker::make('current_time')
                             ->label('Current time')
-                            // ->default(date('Y-m-d'))
+                            ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
+                            ->withoutSeconds()
                             ,
                     ]),
 
