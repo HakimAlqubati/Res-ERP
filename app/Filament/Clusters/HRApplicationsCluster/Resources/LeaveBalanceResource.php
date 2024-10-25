@@ -38,7 +38,7 @@ class LeaveBalanceResource extends Resource
     }
     public static function getPluralLabel(): ?string
     {
-        return isStuff() ? 'My leave balance': static::$modelLabel;static::$pluralLabel;
+        return isStuff() ? 'My leaves': static::$modelLabel;static::$pluralLabel;
     }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
