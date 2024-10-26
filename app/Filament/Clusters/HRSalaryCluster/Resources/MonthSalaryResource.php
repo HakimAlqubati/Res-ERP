@@ -36,6 +36,22 @@ class MonthSalaryResource extends Resource
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Payroll';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Payroll';
+    }
+
+    public static function getLabel(): ?string
+    {
+        return 'Payroll';
+    }
+
+
     public static function form(Form $form): Form
     {
         return $form
