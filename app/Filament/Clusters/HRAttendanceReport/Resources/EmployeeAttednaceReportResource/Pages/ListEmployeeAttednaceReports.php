@@ -69,7 +69,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         if(!isStuff()){
             $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
         }else{
-            $employee_id= 96;
+            $employee_id= auth()->user()?->employee?->id;
         }
         
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
