@@ -76,11 +76,11 @@ class HrEmployeeSearchResultResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -97,7 +97,7 @@ class HrEmployeeSearchResultResource extends Resource
         return [
             'index' => Pages\ListHrEmployeeSearchResults::route('/'),
             'create' => Pages\CreateHrEmployeeSearchResult::route('/create'),
-            'edit' => Pages\EditHrEmployeeSearchResult::route('/{record}/edit'),
+            // 'edit' => Pages\EditHrEmployeeSearchResult::route('/{record}/edit'),
         ];
     }
 }
