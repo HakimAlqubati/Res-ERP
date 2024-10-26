@@ -22,9 +22,16 @@ class EditWorkPeriod extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data['days'] = json_decode($data['days']);
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['day_and_night'] = WorkPeriodResource::calculateDayAndNight($data['start_at'], $data['end_at']);
         return $data;
     }
 }

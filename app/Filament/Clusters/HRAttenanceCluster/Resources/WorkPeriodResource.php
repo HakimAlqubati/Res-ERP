@@ -4,7 +4,6 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
-use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\WorkPeriod;
 use Filament\Forms;
@@ -13,14 +12,15 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Symfony\Component\Yaml\Inline;
-use Filament\Forms\Get;
 
 class WorkPeriodResource extends Resource
 {
@@ -46,35 +46,29 @@ class WorkPeriodResource extends Resource
                             ->columnSpan(1)
                             ->unique(ignoreRecord: true),
 
-                        Toggle::make('all_branches')
-                            ->default(1)
-                            ->label('For all branches?')
-                            ->helperText('This period will be for all branches')
-                            ->live()
-                            ->columnSpan(1)
-                            // ->disabled()
-                            ->inline(false)
-                            ->default(true),
+                        // Toggle::make('all_branches')
+                        //     ->default(1)
+                        //     ->label('For all branches?')
+                        //     ->helperText('This period will be for all branches')
+                        //     ->live()
+                        //     ->columnSpan(1)
+                        //     // ->disabled()
+                        //     ->inline(false)
+                        //     ->default(true),
+                        Forms\Components\Select::make('branch_id')
+                            ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                            ->label('Branch')->required()
+                            ->searchable(),
                         Toggle::make('active')
                             ->label('Active')
                             ->columnSpan(1)
                             ->inline(false)
                             ->default(true),
-                        Fieldset::make()->label('Choose branch that will period will be for')->schema([
-                            Forms\Components\Select::make('branch_id')
-                                ->hidden(fn(Get $get): bool => $get('all_branches'))
-                                ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
-                                ->label('')
 
-                                ->searchable()
-                                ->columnSpanFull(),
-                        ])->columnSpanFull()->hidden(fn(Get $get): bool => $get('all_branches')),
                     ]),
 
                     Textarea::make('description')->columnSpanFull()
                         ->label('Description'),
-
-
                     Grid::make()->columns(2)->schema([
                         Forms\Components\TimePicker::make('start_at')
                             ->label('Start time')
@@ -115,15 +109,14 @@ class WorkPeriodResource extends Resource
                             ->numeric(),
                     ]),
 
-
-                ])
+                ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-        ->defaultSort('id','desc')
+            ->defaultSort('id', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('id')
@@ -143,9 +136,9 @@ class WorkPeriodResource extends Resource
                 //     })
                 //     ,
 
-                Tables\Columns\BooleanColumn::make('active')
+                Tables\Columns\BooleanColumn::make('active')->alignCenter(true)
                     ->label('Active'),
-                Tables\Columns\BooleanColumn::make('day_and_night')
+                Tables\Columns\BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
                     ->label('Day and Night'),
 
                 Tables\Columns\TextColumn::make('start_at')
@@ -161,7 +154,7 @@ class WorkPeriodResource extends Resource
 
             ])
             ->filters([
-                //
+                SelectFilter::make('branch_id')->options(Branch::select('id', 'name')->where('active', 1)->pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -195,9 +188,30 @@ class WorkPeriodResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        if(isSystemManager() || isSuperAdmin()){
+        if (isSystemManager() || isSuperAdmin()) {
             return true;
         }
         return false;
     }
+
+    public static function calculateDayAndNight($startAt, $endAt): bool
+    {
+        // Logic to set default based on time fields
+        return $startAt > $endAt;
+    }
+
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     $query = parent::getEloquentQuery()
+    //         ->withoutGlobalScopes([
+    //             SoftDeletingScope::class,
+    //         ]);
+
+    //     // Check if the user is a branch manager
+    //     if (isBranchManager()) {
+    //         $query->where('branch_id', auth()->user()->branch_id);
+    //     }
+
+    //     return $query;
+    // }
 }

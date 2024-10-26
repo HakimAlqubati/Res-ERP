@@ -793,6 +793,7 @@ class AttendanecEmployee2 extends BasePage
         $periodStartTime = $period->start_at; // Expected to be just "HH:MM:SS"
         $periodEndTime = $period->end_at;     // Expected to be just "HH:MM:SS"
         
+        dd($periodEndTime);
         // Create DateTime objects by combining $date with the period's start and end times
         $currentDateTime = Carbon::parse($date . ' ' . $currentTime);
         $periodStartDateTime = Carbon::parse($date . ' ' . $periodStartTime);

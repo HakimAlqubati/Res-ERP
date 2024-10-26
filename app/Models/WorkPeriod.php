@@ -71,4 +71,16 @@ class WorkPeriod extends Model
 
    
 
+    protected static function booted()
+    {
+        if (isBranchManager()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            });
+        }else if(isStuff()){
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->whereIn('id', auth()?->user()?->employee?->periods?->pluck('id')); // Add your default query here
+            });
+        }
+    }
 }
