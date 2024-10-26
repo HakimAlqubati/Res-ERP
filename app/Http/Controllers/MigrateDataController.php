@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\WorkPeriod;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -244,6 +246,27 @@ class MigrateDataController extends Controller
             }
         });
     }
-    
+
+    public function updateAllPeriodsToDayAndNight(Request $request)
+    {
+        // Define your logic to determine if a period is day and night based on your requirements
+        $updatedPeriods = WorkPeriod::all()->map(function ($period) {
+            // Example logic: Check if period starts in the day and ends at night
+            // You can customize this condition based on your business logic
+            $dayAndNight = ($period->start_at > $period->end_at) ? true : false;
+
+            // Update the period with the new field value
+            $period->update([
+                'day_and_night' => $dayAndNight,
+            ]);
+
+            return $period;
+        });
+
+        return response()->json([
+            'message' => 'All periods updated successfully.',
+            'updated_periods' => $updatedPeriods,
+        ], 200);
+    }
     
 }

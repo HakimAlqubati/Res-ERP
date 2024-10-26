@@ -411,3 +411,5 @@ Route::get('/send-test-email', function () {
 });
 
 Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}',[TestController2::class,'reportAbsentEmployees']);
+
+Route::get('/updateAllPeriodsToDayAndNight',[MigrateDataController::class,'updateAllPeriodsToDayAndNight']);

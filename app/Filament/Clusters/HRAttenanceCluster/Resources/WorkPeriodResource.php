@@ -145,6 +145,8 @@ class WorkPeriodResource extends Resource
 
                 Tables\Columns\BooleanColumn::make('active')
                     ->label('Active'),
+                Tables\Columns\BooleanColumn::make('day_and_night')
+                    ->label('Day and Night'),
 
                 Tables\Columns\TextColumn::make('start_at')
                     ->label('Start Time')

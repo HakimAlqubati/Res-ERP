@@ -25,6 +25,7 @@ class WorkPeriod extends Model
         'updated_by',
         'branch_id',
         'all_branches',
+        'day_and_night',
     ];
 
     // Relationship to the user who created the work period
