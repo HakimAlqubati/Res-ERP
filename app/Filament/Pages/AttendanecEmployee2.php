@@ -323,12 +323,12 @@ class AttendanecEmployee2 extends BasePage
             $periodEndTime = $nearestPeriod->end_at;
             $periodStartTime = $nearestPeriod->start_at;
 
-            // $diff = $this->calculateTimeDifference($checkTime->toTimeString(), $periodStartTime);
-            $diff = $this->calculateTimeDifferenceNew($checkTime->toTimeString(), $date, $nearestPeriod);
-
+            $diff = $this->calculateTimeDifference($checkTime->toTimeString(), $periodStartTime);
+            // $diff = $this->calculateTimeDifferenceNew($checkTime->toTimeString(), $date, $nearestPeriod);
+// dd($this->type);
             // dd($diff,$checkTime->toTimeString(),$periodStartTime);
             // if ($diff > Setting::getSetting('hours_count_after_period_after') && $previousRecord == null) {
-            if ($checkTime->toTimeString() < $periodStartTime && $diff > Setting::getSetting('hours_count_after_period_after')) {
+            if ($checkTime->toTimeString() < $periodStartTime && $diff > Setting::getSetting('hours_count_after_period_after') && $this->type == '') {
                 return $this->sendWarningNotification(__('notifications.you_cannot_attendance_before') . ' ' . $diff . ' ' . __('notifications.hours'));
             }
             if ($periodStartTime > $periodEndTime
