@@ -84,6 +84,11 @@ class SettingResource extends Resource
                                     ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
                                     ->numeric()
                                     ->required(),
+                                    TextInput::make("pre_end_hours_for_check_in_out")
+                                    ->label('Hours before period end for action')
+                                    ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                    ->numeric()
+                                    ->required(),
                                 ]),
                             ]),
                     ]),

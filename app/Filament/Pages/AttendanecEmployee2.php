@@ -821,7 +821,7 @@ class AttendanecEmployee2 extends BasePage
 
         $diffWithEndPeriod = $currentDateTime->diff($periodEndDateTime)->h;
 
-        if ($diffWithEndPeriod <= 1) {
+        if ($diffWithEndPeriod <= Setting::getSetting('pre_end_hours_for_check_in_out')) {
             return true;
         }
         return false;

@@ -126,10 +126,7 @@ class AdminPanelProvider extends PanelProvider
                      (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems(): [] ,
                     ))
                     ,
-                    NavigationGroup::make(__('lang.system_settings'))
-                    ->items( array_merge(
-                        isSuperAdmin() || isSystemManager() ? SystemSettingResource::getNavigationItems(): [],
-                    )),
+                    
                     NavigationGroup::make('System settings')
                         ->items(array_merge(
                          (isSuperAdmin() || isSystemManager()) ? SettingResource::getNavigationItems(): [] ,
