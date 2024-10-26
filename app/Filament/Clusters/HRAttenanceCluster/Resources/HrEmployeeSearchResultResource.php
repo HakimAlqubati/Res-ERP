@@ -54,7 +54,7 @@ class HrEmployeeSearchResultResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->defaultSort('id','desc')
             ->columns([
                 ImageColumn::make('image')
                 ->label('Uploaded Image')
@@ -97,6 +97,7 @@ class HrEmployeeSearchResultResource extends Resource
         return [
             'index' => Pages\ListHrEmployeeSearchResults::route('/'),
             'create' => Pages\CreateHrEmployeeSearchResult::route('/create'),
+            'camera' => Pages\HrEmployeeCameraPage::route('/camera'),
             // 'edit' => Pages\EditHrEmployeeSearchResult::route('/{record}/edit'),
         ];
     }

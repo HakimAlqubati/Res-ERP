@@ -395,3 +395,6 @@ Route::get('/attendanceSecret__', AttendanecEmployee2::class)
 
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
+use App\Http\Controllers\FaceRecognitionController;
+
+Route::post('/recognize-face', [FaceRecognitionController::class, 'recognize']);
