@@ -16,6 +16,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -283,13 +284,17 @@ class UserResource extends Resource
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('email')->icon('heroicon-m-envelope')
-                    ->sortable()->searchable()->limit(20)
+                TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
+                    ->sortable()->searchable()->limit(25)
                     ->searchable(isIndividual: true, isGlobal: false)
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    // ->getCopyMessage('Done copied')
+                    ,
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)
-                    ->toggleable(isToggledHiddenByDefault: false)->default('_'),
+                    ->toggleable(isToggledHiddenByDefault: false)->default('_')->copyable()
+                    // ->getCopyMessage('Done copied')
+                     ,
 
                 TextColumn::make('owner.name')->searchable()->label('Manager')
                     ->toggleable(isToggledHiddenByDefault: false),
