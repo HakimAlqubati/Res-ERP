@@ -14,8 +14,12 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
+use Aws\Rekognition\RekognitionClient;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+
 function getName()
 {
     return 'Eng. Hakeem';
@@ -1430,3 +1434,37 @@ function formatDuration($duration)
     // Return the formatted string
     return "{$hours} h " . (int) $minutes . " m"; // Cast minutes to int to avoid any zero-padding
 }
+
+
+function searchSimilarUserByImage(RekognitionClient $client, string $uploadedImage): ?array
+    {
+        // $uploadedImage = file_get_contents(Storage::path($uploadedImagePath));
+        $uploadedImage = file_get_contents($uploadedImage);
+        $similarityThreshold = 80;
+
+        $employees = Employee::whereNotNull('avatar')->get();
+
+        foreach ($employees as $employee) {
+            $avatarPath = Storage::path('public/' . $employee->avatar);
+            $avatarImage = file_get_contents($avatarPath);
+
+            try {
+                $result = $client->compareFaces([
+                    'SourceImage' => ['Bytes' => $uploadedImage],
+                    'TargetImage' => ['Bytes' => $avatarImage],
+                    'SimilarityThreshold' => $similarityThreshold,
+                ]);
+
+                if (isset($result['FaceMatches']) && count($result['FaceMatches']) > 0) {
+                    return [
+                        'employee_id' => $employee->id,
+                        'similarity' => $result['FaceMatches'][0]['Similarity'],
+                    ];
+                }
+            } catch (\Aws\Exception\AwsException $e) {
+                Log::error('Rekognition error: ' . $e->getMessage());
+            }
+        }
+
+        return null;
+    }

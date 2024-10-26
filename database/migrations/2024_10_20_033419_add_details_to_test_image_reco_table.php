@@ -10,8 +10,9 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
+    {return;
         Schema::table('test_image_reco', function (Blueprint $table) {
+            
             $table->longText('details')->nullable();
         });
     }
