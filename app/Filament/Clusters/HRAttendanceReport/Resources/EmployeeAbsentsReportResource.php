@@ -83,6 +83,15 @@ class EmployeeAbsentsReportResource extends Resource
         return false;
     }
 
+    
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+            return true;
+        }
+        return false;
+    }
+    
     public static function getPages(): array
     {
         return [

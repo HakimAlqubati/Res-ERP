@@ -26,7 +26,6 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
  public $attendanceDetails = [];
     public function showDetails($date, $employeeId, $periodId)
     {
-        
         $attendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
         $this->attendanceDetails = $attendanceDetails;
         return $this->dispatch('open-modal', id: 'show-details');
@@ -66,7 +65,13 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
-    {$employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
+    {
+        if(!isStuff()){
+            $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
+        }else{
+            $employee_id= 96;
+        }
+        
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
 

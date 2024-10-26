@@ -53,11 +53,7 @@ class EmployeeAttednaceReportResource extends Resource
 
                         ->get()->pluck('name', 'id'))
                 
-                    ->default(function () {
-                        if (isStuff()) {
-                            return auth()->user()->employee->id;
-                        }
-                    })
+                   ->hidden(fn()=> isStuff())
                     ->searchable(),
                 Filter::make('date_range')
                     ->form([
@@ -70,11 +66,11 @@ class EmployeeAttednaceReportResource extends Resource
 
             ], FiltersLayout::AboveContent)
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
