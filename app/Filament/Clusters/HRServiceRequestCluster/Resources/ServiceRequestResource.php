@@ -53,19 +53,20 @@ class ServiceRequestResource extends Resource
                     Fieldset::make()->columns(3)->schema([
                         TextInput::make('name')
                             ->required()
-                            ->maxLength(255)->disabled(function () {
-                            if (isStuff()) {
-                                return true;
+                            ->maxLength(255)
+                            ->disabled(function ($record) {
+                            if ($record->created_by == auth()->user()->id) {
+                                return false;
                             }
-                            return false;
+                            return true;
                         }),
                         Select::make('branch_id')->label('Branch')
-                            ->disabled(function () {
-                                if (isStuff()) {
-                                    return true;
-                                }
+                        ->disabled(function ($record) {
+                            if ($record->created_by == auth()->user()->id) {
                                 return false;
-                            })
+                            }
+                            return true;
+                        })
                             ->options(Branch::select('name', 'id')->pluck('name', 'id'))
                             ->default(function () {
                                 if (isStuff()) {
@@ -80,12 +81,13 @@ class ServiceRequestResource extends Resource
                                 return BranchArea::query()
                                     ->where('branch_id', $get('branch_id'))
                                     ->pluck('name', 'id');
-                            })->disabled(function () {
-                            if (isStuff()) {
+                            })
+                            ->disabled(function ($record) {
+                                if ($record->created_by == auth()->user()->id) {
+                                    return false;
+                                }
                                 return true;
-                            }
-                            return false;
-                        })
+                            })
                         ,
                     ]),
                     Fieldset::make()->label('Descripe your service request')->schema([
@@ -95,13 +97,12 @@ class ServiceRequestResource extends Resource
                             ->maxLength(500),
 
                     ])
-                        ->disabled(function () {
-                            if (isStuff()) {
-                                return true;
-                            }
+                    ->disabled(function ($record) {
+                        if ($record->created_by == auth()->user()->id) {
                             return false;
-                        })
-                    ,
+                        }
+                        return true;
+                    })                    ,
 
                     Fieldset::make()->columns(4)->schema([
                         Select::make('assigned_to')
@@ -191,6 +192,7 @@ class ServiceRequestResource extends Resource
                 ]),
             ]);
     }
+
 
     public static function table(Table $table): Table
     {
