@@ -25,16 +25,17 @@ class FaceRecognitionController extends Controller
         // رفع الصورة إلى التخزين
         $filePath = 'public/to_compare/' . time() . '.png'; // يمكنك تغيير المسار حسب رغبتك
         Storage::put($filePath, $imageData); // رفع الصورة إلى المسار المحدد
+
         // Initialize the Rekognition client using the helper function
         $client = awsClient();
-        // Log::warning("send_uploaded ". $imageData);
+
         // Call the recognition function
         $searchResult = $this->searchSimilarUserByImage($client, $imageData, $filePath);
 
         // Return the result as JSON
         if ($searchResult) {
             return response()->json([
-                'message' => 'Face match found!',
+                'message' => $searchResult['message'],
                 'employee_id' => $searchResult['employee_id'],
                 'similarity' => $searchResult['similarity'],
             ]);
@@ -48,7 +49,7 @@ class FaceRecognitionController extends Controller
         $similarityThreshold = 80;
 
         // Fetch all employees who have an avatar
-        $employees = \App\Models\Employee::whereNotNull('avatar')->orderBy('id','desc')->get();
+        $employees = Employee::whereNotNull('avatar')->orderBy('id','desc')->get();
 
         // Log the size of the uploaded image data
         Log::info('Uploaded image size: ' . strlen($uploadedImageData) . ' bytes');
@@ -66,7 +67,6 @@ class FaceRecognitionController extends Controller
 
             // Read the avatar image file contents
             $avatarImage = file_get_contents($avatarPath);
-            // $imageUploaded = file_get_contents('storage/employees/employee-girl-green-hejab.jpeg');
 
             // Log sizes of the images being compared
             Log::info('Comparing images for employee ID: ' . $employee->id);
@@ -75,18 +75,20 @@ class FaceRecognitionController extends Controller
             try {
                 // Call the Rekognition compareFaces API
                 $result = $client->compareFaces([
-                    // 'SourceImage' => ['Bytes' => $imageUploaded], // Use the uploaded image bytes
-                    'SourceImage' => ['Bytes' => $uploadedImageData], // Use the uploaded image bytes
-                    'TargetImage' => ['Bytes' => $avatarImage], // Use the employee's avatar image bytes
+                    'SourceImage' => ['Bytes' => $uploadedImageData],
+                    'TargetImage' => ['Bytes' => $avatarImage],
                     'SimilarityThreshold' => $similarityThreshold,
                 ]);
 
                 // Check for face matches
                 if (isset($result['FaceMatches']) && count($result['FaceMatches']) > 0) {
-                    Log::info('Face match found for employee Name: ' . Employee::find($employee->id)?->name );
+                    $similarity = $result['FaceMatches'][0]['Similarity']; // Get similarity score
+                    Log::info('Face match found for employee Name: ' . $employee->name);
+
                     return [
                         'employee_id' => $employee->id,
-                        'similarity' => $result['FaceMatches'][0]['Similarity'], // Return the first match's similarity score
+                        'similarity' => $similarity, // Return the similarity score
+                        'message' => 'Face match found for employee Name: ' . $employee->name,
                     ];
                 } else {
                     Log::info('No face match found for employee ID: ' . $employee->id);
@@ -99,5 +101,4 @@ class FaceRecognitionController extends Controller
 
         return null; // Return null if no matches are found
     }
-
 }
