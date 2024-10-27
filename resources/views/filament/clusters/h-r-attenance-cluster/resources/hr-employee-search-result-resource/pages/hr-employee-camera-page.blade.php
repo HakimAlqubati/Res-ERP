@@ -1,7 +1,9 @@
 <x-filament::page>
     <div class="flex flex-col items-center justify-center space-y-4">
         <!-- Camera Preview -->
-        <video id="video" autoplay playsinline class="rounded shadow-md"></video>
+        <video id="video" autoplay playsinline class="rounded shadow-md" style="display: block;"></video>
+
+        <canvas id="overlay" class="absolute rounded shadow-md"></canvas> <!-- Canvas for later use -->
 
         <!-- Capture Button -->
         <button id="captureButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
@@ -19,8 +21,8 @@
         <!-- Modal -->
         <div id="resultModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
             <div class="bg-white rounded-lg p-6 w-96">
-                <h2 style="color: black;" class="text-xl font-bold" id="modalTitle">Result</h2> <!-- Retained color style -->
-                <p style="color: black;" id="modalMessage" class="mt-4"></p> <!-- Retained color style -->
+                <h2 style="color: black;" class="text-xl font-bold" id="modalTitle">Result</h2>
+                <p style="color: black;" id="modalMessage" class="mt-4"></p>
                 <button style="color: black;" id="closeModal" class="mt-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Close</button>
             </div>
         </div>
@@ -43,18 +45,26 @@
 
         <script>
             const video = document.getElementById('video');
+            const canvas = document.getElementById('overlay');
             const captureButton = document.getElementById('captureButton');
             const resultMessage = document.getElementById('resultMessage');
             const loadingSpinner = document.getElementById('loadingSpinner');
             const resultModal = document.getElementById('resultModal');
             const modalMessage = document.getElementById('modalMessage');
             const closeModal = document.getElementById('closeModal');
-            const canvas = document.createElement('canvas');
 
-            // Access camera
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => video.srcObject = stream)
-                .catch(error => console.error('Camera access denied:', error));
+            // Start the video stream
+            function startVideo() {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(err => console.error('Camera access denied:', err));
+            }
+
+            // Start the video when the page loads
+            startVideo();
 
             // Capture the image and send to server
             captureButton.addEventListener('click', () => {
@@ -63,16 +73,10 @@
                 canvas.height = video.videoHeight;
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // Convert to base64
                 const imageData = canvas.toDataURL('image/png');
-
-                // Show loading spinner
                 loadingSpinner.classList.remove('hidden');
-                
-                // Hide the video element
                 video.style.display = 'none'; // Hide the video element
 
-                // Send image data to server
                 fetch('/recognize-face', {
                     method: 'POST',
                     headers: {
@@ -83,18 +87,14 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Hide loading spinner
                     loadingSpinner.classList.add('hidden');
-
-                    // Display result message
                     resultMessage.textContent = data.message;
-                    // Show modal with details
-                    modalMessage.textContent = data.message; // Replace with additional user details if needed
+                    modalMessage.textContent = data.message; 
                     resultModal.classList.remove('hidden');
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    loadingSpinner.classList.add('hidden'); // Hide spinner on error
+                    loadingSpinner.classList.add('hidden'); 
                     resultMessage.textContent = 'An error occurred while processing the image.';
                 });
             });
