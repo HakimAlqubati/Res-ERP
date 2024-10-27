@@ -358,78 +358,94 @@ class EmployeeApplicationResource extends Resource
                 // static::approveDepartureRequest(),
                 // static::rejectDepartureRequest(),
 
-                static::approveDepartureRequest()->hidden(function($record){
-                    if(isStuff()){
+                static::approveDepartureRequest()->hidden(function ($record) {
+                    if (isStuff()) {
                         return true;
                     }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
                     }
                     return false;
                 }),
-                static::rejectDepartureRequest()->hidden(function($record){
-                    if(isStuff()){
+                static::rejectDepartureRequest()->hidden(function ($record) {
+                    if (isStuff()) {
                         return true;
                     }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
-                    }
-                    return false;
-                }),
-
-                static::approveAdvanceRequest()->hidden(function($record){
-                    if(isStuff()){
-                        return true;
-                    }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
-                    }
-                    return false;
-                }),
-                static::rejectAdvanceRequest()->hidden(function($record){
-                    if(isStuff()){
-                        return true;
-                    }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
                     }
                     return false;
                 }),
 
-                static::approveLeaveRequest()->hidden(function($record){
-                    if(isStuff()){
+                static::approveAdvanceRequest()->hidden(function ($record) {
+                    if (isStuff()) {
                         return true;
                     }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
                     }
                     return false;
                 }),
-                static::rejectLeaveRequest()->hidden(function($record){
-                    if(isStuff()){
+                static::rejectAdvanceRequest()->hidden(function ($record) {
+                    if (isStuff()) {
                         return true;
                     }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
                     }
                     return false;
                 }),
 
-                static::approveAttendanceRequest()->hidden(function($record){
-                    if(isStuff()){
+                static::approveLeaveRequest()->hidden(function ($record) {
+                    if (isStuff()) {
                         return true;
                     }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
                     }
                     return false;
                 }),
-                static::rejectAttendanceRequest()->hidden(function($record){
-                    if(isStuff()){
+                static::rejectLeaveRequest()->hidden(function ($record) {
+                    if (isStuff()) {
                         return true;
                     }
-                    if($record->employee_id == Auth::user()->employee->id){
-                    return true;
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }),
+
+                static::approveAttendanceRequest()->hidden(function ($record) {
+                    if (isStuff()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }),
+                static::rejectAttendanceRequest()->hidden(function ($record) {
+                    if (isStuff()) {
+                        return true;
+                    }
+                    if (isset(Auth::user()->employee)) {
+                        if ($record->employee_id == Auth::user()->employee->id) {
+                            return true;
+                        }
                     }
                     return false;
                 }),
@@ -733,13 +749,34 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
-                (new AttendanecEmployee())->createAttendance($record->employee, $data['period'], $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT);
-                $record->update([
-                    'status' => EmployeeApplication::STATUS_APPROVED,
-                    'approved_by' => auth()->user()->id,
-                    'approved_at' => now(),
-                ]);
-                ApplicationTransaction::createTransactionFromApplication($record);
+
+                $employeePeriods = $record->employee?->periods;
+
+                if (!is_null($record->employee) && count($employeePeriods) > 0) {
+                    $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+
+                    // Decode the days array for each period
+                    $workTimePeriods = $employeePeriods->map(function ($period) {
+                        $period->days = json_decode($period->days); // Ensure days are decoded
+                        return $period;
+                    });
+
+                    // Filter periods by the day
+                    $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+                        return in_array($day, $period->days);
+                    });
+
+                    $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+
+                    (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
+                    $record->update([
+                        'status' => EmployeeApplication::STATUS_APPROVED,
+                        'approved_by' => auth()->user()->id,
+                        'approved_at' => now(),
+                    ]);
+                }
+                // ApplicationTransaction::createTransactionFromApplication($record);
+
             })
             ->disabledForm()
             ->form(function ($record) {
@@ -766,7 +803,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -780,12 +817,45 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record) {
+
                 $record->update([
                     'status' => EmployeeApplication::STATUS_APPROVED,
                     'approved_by' => auth()->user()->id,
                     'approved_at' => now(),
                 ]);
                 ApplicationTransaction::createTransactionFromApplication($record);
+
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                // $details= json_decode($record->details) ;
+
+                $detailDate = $record?->detail_date;
+                $monthlyDeductionAmount = $record?->detail_monthly_deduction_amount;
+                $advanceAmount = $record?->detail_advance_amount;
+                $deductionStartsFrom = $record?->detail_deduction_starts_from;
+                $deductionEndsAt = $record?->detail_deduction_ends_at;
+                $numberOfMonthsOfDeduction = $record?->detail_number_of_months_of_deduction;
+
+                // $details = EmployeeApplicationResource::getDetailsKeysAndValues(json_decode($record->details));
+                // dd($details);
+                return [
+                    Fieldset::make()->label('Request data')->columns(3)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name),
+                        DatePicker::make('date')->default($detailDate)->label('Advance date'),
+                        TextInput::make('advance_amount')->default($advanceAmount),
+                        TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
+                        TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
+                        TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
+                        TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
+
+                    ]),
+                    Fieldset::make()->label('Request data')->columns(2)->schema([
+                        // DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                        // TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                    ]),
+                ];
+
             })
             ->disabledForm()
             ->form(function ($record) {
@@ -811,7 +881,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -825,13 +895,41 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
-            ->action(function ($record) {
+            ->action(function ($record, $data) {
                 $record->update([
                     'status' => EmployeeApplication::STATUS_APPROVED,
                     'approved_by' => auth()->user()->id,
                     'approved_at' => now(),
                 ]);
-                // Add logic for leave balance update if needed
+                $transaction = ApplicationTransaction::createTransactionFromApplicationV2(
+                    $applicationId = $record->id,
+                    $transactionTypeId = 1,
+                    $amount = 0,
+                    $remaining = 0,
+                    $fromDate = $data['from_date'],
+                    $toDate = $data['to_date'],
+                    $createdBy = auth()->user()->id,
+                    $employeeId = $record->employee_id,
+                    $isCanceled = false,
+                    $canceledAt = null,
+                    $cancelReason = null,
+                    $details = json_encode('Approved leave'),
+                    $branchId = $record->branch_id,
+                    $value = $data['days_count'],
+
+                );
+
+                // Step 3: Calculate the number of leave days and update the leave balance
+
+                // Fetch the leave balance for the employee and specific leave type
+                $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
+                    ->where('leave_type_id', $record->detail_leave_type_id)
+                    ->first();
+
+                // Update the balance if found
+                if ($leaveBalance) {
+                    $leaveBalance->decrement('balance', $transaction->value);
+                }
             })
             ->disabledForm()
             ->form(function ($record) {
@@ -858,7 +956,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -872,13 +970,35 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
-            ->action(function ($record) {
+            ->action(function ($record,$data) {
                 // Logic for approving attendance fingerprint requests
-                $record->update([
-                    'status' => EmployeeApplication::STATUS_APPROVED,
-                    'approved_by' => auth()->user()->id,
-                    'approved_at' => now(),
-                ]);
+                
+                        $employeePeriods = $record->employee?->periods;
+
+                        if (!is_null($record->employee) && count($employeePeriods) > 0) {
+                            $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+
+                            // Decode the days array for each period
+                            $workTimePeriods = $employeePeriods->map(function ($period) {
+                                $period->days = json_decode($period->days); // Ensure days are decoded
+                                return $period;
+                            });
+
+                            // Filter periods by the day
+                            $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+                                return in_array($day, $period->days);
+                            });
+
+                            $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+
+                            (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
+                            $record->update([
+                                'status' => EmployeeApplication::STATUS_APPROVED,
+                                'approved_by' => auth()->user()->id,
+                                'approved_at' => now(),
+                            ]);
+                        }
+                        // ApplicationTransaction::createTransactionFromApplication($record);
             })
             ->disabledForm()
             ->form(function ($record) {
@@ -904,7 +1024,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
