@@ -1442,7 +1442,7 @@ function searchSimilarUserByImage(RekognitionClient $client, string $uploadedIma
         $uploadedImage = file_get_contents($uploadedImage);
         $similarityThreshold = 80;
 
-        $employees = Employee::whereNotNull('avatar')->get();
+        $employees = Employee::whereNotNull('avatar')->orderBy('id','desc')->get();
 
         foreach ($employees as $employee) {
             $avatarPath = Storage::path('public/' . $employee->avatar);

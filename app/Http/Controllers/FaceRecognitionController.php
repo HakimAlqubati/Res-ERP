@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -82,7 +83,7 @@ class FaceRecognitionController extends Controller
 
                 // Check for face matches
                 if (isset($result['FaceMatches']) && count($result['FaceMatches']) > 0) {
-                    Log::info('Face match found for employee ID: ' . $employee->id);
+                    Log::info('Face match found for employee Name: ' . Employee::find($employee->id)?->name );
                     return [
                         'employee_id' => $employee->id,
                         'similarity' => $result['FaceMatches'][0]['Similarity'], // Return the first match's similarity score
