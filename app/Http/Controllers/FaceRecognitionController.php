@@ -66,7 +66,7 @@ class FaceRecognitionController extends Controller
 
             // Read the avatar image file contents
             $avatarImage = file_get_contents($avatarPath);
-            $imageUploaded = file_get_contents('storage/employees/employee-girl-green-hejab.jpeg');
+            // $imageUploaded = file_get_contents('storage/employees/employee-girl-green-hejab.jpeg');
 
             // Log sizes of the images being compared
             Log::info('Comparing images for employee ID: ' . $employee->id);
