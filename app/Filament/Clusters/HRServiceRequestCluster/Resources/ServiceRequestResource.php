@@ -54,18 +54,22 @@ class ServiceRequestResource extends Resource
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->disabled(function ($record) {
-                            if ($record->created_by == auth()->user()->id) {
-                                return false;
-                            }
-                            return true;
+                            ->disabled(condition: function ($record) {
+                                if(isset($record)){
+                                    if ($record->created_by == auth()->user()->id) {
+                                        return false;
+                                    }
+                                    return true;
+                                }
                         }),
                         Select::make('branch_id')->label('Branch')
                         ->disabled(function ($record) {
-                            if ($record->created_by == auth()->user()->id) {
-                                return false;
+                            if(isset($record)){
+                                if ($record->created_by == auth()->user()->id) {
+                                    return false;
+                                }
+                                return true;
                             }
-                            return true;
                         })
                             ->options(Branch::select('name', 'id')->pluck('name', 'id'))
                             ->default(function () {
@@ -83,10 +87,12 @@ class ServiceRequestResource extends Resource
                                     ->pluck('name', 'id');
                             })
                             ->disabled(function ($record) {
-                                if ($record->created_by == auth()->user()->id) {
-                                    return false;
+                                if(isset($record)){
+                                    if ($record->created_by == auth()->user()->id) {
+                                        return false;
+                                    }
+                                    return true;
                                 }
-                                return true;
                             })
                         ,
                     ]),
@@ -98,10 +104,12 @@ class ServiceRequestResource extends Resource
 
                     ])
                     ->disabled(function ($record) {
-                        if ($record->created_by == auth()->user()->id) {
-                            return false;
+                        if(isset($record)){
+                            if ($record->created_by == auth()->user()->id) {
+                                return false;
+                            }
+                            return true;
                         }
-                        return true;
                     })                    ,
 
                     Fieldset::make()->columns(4)->schema([
@@ -125,10 +133,12 @@ class ServiceRequestResource extends Resource
                                 ServiceRequest::URGENCY_LOW => 'Low',
                             ])
                             ->disabled(function () {
-                                if (isStuff()) {
+                                if(isset($record)){
+                                    if ($record->created_by == auth()->user()->id) {
+                                        return false;
+                                    }
                                     return true;
                                 }
-                                return false;
                             })
                             ->required(),
 
@@ -139,10 +149,12 @@ class ServiceRequestResource extends Resource
                                 ServiceRequest::IMPACT_LOW => 'Low',
                             ])
                             ->disabled(function () {
-                                if (isStuff()) {
+                                if(isset($record)){
+                                    if ($record->created_by == auth()->user()->id) {
+                                        return false;
+                                    }
                                     return true;
                                 }
-                                return false;
                             })
                             ->required(),
                         Select::make('status')
@@ -567,6 +579,7 @@ class ServiceRequestResource extends Resource
             'index' => Pages\ListServiceRequests::route('/'),
             'create' => Pages\CreateServiceRequest::route('/create'),
             'edit' => Pages\EditServiceRequest::route('/{record}/edit'),
+            'view' => Pages\ViewServiceRequest::route('/{record}'),
         ];
     }
 
