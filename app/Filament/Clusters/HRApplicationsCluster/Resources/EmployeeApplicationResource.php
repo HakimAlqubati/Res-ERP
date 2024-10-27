@@ -746,7 +746,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -793,7 +793,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
