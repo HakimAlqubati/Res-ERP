@@ -15,7 +15,6 @@ use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -354,296 +353,250 @@ class EmployeeApplicationResource extends Resource
             ->actions([
                 Tables\Actions\RestoreAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                // Action::make('test')->action(function () {
-                //     $recipient = auth()->user();
 
-                //     Notification::make()
-                //         ->title('Saved successfully')
-                //         ->sendToDatabase($recipient, isEventDispatched: true)
-                //         ->broadcast($recipient)
-                //         ->send()
-                //     ;
+                // static::approveDepartureRequest(),
+                // static::rejectDepartureRequest(),
 
-                // }),
-                // Action::make('details')->label('Details')->button()
+                static::approveDepartureRequest(),
+                static::rejectDepartureRequest(),
+
+                static::approveAdvanceRequest(),
+                static::rejectAdvanceRequest(),
+
+                static::approveLeaveRequest(),
+                static::rejectLeaveRequest(),
+
+                static::approveAttendanceRequest(),
+                static::rejectAttendanceRequest(),
+                // Approve missed checkin request
+                // Action::make('approveMissedCheckinRequest')->label('Approve')->button()
+                //     ->databaseTransaction()
+                //     ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
                 //     ->color('success')
-                //     ->icon('heroicon-o-book-open')
+                //     ->icon('heroicon-o-check')
+                //     ->action(function ($record, $data) {
+
+                //         $employeePeriods = $record->employee?->periods;
+
+                //         if (!is_null($record->employee) && count($employeePeriods) > 0) {
+                //             $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+
+                //             // Decode the days array for each period
+                //             $workTimePeriods = $employeePeriods->map(function ($period) {
+                //                 $period->days = json_decode($period->days); // Ensure days are decoded
+                //                 return $period;
+                //             });
+
+                //             // Filter periods by the day
+                //             $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+                //                 return in_array($day, $period->days);
+                //             });
+
+                //             $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+
+                //             (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
+                //             $record->update([
+                //                 'status' => EmployeeApplication::STATUS_APPROVED,
+                //                 'approved_by' => auth()->user()->id,
+                //                 'approved_at' => now(),
+                //             ]);
+                //         }
+                //         // ApplicationTransaction::createTransactionFromApplication($record);
+
+                //     })
                 //     ->disabledForm()
                 //     ->form(function ($record) {
-                //         // $applicationType = $record?->application_type_id;
-                //         // if($applicationType == EmployeeApplication::)
-                //         return [
+                //         // $attendance = Attendance::where('employee_id', $record?->employee_id)
+                //         //     ->where('check_date', $record?->detail_date)
+                //         //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                //         //     ->first();
 
+                //         return [
+                //             // Fieldset::make()->label('Attendance data')->columns(3)->schema([
+                //             //     TextInput::make('employee')->default($record?->employee?->name),
+                //             //     DatePicker::make('check_date')->default($attendance?->check_date),
+                //             //     TimePicker::make('check_time')->default($attendance?->check_time),
+                //             //     TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
+                //             //     TextInput::make('start_at')->default($attendance?->period?->start_at),
+                //             //     TextInput::make('end_at')->default($attendance?->period?->end_at),
+                //             //     Hidden::make('period')->default($attendance?->period),
+                //             // ]),
+                //             Fieldset::make()->label('Request data')->columns(2)->schema([
+                //                 DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                //                 TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                //             ]),
+                //         ];
+                //     }),
+
+                // Action::make('approveAdvanceRequest')->label('Approve')->button()
+                //     ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
+                //     ->color('success')
+                //     ->icon('heroicon-o-check')
+                //     ->action(function ($record, $data) {
+                //         //    ApplicationTransaction::createTransactionFromApplication();
+                //         $record->update([
+                //             'status' => EmployeeApplication::STATUS_APPROVED,
+                //             'approved_by' => auth()->user()->id,
+                //             'approved_at' => now(),
+                //         ]);
+                //         ApplicationTransaction::createTransactionFromApplication($record);
+
+                //     })
+                //     ->disabledForm()
+                //     ->form(function ($record) {
+                //         // $details= json_decode($record->details) ;
+
+                //         $detailDate = $record?->detail_date;
+                //         $monthlyDeductionAmount = $record?->detail_monthly_deduction_amount;
+                //         $advanceAmount = $record?->detail_advance_amount;
+                //         $deductionStartsFrom = $record?->detail_deduction_starts_from;
+                //         $deductionEndsAt = $record?->detail_deduction_ends_at;
+                //         $numberOfMonthsOfDeduction = $record?->detail_number_of_months_of_deduction;
+
+                //         // $details = EmployeeApplicationResource::getDetailsKeysAndValues(json_decode($record->details));
+                //         // dd($details);
+                //         return [
+                //             Fieldset::make()->label('Request data')->columns(3)->schema([
+                //                 TextInput::make('employee')->default($record?->employee?->name),
+                //                 DatePicker::make('date')->default($detailDate)->label('Advance date'),
+                //                 TextInput::make('advance_amount')->default($advanceAmount),
+                //                 TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
+                //                 TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
+                //                 TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
+                //                 TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
+
+                //             ]),
+                //             Fieldset::make()->label('Request data')->columns(2)->schema([
+                //                 // DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                //                 // TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                //             ]),
+                //         ];
+                //     }),
+                // // Action::make('reject')->label('Reject')->button()
+                // //     ->color('warning')
+                // //     ->visible(fn($record): bool => $record->status == EmployeeApplication::STATUS_PENDING)
+                // //     ->icon('heroicon-o-x-mark')
+                // //     ->action(function ($record, $data) {
+                // //         $record->update([
+                // //             'status' => EmployeeApplication::STATUS_REJECTED,
+                // //             'rejected_reason' => $data['rejected_reason'],
+                // //             'rejected_by' => auth()->user()->id,
+                // //             'rejected_at' => now(),
+                // //         ]);
+
+                // //         // Step 2: Create a transaction
+                // //         ApplicationTransaction::createTransactionFromApplication($record);
+
+                // //         // Step 3: Calculate the number of leave days and update the leave balance
+                // //         $fromDate = $record->detail_from_date;
+                // //         $toDate = $record->detail_to_date;
+                // //         $daysRequested = $fromDate->diffInDays($toDate) + 1; // Assuming inclusive of the last day
+
+                // //         // Fetch the leave balance for the employee and specific leave type
+                // //         $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
+                // //             ->where('leave_type_id', $record->detail_leave_type_id)
+                // //             ->first();
+
+                // //         // Update the balance if found
+                // //         if ($leaveBalance) {
+                // //             $leaveBalance->decrement('balance', $daysRequested);
+                // //         }
+                // //     })
+
+                // //     ->form(function ($record) {
+                // //         $attendance = Attendance::where('employee_id', $record?->employee_id)
+                // //             ->where('check_date', $record?->detail_date)
+                // //             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                // //             ->first();
+
+                // //         return [
+                // //             Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
+                // //                 TextInput::make('employee')->default($record?->employee?->name),
+                // //                 DatePicker::make('check_date')->default($attendance?->check_date),
+                // //                 TimePicker::make('check_time')->default($attendance?->check_time),
+                // //                 TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
+                // //                 TextInput::make('start_at')->default($attendance?->period?->start_at),
+                // //                 TextInput::make('end_at')->default($attendance?->period?->end_at),
+                // //                 Hidden::make('period')->default($attendance?->period),
+                // //             ]),
+                // //             Fieldset::make()->disabled()->label('Request data')->columns(2)->schema([
+                // //                 DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                // //                 TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                // //             ]),
+                // //             Fieldset::make()->label('Rejected reason')->columns(2)->schema([
+                // //                 Textarea::make('rejected_reason')->label('')->columnSpanFull()->required()
+                // //                     ->disabled(false)
+                // //                     ->helperText('Please descripe reject reason')
+                // //                 ,
+                // //             ]),
+
+                // //         ];
+                // //     })
+                // // ,
+                // Action::make('approveLeaveRequest')
+                //     ->databaseTransaction(true)
+                //     ->label('Approve')->button()
+                //     ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
+                // // ->
+                //     ->color('success')
+                //     ->icon('heroicon-o-check')
+                //     ->action(function ($record, $data) {
+
+                //         $record->update([
+                //             'status' => EmployeeApplication::STATUS_APPROVED,
+                //             'approved_by' => auth()->user()->id,
+                //             'approved_at' => now(),
+                //         ]);
+                //         $transaction = ApplicationTransaction::createTransactionFromApplicationV2(
+                //             $applicationId = $record->id,
+                //             $transactionTypeId = 1,
+                //             $amount = 0,
+                //             $remaining = 0,
+                //             $fromDate = $data['from_date'],
+                //             $toDate = $data['to_date'],
+                //             $createdBy = auth()->user()->id,
+                //             $employeeId = $record->employee_id,
+                //             $isCanceled = false,
+                //             $canceledAt = null,
+                //             $cancelReason = null,
+                //             $details = json_encode('Approved leave'),
+                //             $branchId = $record->branch_id,
+                //             $value = $data['days_count'],
+
+                //         );
+
+                //         // Step 3: Calculate the number of leave days and update the leave balance
+
+                //         // Fetch the leave balance for the employee and specific leave type
+                //         $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
+                //             ->where('leave_type_id', $record->detail_leave_type_id)
+                //             ->first();
+
+                //         // Update the balance if found
+                //         if ($leaveBalance) {
+                //             $leaveBalance->decrement('balance', $transaction->value);
+                //         }
+                //     })
+                //     ->disabledForm()
+                //     ->form(function ($record) {
+                //         $leaveTypeId = $record?->detail_leave_type_id;
+                //         $toDate = $record?->detail_to_date;
+                //         $fromDate = $record?->detail_from_date;
+                //         $daysCount = $record?->detail_days_count;
+                //         $leaveType = LeaveType::find($leaveTypeId)->name;
+
+                //         return [
+                //             Fieldset::make()->label('Request data')->columns(3)->schema([
+                //                 TextInput::make('employee')->default($record?->employee?->name),
+                //                 TextInput::make('leave')->default($leaveType),
+                //                 DatePicker::make('from_date')->default($fromDate)->label('From date'),
+                //                 DatePicker::make('to_date')->default($toDate)->label('To date'),
+                //                 TextInput::make('days_count')->default($daysCount),
+                //             ]),
                 //         ];
                 //     })
+
                 // ,
-
-                Action::make('approveDepatureRequest')->label('Approve')->button()
-                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->action(function ($record, $data) {
-                        (new AttendanecEmployee())->createAttendance($record->employee, $data['period'], $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT);
-                        $record->update([
-                            'status' => EmployeeApplication::STATUS_APPROVED,
-                            'approved_by' => auth()->user()->id,
-                            'approved_at' => now(),
-                        ]);
-                        ApplicationTransaction::createTransactionFromApplication($record);
-
-                    })
-                    ->disabledForm()
-                    ->form(function ($record) {
-                        $attendance = Attendance::where('employee_id', $record?->employee_id)
-                            ->where('check_date', $record?->detail_date)
-                            ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                            ->first();
-
-                        return [
-                            Fieldset::make()->label('Attendance data')->columns(3)->schema([
-                                TextInput::make('employee')->default($record?->employee?->name),
-                                DatePicker::make('check_date')->default($attendance?->check_date),
-                                TimePicker::make('check_time')->default($attendance?->check_time),
-                                TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
-                                TextInput::make('start_at')->default($attendance?->period?->start_at),
-                                TextInput::make('end_at')->default($attendance?->period?->end_at),
-                                Hidden::make('period')->default($attendance?->period),
-                            ]),
-                            Fieldset::make()->label('Request data')->columns(2)->schema([
-                                DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
-                                TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
-                            ]),
-                        ];
-                    }),
-
-                // Approve missed checkin request
-                Action::make('approveMissedCheckinRequest')->label('Approve')->button()
-                    ->databaseTransaction()
-                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->action(function ($record, $data) {
-
-                        $employeePeriods = $record->employee?->periods;
-
-                        if (!is_null($record->employee) && count($employeePeriods) > 0) {
-                            $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
-
-                            // Decode the days array for each period
-                            $workTimePeriods = $employeePeriods->map(function ($period) {
-                                $period->days = json_decode($period->days); // Ensure days are decoded
-                                return $period;
-                            });
-
-                            // Filter periods by the day
-                            $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-                                return in_array($day, $period->days);
-                            });
-                            
-                            $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
-                           
-                            (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
-                            $record->update([
-                                'status' => EmployeeApplication::STATUS_APPROVED,
-                                'approved_by' => auth()->user()->id,
-                                'approved_at' => now(),
-                            ]);
-                        }
-                        // ApplicationTransaction::createTransactionFromApplication($record);
-
-                    })
-                    ->disabledForm()
-                    ->form(function ($record) {
-                        // $attendance = Attendance::where('employee_id', $record?->employee_id)
-                        //     ->where('check_date', $record?->detail_date)
-                        //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                        //     ->first();
-
-                        return [
-                            // Fieldset::make()->label('Attendance data')->columns(3)->schema([
-                            //     TextInput::make('employee')->default($record?->employee?->name),
-                            //     DatePicker::make('check_date')->default($attendance?->check_date),
-                            //     TimePicker::make('check_time')->default($attendance?->check_time),
-                            //     TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
-                            //     TextInput::make('start_at')->default($attendance?->period?->start_at),
-                            //     TextInput::make('end_at')->default($attendance?->period?->end_at),
-                            //     Hidden::make('period')->default($attendance?->period),
-                            // ]),
-                            Fieldset::make()->label('Request data')->columns(2)->schema([
-                                DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
-                                TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
-                            ]),
-                        ];
-                    }),
-
-                Action::make('approveAdvanceRequest')->label('Approve')->button()
-                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->action(function ($record, $data) {
-                        //    ApplicationTransaction::createTransactionFromApplication();
-                        $record->update([
-                            'status' => EmployeeApplication::STATUS_APPROVED,
-                            'approved_by' => auth()->user()->id,
-                            'approved_at' => now(),
-                        ]);
-                        ApplicationTransaction::createTransactionFromApplication($record);
-
-                    })
-                    ->disabledForm()
-                    ->form(function ($record) {
-                        // $details= json_decode($record->details) ;
-
-                        $detailDate = $record?->detail_date;
-                        $monthlyDeductionAmount = $record?->detail_monthly_deduction_amount;
-                        $advanceAmount = $record?->detail_advance_amount;
-                        $deductionStartsFrom = $record?->detail_deduction_starts_from;
-                        $deductionEndsAt = $record?->detail_deduction_ends_at;
-                        $numberOfMonthsOfDeduction = $record?->detail_number_of_months_of_deduction;
-
-                        // $details = EmployeeApplicationResource::getDetailsKeysAndValues(json_decode($record->details));
-                        // dd($details);
-                        return [
-                            Fieldset::make()->label('Request data')->columns(3)->schema([
-                                TextInput::make('employee')->default($record?->employee?->name),
-                                DatePicker::make('date')->default($detailDate)->label('Advance date'),
-                                TextInput::make('advance_amount')->default($advanceAmount),
-                                TextInput::make('deductionStartsFrom')->label('Deducation starts from')->default($deductionStartsFrom),
-                                TextInput::make('deductionEndsAt')->label('Deducation ends at')->default($deductionEndsAt),
-                                TextInput::make('numberOfMonthsOfDeduction')->label('numberOfMonthsOfDeduction')->default($numberOfMonthsOfDeduction),
-                                TextInput::make('monthlyDeductionAmount')->label('monthlyDeductionAmount')->default($monthlyDeductionAmount),
-
-                            ]),
-                            Fieldset::make()->label('Request data')->columns(2)->schema([
-                                // DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
-                                // TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
-                            ]),
-                        ];
-                    }),
-                Action::make('reject')->label('Reject')->button()
-                    ->color('warning')
-                    ->visible(fn($record): bool => $record->status == EmployeeApplication::STATUS_PENDING)
-                    ->icon('heroicon-o-x-mark')
-                    ->action(function ($record, $data) {
-                        $record->update([
-                            'status' => EmployeeApplication::STATUS_REJECTED,
-                            'rejected_reason' => $data['rejected_reason'],
-                            'rejected_by' => auth()->user()->id,
-                            'rejected_at' => now(),
-                        ]);
-
-                        // Step 2: Create a transaction
-                        ApplicationTransaction::createTransactionFromApplication($record);
-
-                        // Step 3: Calculate the number of leave days and update the leave balance
-                        $fromDate = $record->detail_from_date;
-                        $toDate = $record->detail_to_date;
-                        $daysRequested = $fromDate->diffInDays($toDate) + 1; // Assuming inclusive of the last day
-
-                        // Fetch the leave balance for the employee and specific leave type
-                        $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
-                            ->where('leave_type_id', $record->detail_leave_type_id)
-                            ->first();
-
-                        // Update the balance if found
-                        if ($leaveBalance) {
-                            $leaveBalance->decrement('balance', $daysRequested);
-                        }
-                    })
-
-                    ->form(function ($record) {
-                        $attendance = Attendance::where('employee_id', $record?->employee_id)
-                            ->where('check_date', $record?->detail_date)
-                            ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                            ->first();
-
-                        return [
-                            Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
-                                TextInput::make('employee')->default($record?->employee?->name),
-                                DatePicker::make('check_date')->default($attendance?->check_date),
-                                TimePicker::make('check_time')->default($attendance?->check_time),
-                                TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
-                                TextInput::make('start_at')->default($attendance?->period?->start_at),
-                                TextInput::make('end_at')->default($attendance?->period?->end_at),
-                                Hidden::make('period')->default($attendance?->period),
-                            ]),
-                            Fieldset::make()->disabled()->label('Request data')->columns(2)->schema([
-                                DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
-                                TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
-                            ]),
-                            Fieldset::make()->label('Rejected reason')->columns(2)->schema([
-                                Textarea::make('rejected_reason')->label('')->columnSpanFull()->required()
-                                    ->disabled(false)
-                                    ->helperText('Please descripe reject reason')
-                                ,
-                            ]),
-
-                        ];
-                    })
-                , Action::make('approveLeaveRequest')
-                    ->databaseTransaction(true)
-                    ->label('Approve')->button()
-                    ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
-                    // ->
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->action(function ($record, $data) {
-
-                        $record->update([
-                            'status' => EmployeeApplication::STATUS_APPROVED,
-                            'approved_by' => auth()->user()->id,
-                            'approved_at' => now(),
-                        ]);
-                        $transaction = ApplicationTransaction::createTransactionFromApplicationV2(
-                            $applicationId = $record->id,
-                            $transactionTypeId = 1,
-                            $amount = 0,
-                            $remaining = 0,
-                            $fromDate = $data['from_date'],
-                            $toDate = $data['to_date'],
-                            $createdBy = auth()->user()->id,
-                            $employeeId = $record->employee_id,
-                            $isCanceled = false,
-                            $canceledAt = null,
-                            $cancelReason = null,
-                            $details = json_encode('Approved leave'),
-                            $branchId = $record->branch_id,
-                            $value = $data['days_count'],
-
-                        );
-
-                        // Step 3: Calculate the number of leave days and update the leave balance
-
-                        // Fetch the leave balance for the employee and specific leave type
-                        $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
-                            ->where('leave_type_id', $record->detail_leave_type_id)
-                            ->first();
-
-                        // Update the balance if found
-                        if ($leaveBalance) {
-                            $leaveBalance->decrement('balance', $transaction->value);
-                        }
-                    })
-                    ->disabledForm()
-                    ->form(function ($record) {
-                        $leaveTypeId = $record?->detail_leave_type_id;
-                        $toDate = $record?->detail_to_date;
-                        $fromDate = $record?->detail_from_date;
-                        $daysCount = $record?->detail_days_count;
-                        $leaveType = LeaveType::find($leaveTypeId)->name;
-
-                        return [
-                            Fieldset::make()->label('Request data')->columns(3)->schema([
-                                TextInput::make('employee')->default($record?->employee?->name),
-                                TextInput::make('leave')->default($leaveType),
-                                DatePicker::make('from_date')->default($fromDate)->label('From date'),
-                                DatePicker::make('to_date')->default($toDate)->label('To date'),
-                                TextInput::make('days_count')->default($daysCount),
-                            ]),
-                        ];
-                    })
-
-                ,
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -707,4 +660,191 @@ class EmployeeApplicationResource extends Resource
         }
         return false;
     }
+
+    private static function approveDepartureRequest(): Action
+    {
+        return Action::make('approveDepartureRequest')->label('Approve')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
+            ->color('success')
+            ->icon('heroicon-o-check')
+            ->action(function ($record, $data) {
+                (new AttendanecEmployee())->createAttendance($record->employee, $data['period'], $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT);
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_APPROVED,
+                    'approved_by' => auth()->user()->id,
+                    'approved_at' => now(),
+                ]);
+                ApplicationTransaction::createTransactionFromApplication($record);
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Fieldset::make()->label('Attendance data')->columns(3)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name),
+                        DatePicker::make('check_date')->default(now()->format('Y-m-d'))->label('Date'),
+                        TimePicker::make('check_time')->default(now()->format('H:i'))->label('Time'),
+                    ]),
+                ];
+            });
+    }
+
+    private static function rejectDepartureRequest(): Action
+    {
+        return Action::make('rejectDepartureRequest')->label('Reject')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->action(function ($record) {
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_REJECTED,
+                    'rejected_by' => auth()->user()->id,
+                    'rejected_at' => now(),
+                ]);
+            })
+            // ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
+                ];
+            });
+    }
+    private static function approveAdvanceRequest(): Action
+    {
+        return Action::make('approveAdvanceRequest')->label('Approve')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
+            ->color('success')
+            ->icon('heroicon-o-check')
+            ->action(function ($record) {
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_APPROVED,
+                    'approved_by' => auth()->user()->id,
+                    'approved_at' => now(),
+                ]);
+                ApplicationTransaction::createTransactionFromApplication($record);
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Fieldset::make()->label('Request Data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)->label('Employee'),
+                        TextInput::make('advance_amount')->default($record?->detail_advance_amount)->label('Advance Amount'),
+                    ]),
+                ];
+            });
+    }
+
+    private static function rejectAdvanceRequest(): Action
+    {
+        return Action::make('rejectAdvanceRequest')->label('Reject')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->action(function ($record) {
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_REJECTED,
+                    'rejected_by' => auth()->user()->id,
+                    'rejected_at' => now(),
+                ]);
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
+                ];
+            });
+    }
+
+    private static function approveLeaveRequest(): Action
+    {
+        return Action::make('approveLeaveRequest')->label('Approve')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
+            ->color('success')
+            ->icon('heroicon-o-check')
+            ->action(function ($record) {
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_APPROVED,
+                    'approved_by' => auth()->user()->id,
+                    'approved_at' => now(),
+                ]);
+                // Add logic for leave balance update if needed
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Fieldset::make()->label('Request Data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)->label('Employee'),
+                        DatePicker::make('from_date')->default($record?->detail_from_date)->label('From Date'),
+                        DatePicker::make('to_date')->default($record?->detail_to_date)->label('To Date'),
+                    ]),
+                ];
+            });
+    }
+
+    private static function rejectLeaveRequest(): Action
+    {
+        return Action::make('rejectLeaveRequest')->label('Reject')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->action(function ($record) {
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_REJECTED,
+                    'rejected_by' => auth()->user()->id,
+                    'rejected_at' => now(),
+                ]);
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
+                ];
+            });
+    }
+
+    private static function approveAttendanceRequest(): Action
+    {
+        return Action::make('approveAttendanceRequest')->label('Approve')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
+            ->color('success')
+            ->icon('heroicon-o-check')
+            ->action(function ($record) {
+                // Logic for approving attendance fingerprint requests
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_APPROVED,
+                    'approved_by' => auth()->user()->id,
+                    'approved_at' => now(),
+                ]);
+            })
+            ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Fieldset::make()->label('Request Data')->columns(2)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name)->label('Employee'),
+                        DatePicker::make('check_date')->default($record?->detail_date)->label('Check Date'),
+                    ]),
+                ];
+            });
+    }
+
+    private static function rejectAttendanceRequest(): Action
+    {
+        return Action::make('rejectAttendanceRequest')->label('Reject')->button()
+            ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
+            ->color('danger')
+            ->icon('heroicon-o-x-mark')
+            ->action(function ($record) {
+                $record->update([
+                    'status' => EmployeeApplication::STATUS_REJECTED,
+                    'rejected_by' => auth()->user()->id,
+                    'rejected_at' => now(),
+                ]);
+            })
+            // ->disabledForm()
+            ->form(function ($record) {
+                return [
+                    Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
+                ];
+            });
+    }
+
 }
