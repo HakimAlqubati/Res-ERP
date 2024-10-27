@@ -339,6 +339,11 @@ class EmployeeResource extends Resource
                     ->label('Employee No.')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
+                TextColumn::make('id')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(label: 'Id.')
+                    ->sortable()->searchable()
+                    ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->limit(20)
