@@ -68,6 +68,9 @@
 
                 // Show loading spinner
                 loadingSpinner.classList.remove('hidden');
+                
+                // Hide the video element
+                video.style.display = 'none'; // Hide the video element
 
                 // Send image data to server
                 fetch('/recognize-face', {
@@ -99,6 +102,7 @@
             // Close modal
             closeModal.addEventListener('click', () => {
                 resultModal.classList.add('hidden');
+                video.style.display = 'block'; // Show the video element again when the modal is closed
             });
         </script>
     </div>
