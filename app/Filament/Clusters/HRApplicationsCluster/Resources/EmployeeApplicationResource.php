@@ -30,6 +30,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class EmployeeApplicationResource extends Resource
@@ -357,17 +358,81 @@ class EmployeeApplicationResource extends Resource
                 // static::approveDepartureRequest(),
                 // static::rejectDepartureRequest(),
 
-                static::approveDepartureRequest(),
-                static::rejectDepartureRequest(),
+                static::approveDepartureRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
+                static::rejectDepartureRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
 
-                static::approveAdvanceRequest(),
-                static::rejectAdvanceRequest(),
+                static::approveAdvanceRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
+                static::rejectAdvanceRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
 
-                static::approveLeaveRequest(),
-                static::rejectLeaveRequest(),
+                static::approveLeaveRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
+                static::rejectLeaveRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
 
-                static::approveAttendanceRequest(),
-                static::rejectAttendanceRequest(),
+                static::approveAttendanceRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
+                static::rejectAttendanceRequest()->hidden(function($record){
+                    if(isStuff()){
+                        return true;
+                    }
+                    if($record->employee_id == Auth::user()->employee->id){
+                    return true;
+                    }
+                    return false;
+                }),
                 // Approve missed checkin request
                 // Action::make('approveMissedCheckinRequest')->label('Approve')->button()
                 //     ->databaseTransaction()
