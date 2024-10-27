@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -23,6 +24,7 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -31,6 +33,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EmployeeApplicationResource extends Resource
@@ -748,46 +751,72 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
+            ->databaseTransaction()
             ->action(function ($record, $data) {
+                // dd($data);
+                try {
+                    $employeePeriods = $record->employee?->periods;
 
-                $employeePeriods = $record->employee?->periods;
+                    if (!is_null($record->employee) && count($employeePeriods) > 0) {
+                        $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
 
-                if (!is_null($record->employee) && count($employeePeriods) > 0) {
-                    $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+                        // Decode the days array for each period
+                        $workTimePeriods = $employeePeriods->map(function ($period) {
+                            $period->days = json_decode($period->days); // Ensure days are decoded
+                            return $period;
+                        });
 
-                    // Decode the days array for each period
-                    $workTimePeriods = $employeePeriods->map(function ($period) {
-                        $period->days = json_decode($period->days); // Ensure days are decoded
-                        return $period;
-                    });
+                        // Filter periods by the day
+                        $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+                            return in_array($day, $period->days);
+                        });
 
-                    // Filter periods by the day
-                    $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-                        return in_array($day, $period->days);
-                    });
+                        $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
 
-                    $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT);
+                        $record->update([
+                            'status' => EmployeeApplication::STATUS_APPROVED,
+                            'approved_by' => auth()->user()->id,
+                            'approved_at' => now(),
+                        ]);
+                    }
+                    // ApplicationTransaction::createTransactionFromApplication($record);
 
-                    (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
-                    $record->update([
-                        'status' => EmployeeApplication::STATUS_APPROVED,
-                        'approved_by' => auth()->user()->id,
-                        'approved_at' => now(),
-                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error approving attendance request: ' . $e->getMessage());
+                  return  Notification::make()->body($e->getMessage())->send();
+                    // Handle the exception (log it, return an error message, etc.)
+                    // Optionally, you could return a user-friendly error message
+                    throw new \Exception($e->getMessage());
+                    throw new \Exception('There was an error processing the attendance request. Please try again later.');
                 }
-                // ApplicationTransaction::createTransactionFromApplication($record);
-
             })
-            ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
+
+                $attendance = Attendance::where('employee_id', $record?->employee_id)
+                    ->where('check_date', $record?->detail_date)
+                    ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                    ->first();
+
                 return [
-                    Fieldset::make()->label('Attendance data')->columns(3)->schema([
+                    Fieldset::make()->disabled()->label('Attendance data')->columns(3)->schema([
                         TextInput::make('employee')->default($record?->employee?->name),
-                        DatePicker::make('check_date')->default(now()->format('Y-m-d'))->label('Date'),
-                        TimePicker::make('check_time')->default(now()->format('H:i'))->label('Time'),
+                        DatePicker::make('check_date')->default($attendance?->check_date),
+                        TimePicker::make('check_time')->default($attendance?->check_time),
+                        TextInput::make('period_title')->label('Period')->default($attendance?->period?->name),
+                        TextInput::make('start_at')->default($attendance?->period?->start_at),
+                        TextInput::make('end_at')->default($attendance?->period?->end_at),
+                        Hidden::make('period')->default($attendance?->period),
                     ]),
+                    Fieldset::make()->disabled(false)->label('Request data')->columns(2)->schema([
+                        DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                        TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                    ]),
+
                 ];
-            });
+            })
+        ;
     }
 
     private static function rejectDepartureRequest(): Action
@@ -933,14 +962,23 @@ class EmployeeApplicationResource extends Resource
             })
             ->disabledForm()
             ->form(function ($record) {
+                $leaveTypeId = $record?->detail_leave_type_id;
+                $toDate = $record?->detail_to_date;
+                $fromDate = $record?->detail_from_date;
+                $daysCount = $record?->detail_days_count;
+                $leaveType = LeaveType::find($leaveTypeId)->name;
+
                 return [
-                    Fieldset::make()->label('Request Data')->columns(2)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name)->label('Employee'),
-                        DatePicker::make('from_date')->default($record?->detail_from_date)->label('From Date'),
-                        DatePicker::make('to_date')->default($record?->detail_to_date)->label('To Date'),
+                    Fieldset::make()->label('Request data')->columns(3)->schema([
+                        TextInput::make('employee')->default($record?->employee?->name),
+                        TextInput::make('leave')->default($leaveType),
+                        DatePicker::make('from_date')->default($fromDate)->label('From date'),
+                        DatePicker::make('to_date')->default($toDate)->label('To date'),
+                        TextInput::make('days_count')->default($daysCount),
                     ]),
                 ];
-            });
+            })
+        ;
     }
 
     private static function rejectLeaveRequest(): Action
@@ -970,42 +1008,42 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
-            ->action(function ($record,$data) {
+            ->action(function ($record, $data) {
                 // Logic for approving attendance fingerprint requests
-                
-                        $employeePeriods = $record->employee?->periods;
 
-                        if (!is_null($record->employee) && count($employeePeriods) > 0) {
-                            $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+                $employeePeriods = $record->employee?->periods;
 
-                            // Decode the days array for each period
-                            $workTimePeriods = $employeePeriods->map(function ($period) {
-                                $period->days = json_decode($period->days); // Ensure days are decoded
-                                return $period;
-                            });
+                if (!is_null($record->employee) && count($employeePeriods) > 0) {
+                    $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
 
-                            // Filter periods by the day
-                            $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-                                return in_array($day, $period->days);
-                            });
+                    // Decode the days array for each period
+                    $workTimePeriods = $employeePeriods->map(function ($period) {
+                        $period->days = json_decode($period->days); // Ensure days are decoded
+                        return $period;
+                    });
 
-                            $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+                    // Filter periods by the day
+                    $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+                        return in_array($day, $period->days);
+                    });
 
-                            (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
-                            $record->update([
-                                'status' => EmployeeApplication::STATUS_APPROVED,
-                                'approved_by' => auth()->user()->id,
-                                'approved_at' => now(),
-                            ]);
-                        }
-                        // ApplicationTransaction::createTransactionFromApplication($record);
+                    $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+
+                    (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
+                    $record->update([
+                        'status' => EmployeeApplication::STATUS_APPROVED,
+                        'approved_by' => auth()->user()->id,
+                        'approved_at' => now(),
+                    ]);
+                }
+                // ApplicationTransaction::createTransactionFromApplication($record);
             })
             ->disabledForm()
             ->form(function ($record) {
                 return [
-                    Fieldset::make()->label('Request Data')->columns(2)->schema([
-                        TextInput::make('employee')->default($record?->employee?->name)->label('Employee'),
-                        DatePicker::make('check_date')->default($record?->detail_date)->label('Check Date'),
+                    Fieldset::make()->label('Request data')->columns(2)->schema([
+                        DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
+                        TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
                     ]),
                 ];
             });
