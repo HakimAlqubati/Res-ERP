@@ -355,8 +355,8 @@ class EmployeeApplicationResource extends Resource
                     EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED]),
             ])
             ->actions([
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\RestoreAction::make(),
+                // Tables\Actions\DeleteAction::make(),
 
                 // static::approveDepartureRequest(),
                 // static::rejectDepartureRequest(),
@@ -684,8 +684,8 @@ class EmployeeApplicationResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }

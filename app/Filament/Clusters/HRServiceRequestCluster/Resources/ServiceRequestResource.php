@@ -53,7 +53,12 @@ class ServiceRequestResource extends Resource
                     Fieldset::make()->columns(3)->schema([
                         TextInput::make('name')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)->disabled(function () {
+                            if (isStuff()) {
+                                return true;
+                            }
+                            return false;
+                        }),
                         Select::make('branch_id')->label('Branch')
                             ->disabled(function () {
                                 if (isStuff()) {
@@ -75,7 +80,12 @@ class ServiceRequestResource extends Resource
                                 return BranchArea::query()
                                     ->where('branch_id', $get('branch_id'))
                                     ->pluck('name', 'id');
-                            })
+                            })->disabled(function () {
+                            if (isStuff()) {
+                                return true;
+                            }
+                            return false;
+                        })
                         ,
                     ]),
                     Fieldset::make()->label('Descripe your service request')->schema([
@@ -84,7 +94,14 @@ class ServiceRequestResource extends Resource
                             ->columnSpanFull()
                             ->maxLength(500),
 
-                    ]),
+                    ])
+                        ->disabled(function () {
+                            if (isStuff()) {
+                                return true;
+                            }
+                            return false;
+                        })
+                    ,
 
                     Fieldset::make()->columns(4)->schema([
                         Select::make('assigned_to')
@@ -106,6 +123,12 @@ class ServiceRequestResource extends Resource
                                 ServiceRequest::URGENCY_MEDIUM => 'Medium',
                                 ServiceRequest::URGENCY_LOW => 'Low',
                             ])
+                            ->disabled(function () {
+                                if (isStuff()) {
+                                    return true;
+                                }
+                                return false;
+                            })
                             ->required(),
 
                         Select::make('impact')
@@ -114,6 +137,12 @@ class ServiceRequestResource extends Resource
                                 ServiceRequest::IMPACT_MEDIUM => 'Medium',
                                 ServiceRequest::IMPACT_LOW => 'Low',
                             ])
+                            ->disabled(function () {
+                                if (isStuff()) {
+                                    return true;
+                                }
+                                return false;
+                            })
                             ->required(),
                         Select::make('status')
                             ->default(ServiceRequest::STATUS_NEW)
@@ -221,6 +250,9 @@ class ServiceRequestResource extends Resource
                 TextColumn::make('branchArea.name')->label('Branch Area')
                     ->toggleable(isToggledHiddenByDefault: true)
                 ,
+                TextColumn::make('createdBy.name')->label('Created By')->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                ,
                 TextColumn::make('assignedTo.name')->label('Assigned To')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                 ,
@@ -233,6 +265,12 @@ class ServiceRequestResource extends Resource
             ])
             ->actions([
                 Action::make('Move')->button()
+                ->disabled(function($record){
+                    if($record->status == ServiceRequest::STATUS_CLOSED){
+                        return true;
+                    }
+                    return false;
+                })
                 // ->hidden(function ($record) {
                 //     if (!isSuperAdmin() && !auth()->user()->can('move_status_task')) {
                 //         return true;
@@ -242,14 +280,47 @@ class ServiceRequestResource extends Resource
                         return [
                             Select::make('status')->default(function ($record) {
                                 return $record->status;
-                            })->columnSpanFull()->options(
-                                [
-                                    ServiceRequest::STATUS_NEW => 'New',
-                                    ServiceRequest::STATUS_PENDING => 'Pending',
-                                    ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
-                                    ServiceRequest::STATUS_CLOSED => 'Closed',
-                                ]
-                            ),
+                            })->columnSpanFull()
+                                ->disableOptionWhen(fn(string $value): bool => ($value === ServiceRequest::STATUS_NEW || $value === ServiceRequest::STATUS_PENDING))
+                                
+                                ->disabled(function ($record) {
+                                    if($record->status == ServiceRequest::STATUS_NEW){
+                                        if($record->created_by == auth()->user()->id){
+                                            return false;
+                                        }
+                                    }
+                                    if(isset(auth()->user()?->employee)){
+                                        if($record->assigned_to == auth()->user()?->employee?->id){
+                                            return false;
+                                        }
+                                    }
+                                    // if($record->status == S)
+                                    return true;
+                                    // Get the logs for the status change
+                                    $statusChangeLogs = $record->logs->where('log_type', ServiceRequestLog::LOG_TYPE_STATUS_CHANGED);
+
+                                    // Check if there are any logs and get the last one
+                                    if ($statusChangeLogs->isNotEmpty()) {
+                                        $lastLog = $statusChangeLogs->last();
+
+                                        // Check if the last log's created_by matches the current user
+                                        if($record->status == ServiceRequest::STATUS_PENDING){
+                                            return $lastLog->created_by == auth()->user()->id;
+                                        }
+                                    }
+
+                                    // If there are no logs, do not disable the field
+                                    return false;
+
+                                })
+                                ->options(
+                                    [
+                                        ServiceRequest::STATUS_NEW => 'New',
+                                        ServiceRequest::STATUS_PENDING => 'Pending',
+                                        ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
+                                        ServiceRequest::STATUS_CLOSED => 'Closed',
+                                    ]
+                                ),
                         ];
                     })
                     ->icon('heroicon-m-arrows-right-left')
@@ -268,7 +339,14 @@ class ServiceRequestResource extends Resource
                             ]);
                         }
                     }),
-                Action::make('ReAssign')->button()
+                Action::make('ReAssign')
+                ->disabled(function($record){
+                    if($record->status == ServiceRequest::STATUS_CLOSED){
+                        return true;
+                    }
+                    return false;
+                })
+                ->button()
                     ->hidden(function () {
                         if (isStuff()) {
                             return true;
@@ -313,7 +391,12 @@ class ServiceRequestResource extends Resource
                             ]);
                         }
                     }),
-                Action::make('AddComment')->button()
+                Action::make('AddComment')->button()->disabled(function($record){
+                    if($record->status == ServiceRequest::STATUS_CLOSED){
+                        return true;
+                    }
+                    return false;
+                })
                     ->form(function ($record) {
                         return [
                             Fieldset::make()->schema([
@@ -374,7 +457,12 @@ class ServiceRequestResource extends Resource
                             }
                         }
                     }),
-                Action::make('AddPhotos')
+                Action::make('AddPhotos')->disabled(function($record){
+                    if($record->status == ServiceRequest::STATUS_CLOSED){
+                        return true;
+                    }
+                    return false;
+                })
                 // ->hidden(function ($record) {
                 //     if ($record->task_status == Task::STATUS_COMPLETED) {
                 //         return true;
@@ -448,7 +536,12 @@ class ServiceRequestResource extends Resource
                     ->modalContent(function ($record) {
                         return view('filament.resources.service_requests.gallery', ['photos' => $record->photos()->orderBy('id', 'desc')->get()]);
                     }),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->disabled(function($record){
+                    if($record->status == ServiceRequest::STATUS_CLOSED){
+                        return true;
+                    }
+                    return false;
+                }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
