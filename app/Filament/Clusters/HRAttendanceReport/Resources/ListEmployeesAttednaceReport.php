@@ -237,9 +237,5 @@ class ListEmployeesAttednaceReport extends ListRecords
     $this->showDetailsModal = true; // This opens the modal
 }
 
-public function mount(): void
-{
-    $this->showDetailsModal = false;
-}
 
 }

@@ -51,22 +51,22 @@ class PeriodHistoriesRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()),
-                // Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
-                //     ->requiresConfirmation()->databaseTransaction()
-                //    ->button()
-                //     ->color(Color::Red)
-                //     ->action(function ($record) {
-                //         $record->update(['active' => 0]);
-                //         Notification::make()->title('Done')->send();
-                //     }),
-                // Action::make('enable')->label('Enable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 0))
-                //     ->requiresConfirmation()->databaseTransaction()
-                //     ->button()
-                //     ->color(Color::Green)
-                //     ->action(function ($record) {
-                //         $record->update(['active' => 1]);
-                //         Notification::make()->title('Done')->send();
-                //     }),
+                Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
+                    ->requiresConfirmation()->databaseTransaction()
+                   ->button()
+                    ->color(Color::Red)
+                    ->action(function ($record) {
+                        $record->update(['active' => 0]);
+                        Notification::make()->title('Done')->send();
+                    }),
+                Action::make('enable')->label('Enable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 0))
+                    ->requiresConfirmation()->databaseTransaction()
+                    ->button()
+                    ->color(Color::Green)
+                    ->action(function ($record) {
+                        $record->update(['active' => 1]);
+                        Notification::make()->title('Done')->send();
+                    }),
                 // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

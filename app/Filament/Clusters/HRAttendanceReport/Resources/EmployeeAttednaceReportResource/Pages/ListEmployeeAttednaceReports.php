@@ -23,15 +23,19 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 {
     use InteractsWithForms;
     protected static string $resource = EmployeeAttednaceReportResource::class;
- public $attendanceDetails = [];
+   
+ 
+    public $showDetailsModal = false;
+    public $modalData = [];
     public function showDetails($date, $employeeId, $periodId)
     {
-        $attendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        $this->attendanceDetails = $attendanceDetails;
-        return $this->dispatch('open-modal', id: 'show-details');
+        // Replace with your actual data-fetching logic if needed
+        $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        $this->modalData = $AttendanceDetails->toArray();
+    //  dd($this->modalData);
+        $this->showDetailsModal = true; // This opens the modal
     }
-
- 
+  
 
     
     protected function getForms(): array

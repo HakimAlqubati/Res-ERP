@@ -584,6 +584,7 @@ class EmployeeApplicationResource extends Resource
                     ->databaseTransaction(true)
                     ->label('Approve')->button()
                     ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
+                    // ->
                     ->color('success')
                     ->icon('heroicon-o-check')
                     ->action(function ($record, $data) {

@@ -96,27 +96,19 @@
                                             <x-filament-tables::cell class="internal_cell">
                                                 {{ $item['attendances']['checkout'][0]['supposed_duration_hourly'] }}
                                             </x-filament-tables::cell>
-
-                                            <x-filament-tables::cell class="internal_cell">
-                                                {{-- {{ $item['attendances']['checkout'][0]['actual_duration_hourly'] }} {{'  --  '}} --}}
-                                                {{-- {{ $item['attendances']['checkout']['lastcheckout']['total_actual_duration_hourly'] }} --}}
-                                                {{-- <button class="button"
-                                                        wire:click="showDetails('{{ $date }}', {{ $data[0]['employee_id'] }},{{ $item['period_id'] }})"
-                                                        class="text-blue-500 hover:underline">
-                                                        {{ $item['total_hours'] }}
-                                                    </button> --}}
-
-                                                {{-- <button class="text-blue-500 hover:underline"
-                                                    wire:click="showDetails('{{ $date }}', {{ $data[0]['employee_id'] }},{{ $item['period_id'] }})">
-                                                    {{ $item['total_hours'] }}
-                                                </button> --}}
-
+                                            <x-filament-tables::cell class="internal_cell" x-data="{ tooltip: false }">
                                                 <button class="text-blue-500 hover:underline"
+                                                    @mouseenter="tooltip = true" @mouseleave="tooltip = false"
                                                     wire:click="showDetails('{{ $date }}', {{ $data[0]['employee_id'] }}, {{ $item['period_id'] }})">
                                                     {{ $item['total_hours'] }}
                                                 </button>
-                                            </x-filament-tables::cell>
 
+                                                <div x-show="tooltip"
+                                                    class="absolute bg-gray-700 text-white text-xs rounded py-1 px-2"
+                                                    style="display: none; z-index: 10;">
+                                                    Multiple exit & entery
+                                                </div>
+                                            </x-filament-tables::cell>
                                             <x-filament-tables::cell class="internal_cell">
                                                 {{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}
                                             </x-filament-tables::cell>
@@ -191,6 +183,7 @@
                             }
 
                             // Calculate total hours for each pair of check-in and check-out
+                            // Calculate total hours for each pair of check-in and check-out
                             foreach ($attendances as $index => $attendance) {
                                 $maxRows = max(
                                     count($attendance['checkins'] ?? []),
@@ -210,8 +203,8 @@
                                             $hours =
                                                 $checkoutTime->diffInHours($checkinTime) +
                                                 round(($checkoutTime->diffInMinutes($checkinTime) % 60) / 60, 2); // Add minutes as decimal
-                                            $attendances[$index]['total_hours'][$i] = $hours;
-                                            $totalHours += $hours;
+                                            $attendances[$index]['total_hours'][$i] = abs($hours); // Use abs() to convert to positive
+                                            $totalHours += abs($hours); // Accumulate total hours as positive
                                         } else {
                                             $attendances[$index]['total_hours'][$i] = '-'; // Ignore invalid times
                                         }
@@ -220,6 +213,7 @@
                                     }
                                 }
                             }
+
                         @endphp
 
                         @foreach ($attendances as $index => $attendance)
