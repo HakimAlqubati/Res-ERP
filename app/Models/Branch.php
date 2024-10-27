@@ -69,6 +69,11 @@ class Branch extends Model
                 static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
                     $builder->where('id', auth()->user()->branch_id); // Add your default query here
                 });
+            }else if(isStuff()){
+                static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                    $builder->where('id', auth()->user()->branch_id); // Add your default query here
+                });
+
             }
         }
     }

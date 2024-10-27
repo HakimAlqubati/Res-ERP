@@ -295,7 +295,7 @@ class ServiceRequestResource extends Resource
                             Select::make('status')->default(function ($record) {
                                 return $record->status;
                             })->columnSpanFull()
-                                ->disableOptionWhen(fn(string $value): bool => ($value === ServiceRequest::STATUS_NEW || $value === ServiceRequest::STATUS_PENDING))
+                                ->disableOptionWhen(fn(string $value): bool => ($value === ServiceRequest::STATUS_NEW ))
                                 
                                 ->disabled(function ($record) {
                                     if($record->status == ServiceRequest::STATUS_NEW){

@@ -11,7 +11,6 @@ use App\Models\Task;
 use App\Models\TaskAttachment;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
-use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -256,7 +255,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                     Grid::make()->visible(fn(Get $get): bool => !$get('is_daily'))->columns(2)->schema([
                         DatePicker::make('due_date')->label('Due date')->required(false)
                             ->native(false)
-                            ->displayFormat('d/m/Y')
+                            ->displayFormat('d/m/Y')->disabled(function ($record) {
+                            if (isset($record,auth()->user()->employee)) {
+                                if ($record->assigned_to == auth()->user()->employee->id) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        })
                             ->helperText('Set due date for this task'),
                         Select::make('task_status')->options(
                             [
@@ -559,7 +565,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->button()
                     ->hidden(function ($record) {
-                        if (!isSystemManager() && !isSuperAdmin() && !isBranchManager() ) {
+                        if (!isSystemManager() && !isSuperAdmin() && !isBranchManager()) {
                             return true;
                         }
                         // if (!in_array(getCurrentRole(), [1, 2])) {
