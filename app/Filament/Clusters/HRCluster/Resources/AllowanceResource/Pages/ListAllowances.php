@@ -21,9 +21,9 @@ class ListAllowances extends ListRecords
     public function getTabs(): array
     {
         return [
-            'General allowances' => Tab::make()
+            'Apply to all allownces' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 0)),
-            'Specific employee allowances' => Tab::make()
+            'Custom allownces' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)),
         ];
     }

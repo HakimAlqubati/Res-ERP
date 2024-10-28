@@ -21,6 +21,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Unique;
 
 class LeaveBalanceResource extends Resource
 {
@@ -98,7 +99,19 @@ class LeaveBalanceResource extends Resource
                                 Grid::make()->columns(2)->schema([
                                     Select::make('employee_id')
                                         ->relationship('employee', 'name')
-                                        ->required(),
+                                        ->required()
+                                        ->unique(
+                                            ignoreRecord: true,
+                                            modifyRuleUsing: function (Unique $rule,  Get $get,$state) {
+                                                return $rule->where('employee_id',$state)
+                                            ->where('leave_type_id',$get('../../leave_type_id'))
+                                            ->where('year',$get('../../year'))
+                                            ;
+                                            }
+                                            )->validationMessages([
+                                                'unique'=>'Balance already created'
+                                                ])
+                                            ,
 
                                     TextInput::make('balance')->label('Balance')
                                         ->numeric()

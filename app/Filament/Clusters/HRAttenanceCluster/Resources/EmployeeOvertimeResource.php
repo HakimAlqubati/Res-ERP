@@ -45,10 +45,18 @@ class EmployeeOvertimeResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?string $label = 'Staff Overtime';
-    protected static ?string $pluralModelLabel = 'Staff Overtime';
-    protected static ?string $pluralLabel = 'Staff Overtime';
+    // protected static ?string $label = 'Staff Overtime';
+    // protected static ?string $pluralModelLabel = 'Staff Overtime';
+    // protected static ?string $pluralLabel = 'Staff Overtime';
 
+    public static function getModelLabel(): string
+    {
+        return isStuff() ? 'My Overtime': 'Staff Overtime';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return isStuff() ? 'My Overtime': 'Staff Overtime';
+    }
     protected static ?int $navigationSort = 10;
     public static function form(Form $form): Form
     {
@@ -278,6 +286,9 @@ class EmployeeOvertimeResource extends Resource
                                         }
                                         )
                                         ->relationship('employee', 'name')
+                                        ->validationMessages([
+                                            'unique'=>'This overtime has been recorded'
+                                            ])
                                         ->required(),
                                     TimePicker::make('start_time')
                                         ->label('Start Time')
@@ -349,11 +360,14 @@ class EmployeeOvertimeResource extends Resource
                     ->label('Hours')
                     ->sortable(),
                 IconColumn::make('approved')
-                    ->boolean()
+                    ->boolean()->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
                 TextColumn::make('approvedBy.name')
                     ->label('Approved by')
+                ,
+                TextColumn::make('approved_at')
+                    ->label('Approved at')
                 ,
 
             ])
@@ -411,22 +425,24 @@ class EmployeeOvertimeResource extends Resource
                     })
                     ->action(function (Model $record) {
                         if ($record->approved == 1) {
-                            $record->update(['approved' => 0, 'approved_by' => null]);
+                            $record->update(['approved' => 0, 'approved_by' => null,'approved_at'=> null]);
                         } else {
-                            $record->update(['approved' => 1, 'approved_by' => auth()->user()->id]);
+                            $record->update(['approved' => 1, 'approved_by' => auth()->user()->id,'approved_at'=> now()]);
                         }
                     }),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\ForceDeleteAction::make()->visible(fn():bool=> (isSuperAdmin())),
+                    Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make()->visible(fn():bool=> (isSuperAdmin())),
                     Tables\Actions\RestoreBulkAction::make(),
                     BulkAction::make('Approve')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-check-badge')
-                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id]))
+                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id,'approved_at'=> now()]))
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;
@@ -474,5 +490,22 @@ class EmployeeOvertimeResource extends Resource
         }
         return false;
         return static::can('create');
+    }
+
+    
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }

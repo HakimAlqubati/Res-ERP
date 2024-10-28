@@ -10,6 +10,6 @@ class HRApplicationsCluster extends Cluster
     protected static ?string $clusterBreadcrumb = 'HR';
     public static function getNavigationLabel(): string
     {
-        return 'Applications';
+        return 'Requests';
     }
 }

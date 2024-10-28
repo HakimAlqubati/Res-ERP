@@ -25,6 +25,15 @@ class MonthlyIncentiveResource extends Resource
     protected static ?string $cluster = HRSalaryCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 7;
+
+    public static function getModelLabel(): string
+    {
+        return 'Monthly Bonus';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Monthly Bonus';
+    }
     public static function form(Form $form): Form
     {
         return $form

@@ -168,7 +168,7 @@ class CreateMonthSalary extends CreateRecord
         }
 
         return __('filament-panels::resources/pages/create-record.title', [
-            'label' => 'Generate',
+            'label' => 'Payroll',
         ]);
     }
 }

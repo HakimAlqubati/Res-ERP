@@ -26,6 +26,7 @@ class EmployeeOvertime extends Model
         'created_by',
         'updated_by',
         'branch_id',
+        'approved_at',
     ];
 
     // Relationships

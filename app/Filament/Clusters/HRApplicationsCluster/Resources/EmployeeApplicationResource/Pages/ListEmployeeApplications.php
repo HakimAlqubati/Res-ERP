@@ -52,6 +52,6 @@ class ListEmployeeApplications extends ListRecords
 
     public function getModelLabel(): ?string
     {
-        return 'Application';
+        return 'Request';
     }
 }

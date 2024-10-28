@@ -17,6 +17,18 @@ class CreateEmployeeApplication extends CreateRecord
     protected static string $resource = EmployeeApplicationResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        if (!isStuff()) {
+            $employee = Employee::find($data['employee_id']);
+            if ($employee->branch()->exists()) {
+                $data['branch_id'] = $employee->branch->id;
+            }
+        }
+
+        if (isStuff()) {
+            $data['employee_id'] = auth()->user()->employee->id;
+            $data['branch_id'] = auth()->user()->branch_id;
+        }
+
         $applicationType = EmployeeApplication::APPLICATION_TYPES[$data['application_type']];
         // Log::warning('An application already exists for this employee on the selected date.');
         
@@ -39,17 +51,6 @@ class CreateEmployeeApplication extends CreateRecord
                 ]);
             }
             
-        if (!isStuff()) {
-            $employee = Employee::find($data['employee_id']);
-            if ($employee->branch()->exists()) {
-                $data['branch_id'] = $employee->branch->id;
-            }
-        }
-
-        if (isStuff()) {
-            $data['employee_id'] = auth()->user()->employee->id;
-            $data['branch_id'] = auth()->user()->branch_id;
-        }
 
         $data['application_type_id'] = $data['application_type'];
         $data['application_type_name'] = $applicationType;

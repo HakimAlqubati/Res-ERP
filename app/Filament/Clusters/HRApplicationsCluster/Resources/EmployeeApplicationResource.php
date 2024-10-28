@@ -46,6 +46,12 @@ class EmployeeApplicationResource extends Resource
     protected static ?string $cluster = HRApplicationsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
+
+    protected static ?string $label = 'Request';
+    protected static ?string $pluralLabel = 'Requests';
+
+    protected static ?string $pluralModelLabel = 'Requests';
+
     public static function form(Form $form): Form
     {
         return $form
@@ -77,13 +83,13 @@ class EmployeeApplicationResource extends Resource
                     ,
 
                     DatePicker::make('application_date')
-                        ->label('Application date')
+                        ->label('Request date')
                         ->default(date('Y-m-d'))
                         ->required(),
 
                     ToggleButtons::make('application_type')
                         ->columnSpan(2)
-                        ->label('Application type')
+                        ->label('Request type')
                         ->hiddenOn('edit')
                         ->live()
                         ->options(EmployeeApplication::APPLICATION_TYPES)
@@ -333,7 +339,7 @@ class EmployeeApplicationResource extends Resource
                 TextColumn::make('createdBy.name')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('application_date')->label('Application date')
+                TextColumn::make('application_date')->label('Request date')
                     ->sortable()
                 ,
 
@@ -718,12 +724,12 @@ class EmployeeApplicationResource extends Resource
 
     public static function getTitleCasePluralModelLabel(): string
     {
-        return 'Applications';
+        return 'Requests';
     }
 
     public static function getTitleCaseModelLabel(): string
     {
-        return 'Application';
+        return 'Request';
     }
 
     public static function getNavigationBadge(): ?string

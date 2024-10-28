@@ -22,12 +22,12 @@ class ListDeductions extends ListRecords
     public function getTabs(): array
     {
         return [
-            'General deductions' => Tab::make()
+            'Apply to all deductions' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 0)),
-            'Specific employee deductions' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)),
-            'Penalties deductions' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_penalty', 1)),
+            'Custom\ Penalty deductions' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)->where('is_penalty',1)),
+            // 'Penalties deductions' => Tab::make()
+            //     ->modifyQueryUsing(fn(Builder $query) => $query->where('is_penalty', 1)),
         ];
     }
 }
