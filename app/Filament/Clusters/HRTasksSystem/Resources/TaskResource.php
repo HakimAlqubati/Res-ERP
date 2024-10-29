@@ -141,7 +141,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                         $set('end_date', date('Y-m-d', strtotime('+2 weeks')));
                                         $set('recur_count', 2);
                                     } elseif ($state == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        $set('end_date', date('Y-m-d', strtotime('+7 days')));
+                                        $set('end_date', date('Y-m-d', strtotime('+9 days')));
                                         $set('recur_count', 7);
                                     }
                                 })
@@ -153,6 +153,24 @@ class TaskResource extends Resource implements HasShieldPermissions
                                     ->minDate(date('Y-m-d'))->live()
                                     ->native(false)
                                     ->displayFormat('d/m/Y')
+                                    ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+
+                                        $date1 = new \DateTime($state);
+                                        $date2 = new \DateTime($get('end_date'));
+        
+                                        $interval = $date1->diff($date2);
+        
+                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                            
+                                            $set('recur_count', $interval->days+2);
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            $weeks = floor($interval->days / 7);
+                                            $set('recur_count', $weeks);
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            $months = ($interval->y * 12) + $interval->m;
+                                            $set('recur_count', $months);
+                                        }
+                                    })
                                 ,
                                 TextInput::make('recur_count')
                                     ->default(7)
@@ -167,6 +185,8 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                                     })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        $state +=2;
+                                        // $state= (integer) $state;
                                         $set('end_date', date('Y-m-d', strtotime("+$state days")));
                                     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
                                         $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
@@ -188,7 +208,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 $interval = $date1->diff($date2);
 
                                 if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                    $set('recur_count', $interval->days);
+                                    
+                                    $set('recur_count', $interval->days+2);
                                 } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
                                     $weeks = floor($interval->days / 7);
                                     $set('recur_count', $weeks);

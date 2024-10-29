@@ -6,6 +6,8 @@ use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Task extends Model
 {
@@ -149,4 +151,37 @@ class Task extends Model
             }
         }
     }
+
+
+    /**
+     * Create a new task.
+     *
+     * @param array $data
+     * @return Task|null
+     */
+    public static function createTask(array $data)
+    {
+        // Start a database transaction
+        // DB::beginTransaction();
+
+        try {
+            // Create and return the new task
+            $task = self::create($data);
+
+            // Commit the transaction
+            // DB::commit();
+
+            return $task;
+        } catch (\Exception $e) {
+            // Rollback the transaction if something goes wrong
+            // DB::rollBack();
+
+            // Log the error or handle it as needed
+            Log::error('Task creation failed: ' . $e->getMessage());
+
+            // Optionally, you could throw the exception again or return null
+            return null; // Indicate failure
+        }
+    }
+
 }
