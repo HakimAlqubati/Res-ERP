@@ -2,9 +2,12 @@
 
 use App\Filament\Pages\AttendanecEmployee;
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Http\Controllers\EmployeeAWSController;
+use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
 use App\Models\Employee;
@@ -413,3 +416,15 @@ Route::get('/send-test-email', function () {
 Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}',[TestController2::class,'reportAbsentEmployees']);
 
 Route::get('/updateAllPeriodsToDayAndNight',[MigrateDataController::class,'updateAllPeriodsToDayAndNight']);
+
+Route::get('/addAWSEmployee', [EmployeeAWSController::class, 'addEmployee']);
+Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImages']);
+
+Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
+
+
+Route::get('workbench_webcam',function(){
+return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera');
+});
+
+Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage'])->name('upload.captured.image');

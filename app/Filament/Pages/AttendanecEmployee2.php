@@ -155,9 +155,16 @@ class AttendanecEmployee2 extends BasePage
         $time = $carbonDateTime->toTimeString();
 
         $rfid = $data['rfid'];
-        $employee = Employee::where('rfid', $rfid)->first();
-        $employeePeriods = $employee?->periods;
+        $empId = Employee::where('rfid', $rfid)->first()?->id;
+        // dd($date,$time);
+        $this->handleCreationAttendance($empId, $date, $time);
+    }
 
+    public function handleCreationAttendance($empId, $date, $time)
+    {
+
+        $employee = Employee::find($empId);
+        $employeePeriods = $employee?->periods;
         if (!is_null($employee) && count($employeePeriods) > 0) {
             $day = \Carbon\Carbon::parse($date)->format('l');
 
@@ -195,7 +202,7 @@ class AttendanecEmployee2 extends BasePage
             return
                 [
                 'success' => false,
-                'message' => __('notifications.there_is_no_employee_at_this_number') . $data['rfid'],
+                'message' => __('notifications.there_is_no_employee_at_this_number'),
             ]
             ;
 
@@ -775,15 +782,15 @@ class AttendanecEmployee2 extends BasePage
         return round($totalHours, 2); // Round to two decimal places for clarity
     }
 
-    public function calculateTimeDifferenceNew(string $currentTime,$date, $period): float
+    public function calculateTimeDifferenceNew(string $currentTime, $date, $period): float
     {
         // dd($currentTime,$date,$period);
         // Create DateTime objects for each time
-        
+
         // if($period->day_and_night){
 
         // }
-        
+
         $currentDateTime = Carbon::parse($date . ' ' . $currentTime);
         $periodEndDateTime = Carbon::parse($date . ' ' . $period->end_at);
         // Calculate the difference

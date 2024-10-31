@@ -123,7 +123,7 @@ class EmployeeResource extends Resource
                                                 // ->avatar()
                                                     ->imageEditor()
                                                     ->circleCropper()
-                                                    ->disk('public')
+                                                    ->disk('local')
                                                     ->directory('employees')
                                                     ->visibility('public')
                                                     ->imageEditorAspectRatios([
