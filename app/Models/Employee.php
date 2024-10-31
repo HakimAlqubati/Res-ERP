@@ -95,6 +95,22 @@ class Employee extends Model
         }
         return url('/storage') . '/' . 'employees/default/avatar.png';
     }
+    public function getAvatarImage2Attribute()
+    {
+        $filePath = 'public/' . $this->avatar;
+        
+        if (Storage::exists($filePath) && ($this->avatar != 'employees/default/avatar.png' || $this->avatar != null)) {
+          $arr = explode('/',$this->avatar);
+          if(is_array($arr)&& count($arr)>0){
+              
+              return $arr[1] ?? $this->avatar;
+          }
+          return $this->avatar;
+        }else if($this->avatar == null){
+            return 'no';
+        }
+        return 'no';
+    }
 
     public function approvedLeaveApplications()
     {
