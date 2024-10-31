@@ -2,6 +2,8 @@
 
 use App\Filament\Pages\AttendanecEmployee;
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Http\Controllers\EmployeeAWSController;
+use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
@@ -396,5 +398,10 @@ Route::get('/attendanceSecret__', AttendanecEmployee2::class)
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
 use App\Http\Controllers\FaceRecognitionController;
+use App\Http\Controllers\SearchByCameraController;
 
 Route::post('/recognize-face', [FaceRecognitionController::class, 'recognize']);
+Route::get('/addAWSEmployee', [EmployeeAWSController::class, 'addEmployee']);
+Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImages']);
+
+Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
