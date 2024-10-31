@@ -331,8 +331,8 @@ class EmployeeResource extends Resource
             ->columns([
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
-                TextColumn::make('id')->label('ddd')->copyable(),
-                TextColumn::make('avatar_image2')->copyable()
+                TextColumn::make('id')->label('id')->copyable(),
+                TextColumn::make('avatar_image2')->copyable()->label('avatar name')
                    ,
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
