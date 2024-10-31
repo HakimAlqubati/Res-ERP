@@ -42,6 +42,16 @@ class EmployeeImageAwsIndexesController extends Controller
                     'ExternalImageId' => 'employee-green-hejab',
                     'EmployeeName' => 'Sapna-96',
                 ],
+                [
+                    'ImageName' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c.jpg',
+                    'ExternalImageId' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c',
+                    'EmployeeName' => 'Kadem-125',
+                ],
+                [
+                    'ImageName' => 'Almawqea2017-12-10-08-33-02-243608.jpg',
+                    'ExternalImageId' => 'Almawqea2017-12-10-08-33-02-243608',
+                    'EmployeeName' => 'Abo Bakr Salem-119',
+                ],
             ];
     
             foreach ($images as $image) {
