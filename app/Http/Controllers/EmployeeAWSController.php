@@ -137,7 +137,7 @@ class EmployeeAWSController extends Controller
             $employee = Employee::find($ُemployeeId);
             if($employee){
                 $date= '2024-11-01';
-                $time = '05:31:00';
+                $time = '00:05:00';
                 (new AttendanecEmployee2())->handleCreationAttendance($ُemployeeId,$date,$time);
 
                 Log::info('employee_data_captured',[$employee]);
