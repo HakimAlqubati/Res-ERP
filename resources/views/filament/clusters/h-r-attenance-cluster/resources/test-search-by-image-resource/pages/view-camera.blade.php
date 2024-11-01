@@ -13,49 +13,39 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        /*
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: #f4f6f8;
-        } */
 
         #videoWrapper {
             position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 5px solid rgba(0, 60, 30, 0.7);
+            /* إطار مناسب مع اللون الأخضر */
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
         }
+
 
         body {
             margin: 0;
-            padding: 0;
+            padding: 30px;
             width: 100vw;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            /* background-color: #0b65ed; */
+            /* background: linear-gradient(20deg, rgb(0, 100, 46), rgb(0, 255, 128)); */
+            background: linear-gradient(135deg, rgba(0, 150, 70, 1), rgba(0, 100, 46, 0.8) 50%, rgba(0, 50, 30, 1));
+
+            color: #ffffff;
         }
 
         canvas {
             position: absolute;
         }
 
-        #message {
-            margin-top: 20px;
-            color: #4caf50;
-            font-size: 1.2em;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
 
         #uploadedImageContainer {
             display: flex;
@@ -72,10 +62,11 @@
             border-radius: 8px;
             border: 2px solid #4caf50;
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+
         }
 
         .icon {
-            color: #4caf50;
+            color: #ffffff;
             font-size: 1.5em;
         }
 
@@ -130,23 +121,141 @@
             box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
             /* Shadow for depth */
         }
+
+
+
+        #capturedImage,
+        #video {
+            border-bottom-left-radius: 66px;
+            border-top-right-radius: 66px;
+            margin: 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 5px solid rgba(0, 60, 30, 0.7);
+            /* إطار مناسب مع اللون الأخضر */
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+
+        #messageContainer {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #time,
+        #message {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        #leftPanel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #logo {
+            width: 150px;
+            height: 150px;
+            /* border-radius: 50%; */
+            /* border: 2px solid #ffffff; */
+            /* box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3); */
+        }
+
+        #description {
+            font-size: 1.2em;
+            font-weight: 500;
+            color: #ffffff;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 8px 16px;
+            border-radius: 8px;
+            max-width: 431px;
+            text-align: center;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            display: none;
+        }
+
+        #greeting {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        #greeting img {
+            width: 30px;
+            height: 30px;
+        }
+
+        /* إضافة تأثير النبض */
+        #icon {
+            width: 50px;
+            height: 50px;
+            animation: pulse 1.5s infinite;
+            /* مدة النبض وتكراره */
+            margin-right: 20px;
+        }
+
+        /* تأثير النبض */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                /* تكبير طفيف */
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-    <video id="video" width="720" height="560" autoplay muted></video>
+    {{-- <video id="video" width="720" height="560" autoplay muted></video> --}}
+
+    <div id="leftPanel">
+        <img id="logo" src="{{ asset('storage/logo/default-wb.png') }}" alt="Logo">
+        <div id="description">Stand in front of the camera to register your attendance for work.</div>
+    </div>
+
+    <div id="greeting">
+        <span id="greetingText"></span>
+        <img id="icon" src="" alt="Icon">
+    </div>
+    <div id="videoWrapper">
+        <video id="video" width="720" height="560" autoplay muted></video>
+        <canvas id="overlayCanvas"></canvas>
+    </div>
     <img id="capturedImage" />
     <div id="loader">
         <div class="spinner"></div> <!-- Spinner rotates -->
         <p>Wait for the employee's photo to be matched.</p> <!-- Static message -->
     </div>
 
-    <div>
+
+    <p style="display: none" id="helloEmployee">Hello</p>
+    <br>
+    <div id="messageContainer">
         <p id="message"></p>
-    </div>
-    <div>
-        <p id="time" style="color: blue; font-weight: bolder"></p>
+        <p id="time"></p>
     </div>
     <div id="uploadedImageContainer">
         <span class="icon">✔</span>
@@ -158,6 +267,7 @@
 
     <script>
         const video = document.getElementById('video');
+        const overlayCanvas = document.getElementById('overlayCanvas');
         const messageDiv = document.getElementById('message');
         const timeDiv = document.getElementById('time');
         const uploadedImageContainer = document.getElementById('uploadedImageContainer');
@@ -237,16 +347,17 @@
 
 
                 if (result.status === 'success') {
+                    console.log(result)
                     // Show the success message with the result from Rekognition
                     messageDiv.textContent = result.message;
-                    timeDiv.textContent = `Time used :(${elapsedTime})`;
-
-                    messageDiv.style.color = "#4caf50";
+                    // document.getElementById('helloEmployee').style.display = 'block'
+                    timeDiv.textContent = `Time used :(${elapsedTime}) seconds`;
+                    // timeDiv.textContent = result.message;
                 } else {
                     // Show the error message
                     messageDiv.textContent = result.message;
                     // messageDiv.textContent = `${result.message} Task completed in ${elapsedTime} seconds.`;
-                    timeDiv.textContent = `Time used :(${elapsedTime})`;
+                    timeDiv.textContent = `Time used :(${elapsedTime}) seconds`;
                     messageDiv.style.color = "red";
                 }
 
@@ -309,6 +420,26 @@
                     }
                 }
             }, 100);
+        });
+    </script>
+
+
+
+    <script>
+        // Laravel-passed current time in 24-hour format
+        const currentHour = @json($currentTime);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const icon = document.getElementById("icon");
+            const greetingText = document.getElementById("greetingText");
+
+            if (currentHour >= 6 && currentHour < 18) {
+                icon.src = 'storage/icons/sun.png'; // Add path to sun icon
+                greetingText.textContent = "Good Morning";
+            } else {
+                icon.src = 'storage/icons/crescent-moon.png'; // Add path to moon icon
+                greetingText.textContent = "Good Evening";
+            }
         });
     </script>
 </body>

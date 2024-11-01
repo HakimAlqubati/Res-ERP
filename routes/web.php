@@ -424,7 +424,8 @@ Route::post('/filament/search-by-camera/process', [SearchByCameraController::cla
 
 
 Route::get('workbench_webcam',function(){
-return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera');
+    $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
+return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera',compact('currentTime'));
 });
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage'])->name('upload.captured.image');

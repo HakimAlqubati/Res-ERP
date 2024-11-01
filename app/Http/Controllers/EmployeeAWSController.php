@@ -146,7 +146,7 @@ class EmployeeAWSController extends Controller
                 Log::info('employee_data_captured',['There is no employee']);
             }
             // Return JSON response with the match result
-            return response()->json(['status' => 'success', 'message' => "Match Found: {$name}"]);
+            return response()->json(['status' => 'success', 'message' => "{$name}"]);
 
         } catch (Exception $e) {
             Log::error("Rekognition search error: " . $e->getMessage());

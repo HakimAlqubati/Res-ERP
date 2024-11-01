@@ -52,6 +52,11 @@ class EmployeeImageAwsIndexesController extends Controller
                     'ExternalImageId' => 'Almawqea2017-12-10-08-33-02-243608',
                     'EmployeeName' => 'Abo Bakr Salem-119',
                 ],
+                [
+                    'ImageName' => 'awad.jpeg',
+                    'ExternalImageId' => 'awad',
+                    'EmployeeName' => 'المهندس عوض احمد-118',
+                ],
             ];
     
             foreach ($images as $image) {
