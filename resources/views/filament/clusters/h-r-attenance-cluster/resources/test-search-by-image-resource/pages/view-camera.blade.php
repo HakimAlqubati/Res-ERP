@@ -78,16 +78,74 @@
             color: #4caf50;
             font-size: 1.5em;
         }
+
+
+        /* Loader Styles */
+        #loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: center;
+            z-index: 1000;
+            /* Make sure loader is on top */
+        }
+
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4caf50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            /* Only spinner rotates */
+            margin-bottom: 10px;
+            /* Space between spinner and text */
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        #loader p {
+            margin: 0;
+            padding: 8px 16px;
+            color: #ffffff;
+            font-size: 1em;
+            font-weight: 500;
+            background-color: rgba(0, 0, 0, 0.7);
+            /* Semi-transparent dark background */
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            /* Shadow for depth */
+        }
     </style>
 </head>
 
 <body>
 
     <video id="video" width="720" height="560" autoplay muted></video>
+    <img id="capturedImage" />
+    <div id="loader">
+        <div class="spinner"></div> <!-- Spinner rotates -->
+        <p>Wait for the employee's photo to be matched.</p> <!-- Static message -->
+    </div>
+
     <div id="message"></div>
     <div id="uploadedImageContainer">
         <span class="icon">✔</span>
-        <span id="successMessage">Image uploaded successfully!</span>
+        <span id="successMessage"></span>
         <img id="uploadedImage" />
     </div>
 
@@ -98,6 +156,12 @@
         const messageDiv = document.getElementById('message');
         const uploadedImageContainer = document.getElementById('uploadedImageContainer');
         const uploadedImage = document.getElementById('uploadedImage');
+        const capturedImage = document.getElementById('capturedImage');
+
+        // Initially hide the loader
+        loader.style.display = 'none';
+
+        let loaderActive = false;
 
         Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri('{{ asset('models') }}'),
@@ -122,17 +186,29 @@
         }
 
         async function captureFullFrame() {
+            console.log('done')
             const captureCanvas = document.createElement('canvas');
             captureCanvas.width = video.videoWidth;
             captureCanvas.height = video.videoHeight;
             const ctx = captureCanvas.getContext('2d');
             ctx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
             const dataUrl = captureCanvas.toDataURL('image/png');
+
+            // Display the captured image and hide the video
+            capturedImage.src = dataUrl;
+            capturedImage.style.display = 'block';
+            video.style.display = 'none';
+
+
             await uploadImage(dataUrl);
         }
 
         async function uploadImage(dataUrl) {
             try {
+                // Display loader and activate the loader flag
+                loader.style.display = 'flex';
+                loaderActive = true;
+
                 const response = await fetch("{{ route('upload.captured.image') }}", {
                     method: 'POST',
                     headers: {
@@ -158,14 +234,20 @@
 
                 // Display the uploaded image
                 uploadedImageContainer.style.display = 'flex';
-                uploadedImage.src = dataUrl;
+                // uploadedImage.src = dataUrl;
 
+                // Hide loader and deactivate loader flag
+                loader.style.display = 'none';
+                loaderActive = false;
                 // Stop the camera after upload
                 stopVideo();
             } catch (error) {
                 console.error("Error uploading image:", error);
                 messageDiv.textContent = "Error uploading image!";
                 messageDiv.style.color = "red";
+            } finally {
+                // Hide the loader after uploading is complete
+                loader.style.display = 'none';
             }
         }
 
@@ -181,27 +263,32 @@
             let hasCaptured = false;
 
             setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video, new faceapi
-                        .TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceExpressions();
-                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                // Only process detections if the loader is not active
+                if (!loaderActive) {
+                    const detections = await faceapi.detectAllFaces(video, new faceapi
+                            .TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceExpressions();
+                    const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-                const ctx = canvas.getContext('2d', {
-                    willReadFrequently: true
-                });
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                faceapi.draw.drawDetections(canvas, resizedDetections);
-                faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-                faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                    const ctx = canvas.getContext('2d', {
+                        willReadFrequently: true
+                    });
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // Draw detections only if loader is not active
+                    if (!loaderActive) {
+                        faceapi.draw.drawDetections(canvas, resizedDetections);
+                        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                    }
+                    if (detections.length > 0 && !hasCaptured) {
+                        hasCaptured = true;
 
-                if (detections.length > 0 && !hasCaptured) {
-                    hasCaptured = true;
-
-                    // Wait for 5 seconds before capturing
-                    setTimeout(() => {
-                        captureFullFrame();
-                    }, 3000);
+                        // Wait for 5 seconds before capturing
+                        setTimeout(() => {
+                            captureFullFrame();
+                        }, 1000);
+                    }
                 }
             }, 100);
         });
