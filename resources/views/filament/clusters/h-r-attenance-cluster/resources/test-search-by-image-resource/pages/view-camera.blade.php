@@ -142,7 +142,12 @@
         <p>Wait for the employee's photo to be matched.</p> <!-- Static message -->
     </div>
 
-    <div id="message"></div>
+    <div>
+        <p id="message"></p>
+    </div>
+    <div>
+        <p id="time" style="color: blue; font-weight: bolder"></p>
+    </div>
     <div id="uploadedImageContainer">
         <span class="icon">✔</span>
         <span id="successMessage"></span>
@@ -154,6 +159,7 @@
     <script>
         const video = document.getElementById('video');
         const messageDiv = document.getElementById('message');
+        const timeDiv = document.getElementById('time');
         const uploadedImageContainer = document.getElementById('uploadedImageContainer');
         const uploadedImage = document.getElementById('uploadedImage');
         const capturedImage = document.getElementById('capturedImage');
@@ -185,8 +191,12 @@
             video.srcObject = null;
         }
 
+        let startTime;
+
         async function captureFullFrame() {
-            console.log('done')
+            // Record the start time right before capturing
+            startTime = Date.now();
+
             const captureCanvas = document.createElement('canvas');
             captureCanvas.width = video.videoWidth;
             captureCanvas.height = video.videoHeight;
@@ -222,13 +232,21 @@
 
                 const result = await response.json();
 
+                // Calculate elapsed time and format it
+                const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2); // in seconds
+
+
                 if (result.status === 'success') {
                     // Show the success message with the result from Rekognition
                     messageDiv.textContent = result.message;
+                    timeDiv.textContent = `Time used :(${elapsedTime})`;
+
                     messageDiv.style.color = "#4caf50";
                 } else {
                     // Show the error message
                     messageDiv.textContent = result.message;
+                    // messageDiv.textContent = `${result.message} Task completed in ${elapsedTime} seconds.`;
+                    timeDiv.textContent = `Time used :(${elapsedTime})`;
                     messageDiv.style.color = "red";
                 }
 
