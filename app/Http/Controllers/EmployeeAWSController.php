@@ -131,8 +131,8 @@ class EmployeeAWSController extends Controller
             Log::info('namefromsearch',[$name]);
             $expodedResult = explode('-',$name);
             
-            $ُemployeeId = $expodedResult[1];
-            $employeeName = $expodedResult[0];
+            $ُemployeeId = $expodedResult[1] ?? 0;
+            $employeeName = $expodedResult[0] ?? 'Employee not found';
             $name = $employeeName;
             $employee = Employee::find($ُemployeeId);
             if($employee){

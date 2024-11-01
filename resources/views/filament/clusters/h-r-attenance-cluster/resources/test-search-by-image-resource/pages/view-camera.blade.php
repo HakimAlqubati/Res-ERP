@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
-            box-sizing: border-box;
+            /* box-sizing: border-box; */
             font-family: 'Roboto', sans-serif;
         }
 
@@ -19,9 +19,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            border-radius: 20px;
+            border-radius: 96px;
             overflow: hidden;
-            border: 5px solid rgba(0, 60, 30, 0.7);
+            border: 0.5px solid rgba(0, 60, 30, 0.7);
             /* إطار مناسب مع اللون الأخضر */
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
         }
@@ -128,10 +128,10 @@
         #video {
             border-bottom-left-radius: 66px;
             border-top-right-radius: 66px;
-            margin: 20px;
-            border-radius: 20px;
+            margin: 3px;
+            border-radius: 120px;
             overflow: hidden;
-            border: 5px solid rgba(0, 60, 30, 0.7);
+            /* border: 5px solid rgba(0, 60, 30, 0.7); */
             /* إطار مناسب مع اللون الأخضر */
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
         }
@@ -190,18 +190,20 @@
             font-size: 1.2em;
             font-weight: bold;
             color: #ffffff;
+            z-index: 1000;
+            letter-spacing: 5px !important;
         }
 
         #greeting img {
-            width: 30px;
-            height: 30px;
+            width: 100px;
+            height: 100px;
         }
 
         /* إضافة تأثير النبض */
         #icon {
-            width: 50px;
-            height: 50px;
-            animation: pulse 1.5s infinite;
+            width: 100px;
+            height: 100px;
+            animation: pulse 3s infinite;
             /* مدة النبض وتكراره */
             margin-right: 20px;
         }
