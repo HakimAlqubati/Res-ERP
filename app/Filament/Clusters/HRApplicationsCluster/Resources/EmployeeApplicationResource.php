@@ -342,6 +342,11 @@ class EmployeeApplicationResource extends Resource
                 TextColumn::make('application_date')->label('Request date')
                     ->sortable()
                 ,
+                TextColumn::make('approvedBy.name')->label('Approved by')
+                    ->sortable(),
+                TextColumn::make('approved_at')->label('Approved at')
+                    ->sortable()
+                ,
 
                 TextColumn::make('status')->label('Status')
                     ->badge()
