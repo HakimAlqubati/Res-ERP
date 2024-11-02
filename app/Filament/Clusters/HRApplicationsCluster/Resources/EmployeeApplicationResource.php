@@ -453,7 +453,7 @@ class EmployeeApplicationResource extends Resource
                     }
                     return false;
                 }),
-                static::detailsAttendanceRequest(),
+                
                 static::rejectAttendanceRequest()->hidden(function ($record) {
                     if (isStuff()) {
                         return true;
@@ -465,7 +465,7 @@ class EmployeeApplicationResource extends Resource
                     }
                     return false;
                 }),
-             
+                static::detailsAttendanceRequest(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -874,6 +874,15 @@ class EmployeeApplicationResource extends Resource
                     Fieldset::make()->label('Request data')->columns(2)->schema([
                         DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
                         TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
+                    ]),
+                    Fieldset::make()->label('')->columns(2)->schema([
+                        TextInput::make('approved_at')->default(function($record){
+                            // dd($record->approved_at);
+                            return $record->approved_at;
+                        }),
+                        TextInput::make('approved_by')->default(function($record){
+                            return $record->approvedBy->name;
+                        })
                     ]),
                 ];
             })
