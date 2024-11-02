@@ -94,6 +94,7 @@ class LeaveBalanceResource extends Resource
                     Repeater::make('employees')
                         ->label('')
                         ->columnSpanFull()
+                        ->minItems(2)
                         ->schema(
                             [
                                 Grid::make()->columns(2)->schema([

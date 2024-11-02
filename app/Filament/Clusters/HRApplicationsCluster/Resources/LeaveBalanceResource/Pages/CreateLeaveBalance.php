@@ -18,29 +18,26 @@ class CreateLeaveBalance extends CreateRecord
         // Get the count of employees
         $employeeCount = count($employees);
 
-        if($employeeCount>1){
-            foreach ($employees as $index => $employee) {
+        foreach ($employees as $index => $employee) {
 
-                // Check if this is the last employee
-                if ($index === $employeeCount - 1) {
-                    continue; // Skip the last element
-                }
-                // Create the LeaveBalance record
-                $leaveBalance = LeaveBalance::create([
-                    'branch_id' => $data['branch_id'],
-                    'employee_id' => $employee['employee_id'],
-                    'leave_type_id' => $data['leave_type_id'],
-                    'year' => $data['year'],
-                    'balance' => $employee['balance'],
-                    'created_by' => auth()->user()->id,
-                ]);
-    
-                // Create the associated ApplicationTransaction record
-                static::createTransaction($leaveBalance,$employee,$data);
-    
+            // Check if this is the last employee
+            if ($index === $employeeCount - 1) {
+                continue; // Skip the last element
             }
+            // Create the LeaveBalance record
+            $leaveBalance = LeaveBalance::create([
+                'branch_id' => $data['branch_id'],
+                'employee_id' => $employee['employee_id'],
+                'leave_type_id' => $data['leave_type_id'],
+                'year' => $data['year'],
+                'balance' => $employee['balance'],
+                'created_by' => auth()->user()->id,
+            ]);
+
+            // Create the associated ApplicationTransaction record
+            static::createTransaction($leaveBalance,$employee,$data);
+
         }
-      
         $data['branch_id'] = $data['branch_id'];
         $data['employee_id'] = $employee['employee_id'];
         $data['leave_type_id'] = $data['leave_type_id'];
