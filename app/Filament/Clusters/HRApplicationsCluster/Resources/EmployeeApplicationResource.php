@@ -150,7 +150,7 @@ class EmployeeApplicationResource extends Resource
                                                 $set('detail_deduction_starts_from', $endNextMonth);
                                             })
                                             ->default('Y-m-d'),
-                                        TextInput::make('detail_advance_amount')->numeric()
+                                        TextInput::make('detail_advance_amount')->numeric()->required()
                                             ->label('Amount'),
                                         TextInput::make('basic_salary')->numeric()->disabled()
                                             ->default(0)
@@ -165,7 +165,8 @@ class EmployeeApplicationResource extends Resource
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                 $advancedAmount = $get('detail_advance_amount');
-                                                if ($advancedAmount > 0) {
+                                                // dd($advancedAmount);
+                                                if ($state > 0 && $advancedAmount > 0) {
                                                     $res = $advancedAmount / $state;
 
                                                     $set('detail_number_of_months_of_deduction', $res);
@@ -196,15 +197,17 @@ class EmployeeApplicationResource extends Resource
                                             ->numeric()
                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                 $advancedAmount = $get('detail_advance_amount');
+                                                if ($advancedAmount > 0 && $state > 0) {
 
-                                                $res = $advancedAmount / $state;
-                                                // dd($res,$state);
-                                                $set('detail_monthly_deduction_amount', round($res, 2));
-                                                $state = (int) $state;
-                                                $toMonth = Carbon::now()->addMonths($state)->endOfMonth()->format('Y-m-d');
+                                                    $res = $advancedAmount / $state;
+                                                    // dd($res,$state);
+                                                    $set('detail_monthly_deduction_amount', round($res, 2));
+                                                    $state = (int) $state;
+                                                    $toMonth = Carbon::now()->addMonths($state)->endOfMonth()->format('Y-m-d');
 
-                                                $set('detail_deduction_ends_at', $toMonth);
-                                            })
+                                                    $set('detail_deduction_ends_at', $toMonth);
+                                                }
+                                            })->minValue(1)
                                             ->label('Number of months of deduction'),
 
                                     ]),
@@ -287,6 +290,7 @@ class EmployeeApplicationResource extends Resource
                                                 ->helperText('Type how many days this leave will be')
                                                 ->numeric()
                                             // ->default(2)
+                                                ->minValue(1)
                                                 ->live()
                                                 ->required()
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
@@ -453,7 +457,7 @@ class EmployeeApplicationResource extends Resource
                     }
                     return false;
                 }),
-                
+
                 static::rejectAttendanceRequest()->hidden(function ($record) {
                     if (isStuff()) {
                         return true;
@@ -569,14 +573,14 @@ class EmployeeApplicationResource extends Resource
 
                 } catch (\Exception $e) {
                     Log::error('Error approving attendance request: ' . $e->getMessage());
-                  return  Notification::make()->body($e->getMessage())->send();
+                    return Notification::make()->body($e->getMessage())->send();
                     // Handle the exception (log it, return an error message, etc.)
                     // Optionally, you could return a user-friendly error message
                     throw new \Exception($e->getMessage());
                     throw new \Exception('There was an error processing the attendance request. Please try again later.');
                 }
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
 
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
@@ -837,7 +841,7 @@ class EmployeeApplicationResource extends Resource
     {
         return Action::make('detailsAttendanceRequest')->label('Details')->button()
             ->color('success')
-            // ->icon('heroicon-o-check')
+        // ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
                 // Logic for approving attendance fingerprint requests
 
@@ -876,19 +880,19 @@ class EmployeeApplicationResource extends Resource
                         TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
                     ]),
                     Fieldset::make()->label('')->columns(2)->schema([
-                        TextInput::make('approved_at')->default(function($record){
+                        TextInput::make('approved_at')->default(function ($record) {
                             // dd($record->approved_at);
                             return $record->approved_at;
                         }),
-                        TextInput::make('approved_by')->default(function($record){
+                        TextInput::make('approved_by')->default(function ($record) {
                             return $record->approvedBy->name;
-                        })
+                        }),
                     ]),
                 ];
             })
             ->modalSubmitAction(false)
             ->modalCancelAction(false)
-            ;
+        ;
     }
 
     private static function rejectAttendanceRequest(): Action

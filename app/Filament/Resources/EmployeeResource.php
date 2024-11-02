@@ -216,14 +216,15 @@ class EmployeeResource extends Resource
                         ]),
                     Wizard\Step::make('Finance  & Shift data')
                         ->schema([
-                            Fieldset::make()->label('Set salary data and its config')->schema([
+                            Fieldset::make()->label('Set salary data and account number')->schema([
                                 Grid::make()->label('')->columns(4)->schema([
                                     TextInput::make('salary')
                                         ->numeric()->columnSpan(1)
                                         ->columnSpan(2)
-                                        ->inputMode('decimal')
-                                        ->required()->minValue(1000)
-                                        ->label('Salary')->nullable(),
+                                        ->inputMode('decimal'),
+                                    TextInput::make('bank_account_number')
+                                        ->columnSpan(2)
+                                        ->label('Bank account number')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                         ->label('No salary deduction for absences')->default(0)
                                     // ->isInline(false)

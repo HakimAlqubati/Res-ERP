@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRSalaryCluster;
 use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -39,17 +40,21 @@ class DeductionResource extends Resource
                     Forms\Components\Toggle::make('is_specific')->default(false)
                         ->helperText('This means for specific employee or for general')
                     ,
-                    Forms\Components\Toggle::make('active')->default(true),
-                    Forms\Components\Toggle::make('is_percentage')->live()->default(true)
-                        ->helperText('Set allowance as a salary percentage or fixed amount')
+                    Forms\Components\Toggle::make('active')->default(true), 
+                    Radio::make('is_percentage')->label('')->live()
+                        ->helperText('Set allowance as a salary percentage or fixed amount')  ->options([
+                            'is_percentage' => 'Is percentage',
+                            'is_amount' => 'Is amount',
+                        ])->default('is_amount') 
                     ,
-                    TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
-                        ->suffixIcon('heroicon-o-calculator')
-                        ->suffixIconColor('success')
-                    ,
-                    TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
-                        ->suffixIcon('heroicon-o-percent-badge')
-                        ->suffixIconColor('success'),
+                    
+                    TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
+                    ->suffixIcon('heroicon-o-calculator')
+                    ->suffixIconColor('success')
+                ,
+                TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
+                    ->suffixIcon('heroicon-o-percent-badge')
+                    ->suffixIconColor('success'),
                 ]),
             ]);
     }

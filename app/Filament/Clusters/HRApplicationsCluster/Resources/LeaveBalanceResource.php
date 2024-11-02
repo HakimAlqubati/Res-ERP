@@ -153,8 +153,8 @@ class LeaveBalanceResource extends Resource
                     ->numeric()
                     ->alignCenter(true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('year')->alignCenter(true)
-                    ->numeric()
+                Tables\Columns\TextColumn::make('year')
+                    ->alignCenter(true) 
                     ->sortable(),
                 Tables\Columns\TextColumn::make('balance')->alignCenter(true)
                     ->numeric()

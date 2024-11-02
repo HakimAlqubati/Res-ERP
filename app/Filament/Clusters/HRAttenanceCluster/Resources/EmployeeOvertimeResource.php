@@ -373,7 +373,9 @@ class EmployeeOvertimeResource extends Resource
             ])
             ->selectable()
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\TrashedFilter::make()->visible(fn():bool=> isSuperAdmin())
+                
+                ,
                 SelectFilter::make('branch_id')
                     ->label('Branch')
                     ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
@@ -432,17 +434,28 @@ class EmployeeOvertimeResource extends Resource
                     }),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\ForceDeleteAction::make()->visible(fn():bool=> (isSuperAdmin())),
-                    Tables\Actions\RestoreAction::make(),
+                    Tables\Actions\RestoreAction::make()->visible(fn():bool=> (isSuperAdmin())),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make()->visible(fn():bool=> (isSuperAdmin())),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make()->visible(fn():bool=> (isSuperAdmin())),
                     BulkAction::make('Approve')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-check-badge')
                         ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id,'approved_at'=> now()]))
+                        ->hidden(function () {
+                            if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+                                return false;
+                            }
+                            return true;
+                        })
+                    ,
+                    BulkAction::make('Rollback approved')
+                        ->requiresConfirmation()
+                        ->icon('heroicon-o-x-mark')
+                        ->action(fn(Collection $records) => $records->each->update(['approved' => 0, 'approved_by' => null,'approved_at'=> null]))
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;
@@ -508,4 +521,20 @@ class EmployeeOvertimeResource extends Resource
         }
         return false;
     }
+    
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
 }

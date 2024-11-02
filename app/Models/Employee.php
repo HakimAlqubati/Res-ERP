@@ -39,6 +39,7 @@ class Employee extends Model
         'discount_exception_if_absent',
         'rfid',
         'employee_type',
+        'bank_account_number',
     ];
 
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED = 'added';

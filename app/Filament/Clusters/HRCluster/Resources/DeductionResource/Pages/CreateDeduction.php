@@ -13,4 +13,11 @@ class CreateDeduction extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['is_percentage'] = $data['is_percentage'] == 'is_percentage' ? 1: 0;
+        return $data;
+    }
 }

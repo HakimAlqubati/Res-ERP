@@ -28,7 +28,7 @@ class EmployeeAttednaceReportResource extends Resource
     protected static ?string $label = 'Attendance by employee';
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My attendance' : 'Attendance by employee';
+        return isStuff() ? 'My records' : 'Attendance by employee';
     }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
