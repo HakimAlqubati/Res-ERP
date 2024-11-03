@@ -136,8 +136,10 @@ class EmployeeOvertimeResource extends Resource
                                                     'employee_id' => $employee->id,
                                                     'overtime_details' => $overtimeResults,
                                                     'overtime_hours' => $overtimeResults[0]['overtime_hours'],
-                                                    'start_time' => $overtimeResults[0]['overtime_start_time'],
-                                                    'end_time' => $overtimeResults[0]['overtime_end_time'],
+                                                    // 'start_time' => $overtimeResults[0]['overtime_start_time'],
+                                                    // 'end_time' => $overtimeResults[0]['overtime_end_time'],
+                                                    'start_time' => $overtimeResults[0]['check_in_time'],
+                                                    'end_time' => $overtimeResults[0]['check_out_time'],
                                                 ];
                                             }
                                         }
@@ -170,7 +172,7 @@ class EmployeeOvertimeResource extends Resource
                         ->schema([
                             Grid::make()->columns(3)->schema([
                                 TimePicker::make('start_time_as_default')
-                                    ->label('Start Time')
+                                    ->label('Checkin')
                                     ->live()
                                     ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                         // Get the current repeater data
@@ -202,7 +204,7 @@ class EmployeeOvertimeResource extends Resource
                                 ,
 
                                 TimePicker::make('end_time_as_default')
-                                    ->label('End Time')
+                                    ->label('Checkout')
                                     ->live()
                                     ->afterStateUpdated(function (Set $set, Get $get, $state) {
                                         // Get the current repeater data
@@ -290,8 +292,9 @@ class EmployeeOvertimeResource extends Resource
                                             'unique'=>'This overtime has been recorded'
                                             ])
                                         ->required(),
-                                    TimePicker::make('start_time')
-                                        ->label('Start Time')
+                                    TimePicker::make('start_time')->disabled()
+                                    ->dehydrated()
+                                        ->label('Checkin')
                                         ->live()
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                             $end = Carbon::parse($get('end_time'));
@@ -305,8 +308,9 @@ class EmployeeOvertimeResource extends Resource
                                         })
                                     ,
 
-                                    TimePicker::make('end_time')
-                                        ->label('End Time')
+                                    TimePicker::make('end_time')->disabled()
+                                    ->dehydrated()
+                                        ->label('Checkout')
                                         ->live()
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                             $start = Carbon::parse($get('start_time'));
@@ -350,11 +354,11 @@ class EmployeeOvertimeResource extends Resource
                     ->date(),
 
                 TextColumn::make('start_time')
-                    ->label('Start Time')
+                    ->label('Checkin')
                     ->sortable(),
 
                 TextColumn::make('end_time')
-                    ->label('End Time')
+                    ->label('Checkout')
                     ->sortable(),
 
                 TextColumn::make('hours')

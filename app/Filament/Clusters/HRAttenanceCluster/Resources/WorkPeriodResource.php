@@ -160,7 +160,7 @@ class WorkPeriodResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('copy')
-                ->label('Copy')
+                ->label('Copy')->hidden(fn():bool=>isBranchManager())
                 ->button()
                 ->icon('heroicon-o-clipboard-document-list')
                 ->form(function ($record) {
@@ -230,7 +230,7 @@ class WorkPeriodResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin()) {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager() ) {
             return true;
         }
         return false;

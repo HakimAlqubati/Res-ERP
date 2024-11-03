@@ -68,10 +68,10 @@ class AllowanceResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\ToggleColumn::make('is_specific'),
+                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom'),
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
-                TextColumn::make('precentage'),
+                TextColumn::make('percentage'),
                 Tables\Columns\ToggleColumn::make('active'),
             ])
             ->filters([

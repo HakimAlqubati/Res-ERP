@@ -279,6 +279,7 @@ class Employee extends Model
                 ->get();
     
             $totalMinutes = 0;
+            $checkInTime = null;
             $checkOutTime = null; // To store checkout time
     
             // Loop through attendances to calculate total minutes worked
@@ -341,6 +342,8 @@ class Employee extends Model
                     'overtime' => $formattedOvertime,
                     'overtime_start_time' => $overtimeStartTime, // Return as "HH:MM:SS"
                     'overtime_end_time' => $overtimeEndTime->toTimeString(), // Return as "HH:MM:SS"
+                    'check_in_time' => $checkIn->check_time, // Check-in time
+                    'check_out_time' => $checkOut->check_time, // Check-out time
                 ];
             }
         }
