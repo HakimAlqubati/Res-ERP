@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\Setting;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Forms;
@@ -19,6 +20,9 @@ use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Average;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -119,6 +123,7 @@ class AttendnaceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->paginated([10, 25, 50, 100])
         ->defaultSort('id','desc')
         ->striped()
             ->columns([
@@ -139,6 +144,18 @@ class AttendnaceResource extends Resource
 
                 Tables\Columns\TextColumn::make('check_time')
                     ->label('Check Time'),
+                Tables\Columns\TextColumn::make('delay_minutes')
+                     ->formatStateUsing(function($record){
+                        if($record->delay_minutes<= Setting::getSetting('early_attendance_minutes')){
+                            return 0;
+                        }else{
+                        return $record->delay_minutes;
+                        }
+                     })
+                    ->label('Delay Minuts')->sortable()->summarize(Sum::make()->query(fn (\Illuminate\Database\Query\Builder $query) => $query->where('delay_minutes','>', 10)))
+                    // ->summarize(fn($record): integer => 11)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ,
                 Tables\Columns\TextColumn::make('day')
                     ->label('Day'),
             ])
@@ -152,6 +169,51 @@ class AttendnaceResource extends Resource
                 ->options(function (Get $get) {
                     return Branch::query()
                         ->pluck('name', 'id');
+                }),
+
+                Filter::make('month')
+                ->label('Filter by Month')
+                ->form([
+                    Forms\Components\Select::make('month')
+                        ->label('Month')
+                        ->options([
+                            '01' => 'January',
+                            '02' => 'February',
+                            '03' => 'March',
+                            '04' => 'April',
+                            '05' => 'May',
+                            '06' => 'June',
+                            '07' => 'July',
+                            '08' => 'August',
+                            '09' => 'September',
+                            '10' => 'October',
+                            '11' => 'November',
+                            '12' => 'December',
+                        ])
+                        ->placeholder('Select a month')
+                        ->required(),
+                    
+                    Forms\Components\Select::make('year')
+                        ->label('Year')
+                        ->options(function () {
+                            $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
+                            return array_combine($years, $years);
+                        })
+                        ->placeholder('Select a year')
+                        ->required(),
+                ]) ->query(function (Builder $query, array $data) {
+                    if ($data['month'] && $data['year']) {
+                        $startDate = Carbon::createFromDate($data['year'], $data['month'], 1)->startOfMonth();
+                        $endDate = $startDate->copy()->endOfMonth();
+
+                        $query->whereBetween('check_date', [$startDate, $endDate]);
+                    }
+                })
+                ->indicateUsing(function (array $data): ?string {
+                    if ($data['month'] && $data['year']) {
+                        return 'Month: ' . Carbon::createFromDate($data['year'], $data['month'], 1)->format('F Y');
+                    }
+                    return null;
                 }),
             ])
             ->actions([

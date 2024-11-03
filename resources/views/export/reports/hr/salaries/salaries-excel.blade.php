@@ -25,6 +25,7 @@
                 <th>{{ $allowanceName }}</th>
             @endforeach
            <th>{{'Other allowances'}}</th>
+           <th>{{'Bonus'}}</th>
            <th>{{'Net salary'}}</th>
         </tr>
     </thead>
@@ -45,6 +46,7 @@
                 <td>{{ $item['res_allowances'][$allowanceId] }}</td>
                 @endforeach
                 <td> {{$item['res_specific_allowances']}} </td>
+                <td>{{$item['bonus']}}</td>
                <th> {{$item['net_salary']}} </th>
             </tr>
         @endforeach

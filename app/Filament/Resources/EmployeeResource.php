@@ -298,13 +298,14 @@ class EmployeeResource extends Resource
                                                 ->suffixIconColor('success'),
 
                                         ]),
-                                    Repeater::make('Monthly incentives')
+                                    Repeater::make('Monthly bonus')
                                         ->defaultItems(0)
+                                        ->label('Monthly bonus')
                                         ->relationship('monthlyIncentives')
                                         ->schema([
 
                                             Select::make('monthly_incentive_id')
-                                                ->label('Monthly incentive')
+                                                ->label('Monthly bonus')
                                                 ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
                                                 ->required()
 
@@ -327,7 +328,8 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
                 ImageColumn::make('avatar_image')->label('')
@@ -488,4 +490,5 @@ class EmployeeResource extends Resource
         }
         return false;
     }
+ 
 }

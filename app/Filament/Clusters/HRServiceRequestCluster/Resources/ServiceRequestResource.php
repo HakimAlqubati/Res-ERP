@@ -209,6 +209,7 @@ class ServiceRequestResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('id')->sortable()->searchable(isIndividual: true)->sortable(),
                 TextColumn::make('name')->searchable(isIndividual: true)->sortable()

@@ -337,6 +337,7 @@ class EmployeeOvertimeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('employee.name')
                     ->label('Employee')->limit(20)

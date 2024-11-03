@@ -22,6 +22,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Facades\Excel;
@@ -96,25 +97,40 @@ class MonthSalaryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Title')->searchable(),
-                Tables\Columns\TextColumn::make('notes'),
+                Tables\Columns\TextColumn::make('notes')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('branch.name')->label('Branch')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('createdBy.name')->label('Created by')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('payment_date')->date(),
-                Tables\Columns\ToggleColumn::make('approved'),
+                Tables\Columns\TextColumn::make('createdBy.name')->label('Created by')->searchable()->sortable()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ,
+                Tables\Columns\TextColumn::make('payment_date')->date()
+                ->toggleable(isToggledHiddenByDefault: true)
+                ,
+                Tables\Columns\ToggleColumn::make('approved')->toggleable(isToggledHiddenByDefault: true)->disabled(),
             ])
             ->filters([
-                //
+                SelectFilter::make('branch_id')
+                ->searchable()
+                ->multiple()
+                ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ViewAction::make(),
-                Action::make('excel_download')->action(function ($record) {
+                Action::make('excel_download')
+                ->button()
+                ->color('info')
+                ->icon('heroicon-o-arrow-down-on-square-stack')
+                ->action(function ($record) {
                     return static::exportExcel($record);
                 }),
                 Action::make('salary_slip')
+                ->button()
+                ->color('success')
+                ->icon('heroicon-o-newspaper')
                     ->form(function ($record) {
                         $employeeIds = $record?->details->pluck('employee_id')->toArray();
 
@@ -122,7 +138,7 @@ class MonthSalaryResource extends Resource
                             Hidden::make('month')->default($record?->month),
                             Select::make('employee_id')
                                 ->required()
-                                ->label('Employee')
+                                ->label('Employee')->searchable()
                                 ->helperText('Search employee to get his payslip')
                                 ->options(Employee::whereIn('id', $employeeIds)->select('name', 'id')->pluck('name', 'id')),
                         ];
@@ -173,7 +189,7 @@ class MonthSalaryResource extends Resource
     //     return false;
     // }
 
-    private static function exportExcel($record)
+    public static function exportExcel($record)
     {
 
         $branch = $record?->branch?->name;
@@ -231,8 +247,7 @@ class MonthSalaryResource extends Resource
                 'employee_name' => $value?->employee?->name,
                 'job_title' => $value?->employee?->job_title,
                 'branch' => $branch,
-                'basic_salary' => $value?->basic_salary,
-                'net_salary' => $value?->net_salary,
+                'basic_salary' => $value?->basic_salary, 
                 'overtime_hours' => $value?->overtime_hours,
                 'total_incentives' => $value?->total_incentives,
                 'total_allowances' => $value?->total_allowances,
@@ -241,6 +256,7 @@ class MonthSalaryResource extends Resource
                 'res_allowances' => $resAllowances,
                 'res_specific_deducation' => $resSpecificDeducation,
                 'res_specific_allowances' => $resSpecificAllowances,
+                'bonus'=> $value->total_other_adding,
                 'net_salary' => $value->net_salary,
             ];
         }

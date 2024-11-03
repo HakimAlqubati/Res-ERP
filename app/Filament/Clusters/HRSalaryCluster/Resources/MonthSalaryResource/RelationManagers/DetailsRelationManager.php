@@ -26,14 +26,14 @@ class DetailsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('employee_id')
             ->columns([
-                Tables\Columns\TextColumn::make('employee.name'),
-                Tables\Columns\TextColumn::make('basic_salary'),
-                Tables\Columns\TextColumn::make('total_deductions'),
-                Tables\Columns\TextColumn::make('total_allowances'),
-                Tables\Columns\TextColumn::make('total_incentives'),
-                Tables\Columns\TextColumn::make('overtime_pay'),
-                Tables\Columns\TextColumn::make('total_absent_days'),
-                Tables\Columns\TextColumn::make('net_salary'),
+                Tables\Columns\TextColumn::make('employee.name')->searchable(isIndividual:true),
+                Tables\Columns\TextColumn::make('basic_salary')->sortable(),
+                Tables\Columns\TextColumn::make('total_deductions')->sortable(),
+                Tables\Columns\TextColumn::make('total_allowances')->sortable(),
+                Tables\Columns\TextColumn::make('total_incentives')->label('Total bonus') ->sortable(),
+                Tables\Columns\TextColumn::make('overtime_pay')->sortable(),
+                Tables\Columns\TextColumn::make('total_absent_days')->sortable(),
+                Tables\Columns\TextColumn::make('net_salary')->sortable(),
             ])
             ->filters([
                 //

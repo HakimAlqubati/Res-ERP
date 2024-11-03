@@ -20,6 +20,8 @@ class Task extends Model
     const STATUS_IN_PROGRESS = 'in_progress';
     const STATUS_CLOSED = 'closed';
 
+    const STATUS_REJECTED = 'rejected';
+
     const COLOR_NEW = 'primary';
     const COLOR_PENDING = 'warning';
     const COLOR_IN_PROGRESS = 'info';
@@ -41,6 +43,32 @@ class Task extends Model
         'schedule_type',
         'branch_id',
     ];
+
+
+     /**
+     * Get possible next statuses based on the current status
+     *
+     * @return array
+     */
+    public function getNextStatuses()
+    {
+        switch ($this->task_status) {
+            case self::STATUS_NEW:
+                return [
+                    self::STATUS_PENDING => 'Pending',
+                ];
+            case self::STATUS_PENDING:
+                return [
+                    self::STATUS_IN_PROGRESS => 'In Progress',
+                ];
+            case self::STATUS_IN_PROGRESS:
+                return [
+                    self::STATUS_CLOSED => 'Closed',
+                ];
+            default:
+                return []; // No transitions available for final statuses
+        }
+    }
 
     public function assigned()
     {
@@ -184,4 +212,61 @@ class Task extends Model
         }
     }
 
+      // Define a hasMany relationship with TaskLog
+      public function logs()
+      {
+          return $this->hasMany(TaskLog::class, 'task_id');
+      }
+
+
+    /**
+     * Create a log entry for the task.
+     *
+     * @param int $createdBy - The ID of the user who created the log
+     * @param string $description - Description of the log entry
+     * @param string $logType - Type of the log entry (e.g., 'created', 'moved')
+     * @param array|null $details - Optional details as an array
+     * @return TaskLog
+     */
+    public function createLog(int $createdBy, string $description, string $logType, array $details = null)
+    {
+        // Ensure that the log type is valid
+        $validLogTypes = [
+            TaskLog::TYPE_CREATED,
+            TaskLog::TYPE_MOVED,
+            TaskLog::TYPE_EDITED,
+            TaskLog::TYPE_REJECTED,
+            TaskLog::TYPE_COMMENTED,
+            TaskLog::TYPE_IMAGES_ADDED,
+        ];
+
+        if (!in_array($logType, $validLogTypes)) {
+            throw new \InvalidArgumentException("Invalid log type: {$logType}");
+        }
+
+         // Check if this is a "moved" log to calculate time difference
+        $totalHoursTaken = null;
+        if ($logType === TaskLog::TYPE_MOVED) {
+            // Get the last "moved" log for this task, ordered by creation time
+            $lastMovedLog = $this->logs()
+                ->where('log_type', TaskLog::TYPE_MOVED)
+                ->latest()
+                ->first();
+// dd($lastMovedLog->created_at,$lastMovedLog);
+            if ($lastMovedLog) {
+                // Calculate the difference in hours and minutes
+                $timeDifference = now()->diff($lastMovedLog->created_at);
+                $totalHoursTaken = $timeDifference->format('%H:%I:%S');
+            }
+        }
+// dd($totalHoursTaken,$lastMovedLog->created_at);
+        // Create the log entry
+        return $this->logs()->create([
+            'created_by' => $createdBy,
+            'description' => $description,
+            'log_type' => $logType,
+            'details' => $details ? json_encode($details) : null,
+            'total_hours_taken' => $totalHoursTaken,
+        ]);
+    }
 }

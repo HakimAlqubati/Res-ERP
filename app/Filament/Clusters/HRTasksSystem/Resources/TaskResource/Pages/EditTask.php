@@ -17,7 +17,9 @@ class EditTask extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('MoveTask')->form(function ($record) {
+            Action::make('MoveTask')
+            ->hidden()
+            ->form(function ($record) {
                 return [
                     Select::make('task_status')->default(function ($record) {
                         return $record->task_status;
