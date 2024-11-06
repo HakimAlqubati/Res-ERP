@@ -64,6 +64,7 @@ class EmployeeAWSController extends Controller
         $imageData = str_replace('data:image/png;base64,', '', $imageData);
         $imageData = str_replace(' ', '+', $imageData);
         $imageData = base64_decode($imageData);
+        try {
 
         // Generate a unique filename
         $fileName = 'captured_face_' . time() . '.png';

@@ -21,6 +21,7 @@
                 <th>{{ $deducationName }}</th>
             @endforeach
             <th>{{'Other deducation'}}</th>
+            
             @foreach ($allowanceTypes as $allowanceId => $allowanceName)
                 <th>{{ $allowanceName }}</th>
             @endforeach
@@ -42,6 +43,7 @@
                     <td>{{ $item['res_deducation'][$deducationId] }}</td>
                 @endforeach
                 <td> {{$item['res_specific_deducation']}} </td>
+
                 @foreach ($allowanceTypes as $allowanceId => $allowanceName)
                 <td>{{ $item['res_allowances'][$allowanceId] }}</td>
                 @endforeach

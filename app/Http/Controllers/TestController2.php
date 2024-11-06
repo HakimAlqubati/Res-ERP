@@ -63,8 +63,9 @@ class TestController2 extends Controller
     {
 
         $data = employeeSalarySlip($empId, $yearMonth);
-        $monthSalary = $data->monthSalary;
-        $employee = $data->employee;
+
+        $monthSalary = $data?->monthSalary;
+        $employee = $data?->employee;
         $branch = $employee->branch;
         $deducationDetail = $monthSalary?->deducationDetails->where('employee_id', $empId);
         $increaseDetails = $monthSalary?->increaseDetails->where('employee_id', $empId);

@@ -87,8 +87,13 @@
                                             </x-filament-tables::cell>
                                         @endif
                                         @if (isset($item['attendances']['checkout']))
+                                            @if (!isset($item['attendances']['checkin']))
+                                                <x-filament-tables::cell colspan="2" class="internal_cell">
+                                                    {{ 'There is no checkin' }}
+                                                </x-filament-tables::cell>
+                                            @endif
                                             <x-filament-tables::cell class="internal_cell">
-                                                {{ $item['attendances']['checkout'][0]['check_time'] }}
+                                                {{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}
                                             </x-filament-tables::cell>
                                             <x-filament-tables::cell class="internal_cell">
                                                 {{ $item['attendances']['checkout'][0]['status'] }}
@@ -171,10 +176,9 @@
                     <tbody>
                         @php
                             $attendances = [];
-                            $totalHours = 0; // Variable to store total hours across all entries
+                            $totalMinutes = 0; // Store total minutes across all entries
 
                             foreach ($this->modalData as $detail) {
-                                // Store each checkin and checkout for a given period ID
                                 if ($detail['check_type'] === 'checkin') {
                                     $attendances[$detail['period_id']]['checkins'][] = $detail['check_time'];
                                 } elseif ($detail['check_type'] === 'checkout') {
@@ -182,8 +186,6 @@
                                 }
                             }
 
-                            // Calculate total hours for each pair of check-in and check-out
-                            // Calculate total hours for each pair of check-in and check-out
                             foreach ($attendances as $index => $attendance) {
                                 $maxRows = max(
                                     count($attendance['checkins'] ?? []),
@@ -193,20 +195,24 @@
                                     $checkin = $attendance['checkins'][$i] ?? null;
                                     $checkout = $attendance['checkouts'][$i] ?? null;
 
-                                    // Calculate hours if both check-in and check-out exist
                                     if ($checkin && $checkout) {
                                         $checkinTime = \Carbon\Carbon::createFromFormat('H:i:s', $checkin);
                                         $checkoutTime = \Carbon\Carbon::createFromFormat('H:i:s', $checkout);
 
-                                        // Ensure correct time difference calculation, and only add if checkout is later than checkin
+                                        // Ensure check-out time is later than check-in time
                                         if ($checkoutTime->greaterThan($checkinTime)) {
-                                            $hours =
-                                                $checkoutTime->diffInHours($checkinTime) +
-                                                round(($checkoutTime->diffInMinutes($checkinTime) % 60) / 60, 2); // Add minutes as decimal
-                                            $attendances[$index]['total_hours'][$i] = abs($hours); // Use abs() to convert to positive
-                                            $totalHours += abs($hours); // Accumulate total hours as positive
+                                            // Calculate hours and minutes separately
+                                            $minutesDifference = $checkinTime->diffInMinutes($checkoutTime);
+                                            $hours = intdiv($minutesDifference, 60);
+                                            $minutes = $minutesDifference % 60;
+
+                                            // Format the time as "Xh Ym"
+                                            $attendances[$index]['total_hours'][$i] = "{$hours}h {$minutes}m";
+
+                                            // Accumulate total minutes for all rows
+                                            $totalMinutes += $minutesDifference;
                                         } else {
-                                            $attendances[$index]['total_hours'][$i] = '-'; // Ignore invalid times
+                                            $attendances[$index]['total_hours'][$i] = '0h 0m'; // Set to zero if invalid time
                                         }
                                     } else {
                                         $attendances[$index]['total_hours'][$i] = '-'; // If missing check-in or check-out
@@ -214,6 +220,9 @@
                                 }
                             }
 
+                            // Convert accumulated total minutes to hours and minutes
+                            $totalHours = intdiv($totalMinutes, 60);
+                            $remainingMinutes = $totalMinutes % 60;
                         @endphp
 
                         @foreach ($attendances as $index => $attendance)
@@ -241,7 +250,7 @@
                     <tfoot>
                         <tr>
                             <td colspan="3" class="text-right font-weight-bold">Total Hours:</td>
-                            <td class="font-weight-bold">{{ round($totalHours, 2) }} hours</td>
+                            <td class="font-weight-bold">{{ $totalHours }}h {{ $remainingMinutes }}m</td>
                         </tr>
                     </tfoot>
                 </table>

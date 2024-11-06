@@ -24,7 +24,6 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MonthSalaryResource extends Resource
@@ -51,7 +50,6 @@ class MonthSalaryResource extends Resource
     {
         return 'Payroll';
     }
-
 
     public static function form(Form $form): Form
     {
@@ -96,6 +94,17 @@ class MonthSalaryResource extends Resource
 
     public static function table(Table $table): Table
     {
+    //     $currentYear = 2024;
+    //     $currentMonth = 10;
+
+    //  // Find the transaction and get only the first installment for the current month
+    //     $installment = Employee::find(107)?->transactions()
+    //         ->where('transaction_type_id', 6)
+    //         ->where('year', $currentYear)
+    //         ->where('month', $currentMonth)
+           
+    //         ?->first()?->latest('id')?->first()?->amount;
+    //     dd($installment);
         return $table
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
@@ -104,33 +113,33 @@ class MonthSalaryResource extends Resource
                 Tables\Columns\TextColumn::make('notes')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('branch.name')->label('Branch')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('createdBy.name')->label('Created by')->searchable()->sortable()
-                ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable(isToggledHiddenByDefault: true)
                 ,
                 Tables\Columns\TextColumn::make('payment_date')->date()
-                ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable(isToggledHiddenByDefault: true)
                 ,
                 Tables\Columns\ToggleColumn::make('approved')->toggleable(isToggledHiddenByDefault: true)->disabled(),
             ])
             ->filters([
                 SelectFilter::make('branch_id')
-                ->searchable()
-                ->multiple()
-                ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
+                    ->searchable()
+                    ->multiple()
+                    ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ViewAction::make(),
                 Action::make('excel_download')
-                ->button()
-                ->color('info')
-                ->icon('heroicon-o-arrow-down-on-square-stack')
-                ->action(function ($record) {
-                    return static::exportExcel($record);
-                }),
+                    ->button()
+                    ->color('info')
+                    ->icon('heroicon-o-arrow-down-on-square-stack')
+                    ->action(function ($record) {
+                        return static::exportExcel($record);
+                    }),
                 Action::make('salary_slip')
-                ->button()
-                ->color('success')
-                ->icon('heroicon-o-newspaper')
+                    ->button()
+                    ->color('success')
+                    ->icon('heroicon-o-newspaper')
                     ->form(function ($record) {
                         $employeeIds = $record?->details->pluck('employee_id')->toArray();
 
@@ -152,7 +161,7 @@ class MonthSalaryResource extends Resource
 
                         // Redirect to the generated URL
                         return redirect()->away($url);
-                        
+
                     }),
             ])
             ->bulkActions([
@@ -207,7 +216,8 @@ class MonthSalaryResource extends Resource
 
         $deducationDetails = $record?->deducationDetails;
         $increaseDetails = $record->increaseDetails;
-
+ 
+        
         $data = [];
         foreach ($details as $key => $value) {
             $employee = $value->employee;
@@ -241,22 +251,29 @@ class MonthSalaryResource extends Resource
                 $resSpecificAllowances += optional($employeeIncrease->firstWhere('type_id', $sKeyId))->amount ?? 00;
             }
 
+            $monthlyInstallmentAdvanced = $employee?->transactions()
+                ->where('transaction_type_id', 6)
+                ->where('year', date('Y',strtotime($record->month)))
+                ->where('month',  date('m',strtotime($record->month)))
+            
+                ?->first()?->latest('id')?->first()?->amount;
             $data[] = [
                 'employee_id' => $employee?->id,
                 'employee_no' => $employee?->employee_no,
                 'employee_name' => $value?->employee?->name,
                 'job_title' => $value?->employee?->job_title,
                 'branch' => $branch,
-                'basic_salary' => $value?->basic_salary, 
+                'basic_salary' => $value?->basic_salary,
                 'overtime_hours' => $value?->overtime_hours,
                 'total_incentives' => $value?->total_incentives,
                 'total_allowances' => $value?->total_allowances,
                 'total_deductions' => $value?->total_deductions,
+                'advanced_installment' => $monthlyInstallmentAdvanced,
                 'res_deducation' => $resDeducation,
                 'res_allowances' => $resAllowances,
                 'res_specific_deducation' => $resSpecificDeducation,
                 'res_specific_allowances' => $resSpecificAllowances,
-                'bonus'=> $value->total_other_adding,
+                'bonus' => $value->total_other_adding,
                 'net_salary' => $value->net_salary,
             ];
         }

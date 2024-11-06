@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages;
 
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
+use App\Models\ApplicationTransaction;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
@@ -58,6 +59,11 @@ class CreateMonthSalary extends CreateRecord
                     continue;
                 }
 
+                
+                  // Check for existing advance transactions and create deduction if necessary
+                  $this->handleAdvanceDeductions($employee, $this->record->month, $this->record->branch_id);
+
+
                 // Set deductions and allowances if available
                 $specificDeducation = $calculateSalary['details']['deducation_details']['specific_deducation'] ?? [];
                 $generalDeducation = $calculateSalary['details']['deducation_details']['general_deducation'] ?? [];
@@ -104,6 +110,8 @@ class CreateMonthSalary extends CreateRecord
                         'deduction_amount' => $calculateSalary['details']['deduction_for_late_hours'],
                     ]);
                 }
+
+
                 // Commit the transaction if all is successful
                 DB::commit();
 
@@ -171,5 +179,57 @@ class CreateMonthSalary extends CreateRecord
             'label' => 'Payroll',
         ]);
     }
+
+
+private function handleAdvanceDeductions(Employee $employee, string $yearMonth, int $branchId): void
+{
+    // Parse the specified month to get the year and month
+    $explodedMonth = explode('-', $yearMonth);
+    $month = $explodedMonth[1];
+    $year = $explodedMonth[0];
+
+    $advancedInstalmment = getInstallmentAdvancedMonthly($employee,$year,$month);
+    // If an advance transaction exists, create a deduction transaction
+    if ($advancedInstalmment) {
+        // Calculate the deduction amount based on the remaining amount or other logic
+        $deductionAmount = $advancedInstalmment->installment_amount ?? 0; // Adjust as needed
+
+        // Create a new deduction transaction for the employee
+        ApplicationTransaction::create([
+            'application_id' => null, // Set to null or a related application ID if applicable
+            'transaction_type_id' => 6, // Transaction type for "Deduction of advanced"
+            'transaction_type_name' => ApplicationTransaction::TRANSACTION_TYPES[6],
+            'transaction_description' => 'Monthly deduction for advance payment',
+            'submitted_on' => now(),
+            'branch_id' => $branchId,
+            'amount' => $deductionAmount,
+            'value' => $deductionAmount,
+            'remaining' => 0, // Deduction transaction, so nothing remains
+            
+            'created_by' => auth()->id(),
+            'employee_id' => $employee->id,
+            'year' => $year,
+            'month' => $month,
+            'details' => json_encode([
+                'source' => 'Monthly Salary Generation',
+                'deduction_amount' => $deductionAmount,
+            ]),
+        ]);
+
+             // Create a record in MonthlySalaryDeductionsDetail
+             MonthlySalaryDeductionsDetail::create([
+                'month_salary_id' => $this->record->id,
+                'employee_id' => $employee->id,
+                'is_specific_employee' => 1, // Adjust based on requirements
+                'deduction_id' => MonthlySalaryDeductionsDetail::ADVANCED_MONTHLY_DEDUCATION,
+                'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::ADVANCED_MONTHLY_DEDUCATION],
+                'deduction_amount' => $deductionAmount,
+                'is_percentage' => false, // Assuming a fixed amount
+                'amount_value' => $deductionAmount,
+                'percentage_value' => null,
+            ]);
+    }
+}
+
 }
  

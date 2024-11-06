@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -28,17 +29,19 @@ class ApplicationTransaction extends Model
         'details',
         'branch_id',
         'value',
+        'year',        // Newly added field
+        'month',       // Newly added field
     ];
 
     // Constants for transaction types
-    const APPLICATION_TYPES = [
+    const TRANSACTION_TYPES = [
         1 => 'Leave request',
         2 => 'Missed Check-in Request',
         3 => 'Advance request',
         4 => 'Missed Check-out Request',
         5 => 'Opening balance of employee leave',
+        6 => 'Deucation of advanced',
     ];
-
     // Define relationships
     public function application()
     {
@@ -58,7 +61,7 @@ class ApplicationTransaction extends Model
     // Helper function to get the application type name
     public function getTransactionTypeNameAttribute()
     {
-        return self::APPLICATION_TYPES[$this->transaction_type_id] ?? 'Unknown';
+        return self::TRANSACTION_TYPES[$this->transaction_type_id] ?? 'Unknown';
     }
 
     public static function createTransactionFromApplication(EmployeeApplication $employeeApplication)
@@ -81,8 +84,8 @@ class ApplicationTransaction extends Model
         }
         return self::create([
             'application_id' => $employeeApplication->id,
-            'transaction_type_id' => $employeeApplication->transaction_type_id,
-            'transaction_type_name' => self::APPLICATION_TYPES[$employeeApplication->transaction_type_id] ?? 'Unknown',
+            'transaction_type_id' => $employeeApplication->application_type_id,
+            'transaction_type_name' => static::TRANSACTION_TYPES[$employeeApplication->application_type_id],
             'transaction_description' => 'Transaction created for Employee Application Approval',
             'submitted_on' => now(),
             'amount' => $amount,
@@ -93,6 +96,54 @@ class ApplicationTransaction extends Model
             'employee_id' => $employeeApplication->employee_id,
             'details' => json_encode(['source' => 'Employee Application Approval']),
         ]);
+    }
+    public static function createTransactionFromApplicationV3(EmployeeApplication $employeeApplication,array $details)
+    {
+        // Initialize variables and assign values if they exist in the details array
+    $amount = $details['detail_advance_amount'] ?? 0;
+    $remaining = $details['detail_number_of_months_of_deduction'] 
+                 ? $amount - ($details['detail_monthly_deduction_amount'] * $details['detail_number_of_months_of_deduction']) 
+                 : $amount;
+    $fromDate = $details['detail_deduction_starts_from'] ?? null;
+    $toDate = $details['detail_deduction_ends_at'] ?? null;
+       
+
+  $transaction = self::create([
+            'application_id' => $employeeApplication->id,
+            'transaction_type_id' => $employeeApplication->application_type_id,
+            'transaction_type_name' => static::TRANSACTION_TYPES[$employeeApplication->application_type_id],
+            'transaction_description' => 'Transaction created for Employee Application Approval',
+            'submitted_on' => now(),
+            'branch_id'=> $employeeApplication->branch_id,
+            'amount' => $amount,
+            'value' => $amount,
+            'remaining' => $remaining,
+            'from_date' => $fromDate,
+            'to_date' => $toDate,
+            'created_by' => auth()->id(), // أو يمكن تحديد ID المستخدم
+            'employee_id' => $employeeApplication->employee_id,
+            'details' => json_encode([
+                'source' => 'Employee Application Approval',
+                'detail_date' => $details['detail_date'] ?? null,
+                'detail_advance_amount' => $amount,
+                'detail_monthly_deduction_amount' => $details['detail_monthly_deduction_amount'] ?? 0,
+                'detail_deduction_starts_from' => $fromDate,
+                'detail_deduction_ends_at' => $toDate,
+                'detail_number_of_months_of_deduction' => $details['detail_number_of_months_of_deduction'] ?? 0,
+            ]),
+        ]);
+
+          // Check if installments should be created
+          if ($employeeApplication->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST) {
+            $transaction->createInstallments(
+                $employeeApplication->employee_id,
+                $amount,
+                $details['detail_number_of_months_of_deduction'] ?? 0,
+                $fromDate,
+                $employeeApplication->id
+            );
+        }
+    return $transaction;
     }
 
     /**
@@ -119,7 +170,7 @@ class ApplicationTransaction extends Model
         float $value = null
     ) {
         // Get transaction type name and description
-        $transactionTypeName = static::APPLICATION_TYPES[$transactionTypeId];
+        $transactionTypeName = static::TRANSACTION_TYPES[$transactionTypeId];
         $transactionDescription = match ($transactionTypeId) {
             // 1 => "Leave request submitted for  dates $fromDate to $toDate",
             1 => "Approved Leave",
@@ -150,4 +201,68 @@ class ApplicationTransaction extends Model
             'value' => $value,
         ]);
     }
+
+    public function createInstallments($employeeId, $totalAmount, $numberOfMonths, $startDate, $applicationId)
+    {
+        if ($numberOfMonths <= 0) {
+            return; // Exit if no installments are specified
+        }
+
+        $installmentAmount = $totalAmount / $numberOfMonths;
+        $dueDate = Carbon::parse($startDate);
+
+        // Loop through each month to create installments
+        for ($i = 0; $i < $numberOfMonths; $i++) {
+            EmployeeAdvanceInstallment::create([
+                'employee_id' => $employeeId,
+                'application_id' => $applicationId,
+                'transaction_id' => $this->id,
+                'installment_amount' => round($installmentAmount, 2),
+                'due_date' => $dueDate->copy()->addMonths($i),
+                'is_paid' => false,
+            ]);
+        }
+    }
+
+    // Relationship: Has many installments
+    public function installments()
+    {
+        return $this->hasMany(EmployeeAdvanceInstallment::class, 'transaction_id');
+    }
+
+    /**
+     * to create ontly deducation transaction
+     * @param mixed $employeeId
+     * @param mixed $branchId
+     * @param mixed $amount
+     * @param mixed $month
+     * @param mixed $year
+     * @return 
+     */
+    public static function createMonthlyDeductionTransaction($employeeId, $branchId, $amount, $month, $year)
+    {
+        // Create a deduction transaction for advanced payments
+        return self::create([
+            'application_id' => null, // Set to null or an appropriate ID if linked to an application
+            'transaction_type_id' => 6, // Deduction of advanced
+            'transaction_type_name' => self::TRANSACTION_TYPES[6],
+            'transaction_description' => 'Monthly deduction for advance payment',
+            'submitted_on' => now(),
+            'branch_id' => $branchId,
+            'amount' => $amount,
+            'value' => $amount,
+            'remaining' => 0, // Adjust as needed based on calculations
+            'from_date' => now()->startOfMonth(),
+            'to_date' => now()->endOfMonth(),
+            'created_by' => auth()->id(),
+            'employee_id' => $employeeId,
+            'year' => $year,
+            'month' => $month,
+            'details' => json_encode([
+                'source' => 'Monthly Salary Generation',
+                'deduction_amount' => $amount,
+            ]),
+        ]);
+    }
+
 }

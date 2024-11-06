@@ -14,6 +14,7 @@ class MonthlySalaryDeductionsDetail extends Model
 
     public const LATE_HOUR_DEDUCTIONS = -1;
     public const ABSENT_DAY_DEDUCTIONS = -2;
+    public const ADVANCED_MONTHLY_DEDUCATION = -3;
 
     
     // Specify the fillable fields
@@ -48,5 +49,6 @@ class MonthlySalaryDeductionsDetail extends Model
     public const DEDUCTION_TYPES = [
         self::LATE_HOUR_DEDUCTIONS => 'late_hour_deductions',
         self::ABSENT_DAY_DEDUCTIONS => 'absent_day_deductions',
+        self::ADVANCED_MONTHLY_DEDUCATION => 'advanced monthly installment deducation',
     ];
 }

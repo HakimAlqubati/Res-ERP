@@ -52,7 +52,7 @@ use Carbon\Carbon;
  
      $specificAlloanceCalculated = calculateAllowances($specificAllowances, $basicSalary);
      $specificDeducationCalculated = calculateDeductions($specificDeductions, $basicSalary);
- 
+     $deducationInstallmentAdvancedMonthly = getInstallmentAdvancedMonthly($employee,date('Y',strtotime($date)),date('m',strtotime($date)));
      $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
          return $incentive->amount;
      });
@@ -86,7 +86,7 @@ use Carbon\Carbon;
      $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
      $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
  
-     $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForAbsentDays);
+     $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount?? 0));
      $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result']);
      $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
  
@@ -98,6 +98,7 @@ use Carbon\Carbon;
          'details' => [
              'basic_salary' => $basicSalary,
              'salary_after_deducation' => $remaningSalary,
+             'deducationInstallmentAdvancedMonthly'=> $deducationInstallmentAdvancedMonthly?->installment_amount,
              'total_deducation' => round($totalDeducations, 2),
              'total_allowances' => round($totalAllowances, 2),
              'total_other_adding' => round($totalOtherAdding, 2),
@@ -317,4 +318,26 @@ function employeeSalarySlip($employeeId, $yearMonth)
         ->get()->first();
     return $salaryDetail;
 
+}
+
+/**
+ * to get installments monthly advanced
+ */
+function getInstallmentAdvancedMonthly($employee,$year,$month){
+    
+    
+    // Check if the employee has an advance transaction for the specified month and year
+    $advancedInstalmment = $employee?->transactions()
+    ->where('transaction_type_id', 3)
+    ->whereYear('from_date', $year)
+    ->whereMonth('from_date', $month)
+    ->with(['installments' => function ($query) use ($year, $month) {
+        $query->whereYear('due_date', $year)
+            ->whereMonth('due_date', $month)
+            ->where('is_paid',false)
+            ->limit(1); // Limit to only the first installment for efficiency
+    }])
+    ->first()?->installments->first();
+
+    return $advancedInstalmment;
 }

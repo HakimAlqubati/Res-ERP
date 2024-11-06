@@ -532,12 +532,12 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             $approvedOvertime = $periodData['total_hours'];
                         }
 
-                        // dd($approvedOvertime,$date);
+                        
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',
                             'actual_duration_hourly' => $formattedSupposedActualDuration,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject. ':00',
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
@@ -547,7 +547,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'status' => $attendance->status ?? 'unknown',
                             'actual_duration_hourly' => $formattedSupposedActualDuration,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? 0,
+                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject. ':00',
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
@@ -812,7 +812,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'status' => $attendance->status ?? 'unknown',
                                 'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
                                 'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
-                                'supposed_duration_hourly' => $formattedSupposedActualDuration,
+                                'supposed_duration_hourly' => $formattedSupposedActualDuration != '0 h 0 m' ? $formattedSupposedActualDuration : $periodObject . ':00',
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                                 'approved_overtime' => $approvedOvertime,
@@ -824,7 +824,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'status' => $attendance->status ?? 'unknown',
                                 'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
                                 'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
-                                'supposed_duration_hourly' => $formattedSupposedActualDuration,
+                                'supposed_duration_hourly' => $formattedSupposedActualDuration != '0 h 0 m' ? $formattedSupposedActualDuration : $periodObject . ':00',
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             ];
