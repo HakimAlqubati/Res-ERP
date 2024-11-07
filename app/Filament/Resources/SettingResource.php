@@ -30,6 +30,8 @@ class SettingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
+    protected static ?string $modelLabel = 'System Settings';
+    protected static ?string $pluralLabel = 'System Settings';
     public static function form(Form $form): Form
     {
         return $form

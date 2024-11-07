@@ -12,6 +12,7 @@ use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -72,4 +73,10 @@ class CreateSetting extends CreateRecord
             ->success()
             ->send();
     }
+
+    public function getTitle(): string | Htmlable
+    {
+        return 'System Settings';
+    }
+
 }
