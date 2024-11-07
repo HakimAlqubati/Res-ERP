@@ -228,7 +228,7 @@ function calculateDailySalary($employeeId, $date = null)
     // Calculate daily salary
     $dailySalary = $basicSalary / $daysInMonth;
 
-    return round($dailySalary, 3);
+    return round($dailySalary, 2);
 }
 
 /**
@@ -244,9 +244,9 @@ function calculateHourlySalary($employeeId, $date = null)
     }
 
     // Calculate hourly salary assuming an 8-hour workday
-    $hourlySalary = $dailySalary / 12;
+    $hourlySalary = $dailySalary / setting('hours_no_in_day');
 
-    return round($hourlySalary, 3);
+    return round($hourlySalary, 2);
 }
 
 /**
