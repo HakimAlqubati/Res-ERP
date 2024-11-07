@@ -223,9 +223,9 @@ class EmployeeResource extends Resource
                                         ->numeric()->columnSpan(1)
                                         ->columnSpan(2)
                                         ->inputMode('decimal'),
-                                    TextInput::make('bank_account_number')
-                                        ->columnSpan(2)
-                                        ->label('Bank account number')->nullable(),
+                                    // TextInput::make('bank_account_number')
+                                    //     ->columnSpan(2)
+                                    //     ->label('Bank account number')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
                                         ->label('No salary deduction for absences')->default(0)
                                     // ->isInline(false)
@@ -244,6 +244,10 @@ class EmployeeResource extends Resource
                                             ->label('Bank Name')
                                             ->required()
                                             ->placeholder('Enter bank name'),
+                                        TextInput::make('number')
+                                            ->label('Bank Account Number')
+                                            ->required()
+                                            ->placeholder('Enter bank account number'),
                                     ])
                                     ->collapsed()
                                     ->minItems(1) // Set the minimum number of items
