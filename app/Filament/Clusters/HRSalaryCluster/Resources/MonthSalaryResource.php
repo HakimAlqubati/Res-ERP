@@ -154,11 +154,11 @@ class MonthSalaryResource extends Resource
                     })
                     ->action(function ($record, $data) {
                         $month = $data['month'];
-                        $sid = $data['sid'];
+                        
                         $employeeId = $data['employee_id'];
 
                         // Generate the URL using the route with parameters
-                        $url = url("/to_test_salary_slip/{$employeeId}/{$sid}");
+                        $url = url("/to_test_salary_slip/{$employeeId}/{$record->id}");
 
                         // Redirect to the generated URL
                         return redirect()->away($url);

@@ -60,30 +60,65 @@ class TestController2 extends Controller
         return employeeAttendancesByDate($empIds, $date);
     }
 
-    public function to_test_salary_slip($empId, $yearMonth,$sid)
+    public function to_test_salary_slip($empId,$sid)
     {
-
-        $data = employeeSalarySlip($empId, $yearMonth,$sid);
-
-        $monthSalary = $data?->monthSalary;
-        $employee = $data?->employee;
+        $employee = Employee::find($empId);
         $branch = $employee->branch;
-        $deducationDetail = $monthSalary?->deducationDetails->where('employee_id', $empId);
-        $increaseDetails = $monthSalary?->increaseDetails->where('employee_id', $empId);
-        // dd($increaseDetails,$deducationDetail);
-        $deducationTypes = Deduction::where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
+        $data = employeeSalarySlip($empId,$sid);
+        $increaseDetails = $data->increaseDetails;
+        $deducationDetails = $data->deducationDetails;
+        $allowanceTypes = Allowance::where('active',1)->select('name','id')->pluck('name','id');
+        
+        $month = $data->month;
+        $monthName = Carbon::parse($month)->translatedFormat('F Y');
+
+        $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
+            $typeId = $allowance['type_id'];
+        
+            return [
+                'id' => $allowance['id'],
+                'type_id' => $typeId,
+                'allowance_name' => $allowanceTypes[$typeId] ?? 'Unknown Allowance', // Fallback if allowance type is missing
+                'amount' => $allowance['amount'],
+            ];
+        })->toArray();
+        
+        // Calculate the total allowance amount
+        $totalAllowanceAmount = collect($employeeAllowances)->sum('amount');
+        
+        
+        
+        $deducationTypes = Deduction::where('active', 1)
+        ->select('name', 'id')->pluck('name', 'id')
+        ->toArray();
 
         $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
-        // $allDeductionTypes = $deducationTypes + $constDeducationTypes;
-        $allDeductionTypes =  $constDeducationTypes;
-        $values = MonthSalary::find($sid)->details->where('employee_id',$empId)->first();
-        // dd($values);
-
-        $allowanceTypes = Allowance::where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
-        // dd($specificDeducationTypes);
-        // dd($specificAllowanceTypes);
-        // dd($data, $employee, $branch, $monthSalary);
+        $allDeductionTypes = $deducationTypes + $constDeducationTypes;
+        $employeeDeductions = collect($deducationDetails)->map(function ($deduction) use ($allDeductionTypes) {
+            $deductionId = $deduction['deduction_id'];
         
+            return [
+                'id' => $deduction['id'],
+                'deduction_id' => $deductionId,
+                'deduction_name' => $allDeductionTypes[$deductionId] ?? 'Unknown Deduction', // Fallback if deduction type is missing
+                'deduction_amount' => $deduction['deduction_amount'],
+            ];
+        })->toArray();
+        
+        // Calculate the total deduction amount
+        $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
+         
+        return view('export.reports.hr.salaries.salary-slip',
+        compact(
+            'data',
+            'totalAllowanceAmount',
+            'totalDeductionAmount',
+            'employeeAllowances',
+        'employeeDeductions',
+        'month',
+        'monthName',
+        'employee',
+    'branch')); 
         return view('export.reports.hr.salaries.salary-slip', 
         compact('data', 
         'employee', 

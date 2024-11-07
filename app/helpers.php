@@ -413,3 +413,10 @@ function getMonthsArray()
 }
 
 
+/**
+ * to get setting by key field
+ */
+
+ function setting($key){
+    return \App\Models\Setting::getSetting($key);
+ }

@@ -45,7 +45,7 @@ class ViewMonthSalary extends ViewRecord
                     $employeeId = $data['employee_id'];
 
                     // Generate the URL using the route with parameters
-                    $url = url("/to_test_salary_slip/{$employeeId}/{$month}");
+                    $url = url("/to_test_salary_slip/{$employeeId}/{$this->record->id}");
 
                     // Redirect to the generated URL
                     return redirect()->away($url);

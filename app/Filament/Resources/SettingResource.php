@@ -11,6 +11,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -20,6 +21,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
+use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
 class SettingResource extends Resource
 {
@@ -33,22 +36,45 @@ class SettingResource extends Resource
             ->schema([
                 Tabs::make('settings')->columnSpanFull()
                     ->tabs([
-                        Tab::make('Site Settings')
+                        Tab::make('Company Info')
                             ->schema([
-                                Grid::make()->schema([
-                                    TextInput::make("site_name")
-                                        ->label('Site Name')
-                                        ->columnSpan(2)
-                                        ->required(),
+                                Fieldset::make()->columns(4)->label('Company Info')->schema([
+                                    TextInput::make("company_name")
+                                    ->label('Name'),
+                                    TextInput::make("company_phone")
+                                    ->label('Name')
+                                    
+                                    ->required(),
+                                    // PhoneInput::make('company_phone')
+                                    //     // ->numeric()
+                                    //         ->initialCountry('MY')
+                                    //         ->onlyCountries([
+                                    //             'MY',
+                                    //             'US',
+                                    //             'YE',
+                                    //             'AE',
+                                    //             'SA',
+                                    //         ])
+                                    //         ->displayNumberFormat(PhoneInputNumberType::E164)
+                                    //         ->autoPlaceholder('aggressive')
+                                    //         ->unique(ignoreRecord: true)->required()
+                                    //         ->validateFor(
+                                    //             country: 'MY',
+                                    //             lenient: true, // default: false
+                                    //         ),
 
-                                    FileUpload::make('site_logo')
-                                        ->label('Site Logo')
-                                        ->image()
-                                        ->columnSpan(2)
-                                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                            return "images/" . Str::random(15) . "." . $file->getClientOriginalExtension();
-                                        }),
-                                ]),
+
+                                FileUpload::make('company_logo')
+                                    ->label('Logo')->required()
+                                    ->image()
+                                    ->columnSpan(2)
+                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                        return "company_logo/" . Str::random(15) . "." . $file->getClientOriginalExtension();
+                                    }),
+                                    Fieldset::make()->columnSpanFull()->label('Address')->schema([
+                                        Textarea::make('address')->label('')->columnSpanFull()->required(),
+                                    ])
+                                ])
                             ]),
 
                         Tab::make('HR Settings')
