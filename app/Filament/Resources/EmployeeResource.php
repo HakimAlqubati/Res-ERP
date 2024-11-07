@@ -215,7 +215,7 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
-                    Wizard\Step::make('Finance  & Shift data')
+                    Wizard\Step::make('Finance')
                         ->schema([
                             Fieldset::make()->label('Set salary data and account number')->schema([
                                 Grid::make()->label('')->columns(4)->schema([
