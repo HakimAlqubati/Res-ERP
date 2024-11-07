@@ -250,7 +250,7 @@ class EmployeeResource extends Resource
                                             ->placeholder('Enter bank account number'),
                                     ])
                                     ->collapsed()
-                                    ->minItems(1) // Set the minimum number of items
+                                    ->minItems(0) // Set the minimum number of items
                                      // Optional: set the maximum number of items
                                     ->defaultItems(1) // Default number of items when the form loads
                                     ->columnSpan('full'), // Adjust the span as necessary
