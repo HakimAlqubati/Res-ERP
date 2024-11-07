@@ -79,7 +79,7 @@ class SettingResource extends Resource
 
                         Tab::make('HR Settings')
                             ->schema([
-                                Fieldset::make()->columns(3)->schema([
+                                Fieldset::make()->label('Work Shifts')->columns(3)->schema([
                                     TextInput::make("hours_count_after_period_before")
                                         ->label('Hours allowed before period')
                                         ->numeric()
@@ -115,6 +115,9 @@ class SettingResource extends Resource
                                     ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
                                     ->numeric()
                                     ->required(),
+                                ]),
+                                Fieldset::make()->label('Salary')->columns(4)->schema([
+                                    TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
                                 ]),
                             ]),
                     ]),

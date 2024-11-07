@@ -254,6 +254,7 @@ function calculateHourlySalary($employeeId, $date = null)
  */
 function getDaysInMonth($date)
 {
+    return setting('days_in_month');
     // If date is not provided, use the current date
     $date = $date ?? date('Y-m-d');
 
