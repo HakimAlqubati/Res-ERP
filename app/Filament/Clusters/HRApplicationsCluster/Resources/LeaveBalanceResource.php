@@ -4,10 +4,12 @@ namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster;
+use App\Filament\Clusters\HRAttendanceReport;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -33,6 +35,16 @@ class LeaveBalanceResource extends Resource
     protected static ?string $modelLabel = 'Leave balance';
     protected static ?string $pluralLabel = 'Leave balance';
 
+    // public static function getCluster(): ?string
+    // {
+    //     $user = Filament::auth()->user();
+    //     dd($user);
+    //     dd(auth()->user());
+    //     if (isStuff()) {
+    //         return HRAttendanceReport::class;
+    //     }
+    //     return HRAttenanceCluster::class;
+    // }
     public static function getModelLabel(): string
     {
         return isStuff() ? 'My leaves': static::$modelLabel;
@@ -103,16 +115,16 @@ class LeaveBalanceResource extends Resource
                                         ->required()
                                         ->unique(
                                             ignoreRecord: true,
-                                            modifyRuleUsing: function (Unique $rule,  Get $get,$state) {
-                                                return $rule->where('employee_id',$state)
-                                            ->where('leave_type_id',$get('../../leave_type_id'))
-                                            ->where('year',$get('../../year'))
-                                            ;
+                                            modifyRuleUsing: function (Unique $rule, Get $get, $state) {
+                                                return $rule->where('employee_id', $state)
+                                                    ->where('leave_type_id', $get('../../leave_type_id'))
+                                                    ->where('year', $get('../../year'))
+                                                ;
                                             }
-                                            )->validationMessages([
-                                                'unique'=>'Balance already created'
-                                                ])
-                                            ,
+                                        )->validationMessages([
+                                        'unique' => 'Balance already created',
+                                    ])
+                                    ,
 
                                     TextInput::make('balance')->label('Balance')
                                         ->numeric()
@@ -140,7 +152,7 @@ class LeaveBalanceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100])
             ->columns([
                 Tables\Columns\TextColumn::make('employee.employee_no')
                     ->label('Employee no')
@@ -156,7 +168,7 @@ class LeaveBalanceResource extends Resource
                     ->alignCenter(true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('year')
-                    ->alignCenter(true) 
+                    ->alignCenter(true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('balance')->alignCenter(true)
                     ->numeric()

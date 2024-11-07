@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages;
+use App\Filament\Clusters\HRAttendanceReport;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeOvertime;
@@ -45,6 +46,14 @@ class EmployeeOvertimeResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
+    // public static function getCluster(): ?string
+    // {
+    //     if(isStuff()){
+    //        return HRAttendanceReport::class;
+    //    }
+    //     return HRAttenanceCluster::class;
+    // }
+    
     // protected static ?string $label = 'Staff Overtime';
     // protected static ?string $pluralModelLabel = 'Staff Overtime';
     // protected static ?string $pluralLabel = 'Staff Overtime';

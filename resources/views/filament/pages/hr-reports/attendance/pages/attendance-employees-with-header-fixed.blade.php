@@ -5,19 +5,19 @@
     <x-filament-tables::table class="w-full text-sm text-left pretty  reports" style="padding-top: 200px;">
         <thead class="fixed-header" style="padding-top: 200px;;top:64px;">
             <x-filament-tables::row class="header_report">
-                <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                    <p>{{ 'Attendance employees report' }}</p>
+                <th colspan="3" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+                    {{-- <p>{{ 'Attendance employees report' }}</p> --}}
 
                     <p> Branch:
                         {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
                     </p>
                 </th>
-                <th colspan="4" class="no_border_right_left">
+                <th colspan="2" class="no_border_right_left">
 
                 </th>
                 <th colspan="5" style="text-align: center; vertical-align: middle; padding:12px;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                    {{-- <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt=""> --}}
+                    <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                 </th>
             </x-filament-tables::row>
 

@@ -40,8 +40,12 @@ class Employee extends Model
         'rfid',
         'employee_type',
         'bank_account_number',
+        'bank_information',
     ];
 
+    protected $casts = [
+        'bank_information' => 'array',
+    ];
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED = 'added';
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED = 'removed';
 

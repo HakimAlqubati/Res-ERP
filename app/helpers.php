@@ -327,7 +327,11 @@ function getDays()
  */
 function getUserTypes()
 {
-    return UserType::select('name', 'id')->get()->pluck('name', 'id');
+    return UserType::select('name', 'id')
+    ->when(isStuff(), function ($query) {
+        $query->whereNotIn('id', [3,4]); // Adjust this condition as needed
+    })
+    ->get()->pluck('name', 'id');
 }
 /**
  * to get roles based on user_type_id

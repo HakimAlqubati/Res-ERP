@@ -120,7 +120,7 @@ class UserResource extends Resource
 
                         ]),
                         Fieldset::make()->columns(3)->label('Set user type, role and manager')->schema([
-                            Select::make('user_type')
+                            Select::make('user_type')->required()
                                 ->label('User type')
                                 ->options(getUserTypes())
                                 ->live()
@@ -131,7 +131,7 @@ class UserResource extends Resource
                             ,
                             CheckboxList::make('roles')
                                 ->label('Role')
-                                ->relationship('roles')
+                                ->relationship('roles')->required()
                                 ->maxItems(1)
                                 ->options(function (Get $get) {
                                     // dd($get('user_type'),'hi');
@@ -285,7 +285,7 @@ class UserResource extends Resource
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
-                    ->sortable()->searchable()->limit(25)
+                    ->sortable()->searchable()->limit(30)
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false)
                     // ->getCopyMessage('Done copied')

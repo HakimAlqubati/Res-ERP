@@ -26,6 +26,15 @@ class EditEmployee extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
+        if(isset($data['branch_id']) && !is_null($data['branch_id'])){
+          $employee= $this->record;
+          
+          $user = $employee->user;
+          if($user){
+              $user->branch_id = $data['branch_id'];
+              $user->save();
+          }
+        }
         // dd($data['employee_periods'],$this->record->id);
         $this->logPeriodChanges();
         return $data;
@@ -61,4 +70,5 @@ class EditEmployee extends EditRecord
             }
         }
     }
+
 }

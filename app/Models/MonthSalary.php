@@ -45,4 +45,13 @@ class MonthSalary extends Model
     {
         return $this->belongsTo(User::class,'created_by');
     }
+
+    protected static function booted()
+    {
+        if (isBranchManager()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            });
+        }
+    }
 }

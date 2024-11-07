@@ -2,11 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Employee;
 use App\Models\Task;
+use App\Models\User;
 use App\Notifications\Notification as NotificationsNotification;
 use App\Notifications\NotificationAttendance;
 use App\Notifications\NotificationAttendanceCheck;
+use App\Observers\EmployeeObserver;
 use App\Observers\TaskObserver;
+use App\Observers\UserObserver;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use Filament\Livewire\DatabaseNotifications;
 use Filament\Notifications\Livewire\Notifications;
@@ -39,7 +43,8 @@ class AppServiceProvider extends ServiceProvider
     {
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
         Task::observe(TaskObserver::class);
-
+        Employee::observe(EmployeeObserver::class);
+        User::observe(UserObserver::class);
         // NotificationAttendance::configureUsing(function (NotificationAttendance $notification): void {
         //     $notification->view('filament.notifications.notification');
         // });

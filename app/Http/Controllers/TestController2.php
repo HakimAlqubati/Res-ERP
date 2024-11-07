@@ -6,6 +6,7 @@ use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
+use App\Models\MonthSalary;
 use Carbon\Carbon;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
@@ -59,10 +60,10 @@ class TestController2 extends Controller
         return employeeAttendancesByDate($empIds, $date);
     }
 
-    public function to_test_salary_slip($empId, $yearMonth)
+    public function to_test_salary_slip($empId, $yearMonth,$sid)
     {
 
-        $data = employeeSalarySlip($empId, $yearMonth);
+        $data = employeeSalarySlip($empId, $yearMonth,$sid);
 
         $monthSalary = $data?->monthSalary;
         $employee = $data?->employee;
@@ -73,17 +74,23 @@ class TestController2 extends Controller
         $deducationTypes = Deduction::where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
 
         $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
-        $allDeductionTypes = $deducationTypes + $constDeducationTypes;
+        // $allDeductionTypes = $deducationTypes + $constDeducationTypes;
+        $allDeductionTypes =  $constDeducationTypes;
+        $values = MonthSalary::find($sid)->details->where('employee_id',$empId)->first();
+        // dd($values);
 
         $allowanceTypes = Allowance::where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
         // dd($specificDeducationTypes);
         // dd($specificAllowanceTypes);
         // dd($data, $employee, $branch, $monthSalary);
         
-        return view('export.reports.hr.salaries.salary-slip', compact('data', 'employee', 'branch',
+        return view('export.reports.hr.salaries.salary-slip', 
+        compact('data', 
+        'employee', 
+        'branch',
             'monthSalary', 'allDeductionTypes',
             'allowanceTypes',
-            'deducationDetail', 'increaseDetails'));
+            'deducationDetail', 'increaseDetails','values'));
 
             // $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip', [
         //     'data' => $data,

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Filament\Resources;
-
+use Filament\Forms\Components\Builder as B1;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
@@ -16,6 +16,7 @@ use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
 use Closure;
+use Filament\Forms\Components\Builder\Block;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -233,6 +234,22 @@ class EmployeeResource extends Resource
                                         ->label('Exempt from late attendance deduction')->default(0)
                                     // ->isInline(false)
                                     ,
+
+                                    Repeater::make('bank_information')
+                                    ->label('Bank Information')
+                                    ->columns(2)
+
+                                    ->schema([
+                                        TextInput::make('bank')
+                                            ->label('Bank Name')
+                                            ->required()
+                                            ->placeholder('Enter bank name'),
+                                    ])
+                                    ->collapsed()
+                                    ->minItems(1) // Set the minimum number of items
+                                     // Optional: set the maximum number of items
+                                    ->defaultItems(1) // Default number of items when the form loads
+                                    ->columnSpan('full'), // Adjust the span as necessary
                                 ]),
                                 Fieldset::make()->label('Shift - RFID')->schema([
                                     Grid::make()->columns(2)->schema([

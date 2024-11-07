@@ -50,7 +50,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->visible(fn(): bool => isSuperAdmin()),
+                Tables\Actions\EditAction::make()->visible(fn(): bool => (isSuperAdmin() || isBranchManager())),
                 Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
                     ->requiresConfirmation()->databaseTransaction()
                    ->button()

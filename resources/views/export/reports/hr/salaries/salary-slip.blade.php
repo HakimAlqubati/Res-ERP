@@ -47,6 +47,8 @@
                 $totalDeductions = $deducationDetail
                     ->whereIn('deduction_id', array_keys($allDeductionTypes))
                     ->sum('deduction_amount');
+                    // dd($totalDeductions
+                // );
             @endphp
 
             <table>
@@ -63,34 +65,55 @@
                         <td>{{ number_format($basicSalary, 2) }}</td>
                         <td></td>
                     </tr>
-                    @foreach ($allowanceTypes as $detailId => $detailName)
+                    <tr>
+                        <td>
+                            {{'Total allownces'}}
+                        </td>
+                        <td>{{$values->total_allowances}}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{'Overtime'}}
+                        </td>
+                        <td>{{$values->overtime_pay}}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {{'Total deducations'}}
+                        </td>
+                        <td></td>
+                        <td>{{$values->total_deductions}}</td>
+                    </tr>
+                    {{-- @foreach ($allowanceTypes as $detailId => $detailName)
                         <tr>
                             <td>{{ $detailName }}</td>
                             <td>{{ number_format(optional($increaseDetails->firstWhere('type_id', $detailId))->amount ?? 0, 2) }}
                             </td>
                             <td></td>
                         </tr>
-                    @endforeach
-                    @foreach ($allDeductionTypes as $deducationId => $deducationName)
+                    @endforeach --}}
+                    {{-- @foreach ($allDeductionTypes as $deducationId => $deducationName)
                         <tr>
                             <td>{{ $deducationName }}</td>
                             <td></td>
                             <td>{{ number_format(optional($deducationDetail->firstWhere('deduction_id', $deducationId))->deduction_amount ?? 0, 2) }}
-                            </td>
+                            </td>   
                         </tr>
-                    @endforeach
-                    <tr>
+                    @endforeach --}}
+                    {{-- <tr>
                         <th>Total</th>
                         <th>{{ number_format($totalEarnings, 2) }}</th>
                         <th>{{ number_format($totalDeductions, 2) }}</th>
-                    </tr>
+                    </tr> --}}
                 </tbody>
             </table>
         </section>
 
         <footer>
             <div class="net-salary">
-                <p>Net Salary (RM): {{ $data?->net_salary }}</p>
+                <p>Net Salary (RM): {{ $values?->net_salary }}</p>
             </div>
             <div class="signature">
                 <p>Employee Signature:</p>

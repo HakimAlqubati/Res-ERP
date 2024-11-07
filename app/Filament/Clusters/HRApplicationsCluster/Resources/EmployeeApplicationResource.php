@@ -869,7 +869,7 @@ class EmployeeApplicationResource extends Resource
     private static function departureRequesttDetails(): Action
     {
         return Action::make('departureRequesttDetails')->label('Details')->button()
-            ->color('success')
+            ->color('info')
             ->icon('heroicon-m-newspaper')
          
             ->disabledForm()
@@ -904,7 +904,7 @@ class EmployeeApplicationResource extends Resource
     private static function AttendanceRequestDetails(): Action
     {
         return Action::make('AttendanceRequestDetails')->label('Details')->button()
-            ->color('success')
+            ->color('info')
             ->icon('heroicon-m-newspaper')
          
             ->disabledForm()
@@ -932,7 +932,7 @@ class EmployeeApplicationResource extends Resource
     private static function LeaveRequesttDetails(): Action
     {
         return Action::make('LeaveRequesttDetails')->label('Details')->button()
-            ->color('success')
+            ->color('info')
             ->icon('heroicon-m-newspaper')
          
             ->disabledForm()
@@ -960,7 +960,7 @@ class EmployeeApplicationResource extends Resource
     private static function advancedRequesttDetails(): Action
     {
         return Action::make('LeaveRequesttDetails')->label('Details')->button()
-            ->color('success')
+            ->color('info')
             ->icon('heroicon-m-newspaper')
          
             ->disabledForm()
