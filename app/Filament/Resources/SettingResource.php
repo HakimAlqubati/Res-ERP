@@ -37,6 +37,7 @@ class SettingResource extends Resource
                 Tabs::make('settings')->columnSpanFull()
                     ->tabs([
                         Tab::make('Company Info')
+                            ->icon('heroicon-o-building-office')
                             ->schema([
                                 Fieldset::make()->columns(4)->label('Company Info')->schema([
                                     TextInput::make("company_name")
@@ -59,6 +60,7 @@ class SettingResource extends Resource
                             ]),
 
                         Tab::make('HR Settings')
+                        ->icon('heroicon-o-user-group')
                             ->schema([
                                 Fieldset::make()->label('Work Shifts')->columns(3)->schema([
                                     TextInput::make("hours_count_after_period_before")
@@ -104,7 +106,8 @@ class SettingResource extends Resource
                                 
                             ]),
                             Tab::make('Tax Settings')
-                        ->schema([
+                            ->icon('heroicon-o-calculator')
+                            ->schema([
 
                                 Fieldset::make('MTD/PCB Tax Brackets')->columns(4)->schema([
                                     TextInput::make('bracket_1')
