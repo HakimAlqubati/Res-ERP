@@ -45,25 +45,6 @@ class SettingResource extends Resource
                                     ->label('Name')
                                     
                                     ->required(),
-                                    // PhoneInput::make('company_phone')
-                                    //     // ->numeric()
-                                    //         ->initialCountry('MY')
-                                    //         ->onlyCountries([
-                                    //             'MY',
-                                    //             'US',
-                                    //             'YE',
-                                    //             'AE',
-                                    //             'SA',
-                                    //         ])
-                                    //         ->displayNumberFormat(PhoneInputNumberType::E164)
-                                    //         ->autoPlaceholder('aggressive')
-                                    //         ->unique(ignoreRecord: true)->required()
-                                    //         ->validateFor(
-                                    //             country: 'MY',
-                                    //             lenient: true, // default: false
-                                    //         ),
-
-
                                 FileUpload::make('company_logo')
                                     ->label('Logo')->required()
                                     ->image()
@@ -119,7 +100,87 @@ class SettingResource extends Resource
                                 Fieldset::make()->label('Salary')->columns(4)->schema([
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
                                 ]),
+
+                                
                             ]),
+                            Tab::make('Tax Settings')
+                        ->schema([
+
+                                Fieldset::make('MTD/PCB Tax Brackets')->columns(4)->schema([
+                                    TextInput::make('bracket_1')
+                                        ->label('0 - 5,000')
+                                        ->default(0) // 0% tax rate
+                                        ->helperText('Tax Rate: 0%')
+                                        ->disabled(),
+                                    TextInput::make('bracket_2')
+                                        ->label('5,001 - 20,000')
+                                        ->default(1) // 1% tax rate
+                                        ->helperText('Tax Rate: 1%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_3')
+                                        ->label('20,001 - 35,000')
+                                        ->default(3) // 3% tax rate
+                                        ->helperText('Tax Rate: 3%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_4')
+                                        ->label('35,001 - 50,000')
+                                        ->default(8) // 8% tax rate
+                                        ->helperText('Tax Rate: 8%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_5')
+                                        ->label('50,001 - 70,000')
+                                        ->default(13) // 13% tax rate
+                                        ->helperText('Tax Rate: 13%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_6')
+                                        ->label('70,001 - 100,000')
+                                        ->default(21) // 21% tax rate
+                                        ->helperText('Tax Rate: 21%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_7')
+                                        ->label('100,001 - 250,000')
+                                        ->default(24) // 24% tax rate
+                                        ->helperText('Tax Rate: 24%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_8')
+                                        ->label('250,001 - 400,000')
+                                        ->default(25) // 25% tax rate
+                                        ->helperText('Tax Rate: 25%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_9')
+                                        ->label('400,001 - 600,000')
+                                        ->default(26) // 26% tax rate
+                                        ->helperText('Tax Rate: 26%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_10')
+                                        ->label('600,001 - 1,000,000')
+                                        ->default(28) // 28% tax rate
+                                        ->helperText('Tax Rate: 28%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_11')
+                                        ->label('1,000,001 - 2,000,000')
+                                        ->default(30) // 30% tax rate
+                                        ->helperText('Tax Rate: 30%')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make('bracket_12')
+                                        ->label('Above 2,000,000')
+                                        ->default(32) // 32% tax rate
+                                        ->helperText('Tax Rate: 32%')
+                                        ->numeric()
+                                        ->required(),
+                                ])
+                            
+                        ]),
                     ]),
 
             ]);
