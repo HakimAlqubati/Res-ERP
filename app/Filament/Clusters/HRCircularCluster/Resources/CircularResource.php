@@ -177,6 +177,6 @@ class CircularResource extends Resource
 
     public static function canCreate(): bool
     {
-        return false;
+        return true;
     }
 }
