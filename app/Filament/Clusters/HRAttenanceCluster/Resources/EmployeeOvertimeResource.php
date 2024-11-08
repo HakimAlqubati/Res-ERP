@@ -26,6 +26,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Enums\ActionSize;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -353,35 +354,37 @@ class EmployeeOvertimeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('employee.name')
-                    ->label('Employee')->limit(20)
+                    ->label('Employee')
                     ->sortable()
-                    ->searchable(),
+                    ->wrap()
+                    ->searchable()->toggleable(isToggledHiddenByDefault:false),
 
                 TextColumn::make('date')
                     ->label('Date')
                     ->sortable()
-                    ->date(),
+                    ->toggleable(isToggledHiddenByDefault:false),
 
                 TextColumn::make('start_time')
                     ->label('Checkin')
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault:true),
 
                 TextColumn::make('end_time')
                     ->label('Checkout')
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault:true),
 
                 TextColumn::make('hours')
                     ->label('Hours')
-                    ->sortable(),
-                IconColumn::make('approved')
+                    ->sortable()->toggleable(isToggledHiddenByDefault:false),
+                IconColumn::make('approved')->toggleable(isToggledHiddenByDefault:false)
                     ->boolean()->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
                 TextColumn::make('approvedBy.name')
                     ->label('Approved by')
+                    ->wrap()->toggleable(isToggledHiddenByDefault:false)
                 ,
-                TextColumn::make('approved_at')
-                    ->label('Approved at')
+                TextColumn::make('approved_at')->wrap()
+                    ->label('Approved at')->toggleable(isToggledHiddenByDefault:false)
                 ,
 
             ])
@@ -446,9 +449,12 @@ class EmployeeOvertimeResource extends Resource
                             $record->update(['approved' => 1, 'approved_by' => auth()->user()->id,'approved_at'=> now()]);
                         }
                     }),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\ForceDeleteAction::make()->visible(fn():bool=> (isSuperAdmin())),
-                    Tables\Actions\RestoreAction::make()->visible(fn():bool=> (isSuperAdmin())),
+
+                    ActionGroup::make([
+                        Tables\Actions\DeleteAction::make(),
+                        Tables\Actions\ForceDeleteAction::make()->visible(fn():bool=> (isSuperAdmin())),
+                        Tables\Actions\RestoreAction::make()->visible(fn():bool=> (isSuperAdmin())),
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

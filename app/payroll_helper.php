@@ -275,6 +275,22 @@ function getEmployeeOvertimes($date, $employee)
     $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
 
     // Filter the overtimes to only include those that match the same month
+    $overtimesForMonth = $employee->overtimesofMonth($date)
+        ->get() // Retrieve the collection first
+        ->filter(function ($overtime) use ($month) {
+            return \Carbon\Carbon::parse($overtime->date)->month == $month;
+        });
+
+    $totalHours = $overtimesForMonth->sum(function ($overtime) {
+        return (float) $overtime->hours; // Ensure the 'hours' value is cast to float
+    });
+    return $totalHours;
+}
+function getEmployeeOvertimesOfSpecificDate($date, $employee)
+{
+    $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
+
+    // Filter the overtimes to only include those that match the same month
     $overtimesForMonth = $employee->overtimesByDate($date)
         ->get() // Retrieve the collection first
         ->filter(function ($overtime) use ($month) {
