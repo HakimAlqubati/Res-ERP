@@ -84,7 +84,7 @@ class TestController2 extends Controller
         })->toArray();
         
         // Calculate the total allowance amount
-        $totalAllowanceAmount = collect($employeeAllowances)->sum('amount');
+        $totalAllowanceAmount = collect($employeeAllowances)->sum('amount') + ($data?->details[0]['overtime_pay'] ?? 0 ) + ($employee?->salary ?? 0);
         
         
         

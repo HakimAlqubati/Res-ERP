@@ -81,7 +81,7 @@ class CreateMonthSalary extends CreateRecord
                        'total_absent_days' => $calculateSalary['details']['total_absent_days'],
                        'total_late_hours' => $calculateSalary['details']['total_late_hours'],
                        'overtime_hours' => $calculateSalary['details']['overtime_hours'],
-                       'overtime_pay' => $calculateSalary['net_salary']['overtime_pay'] ?? 0,
+                       'overtime_pay' => $calculateSalary['details']['overtime_pay'] ?? 0,
                    ]);
                }
                 // Try to create salary details

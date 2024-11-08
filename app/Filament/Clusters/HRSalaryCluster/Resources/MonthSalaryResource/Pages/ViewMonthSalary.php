@@ -37,18 +37,25 @@ class ViewMonthSalary extends ViewRecord
                             ->label('Employee')->searchable()
                             ->helperText('Search employee to get his payslip')
                             ->options(Employee::whereIn('id', $employeeIds)
-                            ->select('name', 'id')->limit(2)->pluck('name', 'id')),
+                            ->select('name', 'id')->pluck('name', 'id')),
                     ];
                 })
+                // ->url(fn($record):string=> "/to_test_salary_slip/{$record}/{$this->record->id}")
                 ->action(function ($record, $data) {
-                    $month = $data['month'];
+                    
                     $employeeId = $data['employee_id'];
-
-                    // Generate the URL using the route with parameters
+                    // Generate the URL
                     $url = url("/to_test_salary_slip/{$employeeId}/{$this->record->id}");
 
-                    // Redirect to the generated URL
+                          // Redirect to the generated URL
                     return redirect()->away($url);
+                    
+                    // Return JavaScript to open the URL in a new tab
+                    // return "
+                    //     <script>
+                    //         window.open('$url', '_blank');
+                    //     </script>
+                    // ";
                     
                 }),
         ];

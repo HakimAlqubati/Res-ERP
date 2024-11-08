@@ -80,7 +80,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
-    $overtimePay = $overtimeHours * $hourlySalary * 2;
+    $overtimePay = $overtimeHours * $hourlySalary * setting('overtime_hour_multiplier');
 
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
@@ -112,7 +112,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
             'deduction_for_late_hours' => round($deductionForLateHours, 2),
             'total_monthly_incentives' => $totalMonthlyIncentives,
-            'overtime_pay' => $overtimePay,
+            'overtime_pay' => round($overtimePay,2),
             'overtime_hours' => $overtimeHours,
             'total_absent_days' => $totalAbsentDays,
             'total_late_hours' => $totalLateHours,

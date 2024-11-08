@@ -104,6 +104,13 @@ class SettingResource extends Resource
                                 Fieldset::make()->label('Salary')->columns(4)->schema([
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
                                     TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),
+                                    TextInput::make('overtime_hour_multiplier')
+                                    ->label('Overtime Hour Multiplier')
+                                    ->helperText('Enter the overtime multiplier, e.g., 2 for double, 3 for triple')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->placeholder('Enter multiplier (e.g., 2, 3, 4)')
+                                    ->required(),
                                 ]),
 
                                 

@@ -13,13 +13,13 @@
         <header>
             <div class="company-info">
                 <!-- Left Logo -->
-                <img src="{{ url('/') . '/storage/'.setting('company_logo') }}" alt="Company Logo" class="logo-left">
+                <img src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo" class="logo-left">
 
                 <!-- Company Name and Address in Center -->
                 <div class="company-details">
-                    <h1>{{setting('company_name')}}</h1>
-                    <p>Office: {{setting('address')}}</p>
-                    <p>{{setting('company_phone')}}</p>
+                    <h1>{{ setting('company_name') }}</h1>
+                    <p>Office: {{ setting('address') }}</p>
+                    <p>{{ setting('company_phone') }}</p>
                 </div>
 
                 <!-- Right Logo -->
@@ -64,21 +64,31 @@
                 <tbody>
                     <tr>
                         <td>{{ 'Basic salary' }}</td>
-                        <td>{{ number_format($employee?->salary) }}</td>
+                        <td>{{ number_format($employee?->salary, 2) }}</td>
                         <td></td>
                     </tr>
                     @foreach ($employeeAllowances as $allowance)
                         <tr>
                             <td>{{ $allowance['allowance_name'] ?? '' }}</td>
-                            <td>{{ number_format($allowance['amount'] ?? 0) }}</td>
+                            <td>{{ number_format($allowance['amount'], 2) }}</td>
                             <td></td>
                         </tr>
                     @endforeach
+                    <tr>
+                        <td>{{ 'Overtime pay' }}</td>
+                        <td>{{ number_format($data?->details[0]['overtime_pay'], 2) }}</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>{{ 'Bonus' }}</td>
+                        <td>{{ number_format($data?->details[0]['total_incentives'], 2) }}</td>
+                        <td></td>
+                    </tr>
                     @foreach ($employeeDeductions as $deduction)
                         <tr>
                             <td>{{ $deduction['deduction_name'] ?? '' }}</td>
                             <td></td>
-                            <td>{{ number_format($deduction['deduction_amount'] ?? 0) }}</td>
+                            <td>{{ number_format($deduction['deduction_amount'], 2) }}</td>
                         </tr>
                     @endforeach
                     <tr>
@@ -92,7 +102,8 @@
 
         <footer>
             <div class="net-salary">
-                <p>Net Salary (RM): {{ number_format($data?->details[0]['net_salary'] ?? 0) }}</p>
+                <p>Net Salary (RM): {{ number_format(round($data?->details[0]['net_salary'], 2), 2) ?? 0 }}</p>
+
             </div>
             <div class="signature">
                 <p>Employee Signature </p>

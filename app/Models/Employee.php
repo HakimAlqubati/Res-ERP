@@ -136,6 +136,10 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeePeriodHistory::class,);
     }
+    public function advancedInstallments()
+    {
+        return $this->hasMany(EmployeeAdvanceInstallment::class,);
+    }
 
     // Log changes to periods
     public function logPeriodChange(array $periodIds, $action)

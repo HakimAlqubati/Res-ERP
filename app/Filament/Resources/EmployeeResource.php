@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 use Filament\Forms\Components\Builder as B1;
 use App\Filament\Clusters\HRCluster;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
@@ -16,6 +17,7 @@ use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Builder\Block;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
@@ -35,6 +37,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action as ActionsAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -450,6 +453,19 @@ class EmployeeResource extends Resource
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
+                ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()
+                ->color('info')
+                ->icon('heroicon-m-banknotes')
+                // ->form(function(): array{
+                //     return [
+                        
+                //     ];
+                // })->modalCancelAction(false)->modalSubmitAction(false)
+                ->url(fn ($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
+
+
+                ->openUrlInNewTab()
+                ,
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
@@ -475,6 +491,9 @@ class EmployeeResource extends Resource
             'index' => Pages\ListEmployees::route('/'),
             'create' => Pages\CreateEmployee::route('/create'),
             'edit' => Pages\EditEmployee::route('/{record}/edit'),
+            'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here
+
+
         ];
     }
 
