@@ -27,6 +27,32 @@ class EditUser extends EditRecord
         return $data;
     }
 
+    public function afterSave():void{
+           // Access the related employee model
+        $user = $this->record;
+           $employee = $user->employee;
+// dd($user,$employee);
+        if ($employee) {
+
+            // Check if 'email' or 'phone_number' has changed in the user model
+            // if ($user->isDirty('email')) {
+                $employee->email = $user->email;
+            // }
+            // if ($user->isDirty('phone_number')) {
+                $employee->phone_number = $user->phone_number;
+            // }
+            // if ($user->isDirty('name')) {
+                $employee->name = $user->name;
+            // }
+
+            // if ($user->isDirty('branch_id')) {
+                $employee->branch_id = $user->branch_id;
+            // }
+
+            // Save changes to the employee model
+            $employee->save();
+        }
+    }
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

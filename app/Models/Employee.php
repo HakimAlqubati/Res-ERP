@@ -151,19 +151,7 @@ class Employee extends Model
         ]);
     }
 
-    // Apply the global scope
-    protected static function booted()
-    {
-        if (isBranchManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            });
-        } elseif (isStuff()) {
-            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
-                // $builder->where('id', auth()->user()->employee->id); // Add your default query here
-            });
-        }
-    }
+    
 
     public function getHasUserAttribute()
     {
@@ -366,7 +354,35 @@ class Employee extends Model
     }
 
 
-    
+    protected static function booted()
+{
+    if (auth()->check()) {
+        if (isBranchManager()) {
+            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id);
+            });
+        } elseif (isStuff()) {
+            static::addGlobalScope('specific_employee', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('id', auth()->user()->employee->id);
+            });
+        }
+    }
+}
 
+
+    // protected static function booted()
+    // {
+    //     // parent::booted();
+    //     dd(auth()->user(),auth()->check());
+    //     if (isBranchManager()) {
+    //         static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+    //             $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id); // Add your default query here
+    //         });
+    //     } elseif (isStuff()) {
+    //         static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+    //             // $builder->where('id', auth()->user()->employee->id); // Add your default query here
+    //         });
+    //     }
+    // }
     
 }

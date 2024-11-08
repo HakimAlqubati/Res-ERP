@@ -24,11 +24,10 @@ class ListDeductions extends ListRecords
         return [
             'Apply to all deductions' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 0)),
-            'Custom\ Penalty deductions' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)
-                ->where('is_penalty',1)),
-            // 'Penalties deductions' => Tab::make()
-            //     ->modifyQueryUsing(fn(Builder $query) => $query->where('is_penalty', 1)),
+            'Custom & Penalty deductions' => Tab::make()
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_penalty', 1))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1))
+                ,
         ];
     }
 }

@@ -43,8 +43,8 @@ class AppServiceProvider extends ServiceProvider
     {
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
         Task::observe(TaskObserver::class);
-        Employee::observe(EmployeeObserver::class);
-        User::observe(UserObserver::class);
+        // Employee::observe(EmployeeObserver::class);
+        // User::observe(UserObserver::class);
         // NotificationAttendance::configureUsing(function (NotificationAttendance $notification): void {
         //     $notification->view('filament.notifications.notification');
         // });

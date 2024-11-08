@@ -423,7 +423,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         Task::STATUS_CLOSED => Task::COLOR_CLOSED,
                         // default => 'gray', // Fallback color in case of unknown status
                     })
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 Tables\Columns\TextColumn::make('assigned.name')
                     ->label('Assigned To')
@@ -460,6 +460,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                         Task::STATUS_CLOSED => Task::STATUS_CLOSED,
                     ]
                 ),
+                // Tables\Filters\Filter::make('is_daily')
+                // ->label('Scheduled Task')
+                // ->query(fn(Builder $query) => $query->where('is_daily', 0)) // Default to show non-scheduled tasks
+                // // ->toggleable() // Allow toggling to show both true and false values
+                // ->default(0),
             ])
             ->selectable()
             ->actions([
@@ -485,6 +490,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                     }),
                 Action::make('AddPhotos')
                     ->hidden(function ($record) {
+                        if($record->is_daily){
+                            return true;
+                        }
                         if ($record->task_status == Task::STATUS_CLOSED) {
                             return true;
                         }
@@ -537,6 +545,12 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->color('success'),
 
                 Action::make('MoveTask')->button()->requiresConfirmation()
+                ->hidden(function($record){
+                    if($record->is_daily){
+                        return true;
+                    }
+                    return false;
+                })
                 ->icon('heroicon-m-arrows-right-left')
                 ->color('success')->form(function(){
                     return [
@@ -593,6 +607,9 @@ class TaskResource extends Resource implements HasShieldPermissions
            
                 Action::make('AddComment')->button()
                     ->hidden(function ($record) {
+                        if($record->is_daily){
+                            return true;
+                        }
                         if (!isSuperAdmin() && !auth()->user()->can('add_comment_task')) {
                             return true;
                         }
@@ -623,6 +640,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->button()
                     ->hidden(function ($record) {
+                        if($record->is_daily){
+                            return true;
+                        }
                         if (!isSystemManager() && !isSuperAdmin() && !isBranchManager()) {
                             return true;
                         }
@@ -725,7 +745,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     }
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        return parent::getEloquentQuery()->where('is_daily',0)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

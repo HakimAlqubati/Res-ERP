@@ -285,17 +285,22 @@ class UserResource extends Resource
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
-                    ->sortable()->searchable()->limit(30)
+                ->copyMessage('Email address copied')
+                ->copyMessageDuration(1500)
+                    ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false)
-                    // ->getCopyMessage('Done copied')
                     ,
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)
                     ->toggleable(isToggledHiddenByDefault: false)->default('_')->copyable()
-                    // ->getCopyMessage('Done copied')
+                    ->copyable()
+                    ->copyMessage('Phone number copied')
+                    ->copyMessageDuration(1500)
                      ,
 
+                TextColumn::make('branch.name')->searchable()->label('Branch')
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('owner.name')->searchable()->label('Manager')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('first_role.name')->label('Role')

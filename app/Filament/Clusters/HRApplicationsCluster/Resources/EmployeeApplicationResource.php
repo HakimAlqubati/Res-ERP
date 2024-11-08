@@ -913,16 +913,7 @@ class EmployeeApplicationResource extends Resource
                     Fieldset::make()->label('Request data')->columns(2)->schema([
                         DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
                         TimePicker::make('request_check_time')->default($record?->detail_time)->label('Time'),
-                    ]),
-                    Fieldset::make()->label('')->columns(2)->schema([
-                        TextInput::make('approved_at')->default(function ($record) {
-                            // dd($record->approved_at);
-                            return $record->approved_at;
-                        }),
-                        TextInput::make('approved_by')->default(function ($record) {
-                            return $record->approvedBy->name;
-                        }),
-                    ]),
+                    ])
                 ];
             })
             ->modalSubmitAction(false)
@@ -953,13 +944,13 @@ class EmployeeApplicationResource extends Resource
                     ]),
                 ];
             })
-            ->modalSubmitAction(false)
-            ->modalCancelAction(false)
+            // ->modalSubmitAction(false)
+            // ->modalCancelAction(false)
         ;
     }
     private static function advancedRequesttDetails(): Action
     {
-        return Action::make('LeaveRequesttDetails')->label('Details')->button()
+        return Action::make('advancedRequesttDetails')->label('Details')->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
          

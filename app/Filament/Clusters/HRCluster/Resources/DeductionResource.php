@@ -65,8 +65,8 @@ class DeductionResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\ToggleColumn::make('is_penalty'),
-                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom'),
+                Tables\Columns\ToggleColumn::make('is_penalty')->disabled(),
+                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom')->disabled()->hidden(false),
                 // IconColumn::make('is_percentage')
                 //     ->color(fn(string $state): string => match ($state) {
 

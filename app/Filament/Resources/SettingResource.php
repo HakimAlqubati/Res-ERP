@@ -64,7 +64,7 @@ class SettingResource extends Resource
                         Tab::make('HR Settings')
                         ->icon('heroicon-o-user-group')
                             ->schema([
-                                Fieldset::make()->label('Work Shifts')->columns(3)->schema([
+                                Fieldset::make()->label('Work Shifts')->columns(6)->schema([
                                     TextInput::make("hours_count_after_period_before")
                                         ->label('Hours allowed before period')
                                         ->numeric()
@@ -75,7 +75,18 @@ class SettingResource extends Resource
                                         ->required(),
                                     
 
-                                    Fieldset::make()->columns(1)->columnSpan(1)->schema([
+                                    
+                                    TextInput::make("early_attendance_minutes")
+                                    ->label('Minutes counted as early arrival for attendance')
+                                    ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                    ->numeric()
+                                    ->required(),
+                                    TextInput::make("pre_end_hours_for_check_in_out")
+                                    ->label('Hours before period end for action')
+                                    ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                    ->numeric()
+                                    ->required(),
+                                    Fieldset::make()->columns(1)->columnSpan(2)->schema([
                                         Select::make("period_allowed_to_calculate_overtime")
                                             ->label('Overtime calculation period')
                                             ->options([
@@ -90,16 +101,6 @@ class SettingResource extends Resource
                                         ,
 
                                     ]),
-                                    TextInput::make("early_attendance_minutes")
-                                    ->label('Minutes counted as early arrival for attendance')
-                                    ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
-                                    ->numeric()
-                                    ->required(),
-                                    TextInput::make("pre_end_hours_for_check_in_out")
-                                    ->label('Hours before period end for action')
-                                    ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
-                                    ->numeric()
-                                    ->required(),
                                 ]),
                                 Fieldset::make()->label('Salary')->columns(4)->schema([
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),

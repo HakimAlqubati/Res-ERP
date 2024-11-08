@@ -37,7 +37,7 @@ class AllowanceResource extends Resource
                     Forms\Components\TextInput::make('description')->columnSpan(2),
                 ]),
                 Fieldset::make()->label('')->columns(4)->schema([
-                    Forms\Components\Toggle::make('is_specific')->default(false)
+                    Forms\Components\Toggle::make('is_specific')->default(false)->label('Custom')
                     ->helperText('This means for specific employee or for general')
                     ,
                     Forms\Components\Toggle::make('active')->default(true),
@@ -68,7 +68,7 @@ class AllowanceResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom'),
+                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom')->disabled()->hidden(),
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
                 TextColumn::make('percentage'),

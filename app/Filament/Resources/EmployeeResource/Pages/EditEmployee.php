@@ -24,17 +24,37 @@ class EditEmployee extends EditRecord
         return $this->getResource()::getUrl('index');
     }
 
+    public function afterSave()
+    {
+        $employee = $this->record;
+        // Access the related user model
+        $user = $employee->user;
+
+        if ($user) {
+
+            // Check if 'email' or 'phone_number' changed
+            // if ($employee->isDirty('email')) {
+            $user->email = $employee->email;
+            // }
+            // if ($employee->isDirty('phone_number')) {
+            $user->phone_number = $employee->phone_number;
+            // }
+
+            // if ($user->isDirty('name')) {
+            $employee->name = $user->name;
+            // }
+
+            // if ($user->isDirty('branch_id')) {
+            $employee->branch_id = $user->branch_id;
+            // }
+
+            // Save changes to the user model
+            $user->save();
+        }
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        if(isset($data['branch_id']) && !is_null($data['branch_id'])){
-          $employee= $this->record;
-          
-          $user = $employee->user;
-          if($user){
-              $user->branch_id = $data['branch_id'];
-              $user->save();
-          }
-        }
         // dd($data['employee_periods'],$this->record->id);
         $this->logPeriodChanges();
         return $data;
@@ -58,7 +78,7 @@ class EditEmployee extends EditRecord
             // Determine added and removed periods
             $addedPeriods = array_diff($currentPeriods, $previousPeriods);
             $removedPeriods = array_diff($previousPeriods, $currentPeriods);
-            
+
             // Log added periods
             if (!empty($addedPeriods)) {
                 $employee->logPeriodChange($addedPeriods, Employee::TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED);

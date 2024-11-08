@@ -379,10 +379,20 @@ class EmployeeResource extends Resource
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
-                TextColumn::make('email')->icon('heroicon-m-envelope')
+                TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->sortable()->searchable()->limit(20)->default('@')
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->copyable()
+                    ->copyMessage('Email address copied')
+                    ->copyMessageDuration(1500)
+                    ,
+                    TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
+                        ->toggleable(isToggledHiddenByDefault: false)                    
+                        ->copyable()
+                    ->copyMessage('Phone number copied')
+                    ->copyMessageDuration(1500)
+                    ,
                 TextColumn::make('join_date')->sortable()->label('Start date')
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
@@ -395,8 +405,6 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true),
 
-                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
-                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('position.title')->limit(20)
                     ->label('Position type')
@@ -429,6 +437,11 @@ class EmployeeResource extends Resource
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)
+                    ->url(function($record){
+                        if($record->user){
+                            return url('admin/users/'.$record?->user_id.'/edit');
+                        }
+                    })->openUrlInNewTab()
                 ,
                 TextColumn::make('rfid')
                     ->label('RFID')
@@ -453,7 +466,7 @@ class EmployeeResource extends Resource
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
-                ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()
+                ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                 ->color('info')
                 ->icon('heroicon-m-banknotes')
                 // ->form(function(): array{
