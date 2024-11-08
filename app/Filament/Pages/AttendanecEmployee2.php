@@ -587,7 +587,6 @@ class AttendanecEmployee2 extends BasePage
             }
 
         }
-          dd($checkTime,$endTime);
         // Calculate late departure or early departure
         if ($checkTime->gt($endTime)) { 
             // Late departure
