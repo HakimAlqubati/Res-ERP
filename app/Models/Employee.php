@@ -353,36 +353,21 @@ class Employee extends Model
         return $results; // Return the results
     }
 
+ 
+
 
     protected static function booted()
-{
-    if (auth()->check()) {
+    {
         if (isBranchManager()) {
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id);
+                $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         } elseif (isStuff()) {
-            static::addGlobalScope('specific_employee', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('id', auth()->user()->employee->id);
+            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                // dd(auth()->user()->employee->id);
+                // $builder->where('id', auth()->user()->employee->id); // Add your default query here
             });
         }
     }
-}
-
-
-    // protected static function booted()
-    // {
-    //     // parent::booted();
-    //     dd(auth()->user(),auth()->check());
-    //     if (isBranchManager()) {
-    //         static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-    //             $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id); // Add your default query here
-    //         });
-    //     } elseif (isStuff()) {
-    //         static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
-    //             // $builder->where('id', auth()->user()->employee->id); // Add your default query here
-    //         });
-    //     }
-    // }
     
 }
