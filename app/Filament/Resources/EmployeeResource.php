@@ -184,7 +184,7 @@ class EmployeeResource extends Resource
                                         Select::make('position_id')->columnSpan(1)->label('Position type')
                                             ->searchable()
                                             ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
-                                        Select::make('employee_type')->columnSpan(1)->label('Employee type')
+                                        Select::make('employee_type')->columnSpan(1)->label('Role type')
                                             ->searchable()
                                             ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Select::make('department_id')->columnSpan(1)->label('Department')
