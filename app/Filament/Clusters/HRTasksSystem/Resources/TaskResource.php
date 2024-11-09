@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CommentsRelationManager;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskLogRelationManagerResource\RelationManagers\LogsRelationManager;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
@@ -85,9 +86,9 @@ class TaskResource extends Resource implements HasShieldPermissions
             // 'view_assigned_by',
             'create',
             'update',
-            'delete',
-            'delete_any',
-            'forse_delete',
+            // 'delete',
+            // 'delete_any',
+            // 'forse_delete',
             'publish',
             'rating',
             'add_comment',
@@ -191,7 +192,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                                     })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        $state +=2;
+                                        $state +=1;
                                         // $state= (integer) $state;
                                         $set('end_date', date('Y-m-d', strtotime("+$state days")));
                                     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
@@ -274,7 +275,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ]),
 
                     Forms\Components\Textarea::make('description')
-                        ->required()
+                        // ->required()
                         ->disabledOn('edit')
                         ->maxLength(65535)
                         ->columnSpanFull(),
@@ -431,6 +432,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('createdby.name')
+                    ->label('created By')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('assignedby.name')
                     ->label('Assigned By')
                     ->searchable()
                     ->sortable()
@@ -716,6 +722,8 @@ class TaskResource extends Resource implements HasShieldPermissions
             ], position: ActionsPosition::AfterColumns)
             ->bulkActions([
                 // Tables\Actions\BulkActionGroup::make([
+
+                Tables\Actions\ForceDeleteBulkAction::make(),
                 Tables\Actions\DeleteBulkAction::make()
                 ->hidden(fn(): bool =>(isStuff() || isBranchManager()))
                 ,
@@ -730,6 +738,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     {
         return [
             StepsRelationManager::class,
+            CommentsRelationManager::class,
             LogsRelationManager::class,
         ];
     }
@@ -824,4 +833,38 @@ class TaskResource extends Resource implements HasShieldPermissions
         }
         return false;
     }
+
+    
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
 }

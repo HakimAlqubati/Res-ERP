@@ -22,6 +22,14 @@ class TaskComment extends Model
         return $this->belongsTo(Task::class, 'task_id');
     }
 
+    public function photos(){
+        return $this->hasMany(TaskCommentPhoto::class,'comment_id');
+    }
+
+    public function getPhotosCountAttribute()
+    {
+        return $this->photos()->count();
+    }
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

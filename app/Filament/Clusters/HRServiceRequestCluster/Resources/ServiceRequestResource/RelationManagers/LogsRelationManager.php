@@ -19,8 +19,12 @@ class LogsRelationManager extends RelationManager
     
     protected static ?string $title = 'Activities';
 
+    // public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    // {return $ownerRecord->logs->count();}
+
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {return $ownerRecord->logs->count();}
+
 
     public function form(Form $form): Form
     {

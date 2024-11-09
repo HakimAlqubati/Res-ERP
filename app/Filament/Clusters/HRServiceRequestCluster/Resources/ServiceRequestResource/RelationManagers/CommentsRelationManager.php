@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequest
 
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -12,6 +13,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Str;
 
 class CommentsRelationManager extends RelationManager
 {
@@ -26,6 +28,7 @@ class CommentsRelationManager extends RelationManager
             ->schema([
                 Fieldset::make()->schema([
                     Textarea::make('comment')->columnSpanFull()->required(),
+                    Hidden::make('user_id')->default(auth()->user()->id),
                     // FileUpload::make('image_path')
                     //     ->disk('public')
                     //     ->label('')
@@ -62,7 +65,7 @@ class CommentsRelationManager extends RelationManager
             ->recordTitleAttribute('comment')
             ->columns([
                 Tables\Columns\TextColumn::make('comment'),
-                Tables\Columns\TextColumn::make('createdBy.name'),
+                Tables\Columns\TextColumn::make('user.name'),
                 Tables\Columns\TextColumn::make('created_at'),
             ])
             ->filters([
@@ -106,7 +109,7 @@ class CommentsRelationManager extends RelationManager
                         FileUpload::make('image_path')
                             ->disk('public')
                             ->label('')
-                            ->directory('service_comments')
+                            ->directory('comments')
                             ->columnSpanFull()
                             ->image()
                             ->multiple()
@@ -125,16 +128,16 @@ class CommentsRelationManager extends RelationManager
                             ->downloadable(true)
                             ->previewable(true)
                             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                return (string) str($file->getClientOriginalName())->prepend('comment-');
+                                return Str::random(15) . "." . $file->getClientOriginalExtension();
                             }),
                     ])
                     ->action(function (array $data, $record): void {
-                        $serviceRequest = $record;
+                        $comment = $record;
                         if (isset($data['image_path']) && is_array($data['image_path']) && count($data['image_path']) > 0) {
                             foreach ($data['image_path'] as $file) {
-                                $serviceRequest->photos()->create([
-                                    'image_name' => $file,
-                                    'image_path' => $file,
+                                $comment->photos()->create([
+                                    'file_name' => $file,
+                                    'file_path' => $file,
                                     'created_by' => auth()->user()->id,
                                 ]);
                             }
@@ -152,7 +155,7 @@ class CommentsRelationManager extends RelationManager
                     ->label(function ($record) {
                         return $record->photos_count;
                     })
-                    ->modalHeading('Request service photos')
+                    ->modalHeading('Comment photos')
                     ->modalWidth('lg') // Adjust modal size
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
@@ -160,7 +163,8 @@ class CommentsRelationManager extends RelationManager
                     ->button()
                     ->icon('heroicon-o-camera')
                     ->modalContent(function ($record) {
-                        return view('filament.resources.service_requests.gallery', ['photos' => $record->photos]);
+                        
+                        return view('filament.resources.service_requests.gallery-comment-task', ['photos' => $record->photos]);
                     }),
 
             ])

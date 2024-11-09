@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DailyTasksSettingUp;
+use App\Models\Employee;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +16,10 @@ class TestController extends Controller
     {
         $currentDate = $date;
         $this->currentDate = $date;
+        
         $dayName = date('l', strtotime($currentDate));
         $tasks = $this->getScheduleTasks($date);
+
         $handledSchedules = $this->handleScheuleTasks($tasks, $date);
         // return $handledSchedules;
 
@@ -28,9 +31,17 @@ class TestController extends Controller
 
         // Create a new Request instance with the prepared data
         $request = new Request($storeData);
-
+        $dailyEveryDay = $request->all()['handled_schedules']['daily']['every_day'] ??  [];
+        $dailySpesificDays = $request->all()['handled_schedules']['daily']['specific_days'] ??  [];
+        // dd($dailyEveryDay);
+        // dd($dailySpesificDays[0]['recurrence_dates'],$this->currentDate,in_array($this->currentDate,$dailySpesificDays[0]['recurrence_dates']));
         // Call the store method
-        return $this->store($request);
+        if(count($dailyEveryDay)> 0){
+             $this->storeDailyEveryDay($dailyEveryDay);
+        }
+        if(count($dailySpesificDays)> 0){
+             $this->storeDailySpecificDays($dailySpesificDays);
+        }
         // return $tasks;
     }
 
@@ -47,7 +58,7 @@ class TestController extends Controller
             ->whereHas('steps')
             ->with([
                 'taskScheduleRequrrencePattern:task_id,recurrence_pattern',
-                'steps:title,morphable_id',
+                'steps:title,morphable_id,order',
             ])
             ->orderBy('id', 'desc')
             ->get()
@@ -71,6 +82,7 @@ class TestController extends Controller
 
     public function handleScheuleTasks($tasks, $date)
     {
+        
         $scheduleTypes = DailyTasksSettingUp::getScheduleTypesKeys();
 
         $result = [];
@@ -79,7 +91,6 @@ class TestController extends Controller
 
             if (isset($tasks[$scheduleType])) {
                 foreach ($tasks[$scheduleType] as $task) {
-
                     if ($scheduleType == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
                         $recurrencePatern = $task->taskScheduleRequrrencePattern->recurrence_pattern;
                         $setDays = $recurrencePatern['requr_pattern_set_days'];
@@ -91,7 +102,7 @@ class TestController extends Controller
                                 'current_date' => $date,
                                 'assigned_to' => $task->assigned_to,
                                 'assigned_by' => $task->assigned_by,
-                                'steps' => $task->steps->select('title','order'),
+                                'steps' => $task->steps->select('title','order')->toArray(),
                             ];
                         } else if ($setDays == 'specific_days') {
                             $result[$scheduleType]['specific_days'][] = [
@@ -149,7 +160,7 @@ class TestController extends Controller
                             'current_date' => $date,
                             'assigned_to' => $task->assigned_to,
                             'assigned_by' => $task->assigned_by,
-                            'steps' => $task->steps->pluck('title'),
+                            'steps' => $task->steps->pluck('title','order'),
                             'start_date' => $task->start_date,
                             'end_date' => $task->end_date,
                             'week_recur_every' => $recurrencePatern['requr_pattern_week_recur_every'],
@@ -314,7 +325,7 @@ class TestController extends Controller
     /**
      * create tasks
      */
-    public function store(Request $request)
+    public function storeDailyEveryDay( $data)
     {
         // dd($request->all());
         // Validate incoming request data
@@ -322,99 +333,188 @@ class TestController extends Controller
         //     'current_date' => 'required|date',
         //     'handled_schedules' => 'required|array',
         //     'handled_schedules.daily.every_day' => 'nullable|array',
-        //     'handled_schedules.daily.every_day.*.schedule_task_id' => 'required_with:handled_schedules.daily.every_day|integer|exists:hr_tasks,id',
+        //     'handled_schedules.daily.every_day.*.schedule_task_id' => 'required_with:handled_schedules.daily.every_day|integer|',
         //     'handled_schedules.daily.every_day.*.schedule_task_title' => 'required_with:handled_schedules.daily.every_day|string|max:255',
-        //     // 'handled_schedules.daily.every_day.*.assigned_to' => 'required_with:handled_schedules.daily.every_day|integer|exists:users,id',
-        //     // 'handled_schedules.daily.every_day.*.assigned_by' => 'required_with:handled_schedules.daily.every_day|integer|exists:users,id',
-        //     // 'handled_schedules.daily.every_day.*.steps' => 'nullable|array',
-        //     // 'handled_schedules.daily.every_day.*.steps.*' => 'required_with:handled_schedules.daily.every_day|string', // Assuming steps are strings
-        //     'handled_schedules.daily.specific_days' => 'nullable|array',
-        //     // 'handled_schedules.daily.specific_days.*.schedule_task_id' => 'required_with:handled_schedules.daily.specific_days|integer|exists:hr_tasks,id',
-        //     // 'handled_schedules.daily.specific_days.*.schedule_task_title' => 'required_with:handled_schedules.daily.specific_days|string|max:255',
-        //     // 'handled_schedules.daily.specific_days.*.assigned_to' => 'required_with:handled_schedules.daily.specific_days|integer|exists:users,id',
-        //     // 'handled_schedules.daily.specific_days.*.assigned_by' => 'required_with:handled_schedules.daily.specific_days|integer|exists:users,id',
-        //     // 'handled_schedules.daily.specific_days.*.steps' => 'nullable|array',
-        //     // 'handled_schedules.daily.specific_days.*.steps.*' => 'required_with:handled_schedules.daily.specific_days|string', // Assuming steps are strings
-        //     // 'handled_schedules.daily.specific_days.*.start_date' => 'required_with:handled_schedules.daily.specific_days|date',
-        //     // 'handled_schedules.daily.specific_days.*.end_date' => 'required_with:handled_schedules.daily.specific_days|date',
-        //     // 'handled_schedules.daily.specific_days.*.day_recurrence_each' => 'required_with:handled_schedules.daily.specific_days|integer',
-        //     // 'handled_schedules.daily.specific_days.*.recurrence_dates' => 'required_with:handled_schedules.daily.specific_days|array',
+        //     'handled_schedules.daily.every_day.*.assigned_to' => 'required_with:handled_schedules.daily.every_day|integer|exists:users,id',
+        //     'handled_schedules.daily.every_day.*.assigned_by' => 'required_with:handled_schedules.daily.every_day|integer|exists:users,id',
+        //     'handled_schedules.daily.every_day.*.steps' => 'required|array',
+        //     'handled_schedules.daily.every_day.*.steps.*.title' => 'required|string|max:255', // Change here            
+        //     'handled_schedules.daily.every_day.*.steps.*.order' => 'required|integer|min:1', // Change here            
         // ]);
-// dd($request->all(),$validatedData['handled_schedules']['daily']);
-        $validatedData = $request->all();
-        dd($validatedData);
+// dd($validatedData['handled_schedules']);
+        // $steps = $validatedData['handled_schedules']['daily']['every_day'][0]['steps'] ?? [];
+        // $validatedData = $request->all();
+        // dd($validatedData);
         // Start a database transaction
         // DB::beginTransaction();
-
+// dd($validatedData['handled_schedules']);
         try {
             // Handle daily tasks if they exist
-            if (isset($validatedData['handled_schedules']['daily']['every_day'])) {
-                foreach ($validatedData['handled_schedules']['daily']['every_day'] as $schedule) {
+            // if (isset($validatedData['handled_schedules']['daily']['every_day'])) {
+            if (1==1) {
+                // foreach ($validatedData['handled_schedules']['daily']['every_day'] as $schedule) {
+                foreach ($data as $schedule) {
+                    
                     // Prepare data for task creation
                     $taskData = [
-                        'title' => $schedule['schedule_task_title'],
+                        'title' => $schedule['schedule_task_title'] .'.'. $this->currentDate,
                         'assigned_to' => $schedule['assigned_to'],
                         'assigned_by' => $schedule['assigned_by'],
                         'task_status' => Task::STATUS_NEW, // Set to a default status
-                        'due_date' => now()->addDays(7), // Example: setting due date 7 days from now
+                        'due_date' => $this->currentDate, // Example: setting due date 7 days from now
                         'is_daily' => false,
-                        'start_date' => $validatedData['current_date'],
-                        'end_date' => now()->addDays(7),
-                        // 'schedule_type' => 'daily', // Adjust based on your needs
-                        'branch_id' => 1, // Use appropriate branch ID if necessary
+                        
+                        
+                        'branch_id' => Employee::find($schedule['assigned_to'])?->branch_id, // Use appropriate branch ID if necessary
                         'created_by' => 1,
                         'updated_by' => 1,
                     ];
 
             //         // Create the task
                     $task = Task::create($taskData);
-
-                    // Create task steps if provided
-                    if (isset($schedule['steps'])) {
-                        foreach ($schedule['steps'] as $stepTitle) {
-                            $task->steps()->create(['title' => $stepTitle]);
+                        
+                    if (is_array($schedule['steps']) && count($schedule['steps'])) {
+                            foreach ($schedule['steps'] as $step) {
+                                $task->steps()->create(['title' => $step['title'],'order'=> $step['order']]);
+                            }
                         }
-                    }
                 }
             }
 
             // Handle specific days tasks if they exist
-            if (isset($validatedData['handled_schedules']['daily']['specific_days'])) {
-                // dd('dd');
-                foreach ($validatedData['handled_schedules']['daily']['specific_days'] as $schedule) {
+            // if (isset($validatedData['handled_schedules']['daily']['specific_days'])) {
+            //     // dd('dd');
+            //     foreach ($validatedData['handled_schedules']['daily']['specific_days'] as $schedule) {
+            //         // Prepare data for task creation
+            //         $taskData = [
+            //             'title' => $schedule['schedule_task_title'] .'.'. now()->toDateString(),
+            //             'assigned_to' => $schedule['assigned_to'],
+            //             'assigned_by' => $schedule['assigned_by'],
+            //             'task_status' => Task::STATUS_NEW, // Set to a default status
+            //             'due_date' => now()->addDays(7), // Example: setting due date 7 days from now
+            //             'is_daily' => false, // Set to false as these are not daily
+            //             'start_date' => $schedule['start_date'],
+            //             'end_date' => $schedule['end_date'],
+            //             // 'schedule_type' => 'specific', // This can be changed as needed
+            //             'branch_id' => 1, // Use appropriate branch ID if necessary
+            //             'created_by' => 1,
+            //             'updated_by' => 1,
+            //         ];
+
+            //         // Check if the current date matches any of the recurrence dates
+            //         if (in_array($validatedData['current_date'], $schedule['recurrence_dates'])) {
+            //             // Create the task
+            //             $task = Task::create($taskData);
+
+            //               // Optionally handle recurrence dates if needed
+            //             Log::info("Task '{$task->title}' will recur on: {$validatedData['current_date']}");
+            //         }
+            //     }
+            // }
+
+            // Commit the transaction
+            // DB::commit();
+
+            return response()->json(['message' => 'Tasks created successfully.'], 201);
+        } catch (\Exception $e) {
+            // Rollback the transaction if something goes wrong
+            // DB::rollBack();
+
+            // Log the error or handle it as needed
+            Log::error('Task creation failed: ' . $e->getMessage());
+
+            return response()->json(['error' => 'Task creation failed.'], 500);
+        }
+
+    }
+    public function storeDailySpecificDays($data)
+    {
+        // dd($request->all());
+        // Validate incoming request data
+        // $validatedData = $request->validate([
+            
+            
+        //     'handled_schedules.daily.specific_days' => 'nullable|array',
+        //     'handled_schedules.daily.specific_days.*.schedule_task_id' => 'required_with:handled_schedules.daily.specific_days|integer|exists:hr_tasks,id',
+        //     'handled_schedules.daily.specific_days.*.schedule_task_title' => 'required_with:handled_schedules.daily.specific_days|string|max:255',
+        //     'handled_schedules.daily.specific_days.*.assigned_to' => 'required_with:handled_schedules.daily.specific_days|integer|exists:users,id',
+        //     'handled_schedules.daily.specific_days.*.assigned_by' => 'required_with:handled_schedules.daily.specific_days|integer|exists:users,id',
+        //     'handled_schedules.daily.specific_days.*.steps' => 'nullable|array',
+        //     'handled_schedules.daily.specific_days.*.steps.*' => 'required_with:handled_schedules.daily.specific_days|string', // Assuming steps are strings
+        //     'handled_schedules.daily.specific_days.*.start_date' => 'required_with:handled_schedules.daily.specific_days|date',
+        //     'handled_schedules.daily.specific_days.*.end_date' => 'required_with:handled_schedules.daily.specific_days|date',
+        //     'handled_schedules.daily.specific_days.*.day_recurrence_each' => 'required_with:handled_schedules.daily.specific_days|integer',
+        //     'handled_schedules.daily.specific_days.*.recurrence_dates' => 'required_with:handled_schedules.daily.specific_days|array',
+        // ]);
+// dd($validatedData['handled_schedules']);
+        // $steps = $validatedData['handled_schedules']['daily']['every_day'][0]['steps'] ?? [];
+        // $validatedData = $request->all();
+        // dd($validatedData);
+        // Start a database transaction
+        // DB::beginTransaction();
+// dd($validatedData['handled_schedules']);
+        try {
+            // Handle daily tasks if they exist
+            // if (isset($validatedData['handled_schedules']['daily']['every_day'])) {
+                foreach ($data as $schedule) {
+                    if (in_array($this->currentDate,$schedule['recurrence_dates'])) {
+                    
                     // Prepare data for task creation
                     $taskData = [
-                        'title' => $schedule['schedule_task_title'],
+                        'title' => $schedule['schedule_task_title'] .'.'. $this->currentDate,
                         'assigned_to' => $schedule['assigned_to'],
                         'assigned_by' => $schedule['assigned_by'],
                         'task_status' => Task::STATUS_NEW, // Set to a default status
-                        'due_date' => now()->addDays(7), // Example: setting due date 7 days from now
-                        'is_daily' => false, // Set to false as these are not daily
-                        'start_date' => $schedule['start_date'],
-                        'end_date' => $schedule['end_date'],
-                        // 'schedule_type' => 'specific', // This can be changed as needed
-                        'branch_id' => 1, // Use appropriate branch ID if necessary
+                        'due_date' => $this->currentDate, // Example: setting due date 7 days from now
+                        'is_daily' => false,
+                        
+                        
+                        'branch_id' => Employee::find($schedule['assigned_to'])?->branch_id, // Use appropriate branch ID if necessary
                         'created_by' => 1,
                         'updated_by' => 1,
                     ];
 
-                    // Check if the current date matches any of the recurrence dates
-                    if (in_array($validatedData['current_date'], $schedule['recurrence_dates'])) {
-                        // Create the task
-                        $task = Task::create($taskData);
-
-                        // Create task steps if provided
-                        if (isset($schedule['steps'])) {
-                            foreach ($schedule['steps'] as $stepTitle) {
-                                $task->steps()->create(['title' => $stepTitle]);
+            //         // Create the task
+                    $task = Task::create($taskData);
+                        
+                    if (is_array($schedule['steps']) && count($schedule['steps'])) {
+                            foreach ($schedule['steps'] as $step) {
+                                $task->steps()->create(['title' => $step['title'],'order'=> $step['order']]);
                             }
                         }
-
-                        // Optionally handle recurrence dates if needed
-                        Log::info("Task '{$task->title}' will recur on: {$validatedData['current_date']}");
-                    }
                 }
             }
+
+            // Handle specific days tasks if they exist
+            // if (isset($validatedData['handled_schedules']['daily']['specific_days'])) {
+            //     // dd('dd');
+            //     foreach ($validatedData['handled_schedules']['daily']['specific_days'] as $schedule) {
+            //         // Prepare data for task creation
+            //         $taskData = [
+            //             'title' => $schedule['schedule_task_title'] .'.'. now()->toDateString(),
+            //             'assigned_to' => $schedule['assigned_to'],
+            //             'assigned_by' => $schedule['assigned_by'],
+            //             'task_status' => Task::STATUS_NEW, // Set to a default status
+            //             'due_date' => now()->addDays(7), // Example: setting due date 7 days from now
+            //             'is_daily' => false, // Set to false as these are not daily
+            //             'start_date' => $schedule['start_date'],
+            //             'end_date' => $schedule['end_date'],
+            //             // 'schedule_type' => 'specific', // This can be changed as needed
+            //             'branch_id' => 1, // Use appropriate branch ID if necessary
+            //             'created_by' => 1,
+            //             'updated_by' => 1,
+            //         ];
+
+            //         // Check if the current date matches any of the recurrence dates
+            //         if (in_array($validatedData['current_date'], $schedule['recurrence_dates'])) {
+            //             // Create the task
+            //             $task = Task::create($taskData);
+
+            //               // Optionally handle recurrence dates if needed
+            //             Log::info("Task '{$task->title}' will recur on: {$validatedData['current_date']}");
+            //         }
+            //     }
+            // }
 
             // Commit the transaction
             // DB::commit();
@@ -432,3 +532,4 @@ class TestController extends Controller
 
     }
 }
+          

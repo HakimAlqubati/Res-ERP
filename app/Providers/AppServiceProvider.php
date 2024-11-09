@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
-        Task::observe(TaskObserver::class);
+        // Task::observe(TaskObserver::class);
         // Employee::observe(EmployeeObserver::class);
         // User::observe(UserObserver::class);
         // NotificationAttendance::configureUsing(function (NotificationAttendance $notification): void {
