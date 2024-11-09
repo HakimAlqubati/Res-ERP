@@ -37,11 +37,13 @@ class TestController extends Controller
         // dd($dailySpesificDays[0]['recurrence_dates'],$this->currentDate,in_array($this->currentDate,$dailySpesificDays[0]['recurrence_dates']));
         // Call the store method
         if(count($dailyEveryDay)> 0){
-             $this->storeDailyEveryDay($dailyEveryDay);
+           $dailyEveryDay=  $this->storeDailyEveryDay($dailyEveryDay);
         }
         if(count($dailySpesificDays)> 0){
-             $this->storeDailySpecificDays($dailySpesificDays);
+            $dailySpesificDays = $this->storeDailySpecificDays($dailySpesificDays);
         }
+
+        dd('done',$dailyEveryDay,$dailySpesificDays);
         // return $tasks;
     }
 
