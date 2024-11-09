@@ -71,7 +71,7 @@ class AllowanceResource extends Resource
                 Tables\Columns\ToggleColumn::make('is_specific')->label('Custom')->disabled()->hidden(),
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
-                TextColumn::make('percentage'),
+                TextColumn::make('percentage')->suffix(' % '),
                 Tables\Columns\ToggleColumn::make('active'),
             ])
             ->filters([

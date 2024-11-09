@@ -78,7 +78,7 @@ class DeductionResource extends Resource
                 TextColumn::make('amount')
                     ->hidden(fn($record) => $record?->is_percentage)
                 ,
-                TextColumn::make('percentage'),
+                TextColumn::make('percentage')  ->suffix(' % '),
                 Tables\Columns\ToggleColumn::make('active'),
             ])
             ->filters([
