@@ -45,7 +45,7 @@ class SettingResource extends Resource
                                     TextInput::make("company_name")
                                     ->label('Name'),
                                     TextInput::make("company_phone")
-                                    ->label('Name')
+                                    ->label('Phone')
                                     
                                     ->required(),
                                 FileUpload::make('company_logo')
