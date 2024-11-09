@@ -28,11 +28,11 @@ class MonthlyIncentiveResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return 'Monthly Bonus';
+        return 'Bonus';
     }
     public static function getPluralLabel(): ?string
     {
-        return 'Monthly Bonus';
+        return 'Bonus';
     }
     public static function form(Form $form): Form
     {
