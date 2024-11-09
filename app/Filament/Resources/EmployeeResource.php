@@ -46,6 +46,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Support\Str;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
@@ -150,7 +151,8 @@ class EmployeeResource extends Resource
                                                 // ->default('https://dummyimage.com/900x700')
                                                 // ->previewable(false)
                                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                        return (string) str($file->getClientOriginalName())->prepend('employee-');
+                                                        // return (string) str($file->getClientOriginalName())->prepend('employee-');
+                                                        return  Str::random(15) . "." . $file->getClientOriginalExtension();
                                                     })
                                                 // ->formatStateUsing(function ($record,Get $get){
                                                 //     dd($get);
