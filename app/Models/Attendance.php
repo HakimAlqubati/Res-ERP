@@ -24,8 +24,8 @@ class Attendance extends Model
     const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_MINUTES = 30;
     const PERIOD_ALLOWED_OVERTIME_HOUR_MINUTES = 60;
 
-    const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL = 'Quarter period';
-    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL = 'Half period';
+    const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL = 'Quarter hour';
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL = 'Half hour';
     const PERIOD_ALLOWED_OVERTIME_HOUR_LABEL = 'Hour';
 
     const STATUS_EARLY_ARRIVAL = 'early_arrival';

@@ -5,12 +5,12 @@
         <x-filament-tables::table class="w-full text-sm text-left pretty reports">
             <thead class="fixed-header" style="top:64px;">
                 <x-filament-tables::row class="header_report">
-                    <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                        <p>{{ 'Attendance employee report' }}</p>
+                    <th colspan="4" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+                        {{-- <p>{{ 'Attendance employee report' }}</p> --}}
                         <p>({{ isset($employee_id) && is_numeric($employee_id) ? \App\Models\Employee::find($employee_id)->name : __('lang.choose_branch') }})
                         </p>
                     </th>
-                    <th colspan="4" class="no_border_right_left">
+                    <th colspan="2" class="no_border_right_left">
                         <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                         <br>
                         <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
