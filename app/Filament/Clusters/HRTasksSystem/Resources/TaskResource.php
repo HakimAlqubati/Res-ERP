@@ -837,7 +837,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     
     public static function canDelete(Model $record): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
@@ -845,7 +845,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canDeleteAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;

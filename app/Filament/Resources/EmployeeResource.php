@@ -115,7 +115,22 @@ class EmployeeResource extends Resource
                                                 country: 'MY',
                                                 lenient: true, // default: false
                                             ),
-
+                                            Select::make('gender')
+                                            ->label('Gender')
+                                            ->options([
+                                                1 => 'Male',
+                                                0 => 'Female',
+                                            ])
+                                            ->default(1)
+                                            ->required(),
+                                            // TextInput::make('nationality')
+                                            // ->label('Nationality')
+                                            // ->nullable(),
+                                            Select::make('nationality')
+                                            ->label('Nationality')
+                                            ->options(getNationalities())
+                                            ->searchable()
+                                            ->nullable(),
                                     ]),
                                     Fieldset::make()->label('Employee address')->schema([
                                         Textarea::make('address')->label('')->columnSpanFull(),
@@ -216,7 +231,11 @@ class EmployeeResource extends Resource
                                                 ->required()
                                                 ->options(EmployeeFileType::select('id', 'name')->where('active', 1)->get()->pluck('name', 'id'))
                                                 ->searchable(),
-                                            FileUpload::make('attachment')->label('Attach your file')->downloadable()->previewable()->required(),
+                                            FileUpload::make('attachment')
+                                            ->label('Attach your file')->downloadable()
+                                            ->previewable()->required()
+                                            ->imageEditor()
+                                            ->circleCropper(),
                                         ]),
                                     ]),
                                 ]),

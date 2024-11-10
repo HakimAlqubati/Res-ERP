@@ -41,6 +41,8 @@ class Employee extends Model
         'employee_type',
         'bank_account_number',
         'bank_information',
+        'gender',        // New field
+        'nationality',   // New field
     ];
 
     protected $casts = [
@@ -371,5 +373,6 @@ class Employee extends Model
             });
         }
     }
+
     
 }
