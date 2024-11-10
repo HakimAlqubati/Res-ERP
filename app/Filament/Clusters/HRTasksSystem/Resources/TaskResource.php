@@ -201,7 +201,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                         $set('end_date', date('Y-m-d', strtotime("+$state months")));
                                     }
 
-                                }),
+                                })->required(),
                             ]),
                             DatePicker::make('end_date')
                                 ->native(false)
@@ -793,7 +793,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     public static function canCreate(): bool
     {
         // if (isSuperAdmin() || auth()->user()->can('create_task')) {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isFinanceManager()) {
             return true;
         }
 
@@ -802,7 +802,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
             return true;
         }
         return false;
@@ -828,7 +828,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) {
             return true;
         }
         return false;

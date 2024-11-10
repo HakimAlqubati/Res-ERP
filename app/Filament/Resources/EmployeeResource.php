@@ -44,6 +44,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Illuminate\Support\Str;
@@ -538,9 +539,45 @@ class EmployeeResource extends Resource
     //     return false;
     // }
 
+    public static function canCreate(): bool
+    {
+        
+     if(isSystemManager() || isBranchManager() || isSuperAdmin()){
+        return true;
+     }
+        return false;
+    }
+
+
+    public static function canDelete(Model $record): bool
+    {
+        if(isSystemManager() || isBranchManager() || isSuperAdmin()){
+            return true;
+        }
+        return false;
+    }
+
+    
+    public static function canDeleteAny(): bool
+    {
+        if(isSystemManager() || isBranchManager() || isSuperAdmin()){
+            return true;
+        }
+        return false;
+    }
+
+    
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) {
+            return true;
+        }
+        return false;
+    }
+
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
             return true;
         }
         return false;

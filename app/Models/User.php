@@ -106,6 +106,13 @@ class User extends Authenticatable implements FilamentUser
         }
         return false;
     }
+    public function isFinanceManager()
+    {
+        if (getCurrentRole() == 16) {
+            return true;
+        }
+        return false;
+    }
     public function isSuperAdmin()
     {
         if (getCurrentRole() == 1) {

@@ -266,7 +266,7 @@ class DailyTasksSettingUpResource extends Resource
     {
         $query = static::getModel();
 
-        if (!in_array(getCurrentRole(), [1, 3])) {
+        if (!in_array(getCurrentRole(), [1, 16,3])) {
             return $query::where('assigned_by', auth()->user()->id)
                 ->orWhere('assigned_to', auth()->user()->id)
                 ->orWhere('assigned_to', auth()->user()?->employee?->id)->count();
@@ -317,7 +317,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
             return true;
         }
         return false;

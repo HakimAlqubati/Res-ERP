@@ -98,6 +98,14 @@ class ServiceRequest extends Model
         return $this->morphMany(ServiceRequestPhoto::class, 'imageable');
     }
 
+    public function getFirstPhotoUrlAttribute()
+    {
+        // Get the first photo, or return a default image if none exists
+        $firstPhoto = $this->photos()->first();
+        return $firstPhoto ? url('storage/' . $firstPhoto->image_path) : url('path/to/default/image.jpg');
+    }
+
+
     public function getPhotosCountAttribute()
     {
         return $this->photos()->count();
@@ -120,6 +128,12 @@ class ServiceRequest extends Model
                 ->orWhere('created_by',auth()->user()->id)
                 ; // Add your default query here
             });
-        } 
+        }  elseif (isFinanceManager()) {
+            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('assigned_to', auth()->user()->employee->id)
+                ->orWhere('created_by',auth()->user()->id)
+                ; // Add your default query here
+            });
+        }
     }
 }

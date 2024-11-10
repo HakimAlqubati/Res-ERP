@@ -208,7 +208,7 @@ class ServiceRequestResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->defaultSort('id','desc')
         ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('id')->sortable()->searchable(isIndividual: true)->sortable(),
@@ -246,6 +246,28 @@ class ServiceRequestResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
 
+                Tables\Columns\ImageColumn::make('first_photo_url')
+                ->label('Photo')
+                ->width(50)
+                ->height(50)->disabledClick(true)
+                ->toggleable(isToggledHiddenByDefault: false)
+                // ->extraAttributes(['class' => 'cursor-pointer']) // Make it look clickable
+                ->getStateUsing(fn($record) => $record->photos()->first()?->image_path) // Assuming 'first_photo_url' is derived from the first image
+                // ->action(function ($record) {
+                    
+                //     // Define the action to open the modal
+                //     return Action::make('viewImage')
+                //         ->modalHeading('Service Request Photos')
+                //         ->modalWidth('lg')
+                //         ->modalContent(function () use ($record) {
+                //             dd($record->photos());
+                //             // Return a view that shows all images
+                //             return view('filament.resources.service_requests.gallery', [
+                //                 'photos' => $record->photos()->orderBy('id', 'desc')->get(),
+                //             ]);
+                //         });
+                // })
+                ,
                 TextColumn::make('impact')
                     ->badge()
                     ->icon('heroicon-m-check-badge')

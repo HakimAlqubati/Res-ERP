@@ -96,13 +96,13 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make(__('menu.hr_ms'))
                         // ->icon('heroicon-o-user-group')
                         ->items(array_merge(
-                         (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  HRCluster::getNavigationItems(): [], 
+                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  HRCluster::getNavigationItems(): [], 
                         (getCurrentRole() != 17) ?  HRTasksSystem::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRServiceRequestCluster::getNavigationItems(): [], 
                          (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) ? HRAttenanceCluster::getNavigationItems(): [], 
-                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff()) ? HRAttendanceReport::getNavigationItems(): [], 
+                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRAttendanceReport::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRCircularCluster::getNavigationItems(): [], 
-                          (isSuperAdmin() || isSystemManager() || isBranchManager()) ? HRSalaryCluster::getNavigationItems(): [], 
+                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff()) ? HRApplicationsCluster::getNavigationItems(): [], 
                         ))
                     // ->items([
