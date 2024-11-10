@@ -197,6 +197,20 @@ class UserResource extends Resource
                                     country: 'MY',
                                     lenient: true, // default: false
                                 ),
+                                Select::make('gender')
+                                ->label('Gender')
+                                ->options([
+                                    1 => 'Male',
+                                    0 => 'Female',
+                                ])
+                                ->default(1)
+                                ->required(),
+                            
+                            Select::make('nationality')
+                                ->label('Nationality')
+                                ->options(getNationalities()) // Loads nationalities from JSON file
+                                ->searchable()
+                                ->nullable(),
                             Select::make('branch_id')
                                 ->label('Branch')
                                 ->required()

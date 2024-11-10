@@ -47,8 +47,14 @@ class EditUser extends EditRecord
 
             // if ($user->isDirty('branch_id')) {
                 $employee->branch_id = $user->branch_id;
-            // }
-
+                
+                if(!is_null($employee?->gender)){
+                    $employee->gender = $user->gender;
+                }
+                
+                if(!is_null($employee?->nationality)){
+                    $employee->nationality = $user->nationality;
+                }
             // Save changes to the employee model
             $employee->save();
         }
