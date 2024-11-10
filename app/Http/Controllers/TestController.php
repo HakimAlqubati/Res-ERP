@@ -20,30 +20,35 @@ class TestController extends Controller
         $dayName = date('l', strtotime($currentDate));
         $tasks = $this->getScheduleTasksDaily($date);
 
-        $handledSchedules = $this->handleScheuleTasks($tasks, $date);
-        // return $handledSchedules;
+        $handledSchedulesDaily = $this->handleScheuleTasks($tasks, $date);
 
-        // Prepare data for the store function
-        $storeData = [
-            'current_date' => $currentDate,
-            'handled_schedules' => $handledSchedules, // Use the handled schedules directly
-        ];
 
-        // Create a new Request instance with the prepared data
-        $request = new Request($storeData);
-        $dailyEveryDay = $request->all()['handled_schedules']['daily']['every_day'] ??  [];
-        $dailySpesificDays = $request->all()['handled_schedules']['daily']['specific_days'] ??  [];
-        // dd($dailyEveryDay);
-        // dd($dailySpesificDays[0]['recurrence_dates'],$this->currentDate,in_array($this->currentDate,$dailySpesificDays[0]['recurrence_dates']));
-        // Call the store method
-        if(count($dailyEveryDay)> 0){
-           $dailyEveryDay=  $this->storeDailyEveryDay($dailyEveryDay);
+        if(count($handledSchedulesDaily)> 0){
+
+            // Prepare data for the store function
+            $storeData = [
+                'current_date' => $currentDate,
+                'handled_schedules' => $handledSchedulesDaily, // Use the handled schedules directly
+            ];
+    
+            // Create a new Request instance with the prepared data
+            $request = new Request($storeData);
+            $dailyEveryDay = $request->all()['handled_schedules']['daily']['every_day'] ??  [];
+            $dailySpesificDays = $request->all()['handled_schedules']['daily']['specific_days'] ??  [];
+            
+            // Call the store method
+            if(count($dailyEveryDay)> 0){
+               $dailyEveryDay=  $this->storeDailyEveryDay($dailyEveryDay);
+            }
+            if(count($dailySpesificDays)> 0){
+                $dailySpesificDays = $this->storeDailySpecificDays($dailySpesificDays);
+            }
+    
+            dd('done',$dailyEveryDay,$dailySpesificDays);
+        }else{
+            dd('no schedule task to add');
         }
-        if(count($dailySpesificDays)> 0){
-            $dailySpesificDays = $this->storeDailySpecificDays($dailySpesificDays);
-        }
-
-        dd('done',$dailyEveryDay,$dailySpesificDays);
+        
         // return $tasks;
     }
 
@@ -88,6 +93,7 @@ class TestController extends Controller
         
         $scheduleTypes = DailyTasksSettingUp::getScheduleTypesKeys();
 
+        // dd($scheduleTypes,$tasks);
         $result = [];
 
         foreach ($scheduleTypes as $scheduleType) {
@@ -183,14 +189,52 @@ class TestController extends Controller
     /**
      * to return list of dates each how many day between two dates [start,end]
      */
-    public function generateDailyRecurrenceDates($startDate, $endDate, $dayRecurrenceEach)
+
+     public function generateDailyRecurrenceDates($startDate, $endDate, $dayRecurrenceEach)
+        {
+            try {
+                // Ensure $dayRecurrenceEach is a positive integer
+                $dayRecurrenceEach = (int) $dayRecurrenceEach;
+                if ($dayRecurrenceEach <= 0) {
+                    throw new \InvalidArgumentException("Invalid day recurrence interval.");
+                }
+
+                // Validate date formats
+                if (!strtotime($startDate) || !strtotime($endDate)) {
+                    throw new \InvalidArgumentException("Invalid start or end date format.");
+                }
+
+                $start = new \DateTime($startDate);
+                $end = new \DateTime($endDate);
+
+                // Add one day to the end date to ensure it includes the end date in the period
+                $end->modify('+1 day');
+
+                // Instantiate DateInterval and DatePeriod
+                $interval = new \DateInterval("P{$dayRecurrenceEach}D");
+                $datePeriod = new \DatePeriod($start, $interval, $end);
+
+                $dates = [];
+                foreach ($datePeriod as $date) {
+                    $dates[] = $date->format('Y-m-d');
+                }
+
+                return $dates;
+            } catch (\Exception $e) {
+                Log::error('generateDailyRecurrenceDates error: ' . $e->getMessage());
+                return ['error' => 'Date generation failed'];
+            }
+        }
+
+
+    public function generateDailyRecurrenceDates_old($startDate, $endDate, $dayRecurrenceEach)
     {
         $start = new \DateTime($startDate);
         $end = new \DateTime($endDate);
 
         // Add one day to the end date to ensure it includes the end date in the period
         $end->modify('+1 day');
-
+        // dd($dayRecurrenceEach);
         $interval = new \DateInterval("P{$dayRecurrenceEach}D"); // "P3D" means 3 days
         $datePeriod = new \DatePeriod($start, $interval, $end);
 
