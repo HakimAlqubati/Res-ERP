@@ -18,7 +18,7 @@ class TestController extends Controller
         $this->currentDate = $date;
         
         $dayName = date('l', strtotime($currentDate));
-        $tasks = $this->getScheduleTasks($date);
+        $tasks = $this->getScheduleTasksDaily($date);
 
         $handledSchedules = $this->handleScheuleTasks($tasks, $date);
         // return $handledSchedules;
@@ -47,7 +47,7 @@ class TestController extends Controller
         // return $tasks;
     }
 
-    public function getScheduleTasks($date)
+    public function getScheduleTasksDaily($date)
     {
         $currentDate = $date;
         $dayName = date('l', strtotime($currentDate));
@@ -58,6 +58,7 @@ class TestController extends Controller
             ->where('end_date', '>=', $currentDate)
             ->whereHas('taskScheduleRequrrencePattern')
             ->whereHas('steps')
+            ->where('schedule_type',DailyTasksSettingUp::TYPE_SCHEDULE_DAILY)
             ->with([
                 'taskScheduleRequrrencePattern:task_id,recurrence_pattern',
                 'steps:title,morphable_id,order',
