@@ -38,7 +38,12 @@ class SettingResource extends Resource
             ->schema([
                 Tabs::make('settings')->columnSpanFull()
                     ->tabs([
-                        Tab::make('Company Info')
+                        Tab::make('Company Info')->hidden(function(){
+                            if(isFinanceManager()){
+                                return true;
+                            }
+                            return false;
+                        })
                             ->icon('heroicon-o-building-office')
                             ->schema([
                                 Fieldset::make()->columns(4)->label('Company Info')->schema([
