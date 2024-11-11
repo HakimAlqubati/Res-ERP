@@ -640,7 +640,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return false;
                     })->label(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'Closed' : 'Move task')
                     ->icon(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'heroicon-m-check-badge' : 'heroicon-m-arrows-right-left')
-                // ->color(fn($record):bool =>  $record->task_status != Task::STATUS_CLOSED ? 'success' : 'warning')
+                
                     ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_PENDING) ? 'gray' : 'success')
                     ->form(function () {
                         return [
@@ -694,7 +694,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
-                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0) {
+                        if ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) {
                             return true;
                         }
                         return false;
