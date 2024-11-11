@@ -563,10 +563,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->button()
                     ->hidden(function ($record) {
-                        if ($record->is_daily) {
+                        if ($record->is_daily || isStuff()) {
                             return true;
                         }
 
+                        
                         // if (!isSystemManager() && !isSuperAdmin() ||
                         if ((isBranchManager() && $record->assigned_to == auth()?->user()?->employee?->id)) {
                             return true;
