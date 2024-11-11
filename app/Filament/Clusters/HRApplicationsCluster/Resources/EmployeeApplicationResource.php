@@ -33,6 +33,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -69,13 +70,13 @@ class EmployeeApplicationResource extends Resource
                     //     $set('basic_salary', $employee?->salary);
                     // })
                         ->disabled(function () {
-                            if (isStuff()) {
+                            if (isStuff() || isFinanceManager()) {
                                 return true;
                             }
                             return false;
                         })
                         ->default(function () {
-                            if (isStuff()) {
+                            if (isStuff() || isFinanceManager()) {
                                 return auth()->user()->employee->id;
                             }
                         })
@@ -381,7 +382,7 @@ class EmployeeApplicationResource extends Resource
                 // static::rejectDepartureRequest(),
 
                 static::approveDepartureRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -392,7 +393,7 @@ class EmployeeApplicationResource extends Resource
                     return false;
                 }),
                 static::rejectDepartureRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -404,7 +405,7 @@ class EmployeeApplicationResource extends Resource
                 }),
 
                 static::approveAdvanceRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -415,7 +416,7 @@ class EmployeeApplicationResource extends Resource
                     return false;
                 }),
                 static::rejectAdvanceRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -427,7 +428,7 @@ class EmployeeApplicationResource extends Resource
                 }),
 
                 static::approveLeaveRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -438,7 +439,7 @@ class EmployeeApplicationResource extends Resource
                     return false;
                 }),
                 static::rejectLeaveRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -451,7 +452,7 @@ class EmployeeApplicationResource extends Resource
 
                 static::approveAttendanceRequest()->hidden(function ($record) {
                     // return false;
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -463,7 +464,7 @@ class EmployeeApplicationResource extends Resource
                 }),
 
                 static::rejectAttendanceRequest()->hidden(function ($record) {
-                    if (isStuff()) {
+                    if (isstuff() || isFinanceManager()) {
                         return true;
                     }
                     if (isset(Auth::user()->employee)) {
@@ -1011,5 +1012,23 @@ class EmployeeApplicationResource extends Resource
                 ];
             });
     }
+
+    
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
 
 }

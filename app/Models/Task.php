@@ -42,6 +42,7 @@ class Task extends Model
         'end_date',
         'schedule_type',
         'branch_id',
+        'views',
     ];
 
 

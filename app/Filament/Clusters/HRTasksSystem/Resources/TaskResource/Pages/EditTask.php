@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use App\Models\Task;
 use App\Models\TaskAttachment;
+use App\Models\TaskLog;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
@@ -69,6 +70,22 @@ class EditTask extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+
+        $this->record->increment('views');
+        if($this->record->task_status == Task::STATUS_NEW && $this->record->assign_to == auth()->user()?->employee?->id){
+            $currentStatus = Task::STATUS_NEW;
+            $nextStatus = Task::STATUS_PENDING;
+            $this->record->update(['task_status'=> Task::STATUS_PENDING]);
+            $this->record->createLog(
+                createdBy: auth()->id(), // ID of the user performing the action
+                description: "Task moved to {$nextStatus}", // Log description
+                logType: TaskLog::TYPE_MOVED, // Log type as "moved"
+                details: [
+                    'from' => $currentStatus, // Previous status
+                    'to' => $nextStatus, // New status
+                ]
+            );
+        }
         // dd($data,auth()->user()->employee->id);
         return $data;
     }

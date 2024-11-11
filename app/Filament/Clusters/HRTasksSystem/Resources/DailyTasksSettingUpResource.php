@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
+use App\Models\Branch;
 use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
 use App\Models\User;
@@ -25,8 +26,10 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -227,30 +230,47 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
-                // TextColumn::make('id')->searchable()->sortable(),
-                TextColumn::make('title')->searchable(),
-                TextColumn::make('schedule_type')->searchable()->sortable()->alignCenter(true),
-                TextColumn::make('description'),
+                TextColumn::make('id')->searchable()->sortable()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('title')->searchable()->alignCenter(true),
+                TextColumn::make('schedule_type')->searchable()->sortable()->label('Type')->alignCenter(true),
+                TextColumn::make('description')->limit(30)->searchable()->toggleable(isToggledHiddenByDefault:true),
                 Tables\Columns\TextColumn::make('step_count')
-                    ->color(Color::Blue)
-                    ->searchable(),
-                TextColumn::make('assignedto.name')->label('Assigned to'),
-                TextColumn::make('assignedby.name')->label('Assigned by'),
-                TextColumn::make('start_date')->label('Start date')->sortable(),
-                TextColumn::make('end_date')->label('End date')->sortable(),
-                ToggleColumn::make('active')->label('Active?')->sortable()->disabled(),
+                    ->color(Color::Blue)->alignCenter(true)->label('Steps')
+                    ->searchable()->toggleable(isToggledHiddenByDefault:false),
+                TextColumn::make('assignedto.name')->label('Assigned to')
+                ->words(3)->wrap()
+                ->searchable()->toggleable(isToggledHiddenByDefault:false),
+                TextColumn::make('assignedby.name')
+                ->words(3)->wrap()
+                ->label('Assigned by')->searchable()->toggleable(isToggledHiddenByDefault:false),
+                TextColumn::make('start_date')->label('Start date')->sortable()->searchable()->toggleable(isToggledHiddenByDefault:false),
+                TextColumn::make('end_date')->label('End date')->sortable()->searchable()->toggleable(isToggledHiddenByDefault:false),
+                ToggleColumn::make('active')->label('Active?')->sortable()->disabled()->searchable()->toggleable(isToggledHiddenByDefault:false),
 
             ])
             ->filters([
-                //
+                SelectFilter::make('schedule_type')->label('Schedule type')->multiple()->options(
+                    [
+                        DailyTasksSettingUp::TYPE_SCHEDULE_DAILY => DailyTasksSettingUp::TYPE_SCHEDULE_DAILY,
+                        DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY => DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY,
+                        DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY => DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY,
+                        
+                    ]
+                ),
+                SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
+                    Branch::select('name','id')->pluck('name','id')
+                ),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                // ActionGroup::make([
+                //     Tables\Actions\EditAction::make(),
                 // Tables\Actions\ViewAction::make(),
+                // ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -268,6 +288,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
+        return static::getModel()::count();
         $query = static::getModel();
 
         if (!in_array(getCurrentRole(), [1, 16,3])) {
@@ -286,42 +307,56 @@ class DailyTasksSettingUpResource extends Resource
             'index' => Pages\ListDailyTasksSettingUps::route('/'),
             'create' => Pages\CreateDailyTasksSettingUp::route('/create'),
             'edit' => Pages\EditDailyTasksSettingUp::route('/{record}/edit'),
+            'view' => Pages\ViewDailyTasksSettingUp::route('/{record}'),
         ];
     }
 
-    public static function getEloquentQuery(): Builder
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     return static::getModel()::query();
+    //     $query = static::getModel()::query();
+
+    //     if (
+    //         static::isScopedToTenant() &&
+    //         ($tenant = Filament::getTenant())
+    //     ) {
+    //         static::scopeEloquentQueryToTenant($query, $tenant);
+    //     }
+
+    //     // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
+    //     //     $query->where('assigned_to', auth()->user()->id)
+    //     //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
+    //     //         ->orWhere('created_by', auth()->user()->id)
+    //     //     ;
+    //     // }
+
+    //     if (!in_array(getCurrentRole(), [1, 3])) {
+    //         $query->where('assigned_to', auth()->user()->id)
+    //             ->orWhere('assigned_to', auth()->user()?->employee?->id)
+    //             ->orWhere('assigned_by', auth()->user()?->employee?->id)
+    //             ->orWhere('assigned_by', auth()->user()->id)
+    //         // ->orWhere('created_by', auth()->user()->id)
+    //         ;
+    //     }
+    //     return $query;
+    // }
+
+    // public static function canView(Model $record): bool
+    // {
+    //     if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
+    //         (isSystemManager() && $record->assigned_by == auth()?->user()?->employee?->id)
+    //         || isStuff() || isFinanceManager()) {
+    //         return true;
+    //     }
+    //     return false;
+    // }
+
+    public static function canEdit(Model $record): bool
     {
-        return static::getModel()::query();
-        $query = static::getModel()::query();
-
-        if (
-            static::isScopedToTenant() &&
-            ($tenant = Filament::getTenant())
-        ) {
-            static::scopeEloquentQueryToTenant($query, $tenant);
-        }
-
-        // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
-        //     $query->where('assigned_to', auth()->user()->id)
-        //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
-        //         ->orWhere('created_by', auth()->user()->id)
-        //     ;
-        // }
-
-        if (!in_array(getCurrentRole(), [1, 3])) {
-            $query->where('assigned_to', auth()->user()->id)
-                ->orWhere('assigned_to', auth()->user()?->employee?->id)
-                ->orWhere('assigned_by', auth()->user()?->employee?->id)
-                ->orWhere('assigned_by', auth()->user()->id)
-            // ->orWhere('created_by', auth()->user()->id)
-            ;
-        }
-        return $query;
-    }
-
-    public static function canViewAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+     
+        if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->id) ||
+            (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
+            || isStuff() || isFinanceManager()) {
             return true;
         }
         return false;

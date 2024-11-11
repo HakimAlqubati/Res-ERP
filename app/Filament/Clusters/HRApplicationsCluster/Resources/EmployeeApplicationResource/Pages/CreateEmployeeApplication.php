@@ -17,14 +17,14 @@ class CreateEmployeeApplication extends CreateRecord
     protected static string $resource = EmployeeApplicationResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (!isStuff()) {
+        if (!isStuff() && !isFinanceManager()) {
             $employee = Employee::find($data['employee_id']);
             if ($employee->branch()->exists()) {
                 $data['branch_id'] = $employee->branch->id;
             }
         }
 
-        if (isStuff()) {
+        if (isStuff() || isFinanceManager()) {
             $data['employee_id'] = auth()->user()->employee->id;
             $data['branch_id'] = auth()->user()->branch_id;
         }
