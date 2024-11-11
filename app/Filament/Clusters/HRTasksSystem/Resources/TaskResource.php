@@ -567,7 +567,6 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
 
-                        
                         // if (!isSystemManager() && !isSuperAdmin() ||
                         if ((isBranchManager() && $record->assigned_to == auth()?->user()?->employee?->id)) {
                             return true;
@@ -639,8 +638,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
                         return false;
-                    })
-                    ->icon('heroicon-m-arrows-right-left')
+                    })->label(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'Closed' : 'Move task')
+                    ->icon(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'heroicon-m-check-badge' : 'heroicon-m-arrows-right-left')
                 // ->color(fn($record):bool =>  $record->task_status != Task::STATUS_CLOSED ? 'success' : 'warning')
                     ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_PENDING) ? 'gray' : 'success')
                     ->form(function () {
@@ -695,11 +694,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
-                    if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0) {
-                        return true;
-                    }
-                    return false;
-                })
+                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0) {
+                            return true;
+                        }
+                        return false;
+                    })
                 ,
 
                 Action::make('AddComment')->button()
