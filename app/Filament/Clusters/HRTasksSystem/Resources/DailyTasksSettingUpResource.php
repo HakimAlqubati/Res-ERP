@@ -23,6 +23,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -234,6 +235,9 @@ class DailyTasksSettingUpResource extends Resource
                 TextColumn::make('title')->searchable(),
                 TextColumn::make('schedule_type')->searchable()->sortable()->alignCenter(true),
                 TextColumn::make('description'),
+                Tables\Columns\TextColumn::make('step_count')
+                    ->color(Color::Blue)
+                    ->searchable(),
                 TextColumn::make('assignedto.name')->label('Assigned to'),
                 TextColumn::make('assignedby.name')->label('Assigned by'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),

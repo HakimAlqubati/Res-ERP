@@ -161,6 +161,11 @@ class Task extends Model
 
     }
 
+    public function getStepCountAttribute()
+    {
+        return $this->steps?->count();
+    }
+
     public function branch()
     {
         return $this->belongsTo(Branch::class);

@@ -32,6 +32,11 @@ class DailyTasksSettingUp extends Model
         return $this->morphMany(TaskStep::class, 'morphable');
     }
 
+    public function getStepCountAttribute()
+    {
+        return $this->steps?->count();
+    }
+    
     public function assignedto()
     {
         return $this->belongsTo(Employee::class, 'assigned_to');

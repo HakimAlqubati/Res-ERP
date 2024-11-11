@@ -413,6 +413,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->weight(FontWeight::ExtraBold)
                     ->description('Click')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('step_count')
+                    ->color(Color::Blue)
+                    ->searchable(),
                 TextColumn::make('task_status')->label('Status')
                     ->badge()
                     ->icon('heroicon-m-check-badge')
