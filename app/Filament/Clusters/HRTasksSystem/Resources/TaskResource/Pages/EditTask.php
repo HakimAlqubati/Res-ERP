@@ -77,16 +77,16 @@ class EditTask extends EditRecord
             $nextStatus = Task::STATUS_PENDING;
             $this->record->update(['task_status'=> Task::STATUS_PENDING]);
             $this->record->createLog(
-                createdBy: auth()->id(), // ID of the user performing the action
-                description: "Task moved to {$nextStatus}", // Log description
-                logType: TaskLog::TYPE_MOVED, // Log type as "moved"
+                createdBy: auth()->id(), 
+                description: "Task moved to {$nextStatus}", 
+                logType: TaskLog::TYPE_MOVED, 
                 details: [
-                    'from' => $currentStatus, // Previous status
-                    'to' => $nextStatus, // New status
+                    'from' => $currentStatus, 
+                    'to' => $nextStatus, 
                 ]
             );
         }
-        // dd($data,auth()->user()->employee->id);
+        
         return $data;
     }
 }
