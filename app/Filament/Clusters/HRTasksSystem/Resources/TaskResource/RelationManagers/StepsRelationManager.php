@@ -27,7 +27,7 @@ class StepsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->recordTitleAttribute('order')
             ->columns([
                 Tables\Columns\TextColumn::make('order')->sortable(),

@@ -8,7 +8,6 @@ use App\Models\Branch;
 use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
 use App\Models\User;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -26,12 +25,10 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class DailyTasksSettingUpResource extends Resource
@@ -234,22 +231,22 @@ class DailyTasksSettingUpResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->searchable()->sortable()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('id')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('title')->searchable()->alignCenter(true),
                 TextColumn::make('schedule_type')->searchable()->sortable()->label('Type')->alignCenter(true),
-                TextColumn::make('description')->limit(30)->searchable()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('description')->limit(30)->searchable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('step_count')
                     ->color(Color::Blue)->alignCenter(true)->label('Steps')
-                    ->searchable()->toggleable(isToggledHiddenByDefault:false),
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('assignedto.name')->label('Assigned to')
-                ->words(3)->wrap()
-                ->searchable()->toggleable(isToggledHiddenByDefault:false),
+                    ->words(3)->wrap()
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('assignedby.name')
-                ->words(3)->wrap()
-                ->label('Assigned by')->searchable()->toggleable(isToggledHiddenByDefault:false),
-                TextColumn::make('start_date')->label('Start date')->sortable()->searchable()->toggleable(isToggledHiddenByDefault:false),
-                TextColumn::make('end_date')->label('End date')->sortable()->searchable()->toggleable(isToggledHiddenByDefault:false),
-                ToggleColumn::make('active')->label('Active?')->sortable()->disabled()->searchable()->toggleable(isToggledHiddenByDefault:false),
+                    ->words(3)->wrap()
+                    ->label('Assigned by')->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('start_date')->label('Start date')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('end_date')->label('End date')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: false),
+                ToggleColumn::make('active')->label('Active?')->sortable()->disabled()->searchable()->toggleable(isToggledHiddenByDefault: false),
 
             ])
             ->filters([
@@ -258,11 +255,11 @@ class DailyTasksSettingUpResource extends Resource
                         DailyTasksSettingUp::TYPE_SCHEDULE_DAILY => DailyTasksSettingUp::TYPE_SCHEDULE_DAILY,
                         DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY => DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY,
                         DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY => DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY,
-                        
+
                     ]
                 ),
                 SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
-                    Branch::select('name','id')->pluck('name','id')
+                    Branch::select('name', 'id')->pluck('name', 'id')
                 ),
             ])
             ->actions([
@@ -291,7 +288,7 @@ class DailyTasksSettingUpResource extends Resource
         return static::getModel()::count();
         $query = static::getModel();
 
-        if (!in_array(getCurrentRole(), [1, 16,3])) {
+        if (!in_array(getCurrentRole(), [1, 16, 3])) {
             return $query::where('assigned_by', auth()->user()->id)
                 ->orWhere('assigned_to', auth()->user()->id)
                 ->orWhere('assigned_to', auth()->user()?->employee?->id)->count();
@@ -341,19 +338,20 @@ class DailyTasksSettingUpResource extends Resource
     //     return $query;
     // }
 
-    // public static function canView(Model $record): bool
-    // {
-    //     if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
-    //         (isSystemManager() && $record->assigned_by == auth()?->user()?->employee?->id)
-    //         || isStuff() || isFinanceManager()) {
-    //         return true;
-    //     }
-    //     return false;
-    // }
+    public static function canView(Model $record): bool
+    {
+
+        if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
+            (isSystemManager() && $record->assigned_by == auth()?->user()?->employee?->id)
+        ) {
+            return true;
+        }
+        return false;
+    }
 
     public static function canEdit(Model $record): bool
     {
-     
+
         if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->id) ||
             (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
             || isStuff() || isFinanceManager()) {
