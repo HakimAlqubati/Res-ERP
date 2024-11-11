@@ -373,8 +373,9 @@ class EmployeeApplicationResource extends Resource
                     EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED]),
             ])
             ->actions([
-                // Tables\Actions\RestoreAction::make(),
-                // Tables\Actions\DeleteAction::make(),
+                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ForceDeleteAction::make(),
 
                 // static::approveDepartureRequest(),
                 // static::rejectDepartureRequest(),
