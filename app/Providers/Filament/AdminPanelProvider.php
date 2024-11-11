@@ -129,7 +129,7 @@ class AdminPanelProvider extends PanelProvider
                     
                     NavigationGroup::make('System settings')
                         ->items(array_merge(
-                         (isSuperAdmin() || isSystemManager()) ? SettingResource::getNavigationItems(): [] ,
+                         (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems(): [] ,
                         ))
                         ,
                 ]);

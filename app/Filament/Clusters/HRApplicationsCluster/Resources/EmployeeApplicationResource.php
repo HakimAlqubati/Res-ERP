@@ -545,7 +545,7 @@ class EmployeeApplicationResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff()) {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager()) {
             return true;
         }
         return false;
