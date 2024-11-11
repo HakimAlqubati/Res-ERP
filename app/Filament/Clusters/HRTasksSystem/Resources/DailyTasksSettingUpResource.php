@@ -349,6 +349,14 @@ class DailyTasksSettingUpResource extends Resource
         return false;
     }
 
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+            return true;
+        }
+        return false;
+    }
+
     public static function canEdit(Model $record): bool
     {
 
