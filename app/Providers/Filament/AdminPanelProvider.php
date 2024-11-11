@@ -103,7 +103,7 @@ class AdminPanelProvider extends PanelProvider
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRAttendanceReport::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRCircularCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems(): [], 
-                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff()) ? HRApplicationsCluster::getNavigationItems(): [], 
+                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRApplicationsCluster::getNavigationItems(): [], 
                         ))
                     // ->items([
                     //     ...HRCluster::getNavigationItems(), 
