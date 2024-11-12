@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\Log;
 class StepsRelationManager extends RelationManager
 {
     protected static string $relationship = 'steps';
-
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {return $ownerRecord->steps->count();}
     public function form(Form $form): Form
     {
         return $form
