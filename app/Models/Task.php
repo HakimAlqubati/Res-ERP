@@ -284,14 +284,20 @@ class Task extends Model
                 ->where('log_type', TaskLog::TYPE_MOVED)
                 ->latest()
                 ->first();
-// dd($lastMovedLog->created_at,$lastMovedLog);
+
             if ($lastMovedLog) {
                 // Calculate the difference in hours and minutes
                 $timeDifference = now()->diff($lastMovedLog->created_at);
                 $totalHoursTaken = $timeDifference->format('%H:%I:%S');
+                
+    
+               // Update the total_hours_taken field of the previous log
+               $lastMovedLog->update([
+                'total_hours_taken' => $totalHoursTaken,
+                ]);
             }
         }
-// dd($totalHoursTaken,$lastMovedLog->created_at);
+
         // Create the log entry
         return $this->logs()->create([
             'created_by' => $createdBy,
@@ -308,4 +314,11 @@ class Task extends Model
     }
     return false;
     }
+
+      // Accessor to check if all steps for the task are done
+      public function getIsAllDoneAttribute(): bool
+      {
+          // Check if all related TaskSteps are marked as done
+          return $this->steps()->where('done', false)->count() === 0 ;
+      }
 }

@@ -32,6 +32,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
@@ -344,7 +345,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->afterStateUpdated(function (?string $state, ?string $old, $component) {
                                 $component->helperText("Your rating: $state/10");
                             }),
-                    ]),
+                    ])->hidden(),
 
                     FileUpload::make('file_path')
                         ->label('Add photos')
@@ -650,7 +651,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->tooltip('Rating the Task for 10 Stars')
                     ->icon('heroicon-m-star')
                     ->color('info'),
-                Action::make('MoveTask')->button()->requiresConfirmation()
+                Action::make('MoveTask')
+                ->button()->requiresConfirmation()
                     ->hidden(function ($record) {
                         if ($record->is_daily) {
                             return true;
@@ -704,13 +706,20 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ]),
 
                         ];
-                    })->databaseTransaction()
-                    ->action(function ($record) {
+                    })
 
+                    ->databaseTransaction()
+                    ->action(function ($record) {
+                        
+                        // dd($record->steps->update(['done'=>1]));
+                        DB::beginTransaction();
                         try {
                             $currentStatus = $record->task_status;
                             $nextStatus = implode(', ', array_keys($record->getNextStatuses()));
                             $record->update(['task_status' => $nextStatus]);
+                            if($nextStatus == Task::STATUS_CLOSED){
+                                $record->steps()->update(['done'=>1]);
+                            }
                             $record->createLog(
                                 createdBy: auth()->id(), // ID of the user performing the action
                                 description: "Task moved to {$nextStatus}", // Log description
@@ -725,6 +734,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->body("Task successfully moved to {$nextStatus}")
                                 ->success()
                                 ->send();
+                                DB::commit();
                         } catch (\Throwable $th) {
                             //throw $th;
 
@@ -733,12 +743,16 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->body('There was an error moving the task. Please try again.')
                                 ->danger()
                                 ->send();
+                                DB::rollBack();
                         }
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
                         // if ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) {
-                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0) {
+                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0 
+                        // || ($record->task_status && !$record->is_all_done)
+                    //    || ($record->assigned_to == auth()->user()->employee->id)
+                        ) {
                             return true;
                         }
                         return false;
@@ -964,6 +978,15 @@ class TaskResource extends Resource implements HasShieldPermissions
             return true;
         }
         return false;
+    }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListTasks::class,
+            Pages\CreateTask::class,
+            Pages\EditTask::class,
+        ]);
     }
 
 }

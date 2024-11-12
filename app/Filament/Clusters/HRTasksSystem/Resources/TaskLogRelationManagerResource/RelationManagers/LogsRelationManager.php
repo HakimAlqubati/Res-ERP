@@ -7,6 +7,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -34,6 +35,7 @@ class LogsRelationManager extends RelationManager
     {
         return $table->striped()
             ->recordTitleAttribute('log_type')
+            
             ->columns([
                 TextColumn::make('creator.name')
                 ->label('Created By')
@@ -55,12 +57,13 @@ class LogsRelationManager extends RelationManager
                 })
                 ,
             TextColumn::make('total_hours_taken')->alignCenter(true)
+            ->sortable()
                ->getStateUsing(function($record){
                 if($record->log_type != TaskLog::TYPE_MOVED){
                     return '-';
                 }
                 //  dd( $record->created_at, now());
-                if($record->task->logs->first()->id == $record->id){
+                if(count($record->task->logs)==1 && $record->task->logs->first()->id == $record->id){
                     // Assuming $createdAt and $now are your Carbon instances
                     $createdAt = $record->created_at; // First date
                     $now = now(); // Current time
