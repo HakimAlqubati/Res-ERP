@@ -2,11 +2,13 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskLogRelationManagerResource\RelationManagers;
 
+use App\Models\TaskLog;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -16,6 +18,7 @@ class LogsRelationManager extends RelationManager
     protected static string $relationship = 'logs';
     protected static ?string $label = 'Task Log';
     protected static ?string $pluralLabel = 'Task Logs';
+    protected static ?string $title = 'Activities';
 
     public function form(Form $form): Form
     {
@@ -41,7 +44,15 @@ class LogsRelationManager extends RelationManager
                 ->sortable(),
 
             TextColumn::make('description')
-                ->label('Description')
+                ->getStateUsing(function($record){
+                    if($record->log_type== TaskLog::TYPE_REJECTED){
+                        $reason = json_decode($record?->details,true)?? '---';
+                        return $reason;
+                        return 'ddd';
+                    }else{
+                        return $record->description;
+                    }
+                })
                 ,
             TextColumn::make('total_hours_taken')
                 ->label('Total hours taken')
@@ -54,7 +65,10 @@ class LogsRelationManager extends RelationManager
             
             ])
             ->filters([
-                //
+              SelectFilter::make('log_type')->label('Activity type')->options([
+              TaskLog::TYPE_REJECTED,
+              TaskLog::TYPE_MOVED,
+              ]),
             ])
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),

@@ -23,10 +23,16 @@ class Task extends Model
     const STATUS_REJECTED = 'rejected';
 
     const COLOR_NEW = 'primary';
+    const COLOR_REJECTED = 'danger';
     const COLOR_PENDING = 'warning';
     const COLOR_IN_PROGRESS = 'info';
     const COLOR_CLOSED = 'success';
 
+    const ICON_NEW = 'heroicon-o-plus-circle';           
+    const ICON_REJECTED = 'heroicon-m-backspace';         
+    const ICON_PENDING = 'heroicon-o-clock';             
+    const ICON_IN_PROGRESS = 'heroicon-o-arrow-right-circle'; 
+    const ICON_CLOSED = 'heroicon-o-check-circle';   
     protected $fillable = [
         'title',
         'description',
@@ -66,6 +72,10 @@ class Task extends Model
                 return [
                     self::STATUS_CLOSED => 'Closed',
                 ];
+                case self::STATUS_REJECTED:
+                    return [
+                        self::STATUS_PENDING => 'Pending',
+                    ];
             default:
                 return []; // No transitions available for final statuses
         }
@@ -193,6 +203,11 @@ class Task extends Model
                     ; // Add your default query here
                 });
             }
+            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                $builder->where('is_daily',0)
+                ;
+            });
+            
         }
     }
 

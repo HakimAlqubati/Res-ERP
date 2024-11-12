@@ -421,13 +421,20 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('task_status')->label('Status')
                     ->badge()->alignCenter(true)
-                    ->icon('heroicon-m-check-badge')
+                    ->icon(fn(string $state): string => match ($state) {
+                        Task::STATUS_NEW =>  Task::ICON_NEW,
+                        Task::STATUS_PENDING =>  Task::ICON_PENDING,
+                        Task::STATUS_IN_PROGRESS =>  Task::ICON_IN_PROGRESS,
+                        Task::STATUS_CLOSED =>  Task::ICON_CLOSED,
+                        Task::STATUS_REJECTED =>  Task::ICON_REJECTED,
+                    })
                     ->color(fn(string $state): string => match ($state) {
                         Task::STATUS_NEW => Task::STATUS_NEW,
                         Task::STATUS_PENDING => Task::COLOR_PENDING,
                         Task::STATUS_IN_PROGRESS => Task::COLOR_IN_PROGRESS,
 
                         Task::STATUS_CLOSED => Task::COLOR_CLOSED,
+                        Task::STATUS_REJECTED => Task::COLOR_REJECTED,
                         // default => 'gray', // Fallback color in case of unknown status
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
@@ -639,10 +646,36 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
                         return false;
-                    })->label(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'Closed' : 'Move task')
-                    ->icon(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'heroicon-m-check-badge' : 'heroicon-m-arrows-right-left')
-                
-                    ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) ? 'gray' : 'success')
+                    })
+                    ->label(function($record){
+                        if($record->task_status == Task::STATUS_CLOSED){
+                            return 'Closed';
+                        } elseif($record->task_status == Task::STATUS_REJECTED){
+                            return 'Reopen';
+                        }else{
+                            return 'Move task';
+                        }
+                    })
+                    // ->icon(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'heroicon-m-check-badge' : 'heroicon-m-arrows-right-left')
+                 ->icon(function($record){
+                    if($record->task_status == Task::STATUS_CLOSED){
+                        return 'heroicon-m-check-badge';
+                    }elseif($record->task_status == Task::STATUS_REJECTED){
+                        return 'heroicon-m-lock-open';
+                    }else {
+                        return 'heroicon-m-arrows-right-left';
+                    }
+                 })
+                    // ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) ? 'gray' : 'success')
+                    ->color(function($record){
+                        if($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW){
+                            return 'gray';
+                        }elseif($record->task_status == Task::STATUS_REJECTED){
+                            return Task::COLOR_REJECTED;
+                        }else {
+                            return 'success';
+                        }
+                     })
                     ->form(function () {
                         return [
                             Fieldset::make()->columns(2)->schema([
@@ -728,19 +761,44 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ]);
                     }),
 
-                    Action::make('Reject')->hidden()
-                    ->icon('heroicon-m-chat-bubble-bottom-center-text')
-                    ->visible(fn($record):bool=> $record->task_status == Task::STATUS_CLOSED)
-                    ->color('warning')
-                    ->form(function(){
-                        return [];
+                    Action::make('Reject')->button()->color(Color::Red)
+                    ->icon('heroicon-m-backspace')
+                    ->visible(function($record){
+                        if($record->task_status == Task::STATUS_CLOSED 
+                        // && ($record->assigned_by == auth()->usre()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
+                         ){
+                            return true;
+                        }
+                        return false;
                     })
-                    ->action(function($record){
+                    ->color(Task::COLOR_REJECTED)
+                    ->form(function(){
+                        return [
+                            Fieldset::make()->schema([
+                                Textarea::make('reject_reason')
+                                ->label('Reject reason')->required()
+                                ->columnSpanFull(),
+                            ]),
+                        ];
+                    })->modalIcon('heroicon-m-backspace')
+                    ->action(function($record,$data){
                         DB::beginTransaction();
                         try {
-                            //code...
+                            $record->update(['task_status' => Task::STATUS_REJECTED]);
+                            $record->createLog(
+                                createdBy: auth()->id(), // ID of the user performing the action
+                                description: "Task is rejected", // Log description
+                                logType: TaskLog::TYPE_REJECTED, // Log type as "moved"
+                                details: [
+                                    'reject_reason' => $data['reject_reason'], // Previous status
+                                    
+                                ]
+                            );
+                            Notification::make()->title('Rejected')->send();
+                            DB::commit();
                         } catch (\Throwable $th) {
                             //throw $th;
+                            DB::rollBack();
                         }
                     }),
                 // ReplicateAction::make(),
