@@ -57,7 +57,7 @@ class StepsRelationManager extends RelationManager
                         try {
                             // Check the conditions before updating the status
                             if (($record->morphable->task_status == Task::STATUS_NEW || $record->morphable->task_status == Task::STATUS_PENDING)
-                                && $record->morphable->assign_to == auth()->user()?->employee?->id) {
+                                && $record->morphable->assigned_to == auth()->user()?->employee?->id) {
 
                                 $currentStatus = $record->morphable->task_status;
                                 $nextStatus = Task::STATUS_IN_PROGRESS;
