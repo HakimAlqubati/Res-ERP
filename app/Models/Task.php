@@ -285,4 +285,11 @@ class Task extends Model
             'total_hours_taken' => $totalHoursTaken,
         ]);
     }
+
+    public static function canReject(){
+    if(isBranchManager()){
+        return true;
+    }
+    return false;
+    }
 }
