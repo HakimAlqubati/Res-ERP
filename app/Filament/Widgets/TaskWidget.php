@@ -40,9 +40,10 @@ class TaskWidget extends BaseWidget
                 TextColumn::make('id')->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
 
-                TextColumn::make('title')->sortable()->wrap()->words(4)
+                TextColumn::make('title')->sortable()->words(20)
                     // ->color(Color::Blue)
-                    ->size(TextColumnSize::Medium)
+                    ->tooltip(fn($record):string=> $record->title)
+                    ->size(TextColumnSize::Small)
                     ->color(Color::Green)
                     // ->weight(FontWeight::ExtraBold)
                     // ->description('Click')
