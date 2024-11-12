@@ -633,4 +633,14 @@ class ServiceRequestResource extends Resource
         return false;
         return static::can('delete', $record);
     }
+
+    public static function canCreate(): bool
+    {
+        // if (isSuperAdmin() || auth()->user()->can('create_task')) {
+        if (isFinanceManager()) {
+            return false;
+        }
+
+        return true;
+    }
 }
