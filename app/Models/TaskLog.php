@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -40,4 +41,26 @@ class TaskLog extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public static function formatTimeDifferenceFromString(string $time): string
+    {
+        // Parse the input time string (HH:MM:SS)
+        list($hours, $minutes, $seconds) = explode(':', $time);
+        
+        // Convert hours, minutes, and seconds to integers
+        $hours = (int) $hours;
+        $minutes = (int) $minutes;
+        
+        // Calculate days and remaining hours
+        $days = intdiv($hours, 24);
+        $remainingHours = $hours % 24;
+    
+        // Format the result
+        if ($days > 0) {
+            return sprintf("%dd %dh %dm", $days, $remainingHours, $minutes);
+        } else {
+            return sprintf("%dh %dm", $remainingHours, $minutes);
+        }
+    }
+
 }

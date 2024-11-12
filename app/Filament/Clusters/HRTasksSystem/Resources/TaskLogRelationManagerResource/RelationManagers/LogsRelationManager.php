@@ -54,7 +54,34 @@ class LogsRelationManager extends RelationManager
                     }
                 })
                 ,
-            TextColumn::make('total_hours_taken')
+            TextColumn::make('total_hours_taken')->alignCenter(true)
+               ->getStateUsing(function($record){
+                if($record->log_type != TaskLog::TYPE_MOVED){
+                    return '-';
+                }
+                //  dd( $record->created_at, now());
+                if($record->task->logs->first()->id == $record->id){
+                    // Assuming $createdAt and $now are your Carbon instances
+                    $createdAt = $record->created_at; // First date
+                    $now = now(); // Current time
+
+                    // Calculate the time differences
+                    $diffInDays = $createdAt->diffInDays($now); // Total days difference
+                    $diffInHours = $createdAt->diffInHours($now) % 24; // Hours remaining after full days
+                    $diffInMinutes = $createdAt->diffInMinutes($now) % 60; // Minutes remaining after full hours
+
+                    // Format the result
+                    if ($diffInDays >= 1) {
+                        // If there is at least 1 full day, include days in the output
+                        $timeDifference = "{$diffInDays}d {$diffInHours}h {$diffInMinutes}m";
+                    } else {
+                        // If less than 1 day, only show hours and minutes
+                        $timeDifference = "{$diffInHours}h {$diffInMinutes}m";
+                    }
+                    return $timeDifference;
+                  }
+                  return TaskLog::formatTimeDifferenceFromString($record?->total_hours_taken);
+               })
                 ->label('Total hours taken')
                 ,
 
