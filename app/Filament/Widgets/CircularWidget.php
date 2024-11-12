@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
+use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\CreateAction;
@@ -27,6 +28,10 @@ class CircularWidget extends BaseWidget
 {
     // protected int|string|array $columnSpan = 'full';
 
+    protected function getTableHeading(): string
+    {
+        return 'Memo'; // Set your desired heading here
+    }
     protected static ?int $sort = 1;
     public function table(Table $table): Table
     {
@@ -145,12 +150,15 @@ class CircularWidget extends BaseWidget
             ->query(CircularResource::getEloquentQuery())
             ->defaultPaginationPageOption(5)
             ->defaultSort('created_at', 'desc')
+            // ->recordAction(function(){
+            //     return 'dd';
+            // })
             ->columns([
-                TextColumn::make('title')->label('Subject')->sortable(),
-                TextColumn::make('group.name')->label('Group'),
-                TextColumn::make('released_date')->date()->sortable(),
-                TextColumn::make('createdBy.name')->label('Created by')->sortable(),
-                TextColumn::make('created_at')->date()->sortable(),
+                TextColumn::make('title')->label('Subject')->sortable()->limit(20),
+                TextColumn::make('group.name')->label('Group')->limit(20),
+                TextColumn::make('released_date')->date()->sortable()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('createdBy.name')->label('Created by')->sortable()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault:true),
             ])
             ->actions([
                 Action::make('viewGallery')
@@ -171,8 +179,8 @@ class CircularWidget extends BaseWidget
                     ->modalContent(function ($record) {
                         return view('filament.resources.circulars.gallery', ['photos' => $record->photos]);
                     }),
-                ViewAction::make()->modalHeading('')->form([
-
+                ViewAction::make()->modalHeading('')
+                ->form([
                     Fieldset::make()->columns(3)->label('')->schema([
                         TextInput::make('title')->label('Subject')
                             ->required()
@@ -195,5 +203,5 @@ class CircularWidget extends BaseWidget
             ])
         ;
     }
-
+ 
 }

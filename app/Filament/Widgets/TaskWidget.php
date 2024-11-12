@@ -42,13 +42,14 @@ class TaskWidget extends BaseWidget
 
                 TextColumn::make('title')->sortable()->wrap()->words(4)
                     // ->color(Color::Blue)
-                    // ->size(TextColumnSize::Large)
+                    ->size(TextColumnSize::Large)->color(Color::Green)
                     // ->weight(FontWeight::ExtraBold)
                     // ->description('Click')
-                    ->searchable(),
+                    ->searchable()->icon('heroicon-o-eye')
+                    ->url(fn($record):string=> 'admin/h-r-tasks-system/tasks/'.$record->id.'/edit')->openUrlInNewTab(),
                 TextColumn::make('step_count')->label('Steps')
                     ->color(Color::Blue)->alignCenter(true)
-                    ->searchable(),
+                    ->searchable()->toggleable(isToggledHiddenByDefault:true),
                 TextColumn::make('views')->label('Views')->sortable()
                     ->color(Color::Blue)->alignCenter(true)
                     ->searchable()->toggleable(isToggledHiddenByDefault: true),
@@ -72,13 +73,13 @@ class TaskWidget extends BaseWidget
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
 
-                TextColumn::make('assigned.name')
-                    ->label('Assigned To')
-                    ->searchable()->wrap()->limit(20)
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                // TextColumn::make('assigned.name')
+                //     ->label('Assigned To')
+                //     ->searchable()->wrap()->limit(20)
+                //     ->sortable()
+                //     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('createdby.name')
-                    ->label('created By')
+                    ->label('created By')->toggleable(isToggledHiddenByDefault:true)
                     ->searchable()->wrap()->limit(20)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -90,11 +91,11 @@ class TaskWidget extends BaseWidget
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('due_date')
                     ->date()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])->striped()
             ->filters([
@@ -108,9 +109,9 @@ class TaskWidget extends BaseWidget
             ])
             ->actions([
                 
-                Action::make('Show')
-                ->icon('heroicon-o-eye')
-                ->url(fn($record):string=> 'admin/h-r-tasks-system/tasks/'.$record->id.'/edit')->openUrlInNewTab(),
+                // Action::make('Show')
+                // ->icon('heroicon-o-eye')
+                // ->url(fn($record):string=> 'admin/h-r-tasks-system/tasks/'.$record->id.'/edit')->openUrlInNewTab(),
             ])
         ;
     }
