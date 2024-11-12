@@ -35,11 +35,11 @@ class ListTasks extends ListRecords
                 ->badge(Task::where('task_status', Task::STATUS_NEW)->count()) // Count of "Rejected" tasks
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_NEW)),
 
-            'Pending' => Tab::make()
-                ->badgeColor(Task::COLOR_PENDING)
-                ->icon('heroicon-o-clock') // Example icon for "Pending"
-                ->badge(Task::where('task_status', Task::STATUS_PENDING)->count()) // Count of "Rejected" tasks
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_PENDING)),
+            // 'Pending' => Tab::make()
+            //     ->badgeColor(Task::COLOR_PENDING)
+            //     ->icon('heroicon-o-clock') // Example icon for "Pending"
+            //     ->badge(Task::where('task_status', Task::STATUS_PENDING)->count()) // Count of "Rejected" tasks
+            //     ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_PENDING)),
 
             'In progress' => Tab::make()
                 ->badgeColor(Task::COLOR_IN_PROGRESS)

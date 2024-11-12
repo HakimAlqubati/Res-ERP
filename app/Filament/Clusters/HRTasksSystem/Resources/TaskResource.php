@@ -116,7 +116,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->required()
                             ->default(auth()->user()->id)
                             ->columnSpan(2)
-                            ->options(User::select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->options(User::select('name', 'id')
+                            // ->whereIn('user_type',[1,2,3])
+                            ->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
                         Forms\Components\Select::make('assigned_to')
                             ->label('Assign to')
@@ -295,7 +297,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         Select::make('task_status')->options(
                             [
                                 Task::STATUS_NEW => Task::STATUS_NEW,
-                                Task::STATUS_PENDING => Task::STATUS_PENDING,
+                                // Task::STATUS_PENDING => Task::STATUS_PENDING,
                                 Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
                                 Task::STATUS_CLOSED => Task::STATUS_CLOSED,
                             ]
@@ -423,14 +425,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->badge()->alignCenter(true)
                     ->icon(fn(string $state): string => match ($state) {
                         Task::STATUS_NEW =>  Task::ICON_NEW,
-                        Task::STATUS_PENDING =>  Task::ICON_PENDING,
+                        // Task::STATUS_PENDING =>  Task::ICON_PENDING,
                         Task::STATUS_IN_PROGRESS =>  Task::ICON_IN_PROGRESS,
                         Task::STATUS_CLOSED =>  Task::ICON_CLOSED,
                         Task::STATUS_REJECTED =>  Task::ICON_REJECTED,
                     })
                     ->color(fn(string $state): string => match ($state) {
                         Task::STATUS_NEW => Task::STATUS_NEW,
-                        Task::STATUS_PENDING => Task::COLOR_PENDING,
+                        // Task::STATUS_PENDING => Task::COLOR_PENDING,
                         Task::STATUS_IN_PROGRESS => Task::COLOR_IN_PROGRESS,
 
                         Task::STATUS_CLOSED => Task::COLOR_CLOSED,
@@ -474,7 +476,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                 SelectFilter::make('task_status')->label('Status')->multiple()->options(
                     [
                         Task::STATUS_NEW => Task::STATUS_NEW,
-                        Task::STATUS_PENDING => Task::STATUS_PENDING,
+                        // Task::STATUS_PENDING => Task::STATUS_PENDING,
                         Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
                         Task::STATUS_CLOSED => Task::STATUS_CLOSED,
                     ]
@@ -571,23 +573,23 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->button()
                     ->hidden(function ($record) {
-                        if ($record->is_daily || isStuff()) {
+                        if ($record->is_daily) {
                             return true;
                         }
 
-                        // if (!isSystemManager() && !isSuperAdmin() ||
-                        if ((isBranchManager() && $record->assigned_to == auth()?->user()?->employee?->id)) {
-                            return true;
-                        }
-
-                        // if (!in_array(getCurrentRole(), [1, 2])) {
+                        // // if (!isSystemManager() && !isSuperAdmin() ||
+                        // if ((isBranchManager() && $record->assigned_to == auth()?->user()?->employee?->id)) {
                         //     return true;
                         // }
 
-                        // Check if the task status is not 'completed'
-                        if ($record->task_status !== Task::STATUS_CLOSED) {
-                            return true;
-                        }
+                        // // if (!in_array(getCurrentRole(), [1, 2])) {
+                        // //     return true;
+                        // // }
+
+                        // // Check if the task status is not 'completed'
+                        // if ($record->task_status !== Task::STATUS_CLOSED) {
+                        //     return true;
+                        // }
                         return false;
                     })
                     ->fillForm(
@@ -596,6 +598,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                             // 'task_rating.employee_id' => $record->assigned_to,
                         ]
                     )
+                    ->visible(function($record){
+                        if($record->task_status == Task::STATUS_CLOSED 
+                        && ($record->assigned_by == auth()->user()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
+                         ){
+                            return true;
+                        }
+                        return false;
+                    })
                 // ->requiresConfirmation()
                     ->form(function ($record) {
                         // dd($record->assigned->name);
@@ -668,11 +678,10 @@ class TaskResource extends Resource implements HasShieldPermissions
                  })
                     // ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) ? 'gray' : 'success')
                     ->color(function($record){
-                        if($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW){
+                        // if($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW){
+                        if($record->task_status == Task::STATUS_CLOSED || $record->views == 0){
                             return 'gray';
-                        }elseif($record->task_status == Task::STATUS_REJECTED){
-                            return Task::COLOR_REJECTED;
-                        }else {
+                        } else {
                             return 'success';
                         }
                      })
@@ -728,7 +737,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
-                        if ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) {
+                        // if ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) {
+                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0) {
                             return true;
                         }
                         return false;
@@ -765,7 +775,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-m-backspace')
                     ->visible(function($record){
                         if($record->task_status == Task::STATUS_CLOSED 
-                        // && ($record->assigned_by == auth()->usre()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
+                        && ($record->assigned_by == auth()->user()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
                          ){
                             return true;
                         }
@@ -890,7 +900,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || (isBranchManager() && ($record->assigned_by == auth()?->user()?->id || $record->assigned_to == auth()?->user()?->employee?->id))
+        if (isSuperAdmin() || isSystemManager() || (isBranchManager() && ($record->assigned_by == auth()?->user()?->id || $record->assigned_to == auth()?->user()?->employee?->id))
             // (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
             || isStuff() || isFinanceManager()) {
             return true;

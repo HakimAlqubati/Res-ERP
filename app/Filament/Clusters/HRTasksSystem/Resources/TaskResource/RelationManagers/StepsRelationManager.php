@@ -34,18 +34,7 @@ class StepsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('order')->sortable(),
                 Tables\Columns\TextColumn::make('title')->searchable(),
-                // Tables\Columns\ToggleColumn::make('done')
-                //     ->disabled(function ($record) {
-                //         return false;
-                //         if ((isStuff() && ($record?->morphable?->assigned_to == auth()->user()->employee->id)) || isSuperAdmin()) {
-                //             return false;
-                //         }
-                //         return true;
-
-                //     })->action(function($record){
-                //         dd('hi');
-                //     })
-                // ,
+                
                 Tables\Columns\IconColumn::make('done')
                     ->boolean() // Converts values to boolean, showing one icon for true, another for false
                     ->trueIcon('heroicon-o-check-circle') // Icon when true
@@ -56,7 +45,7 @@ class StepsRelationManager extends RelationManager
 
                         try {
                             // Check the conditions before updating the status
-                            if (($record->morphable->task_status == Task::STATUS_NEW || $record->morphable->task_status == Task::STATUS_PENDING)
+                            if (($record->morphable->task_status == Task::STATUS_NEW || $record->morphable->task_status == Task::STATUS_IN_PROGRESS)
                                 && $record->morphable->assigned_to == auth()->user()?->employee?->id) {
 
                                 $currentStatus = $record->morphable->task_status;
@@ -86,7 +75,7 @@ class StepsRelationManager extends RelationManager
                             // Return success message
                             \Filament\Notifications\Notification::make()
                                 ->title('Success')
-                                ->body('Done')
+                                ->body($record->done ==1 ?'Done': 'Undone')
                                 ->success()
                                 ->send();
 

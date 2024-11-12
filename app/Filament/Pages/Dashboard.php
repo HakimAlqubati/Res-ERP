@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Widgets\CircularWidget;
+use App\Filament\Widgets\TaskWidget;
 
 class Dashboard extends \Filament\Pages\Dashboard
 
@@ -12,6 +13,7 @@ class Dashboard extends \Filament\Pages\Dashboard
     {
         return [
             CircularWidget::class,
+            TaskWidget::class,
         ];
     }
 }

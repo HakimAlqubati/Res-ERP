@@ -30,7 +30,7 @@ class CircularWidget extends BaseWidget
     protected static ?int $sort = 1;
     public function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->headerActions([
                 // Action::make('createFor'),
                 CreateAction::make()->label('New memo')
@@ -149,6 +149,7 @@ class CircularWidget extends BaseWidget
                 TextColumn::make('title')->label('Subject')->sortable(),
                 TextColumn::make('group.name')->label('Group'),
                 TextColumn::make('released_date')->date()->sortable(),
+                TextColumn::make('createdBy.name')->label('Created by')->sortable(),
                 TextColumn::make('created_at')->date()->sortable(),
             ])
             ->actions([

@@ -62,19 +62,20 @@ class Task extends Model
         switch ($this->task_status) {
             case self::STATUS_NEW:
                 return [
-                    self::STATUS_PENDING => 'Pending',
-                ];
-            case self::STATUS_PENDING:
-                return [
+                    // self::STATUS_PENDING => 'Pending',
                     self::STATUS_IN_PROGRESS => 'In Progress',
                 ];
+            // case self::STATUS_PENDING:
+            //     return [
+            //         self::STATUS_IN_PROGRESS => 'In Progress',
+            //     ];
             case self::STATUS_IN_PROGRESS:
                 return [
                     self::STATUS_CLOSED => 'Closed',
                 ];
                 case self::STATUS_REJECTED:
                     return [
-                        self::STATUS_PENDING => 'Pending',
+                        self::STATUS_IN_PROGRESS => 'In progress',
                     ];
             default:
                 return []; // No transitions available for final statuses

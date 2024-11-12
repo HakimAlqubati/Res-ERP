@@ -26,6 +26,10 @@ class Circular extends Model
     {
         return $this->hasMany(CircularPhoto::class);
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class,'created_by');
+    }
 
     public function getPhotosCountAttribute()
     {

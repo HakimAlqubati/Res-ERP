@@ -27,7 +27,7 @@ class EditTask extends EditRecord
                     })->columnSpanFull()->options(
                         [
                             Task::STATUS_NEW => Task::STATUS_NEW,
-                            Task::STATUS_PENDING => Task::STATUS_PENDING,
+                            // Task::STATUS_PENDING => Task::STATUS_PENDING,
                             Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
                             Task::STATUS_CLOSED => Task::STATUS_CLOSED,
                         ]
@@ -71,20 +71,20 @@ class EditTask extends EditRecord
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $this->record->increment('views');
-        if($this->record->task_status == Task::STATUS_NEW && $this->record->assigned_to == auth()->user()?->employee?->id){
-            $currentStatus = Task::STATUS_NEW;
-            $nextStatus = Task::STATUS_PENDING;
-            $this->record->update(['task_status'=> Task::STATUS_PENDING]);
-            $this->record->createLog(
-                createdBy: auth()->id(), 
-                description: "Task moved to {$nextStatus}", 
-                logType: TaskLog::TYPE_MOVED, 
-                details: [
-                    'from' => $currentStatus, 
-                    'to' => $nextStatus, 
-                ]
-            );
-        }
+        // if($this->record->task_status == Task::STATUS_NEW && $this->record->assigned_to == auth()->user()?->employee?->id){
+        //     $currentStatus = Task::STATUS_NEW;
+        //     $nextStatus = Task::STATUS_IN_PROGRESS;
+        //     $this->record->update(['task_status'=> Task::STATUS_IN_PROGRESS]);
+        //     $this->record->createLog(
+        //         createdBy: auth()->id(), 
+        //         description: "Task moved to {$nextStatus}", 
+        //         logType: TaskLog::TYPE_MOVED, 
+        //         details: [
+        //             'from' => $currentStatus, 
+        //             'to' => $nextStatus, 
+        //         ]
+        //     );
+        // }
         
         return $data;
     }
