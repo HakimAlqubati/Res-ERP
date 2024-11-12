@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class TaskWidget extends BaseWidget
 {
-    protected int|string|array $columnSpan = 'full';
+    // protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = 1;
 
@@ -41,10 +41,10 @@ class TaskWidget extends BaseWidget
                     ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('title')->sortable()->wrap()->words(4)
-                    ->color(Color::Blue)
-                    ->size(TextColumnSize::Large)
-                    ->weight(FontWeight::ExtraBold)
-                    ->description('Click')
+                    // ->color(Color::Blue)
+                    // ->size(TextColumnSize::Large)
+                    // ->weight(FontWeight::ExtraBold)
+                    // ->description('Click')
                     ->searchable(),
                 TextColumn::make('step_count')->label('Steps')
                     ->color(Color::Blue)->alignCenter(true)

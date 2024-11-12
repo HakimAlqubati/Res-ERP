@@ -25,12 +25,12 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class CircularWidget extends BaseWidget
 {
-    protected int|string|array $columnSpan = 'full';
+    // protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = 1;
     public function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped()->searchable()
             ->headerActions([
                 // Action::make('createFor'),
                 CreateAction::make()->label('New memo')
