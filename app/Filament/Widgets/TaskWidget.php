@@ -42,7 +42,8 @@ class TaskWidget extends BaseWidget
 
                 TextColumn::make('title')->sortable()->wrap()->words(4)
                     // ->color(Color::Blue)
-                    ->size(TextColumnSize::Large)->color(Color::Green)
+                    ->size(TextColumnSize::Medium)
+                    ->color(Color::Green)
                     // ->weight(FontWeight::ExtraBold)
                     // ->description('Click')
                     ->searchable()->icon('heroicon-o-eye')
