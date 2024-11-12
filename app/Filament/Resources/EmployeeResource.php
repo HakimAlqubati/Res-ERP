@@ -394,6 +394,12 @@ class EmployeeResource extends Resource
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false)
                 ,
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: false)
+                ,
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->limit(12)
@@ -471,12 +477,7 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                 ,
-                TextColumn::make('branch.name')
-                    ->label('Branch')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                ,
+                
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')

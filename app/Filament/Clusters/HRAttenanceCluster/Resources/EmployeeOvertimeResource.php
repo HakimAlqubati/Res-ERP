@@ -351,6 +351,7 @@ class EmployeeOvertimeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->defaultSort('id','desc')
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('employee.name')
@@ -394,7 +395,7 @@ class EmployeeOvertimeResource extends Resource
                 
                 ,
                 SelectFilter::make('branch_id')
-                    ->label('Branch')
+                    ->label('Branch')->multiple()
                     ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
                 SelectFilter::make('employee_id')
                     ->searchable()

@@ -100,7 +100,7 @@ class UserResource extends Resource
                     Fieldset::make('')->label('')->schema([
                         Grid::make()->columns(3)->schema([
                             TextInput::make('name')->disabled()->unique(ignoreRecord: true),
-                            TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email(),
+                            TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email()->required(),
                             PhoneInput::make('phone_number')->disabled()
                             // ->numeric()
                                 ->initialCountry('MY')
@@ -225,14 +225,14 @@ class UserResource extends Resource
                     Fieldset::make()->label('Set user type and role')->schema([
                         Select::make('user_type')
                             ->label('User type')
-                            ->options(getUserTypes())
+                            ->options(getUserTypes())->required()
                             ->live()
                             ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 
                                 //  dd($roles,$state);
                             })
                         ,
-                        CheckboxList::make('roles')
+                        CheckboxList::make('roles')->required()
                             ->label('Role')
                             ->relationship('roles')
                             ->maxItems(1)
