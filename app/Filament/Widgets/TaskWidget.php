@@ -38,11 +38,11 @@ class TaskWidget extends BaseWidget
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('title')->sortable()->words(20)
+                TextColumn::make('title')->sortable()->words(2)
                     // ->color(Color::Blue)
-                    ->tooltip(fn($record):string=> $record->title)
+                    ->tooltip(fn($record):string=> $record->title . '  Task no #'. $record->id)
                     ->size(TextColumnSize::Small)
                     ->color(Color::Green)
                     // ->weight(FontWeight::ExtraBold)
@@ -87,7 +87,11 @@ class TaskWidget extends BaseWidget
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('assignedby.name')
                     ->label('Assigned By')
-                    ->searchable()->wrap()->limit(20)
+                    ->searchable()
+                    ->tooltip(fn($record):string=>$record?->assignedby?->name)
+                    ->size(TextColumnSize::Small)
+                    // ->wrap()
+                    ->limit(10)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('created_at')
