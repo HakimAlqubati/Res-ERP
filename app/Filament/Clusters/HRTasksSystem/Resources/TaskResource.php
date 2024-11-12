@@ -46,6 +46,7 @@ use function Laravel\Prompts\form;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
@@ -641,7 +642,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })->label(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'Closed' : 'Move task')
                     ->icon(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'heroicon-m-check-badge' : 'heroicon-m-arrows-right-left')
                 
-                    ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_PENDING) ? 'gray' : 'success')
+                    ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) ? 'gray' : 'success')
                     ->form(function () {
                         return [
                             Fieldset::make()->columns(2)->schema([
@@ -727,6 +728,21 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ]);
                     }),
 
+                    Action::make('Reject')->hidden()
+                    ->icon('heroicon-m-chat-bubble-bottom-center-text')
+                    ->visible(fn($record):bool=> $record->task_status == Task::STATUS_CLOSED)
+                    ->color('warning')
+                    ->form(function(){
+                        return [];
+                    })
+                    ->action(function($record){
+                        DB::beginTransaction();
+                        try {
+                            //code...
+                        } catch (\Throwable $th) {
+                            //throw $th;
+                        }
+                    }),
                 // ReplicateAction::make(),
                 // ActionGroup::make([
                 //     Tables\Actions\EditAction::make(),
