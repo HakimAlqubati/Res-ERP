@@ -70,9 +70,8 @@ class EditTask extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-
         $this->record->increment('views');
-        if($this->record->task_status == Task::STATUS_NEW && $this->record->assign_to == auth()->user()?->employee?->id){
+        if($this->record->task_status == Task::STATUS_NEW && $this->record->assigned_to == auth()->user()?->employee?->id){
             $currentStatus = Task::STATUS_NEW;
             $nextStatus = Task::STATUS_PENDING;
             $this->record->update(['task_status'=> Task::STATUS_PENDING]);
