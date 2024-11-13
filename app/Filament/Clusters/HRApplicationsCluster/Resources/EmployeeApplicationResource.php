@@ -242,7 +242,7 @@ class EmployeeApplicationResource extends Resource
                                                 ->live()
                                                 ->options(
                                                     $leaveTypes
-                                                )
+                                                )->required()
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state);
                                                     $set('detail_balance', $leaveBalance?->balance);
