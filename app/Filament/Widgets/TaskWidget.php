@@ -75,11 +75,11 @@ class TaskWidget extends BaseWidget
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
 
-                // TextColumn::make('assigned.name')
-                //     ->label('Assigned To')
-                //     ->searchable()->wrap()->limit(20)
-                //     ->sortable()
-                //     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('assigned.name')
+                    ->label('Assigned To')
+                    ->searchable()->wrap()->limit(20)
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('createdby.name')
                     ->label('created By')->toggleable(isToggledHiddenByDefault:true)
                     ->searchable()->wrap()->limit(20)
@@ -88,7 +88,7 @@ class TaskWidget extends BaseWidget
                 TextColumn::make('assignedby.name')
                     ->label('Assigned By')
                     ->searchable()
-                    ->tooltip(fn($record):string=>$record?->assignedby?->name)
+                    ->tooltip(fn($record):string=>$record?->assignedby?->name?? '')
                     ->size(TextColumnSize::Small)
                     // ->wrap()
                     ->limit(10)

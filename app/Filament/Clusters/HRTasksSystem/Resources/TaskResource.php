@@ -446,7 +446,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->label('Assigned To')
                     ->searchable()->wrap()->limit(20)
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('createdby.name')
                     ->label('created By')
                     ->searchable()->wrap()->limit(20)
