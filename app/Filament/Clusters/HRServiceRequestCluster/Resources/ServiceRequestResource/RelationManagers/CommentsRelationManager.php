@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers;
 
+use App\Models\Task;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -180,10 +181,13 @@ class CommentsRelationManager extends RelationManager
         return false;
     }
 
-    // protected function canCreate(): bool
-    // {
-    //     return false;
-    // }
+    protected function canCreate(): bool
+    {
+        if($this->ownerRecord->task_status == Task::STATUS_CLOSED && auth()->user()?->employee?->id){
+            return false;
+        }
+        return true;
+    }
 
     protected function canDelete(Model $record): bool
     {

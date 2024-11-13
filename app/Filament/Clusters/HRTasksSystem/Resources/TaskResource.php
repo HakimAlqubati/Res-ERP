@@ -764,6 +764,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                         if ($record->is_daily) {
                             return true;
                         }
+                        if($record->task_status == Task::STATUS_CLOSED && auth()->user()?->employee?->id){
+                            return true;
+                        }
                         if (!isSuperAdmin() && !auth()->user()->can('add_comment_task')) {
                             return true;
                         }
@@ -807,8 +810,10 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })->modalIcon('heroicon-m-backspace')
                     ->action(function($record,$data){
                         DB::beginTransaction();
+                        // dd($record->steps);
                         try {
                             $record->update(['task_status' => Task::STATUS_REJECTED]);
+                            $record->steps()->update(['done'=>0]);
                             $record->createLog(
                                 createdBy: auth()->id(), // ID of the user performing the action
                                 description: "Task is rejected", // Log description
@@ -823,8 +828,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                         } catch (\Throwable $th) {
                             //throw $th;
                             DB::rollBack();
+                            Notification::make()->title('Error')->warning()->body($th->getMessage())->send();
                         }
-                    }),
+                    })->hidden(fn($record):bool=>$record->task_status == Task::STATUS_REJECTED),
                 // ReplicateAction::make(),
                 // ActionGroup::make([
                 //     Tables\Actions\EditAction::make(),
