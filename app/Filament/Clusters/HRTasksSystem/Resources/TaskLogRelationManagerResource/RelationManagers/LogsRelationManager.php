@@ -52,9 +52,8 @@ class LogsRelationManager extends RelationManager
             TextColumn::make('description')
                 ->getStateUsing(function($record){
                     if($record->log_type== TaskLog::TYPE_REJECTED){
-                        $reason = json_decode($record?->details,true)?? '---';
+                        $reason = json_decode($record?->details,true) ?? '---';
                         return $reason;
-                        return 'ddd';
                     }else{
                         return $record->description;
                     }

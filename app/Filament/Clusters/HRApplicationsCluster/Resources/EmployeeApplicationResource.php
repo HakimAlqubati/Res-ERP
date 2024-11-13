@@ -131,10 +131,10 @@ class EmployeeApplicationResource extends Resource
                         ])) {
                             $form = [
                                 DatePicker::make('detail_date')
-                                    ->label('Date')
+                                    ->label('Date')->required()
                                     ->default('Y-m-d'),
                                 TimePicker::make('detail_time')
-                                    ->label('Time'),
+                                    ->label('Time')->required(),
                             ];
 
                         }
@@ -164,7 +164,7 @@ class EmployeeApplicationResource extends Resource
                                     Grid::make()->columns(3)->schema([
                                         TextInput::make('detail_monthly_deduction_amount')
                                             ->numeric()
-                                            ->label('Monthly deduction amount')
+                                            ->label('Monthly deduction amount')->required()
                                             ->live(onBlur: true)
                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                 $advancedAmount = $get('detail_advance_amount');

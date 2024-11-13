@@ -19,7 +19,9 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class CircularResource extends Resource
@@ -113,13 +115,15 @@ class CircularResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
         ->paginated([10, 25, 50, 100])
             ->columns([
-                Tables\Columns\TextColumn::make('title')->label('Subject')->sortable(),
-                // Tables\Columns\TextColumn::make('description')->limit(50),
-                Tables\Columns\TextColumn::make('group.name')->label('Group'),
-                Tables\Columns\TextColumn::make('released_date')->date()->sortable(),
+                TextColumn::make('title')->label('Subject')->sortable(),
+                // TextColumn::make('description')->limit(50),
+                TextColumn::make('group.name')->label('Group'),
+                TextColumn::make('released_date')->date()->sortable(),
+                TextColumn::make('createdBy.name')->label('Created by')->sortable()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault:false),
             ])
             ->filters([
                 //
@@ -148,7 +152,7 @@ class CircularResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -179,4 +183,23 @@ class CircularResource extends Resource
     {
         return true;
     }
+
+    
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
 }

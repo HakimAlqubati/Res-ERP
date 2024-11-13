@@ -69,29 +69,29 @@ class SettingResource extends Resource
                         Tab::make('HR Settings')
                         ->icon('heroicon-o-user-group')
                             ->schema([
-                                Fieldset::make()->label('Work Shifts')->columns(6)->schema([
+                                Fieldset::make()->label('Work Shifts')->columns(4)->schema([
                                     TextInput::make("hours_count_after_period_before")
-                                        ->label('Hours allowed before period')
+                                        ->label('Allowed hours pre-period')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("hours_count_after_period_after")
-                                        ->label('Hours allowed after period')
+                                        ->label('Allowed hours post-period')
                                         ->numeric()
                                         ->required(),
                                     
 
                                     
                                     TextInput::make("early_attendance_minutes")
-                                    ->label('Minutes counted as early arrival for attendance')
-                                    ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                    ->label('Early arrival minutes')
+                                    // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
                                     ->numeric()
                                     ->required(),
                                     TextInput::make("pre_end_hours_for_check_in_out")
-                                    ->label('Hours before period end for action')
-                                    ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                    ->label('Pre-period action hours')
+                                    // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
                                     ->numeric()
                                     ->required(),
-                                    Fieldset::make()->columns(1)->columnSpan(2)->schema([
+                                    Fieldset::make()->columns(2)->columnSpanFull()->schema([
                                         Select::make("period_allowed_to_calculate_overtime")
                                             ->label('Overtime calculation period')
                                             ->options([
@@ -102,6 +102,7 @@ class SettingResource extends Resource
                                             ->live()
                                             ->required(),
                                         Toggle::make('calculating_overtime_with_half_hour_after_hour')
+                                        ->inline(false)
                                             ->visible(fn(Get $get): bool => $get('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR)
                                         ,
 
@@ -124,94 +125,114 @@ class SettingResource extends Resource
                             Tab::make('Tax Settings')
                             ->icon('heroicon-o-calculator')
                             ->schema([
-
                                 Fieldset::make('MTD/PCB Tax Brackets')->columns(4)->schema([
                                     TextInput::make('tax_bracket_0_to_5000')
-                                    ->label('0 - 5,000')
-                                    ->default(0) // 0% tax rate
-                                    ->helperText('Tax Rate: 0%')
-                                    ->disabled(),
-                                
-                                TextInput::make('tax_bracket_5001_to_20000')
-                                    ->label('5,001 - 20,000')
-                                    ->default(1) // 1% tax rate
-                                    ->helperText('Tax Rate: 1%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_20001_to_35000')
-                                    ->label('20,001 - 35,000')
-                                    ->default(3) // 3% tax rate
-                                    ->helperText('Tax Rate: 3%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_35001_to_50000')
-                                    ->label('35,001 - 50,000')
-                                    ->default(8) // 8% tax rate
-                                    ->helperText('Tax Rate: 8%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_50001_to_70000')
-                                    ->label('50,001 - 70,000')
-                                    ->default(13) // 13% tax rate
-                                    ->helperText('Tax Rate: 13%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_70001_to_100000')
-                                    ->label('70,001 - 100,000')
-                                    ->default(21) // 21% tax rate
-                                    ->helperText('Tax Rate: 21%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_100001_to_250000')
-                                    ->label('100,001 - 250,000')
-                                    ->default(24) // 24% tax rate
-                                    ->helperText('Tax Rate: 24%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_250001_to_400000')
-                                    ->label('250,001 - 400,000')
-                                    ->default(25) // 25% tax rate
-                                    ->helperText('Tax Rate: 25%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_400001_to_600000')
-                                    ->label('400,001 - 600,000')
-                                    ->default(26) // 26% tax rate
-                                    ->helperText('Tax Rate: 26%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_600001_to_1000000')
-                                    ->label('600,001 - 1,000,000')
-                                    ->default(28) // 28% tax rate
-                                    ->helperText('Tax Rate: 28%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_1000001_to_2000000')
-                                    ->label('1,000,001 - 2,000,000')
-                                    ->default(30) // 30% tax rate
-                                    ->helperText('Tax Rate: 30%')
-                                    ->numeric()
-                                    ->required(),
-                                
-                                TextInput::make('tax_bracket_above_2000000')
-                                    ->label('Above 2,000,000')
-                                    ->default(32) // 32% tax rate
-                                    ->helperText('Tax Rate: 32%')
-                                    ->numeric()
-                                    ->required(),
-                                
+                                        ->label('0 - 5,000')
+                                        ->default(0) // 0% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->disabled(),
+                        
+                                    TextInput::make('tax_bracket_5001_to_20000')
+                                        ->label('5,001 - 20,000')
+                                        ->default(1) // 1% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_20001_to_35000')
+                                        ->label('20,001 - 35,000')
+                                        ->default(3) // 3% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_35001_to_50000')
+                                        ->label('35,001 - 50,000')
+                                        ->default(8) // 8% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_50001_to_70000')
+                                        ->label('50,001 - 70,000')
+                                        ->default(13) // 13% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_70001_to_100000')
+                                        ->label('70,001 - 100,000')
+                                        ->default(21) // 21% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_100001_to_250000')
+                                        ->label('100,001 - 250,000')
+                                        ->default(24) // 24% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_250001_to_400000')
+                                        ->label('250,001 - 400,000')
+                                        ->default(25) // 25% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_400001_to_600000')
+                                        ->label('400,001 - 600,000')
+                                        ->default(26) // 26% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_600001_to_1000000')
+                                        ->label('600,001 - 1,000,000')
+                                        ->default(28) // 28% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_1000001_to_2000000')
+                                        ->label('1,000,001 - 2,000,000')
+                                        ->default(30) // 30% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
+                        
+                                    TextInput::make('tax_bracket_above_2000000')
+                                        ->label('Above 2,000,000')
+                                        ->default(32) // 32% tax rate
+                                        ->helperText(fn ($state) => "Tax Rate: {$state}%")
+                                        ->numeric()
+                                        ->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(fn ($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
                                 ])
-                            
-                        ]),
+                            ]),
+                        
                     ]),
 
             ]);

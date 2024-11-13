@@ -27,7 +27,12 @@ class ListCirculars extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('New memo'),
-                     ];
+            Actions\CreateAction::make()->label(function(){
+            if(isStuff()){
+                 return 'Share insight';
+             }
+                return 'New memo';
+            }),
+          ];
     }
 }

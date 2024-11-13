@@ -122,6 +122,7 @@ class WorkPeriodResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->striped()
             ->defaultSort('id', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
@@ -155,50 +156,63 @@ class WorkPeriodResource extends Resource
 
             ])
             ->filters([
-                SelectFilter::make('branch_id')->options(Branch::select('id', 'name')->where('active', 1)->pluck('name', 'id')),
+                SelectFilter::make('branch_id')->label('Branch')->options(Branch::select('id', 'name')->where('active', 1)->pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('copy')
-                ->label('Copy')->hidden(fn():bool=>isBranchManager())
+                ->label('Copy')
+                ->hidden(fn():bool=>isBranchManager())
                 ->button()
                 ->icon('heroicon-o-clipboard-document-list')
                 ->form(function ($record) {
                     return [
-                        Forms\Components\TextInput::make('name')
-                            ->label('Name')
-                            ->required()
-                            ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
-                        Forms\Components\Textarea::make('description')
-                            ->label('Description')
-                            ->default($record->description),
-                        Forms\Components\Toggle::make('active')
-                            ->label('Active')
-                            ->default($record->active),
-                        Forms\Components\TimePicker::make('start_at')
-                            ->label('Start Time')
-                            ->required()
-                            ->default($record->start_at),
-                        Forms\Components\TimePicker::make('end_at')
-                            ->label('End Time')
-                            ->required()
-                            ->default($record->end_at),
-                        Forms\Components\Select::make('branch_id')
-                            ->options(Branch::where('active', 1)->pluck('name', 'id'))
-                            ->label('Branch')
-                            ->default($record->branch_id),
-                        Forms\Components\TextInput::make('allowed_count_minutes_late')
-                            ->label('Allowed Delay (Minutes)')
-                            ->default($record->allowed_count_minutes_late),
+
+                        Fieldset::make()->label('')->columnSpan(3)->schema([
+                            Forms\Components\TextInput::make('name')
+                                ->label('Name')
+                                ->required()
+                                ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
+                            Forms\Components\Textarea::make('description')
+                                ->label('Description')
+                                ->default($record->description),
+                            Forms\Components\Toggle::make('active')
+                                ->label('Active')->inline()
+                                ->default($record->active),
+                                
+                                Forms\Components\TimePicker::make('start_at')
+                                    ->label('Start Time')
+                                    ->required()
+                                    ->default($record->start_at),
+                                Forms\Components\TimePicker::make('end_at')
+                                    ->label('End Time')
+                                    ->required()
+                                    ->default($record->end_at),
+                                Forms\Components\Select::make('branch_id')
+                                    ->options(Branch::where('active', 1)->pluck('name', 'id'))
+                                    ->label('Branch')
+                                    ->default($record->branch_id),
+                                Forms\Components\TextInput::make('allowed_count_minutes_late')
+                                    ->label('Allowed Delay (Minutes)')
+                                    ->default($record->allowed_count_minutes_late),
+                        ]),
                     ];
                 })
-                ->action(function ($record) {
+                ->action(function ($record, array $data) {
                     // Duplicate the record
                     $newRecord = $record->replicate();
                     $newRecord->name = $record->name . ' - Copy'; // Modify as needed to differentiate
+                    // $newRecord->name = $data['name'];
+                    $newRecord->description = $data['description'];
+                    $newRecord->active = $data['active'];
+                    $newRecord->start_at = $data['start_at'];
+                    $newRecord->end_at = $data['end_at'];
+                    $newRecord->branch_id = $data['branch_id'];
+                    $newRecord->allowed_count_minutes_late = $data['allowed_count_minutes_late'];
+        
                     $newRecord->save();
                 })
-                ->requiresConfirmation()
+                
                 ->color('warning')
             ])
             ->bulkActions([
