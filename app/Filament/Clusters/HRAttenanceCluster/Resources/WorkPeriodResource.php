@@ -169,7 +169,7 @@ class WorkPeriodResource extends Resource
                     return [
 
                         Fieldset::make()->label('')->columnSpan(3)->schema([
-                            Forms\Components\TextInput::make('name')
+                            Forms\Components\TextInput::make('name')->unique()
                                 ->label('Name')
                                 ->required()
                                 ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
