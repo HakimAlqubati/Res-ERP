@@ -42,8 +42,13 @@ class TaskLog extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public static function formatTimeDifferenceFromString(string $time): string
+    public static function formatTimeDifferenceFromString(?string $time): string
     {
+         // Return an empty string or a default message if $time is null
+        if ($time === null) {
+            return 'N/A'; // or you could return an empty string ''
+        }
+        
         // Parse the input time string (HH:MM:SS)
         list($hours, $minutes, $seconds) = explode(':', $time);
         

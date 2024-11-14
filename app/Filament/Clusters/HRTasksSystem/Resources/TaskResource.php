@@ -578,6 +578,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
 
+                        if(!$record->task_status != Task::STATUS_REJECTED){
+                            return true;
+                        }
                         // // if (!isSystemManager() && !isSuperAdmin() ||
                         // if ((isBranchManager() && $record->assigned_to == auth()?->user()?->employee?->id)) {
                         //     return true;

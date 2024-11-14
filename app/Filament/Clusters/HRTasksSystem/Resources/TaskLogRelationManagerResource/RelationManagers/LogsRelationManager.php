@@ -86,6 +86,7 @@ class LogsRelationManager extends RelationManager
                     }
                     return $timeDifference;
                   }
+                //   return $record?->total_hours_taken;
                   return TaskLog::formatTimeDifferenceFromString($record?->total_hours_taken);
                })
                 ->label('Total hours taken')
