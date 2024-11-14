@@ -201,8 +201,8 @@ class WorkPeriodResource extends Resource
                 ->action(function ($record, array $data) {
                     // Duplicate the record
                     $newRecord = $record->replicate();
-                    $newRecord->name = $record->name . ' - Copy'; // Modify as needed to differentiate
-                    // $newRecord->name = $data['name'];
+                    // $newRecord->name = $record->name . ' - Copy'; // Modify as needed to differentiate
+                    $newRecord->name = $data['name'];
                     $newRecord->description = $data['description'];
                     $newRecord->active = $data['active'];
                     $newRecord->start_at = $data['start_at'];
