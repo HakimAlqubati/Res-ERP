@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeRatingReportResou
 use App\Filament\Clusters\HRAttendanceReport\Resources\ListEmployeeRatingReports2;
 use App\Models\Attendance;
 use App\Models\Branch;
+use App\Models\Employee;
 use App\Models\TaskRating;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -19,6 +20,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class EmployeeRatingReportResource extends Resource
@@ -63,14 +65,21 @@ class EmployeeRatingReportResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                // SelectFilter::make('employee_id')->label('Employee')
-                // // ->options(Employee::where('active', 1)
-                // //         ->select('name', 'id')->get()->pluck('name', 'id'))
-                //     ->options(fn(Get $get): Collection => Employee::query()
-                //             ->where('active', 1)
-                //             ->where('branch_id', $get('branch_id'))
-                //             ->pluck('name', 'id'))
-                //     ->searchable(),
+                        SelectFilter::make('employee_id')
+                        ->label('Employee')
+                        ->options(function (Get $get) {
+        
+                            // Query to get employees based on branch_id if it is selected
+                            $query = Employee::where('active', 1);
+                            
+                            // if ($branchId) {
+                            //     $query->where('branch_id', $branchId);
+                            // }
+                
+                            return $query->pluck('name', 'id');
+                        })
+                        ->searchable(),
+                    
 
             ], FiltersLayout::AboveContent)
             ->actions([
@@ -82,7 +91,7 @@ class EmployeeRatingReportResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+        
                 ]),
             ]);
     }
@@ -103,11 +112,7 @@ class EmployeeRatingReportResource extends Resource
     {
         return [
             'index' => ListEmployeeRatingReports2::route('/'),
-            // 'create' => Pages\CreateEmployeeAttednaceReport::route('/create'),
-            // 'edit' => Pages\EditEmployeeAttednaceReport::route('/{record}/edit'),
             'view' => ViewDetails::route('/view'),
-            // 'view-detail' => ViewReportDetail::route('/{record}/detail'),
-
         ];
     }
 
@@ -124,29 +129,8 @@ class EmployeeRatingReportResource extends Resource
         $query = $query->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id')
 
         ;
-// dd($query->get());
         return $query;
-        // $query = static::getModel()::query();
-        $query = TaskRating::query()
-            ->select(
-                'hr_employees.id AS employee_id',
-                'hr_employees.name AS employee_name',
-                'hr_employees.employee_no AS employee_no',
-                'hr_tasks.id AS task_id',
-                'hr_task_rating.rating_value AS rating_value'
-            )
-            ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id')
-            ->join('hr_tasks', 'hr_tasks.assigned_to', '=', 'hr_employees.id')
-            ->groupBy(
-                'hr_employees.id',
-                'hr_tasks.id',
-                'hr_task_rating.rating_value',
-                'hr_employees.name',
-                'hr_employees.employee_no',
-            );
-        dd($query);
-        return $query;
-
+        
     }
 
     public static function canViewAny(): bool

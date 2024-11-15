@@ -403,6 +403,8 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function table(Table $table): Table
     {
+        // $task = Task::countMovesToStatus(144,Task::STATUS_CLOSED);
+        // dd($task);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')

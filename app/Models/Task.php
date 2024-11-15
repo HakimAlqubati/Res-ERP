@@ -282,10 +282,12 @@ class Task extends Model
         if (in_array($logType ,[TaskLog::TYPE_MOVED ,TaskLog::TYPE_REJECTED]) && $this->status != Task::STATUS_CLOSED) {
             // Get the last "moved" log for this task, ordered by creation time
             $lastMovedLog = $this->logs()
-                ->where('log_type', TaskLog::TYPE_MOVED)
-                ->orWhere('log_type', TaskLog::TYPE_REJECTED)
-                ->latest()
-                ->first();
+            ->where(function ($query) {
+                $query->where('log_type', TaskLog::TYPE_MOVED)
+                      ->orWhere('log_type', TaskLog::TYPE_REJECTED);
+            })
+            ->latest()
+            ->first();
 
             if ($lastMovedLog) {
                 // Calculate the difference in hours and minutes
@@ -333,10 +335,17 @@ class Task extends Model
           foreach ($this->logs as $log) {
             
             $details =  json_decode($log->details,true);
-            // dd($details);
-            if($log->log_type == TaskLog::TYPE_MOVED && is_array($details)&& $details['to'] != Task::STATUS_CLOSED){
-              if ($log->total_hours_taken) {
+            // if (is_array($details) && array_key_exists('to', $details) && $details['to'] != Task::STATUS_CLOSED) {
+            //     continue;
+            // }
 
+              // Skip if the task is closed
+            if (is_array($details) && array_key_exists('to', $details) && $details['to'] === Task::STATUS_CLOSED) {
+                continue;
+            }
+            if(in_array($log->log_type,[TaskLog::TYPE_MOVED,TaskLog::TYPE_REJECTED])) {
+             
+                if ($log->total_hours_taken) {
                   // Convert each time entry from HH:MM:SS format to seconds
                   list($hours, $minutes, $seconds) = explode(':', $log->total_hours_taken);
                   $totalSeconds += ($hours * 3600) + ($minutes * 60) + $seconds;
@@ -369,4 +378,17 @@ class Task extends Model
           return trim($formattedTime);
       }
 
-   }
+      public function getMoveCountAttribute(): int
+      {
+          // Count the number of logs where log_type is TYPE_MOVED
+          return $this->logs()->where('log_type', TaskLog::TYPE_MOVED)->count();
+      }
+      public static function countMovesToStatus(int $taskId, string $status): int
+      {
+          return TaskLog::where('task_id', $taskId)
+              ->where('log_type', TaskLog::TYPE_MOVED)
+              ->whereJsonContains('details->to', $status)
+              ->count();
+      }
+      
+}
