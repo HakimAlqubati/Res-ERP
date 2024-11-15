@@ -162,7 +162,7 @@ class EmployeeTaskReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
