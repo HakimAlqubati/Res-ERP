@@ -44,7 +44,7 @@ class TaskLog extends Model
 
     public static function formatTimeDifferenceFromString(?string $time): string
     {
-         // Return an empty string or a default message if $time is null
+        // Return an empty string or a default message if $time is null
         if ($time === null) {
             return 'N/A'; // or you could return an empty string ''
         }
@@ -55,17 +55,22 @@ class TaskLog extends Model
         // Convert hours, minutes, and seconds to integers
         $hours = (int) $hours;
         $minutes = (int) $minutes;
+        $seconds = (int) $seconds;
         
         // Calculate days and remaining hours
         $days = intdiv($hours, 24);
         $remainingHours = $hours % 24;
-    
+
         // Format the result
         if ($days > 0) {
             return sprintf("%dd %dh %dm", $days, $remainingHours, $minutes);
-        } else {
+        } elseif ($remainingHours > 0) {
             return sprintf("%dh %dm", $remainingHours, $minutes);
+        } else {
+            // Less than 1 hour, show minutes and seconds only
+            return sprintf("%dm %ds", $minutes, $seconds);
         }
     }
+
 
 }

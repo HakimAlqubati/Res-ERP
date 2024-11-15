@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskLogRelationManagerResource\RelationManagers;
 
+use App\Models\Task;
 use App\Models\TaskLog;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -62,34 +63,47 @@ class LogsRelationManager extends RelationManager
             TextColumn::make('total_hours_taken')->alignCenter(true)
             ->sortable()
                ->getStateUsing(function($record){
-                if($record->log_type != TaskLog::TYPE_MOVED){
-                    return '-';
+                
+               $details =  json_decode($record->details,true);
+                
+                if($record->log_type == TaskLog::TYPE_MOVED && is_array($details)&& $details['to']== Task::STATUS_CLOSED){
+                    return ;
                 }
-                //  dd( $record->created_at, now());
-                if(count($record->task->logs)==1 && $record->task->logs->first()->id == $record->id){
-                    // Assuming $createdAt and $now are your Carbon instances
-                    $createdAt = $record->created_at; // First date
+                
+                if (
+                    in_array($record->log_type,[TaskLog::TYPE_MOVED,TaskLog::TYPE_REJECTED])
+                && $record->task->task_status != Task::STATUS_CLOSED
+               && $record->task->logs->last()->id == $record->id)
+                 {
+                    // Get the creation time of the record and the current time
+                    $createdAt = $record->created_at; // First date (when the log was created)
                     $now = now(); // Current time
+                        // Calculate the time differences
+                        $diffInDays = $createdAt->diffInDays($now); // Total days difference
+                        $diffInHours = $createdAt->diffInHours($now) % 24; // Hours remaining after full days
+                        $diffInMinutes = $createdAt->diffInMinutes($now) % 60; // Minutes remaining after full hours
+                        $diffInSeconds = $createdAt->diffInSeconds($now) % 60; // Seconds remaining after full minutes
 
-                    // Calculate the time differences
-                    $diffInDays = $createdAt->diffInDays($now); // Total days difference
-                    $diffInHours = $createdAt->diffInHours($now) % 24; // Hours remaining after full days
-                    $diffInMinutes = $createdAt->diffInMinutes($now) % 60; // Minutes remaining after full hours
-
-                    // Format the result
-                    if ($diffInDays >= 1) {
-                        // If there is at least 1 full day, include days in the output
-                        $timeDifference = "{$diffInDays}d {$diffInHours}h {$diffInMinutes}m";
-                    } else {
-                        // If less than 1 day, only show hours and minutes
-                        $timeDifference = "{$diffInHours}h {$diffInMinutes}m";
-                    }
+                        // Format the result
+                        if ($diffInDays >= 1) {
+                            // If there is at least 1 full day, include days in the output
+                            $timeDifference = "{$diffInDays}d {$diffInHours}h {$diffInMinutes}m {$diffInSeconds}s";
+                        } elseif ($diffInHours >= 1) {
+                            // If there is at least 1 full hour, include hours in the output
+                            $timeDifference = "{$diffInHours}h {$diffInMinutes}m {$diffInSeconds}s";
+                        } elseif ($diffInMinutes >= 1) {
+                            // If there is at least 1 full minute, include minutes in the output
+                            $timeDifference = "{$diffInMinutes}m {$diffInSeconds}s";
+                        } else {
+                            // If less than 1 minute, show only seconds
+                            $timeDifference = "{$diffInSeconds}s";
+                        }        
                     return $timeDifference;
-                  }
-                //   return $record?->total_hours_taken;
+                }
+
                   return TaskLog::formatTimeDifferenceFromString($record?->total_hours_taken);
                })
-                ->label('Total hours taken')
+                ->label('Time Spent')
                 ,
 
             TextColumn::make('created_at')

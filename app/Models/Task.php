@@ -278,10 +278,12 @@ class Task extends Model
 
          // Check if this is a "moved" log to calculate time difference
         $totalHoursTaken = null;
-        if ($logType === TaskLog::TYPE_MOVED) {
+        // if ($logType === TaskLog::TYPE_MOVED || $logType == TaskLog::TYPE_REJECTED) {
+        if (in_array($logType ,[TaskLog::TYPE_MOVED ,TaskLog::TYPE_REJECTED]) && $this->status != Task::STATUS_CLOSED) {
             // Get the last "moved" log for this task, ordered by creation time
             $lastMovedLog = $this->logs()
                 ->where('log_type', TaskLog::TYPE_MOVED)
+                ->orWhere('log_type', TaskLog::TYPE_REJECTED)
                 ->latest()
                 ->first();
 
@@ -321,4 +323,50 @@ class Task extends Model
           // Check if all related TaskSteps are marked as done
           return $this->steps()->where('done', false)->count() === 0 ;
       }
-}
+
+
+      public function getTotalSpentTimeAttribute(): string
+      {
+          $totalSeconds = 0;
+      
+          // Loop through each TaskLog and accumulate time in seconds
+          foreach ($this->logs as $log) {
+            
+            $details =  json_decode($log->details,true);
+            // dd($details);
+            if($log->log_type == TaskLog::TYPE_MOVED && is_array($details)&& $details['to'] != Task::STATUS_CLOSED){
+              if ($log->total_hours_taken) {
+
+                  // Convert each time entry from HH:MM:SS format to seconds
+                  list($hours, $minutes, $seconds) = explode(':', $log->total_hours_taken);
+                  $totalSeconds += ($hours * 3600) + ($minutes * 60) + $seconds;
+                }
+            }
+          }
+          
+      
+          // Calculate days, hours, minutes, and seconds
+          $days = intdiv($totalSeconds, 86400);
+          $totalSeconds %= 86400;
+          $hours = intdiv($totalSeconds, 3600);
+          $totalSeconds %= 3600;
+          $minutes = intdiv($totalSeconds, 60);
+          $seconds = $totalSeconds % 60;
+      
+          // Format as d h m s
+          $formattedTime = '';
+          if ($days > 0) {
+              $formattedTime .= sprintf("%dd ", $days);
+          }
+          if ($hours > 0 || $days > 0) {
+              $formattedTime .= sprintf("%dh ", $hours);
+          }
+          if ($minutes > 0 || $hours > 0 || $days > 0) {
+              $formattedTime .= sprintf("%dm ", $minutes);
+          }
+          $formattedTime .= sprintf("%ds", $seconds);
+      
+          return trim($formattedTime);
+      }
+
+   }

@@ -460,10 +460,10 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                 // Tables\Columns\TextColumn::make('photos_count')
 
-                //     ->icon('heroicon-o-camera')
+                    // ->icon('heroicon-o-camera')
 
-                //     ->toggleable(isToggledHiddenByDefault: false)
-                //     ,
+                    // ->toggleable(isToggledHiddenByDefault: false)
+                    // ,
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -472,6 +472,11 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                    TextColumn::make('total_spent_time')
+                    ->label('Time Spent')->toggleable(isToggledHiddenByDefault:true)
+                    ->alignCenter(true)
+                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), 
+          
             ])
             ->filters([
                 SelectFilter::make('task_status')->label('Status')->multiple()->options(
