@@ -358,3 +358,9 @@ for scrollbar
     background-color: #3e8e41; /* Even darker green when clicked */
     transform: translateY(1px); /* Button appears pressed */
 }
+
+
+.company-info img {
+    width: 80px;
+    height: auto;
+}

@@ -150,10 +150,6 @@
         text-align: center;
     }
 
-    .company-info img {
-        width: 80px;
-        height: auto;
-    }
 
     .logo-left {
         position: absolute;

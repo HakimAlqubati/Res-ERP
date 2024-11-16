@@ -69,17 +69,24 @@
         style="padding-top: 200px;">
         <thead class="fixed-header" style="padding-top: 200px;;top:64px;">
             <x-filament-tables::row class="header_report">
-                <th colspan="3" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+                <th colspan="3" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }} company-info">
                     {{-- <p>{{ 'Attendance employees report' }}</p> --}}
+                    <div style="width: 100%;">
 
-                    <p> Branch:
-                        {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
-                    </p>
+                        <img style="display: inline-block;" src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo" class="logo-left">
+                    </div>
                 </th>
-                <th colspan="2" class="no_border_right_left">
+                <th colspan="3" class="no_border_right_left">
+                 
+                 <div style="width: 100;">
+                    
+                     <p>
+                          {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
+                      </p>
+                </div>
 
                 </th>
-                <th colspan="5" style="text-align: center; vertical-align: middle; padding:12px;"
+                <th colspan="4" style="text-align: center; vertical-align: middle; padding:12px;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                     <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                 </th>
