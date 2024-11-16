@@ -52,6 +52,7 @@ class TestController2 extends Controller
         return getEmployeePeriodAttendnaceDetails($empId, $periodId, $date);
     }
 
+
     public function to_get_multi_employees_attendances()
     {
         $empIds = explode(',', $_GET['empIds']);

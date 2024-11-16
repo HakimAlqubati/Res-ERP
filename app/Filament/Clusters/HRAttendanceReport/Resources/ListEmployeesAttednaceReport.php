@@ -27,6 +27,24 @@ class ListEmployeesAttednaceReport extends ListRecords
         return $attributes['employee_id'];
     }
 
+    private function parseDuration($duration)
+    {
+        // Match hours and minutes using regex
+        if (preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches)) {
+            $hours = (int)$matches[1];
+            $minutes = (int)$matches[2];
+            return $hours * 60 + $minutes; // Convert to total minutes
+        }
+        return 0; // Default to 0 if parsing fails
+    }
+
+    private function formatDuration($totalMinutes)
+    {
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
+        return "{$hours} h {$minutes} m";
+    }
+
     public function getViewData(): array
     {
         $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'];
@@ -44,11 +62,41 @@ class ListEmployeesAttednaceReport extends ListRecords
         $employees = $query->get()->pluck('id')->toArray();
 
         $report_data = employeeAttendancesByDate($employees, $date);
- 
+
+           // Calculate totals
+            $totalSupposed = 0;
+            $totalWorked = 0;
+            $totalApproved = 0;
+
+            foreach ($report_data as $empData) {
+                foreach ($empData as $periods) {
+                    foreach ($periods['periods'] as $period) {
+                    //     dd($period['attendances']['checkout']['lastcheckout']['approved_overtime'],$period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'],
+                    //     $period['total_hours']
+                    // );
+                         // Parse supposed_duration_hourly
+                    $supposedDuration = $this->parseDuration($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '0 h 0 m');
+                    $totalSupposed += $supposedDuration;
+
+                    // Parse total_hours
+                    $workedDuration = $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
+                    $totalWorked += $workedDuration;
+
+                    // Parse approved_overtime
+                    $approvedDuration = $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
+                    $totalApproved += $approvedDuration;
+                    }
+                }
+            }
+            // dd($totalSupposed,$totalWorked,$totalApproved);
         return [
             'report_data' => $report_data,
             'branch_id' => $branch_id,
             'date' => $date,
+            // 'totalSupposed' => $totalSupposed,
+            'totalSupposed' => $this->formatDuration($totalSupposed),
+            'totalWorked' => $this->formatDuration($totalWorked),
+            'totalApproved' => $this->formatDuration($totalApproved),
         ];
     }
     

@@ -664,8 +664,8 @@ function employeeAttendancesByDate(array $employeeIds, $date)
     foreach ($employeeIds as $employeeId) {
         // Fetch the employee by ID
 
-        $employee = Employee::where('id', $employeeId)->whereHas('periods')->first();
-
+        $employee = Employee::where('id', $employeeId)->first();
+// dd($employee);
         if ($employee) {
 
             // if (!$employee) {
