@@ -63,6 +63,7 @@ class TestController2 extends Controller
 
     public function to_test_salary_slip($empId,$sid)
     {
+    //    return generateSalarySlipPdf($empId,$sid);
         $employee = Employee::find($empId);
         $branch = $employee->branch;
         $data = employeeSalarySlip($empId,$sid);

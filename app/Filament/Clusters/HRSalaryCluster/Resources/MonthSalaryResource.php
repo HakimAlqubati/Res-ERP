@@ -158,7 +158,8 @@ class MonthSalaryResource extends Resource
                         $month = $data['month'];
                         
                         $employeeId = $data['employee_id'];
-
+//  return testPdfDownload();
+                        // return generateSalarySlipPdf($employeeId,$record->id);
                         // Generate the URL using the route with parameters
                         $url = url("/to_test_salary_slip/{$employeeId}/{$record->id}");
 

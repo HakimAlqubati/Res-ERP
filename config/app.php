@@ -130,6 +130,7 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         // 'PDF' => niklasravnsborg\LaravelPdf\Facades\Pdf::class
+        'PDF' => Barryvdh\DomPDF\Facade::class,
 
     ])->toArray(),
 ];
