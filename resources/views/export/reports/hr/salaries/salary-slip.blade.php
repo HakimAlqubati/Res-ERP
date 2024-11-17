@@ -245,4 +245,9 @@
     .employee-info-table td strong {
         font-weight: bold;
     }
+
+    .company-info img {
+    width: 80px;
+    height: auto;
+    }
 </style>
