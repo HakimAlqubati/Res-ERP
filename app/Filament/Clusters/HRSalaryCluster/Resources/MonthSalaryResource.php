@@ -18,12 +18,14 @@ use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Unique;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MonthSalaryResource extends Resource
@@ -68,6 +70,8 @@ class MonthSalaryResource extends Resource
                         ->disabledOn('view')
                         ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
                         ->required()
+                        
+                        
                         ->helperText('Please, choose a branch'),
                     Select::make('name')->label('Month')->hiddenOn('view')
                         ->required()
@@ -92,20 +96,18 @@ class MonthSalaryResource extends Resource
             ]);
     }
 
+   
+   
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
     public static function table(Table $table): Table
     {
-    //     $currentYear = 2024;
-    //     $currentMonth = 10;
-
-    //  // Find the transaction and get only the first installment for the current month
-    //     $installment = Employee::find(107)?->transactions()
-    //         ->where('transaction_type_id', 6)
-    //         ->where('year', $currentYear)
-    //         ->where('month', $currentMonth)
-           
-    //         ?->first()?->latest('id')?->first()?->amount;
-    //     dd($installment);
+    
         return $table
+        ->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([

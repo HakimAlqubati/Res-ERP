@@ -15,7 +15,7 @@
             body * {
                 visibility: hidden;
             }
- 
+
             #report-table,
             #report-table * {
                 visibility: visible;
@@ -69,21 +69,24 @@
         style="padding-top: 200px;">
         <thead class="fixed-header" style="padding-top: 200px;;top:64px;">
             <x-filament-tables::row class="header_report">
-                <th colspan="3" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }} company-info">
+                <th colspan="3"
+                    class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }} company-info">
                     {{-- <p>{{ 'Attendance employees report' }}</p> --}}
                     <div style="width: 100%;">
 
-                        <img style="display: inline-block;" src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo" class="logo-left">
+                        <img style="display: inline-block;"
+                            src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo"
+                            class="logo-left">
                     </div>
                 </th>
                 <th colspan="3" class="no_border_right_left">
-                 
-                 <div style="width: 100;">
-                    
-                     <p>
-                          {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
-                      </p>
-                </div>
+
+                    <div style="width: 100;">
+
+                        <p>
+                            {{ $branch_id == '' ? ' ( All Branches ) ' : \App\Models\Branch::find($branch_id)?->name }}
+                        </p>
+                    </div>
 
                 </th>
                 <th colspan="4" style="text-align: center; vertical-align: middle; padding:12px;"
@@ -110,6 +113,7 @@
                 <th class="internal_cell">{{ __('Status') }}</th>
                 <th class="internal_cell">{{ __('Check-out') }}</th>
                 <th class="internal_cell">{{ __('Status') }}</th>
+                
                 <th class="internal_cell">{{ __('Supposed') }}</th>
                 <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                 <th class="internal_cell">{{ __('Approved') }}</th>
@@ -379,3 +383,6 @@
         if (modal) modal.style.display = 'flex';
     }
 </script>
+
+
+ 

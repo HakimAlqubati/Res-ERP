@@ -442,3 +442,12 @@ function getMonthsArray()
 
         return $nationalities;
     }
+
+
+    function replaceZeroInstedNegative($value)
+    {
+        if($value<0){
+            return 0;
+        }
+        return $value;
+    }

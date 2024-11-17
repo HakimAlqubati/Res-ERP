@@ -95,12 +95,13 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
     $remaningSalary = round($netSalary - round($totalDeducations, 2), 2);
+    $netSalary = replaceZeroInstedNegative($netSalary);
     // Return the details and net salary breakdown
     return [
-        'net_salary' => round($netSalary, 2),
+        'net_salary' =>  round($netSalary, 2),
         'details' => [
-            'basic_salary' => $basicSalary,
-            'salary_after_deducation' => $remaningSalary,
+            'basic_salary' =>  ($basicSalary),
+            'salary_after_deducation' => replaceZeroInstedNegative($remaningSalary),
             'deducationInstallmentAdvancedMonthly' => $deducationInstallmentAdvancedMonthly?->installment_amount,
             'total_deducation' => round($totalDeducations, 2),
             'total_allowances' => round($totalAllowances, 2),

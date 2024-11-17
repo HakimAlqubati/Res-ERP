@@ -7,7 +7,9 @@ use App\Models\ApplicationTransaction;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
+use App\Models\MonthSalary;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\DB;
@@ -22,15 +24,36 @@ class CreateMonthSalary extends CreateRecord
     {
 
         $monthsArray = getMonthsArray();
-
-       
+        
+        
         if (array_key_exists($data['name'], $monthsArray)) {
             $data['start_month'] = $monthsArray[$data['name']]['start_month'];
             $monthYear = Carbon::parse($data['start_month'])->format('Y-m');
-
+            
             $data['end_month'] = $monthsArray[$data['name']]['end_month'];
             $data['name'] = 'Salary of month (' . $monthsArray[$data['name']]['name'] . ')';
             $data['month'] = $monthYear;
+        }
+        $isExist = MonthSalary::
+        withTrashed()
+        ->where('month',$data['month'])->where('branch_id',$data['branch_id'])->first();
+    //    dd($isExist);
+       if ($isExist) {
+           if ($isExist->trashed()) {
+               // Permanently delete the soft-deleted record
+               $isExist->forceDelete();
+           }else{
+
+               // Notify the user and halt the operation if an active record exists
+               Notification::make()
+                   ->title('Payroll is already exist.')
+                   ->warning()
+                   ->send();
+    
+               $this->halt();
+           }
+           
+            
         }
 
         $data['created_by'] = auth()->user()->id;
