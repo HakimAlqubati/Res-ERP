@@ -375,7 +375,8 @@ class Employee extends Model
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
     
                 // Format the overtime into hours and minutes
-                $overtimeHours = floor($overtimeMinutes / 60);
+                // $overtimeHours = floor($overtimeMinutes / 60);
+                $overtimeHours = round($overtimeMinutes / 60 * 2) / 2;
                 $remainingMinutes = $overtimeMinutes % 60;
     
                 // Format as "X h Y m"
@@ -403,7 +404,6 @@ class Employee extends Model
                 ];
             }
         }
-    
         return $results; // Return the results
     }
 

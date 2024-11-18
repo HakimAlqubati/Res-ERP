@@ -91,6 +91,7 @@ class EmployeeOvertimeResource extends Resource
                                         // Fetch the employee using the employee_id from the provided data
                                         $employee = Employee::find($employeeData['employee_id']);
 
+                                        // dd($employee);
                                         // Ensure the employee exists before calling the overtime calculation
                                         if ($employee) {
                                             // Calculate overtime for the specified date
@@ -118,6 +119,7 @@ class EmployeeOvertimeResource extends Resource
                                             'end_time' => $employee['end_time'],
 
                                             'notes' => null,
+                                            // 'hours' => 55,
                                             'hours' => $employee['overtime_hours'],
                                         ];
                                     }, $employeesWithOvertime));
@@ -168,118 +170,9 @@ class EmployeeOvertimeResource extends Resource
                                         ];
                                     }, $employeesWithOvertime));
                                 })
-                                ,
-                            Toggle::make('show_default_values')->label('Set default values?')
-                            // ->helperText('Check if you want to set default values')
-                                ->helperText('Disalbed temporary to remove it')
-                                ->live()
-                                ->disabled()
-                            // ->disabled(fn(Get $get) => is_numeric($get('branch_id')))
-                                ->inline(false)->default(0),
+                          
                         ]),
-                    Fieldset::make('default_values')->label('Set default values')
-                        ->visible(fn(Get $get) => $get('show_default_values'))
-                        ->schema([
-                            Grid::make()->columns(3)->schema([
-                                TimePicker::make('start_time_as_default')
-                                    ->label('Checkin')
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                        // Get the current repeater data
-                                        $employees = $get('employees') ?? [];
-                                        // dd($employees,$state);
-                                        // Loop through the repeater items and set the 'start_time' for each
-
-                                        $end = Carbon::parse($get('end_time_as_default')); // Parse the end time
-                                        if (isset($end)) {
-                                            $start = Carbon::parse($state); // Parse the start time
-
-                                            // Calculate the difference in hours
-                                            $hours = round($start->diffInHours($end), 1);
-
-                                            // Set the result in the hours_as_default field
-                                            $set('hours_as_default', $hours);
-
-                                        }
-
-                                        foreach ($employees as $index => $employee) {
-                                            $employees[$index]['start_time'] = $state;
-                                            $employees[$index]['hours'] = $hours;
-                                        }
-
-                                        // Set the updated repeater data back to the 'employees' field
-                                        $set('employees', $employees);
-
-                                    })
-                                ,
-
-                                TimePicker::make('end_time_as_default')
-                                    ->label('Checkout')
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                        // Get the current repeater data
-                                        $employees = $get('employees') ?? [];
-                                        // dd($employees,$state);
-                                        // Loop through the repeater items and set the 'end_time' for each
-
-                                        $start = Carbon::parse($get('start_time_as_default')); // Parse the start time
-                                        if (isset($start)) {
-                                            $end = Carbon::parse($state); // Parse the end time
-
-                                            // Calculate the difference in hours
-
-                                            $hours = round($start->diffInHours($end), 1);
-
-                                            // Set the result in the hours_as_default field
-                                            $set('hours_as_default', $hours);
-                                        }
-
-                                        foreach ($employees as $index => $employee) {
-                                            $employees[$index]['end_time'] = $state;
-                                            $employees[$index]['hours'] = $hours;
-                                        }
-
-                                        // Set the updated repeater data back to the 'employees' field
-                                        $set('employees', $employees);
-
-                                    })
-                                ,
-                                TextInput::make('hours_as_default')->label('Overtime Hours')
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                        // Get the current repeater data
-                                        $employees = $get('employees') ?? [];
-                                        // dd($employees,$state);
-                                        // Loop through the repeater items and set the 'notes' for each
-                                        foreach ($employees as $index => $employee) {
-                                            $employees[$index]['hours'] = $state;
-                                        }
-
-                                        // Set the updated repeater data back to the 'employees' field
-                                        $set('employees', $employees);
-                                    })
-                                ,
-                            ]),
-                            Grid::make()->columns(2)->schema([
-                                TextInput::make('notes_as_default')
-                                    ->label('Notes')
-                                    ->columnSpan(2)
-                                    ->live()
-                                    ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                        // Get the current repeater data
-                                        $employees = $get('employees') ?? [];
-                                        // dd($employees,$state);
-                                        // Loop through the repeater items and set the 'notes' for each
-                                        foreach ($employees as $index => $employee) {
-                                            $employees[$index]['notes'] = $state;
-                                        }
-
-                                        // Set the updated repeater data back to the 'employees' field
-                                        $set('employees', $employees);
-                                    })
-                                    ->nullable(),
-                            ]),
-                        ]),
+                 
                     Repeater::make('employees')
                         ->label('')
                         ->required()
@@ -333,7 +226,7 @@ class EmployeeOvertimeResource extends Resource
                                             $set('hours', $hours);
                                         })
                                     ,
-                                    TextInput::make('hours')->label('Overtime Hours')->required(),
+                                    TextInput::make('hours')->label('Overtime Hours')->required()->minValue(0.5),
                                 ]),
                                 Grid::make()->columns(2)->schema([
                                     TextInput::make('notes')
@@ -351,9 +244,15 @@ class EmployeeOvertimeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->striped()
         ->defaultSort('id','desc')
             ->paginated([10, 25, 50, 100])
             ->columns([
+                TextColumn::make('id')
+                    ->label('')
+                    ->sortable()
+                    ->wrap()
+                    ->searchable()->toggleable(isToggledHiddenByDefault:true),
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
@@ -409,6 +308,15 @@ class EmployeeOvertimeResource extends Resource
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
+                Action::make('Edit')->visible(fn():bool=>isSuperAdmin())
+                ->form(function($record){
+                    return [
+                        TextInput::make('hours')->default($record->hours),
+                    ];
+                })->action(function($record,$data){
+// dd($data['hours'],$data,$record);
+                    return $record->update(['hours'=>$data['hours']]);
+                }),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
