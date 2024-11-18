@@ -122,12 +122,62 @@ class Employee extends Model
     public function approvedLeaveApplications()
     {
         return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED)->with('leaveType');
-    }
-
+    } 
 
     public function transactions()
     {
         return $this->hasMany(ApplicationTransaction::class, 'employee_id');
+    }
+    public function approvedAdvanceApplication()
+    {
+        return $this->hasMany(EmployeeApplication::class, 'employee_id')
+        ->where('status',EmployeeApplication::STATUS_APPROVED)
+        ->where('application_type_id',EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)
+        ;
+    }
+    public function approvedLeaveApplication()
+    {
+        return $this->hasMany(EmployeeApplication::class, 'employee_id')
+        ->where('status',EmployeeApplication::STATUS_APPROVED)
+        ->where('application_type_id',EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
+        ;
+    }
+
+    // public function getApprovedAdvanceApplicationAttribute()
+    // {
+    //     return $this->approvedAdvanceApplication()->get();
+    // }
+
+ 
+      // Custom attribute to fetch approved advance applications
+      public function getApprovedAdvanceApplicationAttribute()
+      {
+          return $this->approvedAdvanceApplication()->get()->map(function ($application) {
+            // dd($application->paid_installments_count);  
+            return [
+                  'id' =>$application->id,
+                  'paid'=> $application->paid_installments_count,
+                  'details' => json_decode($application->details, true), // Parse the JSON details
+                  'created_at' => $application->created_at->format('Y-m-d'),
+                  'updated_at' => $application->updated_at->format('Y-m-d'),
+              ];
+          });
+      }
+
+      // Custom attribute to fetch approved leave requests
+    public function getApprovedLeaveRequestsAttribute()
+    {
+        return $this->approvedLeaveApplication()->get()->map(function ($leaveRequest) {
+            return [
+                'id' => $leaveRequest->id,
+                'leave_type_id' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_leave_type_id'] ?? null : null,
+                'from_date' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_from_date'] ?? null : null,
+                'to_date' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_to_date'] ?? null : null,
+                'days_count' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_days_count'] ?? null : null,
+                'created_at' => $leaveRequest->created_at->format('Y-m-d'),
+                'updated_at' => $leaveRequest->updated_at->format('Y-m-d'),
+            ];
+        });
     }
 
     public function periods()
@@ -374,5 +424,45 @@ class Employee extends Model
         }
     }
 
-    
+
+      // Define the tax brackets
+      public const TAX_BRACKETS = [
+        [0, 5000, 0],          // 0 - 5,000 -> 0%
+        [5001, 20000, 1],      // 5,001 - 20,000 -> 1%
+        [20001, 35000, 3],     // 20,001 - 35,000 -> 3%
+        [35001, 50000, 8],     // 35,001 - 50,000 -> 8%
+        [50001, 70000, 13],    // 50,001 - 70,000 -> 13%
+        [70001, 100000, 21],   // 70,001 - 100,000 -> 21%
+        [100001, 250000, 24],  // 100,001 - 250,000 -> 24%
+        [250001, 400000, 25],  // 250,001 - 400,000 -> 25%
+        [400001, 600000, 26],  // 400,001 - 600,000 -> 26%
+        [600001, 1000000, 28], // 600,001 - 1,000,000 -> 28%
+        [1000001, 2000000, 30],// 1,000,001 - 2,000,000 -> 30%
+        [2000001, PHP_INT_MAX, 32] // Above 2,000,000 -> 32%
+    ];
+
+    /**
+     * Get the tax percentage based on the employee's salary for nationality 'MY'.
+     *
+     * @return int|null Tax percentage or null if not applicable.
+     */
+    public function getTaxPercentageAttribute()
+    {
+        // Only calculate for nationality 'MY'
+        if ($this->nationality !== 'MY') {
+            return 0; // No tax percentage for non-'MY' nationality
+        }
+
+        $salary = $this->salary;
+
+        foreach (self::TAX_BRACKETS as $bracket) {
+            [$min, $max, $percentage] = $bracket;
+
+            if ($salary >= $min && $salary <= $max) {
+                return $percentage;
+            }
+        }
+
+        return 0; // Return null if no matching bracket is found
+    }
 }

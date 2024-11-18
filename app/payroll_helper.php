@@ -3,6 +3,7 @@
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\Employee;
+use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthSalary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -63,6 +64,9 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $dailySalary = calculateDailySalary($employeeId, $date);
     $hourlySalary = calculateHourlySalary($employeeId, $date);
 
+    
+    $taxDeduction = calculateYearlyTax($employee); // Retrieve tax percentage using the function in the Employee model
+
     $date = Carbon::parse($date);
     // Get the start of the month
     $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
@@ -95,7 +99,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
 
-    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0));
+    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0)+ $taxDeduction);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result']);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
@@ -109,6 +113,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'basic_salary' => ($basicSalary),
             'salary_after_deducation' => replaceZeroInstedNegative($remaningSalary),
             'deducationInstallmentAdvancedMonthly' => $deducationInstallmentAdvancedMonthly?->installment_amount,
+            'tax_deduction' => round($taxDeduction, 2), // Add tax deduction to the breakdown
+
             'total_deducation' => round($totalDeducations, 2),
             'total_allowances' => round($totalAllowances, 2),
             'total_other_adding' => round($totalOtherAdding, 2),
@@ -352,145 +358,268 @@ function employeeSalarySlip($employeeId, $sid)
 
 }
 
-function testPdfDownload()
+function convertToUtf8($data)
 {
-    // Sample Data
-    $employee = (object) [
-        'name' => 'John Doe',
-        'employee_no' => 'EMP12345',
-        'job_title' => 'Software Engineer',
-        'branch' => (object) ['name' => 'Main Branch'],
-    ];
-
-    $monthName = 'October 2024';
-
-    $employeeAllowances = [
-        ['allowance_name' => 'Transport Allowance', 'amount' => 200.50],
-        ['allowance_name' => 'Housing Allowance', 'amount' => 500.00],
-    ];
-
-    $employeeDeductions = [
-        ['deduction_name' => 'Tax', 'deduction_amount' => 150.00],
-        ['deduction_name' => 'Insurance', 'deduction_amount' => 50.00],
-    ];
-
-    $data = [
-        'details' => [
-            [
-                'overtime_pay' => 100.00,
-                'total_incentives' => 50.00,
-                'net_salary' => 1600.50,
-            ],
-        ],
-    ];
-
-    $totalAllowanceAmount = collect($employeeAllowances)->sum('amount');
-    $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
-
-    // Generate PDF
-    $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip-test-pdf', compact(
-        'employee',
-        'monthName',
-        'employeeAllowances',
-        'employeeDeductions',
-        'data',
-        'totalAllowanceAmount',
-        'totalDeductionAmount'
-    ));
-
-    // Return PDF
-    return $pdf->download('salary-slip.pdf');
-}
-
-
-function convert_to_utf8_recursively($dat){
-    if( is_string($dat) ){
-        return mb_convert_encoding($dat, 'UTF-8', 'UTF-8');
-    }
-    elseif( is_array($dat) ){
-        $ret = [];
-        foreach($dat as $i => $d){
-            $ret[$i] = convert_to_utf8_recursively($d);
+    if (is_array($data)) {
+        return array_map('convertToUtf8', $data);
+    } elseif (is_object($data)) {
+        foreach (get_object_vars($data) as $key => $value) {
+            $data->$key = convertToUtf8($value);
         }
-        return $ret;
+        return $data;
+    } elseif (is_string($data)) {
+        // Ensure the string is properly encoded in UTF-8
+        return mb_convert_encoding($data, 'UTF-8', 'UTF-8');
     }
-    else{
-        return $dat;
-    }
+    // Return other data types (e.g., int, float) as-is
+    return $data;
 }
 
-function generateSalarySlipPdf($employeeId, $sid)
+function generateSalarySlipPdf_($employeeId, $sid)
 {
-    // Fetch the month salary with related details
-    $monthSalary = MonthSalary::with([
-        'details' => function ($query) use ($employeeId) {
-            $query->where('employee_id', $employeeId);
-        },
-        'increaseDetails' => function ($query) use ($employeeId) {
-            $query->where('employee_id', $employeeId);
-        },
-        'deducationDetails' => function ($query) use ($employeeId) {
-            $query->where('employee_id', $employeeId);
-        },
-    ])->findOrFail($sid);
-
-    // Retrieve employee and branch information
-    $employeeName = sanitizeString($employee->name ?? 'Unknown');
-    $branchName = sanitizeString($branch->name ?? 'Unknown');
-
     $employee = Employee::find($employeeId);
     $branch = $employee->branch;
-    // $data = employeeSalarySlip($empId,$sid);
-    // Set the month name dynamically from monthSalary
-    $monthName = $monthSalary->month;
+    $data = employeeSalarySlip($employeeId, $sid);
 
-    // Calculate total allowances and deductions
-    $employeeAllowances = $monthSalary->increaseDetails->map(function ($detail) {
+    $increaseDetails = $data->increaseDetails;
+    $deducationDetails = $data->deducationDetails;
+    $allowanceTypes = Allowance::where('active', 1)->select('name', 'id')->pluck('name', 'id');
+
+    $month = $data->month;
+    $monthName = Carbon::parse($month)->translatedFormat('F Y');
+
+    $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
+        $typeId = $allowance['type_id'];
+
         return [
-            'allowance_name' => $detail->allowance_name,
-            'amount' => $detail->amount,
+            'id' => $allowance['id'],
+            'type_id' => $typeId,
+            'allowance_name' => $allowanceTypes[$typeId] ?? 'Unknown Allowance', // Fallback if allowance type is missing
+            'amount' => $allowance['amount'],
         ];
-    });
+    })->toArray();
 
-    $employeeDeductions = $monthSalary->deducationDetails->map(function ($detail) {
+    // Calculate the total allowance amount
+    $totalAllowanceAmount = collect($employeeAllowances)->sum('amount') + ($data?->details[0]['overtime_pay'] ?? 0) + ($employee?->salary ?? 0) + ($data?->details[0]['total_incentives'] ?? 0);
+
+    $deducationTypes = Deduction::where('active', 1)
+        ->select('name', 'id')->pluck('name', 'id')
+        ->toArray();
+
+    $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
+    $allDeductionTypes = $deducationTypes + $constDeducationTypes;
+    $employeeDeductions = collect($deducationDetails)->map(function ($deduction) use ($allDeductionTypes) {
+        $deductionId = $deduction['deduction_id'];
+
         return [
-            'deduction_name' => $detail->deduction_name,
-            'deduction_amount' => $detail->amount,
+            'id' => $deduction['id'],
+            'deduction_id' => $deductionId,
+            'deduction_name' => $allDeductionTypes[$deductionId] ?? 'Unknown Deduction', // Fallback if deduction type is missing
+            'deduction_amount' => $deduction['deduction_amount'],
         ];
-    });
+    })->toArray();
 
-    $totalAllowanceAmount = $employeeAllowances->sum('amount');
-    $totalDeductionAmount = $employeeDeductions->sum('deduction_amount');
-
-    // Prepare the data for the view
-    $data = $monthSalary;
+    // Calculate the total deduction amount
+    $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
 
     try {
         // Prepare Data for the Blade View
         $viewData = compact(
-            'employee',
-            'branch',
-            'monthName',
-            'employeeAllowances',
-            'employeeDeductions',
             'data',
             'totalAllowanceAmount',
-            'totalDeductionAmount'
+            'totalDeductionAmount',
+            'employeeAllowances',
+            'employeeDeductions',
+            'month',
+            'monthName',
+            'employee',
+            'branch'
         );
+        $utf8Data = convertToUtf8($viewData);
+        // Generate PDF
+        // Generate the PDF content
+        //   dd($utf8Data);
+        $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip', $utf8Data);
+        $pdfContent = $pdf->output();
 
-// dd($viewData);
-        // dd($d);
-        $pdf = Pdf::loadView(
-            'export.reports.hr.salaries.salary-slip', convert_to_utf8_recursively($viewData)
-        );
-        return $pdf->stream('salary_slip.pdf');
+        // Use `response()->streamDownload()`
+        return response()->streamDownload(function () use ($pdfContent) {
+            echo $pdfContent;
+        }, 'salary-slip_' . $employee->name . '.pdf');
     } catch (\Exception $e) {
         dd($e->getMessage());
     }
-    // Return the generated PDF
-    // return $pdf->stream('salary_slip.pdf'); // Display the PDF in the browser
-    // return $pdf->download('salary_slip.pdf'); // Uncomment to download the PDF
+
 }
+
+
+function generateSalarySlipPdf($employeeId, $sid)
+{
+    $employee = Employee::find($employeeId);
+    $branch = $employee->branch;
+    $data = employeeSalarySlip($employeeId, $sid);
+
+    $increaseDetails = $data->increaseDetails;
+    $deducationDetails = $data->deducationDetails;
+    $allowanceTypes = Allowance::where('active', 1)->pluck('name', 'id');
+
+    $month = $data->month;
+    $monthName = Carbon::parse($month)->translatedFormat('F Y');
+
+    $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
+        return [
+            'allowance_name' => $allowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
+            'amount' => $allowance['amount'],
+        ];
+    });
+
+    $employeeDeductions = collect($deducationDetails)->map(function ($deduction) {
+        return [
+            'deduction_name' => $deduction['deduction_id'] ?? 'Unknown Deduction',
+            'deduction_amount' => $deduction['deduction_amount'],
+        ];
+    });
+
+    $totalAllowanceAmount = $employeeAllowances->sum('amount') + ($data->details[0]['overtime_pay'] ?? 0) + ($employee->salary ?? 0) + ($data->details[0]['total_incentives'] ?? 0);
+    $totalDeductionAmount = $employeeDeductions->sum('deduction_amount');
+
+    $viewData = compact(
+        'data',
+        'totalAllowanceAmount',
+        'totalDeductionAmount',
+        'employeeAllowances',
+        'employeeDeductions',
+        'month',
+        'monthName',
+        'employee',
+        'branch'
+    );
+
+    $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip', $viewData);
+    return $pdf->output(); // Return PDF content
+}
+
+
+function generateMultipleSalarySlips(array $employeeIds, $sid)
+{
+    $pdfFiles = [];
+
+    foreach ($employeeIds as $employeeId) {
+        $employee = Employee::find($employeeId);
+        $branch = $employee->branch;
+        $data = employeeSalarySlip($employeeId, $sid);
+
+        $month = $data->month;
+        $monthName = Carbon::parse($month)->translatedFormat('F Y');
+
+        $employeeAllowances = collect($data->increaseDetails)->map(function ($allowance) {
+            return [
+                'allowance_name' => $allowance['type_id'] ?? 'Unknown Allowance',
+                'amount' => $allowance['amount'],
+            ];
+        })->toArray();
+
+        $employeeDeductions = collect($data->deducationDetails)->map(function ($deduction) {
+            return [
+                'deduction_name' => $deduction['deduction_id'] ?? 'Unknown Deduction',
+                'deduction_amount' => $deduction['deduction_amount'],
+            ];
+        })->toArray();
+
+        $totalAllowanceAmount = collect($employeeAllowances)->sum('amount') + ($data->details[0]['overtime_pay'] ?? 0) + ($employee->salary ?? 0) + ($data->details[0]['total_incentives'] ?? 0);
+        $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
+
+        // Prepare data for PDF
+        $viewData = compact(
+            'data',
+            'totalAllowanceAmount',
+            'totalDeductionAmount',
+            'employeeAllowances',
+            'employeeDeductions',
+            'month',
+            'monthName',
+            'employee',
+            'branch'
+        );
+
+        // Generate the PDF
+        $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip', $viewData);
+
+        // Save the PDF to a temporary location
+        $fileName = "salary_slip_{$employee->name}.pdf";
+        $filePath = "temp/{$fileName}";
+
+        Storage::disk('public')->put($filePath, $pdf->output());
+
+        $pdfFiles[] = [
+            'name' => $fileName,
+            'url' => Storage::url($filePath),
+        ];
+    }
+
+    return $pdfFiles;
+}
+
+function generateBulkSalarySlipPdf(array $employeeIds, $sid)
+{
+    $mergedPdf = new Pdf; // For merging PDFs, consider libraries like `setasign/fpdi`.
+
+    $zipFilePath = storage_path('app/public/salary_slips.zip'); // Temporary storage for ZIP file
+    $zip = new \ZipArchive();
+
+    if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+        foreach ($employeeIds as $employeeId) {
+            $employee = Employee::find($employeeId);
+            $branch = $employee->branch;
+            $data = employeeSalarySlip($employeeId, $sid);
+
+            $increaseDetails = $data->increaseDetails;
+            $deducationDetails = $data->deducationDetails;
+            $monthName = Carbon::parse($data->month)->translatedFormat('F Y');
+
+            $employeeAllowances = collect($increaseDetails)->map(function ($allowance) {
+                return [
+                    'allowance_name' => $allowance['type_id'] ?? 'Unknown Allowance',
+                    'amount' => $allowance['amount'],
+                ];
+            })->toArray();
+
+            $employeeDeductions = collect($deducationDetails)->map(function ($deduction) {
+                return [
+                    'deduction_name' => $deduction['deduction_id'] ?? 'Unknown Deduction',
+                    'deduction_amount' => $deduction['deduction_amount'],
+                ];
+            })->toArray();
+
+            $totalAllowanceAmount = collect($employeeAllowances)->sum('amount');
+            $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
+
+            $viewData = compact(
+                'employee',
+                'branch',
+                'data',
+                'employeeAllowances',
+                'employeeDeductions',
+                'totalAllowanceAmount',
+                'totalDeductionAmount',
+                'monthName'
+            );
+
+            $pdf = Pdf::loadView('export.reports.hr.salaries.salary-slip', $viewData);
+
+            // Save individual PDF in the ZIP file
+            $fileName = "salary_slip_{$employee->name}.pdf";
+            $zip->addFromString($fileName, $pdf->output());
+        }
+
+        $zip->close();
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    } else {
+        throw new \Exception('Failed to create ZIP file.');
+    }
+}
+
 
 function sanitizeString($string)
 {
@@ -516,4 +645,41 @@ function getInstallmentAdvancedMonthly($employee, $year, $month)
         ->first()?->installments->first();
 
     return $advancedInstalmment;
+}
+
+
+if (!function_exists('calculateYearlyTax')) {
+    /**
+     * Calculate the yearly tax deduction for an employee.
+     *
+     * @param Employee $employee The employee instance.
+     * @return float The yearly tax deduction amount.
+     */
+    function calculateYearlyTax(Employee $employee)
+    {
+        // Check nationality (only for 'MY')
+        if ($employee->nationality !== 'MY') {
+            return 0; // No tax for non-'MY' nationality
+        }
+
+        // Calculate yearly salary
+        $yearlySalary = $employee->salary * 12;
+
+        // Use the tax brackets to determine the tax rate
+        $taxPercentage = 0;
+        foreach (Employee::TAX_BRACKETS as $bracket) {
+            [$min, $max, $percentage] = $bracket;
+
+            if ($yearlySalary >= $min && $yearlySalary <= $max) {
+                $taxPercentage = $percentage;
+                break;
+            }
+        }
+
+
+        // Calculate the yearly tax deduction
+        $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100))/12;
+// dd($yearlyTaxDeduction,$yearlySalary,$taxPercentage);
+        return round($yearlyTaxDeduction, 2); // Return rounded value
+    }
 }

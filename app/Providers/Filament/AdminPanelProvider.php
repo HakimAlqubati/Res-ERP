@@ -19,6 +19,7 @@ use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Pages\Dashboard as PagesDashboard;
+use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\Shield\RoleResource;
@@ -102,6 +103,7 @@ class AdminPanelProvider extends PanelProvider
                          (getCurrentRole() != 17) ? HRServiceRequestCluster::getNavigationItems(): [], 
                          (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) ? HRAttenanceCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRAttendanceReport::getNavigationItems(): [], 
+                        //   (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? EmployeeRecords::getNavigationItems(): [], 
                         //   (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HrClusteReport::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRCircularCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems(): [], 

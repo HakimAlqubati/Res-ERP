@@ -6,6 +6,7 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\User;
+use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -225,7 +226,13 @@ class UserResource extends Resource
                     Fieldset::make()->label('Set user type and role')->schema([
                         Select::make('user_type')
                             ->label('User type')
-                            ->options(getUserTypes())->required()
+                            // ->options(getUserTypes())
+                            ->options(
+                                UserType::select('name', 'id')
+                                ->whereNotIn('id', [2,3,4])
+                                ->get()->pluck('name', 'id')
+                            )
+                            ->required()
                             ->live()
                             ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 

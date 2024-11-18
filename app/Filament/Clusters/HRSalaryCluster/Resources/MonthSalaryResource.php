@@ -25,7 +25,6 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Validation\Rules\Unique;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MonthSalaryResource extends Resource
@@ -70,8 +69,7 @@ class MonthSalaryResource extends Resource
                         ->disabledOn('view')
                         ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
                         ->required()
-                        
-                        
+
                         ->helperText('Please, choose a branch'),
                     Select::make('name')->label('Month')->hiddenOn('view')
                         ->required()
@@ -96,8 +94,6 @@ class MonthSalaryResource extends Resource
             ]);
     }
 
-   
-   
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
@@ -105,9 +101,9 @@ class MonthSalaryResource extends Resource
 
     public static function table(Table $table): Table
     {
-    
+
         return $table
-        ->striped()
+            ->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
@@ -129,8 +125,8 @@ class MonthSalaryResource extends Resource
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
             ->actions([
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make()->button(),
+                Tables\Actions\ViewAction::make()->button(),
                 Action::make('excel_download')
                     ->button()
                     ->color('info')
@@ -138,10 +134,60 @@ class MonthSalaryResource extends Resource
                     ->action(function ($record) {
                         return static::exportExcel($record);
                     }),
+                Action::make('bulk_salary_slip')
+                    ->button()->label('Bulk salary slip')
+                    ->color('primary') // Use primary color for bulk action
+                    ->icon('heroicon-o-archive-box-arrow-down') // Icon for bulk salary slips                
+                    ->form(function ($record) {
+                        $employeeIds = $record?->details->pluck('employee_id')->toArray();
+                        $employeeOptions = Employee::whereIn('id', $employeeIds)
+                            ->select('name', 'id')
+                            ->pluck('name', 'id')
+                            ->toArray();
+                
+                        return [
+                            Hidden::make('month')->default($record?->month),
+                            Forms\Components\CheckboxList::make('employee_ids')
+                                ->required()->columns(3)
+                                ->label('Select Employees')
+                                ->options($employeeOptions) // Use the employee options
+                                ->default(array_keys($employeeOptions)) // Pre-check all employees
+                                ->helperText('Select up to 10 employees to generate their payslips'),
+                        ];
+                    })
+                
+                    ->action(function ($record, $data) {
+                        $employeeIds = $data['employee_ids'];
+                        // dd($employeeIds);
+                        $zipFileName = 'salary_slips.zip';
+                        $zipFilePath = storage_path('app/public/' . $zipFileName);
+                        $zip = new \ZipArchive();
+
+                        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                            foreach ($employeeIds as $employeeId) {
+                                $pdfContent = generateSalarySlipPdf($employeeId, $record->id); // Generate the PDF content
+                                $employeeName = Employee::find($employeeId)->name;
+                                $fileName = 'salary-slip_' . $employeeName . '.pdf';
+
+                                // Add the PDF content to the ZIP archive
+                                $zip->addFromString($fileName, $pdfContent);
+                            }
+
+                            // Close the ZIP archive
+                            $zip->close();
+
+                            // Provide the ZIP file for download
+                            return response()->download($zipFilePath)->deleteFileAfterSend(true);
+                        } else {
+                            throw new \Exception('Could not create ZIP file.');
+                        }
+
+                    }),
                 Action::make('salary_slip')
-                    ->button()
-                    ->color('success')
-                    ->icon('heroicon-o-newspaper')
+                    ->button()->label('Salary slip')
+                    ->color('success') // Use secondary color for single employee action
+                  ->icon('heroicon-o-document-arrow-down') // Icon for employee salary slip
+  
                     ->form(function ($record) {
                         $employeeIds = $record?->details->pluck('employee_id')->toArray();
 
@@ -149,22 +195,23 @@ class MonthSalaryResource extends Resource
                             Hidden::make('month')->default($record?->month),
                             Select::make('employee_id')
                                 ->required()
-                                ->label('Employee')->searchable()
-                                ->helperText('Search employee to get his payslip')
-                                ->options(Employee::whereIn('id', $employeeIds)->select('name', 'id')->pluck('name', 'id')),
+                                ->label('Employee')
+                                ->searchable()
+                                ->columns(2)
+                                ->options(function () use ($employeeIds) {
+                                    return Employee::whereIn('id', $employeeIds)
+                                        ->select('name', 'id')
+                                        ->pluck('name', 'id');
+                                })
+                                ->allowHtml(),
+                            
+
                         ];
                     })
                     ->action(function ($record, $data) {
-                        $month = $data['month'];
-                        
                         $employeeId = $data['employee_id'];
-//  return testPdfDownload();
-                        // return generateSalarySlipPdf($employeeId,$record->id);
-                        // Generate the URL using the route with parameters
-                        $url = url("/to_test_salary_slip/{$employeeId}/{$record->id}");
-
-                        // Redirect to the generated URL
-                        return redirect()->away($url);
+                      return generateSalarySlipPdf_($employeeId, $record->id);
+                        
 
                     }),
             ])
@@ -220,8 +267,7 @@ class MonthSalaryResource extends Resource
 
         $deducationDetails = $record?->deducationDetails;
         $increaseDetails = $record->increaseDetails;
- 
-        
+
         $data = [];
         foreach ($details as $key => $value) {
             $employee = $value->employee;
@@ -257,10 +303,10 @@ class MonthSalaryResource extends Resource
 
             $monthlyInstallmentAdvanced = $employee?->transactions()
                 ->where('transaction_type_id', 6)
-                ->where('year', date('Y',strtotime($record->month)))
-                ->where('month',  date('m',strtotime($record->month)))
-            
-                ?->first()?->latest('id')?->first()?->amount;
+                ->where('year', date('Y', strtotime($record->month)))
+                ->where('month', date('m', strtotime($record->month)))
+
+            ?->first()?->latest('id')?->first()?->amount;
             $data[] = [
                 'employee_id' => $employee?->id,
                 'employee_no' => $employee?->employee_no,

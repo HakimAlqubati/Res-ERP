@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -8,6 +9,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class EmployeeApplication extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected $appends = ['detailed_leave_request'];
+
     protected $table = 'hr_employee_applications';
     protected $fillable = [
         'employee_id',
@@ -140,7 +144,7 @@ class EmployeeApplication extends Model
         }
         return null;
     }
-    
+
     public function getDetailFromDateAttribute()
     {
         if ($this->application_type_id == 1) {
@@ -174,10 +178,10 @@ class EmployeeApplication extends Model
         return null;
     }
     protected static function booted()
-    { 
+    {
         // parent::boot();
-      
-    //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
+
+        //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
         if (auth()->check()) {
             if (isBranchManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
@@ -190,4 +194,76 @@ class EmployeeApplication extends Model
             }
         }
     }
+
+    public function getDetailedAdvanceApplicationAttribute()
+    {
+
+        $details = $this->details; // Assuming `details` is the name of the column
+
+        // Decode the JSON string into an array
+        $detailsArray = json_decode($details, true);
+
+        // Check if decoding was successful and return a detailed array
+        if (is_array($detailsArray)) {
+            return [
+                'id' => $this->id,
+                'advance_amount' => isset($detailsArray['detail_advance_amount'])
+                ? number_format($detailsArray['detail_advance_amount'], 2)
+                : null,
+                'monthly_deduction_amount' => isset($detailsArray['detail_monthly_deduction_amount'])
+                ? number_format($detailsArray['detail_monthly_deduction_amount'], 2)
+                : null,
+                'deduction_ends_at' => isset($detailsArray['detail_deduction_ends_at'])
+                ? Carbon::parse($detailsArray['detail_deduction_ends_at'])->format('Y-m-d')
+                : null,
+                'number_of_months_of_deduction' => $detailsArray['detail_number_of_months_of_deduction'] ?? null,
+                'date' => isset($detailsArray['detail_date'])
+                ? Carbon::parse($detailsArray['detail_date'])->format('Y-m-d')
+                : null,
+                'deduction_starts_from' => isset($detailsArray['detail_deduction_starts_from'])
+                ? Carbon::parse($detailsArray['detail_deduction_starts_from'])->format('Y-m-d')
+                : null,
+            ];
+        }
+
+        // If decoding fails, return null or an empty array
+        return [];
+    }
+
+    public function advanceInstallments()
+    {
+        return $this->hasMany(EmployeeAdvanceInstallment::class, 'application_id');
+    }
+
+    public function getPaidInstallmentsCountAttribute()
+    {
+        return $this->advanceInstallments()->where('is_paid', true)->count();
+    }
+
+    public function getDetailedLeaveRequestAttribute()
+    {
+        $details = $this->details; // Assuming `details` is the column where JSON data is stored
+
+        // Decode the JSON string into an array
+        $detailsArray = json_decode($details, true);
+
+        // Check if decoding was successful and return a detailed array
+        if (is_array($detailsArray)) {
+            return [
+                'id' => $this->id,
+                'leave_type_id' => $detailsArray['detail_leave_type_id'] ?? null,
+                'from_date' => isset($detailsArray['detail_from_date'])
+                ? Carbon::parse($detailsArray['detail_from_date'])->format('Y-m-d')
+                : null,
+                'to_date' => isset($detailsArray['detail_to_date'])
+                ? Carbon::parse($detailsArray['detail_to_date'])->format('Y-m-d')
+                : null,
+                'days_count' => $detailsArray['detail_days_count'] ?? null,
+            ];
+        }
+
+        // If decoding fails, return null or an empty array
+        return [];
+    }
+
 }

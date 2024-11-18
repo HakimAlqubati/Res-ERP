@@ -94,7 +94,7 @@ class EmployeeApplicationResource extends Resource
                         ->columnSpan(2)
                         ->label('Request type')
                         ->hiddenOn('edit')
-                        ->live()
+                        ->live()->required()
                         ->options(EmployeeApplication::APPLICATION_TYPES)
                         ->icons([
                             EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'heroicon-o-banknotes',

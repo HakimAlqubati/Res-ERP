@@ -209,7 +209,10 @@ class TaskResource extends Resource implements HasShieldPermissions
                             DatePicker::make('end_date')
                                 ->native(false)
                                 ->displayFormat('d/m/Y')
-                                ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
+                                
+                                ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)
+                                ->minDate(date('Y-m-d'))
+                                // ->minDate(fn (Get $get) => $get('end_date_min') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
                                 $date1 = new \DateTime($get('start_date'));
@@ -293,7 +296,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 }
                             }
                             return false;
-                        })
+                        })->minDate(now()->toDateString())
                             ->helperText('Set due date for this task'),
                         Select::make('task_status')->options(
                             [
@@ -1000,7 +1003,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     {
         return $page->generateNavigationItems([
             Pages\ListTasks::class,
-            Pages\CreateTask::class,
+            // Pages\CreateTask::class,
             Pages\EditTask::class,
         ]);
     }

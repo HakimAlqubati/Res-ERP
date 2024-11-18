@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstal
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
+use App\Filament\Widgets\CircularWidget;
 use App\Models\Allowance;
 use App\Models\Branch;
 use App\Models\Deduction;
@@ -41,6 +42,7 @@ use Filament\Tables\Actions\Action as ActionsAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -67,6 +69,13 @@ class EmployeeResource extends Resource
     public static function getPluralLabel(): ?string
     {
         return __('lang.employees');
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            // CircularWidget::class, // Include the chart widget
+        ];
     }
 
     public static function getLabel(): ?string
@@ -487,7 +496,12 @@ class EmployeeResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
-            ])
+                SelectFilter::make('nationality')
+                    ->searchable()
+                    ->multiple()
+                    ->label(__('Nationality'))
+                    ->options(getNationalities()),
+            ], FiltersLayout::AboveContent)
             ->actions([
                 ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                 ->color('info')
