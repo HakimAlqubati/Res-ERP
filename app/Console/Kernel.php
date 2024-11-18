@@ -2,8 +2,10 @@
 
 namespace App\Console;
 
+use App\Console\Commands\TestCronJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -18,8 +20,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('inspire')->hourly();
         $schedule->command('app:schedule-task')->dailyAt('06:00');
         $schedule->command('report:send-absent-employees')->dailyAt('10:00');
-
-
+        $schedule->call('test:cron')->everyMinute();
+        
+        // $schedule->job(new TestCronJob)->everyTwentySeconds();
+        // $schedule->call(function () {
+        //     Log::info('Scheduler is working');
+        // })->everyMinute();
     }
 
     /**
