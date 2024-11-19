@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pa
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\ApplicationTransaction;
 use App\Models\Employee;
+use App\Models\EmployeeAdvanceInstallment;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
@@ -132,6 +133,19 @@ class CreateMonthSalary extends CreateRecord
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::TAX_DEDUCTIONS],
                         'deduction_amount' => $calculateSalary['details']['tax_deduction'],
                     ]);
+                }
+                if(isset($calculateSalary['details']['deducation_installment_advanced_monthly']['amount']) && $calculateSalary['details']['deducation_installment_advanced_monthly']['amount'] > 0){
+                    $this->record->deducationDetails()->create([
+                        'employee_id' => $employee->id,
+                        
+                        'deduction_id' => MonthlySalaryDeductionsDetail::ADVANCED_MONTHLY_DEDUCATION,
+                        'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::ADVANCED_MONTHLY_DEDUCATION],
+                        'deduction_amount' => $calculateSalary['details']['deducation_installment_advanced_monthly']['amount'],
+                    ]);
+                    if(isset($calculateSalary['details']['deducation_installment_advanced_monthly']['installment_id'])){
+                        EmployeeAdvanceInstallment::find($calculateSalary['details']['deducation_installment_advanced_monthly']['installment_id'])
+                        ->update(['is_paid'=>1,'paid_date'=>$this->record->end_month]);
+                    }
                 }
                 if(isset($calculateSalary['details']['deduction_for_late_hours']) && $calculateSalary['details']['deduction_for_late_hours'] > 0){
                     $this->record->deducationDetails()->create([

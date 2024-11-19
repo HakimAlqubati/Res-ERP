@@ -122,7 +122,7 @@ class EmployeeAdvanceReportResource extends Resource
                         
             ], FiltersLayout::AboveContent)
             ->actions([
-                Action::make('details')->hidden()
+                Action::make('details')->button()
                 
                 ->form(function ($record) {
                     // Retrieve installments for the given advance_id
@@ -131,27 +131,26 @@ class EmployeeAdvanceReportResource extends Resource
                   
             // Define the Repeater component
             return [
-                Repeater::make('installments')
+                Repeater::make('installments')->label('')
                     ->schema([
                         TextInput::make('installment_amount')
-                            ->label('Installment Amount')
+                            
                             ->disabled(),
 
                         DatePicker::make('due_date')
-                            ->label('Due Date')
+                            
                             ->disabled(),
 
                         Checkbox::make('is_paid')
-                            ->label('Is Paid')
-                            ->disabled(),
+                            
+                            ->disabled()->inline(false),
 
                         DatePicker::make('paid_date')
-                            ->label('Paid Date')
+                            
                             ->disabled(),
                     ])
                     ->defaultItems(count($installments)) // Set default rows based on installment count
-                    ->createItemButtonLabel(false) // Hide the "Add Item" button
-                    ->disableItemCreation() // Prevent adding rows manually
+                   
                     ->columns(4) // Number of columns per row
                     ->default(array_map(function ($installment) {
                         // dd($installment['installment_amount']);
@@ -163,7 +162,7 @@ class EmployeeAdvanceReportResource extends Resource
                         ];
                     }, $installments->toArray())),
             ];
-                })
+                })->modalHeading('Installment Details')
                 ->disabledForm()->modalSubmitAction(false)->modalCancelAction(false)
             ])
             ;

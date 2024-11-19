@@ -173,13 +173,13 @@ class EmployeeApplicationResource extends Resource
                                                     $res = $advancedAmount / $state;
 
                                                     $set('detail_number_of_months_of_deduction', $res);
-                                                    $toMonth = Carbon::now()->addMonths($res)->endOfMonth()->format('Y-m-d');
+                                                    $toMonth = Carbon::now()->addMonths(($res-2))->endOfMonth()->format('Y-m-d');
                                                     $set('detail_deduction_ends_at', $toMonth);
                                                 }
                                             })
                                         ,
                                         Fieldset::make()->columnSpan(1)->columns(1)->schema([
-                                            DatePicker::make('detail_deduction_starts_from')
+                                            DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
                                                 ->label('Deduction starts from')
                                                 ->default('Y-m-d')
                                                 ->live()
@@ -188,11 +188,12 @@ class EmployeeApplicationResource extends Resource
                                                     $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
 
                                                     // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
-                                                    $endNextMonth = Carbon::parse($state)->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
+                                                    
+                                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths-1))->endOfMonth()->format('Y-m-d');
                                                     $set('detail_deduction_ends_at', $endNextMonth);
                                                 })
                                             ,
-                                            DatePicker::make('detail_deduction_ends_at')
+                                            DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
                                                 ->label('Deduction ends at')
                                                 ->default('Y-m-d'),
                                         ]),
@@ -206,7 +207,8 @@ class EmployeeApplicationResource extends Resource
                                                     // dd($res,$state);
                                                     $set('detail_monthly_deduction_amount', round($res, 2));
                                                     $state = (int) $state;
-                                                    $toMonth = Carbon::now()->addMonths($state)->endOfMonth()->format('Y-m-d');
+                                                    
+                                                    $toMonth = Carbon::now()->addMonths(($state-2))->endOfMonth()->format('Y-m-d');
 
                                                     $set('detail_deduction_ends_at', $toMonth);
                                                 }
