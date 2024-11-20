@@ -1,26 +1,23 @@
 <?php
 
 namespace App\Filament\Resources;
-use Filament\Forms\Components\Builder as B1;
+
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
-use App\Filament\Widgets\CircularWidget;
 use App\Models\Allowance;
 use App\Models\Branch;
 use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeFileType;
+use App\Models\EmployeeFileTypeField;
 use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
 use Closure;
-use Filament\Actions\Action;
-use Filament\Forms\Components\Builder\Block;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -48,8 +45,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
 
@@ -124,7 +121,7 @@ class EmployeeResource extends Resource
                                                 country: 'MY',
                                                 lenient: true, // default: false
                                             ),
-                                            Select::make('gender')
+                                        Select::make('gender')
                                             ->label('Gender')
                                             ->options([
                                                 1 => 'Male',
@@ -132,10 +129,10 @@ class EmployeeResource extends Resource
                                             ])
                                             ->default(1)
                                             ->required(),
-                                            // TextInput::make('nationality')
-                                            // ->label('Nationality')
-                                            // ->nullable(),
-                                            Select::make('nationality')
+                                        // TextInput::make('nationality')
+                                        // ->label('Nationality')
+                                        // ->nullable(),
+                                        Select::make('nationality')
                                             ->label('Nationality')
                                             ->options(getNationalities())
                                             ->searchable()
@@ -177,7 +174,7 @@ class EmployeeResource extends Resource
                                                 // ->previewable(false)
                                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                                         // return (string) str($file->getClientOriginalName())->prepend('employee-');
-                                                        return  Str::random(15) . "." . $file->getClientOriginalExtension();
+                                                        return Str::random(15) . "." . $file->getClientOriginalExtension();
                                                     })
                                                 // ->formatStateUsing(function ($record,Get $get){
                                                 //     dd($get);
@@ -224,31 +221,90 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
+
                     Wizard\Step::make('Employee files')
                         ->schema([
                             Repeater::make('files')
-                                ->relationship()
+                                ->relationship() // Define the relationship with the `files` table
                                 ->columns(2)
-                            // ->minItems(0)
                                 ->defaultItems(0)
                                 ->schema([
-
-                                    Fieldset::make()->schema([
+                                    Fieldset::make('File Details')->schema([
                                         Grid::make()->columns(2)->schema([
                                             Select::make('file_type_id')
-                                                ->label('File type')
+                                                ->label('File Type')
                                                 ->required()
-                                                ->options(EmployeeFileType::select('id', 'name')->where('active', 1)->get()->pluck('name', 'id'))
-                                                ->searchable(),
+                                                ->options(
+                                                    EmployeeFileType::select('id', 'name')
+                                                        ->where('active', 1)
+                                                        ->get()
+                                                        ->pluck('name', 'id')
+                                                )
+                                                ->searchable()
+                                                ->reactive() // Makes the field reactive to changes
+                                                ->afterStateUpdated(function ($state, $get, $set) {
+                                                    if (is_numeric($state)) {
+                                                        $dynamicFields = EmployeeFileTypeField::where('file_type_id', $state)->get();
+                                                        $set('dynamic_fields', $dynamicFields->toArray());
+                                                    } else {
+                                                        $set('dynamic_fields', []);
+                                                    }
+                                                }),
+
                                             FileUpload::make('attachment')
-                                            ->label('Attach your file')->downloadable()
-                                            ->previewable()->required()
-                                            ->imageEditor()
-                                            ->circleCropper(),
+                                                ->label('Attach File')
+                                                ->downloadable()
+                                                ->previewable()
+                                            // ->required()
+                                                ->imageEditor()
+                                                ->circleCropper(),
                                         ]),
                                     ]),
-                                ]),
+
+                                    Fieldset::make('Additional Fields')
+                                        ->schema(function (Get $get) {
+                                            // Fetch the dynamic fields for the current file_type_id
+                                            $fileTypeId = $get('file_type_id');
+                                            if (!$fileTypeId) {
+                                                return [];
+                                            }
+
+                                            $dynamicFields = EmployeeFileTypeField::where('file_type_id', $fileTypeId)->get();
+
+                                            // Map the fields dynamically
+                                            return $dynamicFields->map(function ($field) {
+                                                return match ($field->field_type) {
+                                                    'text' => TextInput::make("dynamic_field_values.{$field->field_name}")
+                                                        ->label(ucfirst(str_replace('_', ' ', $field->field_name)))
+                                                        ->required(),
+                                                    'number' => TextInput::make("dynamic_field_values.{$field->field_name}")
+                                                        ->label(ucfirst(str_replace('_', ' ', $field->field_name)))
+                                                        ->numeric()
+                                                        ->required(),
+                                                    'date' => DatePicker::make("dynamic_field_values.{$field->field_name}")
+                                                        ->label(ucfirst(str_replace('_', ' ', $field->field_name)))
+                                                        ->required(),
+                                                    default => null,
+                                                };
+                                            })->filter()->toArray();
+                                        }),
+                                ])
+                                ->mutateRelationshipDataBeforeSaveUsing(function (array $data): array {
+
+                                    // dd($data['dynamic_field_values']);
+                                    foreach ($data as &$file) {
+                                        if (isset($file['dynamic_field_values'])) {
+                                            $file['dynamic_field_values'] = json_encode($file['dynamic_field_values']);
+                                        }
+                                    }
+                                    // dd($file);
+                                     $data['dynamic_field_values']= $file;
+                                    //  dd($data);
+                                     return $data;
+                            }),
+
                         ]),
+
                     Wizard\Step::make('Finance')
                         ->schema([
                             Fieldset::make()->label('Set salary data and account number')->schema([
@@ -270,34 +326,34 @@ class EmployeeResource extends Resource
                                     ,
 
                                     Repeater::make('bank_information')
-                                    ->label('Bank Information')
-                                    ->columns(2)
+                                        ->label('Bank Information')
+                                        ->columns(2)
 
-                                    ->schema([
-                                        TextInput::make('bank')
-                                            ->label('Bank Name')
-                                            ->required()
-                                            ->placeholder('Enter bank name'),
-                                        TextInput::make('number')
-                                            ->label('Bank Account Number')
-                                            ->required()
-                                            ->placeholder('Enter bank account number'),
-                                    ])
-                                    ->collapsed()
-                                    ->minItems(0) // Set the minimum number of items
-                                     // Optional: set the maximum number of items
-                                    ->defaultItems(1) // Default number of items when the form loads
-                                    ->columnSpan('full'), // Adjust the span as necessary
+                                        ->schema([
+                                            TextInput::make('bank')
+                                                ->label('Bank Name')
+                                                ->required()
+                                                ->placeholder('Enter bank name'),
+                                            TextInput::make('number')
+                                                ->label('Bank Account Number')
+                                                ->required()
+                                                ->placeholder('Enter bank account number'),
+                                        ])
+                                        ->collapsed()
+                                        ->minItems(0) // Set the minimum number of items
+                                    // Optional: set the maximum number of items
+                                        ->defaultItems(1) // Default number of items when the form loads
+                                        ->columnSpan('full'), // Adjust the span as necessary
                                 ]),
                                 Fieldset::make()->label('Shift - RFID')->schema([
                                     Grid::make()->columns(2)->schema([
-                                        // CheckboxList::make('periods') 
+                                        // CheckboxList::make('periods')
                                         //     ->label('Work Periods')
-                                        //     ->relationship('periods', 'name') 
-                                        
+                                        //     ->relationship('periods', 'name')
+
                                         //     ->columns(2)
                                         //     ->helperText('Select the employee\'s work periods.')
-                                        
+
                                         // ,
 
                                         TextInput::make('rfid')->label('Employee RFID')
@@ -391,7 +447,7 @@ class EmployeeResource extends Resource
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
                 TextColumn::make('avatar_image2')->copyable()->label('avatar name')->hidden()
-                   ,
+                ,
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')
@@ -423,13 +479,13 @@ class EmployeeResource extends Resource
                     ->copyable()
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500)
-                    ,
-                    TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
-                        ->toggleable(isToggledHiddenByDefault: false)                    
-                        ->copyable()
+                ,
+                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->copyable()
                     ->copyMessage('Phone number copied')
                     ->copyMessageDuration(1500)
-                    ,
+                ,
                 TextColumn::make('join_date')->sortable()->label('Start date')
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
@@ -441,7 +497,6 @@ class EmployeeResource extends Resource
                     ->default(0)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true),
-
 
                 TextColumn::make('position.title')->limit(20)
                     ->label('Position type')
@@ -474,9 +529,9 @@ class EmployeeResource extends Resource
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->url(function($record){
-                        if($record->user){
-                            return url('admin/users/'.$record?->user_id.'/edit');
+                    ->url(function ($record) {
+                        if ($record->user) {
+                            return url('admin/users/' . $record?->user_id . '/edit');
                         }
                     })->openUrlInNewTab()
                 ,
@@ -486,7 +541,7 @@ class EmployeeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                 ,
-                
+
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
@@ -504,17 +559,16 @@ class EmployeeResource extends Resource
             ], FiltersLayout::AboveContent)
             ->actions([
                 ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
-                ->color('info')
-                ->icon('heroicon-m-banknotes')
+                    ->color('info')
+                    ->icon('heroicon-m-banknotes')
                 // ->form(function(): array{
                 //     return [
-                        
+
                 //     ];
                 // })->modalCancelAction(false)->modalSubmitAction(false)
-                ->url(fn ($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
+                    ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
 
-
-                ->openUrlInNewTab()
+                    ->openUrlInNewTab()
                 ,
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
@@ -542,7 +596,6 @@ class EmployeeResource extends Resource
             'create' => Pages\CreateEmployee::route('/create'),
             'edit' => Pages\EditEmployee::route('/{record}/edit'),
             'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here
-
 
         ];
     }
@@ -575,32 +628,29 @@ class EmployeeResource extends Resource
 
     public static function canCreate(): bool
     {
-        
-     if(isSystemManager() || isBranchManager() || isSuperAdmin()){
-        return true;
-     }
+
+        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+            return true;
+        }
         return false;
     }
-
 
     public static function canDelete(Model $record): bool
     {
-        if(isSystemManager() || isBranchManager() || isSuperAdmin()){
+        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
             return true;
         }
         return false;
     }
 
-    
     public static function canDeleteAny(): bool
     {
-        if(isSystemManager() || isBranchManager() || isSuperAdmin()){
+        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
             return true;
         }
         return false;
     }
 
-    
     public static function canEdit(Model $record): bool
     {
         if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) {
@@ -616,5 +666,5 @@ class EmployeeResource extends Resource
         }
         return false;
     }
- 
+
 }

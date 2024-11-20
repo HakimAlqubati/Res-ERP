@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EmployeeFileType extends Model
 {
-    use HasFactory;
+    use HasFactory,SoftDeletes;
       // Specify the table associated with the model (optional if naming conventions are followed)
       protected $table = 'hr_employee_file_types';
 
@@ -29,5 +30,10 @@ class EmployeeFileType extends Model
             'required_count' => $requiredCount,
             'unrequired_count' => $unrequiredCount,
         ];
+    }
+
+    public function dynamicFields()
+    {
+        return $this->hasMany(EmployeeFileTypeField::class, 'file_type_id');
     }
 }

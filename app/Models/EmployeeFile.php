@@ -11,6 +11,10 @@ class EmployeeFile extends Model
     // Specify the table associated with the model (optional)
     protected $table = 'hr_employee_files';
 
+    protected $casts = [
+        'dynamic_field_values' => 'array', // Automatically decode JSON to array
+    ];
+    
     // Define the fillable fields
     protected $fillable = [
         'employee_id',
@@ -18,6 +22,7 @@ class EmployeeFile extends Model
         'attachment',
         'active',
         'description',
+        'dynamic_field_values',
     ];
 
     // Define relationships (optional)

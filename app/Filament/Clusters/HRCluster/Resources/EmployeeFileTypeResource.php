@@ -9,6 +9,8 @@ use App\Models\EmployeeFileType;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\HasManyRepeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -20,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class EmployeeFileTypeResource extends Resource
@@ -43,7 +46,28 @@ class EmployeeFileTypeResource extends Resource
 
                     ]),
                     Textarea::make('description')->columnSpanFull(),
+                ]),
+                Fieldset::make('Dynamic Fields')->schema([
+                    HasManyRepeater::make('dynamicFields')
+                        ->relationship('dynamicFields') // Define the relationship for the dynamic fields
+                        ->schema([
+                            TextInput::make('field_name')
+                                ->label('Field Name')
+                                ->required(),
+                                Select::make('field_type')
+                                ->label('Field Type')
+                                ->required()
+                                ->options([
+                                    'text' => 'Text',
+                                    'number' => 'Number',
+                                    'date' => 'Date',
+                                ])
+                                ->placeholder('Select a field type'),
+                        ])
+                        ->label('Dynamic Fields')
+                        ->createItemButtonLabel('Add New Dynamic Field'),
                 ])
+                ->columnSpanFull(),
             ]);
     }
 
@@ -97,4 +121,33 @@ class EmployeeFileTypeResource extends Resource
         }
         return false;
     }
+
+    
+    public static function canDelete(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+   
+    public static function canForceDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        return false;
+    }
+
 }
