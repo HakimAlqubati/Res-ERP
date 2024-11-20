@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 class TestController extends Controller
 {
     public $currentDate = '';
-    public function to_test_schedule_task($date): array
+    public function to_test_schedule_task($date)
     {
         $currentDate = $date;
         $this->currentDate = $date;
@@ -21,10 +21,26 @@ class TestController extends Controller
         $weeklyTasks = $this->getScheduleTasksWeekly($date);
 
         $dailyTasks = $this->getScheduleTasksDaily($date);
-        // dd($dailyTasks);
-        // $handledSchedulesWeekly = $this->handleScheuleTasks($weeklyTasks, $date);
+        $monthlyTasks = $this->getScheduleTasksMonthly($date);
+        // return $monthlyTasks;
+        $handledSchedulesWeekly = $this->handleScheuleTasks($weeklyTasks, $date);
+        // return $handledSchedulesWeekly;
+        $handledSchedulesMonthly = $this->handleScheuleTasks($monthlyTasks, $date);
         $handledSchedulesDaily = $this->handleScheuleTasks($dailyTasks, $date);
+        //  return $monthlyTasks;
+        // return[count($handledSchedulesMonthly['monthly']),$handledSchedulesMonthly['monthly']];
+        $storeDataResponse = [];
+        if (isset($handledSchedulesWeekly['weekly']) && is_array($handledSchedulesWeekly['weekly']) && count($handledSchedulesWeekly['weekly']) > 0) {
 
+            $storeDataResponse[] = $this->storeWeeklyTasks($handledSchedulesWeekly['weekly']);
+            // return $handledSchedulesWeekly['weekly'];
+        }
+
+        if (isset($handledSchedulesMonthly['monthly']) && is_array(value: $handledSchedulesMonthly['monthly']) && count($handledSchedulesMonthly['monthly']) > 0) {
+            $storeDataResponse[] = $this->storeMonthlyTasks($handledSchedulesMonthly['monthly']);
+            // return $storeDataResponse[];
+        }
+        
         if (count($handledSchedulesDaily) > 0) {
 
             // Prepare data for the store function
@@ -40,18 +56,15 @@ class TestController extends Controller
             // dd($dailyEveryDay,$dailySpesificDays);
             // Call the store method
             if (count($dailyEveryDay) > 0) {
-                $dailyEveryDay = $this->storeDailyEveryDay($dailyEveryDay);
+                $storeDataResponse[] = $dailyEveryDay = $this->storeDailyEveryDay($dailyEveryDay);
             }
             if (count($dailySpesificDays) > 0) {
-                $dailySpesificDays = $this->storeDailySpecificDays($dailySpesificDays);
+                $storeDataResponse[] = $this->storeDailySpecificDays($dailySpesificDays);
             }
 
-            dd('done', $dailyEveryDay, $dailySpesificDays);
-        } else {
-            dd('no schedule task to add');
         }
+        return $storeDataResponse;
 
-        // return $tasks;
     }
 
     public function getScheduleTasksDaily($date)
@@ -125,6 +138,42 @@ class TestController extends Controller
         return $tasks;
     }
 
+    public function getScheduleTasksMonthly($date)
+    {
+        $currentDate = $date;
+        $dayName = date('l', strtotime($currentDate));
+        $tasks = DailyTasksSettingUp::where('active', 1)
+            ->select(['id', 'title', 'assigned_by',
+                'assigned_to', 'start_date', 'end_date', 'schedule_type'])
+            ->where('start_date', '<=', $currentDate)
+            ->where('end_date', '>=', $currentDate)
+            ->whereHas('taskScheduleRequrrencePattern')
+            ->whereHas('steps')
+            ->where('schedule_type', DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY)
+            ->with([
+                'taskScheduleRequrrencePattern:task_id,recurrence_pattern',
+                'steps:title,morphable_id,order',
+            ])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->groupBy(function ($task) {
+                return $task->schedule_type; // Group by recurrence_type
+            })
+        ;
+
+        // Loop through the tasks and decode the recurrence pattern
+        $tasks->each(function ($groupedTasks) {
+            $groupedTasks->each(function ($task) {
+                if (isset($task->taskScheduleRequrrencePattern->recurrence_pattern)) {
+                    // Decode the JSON string to an array
+                    $task->taskScheduleRequrrencePattern->recurrence_pattern = json_decode($task->taskScheduleRequrrencePattern->recurrence_pattern, true);
+                }
+            });
+        });
+
+        return $tasks;
+    }
+
     public function handleScheuleTasks($tasks, $date)
     {
 
@@ -156,7 +205,7 @@ class TestController extends Controller
                                 'current_date' => $date,
                                 'assigned_to' => $task->assigned_to,
                                 'assigned_by' => $task->assigned_by,
-                                'steps' => $task->steps,
+                                'steps' => $task->steps->select('title', 'order')->toArray(),
                                 'start_date' => $task->start_date,
                                 'end_date' => $task->end_date,
                                 'day_recurrence_each' => $recurrencePatern['requr_pattern_day_recurrence_each'],
@@ -167,18 +216,19 @@ class TestController extends Controller
                         $recurrencePatern = $task->taskScheduleRequrrencePattern->recurrence_pattern;
                         $monthlyStatus = $recurrencePatern['requr_pattern_monthly_status'];
                         if ($monthlyStatus == 'day') {
+                            // dd('dd',$task,$recurrencePatern);
                             $result[$scheduleType]['day'][] = [
                                 'schedule_task_id' => $task->id,
                                 'schedule_task_title' => $task->title,
                                 'current_date' => $date,
                                 'assigned_to' => $task->assigned_to,
                                 'assigned_by' => $task->assigned_by,
-                                'steps' => $task->steps->pluck('title'),
+                                'steps' => $task->steps->select('title', 'order')->toArray(),
                                 'start_date' => $task->start_date,
                                 'end_date' => $task->end_date,
                                 'the_day_of_every' => $recurrencePatern['requr_pattern_the_day_of_every'],
                                 'every_months' => $recurrencePatern['requr_pattern_months'],
-                                'recurrence_dates' => $this->generateMonthlyRecurrenceDates($task->start_date, $task->end_date, $recurrencePatern['requr_pattern_the_day_of_every'], $recurrencePatern['requr_pattern_months']),
+                                'recurrence_dates' => $this->generateMonthlyRecurrenceDates($task->start_date, $task->end_date, $recurrencePatern['requr_pattern_the_day_of_every'], $recurrencePatern['requr_pattern_months'], $task),
                             ];
                         } else if ($monthlyStatus == 'the') {
                             $result[$scheduleType]['the'][] = [
@@ -187,7 +237,7 @@ class TestController extends Controller
                                 'current_date' => $date,
                                 'assigned_to' => $task->assigned_to,
                                 'assigned_by' => $task->assigned_by,
-                                'steps' => $task->steps->pluck('title'),
+                                'steps' => $task->steps->select('title', 'order')->toArray(),
                                 'start_date' => $task->start_date,
                                 'end_date' => $task->end_date,
                                 'order' => $recurrencePatern['requr_pattern_order_name'],
@@ -200,13 +250,12 @@ class TestController extends Controller
                         $recurrencePatern = $task->taskScheduleRequrrencePattern->recurrence_pattern;
 
                         $result[$scheduleType][] = [
-                            'schedule_task_id_' => 'ss',
                             'schedule_task_id' => $task->id,
                             'schedule_task_title' => $task->title,
                             'current_date' => $date,
                             'assigned_to' => $task->assigned_to,
                             'assigned_by' => $task->assigned_by,
-                            'steps' => $task->steps->pluck('title', 'order'),
+                            'steps' => $task->steps->select('title', 'order')->toArray(),
                             'start_date' => $task->start_date,
                             'end_date' => $task->end_date,
                             'week_recur_every' => $recurrencePatern['requr_pattern_week_recur_every'],
@@ -263,30 +312,12 @@ class TestController extends Controller
         }
     }
 
-    public function generateDailyRecurrenceDates_old($startDate, $endDate, $dayRecurrenceEach)
-    {
-        $start = new \DateTime($startDate);
-        $end = new \DateTime($endDate);
-
-        // Add one day to the end date to ensure it includes the end date in the period
-        $end->modify('+1 day');
-        // dd($dayRecurrenceEach);
-        $interval = new \DateInterval("P{$dayRecurrenceEach}D"); // "P3D" means 3 days
-        $datePeriod = new \DatePeriod($start, $interval, $end);
-
-        $dates = [];
-        foreach ($datePeriod as $date) {
-            $dates[] = $date->format('Y-m-d');
-        }
-
-        return $dates;
-    }
-
     /**
      * to return list of dates each how many day between two dates [start,end]
      */
-    public function generateMonthlyRecurrenceDates($startDate, $endDate, $dayOfEvery, $everyMonths)
+    public function generateMonthlyRecurrenceDates($startDate, $endDate, $dayOfEvery, $everyMonths, $task)
     {
+        // dd($startDate,$endDate,$dayOfEvery,$everyMonths,$task);
         $start = new \DateTime($startDate);
         $end = new \DateTime($endDate);
 
@@ -410,7 +441,7 @@ class TestController extends Controller
      */
     public function storeDailyEveryDay($data)
     {
-        dd($data);
+        // dd($data);
         // DB::beginTransaction();
         try {
             // Handle daily tasks if they exist
@@ -432,21 +463,24 @@ class TestController extends Controller
                     'updated_by' => 1,
                 ];
 
-                
                 //         // Create the task
                 $task = Task::create($taskData);
-                $steps = $schedule['steps']->toArray();
-                if (is_array($steps) && count($steps)) {
-                    foreach ($steps as $step) {
-                        $task->steps()->create(['title' => $step['title'], 'order' => $step['order']]);
-                    }
+                
+                if (!empty($schedule['steps']) && is_array($schedule['steps'])) {
+                    $task->steps()->createMany($schedule['steps']);
                 }
+                // $steps = $schedule['steps']->toArray();
+                // if (is_array($steps) && count($steps)) {
+                //     foreach ($steps as $step) {
+                //         $task->steps()->create(['title' => $step['title'], 'order' => $step['order']]);
+                //     }
+                // }
             }
 
             // Commit the transaction
             // DB::commit();
 
-            return response()->json(['message' => 'Tasks created successfully.'], 201);
+            return response()->json(['message' => 'Daily tasks created successfully.'], 201);
         } catch (\Exception $e) {
             // Rollback the transaction if something goes wrong
             // DB::rollBack();
@@ -485,19 +519,22 @@ class TestController extends Controller
 // dd(is_array($schedule['steps']->toArray()));
                     //         // Create the task
                     $task = Task::create($taskData);
-                    $steps = $schedule['steps']->toArray();
-                    if (is_array($steps) && count($steps)) {
-                        foreach ($steps as $step) {
-                            $task->steps()->create(['title' => $step['title'], 'order' => $step['order']]);
-                        }
+                    // $steps = $schedule['steps']->toArray();
+                    if (!empty($schedule['steps']) && is_array($schedule['steps'])) {
+                        $task->steps()->createMany($schedule['steps']);
                     }
+                    // if (is_array($steps) && count($steps)) {
+                    //     foreach ($steps as $step) {
+                    //         $task->steps()->create(['title' => $step['title'], 'order' => $step['order']]);
+                    //     }
+                    // }
                 }
             }
 
             // Commit the transaction
             DB::commit();
 
-            return response()->json(['message' => 'Tasks created successfully.'], 201);
+            return response()->json(['message' => 'Daily tasks created successfully.'], 201);
         } catch (\Exception $e) {
             // Rollback the transaction if something goes wrong
             DB::rollBack();
@@ -517,19 +554,22 @@ class TestController extends Controller
     {
         try {
             foreach ($data as $schedule) {
-                // Check if the current date is in the recurrence dates
-                if (in_array($this->currentDate, $schedule['recurrence_dates'])) {
+                // Check if the current date exists in recurrence_dates array
+                $dateMatch = collect($schedule['recurrence_dates'])->contains(function ($recurrenceDate) {
+                    return $recurrenceDate['date'] === $this->currentDate;
+                });
 
+                if ($dateMatch) {
                     // Prepare data for task creation
                     $taskData = [
-                        'title' => $schedule['schedule_task_title'] . '.' . $this->currentDate,
+                        'title' => "{$schedule['schedule_task_title']}.{$this->currentDate}",
                         'assigned_to' => $schedule['assigned_to'],
                         'assigned_by' => $schedule['assigned_by'],
                         'task_status' => Task::STATUS_NEW, // Default status
                         'due_date' => $this->currentDate, // Current date as due date
                         'is_daily' => false,
                         'branch_id' => Employee::find($schedule['assigned_to'])?->branch_id, // Get branch ID if necessary
-                        'created_by' => 1,
+                        'created_by' => 1, // Default to authenticated user
                         'updated_by' => 1,
                     ];
 
@@ -537,11 +577,12 @@ class TestController extends Controller
                     $task = Task::create($taskData);
 
                     // Add steps if they exist
-                    if (is_array($schedule['steps']) && count($schedule['steps']) > 0) {
-                        foreach ($schedule['steps'] as $step) {
-                            $task->steps()->create(['title' => $step['title'], 'order' => $step['order']]);
-                        }
+                    if (!empty($schedule['steps']) && is_array($schedule['steps'])) {
+                        $task->steps()->createMany($schedule['steps']);
                     }
+                }else{
+
+                    return response()->json(['message' => 'No weekly tasks found for the current date'], 201);
                 }
             }
 
@@ -549,11 +590,83 @@ class TestController extends Controller
             return response()->json(['message' => 'Weekly tasks created successfully.'], 201);
         } catch (\Exception $e) {
             // Log the error
-            Log::error('Weekly task creation failed: ' . $e->getMessage());
+            Log::error('Weekly task creation failed: ' . $e->getMessage(), ['data' => $data]);
 
             // Return an error response
             return response()->json(['error' => 'Weekly task creation failed.'], 500);
         }
     }
 
+    /**
+     * Stores weekly tasks based on recurrence dates.
+     */
+    public function storeMonthlyTasks($data)
+    {
+        // Merge the arrays into one single array
+        // $mergedData = array_merge($data['the'], $data['day']);
+        $mergedData = array_merge(
+            $data['the'] ?? [],
+            $data['day'] ?? []
+        );
+        DB::beginTransaction();
+        try {
+            $tasksCreated = false; // Flag to track if any tasks are created
+            foreach ($mergedData as $schedule) {
+                // dd($schedule,$schedule['steps']);
+                // Check if recurrence_dates is valid
+                if (!isset($schedule['recurrence_dates']) || !is_array($schedule['recurrence_dates'])) {
+                    continue; // Skip if recurrence_dates is invalid
+                }
+    
+                // Check if the current date exists in recurrence_dates array
+                if (in_array($this->currentDate, $schedule['recurrence_dates'])) {
+                    // Prepare data for task creation
+                    $taskData = [
+                        'title' => "{$schedule['schedule_task_title']}.{$this->currentDate}",
+                        'assigned_to' => $schedule['assigned_to'],
+                        'assigned_by' => $schedule['assigned_by'],
+                        'task_status' => Task::STATUS_NEW, // Default status
+                        'due_date' => $this->currentDate, // Current date as due date
+                        'is_daily' => false,
+                        'branch_id' => Employee::find($schedule['assigned_to'])?->branch_id, // Get branch ID if necessary
+                        'created_by' => 1, // Default to authenticated user
+                        'updated_by' => 1,
+                    ];
+    
+                    // Create the task
+                    $task = Task::create($taskData);
+    
+                    // Add steps if they exist
+                    if (!empty($schedule['steps']) && is_array($schedule['steps'])) {
+                        $task->steps()->createMany($schedule['steps']);
+                    }
+    
+                    $tasksCreated = true; // Set flag to true
+                }
+            }
+    
+            DB::commit();
+    
+            // Return appropriate response based on tasks created
+            if ($tasksCreated) {
+                return response()->json(['message' => 'Monthly tasks created successfully.'], 201);
+            } else {
+                return response()->json(['message' => 'No monthly tasks found for the current date.'], 200);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // Log the error with detailed information
+            Log::error('Monthly task creation failed', [
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'data' => $data,
+                'merged_data' => $mergedData,
+            ]);
+    
+            // Return an error response
+            return response()->json(['error' => 'Monthly task creation failed. Please check the logs for more details.'], 500);
+        }
+    }
+    
 }

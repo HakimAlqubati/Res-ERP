@@ -27,6 +27,7 @@ use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -261,7 +262,7 @@ class DailyTasksSettingUpResource extends Resource
                 SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
                     Branch::select('name', 'id')->pluck('name', 'id')
                 ),
-            ])
+            ],FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // ActionGroup::make([
