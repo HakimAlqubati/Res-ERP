@@ -130,7 +130,7 @@ class EmployeeApplicationResource extends Resource
                             EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
                         ])) {
                             $form = [
-                                DatePicker::make('detail_date')
+                                DatePicker::make('detail_date')->maxDate(now()->toDateString())
                                     ->label('Date')->required()
                                     ->default('Y-m-d'),
                                 TimePicker::make('detail_time')
@@ -147,6 +147,7 @@ class EmployeeApplicationResource extends Resource
                                         DatePicker::make('detail_date')
                                             ->label('Date')
                                             ->live()
+                                            ->maxDate(now()->toDateString())
                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                 // Parse the state as a Carbon date, add one month, and set it to the end of the month
                                                 $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');

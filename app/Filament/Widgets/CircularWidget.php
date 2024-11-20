@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\CreateAction;
@@ -62,15 +63,17 @@ class CircularWidget extends BaseWidget
                                             Fieldset::make()
                                                 ->hiddenOn('view')
                                                 ->label('Set the branches that you want to send the circular & the group of users')->schema([
+                                                Select::make('group_id')->label('Group')
+                                                        ->helperText('The users group that will recieve this circular')
+                                                        ->options(getUserTypes())
+                                                        ->reactive()
+                                                        ->required(),
                                                 Select::make('branch_ids')->label('Choose branch')
+                                                ->hidden(fn(Get $get):bool=> $get('group_id')==1)
                                                     ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
                                                     ->multiple()
                                                     ->required()
                                                     ->helperText('You can choose multiple branches'),
-                                                Select::make('group_id')->label('Group')
-                                                    ->helperText('The users group that will recieve this circular')
-                                                    ->options(getUserTypes())
-                                                    ->required(),
                                             ]),
 
                                         ]),
@@ -123,7 +126,7 @@ class CircularWidget extends BaseWidget
                     ->modalHeading('')
                     ->mutateFormDataUsing(function (array $data): array {
                         $data['created_by'] = auth()->user()->id;
-                        $data['branch_ids'] = json_encode($data['branch_ids']);
+                        $data['branch_ids'] = isset($data['branch_ids'])?json_encode($data['branch_ids']) : '[]';
                         return $data;
                     })
                     ->after(function ($data, Model $record) {

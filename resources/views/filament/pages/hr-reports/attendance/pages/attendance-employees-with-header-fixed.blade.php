@@ -4,8 +4,10 @@
 
     <style>
         table {
-            border-collapse: collapse;
+            /* border-collapse: collapse; */
             width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
         }
 
         /* Print-specific styles */
@@ -66,8 +68,8 @@
 
     {{-- <div class="table-container"> --}}
     <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table"
-        style="padding-top: 200px;">
-        <thead class="fixed-header" style="padding-top: 200px;;top:64px;">
+        style="padding-top: 5px;">
+        <thead class="fixed-header" style="padding-top: 5px;;top:64px;">
             <x-filament-tables::row class="header_report">
                 <th colspan="3"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }} company-info">
@@ -113,7 +115,7 @@
                 <th class="internal_cell">{{ __('Status') }}</th>
                 <th class="internal_cell">{{ __('Check-out') }}</th>
                 <th class="internal_cell">{{ __('Status') }}</th>
-                
+
                 <th class="internal_cell">{{ __('Supposed') }}</th>
                 <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                 <th class="internal_cell">{{ __('Approved') }}</th>
@@ -383,6 +385,3 @@
         if (modal) modal.style.display = 'flex';
     }
 </script>
-
-
- 

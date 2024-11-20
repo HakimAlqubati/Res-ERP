@@ -16,7 +16,7 @@ class CreateCircular extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['created_by'] = auth()->user()->id;
-        $data['branch_ids'] = json_encode($data['branch_ids']);
+        $data['branch_ids'] = isset($data['branch_ids'])?json_encode($data['branch_ids']) : '[]';
         return $data;
     }
 

@@ -15,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -56,15 +57,17 @@ class CircularResource extends Resource
                                     Fieldset::make()
                                         ->hiddenOn('view')
                                         ->label('Set the branches that you want to send the circular & the group of users')->schema([
+                                        Select::make('group_id')->label('Group')
+                                                ->helperText('The users group that will recieve this circular')
+                                                ->options(getUserTypes())
+                                                ->reactive()
+                                                ->required(),
                                         Select::make('branch_ids')->label('Choose branch')
-                                            ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
+                                        ->hidden(fn(Get $get):bool=> $get('group_id')==1)    
+                                        ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
                                             ->multiple()
                                             ->required()
                                             ->helperText('You can choose multiple branches'),
-                                        Select::make('group_id')->label('Group')
-                                            ->helperText('The users group that will recieve this circular')
-                                            ->options(getUserTypes())
-                                            ->required(),
                                     ]),
 
                                 ]),
@@ -116,6 +119,7 @@ class CircularResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
+        ->defaultSort('id','desc')
         ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('title')->label('Subject')->sortable(),

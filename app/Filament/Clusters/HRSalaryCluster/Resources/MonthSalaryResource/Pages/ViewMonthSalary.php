@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pa
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\Employee;
 use Filament\Actions;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Pages\ViewRecord;
@@ -23,41 +24,86 @@ class ViewMonthSalary extends ViewRecord
             ->action(function(){
                 return MonthSalaryResource::exportExcel($this->record);
             }),
-            Actions\Action::make('salary_slip')
-            ->button()
-            ->color('success')
-            ->icon('heroicon-o-newspaper')
-                ->form(function () {
-                    $employeeIds = $this->record?->details->pluck('employee_id')->toArray();
+            Actions\Action::make('bulk_salary_slip')
+            ->button()->label('Bulk salary slip')
+            ->color('primary') // Use primary color for bulk action
+            ->icon('heroicon-o-archive-box-arrow-down') // Icon for bulk salary slips                
+            ->form(function ($record) {
+                $employeeIds = $record?->details->pluck('employee_id')->toArray();
+                $employeeOptions = Employee::whereIn('id', $employeeIds)
+                    ->select('name', 'id')
+                    ->pluck('name', 'id')
+                    ->toArray();
+        
+                return [
+                    Hidden::make('month')->default($record?->month),
+                    CheckboxList::make('employee_ids')
+                        ->required()->columns(3)
+                        ->label('Select Employees')
+                        ->options($employeeOptions) // Use the employee options
+                        ->default(array_keys($employeeOptions)) // Pre-check all employees
+                        ->helperText('Select up to 10 employees to generate their payslips'),
+                ];
+            })
+        
+            ->action(function ($record, $data) {
+                $employeeIds = $data['employee_ids'];
+                // dd($employeeIds);
+                $zipFileName = 'salary_slips.zip';
+                $zipFilePath = storage_path('app/public/' . $zipFileName);
+                $zip = new \ZipArchive();
 
-                    return [
-                        Hidden::make('month')->default($this->record?->month),
-                        Select::make('employee_id')
-                            ->required()
-                            ->label('Employee')->searchable()
-                            ->helperText('Search employee to get his payslip')
-                            ->options(Employee::whereIn('id', $employeeIds)
-                            ->select('name', 'id')->pluck('name', 'id')),
-                    ];
-                })
-                // ->url(fn($record):string=> "/to_test_salary_slip/{$record}/{$this->record->id}")
-                ->action(function ($record, $data) {
-                    
-                    $employeeId = $data['employee_id'];
-                    // Generate the URL
-                    $url = url("/to_test_salary_slip/{$employeeId}/{$this->record->id}");
+                if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                    foreach ($employeeIds as $employeeId) {
+                        $pdfContent = generateSalarySlipPdf($employeeId, $record->id); // Generate the PDF content
+                        $employeeName = Employee::find($employeeId)->name;
+                        $fileName = 'salary-slip_' . $employeeName . '.pdf';
 
-                          // Redirect to the generated URL
-                    return redirect()->away($url);
+                        // Add the PDF content to the ZIP archive
+                        $zip->addFromString($fileName, $pdfContent);
+                    }
+
+                    // Close the ZIP archive
+                    $zip->close();
+
+                    // Provide the ZIP file for download
+                    return response()->download($zipFilePath)->deleteFileAfterSend(true);
+                } else {
+                    throw new \Exception('Could not create ZIP file.');
+                }
+
+            }),
+        Actions\Action::make('salary_slip')
+            ->button()->label('Salary slip')
+            ->color('success') // Use secondary color for single employee action
+          ->icon('heroicon-o-document-arrow-down') // Icon for employee salary slip
+
+            ->form(function ($record) {
+                $employeeIds = $record?->details->pluck('employee_id')->toArray();
+
+                return [
+                    Hidden::make('month')->default($record?->month),
+                    Select::make('employee_id')
+                        ->required()
+                        ->label('Employee')
+                        ->searchable()
+                        ->columns(2)
+                        ->options(function () use ($employeeIds) {
+                            return Employee::whereIn('id', $employeeIds)
+                                ->select('name', 'id')
+                                ->pluck('name', 'id');
+                        })
+                        ->allowHtml(),
                     
-                    // Return JavaScript to open the URL in a new tab
-                    // return "
-                    //     <script>
-                    //         window.open('$url', '_blank');
-                    //     </script>
-                    // ";
-                    
-                }),
+
+                ];
+            })
+            ->action(function ($record, $data) {
+                $employeeId = $data['employee_id'];
+              return generateSalarySlipPdf_($employeeId, $record->id);
+                
+
+            }),
         ];
     }
 }
