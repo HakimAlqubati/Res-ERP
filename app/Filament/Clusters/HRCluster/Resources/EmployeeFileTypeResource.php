@@ -50,6 +50,7 @@ class EmployeeFileTypeResource extends Resource
                 Fieldset::make('Dynamic Fields')->schema([
                     HasManyRepeater::make('dynamicFields')
                         ->relationship('dynamicFields') // Define the relationship for the dynamic fields
+                        ->columnSpanFull()
                         ->schema([
                             TextInput::make('field_name')
                                 ->label('Field Name')
@@ -64,7 +65,7 @@ class EmployeeFileTypeResource extends Resource
                                 ])
                                 ->placeholder('Select a field type'),
                         ])
-                        ->label('Dynamic Fields')
+                        ->label('')
                         ->createItemButtonLabel('Add New Dynamic Field'),
                 ])
                 ->columnSpanFull(),
