@@ -8,6 +8,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -65,7 +66,7 @@ class LogsRelationManager extends RelationManager
                ->getStateUsing(function($record){
                 
                $details =  json_decode($record->details,true);
-                
+               
                 if($record->log_type == TaskLog::TYPE_MOVED && is_array($details)&& $details['to']== Task::STATUS_CLOSED){
                     return ;
                 }
@@ -109,13 +110,45 @@ class LogsRelationManager extends RelationManager
             TextColumn::make('created_at')
                 ->label('Created At')
                 ->dateTime()
-                ->sortable(),
+                ->sortable()
+                ,
+                IconColumn::make('hasCard')
+                ->label('')
+                ->getStateUsing(function($record){
+
+                    // dd ($record->task->rejection_count);
+                    if($record->log_type == TaskLog::TYPE_REJECTED){
+                              
+                            //   if($record->id == 161){
+                            //    return 'yellow';
+                            //   }
+                              if($record->task->rejection_count == setting('task_rejection_times_red_card')){
+                               return 'red';
+                              }
+                    }
+                    return '';
+                    if($record->task->rejection_count == setting('task_rejection_times_yello_card')){
+                        return 'yellow';
+                    }
+                    return 'red';
+                })
+                ->alignCenter(true)
+
+                ->options([
+                    'heroicon-m-credit-card' => 'red',
+                    'heroicon-o-credit-card' => 'yellow',
+                ])
+                ->colors([
+                    'secondary',
+                    'danger' => 'red',
+                    'warning' => 'yellow',
+                ])
             
             ])
             ->filters([
               SelectFilter::make('log_type')->label('Activity type')->options([
-              TaskLog::TYPE_REJECTED,
-              TaskLog::TYPE_MOVED,
+              TaskLog::TYPE_REJECTED=>TaskLog::TYPE_REJECTED,
+              TaskLog::TYPE_MOVED=>TaskLog::TYPE_MOVED,
               ]),
             ])
             ->headerActions([

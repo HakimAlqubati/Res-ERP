@@ -383,6 +383,11 @@ class Task extends Model
           // Count the number of logs where log_type is TYPE_MOVED
           return $this->logs()->where('log_type', TaskLog::TYPE_MOVED)->count();
       }
+      public function getRejectionCountAttribute(): int
+      {
+          // Count the number of logs where log_type is TYPE_MOVED
+          return $this->logs()->where('log_type', TaskLog::TYPE_REJECTED)->count();
+      }
       public static function countMovesToStatus(int $taskId, string $status): int
       {
           return TaskLog::where('task_id', $taskId)
@@ -390,5 +395,9 @@ class Task extends Model
               ->whereJsonContains('details->to', $status)
               ->count();
       }
-      
+
+      public function taskCards()
+      {
+          return $this->hasMany(TaskCard::class, 'task_id');
+      }
 }

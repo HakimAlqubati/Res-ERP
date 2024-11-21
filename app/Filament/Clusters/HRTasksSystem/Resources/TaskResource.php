@@ -11,6 +11,7 @@ use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskAttachment;
+use App\Models\TaskCard;
 use App\Models\TaskLog;
 use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
@@ -406,7 +407,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function table(Table $table): Table
     {
-        // $task = Task::countMovesToStatus(144,Task::STATUS_CLOSED);
+        // $task = Task::countMovesToStatus(299,Task::STATUS_REJECTED);
         // dd($task);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
@@ -481,6 +482,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->label('Time Spent')->toggleable(isToggledHiddenByDefault:true)
                     ->alignCenter(true)
                     ->formatStateUsing(fn ($state) => $state ?? 'N/A'), 
+                    TextColumn::make('rejection_count')
+                    ->label('Rejection times')->toggleable(isToggledHiddenByDefault:true)
+                    ->alignCenter(true)
           
             ])
             ->filters([
@@ -524,7 +528,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                         if ($record->is_daily) {
                             return true;
                         }
-                        if ($record->task_status == Task::STATUS_CLOSED) {
+                        // if ($record->task_status == Task::STATUS_CLOSED) {
+                        if (in_array($record->task_status,[Task::STATUS_REJECTED, Task::STATUS_CLOSED]) ) {
                             return true;
                         }
                         if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
@@ -764,7 +769,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         // if ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) {
                         if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0 
                         // || ($record->task_status && !$record->is_all_done)
-                    //    || ($record->assigned_to == auth()->user()->employee->id)
+                       || ($record->task_status == Task::STATUS_REJECTED && $record->rejection_count == setting('task_rejection_times_red_card'))
                         ) {
                             return true;
                         }
@@ -779,6 +784,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                         }
                         if($record->task_status == Task::STATUS_CLOSED && auth()->user()?->employee?->id){
                             return true;
+                        }
+                        if (in_array($record->task_status,[Task::STATUS_REJECTED, Task::STATUS_CLOSED]) ) {
+                        return true;
                         }
                         if (!isSuperAdmin() && !auth()->user()->can('add_comment_task')) {
                             return true;
@@ -827,6 +835,16 @@ class TaskResource extends Resource implements HasShieldPermissions
                         try {
                             $record->update(['task_status' => Task::STATUS_REJECTED]);
                             $record->steps()->update(['done'=>0]);
+                          
+                            $record->createLog(
+                                createdBy: auth()->id(), // ID of the user performing the action
+                                description: "Task is rejected", // Log description
+                                logType: TaskLog::TYPE_MOVED, // Log type as "moved"
+                                details: [
+                                    'reject_reason' => $data['reject_reason'], // Previous status
+                                    
+                                ]
+                            );
                             $record->createLog(
                                 createdBy: auth()->id(), // ID of the user performing the action
                                 description: "Task is rejected", // Log description
@@ -836,6 +854,20 @@ class TaskResource extends Resource implements HasShieldPermissions
                                     
                                 ]
                             );
+                            if($record->rejection_count == setting('task_rejection_times_yello_card')){
+                                $record->taskCards()->create([
+                                    'type' => TaskCard::TYPE_YELLOW,
+                                    'employee_id' => $record->assigned_to,
+                                    'active' => true,
+                                ]);
+                            }
+                            if($record->rejection_count == setting('task_rejection_times_red_card')){
+                                $record->taskCards()->create([
+                                    'type' => TaskCard::TYPE_RED,
+                                    'employee_id' => $record->assigned_to,
+                                    'active' => true,
+                                ]);
+                            }
                             Notification::make()->title('Rejected')->send();
                             DB::commit();
                         } catch (\Throwable $th) {
