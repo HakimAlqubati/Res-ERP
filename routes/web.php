@@ -423,13 +423,13 @@ Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImag
 Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
 
 
-Route::get('workbench_webcam',function(){
+Route::get('workbench_webcam/{date}/{time}',function(){
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
 return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera',compact('currentTime'));
 });
-Route::get('workbench_webcam_v2',function(){
+Route::get('workbench_webcam_v2/{date}/{time}',function(){
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera_v2',compact('currentTime'));
+return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v2',compact('currentTime'));
 });
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage'])->name('upload.captured.image');

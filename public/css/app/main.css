@@ -195,6 +195,10 @@ html::-webkit-scrollbar {
 
 .internal_cell {
     width: 110px !important;
+    max-width: 110px !important;
+}
+.status_cell{
+    font-size:  12px !important;
 }
 
 /**

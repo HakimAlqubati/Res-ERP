@@ -135,7 +135,7 @@
                 @endphp
 
                 <x-filament-tables::row>
-                    <x-filament-tables::cell>
+                    <x-filament-tables::cell style="text-align: left">
 
                         {{ $data[0]['employee_name'] }}
                     </x-filament-tables::cell>
@@ -159,7 +159,7 @@
                                             <x-filament-tables::cell class="internal_cell">
                                                 {{ $item['attendances']['checkin'][0]['check_time'] }}
                                             </x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">
+                                            <x-filament-tables::cell class="internal_cell status_cell">
                                                 {{ $item['attendances']['checkin'][0]['status'] }}
                                             </x-filament-tables::cell>
                                         @endif
@@ -172,7 +172,7 @@
                                             <x-filament-tables::cell class="internal_cell">
                                                 {{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}
                                             </x-filament-tables::cell>
-                                            <x-filament-tables::cell class="internal_cell">
+                                            <x-filament-tables::cell class="internal_cell status_cell">
                                                 {{ $item['attendances']['checkout'][0]['status'] }}
                                             </x-filament-tables::cell>
                                             <x-filament-tables::cell class="internal_cell">

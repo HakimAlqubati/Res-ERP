@@ -1,8 +1,70 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
 
+        /* Print-specific styles */
+        @media print {
+
+            /* Hide everything except the table */
+            body * {
+                visibility: hidden;
+            }
+
+            #report-table,
+            #report-table * {
+                visibility: visible;
+            }
+
+            #report-table {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+
+            /* Add borders and spacing for printed tables */
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th,
+            td {
+                border: 1px solid #000;
+                padding: 10px;
+                font-size: 12px;
+                /* Adjust font size for better readability */
+                color: #000;
+                /* Black text for headers */
+            }
+
+            th {
+                background-color: #ddd;
+                /* Light gray background for table headers */
+
+            }
+
+            td {
+                background-color: #fff;
+                /* White background for cells */
+            }
+
+        }
+    </style>
+    {{-- Add the Print Button --}}
+    <div class="text-right mb-4">
+        <button onclick="printReport()" class="btn btn-print">
+            {{ __('Print Report') }}
+        </button>
+    </div>
     @if (isset($employee_id) && is_numeric($employee_id))
-        <x-filament-tables::table class="w-full text-sm text-left pretty reports">
+        <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
             <thead class="fixed-header" style="top:64px;">
                 <x-filament-tables::row class="header_report">
                     <th colspan="4" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
@@ -77,7 +139,7 @@
                                                     <x-filament-tables::cell class="internal_cell">
                                                         {{ $item['attendances']['checkin'][0]['check_time'] }}
                                                     </x-filament-tables::cell>
-                                                    <x-filament-tables::cell class="internal_cell">
+                                                    <x-filament-tables::cell class="internal_cell status_cell">
                                                         {{ $item['attendances']['checkin'][0]['status'] }}
                                                     </x-filament-tables::cell>
                                                     @if (!isset($item['attendances']['checkout']))
@@ -95,7 +157,7 @@
                                                     <x-filament-tables::cell class="internal_cell">
                                                         {{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}
                                                     </x-filament-tables::cell>
-                                                    <x-filament-tables::cell class="internal_cell">
+                                                    <x-filament-tables::cell class="internal_cell status_cell">
                                                         {{ $item['attendances']['checkout']['lastcheckout']['status'] }}
                                                     </x-filament-tables::cell>
                                                     <x-filament-tables::cell class="internal_cell">
@@ -156,6 +218,14 @@
                 @endif
             </tbody>
 
+            <tfoot>
+                <x-filament-tables::row>
+                    <th colspan="7" class="text-right font-bold">{{ __('Total') }}</th>
+                    <td class="text-center">{{ $totalSupposed }}</td>
+                    <td class="text-center">{{ $totalWorked }}</td>
+                    <td class="text-center">{{ $totalApproved }}</td>
+                </x-filament-tables::row>
+            </tfoot>
         </x-filament-tables::table>
     @else
         <div class="please_select_message_div" style="text-align: center;">
@@ -203,10 +273,9 @@
                                     $checkout = $attendance['checkouts'][$i] ?? null;
 
                                     if ($checkin && $checkout) {
+                                        // Ensure check-out time is later than check-in time
                                         $checkinTime = \Carbon\Carbon::createFromFormat('H:i:s', $checkin);
                                         $checkoutTime = \Carbon\Carbon::createFromFormat('H:i:s', $checkout);
-
-                                        // Ensure check-out time is later than check-in time
                                         if ($checkoutTime->greaterThan($checkinTime)) {
                                             // Calculate hours and minutes separately
                                             $minutesDifference = $checkinTime->diffInMinutes($checkoutTime);
@@ -219,7 +288,22 @@
                                             // Accumulate total minutes for all rows
                                             $totalMinutes += $minutesDifference;
                                         } else {
-                                            $attendances[$index]['total_hours'][$i] = '0h 0m'; // Set to zero if invalid time
+                                            // Calculate hours and minutes separately
+                                            $checkinTime = \Carbon\Carbon::createFromFormat('H:i:s', $checkin);
+                                            $checkoutTime = \Carbon\Carbon::createFromFormat('H:i:s', $checkout);
+                                            $checkoutTime->addDay(); // Add a day to the checkout time
+
+                                            // dd($checkinTime,$checkoutTime);
+                                            // Calculate hours and minutes separately
+                                            $minutesDifference = $checkinTime->diffInMinutes($checkoutTime);
+                                            $hours = intdiv($minutesDifference, 60);
+                                            $minutes = $minutesDifference % 60;
+
+                                            // Format the time as "Xh Ym"
+                                            $attendances[$index]['total_hours'][$i] = "{$hours}h {$minutes}m";
+
+                                            // Accumulate total minutes for all rows
+                                            $totalMinutes += $minutesDifference;
                                         }
                                     } else {
                                         $attendances[$index]['total_hours'][$i] = '-'; // If missing check-in or check-out
@@ -231,7 +315,6 @@
                             $totalHours = intdiv($totalMinutes, 60);
                             $remainingMinutes = $totalMinutes % 60;
                         @endphp
-
 
                         @foreach ($attendances as $index => $attendance)
                             @php
@@ -261,8 +344,6 @@
                             <td class="font-weight-bold">{{ $totalHours }}h {{ $remainingMinutes }}m</td>
                         </tr>
                     </tfoot>
-
-
                 </table>
 
                 <div class="text-center mt-4">
@@ -275,4 +356,21 @@
         </div>
     @endif
 
+
 </x-filament-panels::page>
+<script>
+    function printReport() {
+        // Hide the print button and modal while printing
+        const printButton = document.querySelector('button[onclick="printReport()"]');
+        const modal = document.querySelector('.fixed.inset-0');
+
+        if (printButton) printButton.style.display = 'none';
+        if (modal) modal.style.display = 'none';
+
+        window.print();
+
+        // Restore visibility after printing
+        if (printButton) printButton.style.display = 'block';
+        if (modal) modal.style.display = 'flex';
+    }
+</script>

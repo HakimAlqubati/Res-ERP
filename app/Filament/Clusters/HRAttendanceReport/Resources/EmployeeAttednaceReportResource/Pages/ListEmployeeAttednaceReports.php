@@ -8,12 +8,9 @@ use App\Models\Holiday;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
-use Filament\Actions\Action;
-use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,8 +20,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 {
     use InteractsWithForms;
     protected static string $resource = EmployeeAttednaceReportResource::class;
-   
- 
+
     public $showDetailsModal = false;
     public $modalData = [];
     public function showDetails($date, $employeeId, $periodId)
@@ -32,62 +28,75 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         // Replace with your actual data-fetching logic if needed
         $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
         $this->modalData = $AttendanceDetails->toArray();
-    //  dd($this->modalData);
+        //  dd($this->modalData);
         $this->showDetailsModal = true; // This opens the modal
     }
-  
 
-    
     protected function getForms(): array
     {
 
         return array_merge(
             parent::getForms(),
-            
+
             [
-            //merge your own form with default ones
-            'customForm' => $this->makeForm()->disabled()
-            ->fill([
-                'hi'=> 'drgin'
-            ])
-                ->schema([
-                    TextInput::make('hi'),
-                ])
-                ->model(EmployeeAttednaceReportResource::class),
+                //merge your own form with default ones
+                'customForm' => $this->makeForm()->disabled()
+                    ->fill([
+                        'hi' => 'drgin',
+                    ])
+                    ->schema([
+                        TextInput::make('hi'),
+                    ])
+                    ->model(EmployeeAttednaceReportResource::class),
             ]
         );
     }
 
-
     // public function mount(): void
 
     // {
-    
+
     // $this->form->fill();
-    
+
     // }
 
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
     {
-        if(!isStuff()){
+        if (!isStuff()) {
             $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
-        }else{
-            $employee_id= auth()->user()?->employee?->id;
+        } else {
+            $employee_id = auth()->user()?->employee?->id;
         }
-        
+
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
+        // Initialize total counters
+        $totalSupposed = 0;
+        $totalWorked = 0;
+        $totalApproved = 0;
 
         // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
         $data = employeeAttendances($employee_id, $start_date, $end_date);
+        // Calculate totals from the attendance data
+        foreach ($data as $date => $dayData) {
+            foreach ($dayData['periods'] ?? [] as $period) {
+                $totalSupposed += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '0 h 0 m');
+                $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
+                $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
+            }
+        }
         // dd($data);
         return [
             'report_data' => $data,
             'employee_id' => $employee_id,
             'start_date' => $start_date,
             'end_date' => $end_date,
-        ];}
+            'totalSupposed' => $this->formatDuration($totalSupposed),
+        'totalWorked' => $this->formatDuration($totalWorked),
+        'totalApproved' => $this->formatDuration($totalApproved),
+        ];
+    }
 
     public function getReportData2($employee_id, $start_date, $end_date)
     {
@@ -299,6 +308,23 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
             'inactive' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('active', false)),
         ];
+    }
+
+    private function parseDuration($duration)
+    {
+        if (preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches)) {
+            $hours = (int) $matches[1];
+            $minutes = (int) $matches[2];
+            return $hours * 60 + $minutes; // Convert to total minutes
+        }
+        return 0;
+    }
+
+    private function formatDuration($totalMinutes)
+    {
+        $hours = intdiv($totalMinutes, 60);
+        $minutes = $totalMinutes % 60;
+        return "{$hours} h {$minutes} m";
     }
 
 }

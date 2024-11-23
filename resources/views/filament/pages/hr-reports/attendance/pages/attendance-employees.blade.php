@@ -1,8 +1,17 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
 
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+    </style>
+
     {{-- @if (isset($branch_id) && is_numeric($branch_id)) --}}
-    <x-filament-tables::table class="w-full text-sm text-left pretty  reports">
+    <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table">
         <thead>
             <x-filament-tables::row class="header_report">
                 <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
@@ -46,7 +55,7 @@
         </thead>
 
         <tbody>
-            
+
             @foreach ($report_data as $date => $data_)
                 @php
                     $data = array_values($data_);

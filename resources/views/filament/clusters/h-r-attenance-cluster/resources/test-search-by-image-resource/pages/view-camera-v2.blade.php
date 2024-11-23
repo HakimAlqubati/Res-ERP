@@ -346,18 +346,18 @@
                 loader.style.display = 'flex';
                 loaderActive = true;
 
-                const response = await fetch("{{ route('upload.captured.image') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        image: dataUrl,
-                        date:date,
-                        time:time
-                    })
-                });
+                // const response = await fetch("{{ route('upload.captured.image') }}", {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //         'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                //     },
+                //     body: JSON.stringify({
+                //         image: dataUrl,
+                //         date:date,
+                //         time:time
+                //     })
+                // });
 
                 const result = await response.json();
 

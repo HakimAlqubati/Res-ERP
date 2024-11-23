@@ -67,7 +67,7 @@ class LogsRelationManager extends RelationManager
                 
                $details =  json_decode($record->details,true);
                
-                if($record->log_type == TaskLog::TYPE_MOVED && is_array($details)&& $details['to']== Task::STATUS_CLOSED){
+                if( isset($details['to']) && $record->log_type == TaskLog::TYPE_MOVED && is_array($details)&&  $details['to']== Task::STATUS_CLOSED){
                     return ;
                 }
                 

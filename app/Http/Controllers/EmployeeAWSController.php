@@ -59,12 +59,12 @@ class EmployeeAWSController extends Controller
             'image' => 'required|string',
         ]);
 
+
         // Decode the Base64 image
         $imageData = $request->input('image');
         $imageData = str_replace('data:image/png;base64,', '', $imageData);
         $imageData = str_replace(' ', '+', $imageData);
         $imageData = base64_decode($imageData);
-        try {
 
         // Generate a unique filename
         $fileName = 'captured_face_' . time() . '.png';
@@ -129,22 +129,23 @@ class EmployeeAWSController extends Controller
                     $name = $dynamoResult['Item']['Name']['S'];
                 }
             }
-            Log::info('namefromsearch',[$name]);
-            $expodedResult = explode('-',$name);
-            
-            $ُemployeeId = $expodedResult[1] ?? 0;
+            Log::info('namefromsearch', [$name]);
+            $expodedResult = explode('-', $name);
+
+            $employeeId = $expodedResult[1] ?? 0;
             $employeeName = $expodedResult[0] ?? 'Employee not found';
             $name = $employeeName;
-            $employee = Employee::find($ُemployeeId);
-            if($employee){
-                $date= now()->toDateString();
-                $time = now()->toTimeString();
-                (new AttendanecEmployee2())->handleCreationAttendance($ُemployeeId,$date,$time);
+            $employee = Employee::find($employeeId);
+            if ($employee) {
+                // $date = now()->toDateString();
+                // $time = now()->toTimeString();
+                // $time = $_GET['time'];
+                (new AttendanecEmployee2())->handleCreationAttendance($employeeId, $request->date, $request->time);
 
-                Log::info('employee_data_captured',[$employee]);
-            }else{
-                
-                Log::info('employee_data_captured',['There is no employee']);
+                Log::info('employee_data_captured', [$employee]);
+            } else {
+
+                Log::info('employee_data_captured', ['There is no employee']);
             }
             // Return JSON response with the match result
             return response()->json(['status' => 'success', 'message' => "{$name}"]);
