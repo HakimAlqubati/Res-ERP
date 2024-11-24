@@ -88,7 +88,7 @@ class EmployeeAWSController extends Controller
         // Search for face in Rekognition
         try {
             $result = $rekognitionClient->searchFacesByImage([
-                'CollectionId' => 'workbenchemps',
+                'CollectionId' => 'workbenchemps2',
                 'Image' => [
                     'S3Object' => [
                         'Bucket' => env('AWS_BUCKET'),

@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -270,6 +271,40 @@
     <script src="{{ asset('/js/faceapi.js') }}"></script>
 
     <script>
+        let noFaceTimeout; // To keep track of the timer
+        const reopenButton = document.createElement('button');
+        // Style the button
+        reopenButton.textContent = 'Reopen Camera';
+        reopenButton.style.display = 'none';
+        reopenButton.style.position = 'absolute';
+        reopenButton.style.top = '50%';
+        reopenButton.style.left = '50%';
+        reopenButton.style.transform = 'translate(-50%, -50%)';
+        reopenButton.style.padding = '10px 20px';
+        reopenButton.style.fontSize = '1.2em';
+        reopenButton.style.backgroundColor = '#4caf50';
+        reopenButton.style.color = '#ffffff';
+        reopenButton.style.border = 'none';
+        reopenButton.style.borderRadius = '8px';
+        reopenButton.style.cursor = 'pointer';
+        reopenButton.style.boxShadow = '0px 4px 8px rgba(0, 0, 0, 0.2)';
+
+
+        // Add an event listener to reopen the camera
+        reopenButton.addEventListener('click', () => {
+            reopenButton.style.display = 'none'; // Hide the button
+            startVideo(); // Restart the camera
+        });
+
+
+        // Function to reset the timer for no face detection
+        function resetNoFaceTimer() {
+            clearTimeout(noFaceTimeout);
+            noFaceTimeout = setTimeout(() => {
+                stopVideo();
+                reopenButton.style.display = 'block';
+            }, 60000); // 1-minute timeout
+        }
         const video = document.getElementById('video');
         const overlayCanvas = document.getElementById('overlayCanvas');
         const messageDiv = document.getElementById('message');
@@ -285,18 +320,23 @@
 
         let loaderActive = false;
 
+        let blinkDetected = false;
+
         Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri('{{ asset('models') }}'),
             faceapi.nets.faceLandmark68Net.loadFromUri('{{ asset('models') }}'),
             faceapi.nets.faceRecognitionNet.loadFromUri('{{ asset('models') }}'),
             faceapi.nets.faceExpressionNet.loadFromUri('{{ asset('models') }}')
-        ]).then(startVideo);
+        ]).then(stopVideo);
 
         function startVideo() {
             navigator.mediaDevices.getUserMedia({
                     video: {}
                 })
-                .then(stream => video.srcObject = stream)
+                .then((stream) => {
+                    video.srcObject = stream;
+                    resetNoFaceTimer(); // Start/reset the timer
+                })
                 .catch(err => console.error(err));
         }
 
@@ -335,29 +375,29 @@
             const currentDate = urlParts[urlParts.length - 2]; // Second last part
             const currentTime = urlParts[urlParts.length - 1]; // Last part
 
-            
-            await uploadImage(dataUrl, currentDate, currentTime);
+
+            // await uploadImage(dataUrl, currentDate, currentTime);
         }
 
-        async function uploadImage(dataUrl, date,time) {
+        async function uploadImage(dataUrl, date, time) {
             try {
 
                 // Display loader and activate the loader flag
                 loader.style.display = 'flex';
                 loaderActive = true;
 
-                // const response = await fetch("{{ route('upload.captured.image') }}", {
-                //     method: 'POST',
-                //     headers: {
-                //         'Content-Type': 'application/json',
-                //         'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                //     },
-                //     body: JSON.stringify({
-                //         image: dataUrl,
-                //         date:date,
-                //         time:time
-                //     })
-                // });
+                const response = await fetch("{{ route('upload.captured.image') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        image: dataUrl,
+                        date: date,
+                        time: time
+                    })
+                });
 
                 const result = await response.json();
 
@@ -414,12 +454,39 @@
 
             setInterval(async () => {
                 // Only process detections if the loader is not active
-                if (!loaderActive) {
+                // if (!loaderActive) {
                     const detections = await faceapi.detectAllFaces(video, new faceapi
                             .TinyFaceDetectorOptions())
                         .withFaceLandmarks()
                         .withFaceExpressions();
                     const resizedDetections = faceapi.resizeResults(detections, displaySize);
+
+
+                    if (detections.length === 0) {
+                        console.log('No face detected');
+                        return;
+                    }
+
+                    const landmarks = detections[0].landmarks;
+
+                    // Get ear landmarks
+                    const {
+                        leftEarPoints,
+                        rightEarPoints
+                    } = getEarLandmarks(landmarks);
+
+                    // Log ear points for debugging
+                    console.log("Left Ear Points:", leftEarPoints);
+                    console.log("Right Ear Points:", rightEarPoints);
+
+                    // Check if both ears are visible
+                    if (areBothEarsVisible(leftEarPoints, rightEarPoints)) {
+                        console.log("Both ears detected!");
+                    } else {
+                        console.log("One or both ears are not visible.");
+                    }
+
+                    // Example eye landmarks (these points would come from a face detection library)
 
                     const ctx = canvas.getContext('2d', {
                         willReadFrequently: true
@@ -431,17 +498,65 @@
                         faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
                         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
                     }
+
+
+                    if (detections.length > 0) {
+                        resetNoFaceTimer(); // Reset the timer when a face is detected
+                    }
+
                     if (detections.length > 0 && !hasCaptured) {
                         hasCaptured = true;
 
                         // Wait for 5 seconds before capturing
                         setTimeout(() => {
-                            captureFullFrame();
-                        }, 1000);
+                            // captureFullFrame();
+                        }, 3000);
                     }
-                }
+                // }
             }, 100);
         });
+
+
+        // Function to validate if an ear is visible
+        function isEarVisible(earPoints) {
+            if (!earPoints || earPoints.length === 0) return false;
+
+            // Calculate the average position of the ear points
+            const averageX = earPoints.reduce((sum, point) => sum + point._x, 0) / earPoints.length;
+            const averageY = earPoints.reduce((sum, point) => sum + point._y, 0) / earPoints.length;
+
+            // Example thresholds (adjust based on your video dimensions)
+            const isXValid = averageX > 50 && averageX < 600; // X range
+            const isYValid = averageY > 50 && averageY < 400; // Y range
+
+            return isXValid && isYValid;
+        }
+
+        // Main function to check both ears
+        function areBothEarsVisible(leftEarPoints, rightEarPoints) {
+            const leftEarVisible = isEarVisible(leftEarPoints);
+            const rightEarVisible = isEarVisible(rightEarPoints);
+
+            return leftEarVisible && rightEarVisible; // Both ears must be visible
+        }
+        // Function to get approximate ear landmarks
+        function getEarLandmarks(landmarks) {
+            // Approximation based on facial outline (can be adjusted)
+            const leftEarPoints = landmarks.positions.slice(0, 4); // Adjust indices as needed
+            const rightEarPoints = landmarks.positions.slice(12, 16); // Adjust indices as needed
+
+            return {
+                leftEarPoints,
+                rightEarPoints
+            };
+        }
+        // Function to check if both ears are visible
+        function areEarsVisible(leftEarPoints, rightEarPoints) {
+            const isLeftEarVisible = isEarVisible(leftEarPoints);
+            const isRightEarVisible = isEarVisible(rightEarPoints);
+
+            return isLeftEarVisible && isRightEarVisible;
+        }
     </script>
 
 
@@ -462,6 +577,61 @@
                 greetingText.textContent = "Good Evening";
             }
         });
+
+
+        // Function to calculate Eye Aspect Ratio (EAR)
+        function calculateEAR(eyeLandmarks) {
+            // Get key points for the eye
+            const [p1, p2, p3, p4, p5, p6] = eyeLandmarks;
+
+            // Vertical distances (top to bottom of eye)
+            const vertical1 = Math.sqrt(Math.pow(p2.x - p6.x, 2) + Math.pow(p2.y - p6.y, 2)); // d2
+            const vertical2 = Math.sqrt(Math.pow(p3.x - p5.x, 2) + Math.pow(p3.y - p5.y, 2)); // d4
+
+            // Horizontal distance (left to right of eye)
+            const horizontal = Math.sqrt(Math.pow(p1.x - p4.x, 2) + Math.pow(p1.y - p4.y, 2)); // d1
+
+            // Calculate EAR
+            const EAR = (vertical1 + vertical2) / (2 * horizontal);
+
+            return EAR; // Return the Eye Aspect Ratio
+        }
+
+        // Function to detect blinking using EAR thresholds
+        function isBlinking(leftEyeLandmarks, rightEyeLandmarks, threshold = 0.3) {
+
+            // Calculate EAR for both eyes
+            const leftEAR = calculateEAR(leftEyeLandmarks);
+            const rightEAR = calculateEAR(rightEyeLandmarks);
+
+            console.log(`Left EAR: ${leftEAR}, Right EAR: ${rightEAR}`); // Debugging EAR values
+
+            // Check if both eyes' EAR are below the threshold
+            if (leftEAR < threshold && rightEAR < threshold) {
+                return true; // Blink detected
+            }
+
+            return false; // No blink detected
+        }
+
+
+        // function isBlinking(landmarks) {
+        //     const leftEye = landmarks.getLeftEye();
+        //     const rightEye = landmarks.getRightEye();
+
+        //     const leftEyeHeight = Math.abs(leftEye[1].y - leftEye[5].y);
+        //     const leftEyeWidth = Math.abs(leftEye[0].x - leftEye[3].x);
+
+        //     const rightEyeHeight = Math.abs(rightEye[1].y - rightEye[5].y);
+        //     const rightEyeWidth = Math.abs(rightEye[0].x - rightEye[3].x);
+
+        //     const leftRatio = leftEyeHeight / leftEyeWidth;
+        //     const rightRatio = rightEyeHeight / rightEyeWidth;
+
+        //     console.log(`Left Ratio: ${leftRatio}, Right Ratio: ${rightRatio}`); // Debugging ratios
+
+        //     return leftRatio < 0.3 && rightRatio < 0.3; // Adjusted threshold
+        // }
     </script>
 </body>
 

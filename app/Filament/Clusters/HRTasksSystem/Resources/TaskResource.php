@@ -820,14 +820,24 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return false;
                     })
                     ->color(Task::COLOR_REJECTED)
-                    ->form(function(){
-                        return [
+                    ->form(function($record){
+                        $defaultForm = [
+                            Fieldset::make()->visible(fn():bool=> (setting('show_warning_message') && $record->rejection_count== (setting('task_rejection_times_red_card')-1)))->schema([
+                              TextInput::make('message')->label('')
+                              ->extraInputAttributes(['style' => 'font-size:15px;color:red !important;padding:0.75em;font-weight:bold;'])
+                              ->disabled()->columnSpanFull()
+                              ->prefixIcon('heroicon-m-exclamation-circle')
+                              ->inputMode('decimal')
+                              ->prefixIconColor('warning')
+                              ->default('Rejecting this time will result in a penalty being applied to the employee handling it')
+                            ]),
                             Fieldset::make()->schema([
                                 Textarea::make('reject_reason')
                                 ->label('Reject reason')->required()
                                 ->columnSpanFull(),
                             ]),
                         ];
+                        return $defaultForm;;
                     })->modalIcon('heroicon-m-backspace')
                     ->action(function($record,$data){
                         DB::beginTransaction();

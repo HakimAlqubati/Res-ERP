@@ -424,12 +424,14 @@ Route::post('/filament/search-by-camera/process', [SearchByCameraController::cla
 
 
 Route::get('workbench_webcam/{date}/{time}',function(){
+    $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
+    $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera',compact('currentTime'));
+return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera',compact('currentTime','timeoutWebCamValue','webCamCaptureTime'));
 });
 Route::get('workbench_webcam_v2/{date}/{time}',function(){
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v2',compact('currentTime'));
+return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3',compact('currentTime'));
 });
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage'])->name('upload.captured.image');

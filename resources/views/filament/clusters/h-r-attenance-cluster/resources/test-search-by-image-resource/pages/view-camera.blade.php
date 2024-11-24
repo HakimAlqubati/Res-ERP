@@ -267,9 +267,76 @@
         <img id="uploadedImage" />
     </div>
 
+    <button id="reopen" style="z-index: 10;"></button>
+    <button id="nextEmployee" style="z-index: 11;">{{ 'Next employee' }}</button>
+
+
     <script src="{{ asset('/js/faceapi.js') }}"></script>
 
     <script>
+        let noFaceTimeout; // To keep track of the timer
+        const reopenButton = document.getElementById('reopen');
+        const nextEmployeeButton = document.getElementById('nextEmployee');
+        // Style the button
+        reopenButton.textContent = 'Reopen Camera';
+        reopenButton.style.display = 'none';
+        reopenButton.style.position = 'absolute';
+        reopenButton.style.top = '50%';
+        reopenButton.style.left = '50%';
+        reopenButton.style.transform = 'translate(-50%, -50%)';
+        reopenButton.style.padding = '10px 20px';
+        reopenButton.style.fontSize = '1.2em';
+        reopenButton.style.backgroundColor = '#4caf50';
+        reopenButton.style.color = '#ffffff';
+        reopenButton.style.border = 'none';
+        reopenButton.style.borderRadius = '8px';
+        reopenButton.style.cursor = 'pointer';
+        reopenButton.style.boxShadow = '0px 4px 8px rgba(0, 0, 0, 0.2)';
+
+        nextEmployeeButton.style.display = 'none';
+        nextEmployeeButton.style.position = 'absolute';
+        nextEmployeeButton.style.top = '50%';
+        nextEmployeeButton.style.left = '50%';
+        nextEmployeeButton.style.transform = 'translate(-50%, -50%)';
+        nextEmployeeButton.style.padding = '10px 20px';
+        nextEmployeeButton.style.fontSize = '1.2em';
+        nextEmployeeButton.style.backgroundColor = '#4caf50';
+        nextEmployeeButton.style.color = '#ffffff';
+        nextEmployeeButton.style.border = 'none';
+        nextEmployeeButton.style.borderRadius = '8px';
+        nextEmployeeButton.style.cursor = 'pointer';
+        nextEmployeeButton.style.boxShadow = '0px 4px 8px rgba(0, 0, 0, 0.2)';
+
+
+
+        // Add an event listener to reopen the camera
+        reopenButton.addEventListener('click', () => {
+            reopenButton.style.display = 'none'; // Hide the button
+            console.log('show up again')
+            startVideo(); // Restart the camera
+        });
+        // Add an event listener to reopen the camera
+        nextEmployeeButton.addEventListener('click', () => {
+            // nextEmployeeButton.style.display = 'none'; // Hide the button
+            // document.getElementById('capturedImage').display = 'none';
+            // startVideo(); // Restart the camera
+            location.reload(true);
+        });
+
+      
+        const timeoutWebCamValue = @json($timeoutWebCamValue);
+        console.log('Timeout Value:', timeoutWebCamValue);
+        // Function to reset the timer for no face detection
+        function resetNoFaceTimer() {
+
+            clearTimeout(noFaceTimeout);
+            noFaceTimeout = setTimeout(() => {
+                // Capture time from the database
+                stopVideo();
+                reopenButton.style.display = 'block';
+            }, timeoutWebCamValue); //
+        }
+
         const video = document.getElementById('video');
         const overlayCanvas = document.getElementById('overlayCanvas');
         const messageDiv = document.getElementById('message');
@@ -279,6 +346,9 @@
         const uploadedImageContainer = document.getElementById('uploadedImageContainer');
         const uploadedImage = document.getElementById('uploadedImage');
         const capturedImage = document.getElementById('capturedImage');
+
+
+
 
         // Initially hide the loader
         loader.style.display = 'none';
@@ -292,13 +362,18 @@
             faceapi.nets.faceExpressionNet.loadFromUri('{{ asset('models') }}')
         ]).then(startVideo);
 
+
         function startVideo() {
             navigator.mediaDevices.getUserMedia({
                     video: {}
                 })
-                .then(stream => video.srcObject = stream)
+                .then((stream) => {
+                    video.srcObject = stream;
+                    resetNoFaceTimer(); // Start/reset the timer
+                })
                 .catch(err => console.error(err));
         }
+
 
         function stopVideo() {
             const stream = video.srcObject;
@@ -335,11 +410,11 @@
             const currentDate = urlParts[urlParts.length - 2]; // Second last part
             const currentTime = urlParts[urlParts.length - 1]; // Last part
 
-            
+
             await uploadImage(dataUrl, currentDate, currentTime);
         }
 
-        async function uploadImage(dataUrl, date,time) {
+        async function uploadImage(dataUrl, date, time) {
             try {
 
                 // Display loader and activate the loader flag
@@ -354,8 +429,8 @@
                     },
                     body: JSON.stringify({
                         image: dataUrl,
-                        date:date,
-                        time:time
+                        date: date,
+                        time: time
                     })
                 });
 
@@ -373,6 +448,7 @@
                     currentTime.textContent = time;
                     // document.getElementById('helloEmployee').style.display = 'block'
                     timeDiv.textContent = `Time used :(${elapsedTime}) seconds`;
+                    document.getElementById('nextEmployee').style.display = 'block';
                     // timeDiv.textContent = result.message;
                 } else {
                     // Show the error message
@@ -380,6 +456,7 @@
                     // messageDiv.textContent = `${result.message} Task completed in ${elapsedTime} seconds.`;
                     timeDiv.textContent = `Time used :(${elapsedTime}) seconds`;
                     messageDiv.style.color = "red";
+                    document.getElementById('nextEmployee').style.display = 'block';
                 }
 
                 // Display the uploaded image
@@ -395,12 +472,14 @@
                 console.error("Error uploading image:", error);
                 messageDiv.textContent = "Error uploading image!";
                 messageDiv.style.color = "red";
+                document.getElementById('nextEmployee').style.display = 'block';
             } finally {
                 // Hide the loader after uploading is complete
                 loader.style.display = 'none';
             }
         }
-
+        const webCamCaptureTime = @json($webCamCaptureTime);
+        console.log('his',webCamCaptureTime)
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video);
             document.body.append(canvas);
@@ -434,10 +513,17 @@
                     if (detections.length > 0 && !hasCaptured) {
                         hasCaptured = true;
 
+
+                        if (detections.length > 0) {
+                            resetNoFaceTimer(); // Reset the timer when a face is detected
+                        }
+
+                        // Capture time from the database
+                        
                         // Wait for 5 seconds before capturing
                         setTimeout(() => {
                             captureFullFrame();
-                        }, 1000);
+                        }, webCamCaptureTime);
                     }
                 }
             }, 100);

@@ -116,17 +116,23 @@ class LogsRelationManager extends RelationManager
                 ->label('')
                 ->getStateUsing(function($record){
 
-                    // dd ($record->task->rejection_count);
+                    $rejectionCount = $record->task->rejection_count;
+
                     if($record->log_type == TaskLog::TYPE_REJECTED){
-                              
-                            //   if($record->id == 161){
-                            //    return 'yellow';
-                            //   }
-                              if($record->task->rejection_count == setting('task_rejection_times_red_card')){
-                               return 'red';
-                              }
-                    }
-                    return '';
+
+                        // Check for the yellow card condition
+                        if ($rejectionCount >= setting('task_rejection_times_yello_card') 
+        && $rejectionCount < setting('task_rejection_times_red_card')) {
+        return 'yellow'; // Yellow for the first threshold
+    }
+
+    // Check for the red card condition
+    if ($rejectionCount == setting('task_rejection_times_red_card')) {
+        return 'red'; // Red for the second threshold
+    }
+    return '';
+}
+return '';
                     if($record->task->rejection_count == setting('task_rejection_times_yello_card')){
                         return 'yellow';
                     }

@@ -32,26 +32,26 @@ class EmployeeImageAwsIndexesController extends Controller
     
             // Define the images and employee details
             $images = [
-                [
-                    'ImageName' => 'employee-employee-korian-girl.jpeg',
-                    'ExternalImageId' => 'employee-korian-girl',
-                    'EmployeeName' => 'Jane Smith',
-                ],
-                [
-                    'ImageName' => 'employee-girl-green-hejab.jpeg',
-                    'ExternalImageId' => 'employee-green-hejab',
-                    'EmployeeName' => 'Sapna-96',
-                ],
-                [
-                    'ImageName' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c.jpg',
-                    'ExternalImageId' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c',
-                    'EmployeeName' => 'Kadem-125',
-                ],
-                [
-                    'ImageName' => 'Almawqea2017-12-10-08-33-02-243608.jpg',
-                    'ExternalImageId' => 'Almawqea2017-12-10-08-33-02-243608',
-                    'EmployeeName' => 'Abo Bakr Salem-119',
-                ],
+                // [
+                //     'ImageName' => 'employee-employee-korian-girl.jpeg',
+                //     'ExternalImageId' => 'employee-korian-girl',
+                //     'EmployeeName' => 'Jane Smith',
+                // ],
+                // [
+                //     'ImageName' => 'employee-girl-green-hejab.jpeg',
+                //     'ExternalImageId' => 'employee-green-hejab',
+                //     'EmployeeName' => 'Sapna-96',
+                // ],
+                // [
+                //     'ImageName' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c.jpg',
+                //     'ExternalImageId' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c',
+                //     'EmployeeName' => 'Kadem-125',
+                // ],
+                // [
+                //     'ImageName' => 'Almawqea2017-12-10-08-33-02-243608.jpg',
+                //     'ExternalImageId' => 'Almawqea2017-12-10-08-33-02-243608',
+                //     'EmployeeName' => 'Abo Bakr Salem-119',
+                // ],
                 [
                     'ImageName' => 'awad.jpeg',
                     'ExternalImageId' => 'awad',
@@ -63,7 +63,7 @@ class EmployeeImageAwsIndexesController extends Controller
                 try {
                     // Index face in Rekognition
                     $result = $rekognitionClient->indexFaces([
-                        'CollectionId' => 'workbenchemps', // Your collection ID
+                        'CollectionId' => 'workbenchemps2', // Your collection ID
                         'Image' => [
                             'S3Object' => [
                                 'Bucket' => env('AWS_BUCKET'),
@@ -86,7 +86,7 @@ class EmployeeImageAwsIndexesController extends Controller
                         'Item' => [
                             'RekognitionId' => ['S' => $faceId],
                             'Name' => ['S' => $image['EmployeeName']],
-                            'AvatarUrl' => ['S' => "s3://workbenchemps/{$image['ImageName']}"],
+                            'AvatarUrl' => ['S' => "s3://workbenchemps2/{$image['ImageName']}"],
                         ],
                     ]);
     
