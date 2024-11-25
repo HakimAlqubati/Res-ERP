@@ -428,7 +428,7 @@ Route::get('workbench_webcam/{date}/{time}',function(){
     $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
 return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera',compact('currentTime','timeoutWebCamValue','webCamCaptureTime'));
-});
+})->middleware('check');
 Route::get('workbench_webcam_v2/{date}/{time}',function(){
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
 return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3',compact('currentTime'));
