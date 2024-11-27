@@ -119,7 +119,7 @@
                     <th>Task ID</th>
                     <th>Task Title</th>
                     <th>Status</th>
-                    <th>Time Spent (HH:MM:SS)</th>
+                    <th>Time Spent</th>
                 </tr>
             </thead>
             <tbody>
