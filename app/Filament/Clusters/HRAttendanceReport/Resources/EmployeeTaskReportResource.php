@@ -8,12 +8,14 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskLog;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Support\Colors\Color;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\FiltersLayout;
@@ -48,6 +50,7 @@ class EmployeeTaskReportResource extends Resource
                 
                 TextColumn::make('employee_name')->label('Employee name')
                 ->searchable(isGlobal: true)->wrap(),
+                
                 TextColumn::make('task_id')
                 ->tooltip(fn($record):string=> $record->title . '  Task no #'. $record->id)
                 ->size(TextColumnSize::Small)
@@ -59,6 +62,8 @@ class EmployeeTaskReportResource extends Resource
 
                 ->url(fn($record):string=> url('admin/h-r-tasks-system/tasks/'.$record->task_id.'/edit'))->openUrlInNewTab()
                 ,
+                TextColumn::make('task_title')->label('Task title')
+                ->searchable(isGlobal: true)->wrap(),
                 TextColumn::make('task_status')->label('Status')->searchable(isGlobal: true)->alignCenter(true)
                 ->badge()->alignCenter(true)
                     ->icon(fn(string $state): string => match ($state) {
@@ -123,7 +128,25 @@ class EmployeeTaskReportResource extends Resource
                         ->label('Task id')->searchable()
                         ->getSearchResultsUsing(fn (string $search): array => Task::where('id', 'like', "%{$search}%")->limit(5)->pluck('id', 'id')->toArray())
                             ->getOptionLabelUsing(fn ($value): ?string => Task::find($value)?->id),
-            ], FiltersLayout::AboveContent);
+            ], FiltersLayout::AboveContent)
+            ->actions([
+                Action::make('pdf')->label('PDF')
+                ->button()
+                ->action(function($record){
+  // Fetch data for the report
+  $data = static::getEloquentQuery()->get();
+// dd($data);
+  // Generate the PDF using a view
+  $pdf = Pdf::loadView('export.reports.hr.tasks.employee-task-report', ['data' => $data]);
+
+  // Return PDF as a download
+  return response()->streamDownload(
+      fn() => print($pdf->output()),
+      'employee_task_report.pdf'
+  );
+                }),
+            ])
+            ;
     }
  
     public static function canCreate(): bool
@@ -143,6 +166,7 @@ class EmployeeTaskReportResource extends Resource
         $query = Employee::select(
             'hr_employees.branch_id as branch_id','hr_employees.id as employee_id','hr_employees.employee_no as employee_no',
             'hr_employees.name as employee_name','hr_tasks.id as task_id',
+            'hr_tasks.title as task_title',
             'hr_tasks.task_status as task_status',
             DB::raw('SUM(TIME_TO_SEC(hr_task_logs.total_hours_taken)) as total_spent_seconds')
 
@@ -152,7 +176,7 @@ class EmployeeTaskReportResource extends Resource
         ->whereJsonContains('hr_task_logs.details->to', Task::STATUS_CLOSED, '!=')
         ;
         
-        $query = $query->groupBy('hr_employees.id','hr_employees.branch_id','hr_employees.employee_no','hr_employees.name', 'hr_tasks.id','hr_tasks.task_status');
+        $query = $query->groupBy('hr_employees.id','hr_tasks.title','hr_employees.branch_id','hr_employees.employee_no','hr_employees.name', 'hr_tasks.id','hr_tasks.task_status');
 
         // dd($query->toSql());
         return $query->orderBy('hr_tasks.id','desc');
