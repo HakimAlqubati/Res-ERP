@@ -93,8 +93,8 @@
                     @endforeach
                     <tr>
                         <th>Total</th>
-                        <th>{{ number_format($totalAllowanceAmount, 2) }}</th>
-                        <th>{{ number_format($totalDeductionAmount, 2) }}</th>
+                        <th style="text-align: center;">{{ number_format($totalAllowanceAmount, 2) }}</th>
+                        <th style="text-align: center;">{{ number_format($totalDeductionAmount, 2) }}</th>
                     </tr>
                 </tbody>
             </table>

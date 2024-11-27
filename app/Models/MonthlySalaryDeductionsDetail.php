@@ -15,6 +15,7 @@ class MonthlySalaryDeductionsDetail extends Model
     public const LATE_HOUR_DEDUCTIONS = -1;
     public const ABSENT_DAY_DEDUCTIONS = -2;
     public const ADVANCED_MONTHLY_DEDUCATION = -3;
+    public const EARLY_DEPATURE_EARLY_HOURS = -4;
     
     public const TAX_DEDUCTIONS = -4;
     
@@ -51,6 +52,7 @@ class MonthlySalaryDeductionsDetail extends Model
         self::LATE_HOUR_DEDUCTIONS => 'Late hour deductions',
         self::ABSENT_DAY_DEDUCTIONS => 'Absent day deductions',
         self::ADVANCED_MONTHLY_DEDUCATION => 'Advance deduction',
-        self::TAX_DEDUCTIONS => 'MTD', // New entry for Tax Deductions
+        self::TAX_DEDUCTIONS => 'MTD', 
+        self::EARLY_DEPATURE_EARLY_HOURS => 'Early depature hours', 
     ];
 }

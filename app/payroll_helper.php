@@ -85,9 +85,12 @@ function calculateMonthlySalaryV2($employeeId, $date)
     }
 
     $totalLateHours = 0;
+    $totalEarlyDepatureHours = 0;
     if (!$employee->discount_exception_if_attendance_late) {
         $totalLateHours = calculateTotalLateArrival($attendances)['totalHoursFloat'];
+        $totalEarlyDepatureHours = calculateTotalEarlyLeave($attendances);
     }
+
 
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
@@ -99,8 +102,9 @@ function calculateMonthlySalaryV2($employeeId, $date)
     // Calculate deductions for absences and lateness
     $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+    $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
-    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0)+ $taxDeduction);
+    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours +$deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0)+ $taxDeduction);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result']);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
@@ -127,11 +131,13 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'general_allowances_result' => round($generalAllowanceResultCalculated['result'], 2),
             'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
             'deduction_for_late_hours' => round($deductionForLateHours, 2),
+            'deduction_for_early_depature_hours' => round($deductionForEarlyDepatureHours, 2),
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_pay' => round($overtimePay, 2),
             'overtime_hours' => $overtimeHours,
             'total_absent_days' => $totalAbsentDays,
             'total_late_hours' => $totalLateHours,
+            'total_early_depature_hours' => $totalEarlyDepatureHours,
             'deducation_details' => [
                 'specific_deducation' => $specificDeducationCalculated,
                 'general_deducation' => $generalDedeucationResultCalculated,
@@ -316,6 +322,8 @@ function getEmployeeOvertimesOfSpecificDate($date, $employee)
     $totalHours = $overtimesForMonth->sum(function ($overtime) {
         return (float) $overtime->hours; // Ensure the 'hours' value is cast to float
     });
+
+    
     return $totalHours;
 }
 function getEmployeeOvertimesV2($date, $employee)
@@ -422,6 +430,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
         ];
     })->toArray();
 
+    
     // Calculate the total deduction amount
     $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
 
@@ -478,7 +487,7 @@ function generateSalarySlipPdf($employeeId, $sid)
 
     $employeeDeductions = collect($deducationDetails)->map(function ($deduction) {
         return [
-            'deduction_name' => $deduction['deduction_id'] ?? 'Unknown Deduction',
+            'deduction_name' => $deduction['deduction_name'] ?? 'Unknown Deduction',
             'deduction_amount' => $deduction['deduction_amount'],
         ];
     });

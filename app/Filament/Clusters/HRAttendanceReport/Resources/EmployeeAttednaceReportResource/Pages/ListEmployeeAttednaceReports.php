@@ -78,10 +78,13 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 
         // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
         $data = employeeAttendances($employee_id, $start_date, $end_date);
+        // dd(WorkPeriod::find(5)->calculateTotalSupposedDurationForDays(2));
         // Calculate totals from the attendance data
         foreach ($data as $date => $dayData) {
             foreach ($dayData['periods'] ?? [] as $period) {
-                $totalSupposed += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '0 h 0 m');
+                $totalSupposed = WorkPeriod::find($period['period_id'])->calculateTotalSupposedDurationForDays(count($data));
+                $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
+                // dd($totalSupposed,$totalWorked);
                 $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
                 $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
             }
@@ -92,7 +95,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
             'employee_id' => $employee_id,
             'start_date' => $start_date,
             'end_date' => $end_date,
-            'totalSupposed' => $this->formatDuration($totalSupposed),
+            'totalSupposed' => $totalSupposed,
         'totalWorked' => $this->formatDuration($totalWorked),
         'totalApproved' => $this->formatDuration($totalApproved),
         ];

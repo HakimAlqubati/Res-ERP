@@ -518,34 +518,34 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                         $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
                         
-                        
                         $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
-                        
                         if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() > 0) {
                             // if ($isActualLargerThanSupposed &&  $employee->overtimes->count() > 0) {
-                            $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
+                                $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);                                
+                            }
+                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
+                                $approvedOvertime = $formattedSupposedActualDuration;
+                            }
+                            if (!$isActualLargerThanSupposed) {
+                                $approvedOvertime = $periodData['total_hours'];
+                            }
 
-                        }
-                        if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
-                            $approvedOvertime = $formattedSupposedActualDuration;
-                        }
-                        if (!$isActualLargerThanSupposed) {
-                            $approvedOvertime = $periodData['total_hours'];
-                        }
-
-                        
+                        // dd($approvedOvertime);
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
+                            'period_end_at'=>$period->end_at,
                             'status' => $attendance->status ?? 'unknown',
                             'actual_duration_hourly' => $formattedSupposedActualDuration,
                             'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject. ':00',
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
-                            'approved_overtime'=> $approvedOvertime,
+                            'approved_overtime'=>  $approvedOvertime,
                         ];
+                        
                         $periodData['attendances']['checkout'][] = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
+                           
                             'status' => $attendance->status ?? 'unknown',
                             'actual_duration_hourly' => $formattedSupposedActualDuration,
                             'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject. ':00',
@@ -572,6 +572,16 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
     }
     return $result;
+}
+
+function formatHoursMinuts($totalHours){
+    // Separate hours and minutes
+    $hours = floor($totalHours); // Get the integer part (hours)
+    $minutes = ($totalHours - $hours) * 60; // Convert fractional part to minutes
+
+    // Format the output
+    $formattedTime = "{$hours} h " . round($minutes) . " m";
+    return $formattedTime;
 }
 
 /**
@@ -630,11 +640,13 @@ function addHoursToDuration($duration, $additionalHours)
 
         // Add the additional hours
         $totalHours = $hours + $additionalHours;
-
-        // Format the new duration
+        return formatHoursMinuts($totalHours);
         return "{$totalHours} h {$minutes} m";
+dd($totalHours,formatHoursMinuts($totalHours),"{$totalHours} h {$minutes} m");
+        return formatHoursMinuts($totalHours);
+        dd($duration,$minutes,$totalHours);
+        // Format the new duration
     }
-
     // Return the original duration if the format is incorrect
     return $duration;
 }
@@ -818,6 +830,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                                 'approved_overtime' => $approvedOvertime,
                                 'is' => $isActualLargerThanSupposed,
+                                'period_end_at'=>$period->end_at,
 
                             ];
                             $periodData['attendances']['checkout'][] = [
@@ -914,6 +927,45 @@ function calculateTotalLateArrival($attendanceData)
 
     return [
         'totalMinutes' => $totalDelayMinutes,
+        'totalHoursFloat' => round($totalHoursFloat, 1),
+    ];
+}
+
+function calculateTotalEarlyLeave($attendanceData)
+{
+    $totalEarlyLeaveMinutes = 0;
+// return 23;
+    // Loop through each date in the attendance data
+    foreach ($attendanceData as $date => $data) {
+        
+        if (isset($data['periods'])) {
+            // Loop through each period for the date
+            foreach ($data['periods'] as $period) {
+                // dd( $period['attendances']['checkout']['lastcheckout']['early_departure_minutes']);
+                if (isset($period['attendances']['checkout']['lastcheckout']['status'])
+                // && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_ARRIVAL
+                ) {
+                    
+                    // dd($period['attendances']['checkout']['lastcheckout']);
+                        // Check if the status is 'early_arrival' (early leave)
+
+                            // Add the early leave minutes to the total
+                            
+                                $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                            
+
+                    }
+                
+            }
+        }
+    }
+
+    return round(($totalEarlyLeaveMinutes/60),1);
+    // Calculate total hours as a float
+    $totalHoursFloat = $totalEarlyLeaveMinutes / 60;
+
+    return [
+        'totalMinutes' => $totalEarlyLeaveMinutes,
         'totalHoursFloat' => round($totalHoursFloat, 1),
     ];
 }

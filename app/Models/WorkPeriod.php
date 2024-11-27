@@ -70,6 +70,31 @@ class WorkPeriod extends Model
     }
 
    
+      // Function to calculate the total supposed duration for a given number of days
+      public function calculateTotalSupposedDurationForDays(int $days)
+      {
+          // Parse start_at and end_at
+          $start = Carbon::parse($this->start_at);
+          $end = Carbon::parse($this->end_at);
+  
+          // Handle overnight shifts by adding a day if necessary
+          if ($end->lt($start)) {
+              $end->addDay();
+          }
+  
+          // Calculate total minutes for one day
+          $totalMinutesPerDay = $start->diffInMinutes($end);
+  
+          // Multiply total minutes by the number of days
+          $totalMinutes = $totalMinutesPerDay * $days;
+  
+          // Convert minutes to hours and minutes
+          $totalHours = intdiv($totalMinutes, 60);
+          $remainingMinutes = $totalMinutes % 60;
+  
+          // Return the total duration as a formatted string (e.g., 5 days as "12h 30m")
+          return sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
+      }
 
     protected static function booted()
     {

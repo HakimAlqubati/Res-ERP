@@ -55,83 +55,66 @@ class EmployeeAWSController extends Controller
     }
 
     public function uploadCapturedImage(Request $request)
-{
-    // Validate the request to ensure 'image' data is present
-    $request->validate([
-        'image' => 'required|string',
-    ]);
+    {
+        // Validate the request to ensure 'image' data is present
+        $request->validate([
+            'image' => 'required|string',
+        ]);
 
-    // Decode the Base64 image
-    $imageData = $request->input('image');
-    $imageData = str_replace('data:image/png;base64,', '', $imageData);
-    $imageData = str_replace(' ', '+', $imageData);
-    $imageData = base64_decode($imageData);
+        // Decode the Base64 image
+        $imageData = $request->input('image');
+        $imageData = str_replace('data:image/png;base64,', '', $imageData);
+        $imageData = str_replace(' ', '+', $imageData);
+        $imageData = base64_decode($imageData);
 
-    // Generate a unique filename
-    $fileName = 'captured_face_' . time() . '.png';
+        // Generate a unique filename
+        $fileName = 'captured_face_' . time() . '.png';
 
-    // Save the image to the S3 bucket
-    Storage::disk('s3')->put("uploads/{$fileName}", $imageData, [
-        'visibility' => 'private',
-        'ContentType' => 'image/png',  // Make sure the type matches the image format
-    ]);
+        // Save the image to S3
+        Storage::disk('s3')->put("uploads/{$fileName}", $imageData, [
+            'visibility' => 'private',
+            'ContentType' => 'image/jpeg',
+        ]);
 
-    // Initialize Rekognition client
-    $rekognitionClient = new RekognitionClient([
-        'region' => env('AWS_DEFAULT_REGION'),
-        'version' => 'latest',
-        'credentials' => [
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-        ],
-    ]);
-
-    // Detect faces in the uploaded image
-    try {
-        $result = $rekognitionClient->detectFaces([
-            'Image' => [
-                'S3Object' => [
-                    'Bucket' => env('AWS_BUCKET'),
-                    'Name' => "uploads/{$fileName}",
-                ],
+        // Initialize Rekognition client
+        $rekognitionClient = new RekognitionClient([
+            'region' => env('AWS_DEFAULT_REGION'),
+            'version' => 'latest',
+            'credentials' => [
+                'key' => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ],
         ]);
 
-        // Check if face attributes suggest liveness (e.g., eyes open, smile)
-        $faceDetails = $result['FaceDetails'] ?? [];
-        $isReal = false;  // Assume image is not live
+        // Step 1: Create Liveness Session
+        try {
+            $livenessSessionResponse = $rekognitionClient->createFaceLivenessSession([
+                'OutputConfig' => [
+                    'S3Bucket' => env('AWS_BUCKET'),
+                    'S3Prefix' => 'liveness_sessions/',
+                ],
+            ]);
 
-        // Perform basic checks for liveness (e.g., eyes open, smile)
-        foreach ($faceDetails as $face) {
-            $eyesOpen = $face['EyesOpen']['Value'] ?? false;
-            $smile = $face['Smile']['Value'] ?? false;
+            $sessionId = $livenessSessionResponse['SessionId'];
 
-            // Set liveness flag if eyes are open and smiling (simple heuristic)
-            if ($eyesOpen && $smile) {
-                $isReal = true;
-                Log::info('Liveness Detection: Image is Live');
-                break;  // If one face is live, we assume the image is live
+            // Step 2: Analyze Liveness
+            $analyzeResponse = $rekognitionClient->analyzeFaceLiveness([
+                'SessionId' => $sessionId,
+                'ImageBytes' => $imageData,
+            ]);
+
+            // Check Liveness Confidence
+            if ($analyzeResponse['Confidence'] >= 90) {
+                // Proceed with face recognition if liveness is detected
+                return $this->handleFaceRecognition($fileName, $rekognitionClient);
+            } else {
+                return response()->json(['status' => 'error', 'message' => 'Liveness detection failed.']);
             }
+        } catch (Exception $e) {
+            Log::error("Liveness detection error: " . $e->getMessage());
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
         }
-
-        // If no valid face features are found, print Not Live
-        if (!$isReal) {
-            Log::info('Liveness Detection: Image is Not Live');
-        }
-
-        // Return JSON response with the liveness result
-        return response()->json([
-            'status' => $isReal ? 'success' : 'error',
-            'message' => $isReal ? 'Image is Live' : 'Image is Not Live'
-        ]);
-
-    } catch (Exception $e) {
-        Log::error("Rekognition error: " . $e->getMessage());
-        return response()->json(['status' => 'error', 'message' => "Error: " . $e->getMessage()]);
     }
-}
-
-    
 
     private function handleFaceRecognition($fileName, $rekognitionClient)
     {

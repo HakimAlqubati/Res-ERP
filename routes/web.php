@@ -33,6 +33,7 @@ use Spatie\Permission\Models\Role;
  */
 
 Route::get('/totestpdf', function () {
+    return generateSalarySlipPdf_(82,170);
     return view('export.reports.hr.salaries.salary-slip');
     $order = Order::find(52);
     $orderDetails = $order?->orderDetails;

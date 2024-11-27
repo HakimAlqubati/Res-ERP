@@ -156,6 +156,15 @@ class CreateMonthSalary extends CreateRecord
                         'deduction_amount' => $calculateSalary['details']['deduction_for_late_hours'],
                     ]);
                 }
+                if(isset($calculateSalary['details']['deduction_for_early_depature_hours']) && $calculateSalary['details']['deduction_for_early_depature_hours'] > 0){
+                    $this->record->deducationDetails()->create([
+                        'employee_id' => $employee->id,
+                        
+                        'deduction_id' => MonthlySalaryDeductionsDetail::EARLY_DEPATURE_EARLY_HOURS,
+                        'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::EARLY_DEPATURE_EARLY_HOURS],
+                        'deduction_amount' => $calculateSalary['details']['deduction_for_early_depature_hours'],
+                    ]);
+                }
 
 
                 // Commit the transaction if all is successful
