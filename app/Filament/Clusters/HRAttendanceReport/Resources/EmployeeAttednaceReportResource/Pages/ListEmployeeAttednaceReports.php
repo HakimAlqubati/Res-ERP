@@ -85,7 +85,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
                 $totalSupposed = WorkPeriod::find($period['period_id'])->calculateTotalSupposedDurationForDays(count($data));
                 $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
                 // dd($totalSupposed,$totalWorked);
-                $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
+                // $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
                 $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
             }
         }
