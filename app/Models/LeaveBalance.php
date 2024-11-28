@@ -18,10 +18,10 @@ class LeaveBalance extends Model
         'employee_id',
         'leave_type_id',
         'year',
-        'balance',
-        'created_by',
-        'branch_id',
         'month',
+        'balance',
+        'branch_id',
+        'created_by',
     ];
 
     /**

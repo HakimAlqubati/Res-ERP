@@ -101,7 +101,10 @@ class LeaveBalanceResource extends Resource
                                 2026 => 2026,
                                 2027 => 2027,
                             ])->required(),
-                            Select::make('month')->options(getMonthArrayWithKeys())->required(),
+                            Select::make('month')->options(getMonthArrayWithKeys())
+                            // ->multiple()
+                            // ->required()
+                            ,
                         ]),
 
                     Repeater::make('employees')
@@ -114,20 +117,21 @@ class LeaveBalanceResource extends Resource
                                     Select::make('employee_id')
                                         ->relationship('employee', 'name')
                                         ->required()
-                                        // ->unique(
-                                        //     ignoreRecord: true,
-                                        //     modifyRuleUsing: function (Unique $rule, Get $get, $state) {
-                                        //         return $rule->where('employee_id', $state)
-                                        //             ->where('leave_type_id', $get('../../leave_type_id'))
-                                        //             ->where('year', $get('../../year'))
-                                        //             // ->whereRaw(
-                                        //             //     'exists (select 1 from hr_leave_types where hr_leave_types.id = hr_leave_balances.leave_type_id and hr_leave_types.is_monthly != 0)'
-                                        //             // );
-                                        //         ;
-                                        //     }
-                                        // )->validationMessages([
-                                        // 'unique' => 'Balance already created',
-                                    // ])
+                                        ->unique(
+                                            ignoreRecord: true,
+                                            modifyRuleUsing: function (Unique $rule, Get $get, $state) {
+                                                return $rule->where('employee_id', $state)
+                                                    ->where('leave_type_id', $get('../../leave_type_id'))
+                                                    ->where('year', $get('../../year'))
+                                                    ->where('month', $get('../../month'))
+                                                    // ->whereRaw(
+                                                    //     'exists (select 1 from hr_leave_types where hr_leave_types.id = hr_leave_balances.leave_type_id and hr_leave_types.is_monthly != 0)'
+                                                    // );
+                                                ;
+                                            }
+                                        )->validationMessages([
+                                        'unique' => 'Balance already created',
+                                    ])
                                     ,
 
                                     TextInput::make('balance')->label('Balance')
