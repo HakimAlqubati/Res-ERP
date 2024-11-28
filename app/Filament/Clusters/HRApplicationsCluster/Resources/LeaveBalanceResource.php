@@ -21,6 +21,7 @@ use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Validation\Rules\Unique;
@@ -180,23 +181,39 @@ class LeaveBalanceResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('month')
                     ->alignCenter(true)
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(function ($state) {
+                       return getMonthArrayWithKeys()[$state]??'';
+                    })
+                    ,
                 Tables\Columns\TextColumn::make('balance')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
 
             ])->striped()
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\TrashedFilter::make()->hidden(),
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
-                // SelectFilter::make('leave_type_id')
-                //     ->searchable()
-                //     ->multiple()
-                //     ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
-            ])
+                SelectFilter::make('leave_type_id')
+                    ->searchable()
+                    ->multiple()
+                    ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
+                SelectFilter::make('employee_id')
+                    ->searchable()
+                    ->multiple()
+                    ->label('Employee')->options([Employee::get()->pluck('name', 'id')->toArray()]),
+                SelectFilter::make('year')
+                    ->searchable()
+                    ->multiple()
+                    ->label('Year')->options([2024=>2024,2025=>2025,2026=>2026]),
+                SelectFilter::make('month')
+                    ->searchable()
+                    ->multiple()
+                    ->label('Month')->options(getMonthArrayWithKeys()),
+            ],FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
             ])
