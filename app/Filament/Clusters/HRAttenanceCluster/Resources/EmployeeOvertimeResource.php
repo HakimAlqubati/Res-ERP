@@ -308,7 +308,7 @@ class EmployeeOvertimeResource extends Resource
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
-                Action::make('Edit')->visible(fn():bool=>isSuperAdmin())
+                Action::make('Edit')->visible(fn():bool=>(isSuperAdmin() || isBranchManager()))
                 ->form(function($record){
                     return [
                         TextInput::make('hours')->default($record->hours),
