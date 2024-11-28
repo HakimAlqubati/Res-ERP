@@ -30,6 +30,7 @@ class CreateLeaveBalance extends CreateRecord
                 'employee_id' => $employee['employee_id'],
                 'leave_type_id' => $data['leave_type_id'],
                 'year' => $data['year'],
+                'month' => $data['month'],
                 'balance' => $employee['balance'],
                 'created_by' => auth()->user()->id,
             ]);
@@ -42,6 +43,7 @@ class CreateLeaveBalance extends CreateRecord
         $data['employee_id'] = $employee['employee_id'];
         $data['leave_type_id'] = $data['leave_type_id'];
         $data['year'] = $data['year'];
+        $data['month'] = $data['month'];
         $data['balance'] = $employee['balance'];
         $data['created_by'] = auth()->user()->id;
         static::createTransaction($leaveBalance,$employee,$data);
@@ -57,7 +59,7 @@ class CreateLeaveBalance extends CreateRecord
        return  ApplicationTransaction::create([
             'application_id' => $leaveBalance->id,
             'transaction_type_id' => 5, 
-            'transaction_type_name' => ApplicationTransaction::APPLICATION_TYPES[5],
+            'transaction_type_name' => ApplicationTransaction::TRANSACTION_TYPES[5],
             'transaction_description' => 'Opening leave balance created for employee ID ' . $employee['employee_id'],
             'submitted_on' => Carbon::now(),
             'remaining' => $employee['balance'],

@@ -239,7 +239,7 @@ class EmployeeApplicationResource extends Resource
                                 Fieldset::make()->schema(
 
                                     [
-                                        Grid::make()->columns(2)->schema([
+                                        Grid::make()->columns(4)->schema([
                                             Select::make('detail_leave_type_id')->label('Leave type')
                                                 ->requiredIf('application_type', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
                                                 ->live()
@@ -247,10 +247,37 @@ class EmployeeApplicationResource extends Resource
                                                     $leaveTypes
                                                 )->required()
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state);
-                                                    $set('detail_balance', $leaveBalance?->balance);
+                                                    $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state,$get('detail_year'));
+                                                   
+                                                    (LeaveType::find($get('detail_leave_type_id'))?->is_monthly !=1) ? $set('detail_balance', $leaveBalance?->balance):'';
                                                     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
                                                 }),
+                                            Select::make('detail_year')->label('Year')
+                                            ->options([2024=>2024,
+                                            2025=>2025,
+                                            2026=>2026])->default(2024)
+                                            ->live()
+                                            ->visible(fn($get):bool=>(LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1))
+                                            // ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                            //     // dd($state);
+                                            //     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'), $state);
+                                               
+                                            //     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
+                                            //     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
+                                            // })
+                                            ,
+                                            Select::make('detail_month')->label('Month')
+                                            ->options(getMonthArrayWithKeys())
+                                            ->live()
+                                            ->visible(fn($get):bool=>(LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1))
+                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                // dd($state);
+                                                $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'),$get('detail_year'), $state);
+                                               
+                                                (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
+                                                // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
+                                            })
+                                            ,
                                             TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 
                                         ]),
@@ -776,6 +803,8 @@ class EmployeeApplicationResource extends Resource
                 // Fetch the leave balance for the employee and specific leave type
                 $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
                     ->where('leave_type_id', $record->detail_leave_type_id)
+                    ->where('year',$data['detail_year'])
+                    ->where('month',$record?->detail_month)
                     ->first();
 
                 // Update the balance if found
@@ -789,6 +818,8 @@ class EmployeeApplicationResource extends Resource
                 $toDate = $record?->detail_to_date;
                 $fromDate = $record?->detail_from_date;
                 $daysCount = $record?->detail_days_count;
+                $month =  getMonthArrayWithKeys()[$record?->detail_month]??'' ;
+                $year =  $record?->detail_year;;
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
                 return [
@@ -797,6 +828,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('leave')->default($leaveType),
                         DatePicker::make('from_date')->default($fromDate)->label('From date'),
                         DatePicker::make('to_date')->default($toDate)->label('To date'),
+                        TextInput::make('detail_year')->default($year)->label('Year'),
+                        TextInput::make('detail_month')->default($month)->label('Month'),
                         TextInput::make('days_count')->default($daysCount),
                     ]),
                 ];
@@ -937,6 +970,8 @@ class EmployeeApplicationResource extends Resource
                 $toDate = $record?->detail_to_date;
                 $fromDate = $record?->detail_from_date;
                 $daysCount = $record?->detail_days_count;
+                $year =  $record?->detail_year;
+                $month =  getMonthArrayWithKeys()[$record?->detail_month]??'' ;
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
                 return [
@@ -945,6 +980,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('leave')->default($leaveType),
                         DatePicker::make('from_date')->default($fromDate)->label('From date'),
                         DatePicker::make('to_date')->default($toDate)->label('To date'),
+                        TextInput::make('detail_year')->default($year)->label('Year'),
+                        TextInput::make('detail_month')->default($month)->label('Month'),
                         TextInput::make('days_count')->default($daysCount),
                     ]),
                 ];

@@ -21,6 +21,7 @@ class LeaveBalance extends Model
         'balance',
         'created_by',
         'branch_id',
+        'month',
     ];
 
     /**
@@ -41,10 +42,19 @@ class LeaveBalance extends Model
         return $this->belongsTo(LeaveType::class);
     }
 
-    public static function getBalanceForEmployee($employeeId, $leaveTypeId)
+    public static function getBalanceForEmployee($employeeId, $leaveTypeId,$year)
     {
         return self::where('employee_id', $employeeId)
                     ->where('leave_type_id', $leaveTypeId)
+                    ->where('year', $year)
+                    ->first();
+    }
+    public static function getMonthlyBalanceForEmployee($employeeId, $leaveTypeId,$year,$month)
+    {
+        return self::where('employee_id', $employeeId)
+                    ->where('leave_type_id', $leaveTypeId)
+                    ->where('year', $year)
+                    ->where('month', $month)
                     ->first();
     }
 

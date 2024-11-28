@@ -412,6 +412,24 @@ function getMonthsArray()
     ];
 }
 
+function getMonthArrayWithKeys()
+{
+    return [
+        '01' => __('lang.month.january'),  // January
+        '02' => __('lang.month.february'), // February
+        '03' => __('lang.month.march'),    // March
+        '04' => __('lang.month.april'),    // April
+        '05' => __('lang.month.may'),      // May
+        '06' => __('lang.month.june'),     // June
+        '07' => __('lang.month.july'),     // July
+        '08' => __('lang.month.august'),   // August
+        '09' => __('lang.month.september'),// September
+        '10' => __('lang.month.october'),  // October
+        '11' => __('lang.month.november'), // November
+        '12' => __('lang.month.december'), // December
+    ];
+}
+
 
 /**
  * to get setting by key field

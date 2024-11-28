@@ -7,6 +7,8 @@ use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveTypeResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveTypeResource\RelationManagers;
 use App\Models\LeaveType;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -29,34 +31,47 @@ class LeaveTypeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                ->label('Leave Type Name')
-                ->unique(ignoreRecord: true)
-                ->required(),
+                Fieldset::make()->schema([
+                    Grid::make()->label('')->columns(3)->schema([
+                        Forms\Components\TextInput::make('name')
+                        ->label('Leave type name')
+                        ->unique(ignoreRecord: true)
+                        ->required(),
+        
+                    Forms\Components\TextInput::make('count_days')
+                        ->label('Number of days')
+                        ->numeric()
+                        ->required(),
+                     Grid::make()->columns(2)->columnSpan(1)->schema([
+                        Forms\Components\Toggle::make('active')
+                        ->label('Active')->inline(false)
+                        ->default(true),
+                        Forms\Components\Toggle::make('is_monthly')
+                        ->label('Is monthly')->inline(false)
+                        ->default(false),
+                     ])
+                    ]),
+                    Forms\Components\Textarea::make('description')->columnSpanFull()
+                        ->label('Description')
+                        ->nullable(),
+                    ]),
 
-            Forms\Components\TextInput::make('count_days')
-                ->label('Number of Days')
-                ->numeric()
-                ->required(),
 
-            Forms\Components\Textarea::make('description')
-                ->label('Description')
-                ->nullable(),
-
-            Forms\Components\Toggle::make('active')
-                ->label('Active')
-                ->default(true),
+           
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Leave Type'),
-                Tables\Columns\TextColumn::make('count_days')->label('Number of Days'),
+                Tables\Columns\TextColumn::make('count_days')->label('Number of Days')->alignCenter(true),
                 Tables\Columns\BooleanColumn::make('active')
-                    ->label('Active')
+                    ->label('Active')->alignCenter(true)
+                    ->boolean(),
+                Tables\Columns\BooleanColumn::make('is_monthly')->alignCenter(true)
+                    ->label('Is monthly')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime(),
            

@@ -177,6 +177,22 @@ class EmployeeApplication extends Model
         }
         return null;
     }
+    public function getDetailYearAttribute()
+    {
+        if ($this->application_type_id == 1) {
+            $details = json_decode($this->details, true);
+            return $details['detail_year'] ?? null;
+        }
+        return null;
+    }
+    public function getDetailMonthAttribute()
+    {
+        if ($this->application_type_id == 1) {
+            $details = json_decode($this->details, true);
+            return $details['detail_month'] ?? null;
+        }
+        return null;
+    }
     protected static function booted()
     {
         // parent::boot();
