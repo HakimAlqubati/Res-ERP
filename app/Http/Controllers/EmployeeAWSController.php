@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Filament\Pages\AttendanecEmployee2;
 use App\Models\Employee;
 use Aws\DynamoDb\DynamoDbClient;
+use Aws\Exception\AwsException;
 use Aws\Rekognition\RekognitionClient;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -234,7 +235,7 @@ class EmployeeAWSController extends Controller
                         'secret' => env('AWS_SECRET_ACCESS_KEY'),
                     ],
                 ]);
-
+                
                 $dynamoResult = $dynamoDbClient->getItem([
                     'TableName' => 'workbenchemps_recognition',
                     'Key' => [
@@ -254,12 +255,24 @@ class EmployeeAWSController extends Controller
             $employeeId = $expodedResult[1] ?? 0;
             $employeeName = $expodedResult[0] ?? 'Employee not found';
             $name = $employeeName;
+
+             // Step 2: Perform Liveness Detection using Luxand API
+        $livenessResult = $this->performLivenessDetection("uploads/{$fileName}");
+
+        // If liveness check fails, handle accordingly
+        if ($livenessResult['status'] !== 'ok' || !$livenessResult['liveness']) {
+            return response()->json(['status' => 'error', 'message' => 'Face is not live or liveness detection failed']);
+        }else{
+            
+            return response()->json(['status' => 'success', 'message' => 'Yessssssss']);
+        }
+        
             $employee = Employee::find($employeeId);
             if ($employee) {
                 // $date = now()->toDateString();
                 // $time = now()->toTimeString();
                 // $time = $_GET['time'];
-                (new AttendanecEmployee2())->handleCreationAttendance($employeeId, $request->date, $request->time);
+                // (new AttendanecEmployee2())->handleCreationAttendance($employeeId, $request->date, $request->time);
 
                 Log::info('employee_data_captured', [$employee]);
             } else {
@@ -274,4 +287,44 @@ class EmployeeAWSController extends Controller
             return response()->json(['status' => 'error', 'message' => "Error: " . $e->getMessage()]);
         }
     }
+
+
+private function performLivenessDetection($imagePath)
+{
+    // Prepare the data for Luxand API
+    $postData = [
+        "photo" => curl_file_create(Storage::disk('s3')->path($imagePath)),
+    ];
+
+    // Endpoint URL for Luxand Liveness Detection
+    $url = "https://api.luxand.cloud/photo/liveness/v2";
+
+    // Request headers with your API token
+    $headers = [
+        "token: " . "462a00f52d3247b5844e7272e0a7277d", // Replace with your actual token
+    ];
+
+    // Initialize cURL session
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+
+    // Execute cURL session and get the response
+    $response = curl_exec($ch);
+
+    // Handle cURL error
+    if ($response === false) {
+        return ['status' => 'error', 'message' => curl_error($ch)];
+    }
+
+    // Close cURL session
+    curl_close($ch);
+
+    // Decode and return the response
+    return json_decode($response, true);
+}
+  
 }
