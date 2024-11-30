@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class DepartmentResource extends Resource
@@ -41,7 +42,14 @@ class DepartmentResource extends Resource
                 TextInput::make('name')->required(),
                 Textarea::make('description'),
                 Checkbox::make('active')->default(1),
+                Select::make('parent_id')
+                    ->label('Parent Department')
+                    ->options(
+                        Department::pluck('name', 'id')
+                    )
+                    ->nullable(),
                 Select::make('manager_id')->searchable()->options(Employee::select('id', 'name')->get()->pluck('name', 'id')),
+
 
             ]);
     }
@@ -53,10 +61,14 @@ class DepartmentResource extends Resource
                 TextColumn::make('id')->searchable()->sortable(),
                 TextColumn::make('name')->searchable(),
                 TextColumn::make('manager.name')->searchable(),
+                TextColumn::make('parent.name')
+                ->label('Parent Department'),
                 ToggleColumn::make('active'),
             ])
             ->filters([
-                //
+                SelectFilter::make('parent_id')
+                    ->label('Parent Department')
+                    ->options(Department::pluck('name', 'id')->toArray()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

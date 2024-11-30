@@ -212,8 +212,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->displayFormat('d/m/Y')
                                 
                                 ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)
-                                ->minDate(date('Y-m-d'))
-                                // ->minDate(fn (Get $get) => $get('end_date_min') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
+                                // ->minDate(date('Y-m-d'))
+                                ->minDate(fn (Get $get) => $get('start_date') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
                                 $date1 = new \DateTime($get('start_date'));

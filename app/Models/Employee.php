@@ -43,6 +43,10 @@ class Employee extends Model
         'bank_information',
         'gender',        // New field
         'nationality',   // New field
+        'passport_no', 
+        'mykad_number',
+        'tax_identification_number',
+        'has_employee_pass',
     ];
 
     protected $casts = [
@@ -464,5 +468,10 @@ class Employee extends Model
         }
 
         return 0; // Return null if no matching bracket is found
+    }
+
+    public function branchLogs()
+    {
+        return $this->hasMany(EmployeeBranchLog::class);
     }
 }

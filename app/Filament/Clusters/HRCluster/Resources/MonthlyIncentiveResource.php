@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class MonthlyIncentiveResource extends Resource
@@ -78,6 +79,7 @@ class MonthlyIncentiveResource extends Resource
             'index' => Pages\ListMonthlyIncentives::route('/'),
             'create' => Pages\CreateMonthlyIncentive::route('/create'),
             'edit' => Pages\EditMonthlyIncentive::route('/{record}/edit'),
+            'view' => Pages\ViewMonthlyIncentive::route('/{record}'),
         ];
     }
 
@@ -89,6 +91,23 @@ class MonthlyIncentiveResource extends Resource
     public static function canViewAny(): bool
     {
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() ||  isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canCreate(): bool
+    {
+
+        if (isSystemManager()  || isSuperAdmin()) {
             return true;
         }
         return false;

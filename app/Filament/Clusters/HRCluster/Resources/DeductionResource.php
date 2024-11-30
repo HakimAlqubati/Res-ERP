@@ -8,6 +8,7 @@ use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -17,6 +18,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DeductionResource extends Resource
 {
@@ -34,27 +36,34 @@ class DeductionResource extends Resource
                 Fieldset::make()->columns(3)->label('')->schema([
                     Forms\Components\TextInput::make('name')->required(),
                     Forms\Components\TextInput::make('description')->columnSpan(2),
+                    Select::make('condition_applied')->live()->label('Condition applied')->options(Deduction::getConditionAppliedOptions())
+                        ->default(Deduction::CONDITION_ALL),
+                    Select::make('nationalities_applied')->multiple()
+                        ->formatStateUsing(function ($state) {
+                            return json_decode($state,true);
+                        })
+                        ->visible(fn($get): bool => $get('condition_applied') != Deduction::CONDITION_ALL)->required()
+                        ->label('Nationalties')->options(getNationalities())->default('MY'),
+                    TextInput::make('less_salary_to_apply')->label('Less salary to apply')->numeric()
+                        ->visible(fn($get): bool => $get('condition_applied') != Deduction::CONDITION_ALL)->required()
                 ]),
                 Fieldset::make()->label('')->columns(5)->schema([
                     Forms\Components\Toggle::make('is_penalty')->default(false),
                     Forms\Components\Toggle::make('is_specific')->default(false)
-                        ->helperText('This means for specific employee or for general')
-                    ,
-                    Forms\Components\Toggle::make('active')->default(true), 
+                        ->helperText('This means for specific employee or for general'),
+                    Forms\Components\Toggle::make('active')->default(true),
                     Radio::make('is_percentage')->label('')->live()
-                        ->helperText('Set allowance as a salary percentage or fixed amount')  ->options([
+                        ->helperText('Set allowance as a salary percentage or fixed amount')->options([
                             'is_percentage' => 'Is percentage',
                             'is_amount' => 'Is amount',
-                        ])->default('is_amount') 
-                    ,
-                    
+                        ])->default('is_amount'),
+
                     TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
-                    ->suffixIcon('heroicon-o-calculator')
-                    ->suffixIconColor('success')
-                ,
-                TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
-                    ->suffixIcon('heroicon-o-percent-badge')
-                    ->suffixIconColor('success'),
+                        ->suffixIcon('heroicon-o-calculator')
+                        ->suffixIconColor('success'),
+                    TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
+                        ->suffixIcon('heroicon-o-percent-badge')
+                        ->suffixIconColor('success'),
                 ]),
             ]);
     }
@@ -76,9 +85,8 @@ class DeductionResource extends Resource
                 //     }),
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount')
-                    ->hidden(fn($record) => $record?->is_percentage)
-                ,
-                TextColumn::make('percentage')  ->suffix(' % '),
+                    ->hidden(fn($record) => $record?->is_percentage),
+                TextColumn::make('percentage')->suffix(' % '),
                 Tables\Columns\ToggleColumn::make('active'),
             ])
             ->filters([
@@ -107,6 +115,7 @@ class DeductionResource extends Resource
             'index' => Pages\ListDeductions::route('/'),
             'create' => Pages\CreateDeduction::route('/create'),
             'edit' => Pages\EditDeduction::route('/{record}/edit'),
+            'view' => Pages\ViewDeduction::route('/{record}'),
         ];
     }
 
@@ -122,4 +131,23 @@ class DeductionResource extends Resource
         }
         return false;
     }
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() ||  isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    
+    public static function canCreate(): bool
+    {
+
+        if (isSystemManager()  || isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
 }

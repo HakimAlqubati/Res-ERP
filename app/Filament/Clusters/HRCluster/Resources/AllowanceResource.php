@@ -17,6 +17,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class AllowanceResource extends Resource
 {
@@ -38,23 +39,21 @@ class AllowanceResource extends Resource
                 ]),
                 Fieldset::make()->label('')->columns(4)->schema([
                     Forms\Components\Toggle::make('is_specific')->default(false)->label('Custom')
-                    ->helperText('This means for specific employee or for general')
-                    ,
+                        ->helperText('This means for specific employee or for general'),
                     Forms\Components\Toggle::make('active')->default(true),
                     // Forms\Components\Toggle::make('is_percentage')->live()->default(true)
                     //     ->helperText('Set allowance as a salary percentage or fixed amount')
                     // ,
                     Radio::make('is_percentage')->label('')->live()
-                    
-                    ->helperText('Set allowance as a salary percentage or fixed amount')
-                    ->options([
-                        'is_percentage' => 'Is percentage',
-                        'is_amount' => 'Is amount',
-                    ])->default('is_amount'),
+
+                        ->helperText('Set allowance as a salary percentage or fixed amount')
+                        ->options([
+                            'is_percentage' => 'Is percentage',
+                            'is_amount' => 'Is amount',
+                        ])->default('is_amount'),
                     TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
                         ->suffixIcon('heroicon-o-calculator')
-                        ->suffixIconColor('success')
-                    ,
+                        ->suffixIconColor('success'),
                     TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
                         ->suffixIcon('heroicon-o-percent-badge')
                         ->suffixIconColor('success'),
@@ -100,6 +99,7 @@ class AllowanceResource extends Resource
             'index' => Pages\ListAllowances::route('/'),
             'create' => Pages\CreateAllowance::route('/create'),
             'edit' => Pages\EditAllowance::route('/{record}/edit'),
+            'view' => Pages\ViewAllowance::route('/{record}'),
         ];
     }
 
@@ -111,6 +111,25 @@ class AllowanceResource extends Resource
     public static function canViewAny(): bool
     {
         if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
+            return true;
+        }
+        return false;
+    }
+
+
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() ||  isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canCreate(): bool
+    {
+
+        if (isSystemManager()  || isSuperAdmin()) {
             return true;
         }
         return false;

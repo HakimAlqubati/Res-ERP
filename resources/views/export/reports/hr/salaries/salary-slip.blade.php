@@ -63,32 +63,32 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>{{ 'Basic salary' }}</td>
-                        <td>{{ number_format($employee?->salary, 2) }}</td>
+                        <td style="text-align: left">{{ 'Basic salary' }}</td>
+                        <td style="text-align: left">{{ number_format($employee?->salary, 2) }}</td>
                         <td></td>
                     </tr>
                     @foreach ($employeeAllowances as $allowance)
                         <tr>
-                            <td>{{ $allowance['allowance_name'] ?? '' }}</td>
-                            <td>{{ number_format($allowance['amount'], 2) }}</td>
+                            <td style="text-align: left">{{ $allowance['allowance_name'] ?? '' }}</td>
+                            <td style="text-align: left">{{ number_format($allowance['amount'], 2) }}</td>
                             <td></td>
                         </tr>
                     @endforeach
                     <tr>
-                        <td>{{ 'Overtime pay' }}</td>
-                        <td>{{ number_format($data?->details[0]['overtime_pay'], 2) }}</td>
+                        <td style="text-align: left">{{ 'Overtime pay' }}</td>
+                        <td style="text-align: left">{{ number_format($data?->details[0]['overtime_pay'], 2) }}</td>
                         <td></td>
                     </tr>
                     <tr>
-                        <td>{{ 'Bonus' }}</td>
-                        <td>{{ number_format($data?->details[0]['total_incentives'], 2) }}</td>
+                        <td style="text-align: left">{{ 'Bonus' }}</td>
+                        <td style="text-align: left">{{ number_format($data?->details[0]['total_incentives'], 2) }}</td>
                         <td></td>
                     </tr>
                     @foreach ($employeeDeductions as $deduction)
                         <tr>
-                            <td>{{ $deduction['deduction_name'] ?? '' }}</td>
+                            <td style="text-align: left;">{{ $deduction['deduction_name'] ?? '' }}</td>
                             <td></td>
-                            <td>{{ number_format($deduction['deduction_amount'], 2) }}</td>
+                            <td style="text-align: left">{{ number_format($deduction['deduction_amount'], 2) }}</td>
                         </tr>
                     @endforeach
                     <tr>

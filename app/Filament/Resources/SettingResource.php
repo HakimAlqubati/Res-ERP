@@ -44,17 +44,19 @@ class SettingResource extends Resource
                         })
                             ->icon('heroicon-o-building-office')
                             ->schema([
-                                Fieldset::make()->columns(4)->label('Company Info')->schema([
+                                Fieldset::make()->columns(3)->label('Company Info')->schema([
                                     TextInput::make("company_name")
                                         ->label('Name'),
                                     TextInput::make("company_phone")
                                         ->label('Phone Number')
 
                                         ->required(),
+
+                                    Select::make('default_nationality')->label('Default nationality')->searchable()->options(getNationalities()),
                                     FileUpload::make('company_logo')
                                         ->label('Logo')->required()
                                         ->image()
-                                        ->columnSpan(2)
+                                        ->columnSpan(3)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return "company_logo/" . Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
@@ -79,12 +81,16 @@ class SettingResource extends Resource
 
                                     TextInput::make("early_attendance_minutes")
                                         ->label('Early arrival minutes')
-                                    // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                        // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("pre_end_hours_for_check_in_out")
                                         ->label('Pre-period action hours')
-                                    // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                        // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                        ->numeric()
+                                        ->required(),
+                                    TextInput::make("early_depature_deduction_minutes")
+                                        ->label('Early depature deduction minutes')
                                         ->numeric()
                                         ->required(),
                                     Fieldset::make()->columns(2)->columnSpanFull()->schema([
@@ -99,8 +105,7 @@ class SettingResource extends Resource
                                             ->required(),
                                         Toggle::make('calculating_overtime_with_half_hour_after_hour')
                                             ->inline(false)
-                                            ->visible(fn(Get $get): bool => $get('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR)
-                                        ,
+                                            ->visible(fn(Get $get): bool => $get('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR),
 
                                     ]),
                                 ]),
@@ -117,35 +122,35 @@ class SettingResource extends Resource
                                 ]),
                                 Fieldset::make()->label('Face rekognation settings')->columns(4)->schema([
                                     Select::make('timeout_webcam_value')
-                                    ->label('Camera Auto-Off Timer (minutes)')
-                                    ->options([
-                                        '30000' => 'Half Minute',
-                                        '60000' => 'One Minute',
-                                        '120000' => 'Two Minutes',
-                                        '180000' => 'Three Minutes',
-                                        '300000' => 'Five Minutes',
-                                        '600000' => 'Ten Minutes',
-                                    ])
-                                    ->default('30000') 
-                                    ->native(false)
-                                    ->required()
-                                    ->helperText('Select the camera timeout duration.'),
+                                        ->label('Camera Auto-Off Timer (minutes)')
+                                        ->options([
+                                            '30000' => 'Half Minute',
+                                            '60000' => 'One Minute',
+                                            '120000' => 'Two Minutes',
+                                            '180000' => 'Three Minutes',
+                                            '300000' => 'Five Minutes',
+                                            '600000' => 'Ten Minutes',
+                                        ])
+                                        ->default('30000')
+                                        ->native(false)
+                                        ->required()
+                                        ->helperText('Select the camera timeout duration.'),
                                     Select::make('webcam_capture_time')
-                                    ->label('Image Capture Delay (Seconds)')
-                                    ->options([
-                                        '500' => 'Half a Second',
-                                        '1000' => 'One Second',
-                                        '2000' => 'Two Seconds',
-                                        '3000' => 'Three Seconds',
-                                        '5000' => 'Five Seconds',
-                                        '7000' => 'Seven Seconds',
-                                        '8000' => 'Eight Seconds',
-                                        '10000' => 'Ten Seconds',
-                                    ])
-                                    ->default('1000') // Default to 1 second
-                                    ->helperText('Choose the delay before capturing an image.')
-                                    ->native(false)
-                                    ->required(),
+                                        ->label('Image Capture Delay (Seconds)')
+                                        ->options([
+                                            '500' => 'Half a Second',
+                                            '1000' => 'One Second',
+                                            '2000' => 'Two Seconds',
+                                            '3000' => 'Three Seconds',
+                                            '5000' => 'Five Seconds',
+                                            '7000' => 'Seven Seconds',
+                                            '8000' => 'Eight Seconds',
+                                            '10000' => 'Ten Seconds',
+                                        ])
+                                        ->default('1000') // Default to 1 second
+                                        ->helperText('Choose the delay before capturing an image.')
+                                        ->native(false)
+                                        ->required(),
                                 ]),
 
                             ]),
@@ -259,7 +264,7 @@ class SettingResource extends Resource
                                         ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
                                 ]),
                             ]),
-                        Tab::make('Task Settings')
+                        Tab::make('Task Settings')->hidden(fn():bool=>isFinanceManager())
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema([
                                 Fieldset::make('')->columns(4)->schema([
@@ -277,7 +282,7 @@ class SettingResource extends Resource
                                         ->helperText('Yellow card indicates task rejection limit')
                                         ->default(1),
                                     Select::make('task_red_card_penalty_type')->required()
-                                    // ->text('-select a panality-')
+                                        // ->text('-select a panality-')
                                         ->native(false)
                                         ->reactive()
                                         ->label('Penalty Type for Red Card')
@@ -354,5 +359,4 @@ class SettingResource extends Resource
             // 'edit' => Pages\EditSetting::route('/'),
         ];
     }
-
 }

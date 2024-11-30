@@ -22,8 +22,14 @@ class ListAllowances extends ListRecords
     {
         return [
             'Apply to all allownces' => Tab::make()
+                ->icon('heroicon-o-rectangle-stack')
+                ->badge(fn(Builder $query) => $query->where('is_specific', 1)->count())
+                ->badgeColor('warning')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 0)),
             'Custom allownces' => Tab::make()
+                ->icon('heroicon-o-rectangle-stack')
+                ->badge(fn(Builder $query) => $query->where('is_specific', 0)->count())
+                ->badgeColor('success')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)),
         ];
     }

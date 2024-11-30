@@ -13,23 +13,73 @@ use Carbon\Carbon;
  */
 function calculateMonthlySalaryV2($employeeId, $date)
 {
+
+    $generalAllowanceTypes = Allowance::where('is_specific', 0)
+        ->where('active', 1)
+        ->select('name', 'is_percentage', 'amount', 'percentage', 'id')
+        ->get()->toArray();
     // Retrieve the employee model with relations to deductions, allowances, and incentives
     $employee = Employee::with(['deductions', 'allowances', 'monthlyIncentives'])
         ->whereNotNull('salary')
-        ->find($employeeId)
-    ;
+        ->find($employeeId);
     if (!$employee) {
         return 'Employee not found!';
     }
 
-    $generalAllowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'is_percentage', 'amount', 'percentage', 'id')->get()->toArray();
-    $generalDeducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'is_percentage', 'amount', 'percentage', 'id')->get()->toArray();
+
+    $nationality = $employee?->nationality;
 
     // Basic salary from the employee model
     $basicSalary = $employee->salary;
+    // Define the $conditionApplied based on your logic (e.g., from request, or predefined logic)
+    $conditionApplied = Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS; // Example: Set this as needed based on your logic
 
+    $generalDeducationTypes = Deduction::where('is_specific', 0)
+        ->where('active', 1)
+        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied', 'nationalities_applied', 'less_salary_to_apply')
+        // ->when($conditionApplied != Deduction::CONDITION_ALL, function ($query) use ($conditionApplied) {
+        //     // Filter when 'condition_applied' is NOT 'all'
+        //     $query->where('condition_applied', $conditionApplied);
+        // })
+        // ->when(
+        //     $conditionApplied == Deduction::CONDITION_SPECIFIED_NATIONALITIES,
+        //     function ($query) use ($nationality) {
+        //         // If the condition_applied is 'specified_nationalities', filter by nationalities_applied
+        //         $query->whereJsonContains('nationalities_applied', $nationality);
+        //     }
+        // )
+        // ->when($conditionApplied == Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS, function ($query) use ($nationality, $basicSalary) {
+        //     // If condition_applied is 'specified_nationalities_and_emp_has_pass', apply nationalities and less_salary_to_apply
+        //     $query->whereJsonContains('nationalities_applied', $nationality)
+        //         ->where('less_salary_to_apply', '>=', $basicSalary);  // Assuming 'less_salary_to_apply' is a field on Deduction model
+        // })
+        // ->when(function ($query) use ($nationality) {
+        //     $query->where('condition_applied', Deduction::CONDITION_SPECIFIED_NATIONALITIES)->whereJsonContains('nationalities_applied', $nationality);
+        // })
+        ->get();
+    $deduction = [];
+    foreach ($generalDeducationTypes as  $deductionType) {
+        $deductionNationalities = json_decode($deductionType->nationalities_applied, true);
+        if ($deductionType->condition_applied == Deduction::CONDITION_ALL) {
+            $deduction[] = $deductionType;
+        }
+        if (
+            $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES &&
+            in_array($nationality, $deductionNationalities)
+        ) {
+            $deduction[] = $deductionType;
+        }
+        if (
+            $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS &&
+            (in_array($nationality, $deductionNationalities) || ($employee->has_employee_pass))
+        ) {
+            $deduction[] = $deductionType;
+        }
+    }
+    
+    // dd($generalDeducationTypes, $deduction[0]->id, $nationality);
     $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
-    $generalDedeucationResultCalculated = calculateDeductions($generalDeducationTypes, $basicSalary);
+    $generalDedeucationResultCalculated = calculateDeductions($deduction, $basicSalary);
     // return $generalDedeucationResultCalculated;
     // Calculate total deductions
     $specificDeductions = $employee->deductions->map(function ($deduction) {
@@ -56,7 +106,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $specificAlloanceCalculated = calculateAllowances($specificAllowances, $basicSalary);
     $specificDeducationCalculated = calculateDeductions($specificDeductions, $basicSalary);
     $deducationInstallmentAdvancedMonthly = getInstallmentAdvancedMonthly($employee, date('Y', strtotime($date)), date('m', strtotime($date)));
-    
+
     $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
         return $incentive->amount;
     });
@@ -65,7 +115,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $dailySalary = calculateDailySalary($employeeId, $date);
     $hourlySalary = calculateHourlySalary($employeeId, $date);
 
-    
+
     $taxDeduction = calculateYearlyTax($employee); // Retrieve tax percentage using the function in the Employee model
 
     $date = Carbon::parse($date);
@@ -104,7 +154,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
-    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours +$deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0)+ $taxDeduction);
+    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result']);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
@@ -117,8 +167,10 @@ function calculateMonthlySalaryV2($employeeId, $date)
         'details' => [
             'basic_salary' => ($basicSalary),
             'salary_after_deducation' => replaceZeroInstedNegative($remaningSalary),
-            'deducation_installment_advanced_monthly'=>['amount'=>$deducationInstallmentAdvancedMonthly?->installment_amount,
-            'installment_id'=>$deducationInstallmentAdvancedMonthly?->id]  ,
+            'deducation_installment_advanced_monthly' => [
+                'amount' => $deducationInstallmentAdvancedMonthly?->installment_amount,
+                'installment_id' => $deducationInstallmentAdvancedMonthly?->id
+            ],
             'ins' => $deducationInstallmentAdvancedMonthly?->installment_amount,
             'tax_deduction' => round($taxDeduction, 2), // Add tax deduction to the breakdown
 
@@ -323,7 +375,7 @@ function getEmployeeOvertimesOfSpecificDate($date, $employee)
         return (float) $overtime->hours; // Ensure the 'hours' value is cast to float
     });
 
-    
+
     return $totalHours;
 }
 function getEmployeeOvertimesV2($date, $employee)
@@ -366,7 +418,6 @@ function employeeSalarySlip($employeeId, $sid)
     ])->find($sid);
 
     return $monthSalary;
-
 }
 
 function convertToUtf8($data)
@@ -430,7 +481,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
         ];
     })->toArray();
 
-    
+
     // Calculate the total deduction amount
     $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
 
@@ -461,7 +512,6 @@ function generateSalarySlipPdf_($employeeId, $sid)
     } catch (\Exception $e) {
         dd($e->getMessage());
     }
-
 }
 
 
@@ -642,20 +692,20 @@ function sanitizeString($string)
  */
 function getInstallmentAdvancedMonthly($employee, $year, $month)
 {
-    
+
     // Check if the employee has an advance transaction for the specified month and year
     $advancedInstalmment = $employee?->transactions()
-    ->where('transaction_type_id', 3)
-    // ->whereYear('from_date', $year)
-    // ->whereMonth('from_date', $month)
-    ->with(['installments' => function ($query) use ($year, $month) {
+        ->where('transaction_type_id', 3)
+        // ->whereYear('from_date', $year)
+        // ->whereMonth('from_date', $month)
+        ->with(['installments' => function ($query) use ($year, $month) {
             $query->whereYear('due_date', $year)
-            ->whereMonth('due_date', $month)
-            ->where('is_paid', false)
-            ->limit(1); // Limit to only the first installment for efficiency
+                ->whereMonth('due_date', $month)
+                ->where('is_paid', false)
+                ->limit(1); // Limit to only the first installment for efficiency
         }])
         ->first()?->installments->first();
-        // dd($employee,$year,$month,$advancedInstalmment);
+    // dd($employee,$year,$month,$advancedInstalmment);
 
     return $advancedInstalmment;
 }
@@ -691,8 +741,8 @@ if (!function_exists('calculateYearlyTax')) {
 
 
         // Calculate the yearly tax deduction
-        $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100))/12;
-// dd($yearlyTaxDeduction,$yearlySalary,$taxPercentage);
+        $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100)) / 12;
+        // dd($yearlyTaxDeduction,$yearlySalary,$taxPercentage);
         return round($yearlyTaxDeduction, 2); // Return rounded value
     }
 }
