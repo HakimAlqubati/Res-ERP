@@ -354,7 +354,7 @@ function createEmployeeOverime($employee, $date)
 {
     $year = Carbon::parse($date)->year; // Extracts the year
     $month = Carbon::parse($date)->month; // Extracts the month
-    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employee->id, 5, $year, $month)?->balance ?? 0;
+    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employee->id, 6, $year, $month)?->balance ?? 0;
     $totalDayHours = $employee?->working_hours ?? 0;
     return ($monthlyBalance * $totalDayHours);
 }

@@ -641,11 +641,6 @@ function addHoursToDuration($duration, $additionalHours)
         // Add the additional hours
         $totalHours = $hours + $additionalHours;
         return formatHoursMinuts($totalHours);
-        return "{$totalHours} h {$minutes} m";
-dd($totalHours,formatHoursMinuts($totalHours),"{$totalHours} h {$minutes} m");
-        return formatHoursMinuts($totalHours);
-        dd($duration,$minutes,$totalHours);
-        // Format the new duration
     }
     // Return the original duration if the format is incorrect
     return $duration;
