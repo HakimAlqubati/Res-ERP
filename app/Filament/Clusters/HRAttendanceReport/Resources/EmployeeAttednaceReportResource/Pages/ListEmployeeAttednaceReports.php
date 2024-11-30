@@ -83,7 +83,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         // Calculate totals from the attendance data
         foreach ($data as $date => $dayData) {
             foreach ($dayData['periods'] ?? [] as $period) {
-
+               
                 $totalSupposed = WorkPeriod::find($period['period_id'])->calculateTotalSupposedDurationForDays(count($data) - LeaveType::getMonthlyCountDaysSum());
                 $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
                 // dd($totalSupposed,$totalWorked);

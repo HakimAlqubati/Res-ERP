@@ -6,8 +6,11 @@ use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 use App\Models\Attendance;
 use App\Models\Employee;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -44,20 +47,22 @@ class EmployeeAttednaceReportResource extends Resource
     {
         return $table
             ->emptyStateHeading('No data')
-            ->columns([
-
-            ])
+            ->columns([])
             ->filters([
                 SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
-                        ->select('name', 'id')
+                    ->select('name', 'id')
 
-                        ->get()->pluck('name', 'id'))
-                
-                   ->hidden(fn()=> isStuff())
+                    ->get()->pluck('name', 'id'))
+
+                    ->hidden(fn() => isStuff())
                     ->searchable(),
                 Filter::make('date_range')
                     ->form([
-                        DatePicker::make('start_date')
+                        DatePicker::make('start_date')->live()
+                            ->afterStateUpdated(function (Set $set, $state) {
+                                $endNextMonth = Carbon::parse($state)->endOfMonth()->format('Y-m-d');
+                                $set('end_date', $endNextMonth);
+                            })
                             ->label('Start Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
                         DatePicker::make('end_date')
                             ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
@@ -74,7 +79,7 @@ class EmployeeAttednaceReportResource extends Resource
                 ]),
             ]);
     }
- 
+
     public static function canCreate(): bool
     {
         return false;
@@ -86,6 +91,4 @@ class EmployeeAttednaceReportResource extends Resource
             'index' => Pages\ListEmployeeAttednaceReports::route('/'),
         ];
     }
-
-
 }

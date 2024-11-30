@@ -47,6 +47,7 @@ class Employee extends Model
         'mykad_number',
         'tax_identification_number',
         'has_employee_pass',
+        'working_hours',
     ];
 
     protected $casts = [
@@ -208,6 +209,25 @@ class Employee extends Model
     }
 
 
+
+    /**
+     * Get the total number of hours worked by the employee based on their assigned periods.
+     *
+     * @return int
+     */
+    public function getHoursCountAttribute()
+    {
+        $totalHours = 0;
+
+        // Loop through each period and calculate the difference in hours
+        foreach ($this->periods as $period) {
+            $start = Carbon::parse($period->start_at);
+            $end = Carbon::parse($period->end_at);
+            $totalHours += $start->diffInHours($end);
+        }
+
+        return $totalHours;
+    }
 
     public function getHasUserAttribute()
     {

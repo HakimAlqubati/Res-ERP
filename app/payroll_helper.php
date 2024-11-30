@@ -125,7 +125,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * setting('overtime_hour_multiplier');
-    $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employeeId, $date);
+    $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employee, $date);
     $overtimeBasedOnMonthlyLeavePay = 0;
     if ($overtimeBasedOnMonthlyLeave > 0) {
         $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
@@ -350,12 +350,12 @@ function getEmployeeOvertimes($date, $employee)
 /**
  * create overtime basedon monthly leave
  */
-function createEmployeeOverime($employeeId, $date)
+function createEmployeeOverime($employee, $date)
 {
     $year = Carbon::parse($date)->year; // Extracts the year
     $month = Carbon::parse($date)->month; // Extracts the month
-    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, 5, $year, $month)?->balance ?? 0;
-    $totalDayHours = 12;
+    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employee->id, 5, $year, $month)?->balance ?? 0;
+    $totalDayHours = $employee?->working_hours ?? 0;
     return ($monthlyBalance * $totalDayHours);
 }
 function getEmployeeOvertimesOfSpecificDate($date, $employee)

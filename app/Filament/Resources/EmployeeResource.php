@@ -132,6 +132,9 @@ class EmployeeResource extends Resource
                                         // TextInput::make('nationality')
                                         // ->label('Nationality')
                                         // ->nullable(),
+                                        TextInput::make('working_hours')->label('Working hours')->numeric()->disabled()
+                                        ,
+
                                         Select::make('nationality')
                                             ->label('Nationality')->live()
                                             ->options(getNationalities())
@@ -504,6 +507,16 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true),
 
+                    TextColumn::make('working_hours')->label('Working hours')->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true)
+                    ->action(function($record){
+                        
+                        $hoursCount =  abs($record->hours_count) ;
+                        $record->update([
+                            'working_hours'=> $hoursCount
+                        ]);
+                    })
+                    ,
                 TextColumn::make('position.title')->limit(20)
                     ->label('Position type')
                     ->toggleable(isToggledHiddenByDefault: true)
