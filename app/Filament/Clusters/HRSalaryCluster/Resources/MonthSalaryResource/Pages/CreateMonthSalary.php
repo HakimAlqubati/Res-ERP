@@ -165,6 +165,17 @@ class CreateMonthSalary extends CreateRecord
                         'deduction_amount' => $calculateSalary['details']['deduction_for_early_depature_hours'],
                     ]);
                 }
+                
+                if(isset($calculateSalary['details']['overtime_based_on_monthly_leave_pay']) && $calculateSalary['details']['overtime_based_on_monthly_leave_pay'] > 0){
+                    $this->record->increaseDetails()->create([
+                        'employee_id' => $employee->id,
+                        'type' => MonthlySalaryIncreaseDetail::TYPE_ALLOWANCE,
+                        'type_id' =>MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_ID,
+                        
+                        'name' => MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_Name,
+                        'amount' => $calculateSalary['details']['overtime_based_on_monthly_leave_pay'],
+                    ]);
+                }
 
 
                 // Commit the transaction if all is successful

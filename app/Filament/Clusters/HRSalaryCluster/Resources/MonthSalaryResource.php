@@ -11,6 +11,7 @@ use App\Models\Branch;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
+use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
@@ -60,10 +61,10 @@ class MonthSalaryResource extends Resource
                 Fieldset::make()->label('Set Branch, Month and payment date')->columns(3)->schema([
                     TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
                         ->disabled()
-                    // ->extraAttributes(['class' => 'text-red-600'])
+                        // ->extraAttributes(['class' => 'text-red-600'])
                         ->suffixIcon('heroicon-o-exclamation-triangle')
                         ->suffixIconColor('warning')
-                    // ->color(Color::Red)
+                        // ->color(Color::Red)
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
                         ->disabledOn('view')
@@ -82,13 +83,11 @@ class MonthSalaryResource extends Resource
                                 return [$key => $month['name']]; // Using month key as the option key
                             });
                         })
-                    // ->searchable()
-                        ->default(now()->format('F'))
-                    ,
+                        // ->searchable()
+                        ->default(now()->format('F')),
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
                     Forms\Components\DatePicker::make('payment_date')->required()
-                        ->default(date('Y-m-d'))
-                    ,
+                        ->default(date('Y-m-d')),
                 ]),
                 Forms\Components\Textarea::make('notes')->label('Notes')->columnSpanFull(),
             ]);
@@ -111,11 +110,9 @@ class MonthSalaryResource extends Resource
                 Tables\Columns\TextColumn::make('notes')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('branch.name')->label('Branch')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('createdBy.name')->label('Created by')->searchable()->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                ,
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('payment_date')->date()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                ,
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\ToggleColumn::make('approved')->toggleable(isToggledHiddenByDefault: true)->disabled(),
             ])
             ->filters([
@@ -144,7 +141,7 @@ class MonthSalaryResource extends Resource
                             ->select('name', 'id')
                             ->pluck('name', 'id')
                             ->toArray();
-                
+
                         return [
                             Hidden::make('month')->default($record?->month),
                             Forms\Components\CheckboxList::make('employee_ids')
@@ -155,7 +152,7 @@ class MonthSalaryResource extends Resource
                                 ->helperText('Select up to 10 employees to generate their payslips'),
                         ];
                     })
-                
+
                     ->action(function ($record, $data) {
                         $employeeIds = $data['employee_ids'];
                         // dd($employeeIds);
@@ -181,13 +178,12 @@ class MonthSalaryResource extends Resource
                         } else {
                             throw new \Exception('Could not create ZIP file.');
                         }
-
                     }),
                 Action::make('salary_slip')
                     ->button()->label('Salary slip')
                     ->color('success') // Use secondary color for single employee action
-                  ->icon('heroicon-o-document-arrow-down') // Icon for employee salary slip
-  
+                    ->icon('heroicon-o-document-arrow-down') // Icon for employee salary slip
+
                     ->form(function ($record) {
                         $employeeIds = $record?->details->pluck('employee_id')->toArray();
 
@@ -204,15 +200,13 @@ class MonthSalaryResource extends Resource
                                         ->pluck('name', 'id');
                                 })
                                 ->allowHtml(),
-                            
+
 
                         ];
                     })
                     ->action(function ($record, $data) {
                         $employeeId = $data['employee_id'];
-                      return generateSalarySlipPdf_($employeeId, $record->id);
-                        
-
+                        return generateSalarySlipPdf_($employeeId, $record->id);
                     }),
             ])
             ->bulkActions([
@@ -259,6 +253,9 @@ class MonthSalaryResource extends Resource
         $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
         $specificAllowanceTypes = Allowance::where('is_specific', 1)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
 
+       
+        $constAllowanceTypes = MonthlySalaryIncreaseDetail::ALLOWANCE_TYPES;
+        $allAllowanceTypes = $allowanceTypes + $constAllowanceTypes;
         $deducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
         $specificDeducationTypes = Deduction::where('is_specific', 1)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
         $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
@@ -292,7 +289,7 @@ class MonthSalaryResource extends Resource
             }
 
             $resAllowances = [];
-            foreach ($allowanceTypes as $keyId => $val) {
+            foreach ($allAllowanceTypes as $keyId => $val) {
                 $resAllowances[$keyId] = optional($employeeIncrease->firstWhere('type_id', $keyId))->amount ?? 00;
             }
 
@@ -306,7 +303,7 @@ class MonthSalaryResource extends Resource
                 ->where('year', date('Y', strtotime($record->month)))
                 ->where('month', date('m', strtotime($record->month)))
 
-            ?->first()?->latest('id')?->first()?->amount;
+                ?->first()?->latest('id')?->first()?->amount;
             $data[] = [
                 'employee_id' => $employee?->id,
                 'employee_no' => $employee?->employee_no,
@@ -328,6 +325,6 @@ class MonthSalaryResource extends Resource
             ];
         }
 
-        return Excel::download(new SalariesExport($data, $allDeductionTypes, $allowanceTypes), $fileName . '.xlsx');
+        return Excel::download(new SalariesExport($data, $allDeductionTypes, $allAllowanceTypes), $fileName . '.xlsx');
     }
 }

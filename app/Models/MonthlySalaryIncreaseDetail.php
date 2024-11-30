@@ -15,6 +15,8 @@ class MonthlySalaryIncreaseDetail extends Model
     public const TYPE_INCENTIVE = 'incentive';
     public const TYPE_ALLOWANCE = 'allowance';
 
+    public const TYPE_MONTHLY_LEAVE_ALLOWANCE_ID = -1;
+    public const TYPE_MONTHLY_LEAVE_ALLOWANCE_Name = 'Weekend leave allowance';
     protected $fillable = [
         'month_salary_id',
         'employee_id',
@@ -35,4 +37,8 @@ class MonthlySalaryIncreaseDetail extends Model
     {
         return $this->belongsTo(MonthSalary::class, 'month_salary_id');
     }
+
+    public const ALLOWANCE_TYPES = [
+        self::TYPE_MONTHLY_LEAVE_ALLOWANCE_ID => self::TYPE_MONTHLY_LEAVE_ALLOWANCE_Name,
+    ];
 }

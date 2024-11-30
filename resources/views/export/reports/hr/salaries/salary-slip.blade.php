@@ -70,7 +70,7 @@
                     @foreach ($employeeAllowances as $allowance)
                         <tr>
                             <td style="text-align: left">{{ $allowance['allowance_name'] ?? '' }}</td>
-                            <td style="text-align: left">{{ number_format($allowance['amount'], 2) }}</td>
+                            <td style="text-align: left">{{ number_format($allowance['amount']?? 0, 2) }}</td>
                             <td></td>
                         </tr>
                     @endforeach

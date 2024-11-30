@@ -99,6 +99,7 @@ class LeaveBalanceResource extends Resource
                             ,
                             Select::make('year')->options([
                                 2024 => 2024,
+                                2025 => 2025,
                                 2026 => 2026,
                                 2027 => 2027,
                             ])->required(),
@@ -125,9 +126,6 @@ class LeaveBalanceResource extends Resource
                                                     ->where('leave_type_id', $get('../../leave_type_id'))
                                                     ->where('year', $get('../../year'))
                                                     ->where('month', $get('../../month'))
-                                                    // ->whereRaw(
-                                                    //     'exists (select 1 from hr_leave_types where hr_leave_types.id = hr_leave_balances.leave_type_id and hr_leave_types.is_monthly != 0)'
-                                                    // );
                                                 ;
                                             }
                                         )->validationMessages([

@@ -3,7 +3,9 @@
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\Employee;
+use App\Models\LeaveBalance;
 use App\Models\MonthlySalaryDeductionsDetail;
+use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -13,7 +15,6 @@ use Carbon\Carbon;
  */
 function calculateMonthlySalaryV2($employeeId, $date)
 {
-
     $generalAllowanceTypes = Allowance::where('is_specific', 0)
         ->where('active', 1)
         ->select('name', 'is_percentage', 'amount', 'percentage', 'id')
@@ -27,35 +28,15 @@ function calculateMonthlySalaryV2($employeeId, $date)
     }
 
 
-    $nationality = $employee?->nationality;
 
+
+    $nationality = $employee?->nationality;
     // Basic salary from the employee model
     $basicSalary = $employee->salary;
-    // Define the $conditionApplied based on your logic (e.g., from request, or predefined logic)
-    $conditionApplied = Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS; // Example: Set this as needed based on your logic
 
     $generalDeducationTypes = Deduction::where('is_specific', 0)
         ->where('active', 1)
         ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied', 'nationalities_applied', 'less_salary_to_apply')
-        // ->when($conditionApplied != Deduction::CONDITION_ALL, function ($query) use ($conditionApplied) {
-        //     // Filter when 'condition_applied' is NOT 'all'
-        //     $query->where('condition_applied', $conditionApplied);
-        // })
-        // ->when(
-        //     $conditionApplied == Deduction::CONDITION_SPECIFIED_NATIONALITIES,
-        //     function ($query) use ($nationality) {
-        //         // If the condition_applied is 'specified_nationalities', filter by nationalities_applied
-        //         $query->whereJsonContains('nationalities_applied', $nationality);
-        //     }
-        // )
-        // ->when($conditionApplied == Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS, function ($query) use ($nationality, $basicSalary) {
-        //     // If condition_applied is 'specified_nationalities_and_emp_has_pass', apply nationalities and less_salary_to_apply
-        //     $query->whereJsonContains('nationalities_applied', $nationality)
-        //         ->where('less_salary_to_apply', '>=', $basicSalary);  // Assuming 'less_salary_to_apply' is a field on Deduction model
-        // })
-        // ->when(function ($query) use ($nationality) {
-        //     $query->where('condition_applied', Deduction::CONDITION_SPECIFIED_NATIONALITIES)->whereJsonContains('nationalities_applied', $nationality);
-        // })
         ->get();
     $deduction = [];
     foreach ($generalDeducationTypes as  $deductionType) {
@@ -76,11 +57,10 @@ function calculateMonthlySalaryV2($employeeId, $date)
             $deduction[] = $deductionType;
         }
     }
-    
-    // dd($generalDeducationTypes, $deduction[0]->id, $nationality);
+
     $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
     $generalDedeucationResultCalculated = calculateDeductions($deduction, $basicSalary);
-    // return $generalDedeucationResultCalculated;
+
     // Calculate total deductions
     $specificDeductions = $employee->deductions->map(function ($deduction) {
         return [
@@ -145,7 +125,11 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * setting('overtime_hour_multiplier');
-
+    $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employeeId, $date);
+    $overtimeBasedOnMonthlyLeavePay = 0;
+    if ($overtimeBasedOnMonthlyLeave > 0) {
+        $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
+    }
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
@@ -155,7 +139,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
     $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction);
-    $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result']);
+    $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + $overtimeBasedOnMonthlyLeavePay);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
     $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
@@ -187,6 +171,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_pay' => round($overtimePay, 2),
             'overtime_hours' => $overtimeHours,
+            'overtime_based_on_monthly_leave' => $overtimeBasedOnMonthlyLeave,
+            'overtime_based_on_monthly_leave_pay' => $overtimeBasedOnMonthlyLeavePay,
             'total_absent_days' => $totalAbsentDays,
             'total_late_hours' => $totalLateHours,
             'total_early_depature_hours' => $totalEarlyDepatureHours,
@@ -360,6 +346,18 @@ function getEmployeeOvertimes($date, $employee)
     });
     return $totalHours;
 }
+
+/**
+ * create overtime basedon monthly leave
+ */
+function createEmployeeOverime($employeeId, $date)
+{
+    $year = Carbon::parse($date)->year; // Extracts the year
+    $month = Carbon::parse($date)->month; // Extracts the month
+    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, 5, $year, $month)?->balance ?? 0;
+    $totalDayHours = 12;
+    return ($monthlyBalance * $totalDayHours);
+}
 function getEmployeeOvertimesOfSpecificDate($date, $employee)
 {
     $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
@@ -445,8 +443,9 @@ function generateSalarySlipPdf_($employeeId, $sid)
 
     $increaseDetails = $data->increaseDetails;
     $deducationDetails = $data->deducationDetails;
-    $allowanceTypes = Allowance::where('active', 1)->select('name', 'id')->pluck('name', 'id');
-
+    $allowanceTypes = Allowance::where('active', 1)->pluck('name', 'id')->toArray();
+    $constAllowanceTypes = MonthlySalaryIncreaseDetail::ALLOWANCE_TYPES;
+    $allowanceTypes = $allowanceTypes + $constAllowanceTypes;
     $month = $data->month;
     $monthName = Carbon::parse($month)->translatedFormat('F Y');
 
@@ -523,14 +522,15 @@ function generateSalarySlipPdf($employeeId, $sid)
 
     $increaseDetails = $data->increaseDetails;
     $deducationDetails = $data->deducationDetails;
-    $allowanceTypes = Allowance::where('active', 1)->pluck('name', 'id');
-
+    $allowanceTypes = Allowance::where('active', 1)->pluck('name', 'id')->toArray();
+    $constAllowanceTypes = MonthlySalaryIncreaseDetail::ALLOWANCE_TYPES;
+    $allallowanceTypes = $allowanceTypes + $constAllowanceTypes;
     $month = $data->month;
     $monthName = Carbon::parse($month)->translatedFormat('F Y');
 
-    $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
+    $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allallowanceTypes) {
         return [
-            'allowance_name' => $allowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
+            'allowance_name' => $allallowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
             'amount' => $allowance['amount'],
         ];
     });

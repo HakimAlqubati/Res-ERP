@@ -36,4 +36,20 @@ class LeaveType extends Model
     {
         return $this->hasMany(LeaveBalance::class);
     }
+
+
+    /**
+     * Scope to get the sum of monthly count days, defaulting null values to 4.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return int
+     */
+    public function scopeGetMonthlyCountDaysSum($query)
+    {
+        return $query->where('is_monthly', 1)
+            ->get()
+            ->sum(function ($leaveType) {
+                return $leaveType->count_days ?? 4;
+            });
+    }
 }

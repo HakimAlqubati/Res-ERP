@@ -43,7 +43,7 @@ class Employee extends Model
         'bank_information',
         'gender',        // New field
         'nationality',   // New field
-        'passport_no', 
+        'passport_no',
         'mykad_number',
         'tax_identification_number',
         'has_employee_pass',
@@ -109,15 +109,15 @@ class Employee extends Model
     public function getAvatarImage2Attribute()
     {
         $filePath = 'public/' . $this->avatar;
-        
+
         if (Storage::exists($filePath) && ($this->avatar != 'employees/default/avatar.png' || $this->avatar != null)) {
-          $arr = explode('/',$this->avatar);
-          if(is_array($arr)&& count($arr)>0){
-              
-              return $arr[1] ?? $this->avatar;
-          }
-          return $this->avatar;
-        }else if($this->avatar == null){
+            $arr = explode('/', $this->avatar);
+            if (is_array($arr) && count($arr) > 0) {
+
+                return $arr[1] ?? $this->avatar;
+            }
+            return $this->avatar;
+        } else if ($this->avatar == null) {
             return 'no';
         }
         return 'no';
@@ -126,7 +126,7 @@ class Employee extends Model
     public function approvedLeaveApplications()
     {
         return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED)->with('leaveType');
-    } 
+    }
 
     public function transactions()
     {
@@ -135,15 +135,15 @@ class Employee extends Model
     public function approvedAdvanceApplication()
     {
         return $this->hasMany(EmployeeApplication::class, 'employee_id')
-        ->where('status',EmployeeApplication::STATUS_APPROVED)
-        ->where('application_type_id',EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)
+            ->where('status', EmployeeApplication::STATUS_APPROVED)
+            ->where('application_type_id', EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)
         ;
     }
     public function approvedLeaveApplication()
     {
         return $this->hasMany(EmployeeApplication::class, 'employee_id')
-        ->where('status',EmployeeApplication::STATUS_APPROVED)
-        ->where('application_type_id',EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
+            ->where('status', EmployeeApplication::STATUS_APPROVED)
+            ->where('application_type_id', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
         ;
     }
 
@@ -152,23 +152,23 @@ class Employee extends Model
     //     return $this->approvedAdvanceApplication()->get();
     // }
 
- 
-      // Custom attribute to fetch approved advance applications
-      public function getApprovedAdvanceApplicationAttribute()
-      {
-          return $this->approvedAdvanceApplication()->get()->map(function ($application) {
+
+    // Custom attribute to fetch approved advance applications
+    public function getApprovedAdvanceApplicationAttribute()
+    {
+        return $this->approvedAdvanceApplication()->get()->map(function ($application) {
             // dd($application->paid_installments_count);  
             return [
-                  'id' =>$application->id,
-                  'paid'=> $application->paid_installments_count,
-                  'details' => json_decode($application->details, true), // Parse the JSON details
-                  'created_at' => $application->created_at->format('Y-m-d'),
-                  'updated_at' => $application->updated_at->format('Y-m-d'),
-              ];
-          });
-      }
+                'id' => $application->id,
+                'paid' => $application->paid_installments_count,
+                'details' => json_decode($application->details, true), // Parse the JSON details
+                'created_at' => $application->created_at->format('Y-m-d'),
+                'updated_at' => $application->updated_at->format('Y-m-d'),
+            ];
+        });
+    }
 
-      // Custom attribute to fetch approved leave requests
+    // Custom attribute to fetch approved leave requests
     public function getApprovedLeaveRequestsAttribute()
     {
         return $this->approvedLeaveApplication()->get()->map(function ($leaveRequest) {
@@ -207,7 +207,7 @@ class Employee extends Model
         ]);
     }
 
-    
+
 
     public function getHasUserAttribute()
     {
@@ -239,16 +239,16 @@ class Employee extends Model
     public function overtimesByDate($date)
     {
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
-                    ->where('approved', 1)
-                    ->where('date', $date);
+            ->where('approved', 1)
+            ->where('date', $date);
     }
     public function overtimesofMonth($date)
     {
         $startOfMonth = Carbon::parse($date)->startOfMonth()->toDateString();
         $endOfMonth = Carbon::parse($date)->endOfMonth()->toDateString();
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')
-                    ->where('approved', 1)
-                    ->whereBetween('date', [$startOfMonth, $endOfMonth]);
+            ->where('approved', 1)
+            ->whereBetween('date', [$startOfMonth, $endOfMonth]);
     }
 
     public function attendances()
@@ -258,7 +258,7 @@ class Employee extends Model
 
     public function attendancesByDate($date)
     {
-        return $this->hasMany(Attendance::class)->where('check_date',$date);
+        return $this->hasMany(Attendance::class)->where('check_date', $date);
     }
 
     /**
@@ -324,10 +324,10 @@ class Employee extends Model
         if ($employee === null || $employee->periods->isEmpty()) {
             return []; // Return an empty array if no periods exist
         }
-    
+
         // Initialize an array to store results
         $results = [];
-    
+
         // Loop through each period
         foreach ($employee->periods as $period) {
             // Get attendances for the specified employee and date within the current period
@@ -337,61 +337,61 @@ class Employee extends Model
                 ->where('check_date', $date)
                 ->orderBy('id')
                 ->get();
-    
+
             $totalMinutes = 0;
             $checkInTime = null;
             $checkOutTime = null; // To store checkout time
-    
+
             // Loop through attendances to calculate total minutes worked
             for ($i = 0; $i < $attendances->count(); $i++) {
                 $checkIn = $attendances[$i];
-    
+
                 // Ensure the current record is a check-in
                 if ($checkIn->check_type === 'checkin') {
                     // Look for the next check-out
                     $i++;
                     if ($i < $attendances->count()) {
                         $checkOut = $attendances[$i];
-    
+
                         // Ensure it is indeed a check-out
                         if ($checkOut->check_type === 'checkout') {
                             $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
                             $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
-    
+
                             // Adjust for midnight crossing
                             if ($checkOutTime < $checkInTime) {
                                 $checkOutTime->addDay(); // Add 24 hours
                             }
-    
+
                             // Calculate the time difference in minutes
                             $totalMinutes += $checkInTime->diffInMinutes($checkOutTime);
                         }
                     }
                 }
             }
-    
+
             // Convert the supposed duration string "HH:MM" to total minutes
             list($hours, $minutes) = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ($hours * 60) + $minutes; // Convert to total minutes
-            
+
             if ($totalMinutes > ($supposedDurationMinutes + Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime')))) {
                 // Calculate the overtime minutes
                 $overtimeMinutes = $totalMinutes - $supposedDurationMinutes;
-    
+
                 // Format the overtime into hours and minutes
                 // $overtimeHours = floor($overtimeMinutes / 60);
                 $overtimeHours = round($overtimeMinutes / 60 * 2) / 2;
                 $remainingMinutes = $overtimeMinutes % 60;
-    
+
                 // Format as "X h Y m"
                 $formattedOvertime = "{$overtimeHours} h {$remainingMinutes} m";
-    
+
                 // Determine the start time (end of the supposed period) and end time (checkout time)
                 // $supposedEndTime = Carbon::parse("{$period->end_time}"); // Assuming you have supposed_end_time in your period
-              
+
                 $overtimeStartTime = $period->end_at;
                 $overtimeEndTime = $checkOutTime; // End of overtime is the checkout time
-    
+
                 if (Setting::getSetting('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR && Setting::getSetting('calculating_overtime_with_half_hour_after_hour')) {
                     $overtimeHours = round($overtimeHours, 2);
                 }
@@ -411,7 +411,7 @@ class Employee extends Model
         return $results; // Return the results
     }
 
- 
+
 
 
     protected static function booted()
@@ -429,8 +429,8 @@ class Employee extends Model
     }
 
 
-      // Define the tax brackets
-      public const TAX_BRACKETS = [
+    // Define the tax brackets
+    public const TAX_BRACKETS = [
         [0, 5000, 0],          // 0 - 5,000 -> 0%
         [5001, 20000, 1],      // 5,001 - 20,000 -> 1%
         [20001, 35000, 3],     // 20,001 - 35,000 -> 3%
@@ -441,7 +441,7 @@ class Employee extends Model
         [250001, 400000, 25],  // 250,001 - 400,000 -> 25%
         [400001, 600000, 26],  // 400,001 - 600,000 -> 26%
         [600001, 1000000, 28], // 600,001 - 1,000,000 -> 28%
-        [1000001, 2000000, 30],// 1,000,001 - 2,000,000 -> 30%
+        [1000001, 2000000, 30], // 1,000,001 - 2,000,000 -> 30%
         [2000001, PHP_INT_MAX, 32] // Above 2,000,000 -> 32%
     ];
 
@@ -474,4 +474,5 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeBranchLog::class);
     }
+ 
 }

@@ -37,7 +37,7 @@ class ViewMonthSalary extends ViewRecord
         
                 return [
                     Hidden::make('month')->default($record?->month),
-                    CheckboxList::make('employee_ids')
+                    CheckboxList::make('employee_ids')->searchable()
                         ->required()->columns(3)
                         ->label('Select Employees')
                         ->options($employeeOptions) // Use the employee options
