@@ -16,7 +16,7 @@ class MonthlySalaryIncreaseDetail extends Model
     public const TYPE_ALLOWANCE = 'allowance';
 
     public const TYPE_MONTHLY_LEAVE_ALLOWANCE_ID = -1;
-    public const TYPE_MONTHLY_LEAVE_ALLOWANCE_Name = 'Weekend leave allowance';
+    public const TYPE_MONTHLY_LEAVE_ALLOWANCE_Name = 'Weekend overtime';
     protected $fillable = [
         'month_salary_id',
         'employee_id',
