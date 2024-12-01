@@ -61,6 +61,10 @@ class EmployeeApplication extends Model
     {
         return $this->belongsTo(Employee::class); // Assuming you have an Employee model
     }
+
+    // public function transaction(){
+    //     return $this->hasOne(ApplicationTransaction::class,'application_id')
+    // }
     public function branch()
     {
         return $this->belongsTo(Branch::class);

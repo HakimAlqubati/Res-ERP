@@ -75,7 +75,8 @@ class TestController2 extends Controller
         $allowanceTypes = $allowanceTypes + $constAllowanceTypes;
         $month = $data->month;
         $monthName = Carbon::parse($month)->translatedFormat('F Y');
-
+        $allowanceTypes = array_reverse($allowanceTypes,true);
+        // dd($allowanceTypes);
         $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
             $typeId = $allowance['type_id'];
 

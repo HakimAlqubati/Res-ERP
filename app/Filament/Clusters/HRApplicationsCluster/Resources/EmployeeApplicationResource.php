@@ -65,10 +65,10 @@ class EmployeeApplicationResource extends Resource
                         ->searchable()
                         ->required()
                         ->live()
-                    // ->afterStateUpdated(function ($get, $set, $state) {
-                    //     $employee = Employee::find($state);
-                    //     $set('basic_salary', $employee?->salary);
-                    // })
+                        // ->afterStateUpdated(function ($get, $set, $state) {
+                        //     $employee = Employee::find($state);
+                        //     $set('basic_salary', $employee?->salary);
+                        // })
                         ->disabled(function () {
                             if (isStuff() || isFinanceManager()) {
                                 return true;
@@ -82,8 +82,7 @@ class EmployeeApplicationResource extends Resource
                         })
                         ->options(Employee::select('name', 'id')
 
-                                ->get()->plucK('name', 'id'))
-                    ,
+                            ->get()->plucK('name', 'id')),
 
                     DatePicker::make('application_date')
                         ->label('Request date')
@@ -107,19 +106,18 @@ class EmployeeApplicationResource extends Resource
                             EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'warning',
                             EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'success',
                             EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'danger',
-                        ])
-                    ,
+                        ]),
                 ]),
                 Fieldset::make('')
                     ->label(fn(Get $get): string => EmployeeApplication::APPLICATION_TYPES[$get('application_type')])
 
                     ->columns(1)
-                // ->visible(fn(Get $get): bool => in_array($get('application_type')
+                    // ->visible(fn(Get $get): bool => in_array($get('application_type')
 
-                //     , [
-                //         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
-                //         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
-                //     ]))
+                    //     , [
+                    //         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+                    //         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
+                    //     ]))
                     ->visible(fn(Get $get): bool => is_numeric($get('application_type')))
 
                     ->schema(function ($get, $set) {
@@ -136,7 +134,6 @@ class EmployeeApplicationResource extends Resource
                                 TimePicker::make('detail_time')
                                     ->label('Time')->required(),
                             ];
-
                         }
                         if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST) {
                             $employee = Employee::find($get('employee_id'));
@@ -158,8 +155,7 @@ class EmployeeApplicationResource extends Resource
                                             ->label('Amount'),
                                         TextInput::make('basic_salary')->numeric()->disabled()
                                             ->default(0)
-                                            ->label('Basic salary')->helperText('Employee basic salary')
-                                        ,
+                                            ->label('Basic salary')->helperText('Employee basic salary'),
 
                                     ]),
                                     Grid::make()->columns(3)->schema([
@@ -174,11 +170,10 @@ class EmployeeApplicationResource extends Resource
                                                     $res = $advancedAmount / $state;
 
                                                     $set('detail_number_of_months_of_deduction', $res);
-                                                    $toMonth = Carbon::now()->addMonths(($res-2))->endOfMonth()->format('Y-m-d');
+                                                    $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
                                                     $set('detail_deduction_ends_at', $toMonth);
                                                 }
-                                            })
-                                        ,
+                                            }),
                                         Fieldset::make()->columnSpan(1)->columns(1)->schema([
                                             DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
                                                 ->label('Deduction starts from')
@@ -189,11 +184,10 @@ class EmployeeApplicationResource extends Resource
                                                     $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
 
                                                     // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
-                                                    
-                                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths-1))->endOfMonth()->format('Y-m-d');
+
+                                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
                                                     $set('detail_deduction_ends_at', $endNextMonth);
-                                                })
-                                            ,
+                                                }),
                                             DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
                                                 ->label('Deduction ends at')
                                                 ->default('Y-m-d'),
@@ -208,8 +202,8 @@ class EmployeeApplicationResource extends Resource
                                                     // dd($res,$state);
                                                     $set('detail_monthly_deduction_amount', round($res, 2));
                                                     $state = (int) $state;
-                                                    
-                                                    $toMonth = Carbon::now()->addMonths(($state-2))->endOfMonth()->format('Y-m-d');
+
+                                                    $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
 
                                                     $set('detail_deduction_ends_at', $toMonth);
                                                 }
@@ -247,37 +241,38 @@ class EmployeeApplicationResource extends Resource
                                                     $leaveTypes
                                                 )->required()
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state,$get('detail_year'));
-                                                   
-                                                    (LeaveType::find($get('detail_leave_type_id'))?->is_monthly !=1) ? $set('detail_balance', $leaveBalance?->balance):'';
+                                                    $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state, $get('detail_year'));
+
+                                                    (LeaveType::find($get('detail_leave_type_id'))?->is_monthly != 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
                                                     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
                                                 }),
                                             Select::make('detail_year')->label('Year')
-                                            ->options([2024=>2024,
-                                            2025=>2025,
-                                            2026=>2026])->default(2024)
-                                            ->live()
-                                            ->visible(fn($get):bool=>(LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1))
+                                                ->options([
+                                                    2024 => 2024,
+                                                    2025 => 2025,
+                                                    2026 => 2026
+                                                ])->default(2024)
+                                                ->live()
+                                                // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
                                             // ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                             //     // dd($state);
                                             //     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'), $state);
-                                               
+
                                             //     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
                                             //     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
                                             // })
                                             ,
                                             Select::make('detail_month')->label('Month')
-                                            ->options(getMonthArrayWithKeys())
-                                            ->live()
-                                            ->visible(fn($get):bool=>(LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1))
-                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                // dd($state);
-                                                $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'),$get('detail_year'), $state);
-                                               
-                                                (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
-                                                // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
-                                            })
-                                            ,
+                                                ->options(getMonthArrayWithKeys())
+                                                ->live()
+                                                // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
+                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                                    // dd($state);
+                                                    $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_leave_type_id'), $get('detail_year'), $state);
+
+                                                    (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
+                                                    // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
+                                                }),
                                             TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 
                                         ]),
@@ -317,12 +312,12 @@ class EmployeeApplicationResource extends Resource
                                                 }),
 
                                             TextInput::make('detail_days_count')
-                                            // ->disabled()
+                                                // ->disabled()
                                                 ->label('Number of Days')
-                                            // ->helperText('Type how many days this leave will be')
+                                                // ->helperText('Type how many days this leave will be')
                                                 ->helperText('Type how many days this leave will be')
                                                 ->numeric()
-                                            // ->default(2)
+                                                // ->default(2)
                                                 ->minValue(1)
                                                 ->live()
                                                 ->required()
@@ -335,8 +330,7 @@ class EmployeeApplicationResource extends Resource
                                                 ->maxValue(function ($get) {
                                                     $balance = $get('detail_balance') ?? 0;
                                                     return $balance;
-                                                })->validationAttribute('ddddd')
-                                            ,
+                                                })->validationAttribute('ddddd'),
 
                                         ]),
                                     ]
@@ -350,15 +344,13 @@ class EmployeeApplicationResource extends Resource
                                 $form
                             ),
                         ];
-                    })
-                ,
+                    }),
                 Fieldset::make()->label('')->schema([
                     Textarea::make('notes') // Add the new details field
                         ->label('Notes')
                         ->placeholder('Notes...')
-                    // ->rows(5)
-                        ->columnSpanFull()
-                    ,
+                        // ->rows(5)
+                        ->columnSpanFull(),
                 ]),
             ]);
     }
@@ -378,8 +370,7 @@ class EmployeeApplicationResource extends Resource
                     ->sortable()
                     ->searchable(),
                 TextColumn::make('application_date')->label('Request date')
-                    ->sortable()
-                ,
+                    ->sortable(),
                 // TextColumn::make('approvedBy.name')->label('Approved by')
                 //     ->sortable(),
                 // TextColumn::make('approved_at')->label('Approved at')
@@ -401,12 +392,42 @@ class EmployeeApplicationResource extends Resource
                 SelectFilter::make('status')->options([
                     EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
                     EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
-                    EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED]),
+                    EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED
+                ]),
             ])
             ->actions([
                 Tables\Actions\RestoreAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\DeleteAction::make()->using(function ($record) {
+
+                    DB::beginTransaction();
+                    try {
+                        $record->delete();
+                        $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
+                        if ($transaction) {
+                            $transaction->update(['is_canceled' => 1, 'cancel_reason' => 'Application deleted','canceled_at'=>now()]);
+                        }
+                        DB::commit();
+                    } catch (\Exception $th) {
+                        DB::rollBack();
+                        return Notification::make()->title($th->getMessage())->warning()->send();
+                        //throw $th;
+                    }
+                }),
+                Tables\Actions\ForceDeleteAction::make()->using(function($record){
+                    DB::beginTransaction();
+                    try {
+                        $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
+                        $record->forceDelete();
+                        if ($transaction) {
+                            $transaction->forceDelete();
+                        }
+                        DB::commit();
+                    } catch (\Exception $th) {
+                        DB::rollBack();
+                        return Notification::make()->title($th->getMessage())->warning()->send();
+                        //throw $th;
+                    }
+                }),
 
                 // static::approveDepartureRequest(),
                 // static::rejectDepartureRequest(),
@@ -505,20 +526,16 @@ class EmployeeApplicationResource extends Resource
                     return false;
                 }),
                 static::AttendanceRequestDetails()
-                ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST))
-                ,
-                
+                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
+
                 static::LeaveRequesttDetails()
-                ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST))
-                ,
+                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)),
                 static::departureRequesttDetails()
-                ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST))
-                ,
-                
+                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
+
                 static::advancedRequesttDetails()
-                ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
-                ,
-                
+                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -629,7 +646,7 @@ class EmployeeApplicationResource extends Resource
                     throw new \Exception('There was an error processing the attendance request. Please try again later.');
                 }
             })
-        // ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
 
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
@@ -670,7 +687,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-        // ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -683,20 +700,20 @@ class EmployeeApplicationResource extends Resource
             ->visible(fn($record): bool => ($record->status == EmployeeApplication::STATUS_PENDING && $record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST))
             ->color('success')
             ->icon('heroicon-o-check')
-            
+
             ->action(function ($record) {
-                
-                $details = static::getDetailsKeysAndValues( json_decode($record->details,true) );
-                
-                DB::beginTransaction(); 
+
+                $details = static::getDetailsKeysAndValues(json_decode($record->details, true));
+
+                DB::beginTransaction();
                 try {
                     $record->update([
                         'status' => EmployeeApplication::STATUS_APPROVED,
                         'approved_by' => auth()->user()->id,
                         'approved_at' => now(),
                     ]);
-            
-                    ApplicationTransaction::createTransactionFromApplicationV3($record,$details);
+
+                    ApplicationTransaction::createTransactionFromApplicationV3($record, $details);
                     DB::commit();
 
                     // Show success notification
@@ -706,13 +723,12 @@ class EmployeeApplicationResource extends Resource
                     DB::rollBack();
 
                     Notification::make()->danger()->title('An error occurred while approving the application.')->send();
-            
+
                     // Optionally rethrow the exception if needed for debugging
                     // throw $th;
                 }
-
             })
-            
+
             ->disabledForm()
             ->form(function ($record) {
                 // $details= json_decode($record->details) ;
@@ -742,9 +758,8 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes)
                     ]),
                 ];
-
             })
-;
+        ;
     }
 
     private static function rejectAdvanceRequest(): Action
@@ -760,7 +775,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-        // ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -803,8 +818,8 @@ class EmployeeApplicationResource extends Resource
                 // Fetch the leave balance for the employee and specific leave type
                 $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
                     ->where('leave_type_id', $record->detail_leave_type_id)
-                    ->where('year',$data['detail_year'])
-                    ->where('month',$record?->detail_month)
+                    ->where('year', $data['detail_year'])
+                    ->where('month', $record?->detail_month)
                     ->first();
 
                 // Update the balance if found
@@ -818,7 +833,7 @@ class EmployeeApplicationResource extends Resource
                 $toDate = $record?->detail_to_date;
                 $fromDate = $record?->detail_from_date;
                 $daysCount = $record?->detail_days_count;
-                $month =  getMonthArrayWithKeys()[$record?->detail_month]??'' ;
+                $month =  getMonthArrayWithKeys()[$record?->detail_month] ?? '';
                 $year =  $record?->detail_year;;
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
@@ -850,7 +865,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-        // ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -909,7 +924,7 @@ class EmployeeApplicationResource extends Resource
         return Action::make('departureRequesttDetails')->label('Details')->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
-         
+
             ->disabledForm()
             ->form(function ($record) {
 
@@ -944,7 +959,7 @@ class EmployeeApplicationResource extends Resource
         return Action::make('AttendanceRequestDetails')->label('Details')->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
-         
+
             ->disabledForm()
             ->form(function ($record) {
                 return [
@@ -963,7 +978,7 @@ class EmployeeApplicationResource extends Resource
         return Action::make('LeaveRequesttDetails')->label('Details')->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
-         
+
             ->disabledForm()
             ->form(function ($record) {
                 $leaveTypeId = $record?->detail_leave_type_id;
@@ -971,7 +986,7 @@ class EmployeeApplicationResource extends Resource
                 $fromDate = $record?->detail_from_date;
                 $daysCount = $record?->detail_days_count;
                 $year =  $record?->detail_year;
-                $month =  getMonthArrayWithKeys()[$record?->detail_month]??'' ;
+                $month =  getMonthArrayWithKeys()[$record?->detail_month] ?? '';
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
                 return [
@@ -995,7 +1010,7 @@ class EmployeeApplicationResource extends Resource
         return Action::make('advancedRequesttDetails')->label('Details')->button()
             ->color('info')
             ->icon('heroicon-m-newspaper')
-         
+
             ->disabledForm()
             ->form(function ($record) {
                 // $details= json_decode($record->details) ;
@@ -1025,7 +1040,6 @@ class EmployeeApplicationResource extends Resource
                         TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes)
                     ]),
                 ];
-
             })
             ->modalSubmitAction(false)
             ->modalCancelAction(false)
@@ -1045,7 +1059,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-        // ->disabledForm()
+            // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -1053,7 +1067,7 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
-    
+
     public static function canDelete(Model $record): bool
     {
         if (isSuperAdmin() || isSystemManager()) {
@@ -1069,6 +1083,4 @@ class EmployeeApplicationResource extends Resource
         }
         return false;
     }
-
-
 }

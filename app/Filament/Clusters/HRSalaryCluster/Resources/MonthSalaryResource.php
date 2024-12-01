@@ -136,48 +136,12 @@ class MonthSalaryResource extends Resource
                     ->color('primary') // Use primary color for bulk action
                     ->icon('heroicon-o-archive-box-arrow-down') // Icon for bulk salary slips                
                     ->form(function ($record) {
-                        $employeeIds = $record?->details->pluck('employee_id')->toArray();
-                        $employeeOptions = Employee::whereIn('id', $employeeIds)
-                            ->select('name', 'id')
-                            ->pluck('name', 'id')
-                            ->toArray();
-
-                        return [
-                            Hidden::make('month')->default($record?->month),
-                            Forms\Components\CheckboxList::make('employee_ids')
-                                ->required()->columns(3)
-                                ->label('Select Employees')
-                                ->options($employeeOptions) // Use the employee options
-                                ->default(array_keys($employeeOptions)) // Pre-check all employees
-                                ->helperText('Select up to 10 employees to generate their payslips'),
-                        ];
+                        return static::bulkSalarySlipForm($record);
                     })
 
                     ->action(function ($record, $data) {
                         $employeeIds = $data['employee_ids'];
-                        // dd($employeeIds);
-                        $zipFileName = 'salary_slips.zip';
-                        $zipFilePath = storage_path('app/public/' . $zipFileName);
-                        $zip = new \ZipArchive();
-
-                        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-                            foreach ($employeeIds as $employeeId) {
-                                $pdfContent = generateSalarySlipPdf($employeeId, $record->id); // Generate the PDF content
-                                $employeeName = Employee::find($employeeId)->name;
-                                $fileName = 'salary-slip_' . $employeeName . '.pdf';
-
-                                // Add the PDF content to the ZIP archive
-                                $zip->addFromString($fileName, $pdfContent);
-                            }
-
-                            // Close the ZIP archive
-                            $zip->close();
-
-                            // Provide the ZIP file for download
-                            return response()->download($zipFilePath)->deleteFileAfterSend(true);
-                        } else {
-                            throw new \Exception('Could not create ZIP file.');
-                        }
+                        return static::bulkSalarySlip($record, $employeeIds);
                     }),
                 Action::make('salary_slip')
                     ->button()->label('Salary slip')
@@ -228,20 +192,10 @@ class MonthSalaryResource extends Resource
         return [
             'index' => Pages\ListMonthSalaries::route('/'),
             'create' => Pages\CreateMonthSalary::route('/create'),
-            // 'edit' => Pages\EditMonthSalary::route('/{record}/edit'),
             'view' => Pages\ViewMonthSalary::route('/{record}'),
         ];
     }
 
-    // public static function canDelete(Model $record): bool
-    // {
-    //     return false;
-    // }
-
-    // public static function canDeleteAny(): bool
-    // {
-    //     return false;
-    // }
 
     public static function exportExcel($record)
     {
@@ -253,7 +207,7 @@ class MonthSalaryResource extends Resource
         $allowanceTypes = Allowance::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
         $specificAllowanceTypes = Allowance::where('is_specific', 1)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
 
-       
+
         $constAllowanceTypes = MonthlySalaryIncreaseDetail::ALLOWANCE_TYPES;
         $allAllowanceTypes = $allowanceTypes + $constAllowanceTypes;
         $deducationTypes = Deduction::where('is_specific', 0)->where('active', 1)->select('name', 'id')->pluck('name', 'id')->toArray();
@@ -326,5 +280,51 @@ class MonthSalaryResource extends Resource
         }
 
         return Excel::download(new SalariesExport($data, $allDeductionTypes, $allAllowanceTypes), $fileName . '.xlsx');
+    }
+
+    public static function bulkSalarySlip($record, $employeeIds)
+    {
+        $zipFileName = 'salary_slips.zip';
+        $zipFilePath = storage_path('app/public/' . $zipFileName);
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($employeeIds as $employeeId) {
+                $pdfContent = generateSalarySlipPdf($employeeId, $record->id); // Generate the PDF content
+                $employeeName = Employee::find($employeeId)->name;
+                $fileName = 'salary-slip_' . $employeeName . '.pdf';
+
+                // Add the PDF content to the ZIP archive
+                $zip->addFromString($fileName, $pdfContent);
+            }
+
+            // Close the ZIP archive
+            $zip->close();
+
+            // Provide the ZIP file for download
+            return response()->download($zipFilePath)->deleteFileAfterSend(true);
+        } else {
+            throw new \Exception('Could not create ZIP file.');
+        }
+    }
+
+    public static function bulkSalarySlipForm($record)
+    {
+        $employeeIds = $record?->details->pluck('employee_id')->toArray();
+        $employeeOptions = Employee::whereIn('id', $employeeIds)
+            ->select('name', 'id')
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return [
+            Hidden::make('month')->default($record?->month),
+            Forms\Components\CheckboxList::make('employee_ids')
+                ->searchable()
+                ->required()->columns(3)
+                ->label('Select Employees')->bulkToggleable()
+                ->options($employeeOptions) // Use the employee options
+                ->default(array_keys($employeeOptions)) // Pre-check all employees
+                ->helperText('Select up to 10 employees to generate their payslips'),
+        ];
     }
 }

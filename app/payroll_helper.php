@@ -448,7 +448,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
     $allowanceTypes = $allowanceTypes + $constAllowanceTypes;
     $month = $data->month;
     $monthName = Carbon::parse($month)->translatedFormat('F Y');
-
+    $allowanceTypes = array_reverse($allowanceTypes,true);
     $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
         $typeId = $allowance['type_id'];
 
@@ -527,7 +527,7 @@ function generateSalarySlipPdf($employeeId, $sid)
     $allallowanceTypes = $allowanceTypes + $constAllowanceTypes;
     $month = $data->month;
     $monthName = Carbon::parse($month)->translatedFormat('F Y');
-
+    $allallowanceTypes = array_reverse($allallowanceTypes,true);
     $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allallowanceTypes) {
         return [
             'allowance_name' => $allallowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
