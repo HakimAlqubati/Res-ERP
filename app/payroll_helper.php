@@ -93,7 +93,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     // Calculate daily and hourly salary
     $dailySalary = calculateDailySalary($employeeId, $date);
-    $hourlySalary = calculateHourlySalary($employeeId, $date);
+    $hourlySalary = calculateHourlySalary($employee, $date);
 
 
     $taxDeduction = calculateYearlyTax($employee); // Retrieve tax percentage using the function in the Employee model
@@ -294,17 +294,17 @@ function calculateDailySalary($employeeId, $date = null)
 /**
  * to calculate the hourly salary
  */
-function calculateHourlySalary($employeeId, $date = null)
+function calculateHourlySalary($employee, $date = null)
 {
     // Get the daily salary using the given date
-    $dailySalary = calculateDailySalary($employeeId, $date);
+    $dailySalary = calculateDailySalary($employee->id, $date);
 
     if (!is_numeric($dailySalary)) {
         return $dailySalary; // Return error message from calculateDailySalary if any
     }
 
     // Calculate hourly salary assuming an 8-hour workday
-    $hourlySalary = $dailySalary / setting('hours_no_in_day');
+    $hourlySalary = $dailySalary / $employee->working_hours;
 
     return round($hourlySalary, 2);
 }
