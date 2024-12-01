@@ -704,7 +704,7 @@ class EmployeeResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
             return true;
         }
         return false;
