@@ -67,21 +67,23 @@
                         <td style="text-align: left">{{ number_format($employee?->salary, 2) }}</td>
                         <td></td>
                     </tr>
-                    @foreach ($employeeAllowances as $allowance)
-                        <tr>
-                            <td style="text-align: left">{{ $allowance['allowance_name'] ?? '' }}</td>
-                            <td style="text-align: left">{{ number_format($allowance['amount']?? 0, 2) }}</td>
-                            <td></td>
-                        </tr>
-                    @endforeach
+
                     <tr>
                         <td style="text-align: left">{{ 'Overtime pay' }}</td>
                         <td style="text-align: left">{{ number_format($data?->details[0]['overtime_pay'], 2) }}</td>
                         <td></td>
                     </tr>
+                    @foreach ($employeeAllowances as $allowance)
+                        <tr>
+                            <td style="text-align: left">{{ $allowance['allowance_name'] ?? '' }}</td>
+                            <td style="text-align: left">{{ number_format($allowance['amount'] ?? 0, 2) }}</td>
+                            <td></td>
+                        </tr>
+                    @endforeach
                     <tr>
                         <td style="text-align: left">{{ 'Bonus' }}</td>
-                        <td style="text-align: left">{{ number_format($data?->details[0]['total_incentives'], 2) }}</td>
+                        <td style="text-align: left">{{ number_format($data?->details[0]['total_incentives'], 2) }}
+                        </td>
                         <td></td>
                     </tr>
                     @foreach ($employeeDeductions as $deduction)
@@ -247,7 +249,7 @@
     }
 
     .company-info img {
-    width: 80px;
-    height: auto;
+        width: 80px;
+        height: auto;
     }
 </style>
