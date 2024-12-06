@@ -36,28 +36,46 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $generalDeducationTypes = Deduction::where('is_specific', 0)
         ->where('active', 1)
-        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied', 'nationalities_applied', 'less_salary_to_apply')
+        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied_v2', 'nationalities_applied', 'less_salary_to_apply')
         ->get();
     $deduction = [];
     foreach ($generalDeducationTypes as  $deductionType) {
-        $deductionNationalities = json_decode($deductionType->nationalities_applied, true);
-        if ($deductionType->condition_applied == Deduction::CONDITION_ALL) {
+        // $deductionNationalities = json_decode($deductionType->nationalities_applied, true);
+        // if ($deductionType->condition_applied == Deduction::CONDITION_ALL) {
+        //     $deduction[] = $deductionType;
+        // }
+        // if (
+        //     $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES &&
+        //     in_array($nationality, $deductionNationalities)
+        // ) {
+        //     $deduction[] = $deductionType;
+        // }
+        // if (
+        //     $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS &&
+        //     (in_array($nationality, $deductionNationalities) || ($employee->has_employee_pass))
+        // ) {
+        //     $deduction[] = $deductionType;
+        // }
+
+        if ($deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_ALL) {
             $deduction[] = $deductionType;
         }
         if (
-            $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES &&
-            in_array($nationality, $deductionNationalities)
+            $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
+            $employee->is_citizen
+            &&  $basicSalary >= $deductionType->less_salary_to_apply
         ) {
             $deduction[] = $deductionType;
         }
         if (
-            $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS &&
-            (in_array($nationality, $deductionNationalities) || ($employee->has_employee_pass))
+            $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS &&
+            ($employee->is_citizen || ($employee->has_employee_pass))
+            && $basicSalary >= $deductionType->less_salary_to_apply
         ) {
             $deduction[] = $deductionType;
         }
     }
-
+    // dd($deduction);
     $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
     $generalDedeucationResultCalculated = calculateDeductions($deduction, $basicSalary);
 
@@ -448,7 +466,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
     $allowanceTypes = $allowanceTypes + $constAllowanceTypes;
     $month = $data->month;
     $monthName = Carbon::parse($month)->translatedFormat('F Y');
-    $allowanceTypes = array_reverse($allowanceTypes,true);
+    $allowanceTypes = array_reverse($allowanceTypes, true);
     $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
         $typeId = $allowance['type_id'];
 
@@ -527,7 +545,7 @@ function generateSalarySlipPdf($employeeId, $sid)
     $allallowanceTypes = $allowanceTypes + $constAllowanceTypes;
     $month = $data->month;
     $monthName = Carbon::parse($month)->translatedFormat('F Y');
-    $allallowanceTypes = array_reverse($allallowanceTypes,true);
+    $allallowanceTypes = array_reverse($allallowanceTypes, true);
     $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allallowanceTypes) {
         return [
             'allowance_name' => $allallowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
@@ -720,29 +738,33 @@ if (!function_exists('calculateYearlyTax')) {
      */
     function calculateYearlyTax(Employee $employee)
     {
-        // Check nationality (only for 'MY')
-        if ($employee->nationality !== 'MY') {
+        // // Check nationality (only for 'MY')
+        // if ($employee->nationality !== 'MY') {
+        //     return 0; // No tax for non-'MY' nationality
+        // }
+        if (!$employee->is_citizen) {
             return 0; // No tax for non-'MY' nationality
         }
 
         // Calculate yearly salary
         $yearlySalary = $employee->salary * 12;
+        // $yearlySalary = $employee->salary ;
 
         // Use the tax brackets to determine the tax rate
         $taxPercentage = 0;
         foreach (Employee::TAX_BRACKETS as $bracket) {
             [$min, $max, $percentage] = $bracket;
-
             if ($yearlySalary >= $min && $yearlySalary <= $max) {
                 $taxPercentage = $percentage;
                 break;
             }
         }
-
+        // dd($taxPercentage);
 
         // Calculate the yearly tax deduction
         $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100)) / 12;
-        // dd($yearlyTaxDeduction,$yearlySalary,$taxPercentage);
-        return round($yearlyTaxDeduction, 2); // Return rounded value
+        // $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100));
+        // dd('hi', $yearlyTaxDeduction, $yearlySalary, $taxPercentage);
+        return round($yearlyTaxDeduction, 2) / 12; // Return rounded value
     }
 }

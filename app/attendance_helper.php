@@ -928,6 +928,7 @@ function calculateTotalLateArrival($attendanceData)
 
 function calculateTotalEarlyLeave($attendanceData)
 {
+    // dd($attendanceData);
     $totalEarlyLeaveMinutes = 0;
 // return 23;
     // Loop through each date in the attendance data
@@ -938,7 +939,8 @@ function calculateTotalEarlyLeave($attendanceData)
             foreach ($data['periods'] as $period) {
                 // dd( $period['attendances']['checkout']['lastcheckout']['early_departure_minutes']);
                 if (isset($period['attendances']['checkout']['lastcheckout']['status'])
-                // && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_ARRIVAL
+                && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_DEPARTURE
+            && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] >= setting('early_depature_deduction_minutes')
                 ) {
                     
                     // dd($period['attendances']['checkout']['lastcheckout']);

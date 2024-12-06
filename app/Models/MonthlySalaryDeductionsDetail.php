@@ -15,9 +15,9 @@ class MonthlySalaryDeductionsDetail extends Model
     public const LATE_HOUR_DEDUCTIONS = -1;
     public const ABSENT_DAY_DEDUCTIONS = -2;
     public const ADVANCED_MONTHLY_DEDUCATION = -3;
-    public const EARLY_DEPATURE_EARLY_HOURS = -4;
     
     public const TAX_DEDUCTIONS = -4;
+    public const EARLY_DEPATURE_EARLY_HOURS = -5;
     
     // Specify the fillable fields
     protected $fillable = [

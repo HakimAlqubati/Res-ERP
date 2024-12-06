@@ -36,14 +36,8 @@ class DeductionResource extends Resource
                 Fieldset::make()->columns(3)->label('')->schema([
                     Forms\Components\TextInput::make('name')->required(),
                     Forms\Components\TextInput::make('description')->columnSpan(2),
-                    Select::make('condition_applied')->live()->label('Condition applied')->options(Deduction::getConditionAppliedOptions())
-                        ->default(Deduction::CONDITION_ALL),
-                    Select::make('nationalities_applied')->multiple()
-                        ->formatStateUsing(function ($state) {
-                            return json_decode($state,true);
-                        })
-                        ->visible(fn($get): bool => $get('condition_applied') != Deduction::CONDITION_ALL)->required()
-                        ->label('Nationalties')->options(getNationalities())->default('MY'),
+                    Select::make('condition_applied')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
+                        ->default(Deduction::CONDITION_APPLIED_V2_ALL),
                     TextInput::make('less_salary_to_apply')->label('Less salary to apply')->numeric()
                         ->visible(fn($get): bool => $get('condition_applied') != Deduction::CONDITION_ALL)->required()
                 ]),
@@ -71,6 +65,7 @@ class DeductionResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('description'),
@@ -87,7 +82,7 @@ class DeductionResource extends Resource
                 TextColumn::make('amount')
                     ->hidden(fn($record) => $record?->is_percentage),
                 TextColumn::make('percentage')->suffix(' % '),
-                Tables\Columns\ToggleColumn::make('active'),
+                Tables\Columns\ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([
                 //
@@ -140,7 +135,7 @@ class DeductionResource extends Resource
         return false;
     }
 
-    
+
     public static function canCreate(): bool
     {
 
@@ -149,5 +144,4 @@ class DeductionResource extends Resource
         }
         return false;
     }
-
 }

@@ -57,6 +57,7 @@ class CreateEmployeeApplication extends CreateRecord
         $data['created_by'] = auth()->user()->id;
         $data['status'] = EmployeeApplication::STATUS_PENDING;
         $data['details'] = json_encode(EmployeeApplicationResource::getDetailsKeysAndValues($data));
+        // $data['details'] = [];
         
         return $data;
     }

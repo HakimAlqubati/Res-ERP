@@ -327,26 +327,31 @@ class EmployeeResource extends Resource
                                     TextInput::make('salary')
                                         ->numeric()
 
-                                        ->inputMode('decimal'),
+                                        ->inputMode('decimal')->disabled(fn():bool=>isBranchManager()),
                                     TextInput::make('tax_identification_number')
                                         ->label('Tax identification no.')
                                         ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
                                             || ($get('has_employee_pass') == 1)
                                         ))
-                                        ->numeric(),
+                                        ->numeric()
+                                        ->disabled(fn():bool=>isBranchManager())
+                                        ,
                                     // TextInput::make('bank_account_number')
                                     //     ->columnSpan(2)
                                     //     ->label('Bank account number')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
+                                    ->disabled(fn():bool=>isBranchManager())
                                         ->label('No salary deduction for absences')->default(0)->inline(false)
                                     // ->isInline(false)
                                     ,
                                     Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
+                                    ->disabled(fn():bool=>isBranchManager())
                                         ->label('Exempt from late attendance deduction')->default(0)->inline(false)
                                     // ->isInline(false)
                                     ,
 
                                     Repeater::make('bank_information')
+                                    ->disabled(fn():bool=>isBranchManager())
                                         ->label('Bank Information')
                                         ->columns(2)
 
@@ -557,6 +562,14 @@ class EmployeeResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('nationality')->sortable()->searchable()
+                    ->label('Nationality')
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                IconColumn::make('is_citizen')
+                    ->label('Is citizen')
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
 
             ])
             ->filters([

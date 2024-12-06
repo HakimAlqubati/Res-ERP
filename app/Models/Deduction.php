@@ -23,6 +23,7 @@ class Deduction extends Model
         'nationalities_applied',
         'condition_applied',
         'less_salary_to_apply',
+        'condition_applied_v2',
     ];
 
     // Add constants for the 'condition_applied' enum values
@@ -46,4 +47,19 @@ class Deduction extends Model
         // Filter the deductions based on the condition_applied
         return $query->where('is_specific', 0)->where('active', 1)->where('condition_applied', $condition);
     }
+
+   
+     // Optional: Define constants for the new field 'condition_applied_v2'
+     const CONDITION_APPLIED_V2_ALL = 'all';
+     const CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE = 'citizen_employee';
+     const CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS = 'citizen_employee_and_foreign_has_emp_pass';
+ 
+     public static function getConditionAppliedV2Options()
+     {
+         return [
+             self::CONDITION_APPLIED_V2_ALL => 'All',
+             self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE => 'Citizen Employee',
+             self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS => 'Citizen Employee and Foreign Has Pass',
+         ];
+     }
 }

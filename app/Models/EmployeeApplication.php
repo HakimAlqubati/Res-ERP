@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Carbon\Carbon;
@@ -10,8 +11,9 @@ class EmployeeApplication extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $appends = ['detailed_leave_request'];
+    protected $appends = ['detailed_leave_request', 'detailed_advance_application'];
 
+    // protected $casts = ['details' => 'array'];
     protected $table = 'hr_employee_applications';
     protected $fillable = [
         'employee_id',
@@ -216,8 +218,7 @@ class EmployeeApplication extends Model
     }
 
     public function getDetailedAdvanceApplicationAttribute()
-    {
-
+    { 
         $details = $this->details; // Assuming `details` is the name of the column
 
         // Decode the JSON string into an array
@@ -225,24 +226,25 @@ class EmployeeApplication extends Model
 
         // Check if decoding was successful and return a detailed array
         if (is_array($detailsArray)) {
+
             return [
                 'id' => $this->id,
                 'advance_amount' => isset($detailsArray['detail_advance_amount'])
-                ? number_format($detailsArray['detail_advance_amount'], 2)
-                : null,
+                    ? number_format($detailsArray['detail_advance_amount'], 2)
+                    : null,
                 'monthly_deduction_amount' => isset($detailsArray['detail_monthly_deduction_amount'])
-                ? number_format($detailsArray['detail_monthly_deduction_amount'], 2)
-                : null,
+                    ? number_format($detailsArray['detail_monthly_deduction_amount'], 2)
+                    : null,
                 'deduction_ends_at' => isset($detailsArray['detail_deduction_ends_at'])
-                ? Carbon::parse($detailsArray['detail_deduction_ends_at'])->format('Y-m-d')
-                : null,
+                    ? Carbon::parse($detailsArray['detail_deduction_ends_at'])->format('Y-m-d')
+                    : null,
                 'number_of_months_of_deduction' => $detailsArray['detail_number_of_months_of_deduction'] ?? null,
                 'date' => isset($detailsArray['detail_date'])
-                ? Carbon::parse($detailsArray['detail_date'])->format('Y-m-d')
-                : null,
+                    ? Carbon::parse($detailsArray['detail_date'])->format('Y-m-d')
+                    : null,
                 'deduction_starts_from' => isset($detailsArray['detail_deduction_starts_from'])
-                ? Carbon::parse($detailsArray['detail_deduction_starts_from'])->format('Y-m-d')
-                : null,
+                    ? Carbon::parse($detailsArray['detail_deduction_starts_from'])->format('Y-m-d')
+                    : null,
             ];
         }
 
@@ -273,11 +275,11 @@ class EmployeeApplication extends Model
                 'id' => $this->id,
                 'leave_type_id' => $detailsArray['detail_leave_type_id'] ?? null,
                 'from_date' => isset($detailsArray['detail_from_date'])
-                ? Carbon::parse($detailsArray['detail_from_date'])->format('Y-m-d')
-                : null,
+                    ? Carbon::parse($detailsArray['detail_from_date'])->format('Y-m-d')
+                    : null,
                 'to_date' => isset($detailsArray['detail_to_date'])
-                ? Carbon::parse($detailsArray['detail_to_date'])->format('Y-m-d')
-                : null,
+                    ? Carbon::parse($detailsArray['detail_to_date'])->format('Y-m-d')
+                    : null,
                 'days_count' => $detailsArray['detail_days_count'] ?? null,
             ];
         }
@@ -285,5 +287,4 @@ class EmployeeApplication extends Model
         // If decoding fails, return null or an empty array
         return [];
     }
-
 }

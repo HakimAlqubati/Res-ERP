@@ -322,9 +322,8 @@ class MonthSalaryResource extends Resource
                 ->searchable()
                 ->required()->columns(3)
                 ->label('Select Employees')->bulkToggleable()
-                ->options($employeeOptions) // Use the employee options
-                ->default(array_keys($employeeOptions)) // Pre-check all employees
-                ->helperText('Select up to 10 employees to generate their payslips'),
+                ->options($employeeOptions)
+                ->default(array_keys($employeeOptions)) ,
         ];
     }
 }

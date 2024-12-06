@@ -71,7 +71,7 @@ class AllowanceResource extends Resource
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
                 TextColumn::make('percentage')->suffix(' % '),
-                Tables\Columns\ToggleColumn::make('active'),
+                Tables\Columns\ToggleColumn::make('active')->disabled(fn():bool=>isBranchManager()),
             ])
             ->filters([
                 //

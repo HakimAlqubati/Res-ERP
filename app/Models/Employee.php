@@ -494,5 +494,20 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeBranchLog::class);
     }
- 
+
+        // Create an accessor for 'is_citizen' based on nationality
+        public function getIsCitizenAttribute()
+        {
+            // Retrieve the global default nationality from config
+            $defaultNationality = setting('default_nationality');
+    
+            // Return true if employee nationality matches the default nationality
+            return $this->nationality == $defaultNationality;
+        }
+    
+        // Create an accessor for 'is_foreign' (if needed)
+        public function getIsForeignAttribute()
+        {
+            return !$this->is_citizen; // This will return the opposite of is_citizen
+        }
 }

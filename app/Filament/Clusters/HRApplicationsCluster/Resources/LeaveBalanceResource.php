@@ -164,7 +164,7 @@ class LeaveBalanceResource extends Resource
                 Tables\Columns\TextColumn::make('employee.employee_no')
                     ->label('Employee no')
                     ->numeric()
-                    ->searchable()
+                    ->searchable()->alignCenter(true)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('employee.name')
                     ->numeric()
