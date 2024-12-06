@@ -91,15 +91,15 @@ function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate)
 /**
  * to return the employees that absent in specific day, or maybe forget checkin
  */
-function reportAbsentEmployees($date, $branchId,$currentTime)
+function reportAbsentEmployees($date, $branchId, $currentTime)
 {
     $employees = Employee::where('branch_id', $branchId)
-    ->with(['periods' => function($query) {
-        $query->select('hr_work_periods.id', 'hr_work_periods.name', 'hr_work_periods.start_at', 'hr_work_periods.end_at')
-              ->whereNull('hr_work_periods.deleted_at');
-    }])
-    ->select('id', 'name', 'employee_no', 'branch_id')
-    ->get();
+        ->with(['periods' => function ($query) {
+            $query->select('hr_work_periods.id', 'hr_work_periods.name', 'hr_work_periods.start_at', 'hr_work_periods.end_at')
+                ->whereNull('hr_work_periods.deleted_at');
+        }])
+        ->select('id', 'name', 'employee_no', 'branch_id')
+        ->get();
 
     $absentEmployees = [];
 
@@ -107,10 +107,10 @@ function reportAbsentEmployees($date, $branchId,$currentTime)
     foreach ($employees as $employee) {
         $attendance = $employee->attendancesByDate($date)->exists();
         $isPeriodEnded = false;
-        
+
         // Check if any of the periods' end time is less than the current time
         foreach ($employee->periods as $period) {
-                 if ($currentTime> $period->start_at) {
+            if ($currentTime > $period->start_at) {
                 $isPeriodEnded = true;
                 break;
             }
@@ -121,7 +121,7 @@ function reportAbsentEmployees($date, $branchId,$currentTime)
             $absentEmployees[] = [
                 'name' => $employee->name,
                 'employee_no' => $employee->employee_no,
-                'periods' => $employee->periods->map(function($period) {
+                'periods' => $employee->periods->map(function ($period) {
                     return [
                         'id' => $period->id,
                         'name' => $period->name,
@@ -137,7 +137,8 @@ function reportAbsentEmployees($date, $branchId,$currentTime)
 }
 
 if (!function_exists('ordinal')) {
-    function ordinal($number) {
+    function ordinal($number)
+    {
         $suffixes = ['th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th'];
         return $number . ($suffixes[($number % 100 >= 11 && $number % 100 <= 13) ? 0 : $number % 10]);
     }
@@ -384,15 +385,21 @@ function employeeAttendances($employeeId, $startDate, $endDate)
         })
         ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_description']);
 
-    $leaveApplications = $employee?->approvedLeaveApplications()
+    // dd($leaveApplications);
+    $leaveApplications =  $employee?->approvedLeaveApplications()
+        ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
         ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('from_date', [$startDate, $endDate])
-                ->orWhereBetween('to_date', [$startDate, $endDate]);
+            $query->whereBetween('hr_leave_requests.start_date', [$startDate, $endDate])
+                ->orWhereBetween('hr_leave_requests.end_date', [$startDate, $endDate]);
         })
-        ->select('from_date', 'to_date', 'leave_type_id')
-        ->with('leaveType:id,name') // Assuming you have a relationship defined
-        ->get();
-
+        ->join('hr_leave_types','hr_leave_requests.leave_type','=','hr_leave_types.id')
+        ->select(
+            'hr_leave_requests.start_date as from_date',
+            'hr_leave_requests.end_date as to_date',
+            'hr_leave_requests.leave_type',
+            'hr_leave_types.name as transaction_description',
+        )->get();
+    // dd($leaveApplications);
     // Initialize an array to hold the results
     $result = [];
     $employeeHistoryPeriods = getPeriodsForDateRange($employeeId, $startDate, $endDate);
@@ -426,29 +433,46 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
         // Check if the current date falls within any leave applications
         if ($leaveApplications) {
+            // dd($leaveApplications);
             foreach ($leaveApplications as $leave) {
+                // dd($leave);
                 if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
                     $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leave->leave_type_id,
+                        'leave_type_id' => $leave->leave_type,
                         'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
                     ];
                     continue 2; // Skip to the next date if it's a leave day
                 }
             }
         }
+        // dd($leaveApplications,$leaveTransactions);
         // Check if the current date falls within any leave applications
-        if ($leaveTransactions) {
-            foreach ($leaveTransactions as $leaveTransaction) {
-                if ($date->isBetween($leaveTransaction->from_date, $leaveTransaction->to_date, true)) {
+        // if ($leaveTransactions) {
+        //     foreach ($leaveTransactions as $leaveTransaction) {
+        //         if ($date->isBetween($leaveTransaction->from_date, $leaveTransaction->to_date, true)) {
+        //             $result[$date->toDateString()]['leave'] = [
+        //                 'leave_type_id' => $leaveTransaction->leave_type_id,
+        //                 'transaction_description' => $leaveTransaction->transaction_description, // Include leave type name
+        //             ];
+        //             continue 2; // Skip to the next date if it's a leave day
+        //         }
+        //     }
+        // }
+
+        if ($leaveApplications) {
+            foreach ($leaveApplications as $leaveApplication) {
+                // dd($leaveApplication->transaction_description,$leaveApplication);
+                if ($date->isBetween($leaveApplication->from_date, $leaveApplication->to_date, true)) {
                     $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leaveTransaction->leave_type_id,
-                        'transaction_description' => $leaveTransaction->transaction_description, // Include leave type name
+                        'leave_type_id' => $leaveApplication->leave_type_id,
+                        'transaction_description' => $leaveApplication->transaction_description, // Include leave type name
                     ];
                     continue 2; // Skip to the next date if it's a leave day
                 }
             }
         }
- 
+        
+        // dd($leaveTransactions, $leaveApplications,$result);
 
         $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
 
@@ -506,49 +530,48 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             'delay_minutes' => $attendance->delay_minutes ?? 0,
                             'status' => $attendance->status ?? 'unknown',
                         ];
-
                     } elseif ($attendance->check_type === 'checkout') {
 
                         $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
-                      
 
-                      
+
+
 
                         $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
                         $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
-                        
+
                         $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
                         if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() > 0) {
                             // if ($isActualLargerThanSupposed &&  $employee->overtimes->count() > 0) {
-                                $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);                                
-                            }
-                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
-                                $approvedOvertime = $formattedSupposedActualDuration;
-                            }
-                            if (!$isActualLargerThanSupposed) {
-                                $approvedOvertime = $periodData['total_hours'];
-                            }
+                            $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
+                        }
+                        if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
+                            $approvedOvertime = $formattedSupposedActualDuration;
+                        }
+                        if (!$isActualLargerThanSupposed) {
+                            $approvedOvertime = $periodData['total_hours'];
+                        }
 
                         // dd($approvedOvertime);
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'period_end_at'=>$period->end_at,
+                            'period_end_at' => $period->end_at,
                             'status' => $attendance->status ?? 'unknown',
                             'actual_duration_hourly' => $formattedSupposedActualDuration,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject. ':00',
+                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject . ':00',
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
-                            'approved_overtime'=>  $approvedOvertime,
+                            'approved_overtime' =>  $approvedOvertime,
                         ];
-                        
+
                         $periodData['attendances']['checkout'][] = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
-                           
+
                             'status' => $attendance->status ?? 'unknown',
                             'actual_duration_hourly' => $formattedSupposedActualDuration,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject. ':00',
+                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject . ':00',
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
@@ -569,12 +592,13 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 return 'no_periods';
             }
         }
-
     }
+    // dd($result   );
     return $result;
 }
 
-function formatHoursMinuts($totalHours){
+function formatHoursMinuts($totalHours)
+{
     // Separate hours and minutes
     $hours = floor($totalHours); // Get the integer part (hours)
     $minutes = ($totalHours - $hours) * 60; // Convert fractional part to minutes
@@ -594,7 +618,7 @@ function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
         ->where('check_date', $date)
         ->select('check_time', 'check_type', 'period_id')
         ->orderBy('id', 'asc')
-    // ->groupBy('period_id')
+        // ->groupBy('period_id')
         ->get();
     return $attenance;
 }
@@ -672,7 +696,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
         // Fetch the employee by ID
 
         $employee = Employee::where('id', $employeeId)->first();
-// dd($employee);
+        // dd($employee);
         if ($employee) {
 
             // if (!$employee) {
@@ -738,19 +762,11 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             if ($leaveTransactions) {
 
                 $result[$employeeId][$date->toDateString()]['leave'] = [
-                    'transaction_type_id' => $leaveTransactions->transaction_type_id,
+                    'transaction_type_id' => $leaveTransactions->leave_type,
                     'transaction_description' => $leaveTransactions->transaction_description,
                 ];
                 // continue; // Skip to the next employee if it's a leave day
             }
-
-            // Get the employee's work periods for the current date
-            // $employeePeriods = DB::table('hr_work_periods as wp')
-            //     ->join('hr_employee_periods as ep', 'wp.id', '=', 'ep.period_id')
-            //     ->select('wp.start_at', 'wp.end_at', 'ep.period_id')
-            //     ->where('ep.employee_id', $employeeId)
-            //     ->orderBy('wp.start_at', 'asc')
-            //     ->get();
 
             $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()] ?? [];
             // dd($employeePeriods, $employeePeriods2);
@@ -806,7 +822,6 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
                                 $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
-
                             }
                             if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
                                 $approvedOvertime = $formattedSupposedActualDuration;
@@ -825,7 +840,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                                 'approved_overtime' => $approvedOvertime,
                                 'is' => $isActualLargerThanSupposed,
-                                'period_end_at'=>$period->end_at,
+                                'period_end_at' => $period->end_at,
 
                             ];
                             $periodData['attendances']['checkout'][] = [
@@ -859,6 +874,7 @@ function calculateTotalAbsentDays($attendanceData)
     // dd ($attendanceData);
     $totalAbsentDays = 0;
 
+    $result = [];
     foreach ($attendanceData as $date => $data) {
         // Check if periods exist for the date
         if (isset($data['periods']) && !empty($data['periods'])) {
@@ -867,16 +883,19 @@ function calculateTotalAbsentDays($attendanceData)
             // Loop through each period to check attendance
             foreach ($data['periods'] as $period) {
                 // dd(array_intersect_key(array_flip(['checkin', 'checkout']), $period['attendances']),$period['attendances']);
-                if(( is_array($period['attendances'])&& count($period['attendances']) ==1)){
-                    // dd($period['attendances'],$period);
-                //    dd('hi');
-                   $allAbsent = true; // Found a period that is not absent
-                   break; // No need to check further
+                if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
 
-               }
-                if (isset($period['attendances']) && ($period['attendances'] !== 'absent' )) {
+                    $allAbsent = true; // Found a period that is not absent
+                    break; // No need to check further
+
+                }
+                if (isset($period['attendances']) && ($period['attendances'] !== 'absent')) {
                     $allAbsent = false; // Found a period that is not absent
                     break; // No need to check further
+                }
+                // Collect absent periods
+                if (isset($period['attendances']) && $period['attendances'] === 'absent') {
+                    $result[] = $period['date'];  // Save the absent period for later use
                 }
             }
 
@@ -885,7 +904,13 @@ function calculateTotalAbsentDays($attendanceData)
                 $totalAbsentDays++;
             }
         }
-    } 
+    }
+
+    return [
+        'total_absent_days' => $totalAbsentDays,
+        'absent_dates' => $result,
+    ];
+    dd($totalAbsentDays, $result);
     return $totalAbsentDays;
 }
 
@@ -905,8 +930,8 @@ function calculateTotalLateArrival($attendanceData)
                         if (isset($checkin['status']) && $checkin['status'] === Attendance::STATUS_LATE_ARRIVAL) {
                             // Add the delay minutes to the total
 
-                            if($checkin['delay_minutes']>Setting::getSetting('early_attendance_minutes')){
-       
+                            if ($checkin['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
+
                                 $totalDelayMinutes += $checkin['delay_minutes'];
                                 // $totalDelayMinutes += 2;
                             }
@@ -930,34 +955,32 @@ function calculateTotalEarlyLeave($attendanceData)
 {
     // dd($attendanceData);
     $totalEarlyLeaveMinutes = 0;
-// return 23;
+    // return 23;
     // Loop through each date in the attendance data
     foreach ($attendanceData as $date => $data) {
-        
+
         if (isset($data['periods'])) {
             // Loop through each period for the date
             foreach ($data['periods'] as $period) {
                 // dd( $period['attendances']['checkout']['lastcheckout']['early_departure_minutes']);
-                if (isset($period['attendances']['checkout']['lastcheckout']['status'])
-                && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_DEPARTURE
-            && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] >= setting('early_depature_deduction_minutes')
+                if (
+                    isset($period['attendances']['checkout']['lastcheckout']['status'])
+                    && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_DEPARTURE
+                    && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] >= setting('early_depature_deduction_minutes')
                 ) {
-                    
+
                     // dd($period['attendances']['checkout']['lastcheckout']);
-                        // Check if the status is 'early_arrival' (early leave)
+                    // Check if the status is 'early_arrival' (early leave)
 
-                            // Add the early leave minutes to the total
-                            
-                                $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
-                            
+                    // Add the early leave minutes to the total
 
-                    }
-                
+                    $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                }
             }
         }
     }
 
-    return round(($totalEarlyLeaveMinutes/60),1);
+    return round(($totalEarlyLeaveMinutes / 60), 1);
     // Calculate total hours as a float
     $totalHoursFloat = $totalEarlyLeaveMinutes / 60;
 

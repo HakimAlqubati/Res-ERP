@@ -269,7 +269,7 @@ class EmployeeApplicationResource_old extends Resource
                                                 // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     // dd($state);
-                                                    $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_leave_type_id'), $get('detail_year'), $state);
+                                                    $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_year'), $state);
 
                                                     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
                                                     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);

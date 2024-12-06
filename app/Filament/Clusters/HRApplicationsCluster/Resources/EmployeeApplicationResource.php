@@ -254,7 +254,7 @@ class EmployeeApplicationResource extends Resource
                                                 )->required()
                                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                                     if (LeaveType::find($get('detail_leave_type_id'))?->is_monthly) {
-                                                        $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $state, $get('detail_year'), $get('detail_month'));
+                                                        $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_year'), $get('detail_month'));
                                                         $set('detail_balance', $leaveBalance?->balance);
                                                     } else {
 
@@ -271,27 +271,10 @@ class EmployeeApplicationResource extends Resource
                                                     2025 => 2025,
                                                     2026 => 2026
                                                 ])->default(2024)
-                                                ->live()
-                                            // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
-                                            // ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                            //     // dd($state);
-                                            //     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'), $state);
-
-                                            //     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
-                                            //     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
-                                            // })
-                                            ,
+                                                ->live(),
                                             Select::make('detail_month')->label('Month')
                                                 ->options(getMonthArrayWithKeys())
                                                 ->live()
-                                                // // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
-                                                // ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                //     // dd($state);
-                                                //     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_leave_type_id'), $get('detail_year'), $state);
-
-                                                //     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
-                                                //     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
-                                                // })
                                                 ->default(11),
                                             TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 

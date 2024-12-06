@@ -208,7 +208,7 @@
                             @endif
                             @if (count($data['periods']) == 0 && isset($data['leave']))
                                 <x-filament-tables::cell colspan="9">
-                                    {{ $data['leave']['transaction_description'] }}
+                                    {{ $data['leave']['transaction_description'] ?? '' }}
                                 </x-filament-tables::cell>
                             @endif
 

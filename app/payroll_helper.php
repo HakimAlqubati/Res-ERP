@@ -3,12 +3,16 @@
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\Employee;
+use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
+use App\Models\LeaveType;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * to calculate the salary
@@ -128,9 +132,13 @@ function calculateMonthlySalaryV2($employeeId, $date)
         return 'no_periods';
     }
     $totalAbsentDays = 0;
+    $absentDates = [];
     if (!$employee->discount_exception_if_absent) {
-        $totalAbsentDays = calculateTotalAbsentDays($attendances);
+        // dd(calculateTotalAbsentDays($attendances));
+        $totalAbsentDays = calculateTotalAbsentDays($attendances)['total_absent_days'];
+        $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
     }
+
 
     $totalLateHours = 0;
     $totalEarlyDepatureHours = 0;
@@ -143,11 +151,15 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * setting('overtime_hour_multiplier');
+
+    $monthlyLeaveBalance = getLeaveMonthlyBalance($employee, $date);
     $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employee, $date);
     $overtimeBasedOnMonthlyLeavePay = 0;
     if ($overtimeBasedOnMonthlyLeave > 0) {
         $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
     }
+
+    $checkForMonthlyBalanceAndCreateToCancelAbsent = checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
@@ -189,9 +201,11 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'total_monthly_incentives' => $totalMonthlyIncentives,
             'overtime_pay' => round($overtimePay, 2),
             'overtime_hours' => $overtimeHours,
+            'monthly_leave_balance' => $monthlyLeaveBalance,
             'overtime_based_on_monthly_leave' => $overtimeBasedOnMonthlyLeave,
             'overtime_based_on_monthly_leave_pay' => $overtimeBasedOnMonthlyLeavePay,
             'total_absent_days' => $totalAbsentDays,
+            'absent_dates' => $absentDates,
             'total_late_hours' => $totalLateHours,
             'total_early_depature_hours' => $totalEarlyDepatureHours,
             'deducation_details' => [
@@ -372,9 +386,20 @@ function createEmployeeOverime($employee, $date)
 {
     $year = Carbon::parse($date)->year; // Extracts the year
     $month = Carbon::parse($date)->month; // Extracts the month
-    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employee->id, 6, $year, $month)?->balance ?? 0;
+    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employee->id, $year, $month)?->balance ?? 0;
     $totalDayHours = $employee?->working_hours ?? 0;
     return ($monthlyBalance * $totalDayHours);
+}
+
+/**
+ * get leave monthly balance
+ */
+function getLeaveMonthlyBalance($employee, $yearAndMonth)
+{
+    $year = Carbon::parse($yearAndMonth)->year; // Extracts the year
+    $month = Carbon::parse($yearAndMonth)->month; // Extracts the month
+    $monthlyBalance = LeaveBalance::getMonthlyBalanceForEmployee($employee->id, $year, $month)?->balance ?? 0;
+    return $monthlyBalance;
 }
 function getEmployeeOvertimesOfSpecificDate($date, $employee)
 {
@@ -767,4 +792,52 @@ if (!function_exists('calculateYearlyTax')) {
         // dd('hi', $yearlyTaxDeduction, $yearlySalary, $taxPercentage);
         return round($yearlyTaxDeduction, 2) / 12; // Return rounded value
     }
+}
+
+
+function checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $yearAndMonth, $totalAbsentDays, $monthlyLeaveBalance, $absentDates)
+{
+    $date = new \DateTime($yearAndMonth . '-01');
+    $year = $date->format('Y');
+    $month = $date->format('m');
+    $totalDaysOfMonth = $date->format('t');
+    // dd($year, $month, $totalDaysOfMonth, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
+    DB::beginTransaction();
+    try {
+        //code...
+        DB::commit();
+
+        for ($i = 0; $i < $monthlyLeaveBalance; $i++) {
+// dd($absentDates[$i]);
+            EmployeeApplicationV2::create([
+                'employee_id' => $employee->id,
+                'branch_id' => $employee->branch_id,
+                'application_date' => now()->toDateString(),
+                'status' => EmployeeApplicationV2::STATUS_APPROVED,
+                'notes' => 'Auto generated',
+                'application_type_id' => 1,
+                'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+                'created_by' => 1,
+                'approved_by' => 1,
+                'approved_at' => now(),
+            ])->leaveRequest()->create([
+                'application_type_id' => 1,
+                'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+                'employee_id' => $employee->id,
+                'leave_type' => LeaveType::where('active', 1)->where('used_as_weekend', 1)->first()?->id,
+                'year' => $year,
+                'month' => $month,
+                'start_date' => $absentDates[$i],
+                'end_date' => $absentDates[$i],
+                'days_count' => 1,
+            ])
+            ;
+        }
+        Log::alert('done_created_auto_monthly_leave', ['employee' => $employee, 'absentDates' => $absentDates]);
+    } catch (\Throwable $th) {
+        //throw $th;
+        DB::rollBack();
+        Log::error('failed_creating_auto_monthly', ['error' => $th]);
+    }
+    
 }

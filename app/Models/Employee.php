@@ -126,7 +126,7 @@ class Employee extends Model
 
     public function approvedLeaveApplications()
     {
-        return $this->hasMany(LeaveApplication::class, 'employee_id')->where('status', LeaveApplication::STATUS_APPROVED)->with('leaveType');
+        return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')->where('hr_employee_applications.application_type_id', 1)->where('status', EmployeeApplicationV2::STATUS_APPROVED)->with('leaveRequest');
     }
 
     public function transactions()
@@ -495,19 +495,19 @@ class Employee extends Model
         return $this->hasMany(EmployeeBranchLog::class);
     }
 
-        // Create an accessor for 'is_citizen' based on nationality
-        public function getIsCitizenAttribute()
-        {
-            // Retrieve the global default nationality from config
-            $defaultNationality = setting('default_nationality');
-    
-            // Return true if employee nationality matches the default nationality
-            return $this->nationality == $defaultNationality;
-        }
-    
-        // Create an accessor for 'is_foreign' (if needed)
-        public function getIsForeignAttribute()
-        {
-            return !$this->is_citizen; // This will return the opposite of is_citizen
-        }
+    // Create an accessor for 'is_citizen' based on nationality
+    public function getIsCitizenAttribute()
+    {
+        // Retrieve the global default nationality from config
+        $defaultNationality = setting('default_nationality');
+
+        // Return true if employee nationality matches the default nationality
+        return $this->nationality == $defaultNationality;
+    }
+
+    // Create an accessor for 'is_foreign' (if needed)
+    public function getIsForeignAttribute()
+    {
+        return !$this->is_citizen; // This will return the opposite of is_citizen
+    }
 }

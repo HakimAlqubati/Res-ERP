@@ -18,6 +18,7 @@ class LeaveType extends Model
         'created_by',
         'updated_by',
         'is_monthly',
+        'used_as_weekend',
     ];
 
     // Relationship to the user who created the leave type

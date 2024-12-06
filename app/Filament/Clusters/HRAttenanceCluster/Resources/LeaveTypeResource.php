@@ -49,6 +49,9 @@ class LeaveTypeResource extends Resource
                         Forms\Components\Toggle::make('is_monthly')
                         ->label('Is monthly')->inline(false)
                         ->default(false),
+                        Forms\Components\Toggle::make('used_as_weekend')
+                        ->label('Used as weekend')->inline(false)
+                        ->default(false),
                      ])
                     ]),
                     Forms\Components\Textarea::make('description')->columnSpanFull()
