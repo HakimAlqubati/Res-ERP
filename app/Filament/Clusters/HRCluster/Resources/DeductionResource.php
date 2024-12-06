@@ -36,10 +36,10 @@ class DeductionResource extends Resource
                 Fieldset::make()->columns(3)->label('')->schema([
                     Forms\Components\TextInput::make('name')->required(),
                     Forms\Components\TextInput::make('description')->columnSpan(2),
-                    Select::make('condition_applied')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
+                    Select::make('condition_applied_v2')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
                         ->default(Deduction::CONDITION_APPLIED_V2_ALL),
                     TextInput::make('less_salary_to_apply')->label('Less salary to apply')->numeric()
-                        ->visible(fn($get): bool => $get('condition_applied') != Deduction::CONDITION_ALL)->required()
+                        ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)->required()
                 ]),
                 Fieldset::make()->label('')->columns(5)->schema([
                     Forms\Components\Toggle::make('is_penalty')->default(false),
