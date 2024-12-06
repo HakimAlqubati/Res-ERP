@@ -18,12 +18,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Unique;
 
 class LeaveBalanceResource extends Resource
@@ -48,11 +50,12 @@ class LeaveBalanceResource extends Resource
     // }
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My leaves': static::$modelLabel;
+        return isStuff() ? 'My leaves' : static::$modelLabel;
     }
     public static function getPluralLabel(): ?string
     {
-        return isStuff() ? 'My leaves': static::$modelLabel;static::$pluralLabel;
+        return isStuff() ? 'My leaves' : static::$modelLabel;
+        static::$pluralLabel;
     }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
@@ -81,8 +84,7 @@ class LeaveBalanceResource extends Resource
 
                                         ];
                                     }, $employees));
-                                })
-                            ,
+                                }),
                             Select::make('leave_type_id')->label('Leave type')
                                 ->required()
                                 ->live()
@@ -95,8 +97,7 @@ class LeaveBalanceResource extends Resource
                                     }
                                     // Set the updated repeater data back to the 'employees' field
                                     $set('employees', $employees);
-                                })
-                            ,
+                                }),
                             Select::make('year')->options([
                                 2024 => 2024,
                                 2025 => 2025,
@@ -129,9 +130,8 @@ class LeaveBalanceResource extends Resource
                                                 ;
                                             }
                                         )->validationMessages([
-                                        'unique' => 'Balance already created',
-                                    ])
-                                    ,
+                                            'unique' => 'Balance already created',
+                                        ]),
 
                                     TextInput::make('balance')->label('Balance')
                                         ->numeric()
@@ -144,16 +144,12 @@ class LeaveBalanceResource extends Resource
                                     //     return $max;
                                     // })
                                     ,
-                                ])
+                                ]),
 
-                                ,
-
-                            ])
-
-                    ,
+                            ]
+                        ),
                 ]
-            )
-        ;
+            );
     }
 
     public static function table(Table $table): Table
@@ -181,9 +177,8 @@ class LeaveBalanceResource extends Resource
                     ->alignCenter(true)
                     ->sortable()
                     ->formatStateUsing(function ($state) {
-                       return getMonthArrayWithKeys()[$state]??'';
-                    })
-                    ,
+                        return getMonthArrayWithKeys()[$state] ?? '';
+                    }),
                 Tables\Columns\TextColumn::make('balance')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
@@ -206,14 +201,34 @@ class LeaveBalanceResource extends Resource
                 SelectFilter::make('year')
                     ->searchable()
                     ->multiple()
-                    ->label('Year')->options([2024=>2024,2025=>2025,2026=>2026]),
+                    ->label('Year')->options([2024 => 2024, 2025 => 2025, 2026 => 2026]),
                 SelectFilter::make('month')
                     ->searchable()
                     ->multiple()
                     ->label('Month')->options(getMonthArrayWithKeys()),
-            ],FiltersLayout::AboveContent)
+            ], FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()
+                    ->form(function ($record) {
+                        return [
+                            TextInput::make('balance', $record->balance)->default($record->balance),
+                        ];
+                    })->action(function ($record, $data) {
+                        DB::beginTransaction();
+                        try {
+                            $record->update([
+                                'balance' => $data['balance'],
+                            ]);
+                            DB::commit();
+                            Notification::make()->success()->title('Done')->send();
+                        } catch (\Exception $th) {
+                            //throw $th;
+                            DB::rollBack();
+                            Notification::make()->warning()->body($th->getMessage())->send();
+                        }
+                    }),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

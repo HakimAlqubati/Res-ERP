@@ -25,36 +25,33 @@ class CreateMonthSalary extends CreateRecord
     {
 
         $monthsArray = getMonthsArray();
-        
-        
+
+
         if (array_key_exists($data['name'], $monthsArray)) {
             $data['start_month'] = $monthsArray[$data['name']]['start_month'];
             $monthYear = Carbon::parse($data['start_month'])->format('Y-m');
-            
+
             $data['end_month'] = $monthsArray[$data['name']]['end_month'];
             $data['name'] = 'Salary of month (' . $monthsArray[$data['name']]['name'] . ')';
             $data['month'] = $monthYear;
         }
-        $isExist = MonthSalary::
-        withTrashed()
-        ->where('month',$data['month'])->where('branch_id',$data['branch_id'])->first();
-    //    dd($isExist);
-       if ($isExist) {
-           if ($isExist->trashed()) {
-               // Permanently delete the soft-deleted record
-               $isExist->forceDelete();
-           }else{
+        $isExist = MonthSalary::withTrashed()
+            ->where('month', $data['month'])->where('branch_id', $data['branch_id'])->first();
+        //    dd($isExist);
+        if ($isExist) {
+            if ($isExist->trashed()) {
+                // Permanently delete the soft-deleted record
+                $isExist->forceDelete();
+            } else {
 
-               // Notify the user and halt the operation if an active record exists
-               Notification::make()
-                   ->title('Payroll is already exist.')
-                   ->warning()
-                   ->send();
-    
-               $this->halt();
-           }
-           
-            
+                // Notify the user and halt the operation if an active record exists
+                Notification::make()
+                    ->title('Payroll is already exist.')
+                    ->warning()
+                    ->send();
+
+                $this->halt();
+            }
         }
 
         $data['created_by'] = auth()->user()->id;
@@ -68,12 +65,12 @@ class CreateMonthSalary extends CreateRecord
             ->where('branch_id', $this->record->branch_id)
             ->select('id')
             ->get();
-
         foreach ($branchEmployees as $employee) {
             // Begin a transaction
             DB::beginTransaction();
 
             try {
+                // checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $this->record->end_month, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
                 $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month);
                 $specificDeducation = $generalDeducation = $specificAllowances = $generalAllowances = [];
 
@@ -83,9 +80,9 @@ class CreateMonthSalary extends CreateRecord
                     continue;
                 }
 
-                
-                  // Check for existing advance transactions and create deduction if necessary
-                  $this->handleAdvanceDeductions($employee, $this->record->month, $this->record->branch_id);
+
+                // Check for existing advance transactions and create deduction if necessary
+                $this->handleAdvanceDeductions($employee, $this->record->month, $this->record->branch_id);
 
 
                 // Set deductions and allowances if available
@@ -93,21 +90,22 @@ class CreateMonthSalary extends CreateRecord
                 $generalDeducation = $calculateSalary['details']['deducation_details']['general_deducation'] ?? [];
                 $specificAllowances = $calculateSalary['details']['adding_details']['specific_allowances'] ?? [];
                 $generalAllowances = $calculateSalary['details']['adding_details']['general_allowances'] ?? [];
-               if(isset($calculateSalary['details'])){
-                   $this->record->details()->create([
-                       'employee_id' => $employee->id,
-                       'basic_salary' => $calculateSalary['details']['basic_salary'],
-                       'total_deductions' => $calculateSalary['details']['total_deducation'],
-                       'total_allowances' => $calculateSalary['details']['total_allowances'],
-                       'total_incentives' => $calculateSalary['details']['total_monthly_incentives'],
-                       'total_other_adding' => $calculateSalary['details']['total_other_adding'],
-                       'net_salary' => $calculateSalary['net_salary'],
-                       'total_absent_days' => $calculateSalary['details']['total_absent_days'],
-                       'total_late_hours' => $calculateSalary['details']['total_late_hours'],
-                       'overtime_hours' => $calculateSalary['details']['overtime_hours'],
-                       'overtime_pay' => $calculateSalary['details']['overtime_pay'] ?? 0,
-                   ]);
-               }
+     
+                if (isset($calculateSalary['details'])) {
+                    $this->record->details()->create([
+                        'employee_id' => $employee->id,
+                        'basic_salary' => $calculateSalary['details']['basic_salary'],
+                        'total_deductions' => $calculateSalary['details']['total_deducation'],
+                        'total_allowances' => $calculateSalary['details']['total_allowances'],
+                        'total_incentives' => $calculateSalary['details']['total_monthly_incentives'],
+                        'total_other_adding' => $calculateSalary['details']['total_other_adding'],
+                        'net_salary' => $calculateSalary['net_salary'],
+                        'total_absent_days' => $calculateSalary['details']['total_absent_days'],
+                        'total_late_hours' => $calculateSalary['details']['total_late_hours'],
+                        'overtime_hours' => $calculateSalary['details']['overtime_hours'],
+                        'overtime_pay' => $calculateSalary['details']['overtime_pay'] ?? 0,
+                    ]);
+                }
                 // Try to create salary details
 
                 // Create allowance and deduction details
@@ -116,62 +114,62 @@ class CreateMonthSalary extends CreateRecord
                 $this->createDeductionDetails($specificDeducation, $employee, true);
                 $this->createDeductionDetails($generalDeducation, $employee, false);
 
-                if(isset($calculateSalary['details']['deduction_for_absent_days']) && $calculateSalary['details']['deduction_for_absent_days'] > 0){
+                if (isset($calculateSalary['details']['deduction_for_absent_days']) && $calculateSalary['details']['deduction_for_absent_days'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,
-                        
+
                         'deduction_id' => MonthlySalaryDeductionsDetail::ABSENT_DAY_DEDUCTIONS,
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::ABSENT_DAY_DEDUCTIONS],
                         'deduction_amount' => $calculateSalary['details']['deduction_for_absent_days'],
                     ]);
                 }
-                if(isset($calculateSalary['details']['tax_deduction']) && $calculateSalary['details']['tax_deduction'] > 0){
+                if (isset($calculateSalary['details']['tax_deduction']) && $calculateSalary['details']['tax_deduction'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,
-                        
+
                         'deduction_id' => MonthlySalaryDeductionsDetail::TAX_DEDUCTIONS,
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::TAX_DEDUCTIONS],
                         'deduction_amount' => $calculateSalary['details']['tax_deduction'],
                     ]);
                 }
-                if(isset($calculateSalary['details']['deducation_installment_advanced_monthly']['amount']) && $calculateSalary['details']['deducation_installment_advanced_monthly']['amount'] > 0){
+                if (isset($calculateSalary['details']['deducation_installment_advanced_monthly']['amount']) && $calculateSalary['details']['deducation_installment_advanced_monthly']['amount'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,
-                        
+
                         'deduction_id' => MonthlySalaryDeductionsDetail::ADVANCED_MONTHLY_DEDUCATION,
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::ADVANCED_MONTHLY_DEDUCATION],
                         'deduction_amount' => $calculateSalary['details']['deducation_installment_advanced_monthly']['amount'],
                     ]);
-                    if(isset($calculateSalary['details']['deducation_installment_advanced_monthly']['installment_id'])){
+                    if (isset($calculateSalary['details']['deducation_installment_advanced_monthly']['installment_id'])) {
                         EmployeeAdvanceInstallment::find($calculateSalary['details']['deducation_installment_advanced_monthly']['installment_id'])
-                        ->update(['is_paid'=>1,'paid_date'=>$this->record->end_month]);
+                            ->update(['is_paid' => 1, 'paid_date' => $this->record->end_month]);
                     }
                 }
-                if(isset($calculateSalary['details']['deduction_for_late_hours']) && $calculateSalary['details']['deduction_for_late_hours'] > 0){
+                if (isset($calculateSalary['details']['deduction_for_late_hours']) && $calculateSalary['details']['deduction_for_late_hours'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,
-                        
+
                         'deduction_id' => MonthlySalaryDeductionsDetail::LATE_HOUR_DEDUCTIONS,
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::LATE_HOUR_DEDUCTIONS],
                         'deduction_amount' => $calculateSalary['details']['deduction_for_late_hours'],
                     ]);
                 }
-                if(isset($calculateSalary['details']['deduction_for_early_depature_hours']) && $calculateSalary['details']['deduction_for_early_depature_hours'] > 0){
+                if (isset($calculateSalary['details']['deduction_for_early_depature_hours']) && $calculateSalary['details']['deduction_for_early_depature_hours'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,
-                        
+
                         'deduction_id' => MonthlySalaryDeductionsDetail::EARLY_DEPATURE_EARLY_HOURS,
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::EARLY_DEPATURE_EARLY_HOURS],
                         'deduction_amount' => $calculateSalary['details']['deduction_for_early_depature_hours'],
                     ]);
                 }
-                
-                if(isset($calculateSalary['details']['overtime_based_on_monthly_leave_pay']) && $calculateSalary['details']['overtime_based_on_monthly_leave_pay'] > 0){
+
+                if (isset($calculateSalary['details']['overtime_based_on_monthly_leave_pay']) && $calculateSalary['details']['overtime_based_on_monthly_leave_pay'] > 0) {
                     $this->record->increaseDetails()->create([
                         'employee_id' => $employee->id,
                         'type' => MonthlySalaryIncreaseDetail::TYPE_ALLOWANCE,
-                        'type_id' =>MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_ID,
-                        
+                        'type_id' => MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_ID,
+
                         'name' => MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_Name,
                         'amount' => $calculateSalary['details']['overtime_based_on_monthly_leave_pay'],
                     ]);
@@ -180,7 +178,6 @@ class CreateMonthSalary extends CreateRecord
 
                 // Commit the transaction if all is successful
                 DB::commit();
-
             } catch (\Exception $e) {
                 // Rollback the transaction on any failure
                 DB::rollBack();
@@ -247,43 +244,43 @@ class CreateMonthSalary extends CreateRecord
     }
 
 
-private function handleAdvanceDeductions(Employee $employee, string $yearMonth, int $branchId): void
-{
-    // Parse the specified month to get the year and month
-    $explodedMonth = explode('-', $yearMonth);
-    $month = $explodedMonth[1];
-    $year = $explodedMonth[0];
+    private function handleAdvanceDeductions(Employee $employee, string $yearMonth, int $branchId): void
+    {
+        // Parse the specified month to get the year and month
+        $explodedMonth = explode('-', $yearMonth);
+        $month = $explodedMonth[1];
+        $year = $explodedMonth[0];
 
-    $advancedInstalmment = getInstallmentAdvancedMonthly($employee,$year,$month);
-    // If an advance transaction exists, create a deduction transaction
-    if ($advancedInstalmment) {
-        // Calculate the deduction amount based on the remaining amount or other logic
-        $deductionAmount = $advancedInstalmment->installment_amount ?? 0; // Adjust as needed
+        $advancedInstalmment = getInstallmentAdvancedMonthly($employee, $year, $month);
+        // If an advance transaction exists, create a deduction transaction
+        if ($advancedInstalmment) {
+            // Calculate the deduction amount based on the remaining amount or other logic
+            $deductionAmount = $advancedInstalmment->installment_amount ?? 0; // Adjust as needed
 
-        // Create a new deduction transaction for the employee
-        ApplicationTransaction::create([
-            'application_id' => null, // Set to null or a related application ID if applicable
-            'transaction_type_id' => 6, // Transaction type for "Deduction of advanced"
-            'transaction_type_name' => ApplicationTransaction::TRANSACTION_TYPES[6],
-            'transaction_description' => 'Monthly deduction for advance payment',
-            'submitted_on' => now(),
-            'branch_id' => $branchId,
-            'amount' => $deductionAmount,
-            'value' => $deductionAmount,
-            'remaining' => 0, // Deduction transaction, so nothing remains
-            
-            'created_by' => auth()->id(),
-            'employee_id' => $employee->id,
-            'year' => $year,
-            'month' => $month,
-            'details' => json_encode([
-                'source' => 'Monthly Salary Generation',
-                'deduction_amount' => $deductionAmount,
-            ]),
-        ]);
+            // Create a new deduction transaction for the employee
+            ApplicationTransaction::create([
+                'application_id' => null, // Set to null or a related application ID if applicable
+                'transaction_type_id' => 6, // Transaction type for "Deduction of advanced"
+                'transaction_type_name' => ApplicationTransaction::TRANSACTION_TYPES[6],
+                'transaction_description' => 'Monthly deduction for advance payment',
+                'submitted_on' => now(),
+                'branch_id' => $branchId,
+                'amount' => $deductionAmount,
+                'value' => $deductionAmount,
+                'remaining' => 0, // Deduction transaction, so nothing remains
 
-             // Create a record in MonthlySalaryDeductionsDetail
-             MonthlySalaryDeductionsDetail::create([
+                'created_by' => auth()->id(),
+                'employee_id' => $employee->id,
+                'year' => $year,
+                'month' => $month,
+                'details' => json_encode([
+                    'source' => 'Monthly Salary Generation',
+                    'deduction_amount' => $deductionAmount,
+                ]),
+            ]);
+
+            // Create a record in MonthlySalaryDeductionsDetail
+            MonthlySalaryDeductionsDetail::create([
                 'month_salary_id' => $this->record->id,
                 'employee_id' => $employee->id,
                 'is_specific_employee' => 1, // Adjust based on requirements
@@ -294,8 +291,6 @@ private function handleAdvanceDeductions(Employee $employee, string $yearMonth, 
                 'amount_value' => $deductionAmount,
                 'percentage_value' => null,
             ]);
+        }
     }
 }
-
-}
- 

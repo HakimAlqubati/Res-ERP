@@ -439,7 +439,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
                     $result[$date->toDateString()]['leave'] = [
                         'leave_type_id' => $leave->leave_type,
-                        'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
+                        'transaction_description' => $leave->transaction_description ?? 'Unknown', // Include leave type name
                     ];
                     continue 2; // Skip to the next date if it's a leave day
                 }
