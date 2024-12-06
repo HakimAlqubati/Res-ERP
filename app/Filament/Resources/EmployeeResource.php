@@ -386,7 +386,9 @@ class EmployeeResource extends Resource
                                             ->unique(ignoreRecord: true),
                                     ]),
                                 ]),
-                                Fieldset::make()->columns(3)->label('Finance')->schema([
+                                Fieldset::make()->columns(3)->label('Finance')
+                                ->disabled(fn():bool=>isBranchManager())
+                                ->schema([
                                     Repeater::make('Monthly deductions')
 
                                         ->defaultItems(0)
