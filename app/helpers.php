@@ -460,6 +460,23 @@ function getMonthArrayWithKeys()
 
         return $nationalities;
     }
+    function getNationalitiesAsCountries(): array
+    {
+        $path = storage_path('app/data/nationalities.json');
+        
+        $nationalities = [];
+
+        if (file_exists($path)) {
+            $data = json_decode(file_get_contents($path), true);
+            foreach ($data as $item) {
+                if ($item['active']) {
+                    $nationalities[$item['code']] = $item['country']['en']; // Change 'en' to your app's default language if needed
+                }
+            }
+        }
+
+        return $nationalities;
+    }
 
 
     function replaceZeroInstedNegative($value)

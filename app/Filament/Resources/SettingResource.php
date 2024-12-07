@@ -52,7 +52,7 @@ class SettingResource extends Resource
 
                                         ->required(),
 
-                                    Select::make('default_nationality')->label('Locale')->searchable()->options(getNationalities()),
+                                    Select::make('default_nationality')->label('Locale')->searchable()->options(getNationalitiesAsCountries()),
                                     FileUpload::make('company_logo')
                                         ->label('Logo')->required()
                                         ->image()

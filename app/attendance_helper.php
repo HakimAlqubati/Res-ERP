@@ -372,18 +372,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
     // Fetch leave applications within the date range
     $employee = Employee::find($employeeId);
-    $leaveTransactions = $employee?->transactions()
-        ->where('transaction_type_id', 1) // 1 represents "Leave request"
-        ->where('is_canceled', false) // Ensure the transaction is not canceled
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('from_date', [$startDate, $endDate]) // Overlap with start date
-                ->orWhereBetween('to_date', [$startDate, $endDate]) // Overlap with end date
-                ->orWhere(function ($subQuery) use ($startDate, $endDate) {
-                    $subQuery->where('from_date', '<=', $startDate)
-                        ->where('to_date', '>=', $endDate); // Fully contains the range
-                });
-        })
-        ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_description']);
+   
 
     // dd($leaveApplications);
     $leaveApplications =  $employee?->approvedLeaveApplications()
@@ -445,19 +434,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 }
             }
         }
-        // dd($leaveApplications,$leaveTransactions);
-        // Check if the current date falls within any leave applications
-        // if ($leaveTransactions) {
-        //     foreach ($leaveTransactions as $leaveTransaction) {
-        //         if ($date->isBetween($leaveTransaction->from_date, $leaveTransaction->to_date, true)) {
-        //             $result[$date->toDateString()]['leave'] = [
-        //                 'leave_type_id' => $leaveTransaction->leave_type_id,
-        //                 'transaction_description' => $leaveTransaction->transaction_description, // Include leave type name
-        //             ];
-        //             continue 2; // Skip to the next date if it's a leave day
-        //         }
-        //     }
-        // }
+       
 
         if ($leaveApplications) {
             foreach ($leaveApplications as $leaveApplication) {
@@ -472,7 +449,6 @@ function employeeAttendances($employeeId, $startDate, $endDate)
             }
         }
         
-        // dd($leaveTransactions, $leaveApplications,$result);
 
         $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
 
