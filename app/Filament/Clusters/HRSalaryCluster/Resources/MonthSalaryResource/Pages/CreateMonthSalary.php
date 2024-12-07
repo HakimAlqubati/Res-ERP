@@ -70,8 +70,7 @@ class CreateMonthSalary extends CreateRecord
             DB::beginTransaction();
 
             try {
-                // checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $this->record->end_month, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
-                $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month);
+                $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month, true);
                 $specificDeducation = $generalDeducation = $specificAllowances = $generalAllowances = [];
 
                 if ($calculateSalary === 'no_periods') {
@@ -90,7 +89,7 @@ class CreateMonthSalary extends CreateRecord
                 $generalDeducation = $calculateSalary['details']['deducation_details']['general_deducation'] ?? [];
                 $specificAllowances = $calculateSalary['details']['adding_details']['specific_allowances'] ?? [];
                 $generalAllowances = $calculateSalary['details']['adding_details']['general_allowances'] ?? [];
-     
+
                 if (isset($calculateSalary['details'])) {
                     $this->record->details()->create([
                         'employee_id' => $employee->id,

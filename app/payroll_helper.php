@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * to calculate the salary
  */
-function calculateMonthlySalaryV2($employeeId, $date)
+function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
 {
     $generalAllowanceTypes = Allowance::where('is_specific', 0)
         ->where('active', 1)
@@ -40,8 +40,10 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $generalDeducationTypes = Deduction::where('is_specific', 0)
         ->where('active', 1)
-        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied_v2', 'nationalities_applied', 'less_salary_to_apply')
+        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied_v2', 'nationalities_applied', 'less_salary_to_apply', 'has_brackets')
+        ->with('brackets')
         ->get();
+    // dd($generalDeducationTypes);
     $deduction = [];
     foreach ($generalDeducationTypes as  $deductionType) {
         // $deductionNationalities = json_decode($deductionType->nationalities_applied, true);
@@ -68,9 +70,17 @@ function calculateMonthlySalaryV2($employeeId, $date)
             $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
             $employee->is_citizen
             &&  $basicSalary >= $deductionType->less_salary_to_apply
+            && $deductionType->has_brackets == 1
         ) {
             $deduction[] = $deductionType;
         }
+        // if (
+        //     $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
+        //     $employee->is_citizen
+        //     && $deductionType->has_brackets == 1
+        // ) {
+        //     $deduction[] = $deductionType;
+        // }
         if (
             $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS &&
             ($employee->is_citizen || ($employee->has_employee_pass))
@@ -82,7 +92,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     // dd($deduction);
     $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
     $generalDedeucationResultCalculated = calculateDeductions($deduction, $basicSalary);
-
+    // dd($deduction);
     // Calculate total deductions
     $specificDeductions = $employee->deductions->map(function ($deduction) {
         return [
@@ -91,6 +101,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'percentage' => $deduction->percentage,
             'id' => $deduction->deduction_id,
             'name' => $deduction->deduction->name,
+            'has_brackets' => $deduction->deduction->has_brackets,
         ];
     })->toArray();
 
@@ -160,18 +171,26 @@ function calculateMonthlySalaryV2($employeeId, $date)
     }
 
 
-    $checkForMonthlyBalanceAntCreate =  checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
+    $checkForMonthlyBalanceAntCreate['result'] = null;
+    if ($createPayrol) {
+        $checkForMonthlyBalanceAntCreate =  checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
+    }
 
 
     $realTotalAbsentDays = $totalAbsentDays;
-    if($checkForMonthlyBalanceAntCreate['result']){
-        $totalAbsentDays-=$monthlyLeaveBalance;
+    if ($checkForMonthlyBalanceAntCreate['result'] && $createPayrol) {
+        $totalAbsentDays -= $monthlyLeaveBalance;
+    }
+    if (!$createPayrol) {
+        $totalAbsentDays -= $monthlyLeaveBalance;
     }
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
     // Calculate deductions for absences and lateness
     $deductionForAbsentDays = $totalAbsentDays * $dailySalary; // Deduction for absent days
+    $realDeductionForAbsentDays = $realTotalAbsentDays * $dailySalary; // Deduction for absent days
+
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
@@ -202,8 +221,9 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'specific_allowances_result' => round($specificAlloanceCalculated['result'], 2),
             'general_deducation_result' => round($generalDedeucationResultCalculated['result'], 2),
             'general_allowances_result' => round($generalAllowanceResultCalculated['result'], 2),
-            // 'deduction_for_absent_days' => $deductionForAbsentDays && !$checkForMonthlyBalanceAntCreate['result'] ? round($deductionForAbsentDays, 2) : 0,
-            'deduction_for_absent_days' => $deductionForAbsentDays,
+
+            'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
+            'realDeductionForAbsentDays' => round($realDeductionForAbsentDays, 2),
             'deduction_for_late_hours' => round($deductionForLateHours, 2),
             'deduction_for_early_depature_hours' => round($deductionForEarlyDepatureHours, 2),
             'total_monthly_incentives' => $totalMonthlyIncentives,
@@ -212,7 +232,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'monthly_leave_balance' => $monthlyLeaveBalance,
             'overtime_based_on_monthly_leave' => $overtimeBasedOnMonthlyLeave,
             'overtime_based_on_monthly_leave_pay' => $overtimeBasedOnMonthlyLeavePay,
-            // 'total_absent_days' => $totalAbsentDays && !$checkForMonthlyBalanceAntCreate['result'] ? $totalAbsentDays : 0,
+
             'total_absent_days' => $totalAbsentDays,
             'realTotalAbsentDays' => $realTotalAbsentDays,
             'absent_dates' => $absentDates,
@@ -254,6 +274,9 @@ function calculateDeductions(array $deductions, float $basicSalary): array
             $deductionAmount = (float) $deduction['amount'];
         }
 
+        if ($deduction->has_brackets && $deduction->has('brackets')) {
+            $deductionAmount = $deduction->calculateTax($basicSalary)['monthly'] ?? 0;
+        }
         // Add to total deductions
         $totalDeductions += $deductionAmount;
 
@@ -774,6 +797,11 @@ if (!function_exists('calculateYearlyTax')) {
      */
     function calculateYearlyTax(Employee $employee)
     {
+        return 0;
+        $tax = Deduction::where('has_brackets', 1)->whereHas('brackets')->first();
+        return $tax->calculateTax($employee->salary)['monthly'] ?? 0;
+
+
         // // Check nationality (only for 'MY')
         // if ($employee->nationality !== 'MY') {
         //     return 0; // No tax for non-'MY' nationality
@@ -795,13 +823,15 @@ if (!function_exists('calculateYearlyTax')) {
                 break;
             }
         }
-        // dd($taxPercentage);
+        // dd($taxPercentage,$yearlySalary);
 
         // Calculate the yearly tax deduction
-        $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100)) / 12;
+        $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100));
         // $yearlyTaxDeduction = ($yearlySalary * ($taxPercentage / 100));
         // dd('hi', $yearlyTaxDeduction, $yearlySalary, $taxPercentage);
-        return round($yearlyTaxDeduction, 2) / 12; // Return rounded value
+        $monthlyTaxDeduction = $yearlyTaxDeduction / 12;
+        return round($monthlyTaxDeduction, 2); // Return rounded value
+        return round($yearlyTaxDeduction, 2); // Return rounded value
     }
 }
 

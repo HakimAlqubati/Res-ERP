@@ -20,7 +20,7 @@ class TestController2 extends Controller
     }
     public function to_test_calculate_salary($empId, $date)
     {
-        return calculateMonthlySalaryV2($empId, $date);
+        return calculateMonthlySalaryV2($empId, $date,false);
     }
 
     public function to_test_emplployee_attendance_time()
