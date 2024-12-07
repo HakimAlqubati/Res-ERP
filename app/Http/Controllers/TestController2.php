@@ -98,6 +98,7 @@ class TestController2 extends Controller
             ->toArray();
 
         $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
+        // dd($constDeducationTypes);
         $allDeductionTypes = $deducationTypes + $constDeducationTypes;
         $employeeDeductions = collect($deducationDetails)->map(function ($deduction) use ($allDeductionTypes) {
             $deductionId = $deduction['deduction_id'];
@@ -109,7 +110,7 @@ class TestController2 extends Controller
                 'deduction_amount' => $deduction['deduction_amount'],
             ];
         })->toArray();
-
+// dd($deducationTypes);
         // Calculate the total deduction amount
         $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
 

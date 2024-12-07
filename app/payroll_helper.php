@@ -163,6 +163,10 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $checkForMonthlyBalanceAntCreate =  checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
 
 
+    $realTotalAbsentDays = $totalAbsentDays;
+    if($checkForMonthlyBalanceAntCreate['result']){
+        $totalAbsentDays-=$monthlyLeaveBalance;
+    }
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
@@ -198,7 +202,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'specific_allowances_result' => round($specificAlloanceCalculated['result'], 2),
             'general_deducation_result' => round($generalDedeucationResultCalculated['result'], 2),
             'general_allowances_result' => round($generalAllowanceResultCalculated['result'], 2),
-            'deduction_for_absent_days' => $deductionForAbsentDays && !$checkForMonthlyBalanceAntCreate['result'] ? round($deductionForAbsentDays, 2) : 0,
+            // 'deduction_for_absent_days' => $deductionForAbsentDays && !$checkForMonthlyBalanceAntCreate['result'] ? round($deductionForAbsentDays, 2) : 0,
+            'deduction_for_absent_days' => $deductionForAbsentDays,
             'deduction_for_late_hours' => round($deductionForLateHours, 2),
             'deduction_for_early_depature_hours' => round($deductionForEarlyDepatureHours, 2),
             'total_monthly_incentives' => $totalMonthlyIncentives,
@@ -207,7 +212,9 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'monthly_leave_balance' => $monthlyLeaveBalance,
             'overtime_based_on_monthly_leave' => $overtimeBasedOnMonthlyLeave,
             'overtime_based_on_monthly_leave_pay' => $overtimeBasedOnMonthlyLeavePay,
-            'total_absent_days' => $totalAbsentDays && !$checkForMonthlyBalanceAntCreate['result'] ? $totalAbsentDays : 0,
+            // 'total_absent_days' => $totalAbsentDays && !$checkForMonthlyBalanceAntCreate['result'] ? $totalAbsentDays : 0,
+            'total_absent_days' => $totalAbsentDays,
+            'realTotalAbsentDays' => $realTotalAbsentDays,
             'absent_dates' => $absentDates,
 
             'total_late_hours' => $totalLateHours,
