@@ -13,6 +13,8 @@ class LeaveBalance extends Model
     // Define the table name if it's different from the convention
     protected $table = 'hr_leave_balances';
 
+    // protected $appends = ['balance'];
+
     // Define fillable attributes for mass assignment
     protected $fillable = [
         'employee_id',
@@ -76,4 +78,9 @@ class LeaveBalance extends Model
             }
         }
     }
+
+    // public function getBalanceAttribute()
+    // {
+    //     return 50;
+    // }
 }

@@ -29,10 +29,10 @@ class CreateEmployeeApplication extends CreateRecord
             $data['branch_id'] = auth()->user()->branch_id;
         }
 
-        $applicationType = EmployeeApplication::APPLICATION_TYPES[$data['application_type']];
+        $applicationType = EmployeeApplication::APPLICATION_TYPES[$data['application_type_id']];
         // Log::warning('An application already exists for this employee on the selected date.');
         
-        $data['application_type_id'] = $data['application_type'];
+        $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
         // dd($data);
         // Check if an application already exists for the same employee and date
@@ -52,7 +52,7 @@ class CreateEmployeeApplication extends CreateRecord
             }
             
 
-        $data['application_type_id'] = $data['application_type'];
+        $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
         $data['created_by'] = auth()->user()->id;
         $data['status'] = EmployeeApplication::STATUS_PENDING;

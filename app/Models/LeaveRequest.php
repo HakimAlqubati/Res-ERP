@@ -20,6 +20,6 @@ class LeaveRequest extends Model
         'leave_type_id',
         'year',
         'month',
-        
+        'days_count',
     ];
 }

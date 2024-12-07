@@ -15,8 +15,10 @@ use App\Models\UserType;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+
 function getName()
 {
     return 'Eng. Hakeem';
@@ -328,10 +330,10 @@ function getDays()
 function getUserTypes()
 {
     return UserType::select('name', 'id')
-    ->when(isStuff(), function ($query) {
-        $query->whereNotIn('id', [3,4]); // Adjust this condition as needed
-    })
-    ->get()->pluck('name', 'id');
+        ->when(isStuff(), function ($query) {
+            $query->whereNotIn('id', [3, 4]); // Adjust this condition as needed
+        })
+        ->get()->pluck('name', 'id');
 }
 /**
  * to get roles based on user_type_id
@@ -340,7 +342,6 @@ function getRolesByTypeId($id)
 {
     $user_types = UserType::find($id)?->role_ids;
     return $user_types;
-
 }
 
 /**
@@ -423,7 +424,7 @@ function getMonthArrayWithKeys()
         '06' => __('lang.month.june'),     // June
         '07' => __('lang.month.july'),     // July
         '08' => __('lang.month.august'),   // August
-        '09' => __('lang.month.september'),// September
+        '09' => __('lang.month.september'), // September
         '10' => __('lang.month.october'),  // October
         '11' => __('lang.month.november'), // November
         '12' => __('lang.month.december'), // December
@@ -435,54 +436,65 @@ function getMonthArrayWithKeys()
  * to get setting by key field
  */
 
- function setting($key){
+function setting($key)
+{
     return \App\Models\Setting::getSetting($key);
- }
+}
 
- /**
-  * to get nationalities
-  */
+/**
+ * to get nationalities
+ */
 
-    function getNationalities(): array
-    {
-        $path = storage_path('app/data/nationalities.json');
-        
-        $nationalities = [];
+function getNationalities(): array
+{
+    $path = storage_path('app/data/nationalities.json');
 
-        if (file_exists($path)) {
-            $data = json_decode(file_get_contents($path), true);
-            foreach ($data as $item) {
-                if ($item['active']) {
-                    $nationalities[$item['code']] = $item['name']['en']; // Change 'en' to your app's default language if needed
-                }
+    $nationalities = [];
+
+    if (file_exists($path)) {
+        $data = json_decode(file_get_contents($path), true);
+        foreach ($data as $item) {
+            if ($item['active']) {
+                $nationalities[$item['code']] = $item['name']['en']; // Change 'en' to your app's default language if needed
             }
         }
-
-        return $nationalities;
     }
-    function getNationalitiesAsCountries(): array
-    {
-        $path = storage_path('app/data/nationalities.json');
-        
-        $nationalities = [];
 
-        if (file_exists($path)) {
-            $data = json_decode(file_get_contents($path), true);
-            foreach ($data as $item) {
-                if ($item['active']) {
-                    $nationalities[$item['code']] = $item['country']['en']; // Change 'en' to your app's default language if needed
-                }
+    return $nationalities;
+}
+function getNationalitiesAsCountries(): array
+{
+    $path = storage_path('app/data/nationalities.json');
+
+    $nationalities = [];
+
+    if (file_exists($path)) {
+        $data = json_decode(file_get_contents($path), true);
+        foreach ($data as $item) {
+            if ($item['active']) {
+                $nationalities[$item['code']] = $item['country']['en']; // Change 'en' to your app's default language if needed
             }
         }
-
-        return $nationalities;
     }
 
+    return $nationalities;
+}
 
-    function replaceZeroInstedNegative($value)
-    {
-        if($value<0){
-            return 0;
-        }
-        return $value;
+
+function replaceZeroInstedNegative($value)
+{
+    if ($value < 0) {
+        return 0;
     }
+    return $value;
+}
+
+function showSuccessNotifiMessage($title, $body = null)
+{
+    return Notification::make()->success()->title($title)->body($body)->send();
+}
+function showWarningNotifiMessage($title, $body = null)
+{
+    return Notification::make()->warning()->title($title)->body($body)->send();
+}
+
