@@ -59,8 +59,8 @@ class Deduction extends Model
     {
         return [
             self::CONDITION_APPLIED_V2_ALL => 'All',
-            self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE => 'Citizen Employee',
-            self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS => 'Citizen Employee and Foreign Has Pass',
+            self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE => 'Local staff',
+            self::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS => 'Local staff & expat with EP',
         ];
     }
 
