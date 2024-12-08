@@ -148,7 +148,7 @@ class EmployeeResource extends Resource
                                             ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                             ->schema([
                                                 TextInput::make('passport_no')->label('Passport no.')->numeric(),
-                                                Toggle::make('has_employee_pass')->label('Has employee pass')->inline(false)->live()
+                                                Toggle::make('has_employee_pass')->label('Has employement pass')->inline(false)->live()
 
                                             ]),
 
@@ -329,7 +329,7 @@ class EmployeeResource extends Resource
 
                                         ->inputMode('decimal')->disabled(fn():bool=>isBranchManager()),
                                     TextInput::make('tax_identification_number')
-                                        ->label('Tax identification no.')
+                                        ->label('Tax Identification Number(TIN)')
                                         ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
                                             || ($get('has_employee_pass') == 1)
                                         ))
@@ -477,7 +477,7 @@ class EmployeeResource extends Resource
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->limit(20)
-                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')
                     ->label('Branch')
