@@ -32,7 +32,7 @@ class DeductionResource extends Resource
     protected static ?int $navigationSort = 6;
     public static function form(Form $form): Form
     {
-        
+
         return $form
             ->schema([
                 Fieldset::make()->columns(3)->label('')->schema([
@@ -41,7 +41,9 @@ class DeductionResource extends Resource
                     Select::make('condition_applied_v2')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
                         ->default(Deduction::CONDITION_APPLIED_V2_ALL),
                     TextInput::make('less_salary_to_apply')->label('Less salary to apply')->numeric()
-                        ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)->required()
+                        // ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)
+                        ->hidden()
+                        ->required()
                 ]),
                 Fieldset::make()->label('')->columns(6)->schema([
                     Forms\Components\Toggle::make('is_penalty')->default(false),
