@@ -69,7 +69,7 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
         if (
             $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
             $employee->is_citizen
-            &&  $basicSalary >= $deductionType->less_salary_to_apply
+            // &&  $basicSalary >= $deductionType->less_salary_to_apply
             && $deductionType->has_brackets == 1
         ) {
             $deduction[] = $deductionType;
@@ -84,7 +84,7 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
         if (
             $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS &&
             ($employee->is_citizen || ($employee->has_employee_pass))
-            && $basicSalary >= $deductionType->less_salary_to_apply
+            // && $basicSalary >= $deductionType->less_salary_to_apply
         ) {
             $deduction[] = $deductionType;
         }
