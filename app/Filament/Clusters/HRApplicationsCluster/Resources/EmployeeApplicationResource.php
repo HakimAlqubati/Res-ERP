@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpParser\Node\Expr\Throw_;
 
 class EmployeeApplicationResource extends Resource
 {
@@ -889,6 +890,10 @@ class EmployeeApplicationResource extends Resource
                         $leaveBalance->decrement('balance', $record->leaveRequest->days_count);
                         DB::commit();
                         showSuccessNotifiMessage('Done');
+                    }else{
+                        
+                        // showWarningNotifiMessage('dd');
+                        throw new \Exception('Leave balance not found for the given conditions.',$leaveBalance);
                     }
                 } catch (\Exception $th) {
                     //throw $th;
