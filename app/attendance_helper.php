@@ -711,38 +711,38 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                 continue; // Skip to the next employee if it's a holiday
             }
 
-            // Fetch leave applications for the specific date
-            $leave = $employee->approvedLeaveApplications()
-                ->whereDate('from_date', '<=', $date)
-                ->whereDate('to_date', '>=', $date)
-                ->select('from_date', 'to_date', 'leave_type_id')
-                ->with('leaveType:id,name') // Assuming you have a relationship defined
-                ->first();
+            // // Fetch leave applications for the specific date
+            // $leave = $employee->approvedLeaveApplications()
+            //     ->whereDate('from_date', '<=', $date)
+            //     ->whereDate('to_date', '>=', $date)
+            //     ->select('from_date', 'to_date', 'leave_type_id')
+            //     ->with('leaveType:id,name') // Assuming you have a relationship defined
+            //     ->first();
 
-            $leaveTransactions = $employee->transactions()
-                ->where('transaction_type_id', 1) // 1 represents "Leave request"
-                ->where('is_canceled', false) // Ensure the transaction is not canceled
-                ->whereDate('from_date', '<=', $date)
-                ->whereDate('to_date', '>=', $date)
-                ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_type_id', 'transaction_description'])->first();
+            // $leaveTransactions = $employee->transactions()
+            //     ->where('transaction_type_id', 1) // 1 represents "Leave request"
+            //     ->where('is_canceled', false) // Ensure the transaction is not canceled
+            //     ->whereDate('from_date', '<=', $date)
+            //     ->whereDate('to_date', '>=', $date)
+            //     ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_type_id', 'transaction_description'])->first();
 
-            // Check if the current date falls within any leave applications
-            if ($leave) {
-                $result[$employeeId][$date->toDateString()]['leave'] = [
-                    'leave_type_id' => $leave->leave_type_id,
-                    'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
-                ];
-                continue; // Skip to the next employee if it's a leave day
-            }
+            // // Check if the current date falls within any leave applications
+            // if ($leave) {
+            //     $result[$employeeId][$date->toDateString()]['leave'] = [
+            //         'leave_type_id' => $leave->leave_type_id,
+            //         'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
+            //     ];
+            //     continue; // Skip to the next employee if it's a leave day
+            // }
 
-            if ($leaveTransactions) {
+            // if ($leaveTransactions) {
 
-                $result[$employeeId][$date->toDateString()]['leave'] = [
-                    'transaction_type_id' => $leaveTransactions->leave_type,
-                    'transaction_description' => $leaveTransactions->transaction_description,
-                ];
-                // continue; // Skip to the next employee if it's a leave day
-            }
+            //     $result[$employeeId][$date->toDateString()]['leave'] = [
+            //         'transaction_type_id' => $leaveTransactions->leave_type,
+            //         'transaction_description' => $leaveTransactions->transaction_description,
+            //     ];
+            //     // continue; // Skip to the next employee if it's a leave day
+            // }
 
             $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()] ?? [];
             // dd($employeePeriods, $employeePeriods2);
