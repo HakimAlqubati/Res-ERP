@@ -283,7 +283,7 @@ function calculateDeductions(array $deductions, float $basicSalary): array
         }
 
         if ($deduction->has_brackets && $deduction->has('brackets')) {
-            $deductionAmount = $deduction->calculateTax($basicSalary)['monthly'] ?? 0;
+            $deductionAmount = $deduction->calculateTax($basicSalary)['monthly_tax'] ?? 0;
         }
         // Add to total deductions
         $totalDeductions += $deductionAmount;
