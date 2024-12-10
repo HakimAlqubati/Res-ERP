@@ -980,6 +980,8 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
+
+
                 // dd($record, $data);
                 DB::beginTransaction();
                 try {
@@ -989,19 +991,18 @@ class EmployeeApplicationResource extends Resource
                         'approved_at' => now(),
                     ]);
                     // Step 3: Calculate the number of leave days and update the leave balance
-                    $leaveBalance = LeaveBalance::where('employee_id', $record->employee_id)
-                        ->where('leave_type_id', $record->leaveRequest->leave_type)
-                        ->where('year', $record->leaveRequest->year)
-                        ->where('month', $record->leaveRequest->month)
-                        ->first();
-
+                    $leaveBalance = LeaveBalance::getLeaveBalanceForEmployee(
+                        $record->employee_id,
+                        $record->leaveRequest->year,
+                        $record->leaveRequest->leave_type,
+                        $record->leaveRequest->month
+                    );
                     // Update the balance if found
                     if ($leaveBalance) {
                         $leaveBalance->decrement('balance', $record->leaveRequest->days_count);
                         DB::commit();
                         showSuccessNotifiMessage('Done');
                     } else {
-
                         // showWarningNotifiMessage('dd');
                         throw new \Exception('Leave balance not found for the given conditions.', $leaveBalance);
                     }
