@@ -54,7 +54,7 @@ class LeaveBalance extends Model
     public static function getMonthlyBalanceForEmployee($employeeId, $year, $month)
     {
         return self::where('employee_id', $employeeId)
-            ->where('hr_leave_types.used_as_weekend', 1)
+            ->where('type', LeaveType::TYPE_WEEKLY)->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)
             ->join('hr_leave_types', 'hr_leave_balances.leave_type_id', '=', 'hr_leave_types.id')
             ->where('year', $year)
             ->where('month', $month)

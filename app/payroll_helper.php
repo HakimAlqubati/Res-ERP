@@ -851,7 +851,7 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $yearAndMonth,
     $year = $date->format('Y');
     $month = $date->format('m');
     $totalDaysOfMonth = $date->format('t');
-    $leaveTypeId = LeaveType::where('active', 1)->where('used_as_weekend', 1)->first()?->id;
+    $leaveTypeId = LeaveType::where('active', 1)->where('type', LeaveType::TYPE_WEEKLY)->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)->first()?->id;
     $leaveBalance = LeaveBalance::where('employee_id', $employee->id)
         ->where('year', $year)
         ->where('month', $month)
@@ -985,7 +985,7 @@ function ____($employee, $yearAndMonth, $totalAbsentDays, $monthlyLeaveBalance, 
             ]);
 
             // Create related leaveRequest and store it in the array
-            $leaveType = LeaveType::where('active', 1)->where('used_as_weekend', 1)->first();
+            $leaveType = LeaveType::where('active', 1)->where('type', LeaveType::TYPE_WEEKLY)->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)->first();
             $leaveRequest = $employeeApplication->leaveRequest()->make([
                 'application_type_id' => 1,
                 'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
