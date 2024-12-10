@@ -226,7 +226,7 @@ class EmployeeOvertimeResource extends Resource
                                             $set('hours', $hours);
                                         })
                                     ,
-                                    TextInput::make('hours')->label('Overtime Hours')->required()->minValue(0.5),
+                                    TextInput::make('hours')->label('Overtime Hours')->numeric()->required()->minValue(0.5),
                                 ]),
                                 Grid::make()->columns(2)->schema([
                                     TextInput::make('notes')
