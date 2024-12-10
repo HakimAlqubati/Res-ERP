@@ -57,12 +57,19 @@ class EmployeeApplicationV2 extends Model
         self::APPLICATION_TYPE_ADVANCE_REQUEST => 'Advance request',
         self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'Missed check-out',
     ];
+    const APPLICATION_TYPE_FILTERS = [
+        self::APPLICATION_TYPE_LEAVE_REQUEST => '?activeTab=Leave+request',
+        self::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => '?activeTab=Missed+check-in',
+        self::APPLICATION_TYPE_ADVANCE_REQUEST => '?activeTab=Advance+request',
+        self::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => '?activeTab=Missed+check-out',
+    ];
 
     // Constants for status
     const STATUS_PENDING = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
 
+    
     // Relationships
     public function employee()
     {

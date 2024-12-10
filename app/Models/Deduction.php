@@ -106,7 +106,7 @@ class Deduction extends Model
  
          return [
              'total_tax' => round($tax, 2),
-             'monthly_tax' => $monthlyTax,
+             'monthly_tax' => $monthlyTax ,
          ];
      }
     public function calculateTax_(float $salary): array

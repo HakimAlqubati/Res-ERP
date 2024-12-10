@@ -9,10 +9,12 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Setting;
 use Carbon\Carbon;
+use DateTime;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -28,6 +30,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class AttendnaceResource extends Resource
 {
@@ -70,8 +73,8 @@ class AttendnaceResource extends Resource
                         ->label('Employee')
                         ->live()
                         ->searchable()
-                    // ->default(auth()->user()?->employee?->id)
-                    // ->disabled()
+                        // ->default(auth()->user()?->employee?->id)
+                        // ->disabled()
                         ->relationship('employee', 'name')
                         ->afterStateUpdated(function (Get $get, Set $set) {
                             $employee_id = $get('employee_id');
@@ -86,16 +89,12 @@ class AttendnaceResource extends Resource
                                 $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
                             } else if (count($employee_attendance) == 2) {
                                 $set('check_type', Attendance::CHECKTYPE_CHECKIN);
-
                             } else if (count($employee_attendance) == 3) {
                                 $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
-
                             } else if (count($employee_attendance) == 4) {
                                 $set('check_type', Attendance::CHECKTYPE_CHECKIN);
-
                             } else if (count($employee_attendance) == 5) {
                                 $set('check_type', Attendance::CHECKTYPE_CHECKOUT);
-
                             }
                         })
                         ->required(),
@@ -123,9 +122,9 @@ class AttendnaceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        ->paginated([10, 25, 50, 100])
-        ->defaultSort('id','desc')
-        ->striped()
+            ->paginated([10, 25, 50, 100])
+            ->defaultSort('id', 'desc')
+            ->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('employee.name')
                     ->label('Employee')
@@ -136,7 +135,10 @@ class AttendnaceResource extends Resource
                     ->label('Type')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('period.name')
-                    ->label('Period'),
+                    ->label('Period')
+                    ->tooltip(function ($record) {
+                        return $record->period->start_at . ' - ' . $record->period->end_at;
+                    }),
 
                 Tables\Columns\TextColumn::make('check_date')
                     ->label('Check Date')
@@ -144,20 +146,24 @@ class AttendnaceResource extends Resource
 
                 Tables\Columns\TextColumn::make('check_time')
                     ->label('Check Time'),
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Status'),
                 Tables\Columns\TextColumn::make('delay_minutes')
-                     ->formatStateUsing(function($record){
-                        if($record->delay_minutes<= Setting::getSetting('early_attendance_minutes')){
+                    ->formatStateUsing(function ($record) {
+                        if ($record->delay_minutes <= Setting::getSetting('early_attendance_minutes')) {
                             return 0;
-                        }else{
-                        return $record->delay_minutes;
+                        } else {
+                            return $record->delay_minutes;
                         }
-                     })
-                    ->label('Delay Minuts')->sortable()->summarize(Sum::make()->query(fn (\Illuminate\Database\Query\Builder $query) => $query->where('delay_minutes','>', 10)))
+                    })
+                    ->label('Delay Minuts')->sortable()->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('delay_minutes', '>', 10)))
                     // ->summarize(fn($record): integer => 11)
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ,
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 Tables\Columns\TextColumn::make('day')
                     ->label('Day'),
+                Tables\Columns\TextColumn::make('early_departure_minutes')
+                    ->label('Early departure minutes')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -166,57 +172,121 @@ class AttendnaceResource extends Resource
                         ->pluck('name', 'id');
                 }),
                 SelectFilter::make('branch_id')->searchable()->label('Branch')
-                ->options(function (Get $get) {
-                    return Branch::query()
-                        ->pluck('name', 'id');
-                }),
+                    ->options(function (Get $get) {
+                        return Branch::query()
+                            ->pluck('name', 'id');
+                    }),
 
                 Filter::make('month')
-                ->label('Filter by Month')
-                ->form([
-                    Forms\Components\Select::make('month')
-                        ->label('Month')
-                        ->options([
-                            '01' => 'January',
-                            '02' => 'February',
-                            '03' => 'March',
-                            '04' => 'April',
-                            '05' => 'May',
-                            '06' => 'June',
-                            '07' => 'July',
-                            '08' => 'August',
-                            '09' => 'September',
-                            '10' => 'October',
-                            '11' => 'November',
-                            '12' => 'December',
-                        ])
-                        ->placeholder('Select a month')
-                        ->required(),
-                    
-                    Forms\Components\Select::make('year')
-                        ->label('Year')
-                        ->options(function () {
-                            $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
-                            return array_combine($years, $years);
-                        })
-                        ->placeholder('Select a year')
-                        ->required(),
-                ]) ->query(function (Builder $query, array $data) {
-                    if ($data['month'] && $data['year']) {
-                        $startDate = Carbon::createFromDate($data['year'], $data['month'], 1)->startOfMonth();
-                        $endDate = $startDate->copy()->endOfMonth();
+                    ->label('Filter by Month')
+                    ->form([
+                        Forms\Components\Select::make('month')
+                            ->label('Month')
+                            ->options([
+                                '01' => 'January',
+                                '02' => 'February',
+                                '03' => 'March',
+                                '04' => 'April',
+                                '05' => 'May',
+                                '06' => 'June',
+                                '07' => 'July',
+                                '08' => 'August',
+                                '09' => 'September',
+                                '10' => 'October',
+                                '11' => 'November',
+                                '12' => 'December',
+                            ])
+                            ->placeholder('Select a month'),
 
-                        $query->whereBetween('check_date', [$startDate, $endDate]);
-                    }
-                })
-                ->indicateUsing(function (array $data): ?string {
-                    if ($data['month'] && $data['year']) {
-                        return 'Month: ' . Carbon::createFromDate($data['year'], $data['month'], 1)->format('F Y');
-                    }
-                    return null;
-                }),
+                        Forms\Components\Select::make('year')
+                            ->label('Year')
+                            ->options(function () {
+                                $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
+                                return array_combine($years, $years);
+                            })
+                            ->placeholder('Select a year'),
+
+
+                    ])->query(function (Builder $query, array $data) {
+                        if ($data['month'] && $data['year']) {
+                            $startDate = Carbon::createFromDate($data['year'], $data['month'], 1)->startOfMonth();
+                            $endDate = $startDate->copy()->endOfMonth();
+
+                            $query->whereBetween('check_date', [$startDate, $endDate]);
+                        }
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if ($data['month'] && $data['year']) {
+                            return 'Month: ' . Carbon::createFromDate($data['year'], $data['month'], 1)->format('F Y');
+                        }
+                        return null;
+                    }),
+                SelectFilter::make('check_type')
+                    ->label('Type')
+                    ->options([
+                        Attendance::CHECKTYPE_CHECKIN => Attendance::CHECKTYPE_CHECKIN,
+                        Attendance::CHECKTYPE_CHECKOUT => Attendance::CHECKTYPE_CHECKOUT,
+                    ]),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(Attendance::getStatuses()),
             ])
             ->actions([
+
+                Tables\Actions\Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
+                    ->button()->form(function ($record) {
+                        $checkInData = $record->checkinRecord;
+
+                        $checkInTime = $checkInData?->check_time;
+                        $checkInDate = $checkInData?->check_date;
+
+                        $checkOutTime = $record?->check_time;
+                        $checkOutDate = $record?->check_date;
+                        $periodStartAt = $record?->period?->start_at;
+                        $periodEndAt = $record?->period?->end_at;
+                        $checkINTimeDate = Carbon::parse($checkInDate . ' ' . $checkInTime);
+                        $checkOutTimeDate = Carbon::parse($checkOutDate . ' ' . $checkOutTime);
+                        $periodEndAtTimeDate = Carbon::parse($checkOutDate . ' ' . $periodEndAt)->addDay();
+
+
+                        $earlyMinutsDepature = round($checkOutTimeDate->diffInMinutes($periodEndAtTimeDate), 2);
+                        return [
+                            Grid::make()->disabled()->label('Checkin')->columns(2)->schema([
+                                TextInput::make('check_in_time')->default($checkInTime),
+                                TextInput::make('check_in_date')->default($checkInDate),
+                            ]),
+
+                            Grid::make()->disabled()->label('Checkout')->columns(2)->schema([
+                                TextInput::make('check_time')->default($checkOutTime),
+                                TextInput::make('check_date')->default($checkOutDate),
+                            ]),
+                            Grid::make()->disabled()->label('Period')->columns(2)->schema([
+                                TextInput::make('period_start_at')->default($periodStartAt),
+                                TextInput::make('period_end_at')->default($periodEndAt),
+                            ]),
+                            TextInput::make('early_minuts_departure')->default($earlyMinutsDepature)->columnSpanFull()->disabled(false),
+                            Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
+                            ->default(Attendance::STATUS_EARLY_DEPARTURE)
+                            ,
+                        ];
+                    })->modalCancelAction(false)
+                    ->action(function ($record, $data) {
+                        DB::beginTransaction();
+
+                        try {
+                            //code...
+                            $record->update([
+                                'status' => $data['status_2'],
+                                'early_departure_minutes' => $data['early_minuts_departure']
+                            ]);
+                            DB::commit();
+                            showSuccessNotifiMessage('Done');
+                        } catch (\Exception $th) {
+                            DB::rollBack();
+                            showWarningNotifiMessage($th->getMessage());
+                            throw $th;
+                        }
+                    }),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
@@ -258,9 +328,9 @@ class AttendnaceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-        ->withoutGlobalScopes([
-            SoftDeletingScope::class,
-        ]);
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 
     public static function canDelete(Model $record): bool

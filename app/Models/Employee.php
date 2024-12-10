@@ -510,4 +510,19 @@ class Employee extends Model
     {
         return !$this->is_citizen; // This will return the opposite of is_citizen
     }
+    public function getGenderTitleAttribute()
+    {
+        switch ($this->gender) {
+            case 1:
+                return 'Male';
+                break;
+            case 0:
+                return 'Female';
+                break;
+
+            default:
+                return 'Not set';
+                break;
+        }
+    }
 }

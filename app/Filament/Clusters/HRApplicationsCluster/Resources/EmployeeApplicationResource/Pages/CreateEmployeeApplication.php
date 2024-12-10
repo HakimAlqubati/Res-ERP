@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicat
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
+use App\Models\EmployeeApplicationV2;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\Support\Htmlable;
@@ -31,7 +32,7 @@ class CreateEmployeeApplication extends CreateRecord
 
         $applicationType = EmployeeApplication::APPLICATION_TYPES[$data['application_type_id']];
         // Log::warning('An application already exists for this employee on the selected date.');
-        
+
         $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
         // dd($data);
@@ -39,18 +40,18 @@ class CreateEmployeeApplication extends CreateRecord
         $existingApplication = EmployeeApplication::where('employee_id', $data['employee_id'])
             ->where('application_date', $data['application_date'])
             ->where('application_type_id', $data['application_type_id'])
-            ->where('status',EmployeeApplication::STATUS_APPROVED)
+            ->where('status', EmployeeApplication::STATUS_APPROVED)
             ->first();
 
-            if ($existingApplication) {
-                Notification::make()->body('An application already exists for this employee on the selected date.')->warning()->send();
-                Log::warning('An application already exists for this employee on the selected date.');
-                // Throw a validation exception if an application exists
-                throw ValidationException::withMessages([
-                    'application_date' => 'An application already exists for this employee on the selected date.',
-                ]);
-            }
-            
+        if ($existingApplication) {
+            Notification::make()->body('An application already exists for this employee on the selected date.')->warning()->send();
+            Log::warning('An application already exists for this employee on the selected date.');
+            // Throw a validation exception if an application exists
+            throw ValidationException::withMessages([
+                'application_date' => 'An application already exists for this employee on the selected date.',
+            ]);
+        }
+
 
         $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
@@ -58,17 +59,12 @@ class CreateEmployeeApplication extends CreateRecord
         $data['status'] = EmployeeApplication::STATUS_PENDING;
         $data['details'] = json_encode(EmployeeApplicationResource::getDetailsKeysAndValues($data));
         // $data['details'] = [];
-        
+
         return $data;
     }
 
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        return $this->getResource()::getUrl('index') . EmployeeApplicationV2::APPLICATION_TYPE_FILTERS[$this->record->application_type_id];
     }
-
-   
- 
-
-    
 }

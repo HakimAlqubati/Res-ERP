@@ -120,4 +120,16 @@ class Attendance extends Model
     {
         return $this->hasOne(Attendance::class, 'checkinrecord_id');
     }
+
+    public static function getStatuses()
+    {
+        return [
+            self::STATUS_EARLY_ARRIVAL => self::STATUS_EARLY_ARRIVAL,
+            self::STATUS_LATE_ARRIVAL => self::STATUS_LATE_ARRIVAL,
+            self::STATUS_ON_TIME => self::STATUS_ON_TIME,
+            self::STATUS_EARLY_DEPARTURE => self::STATUS_EARLY_DEPARTURE,
+            self::STATUS_LATE_DEPARTURE => self::STATUS_LATE_DEPARTURE,
+            self::STATUS_TEST => self::STATUS_TEST,
+        ];
+    }
 }

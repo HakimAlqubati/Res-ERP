@@ -127,13 +127,11 @@ class EmployeeResource extends Resource
                                                 1 => 'Male',
                                                 0 => 'Female',
                                             ])
-                                            ->default(1)
                                             ->required(),
                                         // TextInput::make('nationality')
                                         // ->label('Nationality')
                                         // ->nullable(),
-                                        TextInput::make('working_hours')->label('Working hours')->numeric()
-                                        ,
+                                        TextInput::make('working_hours')->label('Working hours')->numeric(),
 
                                         Select::make('nationality')
                                             ->label('Nationality')->live()
@@ -328,31 +326,30 @@ class EmployeeResource extends Resource
                                     TextInput::make('salary')
                                         ->numeric()
 
-                                        ->inputMode('decimal')->disabled(fn():bool=>isBranchManager()),
+                                        ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
                                     TextInput::make('tax_identification_number')
                                         ->label('Tax Identification Number(TIN)')
                                         ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
                                             || ($get('has_employee_pass') == 1)
                                         ))
                                         ->numeric()
-                                        ->disabled(fn():bool=>isBranchManager())
-                                        ,
+                                        ->disabled(fn(): bool => isBranchManager()),
                                     // TextInput::make('bank_account_number')
                                     //     ->columnSpan(2)
                                     //     ->label('Bank account number')->nullable(),
                                     Toggle::make('discount_exception_if_absent')->columnSpan(1)
-                                    ->disabled(fn():bool=>isBranchManager())
+                                        ->disabled(fn(): bool => isBranchManager())
                                         ->label('No salary deduction for absences')->default(0)->inline(false)
                                     // ->isInline(false)
                                     ,
                                     Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
-                                    ->disabled(fn():bool=>isBranchManager())
+                                        ->disabled(fn(): bool => isBranchManager())
                                         ->label('Exempt from late attendance deduction')->default(0)->inline(false)
                                     // ->isInline(false)
                                     ,
 
                                     Repeater::make('bank_information')
-                                    ->disabled(fn():bool=>isBranchManager())
+                                        ->disabled(fn(): bool => isBranchManager())
                                         ->label('Bank Information')
                                         ->columns(2)
 
@@ -388,71 +385,71 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                                 Fieldset::make()->columns(3)->label('Finance')
-                                ->disabled(fn():bool=>isBranchManager())
-                                ->schema([
-                                    Repeater::make('Monthly deductions')
+                                    ->disabled(fn(): bool => isBranchManager())
+                                    ->schema([
+                                        Repeater::make('Monthly deductions')
 
-                                        ->defaultItems(0)
-                                        ->relationship('deductions')
-                                        ->schema([
+                                            ->defaultItems(0)
+                                            ->relationship('deductions')
+                                            ->schema([
 
-                                            Select::make('deduction_id')
-                                                ->label('Deducation')
-                                                ->options(
-                                                    Deduction::where('active', 1)
-                                                        ->where('is_penalty', 0)
-                                                        ->where('is_specific', 1)
-                                                        ->get()->pluck('name', 'id')
-                                                )
-                                                ->required(),
-                                            Toggle::make('is_percentage')->live()->default(true)
-                                            // ->helperText('Set allowance as a salary percentage or fixed amount')
-                                            ,
-                                            TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
-                                                ->suffixIcon('heroicon-o-calculator')
-                                                ->suffixIconColor('success'),
-                                            TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
-                                                ->suffixIcon('heroicon-o-percent-badge')
-                                                ->suffixIconColor('success'),
+                                                Select::make('deduction_id')
+                                                    ->label('Deducation')
+                                                    ->options(
+                                                        Deduction::where('active', 1)
+                                                            ->where('is_penalty', 0)
+                                                            ->where('is_specific', 1)
+                                                            ->get()->pluck('name', 'id')
+                                                    )
+                                                    ->required(),
+                                                Toggle::make('is_percentage')->live()->default(true)
+                                                // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                                ,
+                                                TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
+                                                    ->suffixIcon('heroicon-o-calculator')
+                                                    ->suffixIconColor('success'),
+                                                TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                    ->suffixIcon('heroicon-o-percent-badge')
+                                                    ->suffixIconColor('success'),
 
-                                        ]),
-                                    Repeater::make('Monthly allowances')
-                                        ->defaultItems(0)
-                                        ->relationship('allowances')
-                                        ->schema([
+                                            ]),
+                                        Repeater::make('Monthly allowances')
+                                            ->defaultItems(0)
+                                            ->relationship('allowances')
+                                            ->schema([
 
-                                            Select::make('allowance_id')
-                                                ->label('Allowance')
-                                                ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
-                                                ->required(),
-                                            Toggle::make('is_percentage')->live()->default(true)
-                                            // ->helperText('Set allowance as a salary percentage or fixed amount')
-                                            ,
-                                            TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
-                                                ->suffixIcon('heroicon-o-calculator')
-                                                ->suffixIconColor('success'),
-                                            TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
-                                                ->suffixIcon('heroicon-o-percent-badge')
-                                                ->suffixIconColor('success'),
+                                                Select::make('allowance_id')
+                                                    ->label('Allowance')
+                                                    ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
+                                                    ->required(),
+                                                Toggle::make('is_percentage')->live()->default(true)
+                                                // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                                ,
+                                                TextInput::make('amount')->visible(fn(Get $get): bool => !$get('is_percentage'))->numeric()
+                                                    ->suffixIcon('heroicon-o-calculator')
+                                                    ->suffixIconColor('success'),
+                                                TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                    ->suffixIcon('heroicon-o-percent-badge')
+                                                    ->suffixIconColor('success'),
 
-                                        ]),
-                                    Repeater::make('Monthly bonus')
-                                        ->defaultItems(0)
-                                        ->label('Monthly bonus')
-                                        ->relationship('monthlyIncentives')
-                                        ->schema([
+                                            ]),
+                                        Repeater::make('Monthly bonus')
+                                            ->defaultItems(0)
+                                            ->label('Monthly bonus')
+                                            ->relationship('monthlyIncentives')
+                                            ->schema([
 
-                                            Select::make('monthly_incentive_id')
-                                                ->label('Monthly bonus')
-                                                ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
-                                                ->required(),
-                                            TextInput::make('amount')
-                                                ->default(0)->minValue(0)
-                                                ->numeric(),
+                                                Select::make('monthly_incentive_id')
+                                                    ->label('Monthly bonus')
+                                                    ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
+                                                    ->required(),
+                                                TextInput::make('amount')
+                                                    ->default(0)->minValue(0)
+                                                    ->numeric(),
 
-                                        ]),
+                                            ]),
 
-                                ]),
+                                    ]),
                             ]),
                         ]),
                 ])->columnSpanFull()->skippable(),
@@ -489,12 +486,12 @@ class EmployeeResource extends Resource
                     ->sortable()->searchable()
                     ->limit(12)
                     ->label('Full name')
-                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->sortable()->searchable()->limit(20)->default('@')
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->searchable(isIndividual: true, isGlobal: false)
+                    ->searchable(isIndividual: true, isGlobal: true)
                     ->copyable()
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500),
@@ -515,16 +512,15 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true),
 
-                    TextColumn::make('working_hours')->label('Working hours')->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('working_hours')->label('Working hours')->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true)
-                    ->action(function($record){
-                        
-                        $hoursCount =  abs($record->hours_count) ;
+                    ->action(function ($record) {
+
+                        $hoursCount =  abs($record->hours_count);
                         $record->update([
-                            'working_hours'=> $hoursCount
+                            'working_hours' => $hoursCount
                         ]);
-                    })
-                    ,
+                    }),
                 TextColumn::make('position.title')->limit(20)
                     ->label('Position type')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -568,6 +564,9 @@ class EmployeeResource extends Resource
                 TextColumn::make('nationality')->sortable()->searchable()
                     ->label('Nationality')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                TextColumn::make('gender_title')->sortable()
+                    ->label('Gender')
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 IconColumn::make('is_citizen')
                     ->label('Is citizen')
                     ->trueIcon('heroicon-o-check-badge')
@@ -578,7 +577,8 @@ class EmployeeResource extends Resource
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
-                Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\TrashedFilter::make()
+                    ->visible(fn(): bool => (isSystemManager() || isSuperAdmin())),
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()

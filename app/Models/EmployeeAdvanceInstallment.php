@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Models;
 
@@ -14,18 +14,12 @@ class EmployeeAdvanceInstallment extends Model
     protected $fillable = [
         'employee_id',
         'application_id',
-        'transaction_id',
         'installment_amount',
         'due_date',
         'is_paid',
         'paid_date',
     ];
 
-    // Relationship: Belongs to a single application transaction
-    public function transaction()
-    {
-        return $this->belongsTo(ApplicationTransaction::class, 'transaction_id');
-    }
 
     // Relationship: Belongs to a single employee application
     public function application()

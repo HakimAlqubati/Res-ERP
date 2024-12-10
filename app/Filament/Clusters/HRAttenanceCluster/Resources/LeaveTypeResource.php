@@ -9,6 +9,7 @@ use App\Models\LeaveType;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -32,35 +33,31 @@ class LeaveTypeResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->schema([
-                    Grid::make()->label('')->columns(3)->schema([
+                    Grid::make()->label('')->columns(5)->schema([
                         Forms\Components\TextInput::make('name')
-                        ->label('Leave type name')
-                        ->unique(ignoreRecord: true)
-                        ->required(),
-        
-                    Forms\Components\TextInput::make('count_days')
-                        ->label('Number of days')
-                        ->numeric()
-                        ->required(),
-                     Grid::make()->columns(2)->columnSpan(1)->schema([
-                        Forms\Components\Toggle::make('active')
-                        ->label('Active')->inline(false)
-                        ->default(true),
-                        Forms\Components\Toggle::make('is_monthly')
-                        ->label('Is monthly')->inline(false)
-                        ->default(false),
-                        Forms\Components\Toggle::make('used_as_weekend')
-                        ->label('Used as weekend')->inline(false)
-                        ->default(false),
-                     ])
+                            ->label('Leave type name')
+                            ->unique(ignoreRecord: true)
+                            ->required(),
+
+                        Forms\Components\TextInput::make('count_days')
+                            ->label('Number of days')
+                            ->numeric()
+                            ->required(),
+
+                            Select::make('type')->label('Type')->options(LeaveType::getTypes()),
+                            Select::make('balance_period')->label('Balance period')->options(LeaveType::getBalancePeriods()),
+                            Forms\Components\Toggle::make('active')
+                                ->label('Active')->inline(false)
+                                ->default(true),
+
                     ]),
                     Forms\Components\Textarea::make('description')->columnSpanFull()
                         ->label('Description')
                         ->nullable(),
-                    ]),
+                ]),
 
 
-           
+
             ]);
     }
 
@@ -70,14 +67,14 @@ class LeaveTypeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Leave Type'),
                 Tables\Columns\TextColumn::make('count_days')->label('Number of Days')->alignCenter(true),
+                
+                Tables\Columns\TextColumn::make('type')->label('Type')->alignCenter(true),
+                Tables\Columns\TextColumn::make('balance_period')->label('Balance Period')->alignCenter(true),
+                Tables\Columns\TextColumn::make('created_at')->label('Created At')->toggleable(isToggledHiddenByDefault: true)->dateTime(),
                 Tables\Columns\BooleanColumn::make('active')
                     ->label('Active')->alignCenter(true)
                     ->boolean(),
-                Tables\Columns\BooleanColumn::make('is_monthly')->alignCenter(true)
-                    ->label('Is monthly')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime(),
-           
+
             ])
             ->filters([
                 //
@@ -115,7 +112,7 @@ class LeaveTypeResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if(isSystemManager() || isSuperAdmin()){
+        if (isSystemManager() || isSuperAdmin()) {
             return true;
         }
         return false;

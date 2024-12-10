@@ -61,6 +61,35 @@ class LeaveBalance extends Model
             ->first();
     }
 
+    public static function getLeaveBalanceForEmployee($employeeId, $year, $leaveTypeId, $month = null)
+    {
+        // Retrieve the leave type object by leave_type_id
+        $leaveType = LeaveType::find($leaveTypeId);
+
+        if (!$leaveType) {
+            throw new \InvalidArgumentException('Invalid leave type ID.');
+        }
+
+        // If the leave type is monthly, the month is required
+        if ($leaveType->type == LeaveType::TYPE_MONTHLY && $leaveType->balance_period == LeaveType::BALANCE_PERIOD_MONTHLY && $month === null) {
+            throw new \InvalidArgumentException('Month is required for monthly leave types.');
+        }
+
+        // Prepare the query to get the leave balance
+        $query = self::where('employee_id', $employeeId)
+            ->where('leave_type_id', $leaveTypeId)
+            ->where('year', $year);
+
+        // Add the month condition if it's a monthly leave type
+        if ($leaveType->type == LeaveType::TYPE_MONTHLY) {
+            $query->where('month', $month);
+        }
+
+        // Get the balance record
+        $balance = $query->first();
+        return $balance; // This will return the balance record or null if not found
+    }
+
     protected static function booted()
     {
         // parent::boot();
