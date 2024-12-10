@@ -163,7 +163,9 @@ class AttendnaceResource extends Resource
                     ->label('Day'),
                 Tables\Columns\TextColumn::make('early_departure_minutes')
                     ->label('Early departure minutes')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20)))
+                    ,
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
