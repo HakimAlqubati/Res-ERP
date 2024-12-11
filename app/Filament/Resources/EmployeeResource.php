@@ -137,8 +137,7 @@ class EmployeeResource extends Resource
                                             ->label('Nationality')->live()
                                             ->required()
                                             ->options(getNationalities())
-                                            ->searchable()
-                                            ->nullable(),
+                                            ->searchable(),
 
                                         TextInput::make('mykad_number')->label('MyKad no.')->numeric()
                                             ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
