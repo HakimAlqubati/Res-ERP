@@ -124,6 +124,10 @@ class Employee extends Model
         return 'no';
     }
 
+    public function leaveApplications()
+    {
+        return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')->where('hr_employee_applications.application_type_id', 1)->with('leaveRequest');
+    }
     public function approvedLeaveApplications()
     {
         return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')->where('hr_employee_applications.application_type_id', 1)->where('status', EmployeeApplicationV2::STATUS_APPROVED)->with('leaveRequest');
@@ -524,5 +528,22 @@ class Employee extends Model
                 return 'Not set';
                 break;
         }
+    }
+
+
+    public function approvedPenaltyDeductions()
+    {
+        return $this->hasMany(PenaltyDeduction::class)->where('status', 'approved');
+    }
+
+
+    public function getApprovedPenaltyDeductionsForPeriod($year, $month)
+    {
+        return $this->approvedPenaltyDeductions()
+            ->select('year', 'month', 'penalty_amount', 'deduction_id', 'hr_deductions.name as deduction_name')
+            ->leftJoin('hr_deductions', 'hr_deductions.id', '=', 'hr_penalty_deductions.deduction_id')
+            ->where('year', $year)
+            ->where('month', $month)
+            ->get();
     }
 }

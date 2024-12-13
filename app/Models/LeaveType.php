@@ -20,6 +20,7 @@ class LeaveType extends Model
         'updated_by',
         'type',
         'balance_period',
+        'is_paid',
     ];
 
     // Enum constants for 'type'

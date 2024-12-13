@@ -57,8 +57,9 @@ class EmployeeAdvanceReportResource extends Resource
                 ->getStateUsing(function($record){
                     $employee = Employee::find($record->employee_id);
                   $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                    if($advance){
-                        return $advance['details']['detail_advance_amount'];
+                  
+                  if($advance){
+                        return $advance['details']['detail_advance_amount'] ?? 0;
                     }
                 })
                 ,
@@ -68,9 +69,9 @@ class EmployeeAdvanceReportResource extends Resource
                 ->getStateUsing(function($record){
                     $employee = Employee::find($record->employee_id);
                   $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
-                //   dd($advance); 
+                //   dd($advance['details']); 
                   if($advance){
-                        return $advance['details']['detail_number_of_months_of_deduction'];
+                        return $advance['details']['detail_number_of_months_of_deduction'] ?? 0;
                     }
                 })
                 ,
@@ -81,7 +82,7 @@ class EmployeeAdvanceReportResource extends Resource
                     $employee = Employee::find($record->employee_id);
                   $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
                   if($advance){
-                        return $advance['details']['detail_monthly_deduction_amount'];
+                        return $advance['details']['detail_monthly_deduction_amount'] ?? 0;
                     }
                 })
                 ,
@@ -101,7 +102,7 @@ class EmployeeAdvanceReportResource extends Resource
                   $advance =  $employee->approved_advance_application->where('id',$record->advance_id)->first()?? null;
                 //   dd($advance); 
                   if($advance){
-                        return $advance['details']['detail_deduction_ends_at'];
+                        return $advance['details']['detail_deduction_ends_at'] ?? 0;
                     }
                 })
                 ,

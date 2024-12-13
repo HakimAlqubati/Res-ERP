@@ -72,7 +72,10 @@ class CreateMonthSalary extends CreateRecord
             try {
                 $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month, true);
                 $specificDeducation = $generalDeducation = $specificAllowances = $generalAllowances = [];
+                // if ($employee->id == 96) {
 
+                //     dd(count($calculateSalary['details']['deducation_details']['general_deducation_employer']),$calculateSalary['details']['deducation_details']['general_deducation_employer'][0]['name']);
+                // }
                 if ($calculateSalary === 'no_periods') {
                     Log::warning("No periods found for employee ID: {$employee->id}");
                     DB::rollBack();
@@ -113,10 +116,40 @@ class CreateMonthSalary extends CreateRecord
                 $this->createDeductionDetails($specificDeducation, $employee, true);
                 $this->createDeductionDetails($generalDeducation, $employee, false);
 
+                // Store approved penalty deductions
+                if (
+                    isset($calculateSalary['details']['deducation_details']['approved_penalty_deductions'])
+
+                ) {
+                    foreach ($calculateSalary['details']['deducation_details']['approved_penalty_deductions'] as $penaltyDeduction) {
+                        $this->record->deducationDetails()->create([
+                            'employee_id' => $employee->id,
+                            'deduction_id' => $penaltyDeduction['deduction_id'],
+                            'deduction_name' => $penaltyDeduction['deduction_name'],
+                            'deduction_amount' => $penaltyDeduction['penalty_amount']
+                        ]);
+                    }
+                }
+                if (
+                    isset($calculateSalary['details']['deducation_details']['general_deducation_employer'])
+                    && count($calculateSalary['details']['deducation_details']['general_deducation_employer']) > 0
+                ) {
+                    foreach ($calculateSalary['details']['deducation_details']['general_deducation_employer'] as $deductionEmployer) {
+                        if (isset($deductionEmployer['name'])) { 
+                            $this->record->deducationDetails()->create([
+                                'employee_id' => $employee->id,
+                                'deduction_id' => $deductionEmployer['id'],
+                                'deduction_name' => $deductionEmployer['name'],
+                                'deduction_amount' => $deductionEmployer['amount_value']
+                            ]);
+                        }
+                    }
+                }
+
+                // Store absent day deductions
                 if (isset($calculateSalary['details']['deduction_for_absent_days']) && $calculateSalary['details']['deduction_for_absent_days'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,
-
                         'deduction_id' => MonthlySalaryDeductionsDetail::ABSENT_DAY_DEDUCTIONS,
                         'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::ABSENT_DAY_DEDUCTIONS],
                         'deduction_amount' => $calculateSalary['details']['deduction_for_absent_days'],
@@ -180,6 +213,8 @@ class CreateMonthSalary extends CreateRecord
             } catch (\Exception $e) {
                 // Rollback the transaction on any failure
                 DB::rollBack();
+                $this->record->delete();
+                // showWarningNotifiMessage('ERROR',$e->getMessage());
                 Log::error("Transaction failed for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
             }
         }

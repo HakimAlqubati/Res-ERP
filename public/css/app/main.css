@@ -368,3 +368,11 @@ for scrollbar
     width: 80px;
     height: auto;
 }
+
+
+@font-face {
+    font-family: 'Amiri';
+    src: url('{{ asset("css/Amiri-Bold.ttf") }}') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}

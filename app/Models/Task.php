@@ -114,10 +114,7 @@ class Task extends Model
         return $this->hasOne(TaskRating::class, 'task_id');
     }
 
-    public function task_menu()
-    {
-        return $this->hasMany(TasksMenus::class, 'task_id');
-    }
+    
 
     public function menus()
     {

@@ -9,7 +9,7 @@ use App\Models\LeaveType;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -40,28 +40,12 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
 
     $generalDeducationTypes = Deduction::where('is_specific', 0)
         ->where('active', 1)
-        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied_v2', 'nationalities_applied', 'less_salary_to_apply', 'has_brackets')
+        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied_v2', 'nationalities_applied', 'less_salary_to_apply', 'has_brackets', 'applied_by')
         ->with('brackets')
         ->get();
     // dd($generalDeducationTypes);
     $deduction = [];
     foreach ($generalDeducationTypes as  $deductionType) {
-        // $deductionNationalities = json_decode($deductionType->nationalities_applied, true);
-        // if ($deductionType->condition_applied == Deduction::CONDITION_ALL) {
-        //     $deduction[] = $deductionType;
-        // }
-        // if (
-        //     $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES &&
-        //     in_array($nationality, $deductionNationalities)
-        // ) {
-        //     $deduction[] = $deductionType;
-        // }
-        // if (
-        //     $deductionType->condition_applied == Deduction::CONDITION_SPECIFIED_NATIONALITIES_AND_EMP_HAS_PASS &&
-        //     (in_array($nationality, $deductionNationalities) || ($employee->has_employee_pass))
-        // ) {
-        //     $deduction[] = $deductionType;
-        // }
 
         if ($deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_ALL) {
             $deduction[] = $deductionType;
@@ -69,7 +53,6 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
         if (
             $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
             $employee->is_citizen
-            // &&  $basicSalary >= $deductionType->less_salary_to_apply
             && $deductionType->has_brackets == 1
         ) {
             $deduction[] = $deductionType;
@@ -77,8 +60,6 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
         if (
             $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
             $employee->is_citizen
-            // &&  $basicSalary >= $deductionType->less_salary_to_apply
-            // && $deductionType->has_brackets == 1
         ) {
             $deduction[] = $deductionType;
         }
@@ -99,7 +80,13 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
     }
     // dd($deduction);
     $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
+    $deductionEmployer = collect($deduction)->whereIn('applied_by', [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])->toArray();
+
     $generalDedeucationResultCalculated = calculateDeductions($deduction, $basicSalary);
+    $dedeucationResultCalculatedEmployer = calculateDeductionsEmployeer($deductionEmployer, $basicSalary);
+
+    $approvedPenaltyDeductions = $employee->getApprovedPenaltyDeductionsForPeriod(date('Y', strtotime($date)), date('m', strtotime($date)));
+    $totalPenaltyDeductions = collect($approvedPenaltyDeductions)->sum('penalty_amount');
     // dd($deduction);
     // Calculate total deductions
     $specificDeductions = $employee->deductions->map(function ($deduction) {
@@ -110,6 +97,7 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
             'id' => $deduction->deduction_id,
             'name' => $deduction->deduction->name,
             'has_brackets' => $deduction->deduction->has_brackets,
+            'applied_by' => $deduction->deduction->applied_by,
         ];
     })->toArray();
 
@@ -202,7 +190,7 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
-    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction);
+    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + $overtimeBasedOnMonthlyLeavePay);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
@@ -210,7 +198,7 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
     $remaningSalary = round($netSalary - round($totalDeducations, 2), 2);
     $netSalary = replaceZeroInstedNegative($netSalary);
     // Return the details and net salary breakdown
-    return [
+    $result = [
         'net_salary' => round($netSalary, 2),
         'details' => [
             'basic_salary' => ($basicSalary),
@@ -223,11 +211,13 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
             'tax_deduction' => round($taxDeduction, 2), // Add tax deduction to the breakdown
 
             'total_deducation' => round($totalDeducations, 2),
+            'totalPenaltyDeductions' => $totalPenaltyDeductions,
             'total_allowances' => round($totalAllowances, 2),
             'total_other_adding' => round($totalOtherAdding, 2),
             'specific_deducation_result' => round($specificDeducationCalculated['result'], 2),
             'specific_allowances_result' => round($specificAlloanceCalculated['result'], 2),
             'general_deducation_result' => round($generalDedeucationResultCalculated['result'], 2),
+
             'general_allowances_result' => round($generalAllowanceResultCalculated['result'], 2),
 
             'deduction_for_absent_days' => round($deductionForAbsentDays, 2),
@@ -250,6 +240,8 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
             'deducation_details' => [
                 'specific_deducation' => $specificDeducationCalculated,
                 'general_deducation' => $generalDedeucationResultCalculated,
+                'approved_penalty_deductions' => $approvedPenaltyDeductions,
+                'general_deducation_employer' => $dedeucationResultCalculatedEmployer,
             ],
             'adding_details' => [
                 'specific_allowances' => $specificAlloanceCalculated,
@@ -263,6 +255,9 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
             ],
         ],
     ];
+    // dd($result['details']['deducation_details']['general_deducation_employer'][0]['deduction_amount']);
+    // dd(count($result['details']['deducation_details']['general_deducation_employer']));
+    return $result;
 }
 
 /**
@@ -292,6 +287,44 @@ function calculateDeductions(array $deductions, float $basicSalary): array
         $finalDeductions[] = [
             'id' => $deduction['id'],
             'name' => $deduction['name'],
+            'deduction_amount' => $deductionAmount,
+            'is_percentage' => $deduction['is_percentage'],
+            'amount_value' => $deduction['amount'],
+            'percentage_value' => $deduction['percentage'],
+            'applied_by' => $deduction['applied_by'],
+        ];
+    }
+
+    // Add the total deductions to the result
+    $finalDeductions['result'] = $totalDeductions;
+
+    return $finalDeductions;
+}
+function calculateDeductionsEmployeer($deductions, float $basicSalary): array
+{
+
+    $finalDeductions = [];
+    $totalDeductions = 0.0; // Initialize total deductions
+
+    foreach ($deductions as $deduction) {
+        if ($deduction['is_percentage']) {
+            // Calculate the deduction based on the percentage
+            $deductionAmount = ($basicSalary * $deduction['percentage']) / 100;
+        } else {
+            // Use the fixed amount directly
+            $deductionAmount = (float) $deduction['amount'];
+        }
+
+        if (isset($deduction['has_brackets']) && $deduction['has_brackets'] && isset($deduction['brackets'])) {
+            $deductionAmount = $deduction->calculateTax($basicSalary)['monthly_tax'] ?? 0;
+        }
+        // Add to total deductions
+        $totalDeductions += $deductionAmount;
+
+        // Store the result
+        $finalDeductions[] = [
+            'id' => $deduction['id'],
+            'name' => $deduction['name'] . ' (Employer) ',
             'deduction_amount' => $deductionAmount,
             'is_percentage' => $deduction['is_percentage'],
             'amount_value' => $deduction['amount'],
@@ -560,7 +593,8 @@ function generateSalarySlipPdf_($employeeId, $sid)
         return [
             'id' => $deduction['id'],
             'deduction_id' => $deductionId,
-            'deduction_name' => $allDeductionTypes[$deductionId] ?? 'Unknown Deduction', // Fallback if deduction type is missing
+            // 'deduction_name' => $allDeductionTypes[$deductionId] ?? 'Unknown Deduction', // Fallback if deduction type is missing
+            'deduction_name' => $deduction['deduction_name'] ?? 'Unknown Deduction',
             'deduction_amount' => $deduction['deduction_amount'],
         ];
     })->toArray();

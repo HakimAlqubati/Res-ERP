@@ -33,10 +33,10 @@ class LeaveTypeResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->schema([
-                    Grid::make()->label('')->columns(5)->schema([
+                    Grid::make()->label('')->columns(7)->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Leave type name')
-                            ->unique(ignoreRecord: true)
+                            ->unique(ignoreRecord: true)->columnSpan(2)
                             ->required(),
 
                         Forms\Components\TextInput::make('count_days')
@@ -44,11 +44,14 @@ class LeaveTypeResource extends Resource
                             ->numeric()
                             ->required(),
 
-                            Select::make('type')->label('Type')->options(LeaveType::getTypes()),
-                            Select::make('balance_period')->label('Balance period')->options(LeaveType::getBalancePeriods()),
-                            Forms\Components\Toggle::make('active')
-                                ->label('Active')->inline(false)
-                                ->default(true),
+                        Select::make('type')->label('Type')->options(LeaveType::getTypes()),
+                        Select::make('balance_period')->label('Balance period')->options(LeaveType::getBalancePeriods()),
+                        Forms\Components\Toggle::make('active')
+                            ->label('Active')->inline(false)
+                            ->default(true),
+                        Forms\Components\Toggle::make('is_paid')
+                            ->label('Is paid')->inline(false)
+                            ->default(true),
 
                     ]),
                     Forms\Components\Textarea::make('description')->columnSpanFull()
@@ -67,11 +70,14 @@ class LeaveTypeResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Leave Type'),
                 Tables\Columns\TextColumn::make('count_days')->label('Number of Days')->alignCenter(true),
-                
+
                 Tables\Columns\TextColumn::make('type')->label('Type')->alignCenter(true),
                 Tables\Columns\TextColumn::make('balance_period')->label('Balance Period')->alignCenter(true),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->toggleable(isToggledHiddenByDefault: true)->dateTime(),
                 Tables\Columns\BooleanColumn::make('active')
+                    ->label('Active')->alignCenter(true)
+                    ->boolean(),
+                Tables\Columns\BooleanColumn::make('is_paid')
                     ->label('Active')->alignCenter(true)
                     ->boolean(),
 

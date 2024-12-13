@@ -20,7 +20,7 @@ class TestController2 extends Controller
     }
     public function to_test_calculate_salary($empId, $date)
     {
-        return calculateMonthlySalaryV2($empId, $date,false);
+        return calculateMonthlySalaryV2($empId, $date, false);
     }
 
     public function to_test_emplployee_attendance_time()
@@ -75,7 +75,7 @@ class TestController2 extends Controller
         $allowanceTypes = $allowanceTypes + $constAllowanceTypes;
         $month = $data->month;
         $monthName = Carbon::parse($month)->translatedFormat('F Y');
-        $allowanceTypes = array_reverse($allowanceTypes,true);
+        $allowanceTypes = array_reverse($allowanceTypes, true);
         // dd($allowanceTypes);
         $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allowanceTypes) {
             $typeId = $allowance['type_id'];
@@ -98,7 +98,6 @@ class TestController2 extends Controller
             ->toArray();
 
         $constDeducationTypes = MonthlySalaryDeductionsDetail::DEDUCTION_TYPES;
-        // dd($constDeducationTypes);
         $allDeductionTypes = $deducationTypes + $constDeducationTypes;
         $employeeDeductions = collect($deducationDetails)->map(function ($deduction) use ($allDeductionTypes) {
             $deductionId = $deduction['deduction_id'];
@@ -106,11 +105,13 @@ class TestController2 extends Controller
             return [
                 'id' => $deduction['id'],
                 'deduction_id' => $deductionId,
-                'deduction_name' => $allDeductionTypes[$deductionId] ?? 'Unknown Deduction', // Fallback if deduction type is missing
+                // 'deduction_name' => $allDeductionTypes[$deductionId] ?? 'Unknown Deduction', // Fallback if deduction type is missing
+                'deduction_name' => $deduction['deduction_name'] ?? 'Unknown Deduction', // Fallback if deduction type is missing
                 'deduction_amount' => $deduction['deduction_amount'],
             ];
         })->toArray();
-// dd($deducationTypes);
+        // dd($allDeductionTypes, $deducationDetails,$employeeDeductions);
+        // dd($deducationTypes);
         // Calculate the total deduction amount
         $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
 

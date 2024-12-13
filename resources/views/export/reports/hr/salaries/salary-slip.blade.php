@@ -13,7 +13,7 @@
         <header>
             <div class="company-info">
                 <!-- Left Logo -->
-                <img src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo" class="logo-left">
+                <img src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo" style="width: 80px; height: auto;" class="logo-left">
 
                 <!-- Company Name and Address in Center -->
                 <div class="company-details">
@@ -36,19 +36,17 @@
                 <tr>
                     <td><strong>Name:</strong></td>
                     <td>{{ $employee?->name }}</td>
-                </tr>
-                <tr>
-                    <td><strong>ID No:</strong></td>
-                    <td>{{ $employee?->employee_no }}</td>
-                </tr>
-                <tr>
                     <td><strong>Job:</strong></td>
                     <td>{{ $employee?->job_title }}</td>
                 </tr>
                 <tr>
+                    <td><strong>ID No:</strong></td>
+                    <td>{{ $employee?->employee_no }}</td>
                     <td><strong>Branch:</strong></td>
                     <td>{{ $branch?->name }}</td>
                 </tr>
+
+
             </table>
         </section>
 

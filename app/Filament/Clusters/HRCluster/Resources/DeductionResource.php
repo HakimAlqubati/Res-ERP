@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRSalaryCluster;
 use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -16,6 +17,7 @@ use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
@@ -35,16 +37,21 @@ class DeductionResource extends Resource
 
         return $form
             ->schema([
-                Fieldset::make()->columns(3)->label('')->schema([
-                    Forms\Components\TextInput::make('name')->required(),
-                    Forms\Components\TextInput::make('description')->columnSpan(2),
-                    Select::make('condition_applied_v2')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
-                        ->default(Deduction::CONDITION_APPLIED_V2_ALL),
-                    TextInput::make('less_salary_to_apply')->label('Less salary to apply')->numeric()
-                        // ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)
-                        ->hidden()
-                        ->required()
-                ]),
+                Fieldset::make()->columns(4)
+                    ->label('')->schema([
+                        Forms\Components\TextInput::make('name')->required(),
+                        Select::make('condition_applied_v2')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
+                            ->default(Deduction::CONDITION_APPLIED_V2_ALL),
+                        Select::make('applied_by')->live()->label('Applied by')->options(
+                            Deduction::getAppliedByOptions()
+                        )->default(Deduction::APPLIED_BY_EMPLOYEE),
+                        TextInput::make('less_salary_to_apply')
+                            ->label('Less salary to apply')->numeric()
+                            // ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)
+                            ->hidden()
+                            ->required(),
+                        Forms\Components\TextInput::make('description')->columnSpan(4),
+                    ]),
                 Fieldset::make()->label('')->columns(6)->schema([
                     Forms\Components\Toggle::make('is_penalty')->default(false),
 
@@ -53,17 +60,30 @@ class DeductionResource extends Resource
                     Forms\Components\Toggle::make('active')->default(true),
                     Forms\Components\Toggle::make('has_brackets')->default(false)->live(),
                     Radio::make('is_percentage')->label('')->live()
-                        ->helperText('Set allowance as a salary percentage or fixed amount')->options([
+                        ->helperText('Set deduction as a salary percentage or fixed amount')->options([
                             'is_percentage' => 'Is percentage',
                             'is_amount' => 'Is amount',
                         ])->default('is_amount'),
 
-                    TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
-                        ->suffixIcon('heroicon-o-calculator')
-                        ->suffixIconColor('success'),
-                    TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
-                        ->suffixIcon('heroicon-o-percent-badge')
-                        ->suffixIconColor('success'),
+                    Grid::make()->schema([
+
+                        TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
+                            ->suffixIcon('heroicon-o-calculator')
+                            ->suffixIconColor('success'),
+                        TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
+                            ->suffixIcon('heroicon-o-percent-badge')
+                            ->suffixIconColor('success'),
+                        TextInput::make('employer_amount')
+                            ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
+                            ->numeric()
+                            ->suffixIcon('heroicon-o-calculator')
+                            ->suffixIconColor('success'),
+                        TextInput::make('employer_percentage')
+                            ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
+                            ->numeric()
+                            ->suffixIcon('heroicon-o-percent-badge')
+                            ->suffixIconColor('success'),
+                    ]),
                     // Tax Brackets Repeater
                     Repeater::make('brackets')  // The relationship field for Deduction Brackets
                         ->label('Tax Brackets')
@@ -95,21 +115,29 @@ class DeductionResource extends Resource
         return $table
             ->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\ToggleColumn::make('is_penalty')->disabled(),
-                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom')->disabled()->hidden(false),
-                // IconColumn::make('is_percentage')
-                //     ->color(fn(string $state): string => match ($state) {
+                Tables\Columns\TextColumn::make('name')->sortable()->searchable()->wrap(),
+                Tables\Columns\TextColumn::make('description')->wrap()->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('is_penalty')->alignCenter(true)
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark'),
+                IconColumn::make('is_specific')->label('Custom')->alignCenter(true)
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark')
+                    ->hidden(false),
 
-                //         0 => 'warning',
-                //         1 => 'success',
-                //         default => 'gray',
-                //     }),
-                ToggleColumn::make('is_percentage')->disabled(),
-                TextColumn::make('amount')
-                    ->hidden(fn($record) => $record?->is_percentage),
-                TextColumn::make('percentage')->suffix(' % '),
+                IconColumn::make('is_percentage')->alignCenter(true)
+                    ->trueIcon('heroicon-o-check-badge')
+                    ->falseIcon('heroicon-o-x-mark'),
+                TextColumn::make('amount')->hidden(),
+                TextColumn::make('percentage')->suffix(' % ')->hidden(),
+                TextColumn::make('amount_percentage')
+                    ->label('Amount/Percentage')->alignCenter(true)
+                    ->getStateUsing(function ($record) {
+                        if ($record->is_percentage) {
+                            return ($record->percentage ?? 0) . ' %';
+                        }
+                        return $record->amount ?? 0;
+                    }),
                 Tables\Columns\ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([

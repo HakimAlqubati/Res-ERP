@@ -106,6 +106,8 @@ class EmployeeApplicationResource extends Resource
                             $set('leaveRequest.detail_year', $year);
                             $set('leaveRequest.detail_month', $month);
                             $set('leaveRequest.detail_from_date', $get('application_date'));
+                            $set('missedCheckinRequest.detail_date', $get('application_date'));
+                            $set('missedCheckoutRequest.detail_date', $get('application_date'));
                             $set('leaveRequest.detail_to_date', $get('application_date'));
                             $set('leaveRequest.detail_days_count', 1);
                         })
@@ -143,6 +145,10 @@ class EmployeeApplicationResource extends Resource
                             $set('leaveRequest.detail_from_date', $get('application_date'));
                             $set('leaveRequest.detail_to_date', $get('application_date'));
                             $set('leaveRequest.detail_days_count', 1);
+                            $set('missedCheckinRequest.detail_date', $get('application_date'));
+                            $set('missedCheckoutRequest.detail_date', $get('application_date'));
+                            $set('missedCheckinRequest.detail_time', now()->toTimeString());
+                            $set('missedCheckoutRequest.detail_time', now()->toTimeString());
                         }),
                 ]),
                 Fieldset::make('')
@@ -157,300 +163,18 @@ class EmployeeApplicationResource extends Resource
                         if (
                             $get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST
                         ) {
-                            $form = [
-                                DatePicker::make('detail_date')->maxDate(now()->toDateString())
-                                    ->label('Date')->required()
-                                    ->default('Y-m-d')
-                                // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
-                                ,
-                                TimePicker::make('detail_time')
-                                    ->label('Time')->required(),
-                            ];
-                            return [
-                                Fieldset::make('missedCheckinRequest')
-                                    ->relationship('missedCheckinRequest')
-                                    ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
-
-                                        $data['application_type_id'] = 2;
-                                        $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
-
-                                        $data['employee_id'] = $get('employee_id');
-
-                                        $data['date'] = $data['detail_date'];
-                                        $data['time'] = $data['detail_time'];
-
-
-                                        return $data;
-                                    })
-
-                                    ->columns(count($form))->schema(
-                                        $form
-                                    ),
-                            ];
+                            return self::attendanceRequestForm();
                         }
                         if (
                             $get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST
                         ) {
-                            $form = [
-                                DatePicker::make('detail_date')->maxDate(now()->toDateString())
-                                    ->label('Date')->required()
-                                    ->default('Y-m-d'),
-                                TimePicker::make('detail_time')
-                                    ->label('Time')->required(),
-                            ];
-                            return [
-                                Fieldset::make('missedCheckoutRequest')
-                                    ->relationship('missedCheckoutRequest')
-                                    ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
-
-                                        $data['application_type_id'] = 4;
-                                        $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST];
-
-                                        $data['employee_id'] = $get('employee_id');
-
-                                        $data['date'] = $data['detail_date'];
-                                        $data['time'] = $data['detail_time'];
-
-
-                                        return $data;
-                                    })
-
-                                    ->columns(count($form))->schema(
-                                        $form
-                                    ),
-                            ];
+                            return self::departureRequestForm($set, $get);
                         }
                         if ($get('application_type_id') == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
-                            $employee = Employee::find($get('employee_id'));
-                            $set('advanceRequest.basic_salary', $employee?->salary);
-                            $set('advanceRequest.detail_date', $get('application_date'));
-                            $set('advanceRequest.detail_deduction_starts_from', $get('application_date'));
-                            return [
-                                Fieldset::make('advanceRequest')
-                                    ->relationship('advanceRequest')
-                                    ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
-
-                                        $data['application_type_id'] = 3;
-                                        $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST];
-
-                                        $data['employee_id'] = $get('employee_id');
-
-
-                                        $data['advance_amount'] = $data['detail_advance_amount'];
-                                        $data['monthly_deduction_amount'] = $data['detail_monthly_deduction_amount'];
-                                        $data['deduction_ends_at'] = $data['detail_deduction_ends_at'];
-                                        $data['number_of_months_of_deduction'] = $data['detail_number_of_months_of_deduction'];
-                                        $data['deduction_starts_from'] = $data['detail_deduction_starts_from'];
-                                        $data['date'] = $data['detail_date'];
-
-                                        $data['reason'] = $get('notes');
-                                        // dd($data);
-                                        return $data;
-                                    })
-                                    ->label('')->schema([
-                                        Grid::make()->columns(3)->schema([
-                                            DatePicker::make('detail_date')
-                                                ->label('Date')
-                                                ->live()
-                                                ->maxDate(now()->toDateString())
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                                    $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
-                                                    $set('detail_deduction_starts_from', $endNextMonth);
-                                                })
-                                                ->default('Y-m-d'),
-                                            TextInput::make('detail_advance_amount')->numeric()->required()
-                                                ->label('Amount'),
-                                            TextInput::make('basic_salary')->numeric()->disabled()
-                                                ->default(0)
-                                                ->label('Basic salary')->helperText('Employee basic salary'),
-
-                                        ]),
-                                        Grid::make()->columns(3)->schema([
-                                            TextInput::make('detail_monthly_deduction_amount')
-                                                ->numeric()
-                                                ->label('Monthly deduction amount')->required()
-                                                ->live(onBlur: true)
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    $advancedAmount = $get('detail_advance_amount');
-                                                    // dd($advancedAmount);
-                                                    if ($state > 0 && $advancedAmount > 0) {
-                                                        $res = $advancedAmount / $state;
-
-                                                        $set('detail_number_of_months_of_deduction', $res);
-                                                        $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
-                                                        $set('detail_deduction_ends_at', $toMonth);
-                                                    }
-                                                }),
-                                            Fieldset::make()->columnSpan(1)->columns(1)->schema([
-                                                DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
-                                                    ->label('Deduction starts from')
-                                                    ->default('Y-m-d')
-                                                    ->live()
-                                                    ->afterStateUpdated(function ($get, $set, $state) {
-
-                                                        $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
-
-                                                        // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
-
-                                                        $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
-                                                        $set('detail_deduction_ends_at', $endNextMonth);
-                                                    }),
-                                                DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
-                                                    ->label('Deduction ends at')
-                                                    ->default('Y-m-d'),
-                                            ]),
-                                            TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
-                                                ->numeric()
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    $advancedAmount = $get('detail_advance_amount');
-                                                    if ($advancedAmount > 0 && $state > 0) {
-
-                                                        $res = $advancedAmount / $state;
-                                                        // dd($res,$state);
-                                                        $set('detail_monthly_deduction_amount', round($res, 2));
-                                                        $state = (int) $state;
-
-                                                        $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
-
-                                                        $set('detail_deduction_ends_at', $toMonth);
-                                                    }
-                                                })->minValue(1)
-                                                ->label('Number of months of deduction'),
-
-                                        ]),
-
-                                    ]),
-                            ];
+                            return self::advanceRequestForm($set, $get);
                         }
                         if ($get('application_type_id') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
-
-                            $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
-                            $set('from_to_date', date('Y-m-d'));
-                            // Get the leave types that are active and have a balance for the employee
-                            $leaveTypes = LeaveType::where('active', 1)
-                                ->whereIn('id', $leaveBalances)
-                                ->whereHas('leaveBalances', function ($query) use ($get) {
-                                    $query->where('employee_id', $get('employee_id'))
-                                        ->where('balance', '>', 0); // Ensure the balance is greater than 0
-                                })
-                                ->select('name', 'id')
-                                ->get()
-                                ->pluck('name', 'id');
-                            return [
-                                Fieldset::make('leaveRequest')
-                                    ->relationship('leaveRequest')->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
-
-                                        $data['application_type_id'] = 1;
-                                        $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
-
-                                        $data['employee_id'] = $get('employee_id');
-                                        $data['leave_type'] = $data['detail_leave_type_id'];
-                                        $data['start_date'] = $data['detail_from_date'];
-                                        $data['end_date'] = $data['detail_to_date'];
-
-                                        $data['year'] = $data['detail_year'];
-                                        $data['month'] = $data['detail_month'];
-                                        $data['days_count'] = $data['detail_days_count'];
-                                        // dd($data);
-                                        return $data;
-                                    })
-                                    // ->mutateRelationshipDataBeforeSaveUsing(function ($data) {
-                                    //     dd($data);
-                                    // })
-                                    ->schema(
-
-                                        [
-                                            Grid::make()->columns(4)->schema([
-                                                Select::make('detail_leave_type_id')->label('Leave type')
-                                                    ->requiredIf('application_type_id', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
-                                                    ->live()
-                                                    ->options(
-                                                        $leaveTypes
-                                                    )->required()
-                                                    ->afterStateUpdated(function ($get, Set $set, $state) {
-                                                        $leaveBalance = LeaveBalance::getLeaveBalanceForEmployee($get('../employee_id'), $get('detail_year'), $state, $get('detail_month'));
-                                                        $set('detail_balance', $leaveBalance?->balance);
-                                                    }),
-                                                Select::make('detail_year')->label('Year')
-
-                                                    ->options([
-                                                        2024 => 2024,
-                                                        2025 => 2025,
-                                                        2026 => 2026
-                                                    ])->disabled()->dehydrated()
-                                                    ->live(),
-                                                Select::make('detail_month')->label('Month')->disabled()
-                                                    ->options(getMonthArrayWithKeys())
-                                                    ->live()
-                                                    ->dehydrated()
-                                                    ->default(11),
-                                                TextInput::make('detail_balance')->label('Leave balance')->disabled(),
-
-                                            ]),
-                                            Grid::make()->columns(3)->schema([
-                                                DatePicker::make('detail_from_date')
-                                                    ->label('From Date')
-                                                    ->reactive()
-                                                    ->default(date('Y-m-d'))
-                                                    ->required()
-                                                    ->disabled()->dehydrated()
-                                                    ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                        $fromDate = $get('detail_from_date');
-                                                        $toDate = $get('detail_to_date');
-
-                                                        if ($fromDate && $toDate) {
-                                                            $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                                            $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
-                                                        } else {
-                                                            $set('detail_days_count', 0); // Reset if no valid dates are selected
-                                                        }
-                                                    }),
-
-                                                DatePicker::make('detail_to_date')
-                                                    ->label('To Date')
-                                                    ->disabled()->dehydrated()
-                                                    ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
-                                                    ->reactive()
-                                                    ->required()
-                                                    ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                        $fromDate = $get('detail_from_date');
-                                                        $toDate = $get('detail_to_date');
-
-                                                        if ($fromDate && $toDate) {
-                                                            $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                                            $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
-                                                        } else {
-                                                            $set('detail_days_count', 0); // Reset if no valid dates are selected
-                                                        }
-                                                    }),
-
-                                                TextInput::make('detail_days_count')
-                                                    // ->disabled()
-                                                    ->label('Number of Days')
-                                                    // ->helperText('Type how many days this leave will be')
-                                                    ->helperText('Type how many days this leave will be')
-                                                    ->numeric()
-                                                    // ->default(2)
-                                                    ->minValue(1)
-                                                    ->live()
-                                                    ->required()
-                                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                        // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                                        $state = (int) $state;
-                                                        $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state - 1))->format('Y-m-d');
-                                                        $set('detail_to_date', $nextDate);
-                                                    })
-                                                    ->maxValue(function ($get) {
-                                                        $balance = $get('detail_balance') ?? 0;
-                                                        return $balance;
-                                                    })->validationAttribute('Leave balance'),
-
-                                            ]),
-                                        ]
-
-                                    ),
-                            ];
+                            return self::leaveRequestForm($set, $get);
                         }
 
                         return [
@@ -1278,5 +1002,305 @@ class EmployeeApplicationResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function leaveRequestForm($set, $get)
+    {
+        $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
+        $set('from_to_date', date('Y-m-d'));
+        // Get the leave types that are active and have a balance for the employee
+        $leaveTypes = LeaveType::where('active', 1)
+            ->whereIn('id', $leaveBalances)
+            ->whereHas('leaveBalances', function ($query) use ($get) {
+                $query->where('employee_id', $get('employee_id'))
+                    ->where('balance', '>', 0); // Ensure the balance is greater than 0
+            })
+            ->select('name', 'id')
+            ->get()
+            ->pluck('name', 'id');
+        return [
+            Fieldset::make('leaveRequest')
+                ->relationship('leaveRequest')->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+
+                    $data['application_type_id'] = 1;
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
+
+                    $data['employee_id'] = $get('employee_id');
+                    $data['leave_type'] = $data['detail_leave_type_id'];
+                    $data['start_date'] = $data['detail_from_date'];
+                    $data['end_date'] = $data['detail_to_date'];
+
+                    $data['year'] = $data['detail_year'];
+                    $data['month'] = $data['detail_month'];
+                    $data['days_count'] = $data['detail_days_count'];
+
+                    return $data;
+                })
+                ->schema(
+
+                    [
+                        Grid::make()->columns(4)->schema([
+                            Select::make('detail_leave_type_id')->label('Leave type')
+                                ->requiredIf('application_type_id', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
+                                ->live()
+                                ->options(
+                                    $leaveTypes
+                                )->required()
+                                ->afterStateUpdated(function ($get, Set $set, $state) {
+                                    $leaveBalance = LeaveBalance::getLeaveBalanceForEmployee($get('../employee_id'), $get('detail_year'), $state, $get('detail_month'));
+                                    $set('detail_balance', $leaveBalance?->balance);
+                                }),
+                            Select::make('detail_year')->label('Year')
+
+                                ->options([
+                                    2024 => 2024,
+                                    2025 => 2025,
+                                    2026 => 2026
+                                ])->disabled()->dehydrated()
+                                ->live(),
+                            Select::make('detail_month')->label('Month')->disabled()
+                                ->options(getMonthArrayWithKeys())
+                                ->live()
+                                ->dehydrated()
+                                ->default(11),
+                            TextInput::make('detail_balance')->label('Leave balance')->disabled(),
+
+                        ]),
+                        Grid::make()->columns(3)->schema([
+                            DatePicker::make('detail_from_date')
+                                ->label('From Date')
+                                ->reactive()
+                                ->default(date('Y-m-d'))
+                                ->required()
+                                ->dehydrated()
+                                ->afterStateUpdated(function ($state, callable $set, $get) {
+                                    $fromDate = $get('detail_from_date');
+                                    $toDate = $get('detail_to_date');
+
+                                    if ($fromDate && $toDate) {
+                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
+                                    } else {
+                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
+                                    }
+                                }),
+
+                            DatePicker::make('detail_to_date')
+                                ->label('To Date')
+                                ->dehydrated()
+                                ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                                ->reactive()
+                                ->required()
+                                ->afterStateUpdated(function ($state, callable $set, $get) {
+                                    $fromDate = $get('detail_from_date');
+                                    $toDate = $get('detail_to_date');
+
+                                    if ($fromDate && $toDate) {
+                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
+                                    } else {
+                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
+                                    }
+                                }),
+
+                            TextInput::make('detail_days_count')
+                                // ->disabled()
+                                ->label('Number of Days')
+                                // ->helperText('Type how many days this leave will be')
+                                ->helperText('Type how many days this leave will be')
+                                ->numeric()
+                                // ->default(2)
+                                ->minValue(1)
+                                ->live()
+                                ->required()
+                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    // Parse the state as a Carbon date, add one month, and set it to the end of the month
+                                    $state = (int) $state;
+                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state - 1))->format('Y-m-d');
+                                    $set('detail_to_date', $nextDate);
+                                })
+                                ->maxValue(function ($get) {
+                                    $balance = $get('detail_balance') ?? 0;
+                                    return $balance;
+                                })->validationAttribute('Leave balance'),
+
+                        ]),
+                    ]
+
+                ),
+        ];
+    }
+
+
+    public static function advanceRequestForm($set, $get)
+    {
+        $employee = Employee::find($get('employee_id'));
+        $set('advanceRequest.basic_salary', $employee?->salary);
+        $set('advanceRequest.detail_date', $get('application_date'));
+        $set('advanceRequest.detail_deduction_starts_from', $get('application_date'));
+        return [
+            Fieldset::make('advanceRequest')
+                ->relationship('advanceRequest')
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+
+                    $data['application_type_id'] = 3;
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST];
+
+                    $data['employee_id'] = $get('employee_id');
+
+
+                    $data['advance_amount'] = $data['detail_advance_amount'];
+                    $data['monthly_deduction_amount'] = $data['detail_monthly_deduction_amount'];
+                    $data['deduction_ends_at'] = $data['detail_deduction_ends_at'];
+                    $data['number_of_months_of_deduction'] = $data['detail_number_of_months_of_deduction'];
+                    $data['deduction_starts_from'] = $data['detail_deduction_starts_from'];
+                    $data['date'] = $data['detail_date'];
+
+                    $data['reason'] = $get('notes');
+                    // dd($data);
+                    return $data;
+                })
+                ->label('')->schema([
+                    Grid::make()->columns(3)->schema([
+                        DatePicker::make('detail_date')
+                            ->label('Date')
+                            ->live()
+                            ->maxDate(now()->toDateString())
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                // Parse the state as a Carbon date, add one month, and set it to the end of the month
+                                $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
+                                $set('detail_deduction_starts_from', $endNextMonth);
+                            })
+                            ->default('Y-m-d'),
+                        TextInput::make('detail_advance_amount')->numeric()->required()
+                            ->label('Amount'),
+                        TextInput::make('basic_salary')->numeric()->disabled()
+                            ->default(0)
+                            ->label('Basic salary')->helperText('Employee basic salary'),
+
+                    ]),
+                    Grid::make()->columns(3)->schema([
+                        TextInput::make('detail_monthly_deduction_amount')
+                            ->numeric()
+                            ->label('Monthly deduction amount')->required()
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $advancedAmount = $get('detail_advance_amount');
+                                // dd($advancedAmount);
+                                if ($state > 0 && $advancedAmount > 0) {
+                                    $res = $advancedAmount / $state;
+
+                                    $set('detail_number_of_months_of_deduction', $res);
+                                    $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
+                                    $set('detail_deduction_ends_at', $toMonth);
+                                }
+                            }),
+                        Fieldset::make()->columnSpan(1)->columns(1)->schema([
+                            DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
+                                ->label('Deduction starts from')
+                                ->default('Y-m-d')
+                                ->live()
+                                ->afterStateUpdated(function ($get, $set, $state) {
+
+                                    $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
+
+                                    // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
+
+                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
+                                    $set('detail_deduction_ends_at', $endNextMonth);
+                                }),
+                            DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
+                                ->label('Deduction ends at')
+                                ->default('Y-m-d'),
+                        ]),
+                        TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
+                            ->numeric()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                $advancedAmount = $get('detail_advance_amount');
+                                if ($advancedAmount > 0 && $state > 0) {
+
+                                    $res = $advancedAmount / $state;
+                                    // dd($res,$state);
+                                    $set('detail_monthly_deduction_amount', round($res, 2));
+                                    $state = (int) $state;
+
+                                    $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
+
+                                    $set('detail_deduction_ends_at', $toMonth);
+                                }
+                            })->minValue(1)
+                            ->label('Number of months of deduction'),
+
+                    ]),
+
+                ]),
+        ];
+    }
+    public static function departureRequestForm($set, $get)
+    {
+        $form = [
+            DatePicker::make('detail_date')->maxDate(now()->toDateString())
+                ->label('Date')->required()
+                ->default('Y-m-d')->live(),
+            TimePicker::make('detail_time')
+                ->label('Time')->required(),
+        ];
+        return [
+            Fieldset::make('missedCheckoutRequest')->label('')
+                ->relationship('missedCheckoutRequest')
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+
+                    $data['application_type_id'] = 4;
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST];
+
+                    $data['employee_id'] = $get('employee_id');
+
+                    $data['date'] = $data['detail_date'];
+                    $data['time'] = $data['detail_time'];
+
+
+                    return $data;
+                })
+
+                ->columns(count($form))->schema(
+                    $form
+                ),
+        ];
+    }
+
+    public static function attendanceRequestForm()
+    {
+        $form = [
+            DatePicker::make('detail_date')->maxDate(now()->toDateString())
+                ->label('Date')->required()
+                ->default('Y-m-d')
+                ->maxDate(now()->toDateString())
+            // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
+            ,
+            TimePicker::make('detail_time')
+            ->default(now())
+                ->label('Time')->required(),
+        ];
+        return [
+            Fieldset::make('missedCheckinRequest')->label('')
+                ->relationship('missedCheckinRequest')
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+
+                    $data['application_type_id'] = 2;
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
+
+                    $data['employee_id'] = $get('employee_id');
+
+                    $data['date'] = $data['detail_date'];
+                    $data['time'] = $data['detail_time'];
+
+
+                    return $data;
+                })
+
+                ->columns(count($form))->schema(
+                    $form
+                ),
+        ];
     }
 }

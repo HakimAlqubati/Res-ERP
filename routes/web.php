@@ -15,6 +15,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,11 @@ use Spatie\Permission\Models\Role;
  */
 
 Route::get('/totestpdf', function () {
-    return generateSalarySlipPdf_(82,170);
+    // return generateSalarySlipPdf_(82,170);
+    $employee = Employee::find(143);
+    $branch = Employee::find(6);
+    $task = Task::with('steps')->find(69);
+    return view('export.reports.hr.tasks.employee-task-report2', compact('employee','branch','task'));
     return view('export.reports.hr.salaries.salary-slip');
     $order = Order::find(52);
     $orderDetails = $order?->orderDetails;
@@ -47,7 +52,7 @@ Route::get('/to_test_emplployee_attendance_time', [TestController2::class, 'to_t
 Route::get('/to_get_employee_attendances', [TestController2::class, 'to_get_employee_attendances']);
 Route::get('/to_get_employee_attendance_period_details', [TestController2::class, 'to_get_employee_attendance_period_details']);
 Route::get('/to_get_multi_employees_attendances', [TestController2::class, 'to_get_multi_employees_attendances']);
-Route::get('/migrateEmployeePeriodHistory',[MigrateDataController::class,'migrateEmployeePeriodHistory']);
+Route::get('/migrateEmployeePeriodHistory', [MigrateDataController::class, 'migrateEmployeePeriodHistory']);
 Route::get('/toviewrepeated', function () {
     /**
      * order IDs
@@ -402,13 +407,13 @@ Route::get('/attendanceSecret__', AttendanecEmployee2::class)
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
 
-Route::get('/migrateAdvanceRequest',[MigrateDataController::class,'migrateAdvanceRequest']);
-Route::get('/migrateMissedCheckinRequest',[MigrateDataController::class,'migrateMissedCheckinRequest']);
-Route::get('/migrateMissedCheckoutRequest',[MigrateDataController::class,'migrateMissedCheckoutRequest']);
-Route::get('/migrateLeaveRequest',[MigrateDataController::class,'migrateLeaveRequest']);
+Route::get('/migrateAdvanceRequest', [MigrateDataController::class, 'migrateAdvanceRequest']);
+Route::get('/migrateMissedCheckinRequest', [MigrateDataController::class, 'migrateMissedCheckinRequest']);
+Route::get('/migrateMissedCheckoutRequest', [MigrateDataController::class, 'migrateMissedCheckoutRequest']);
+Route::get('/migrateLeaveRequest', [MigrateDataController::class, 'migrateLeaveRequest']);
 Route::get('/send-test-email', function () {
-    
-   
+
+
     // $sampleEmployees = [
     //     (object)['name' => 'John Doe'],
     //     (object)['name' => 'Jane Smith']
@@ -418,9 +423,9 @@ Route::get('/send-test-email', function () {
     // return 'Email sent!';
 });
 
-Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}',[TestController2::class,'reportAbsentEmployees']);
+Route::get('/reportAbsentEmployees/{date}/{branchId}/{currentTime}', [TestController2::class, 'reportAbsentEmployees']);
 
-Route::get('/updateAllPeriodsToDayAndNight',[MigrateDataController::class,'updateAllPeriodsToDayAndNight']);
+Route::get('/updateAllPeriodsToDayAndNight', [MigrateDataController::class, 'updateAllPeriodsToDayAndNight']);
 
 Route::get('/addAWSEmployee', [EmployeeAWSController::class, 'addEmployee']);
 Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImages']);
@@ -428,17 +433,17 @@ Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImag
 Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
 
 
-Route::get('workbench_webcam/{date}/{time}',function(){
+Route::get('workbench_webcam/{date}/{time}', function () {
     $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
     $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera',compact('currentTime','timeoutWebCamValue','webCamCaptureTime'));
+    return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
 })
-// ->middleware('check')
+    // ->middleware('check')
 ;
-Route::get('workbench_webcam_v2',function(){
+Route::get('workbench_webcam_v2', function () {
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3',compact('currentTime'));
+    return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));
 });
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage_old'])->name('upload.captured.image');

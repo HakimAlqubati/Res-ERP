@@ -25,6 +25,9 @@ class Deduction extends Model
         'less_salary_to_apply',
         'condition_applied_v2',
         'has_brackets',
+        'applied_by',
+        'employer_percentage',
+        'employer_amount'
     ];
 
     // Add constants for the 'condition_applied' enum values
@@ -42,6 +45,20 @@ class Deduction extends Model
         ];
     }
 
+    // Add constants for applied_by field
+    const APPLIED_BY_EMPLOYEE = 'employee';
+    const APPLIED_BY_EMPLOYER = 'employer';
+    const APPLIED_BY_BOTH = 'both';
+
+    // You can also create a method to retrieve the applied_by options
+    public static function getAppliedByOptions()
+    {
+        return [
+            self::APPLIED_BY_EMPLOYEE => 'Employee',
+            self::APPLIED_BY_EMPLOYER => 'Employer',
+            self::APPLIED_BY_BOTH => 'Both',
+        ];
+    }
     // Define a model scope for filtering by 'condition_applied'
     public function scopeConditionApplied($query, $condition)
     {
@@ -80,35 +97,35 @@ class Deduction extends Model
      */
 
 
-     public function calculateTax(float $salary): array
-     {
-         // Retrieve the tax brackets from the database and sort by 'min_amount'
-         $brackets = $this->brackets()->orderBy('min_amount')->get();
- 
-         $salary *= 12;
-         $tax = 0;
-         $previousBracketMax = 0;
-         
-         // Loop through each tax bracket and calculate the tax for each applicable range
-         foreach ($brackets as $bracket) {
-             // If the salary exceeds the current bracket's max_amount, calculate the tax for the full range
-             if ($salary > $bracket['max_amount']) {
-                 $tax += ($bracket['max_amount'] - $bracket['min_amount']) * ($bracket['percentage'] / 100);
-             } else {
-                 // Calculate tax for the remaining amount within the bracket
-                 $tax += ($salary - $bracket['min_amount']) * ($bracket['percentage'] / 100);
-                 break; // No need to continue once the salary is fully taxed
-             }
-         }
- 
-         // Return both the total tax and the monthly tax deduction (divide by 12 for monthly)
-         $monthlyTax = round($tax / 12, 2);
- 
-         return [
-             'total_tax' => round($tax, 2),
-             'monthly_tax' => $monthlyTax ,
-         ];
-     }
+    public function calculateTax(float $salary): array
+    {
+        // Retrieve the tax brackets from the database and sort by 'min_amount'
+        $brackets = $this->brackets()->orderBy('min_amount')->get();
+
+        $salary *= 12;
+        $tax = 0;
+        $previousBracketMax = 0;
+
+        // Loop through each tax bracket and calculate the tax for each applicable range
+        foreach ($brackets as $bracket) {
+            // If the salary exceeds the current bracket's max_amount, calculate the tax for the full range
+            if ($salary > $bracket['max_amount']) {
+                $tax += ($bracket['max_amount'] - $bracket['min_amount']) * ($bracket['percentage'] / 100);
+            } else {
+                // Calculate tax for the remaining amount within the bracket
+                $tax += ($salary - $bracket['min_amount']) * ($bracket['percentage'] / 100);
+                break; // No need to continue once the salary is fully taxed
+            }
+        }
+
+        // Return both the total tax and the monthly tax deduction (divide by 12 for monthly)
+        $monthlyTax = round($tax / 12, 2);
+
+        return [
+            'total_tax' => round($tax, 2),
+            'monthly_tax' => $monthlyTax,
+        ];
+    }
     public function calculateTax_(float $salary): array
     {
         // Retrieve the brackets associated with this deduction
@@ -187,5 +204,16 @@ class Deduction extends Model
             'annual_tax' => $tax,
             'monthly_tax' => $tax / 12, // Monthly tax deduction
         ];
+    }
+
+    /**
+     * Scope a query to only include penalty deductions.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopePenalty($query)
+    {
+        return $query->where('is_penalty', true);
     }
 }
