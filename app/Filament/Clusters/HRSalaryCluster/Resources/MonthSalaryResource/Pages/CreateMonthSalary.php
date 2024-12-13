@@ -140,7 +140,7 @@ class CreateMonthSalary extends CreateRecord
                                 'employee_id' => $employee->id,
                                 'deduction_id' => $deductionEmployer['id'],
                                 'deduction_name' => $deductionEmployer['name'],
-                                'deduction_amount' => $deductionEmployer['amount_value']
+                                'deduction_amount' => $deductionEmployer['deduction_amount']
                             ]);
                         }
                     }

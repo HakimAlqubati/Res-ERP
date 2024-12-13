@@ -331,7 +331,7 @@ function calculateDeductionsEmployeer($deductions, float $basicSalary): array
             'percentage_value' => $deduction['percentage'],
         ];
     }
-
+    
     // Add the total deductions to the result
     $finalDeductions['result'] = $totalDeductions;
 
