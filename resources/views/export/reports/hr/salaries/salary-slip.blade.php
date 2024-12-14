@@ -13,7 +13,8 @@
         <header>
             <div class="company-info">
                 <!-- Left Logo -->
-                <img src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo" style="width: 80px; height: auto;" class="logo-left">
+                <img src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo"
+                    style="width: 80px; height: auto;" class="logo-left">
 
                 <!-- Company Name and Address in Center -->
                 <div class="company-details">
@@ -78,12 +79,14 @@
                             <td></td>
                         </tr>
                     @endforeach
-                    <tr>
-                        <td style="text-align: left">{{ 'Bonus' }}</td>
-                        <td style="text-align: left">{{ number_format($data?->details[0]['total_incentives'], 2) }}
-                        </td>
-                        <td></td>
-                    </tr>
+                    @if ($data?->details[0]['total_incentives'] > 0)
+                        <tr>
+                            <td style="text-align: left">{{ 'Bonus' }}</td>
+                            <td style="text-align: left">{{ number_format($data?->details[0]['total_incentives'], 2) }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    @endif
                     @foreach ($employeeDeductions as $deduction)
                         <tr>
                             <td style="text-align: left;">{{ $deduction['deduction_name'] ?? '' }}</td>

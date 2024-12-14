@@ -96,20 +96,15 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         $remainingMinutes = $totalMinutes % 60; // Get the remaining minutes
         // Format the result
         $totalSupposed = sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
-      
+
         foreach ($data as $date => $dayData) {
-
             foreach ($dayData['periods'] ?? [] as $period) {
-
-
-
                 // $arr[] = $period['period_id'];
                 $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
-
                 $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
             }
         }
-        
+
         // dd($data);
         return [
             'report_data' => $data,
