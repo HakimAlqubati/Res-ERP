@@ -86,6 +86,7 @@
                 <th>Task Title</th>
                 <th>Status</th>
                 <th>Time Spent</th>
+                <th>Progress</th>
             </tr>
         </thead>
         <tbody>
@@ -96,6 +97,7 @@
                     <td>{{ $record->task_title }}</td>
                     <td>{{ $record->task_status }}</td>
                     <td>{{ gmdate('H:i:s', $record->total_spent_seconds ?? 0) }}</td>
+                    <td>{{ $record->progress_percentage }}</td>
                 </tr>
             @endforeach
         </tbody>

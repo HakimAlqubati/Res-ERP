@@ -420,10 +420,10 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->chart(TaskWidgetChart::class)
                     
 
-                    ->maxWidth(100)
+                    ->maxWidth(80)
                     ->maxHeight(100)->alignCenter(true)
                     ->description('')
-                    ->toggleable()->hidden(),
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('title')->sortable()->wrap()->words(4)
                     ->color(Color::Blue)
                     ->size(TextColumnSize::Large)

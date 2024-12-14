@@ -392,12 +392,13 @@ class Task extends Model
         // Count the total number of steps
         $totalSteps = $this->steps()->count();
 
-        // Count the number of completed steps (is_done = true)
-        $completedSteps = $this->steps()->where('is_done', true)->count();
+
+        $completedSteps = $this->steps()->where('done', true)->count();
 
         // Calculate the percentage of completed steps
         if ($totalSteps > 0) {
-            return ($completedSteps / $totalSteps) * 100;
+            $res = ($completedSteps / $totalSteps) * 100;
+            return round($res);
         }
 
         return 0; // If there are no steps, progress is 0%

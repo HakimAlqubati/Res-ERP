@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskLog;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
@@ -126,6 +127,11 @@ class EmployeeTaskReportResource extends Resource
                     ->maxHeight(100)->alignCenter(true)
                     ->description('')->hidden()
                     ->toggleable(false),
+                TextColumn::make('progress_percentage')->label('Progress')
+                    ->getStateUsing(function ($record) {
+                        $task = Task::find($record->task_id);
+                        return $task->progress_percentage;
+                    })->alignCenter(true)->toggleable(false)->suffix('%')
             ])
             ->filters([
                 SelectFilter::make('hr_employees.branch_id')->placeholder('Branch')
@@ -198,8 +204,12 @@ class EmployeeTaskReportResource extends Resource
             ->bulkActions([
                 BulkAction::make('print')->button()->icon('heroicon-o-printer')
                     ->action(function (Collection $records) {
-                        // Fetch data for the report
-                        $data = $records;
+                        // Fetch data for the report and add progress percentage
+                        $data = $records->map(function($record) {
+                            $task = Task::find($record->task_id);
+                            $record->progress_percentage = ($task ? $task->progress_percentage : 0).'%';
+                            return $record;
+                        });
 
                         // Generate the PDF using a view
                         $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report', ['data' => $data]);

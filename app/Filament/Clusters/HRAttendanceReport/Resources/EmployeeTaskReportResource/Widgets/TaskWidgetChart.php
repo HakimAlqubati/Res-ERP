@@ -13,7 +13,7 @@ class TaskWidgetChart extends InlineChartWidget
  
     protected function getData(): array
     {
-        $task = Model::find($this->record->task_id);
+        $task = Task::find($this->record->id);
 
         if (!$task) {
             return [];
