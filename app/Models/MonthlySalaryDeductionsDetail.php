@@ -49,7 +49,7 @@ class MonthlySalaryDeductionsDetail extends Model
     }
 
     public const DEDUCTION_TYPES = [
-        self::LATE_HOUR_DEDUCTIONS => 'Late hour deduction',
+        self::LATE_HOUR_DEDUCTIONS => 'Late arrival deduction',
         self::ABSENT_DAY_DEDUCTIONS => 'Absent day deduction',
         self::ADVANCED_MONTHLY_DEDUCATION => 'Advance deduction',
         // self::TAX_DEDUCTIONS => 'MTD', 
