@@ -14,6 +14,8 @@ use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -68,23 +70,26 @@ class LeaveTypeResource extends Resource
     {
         return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Leave Type'),
-                Tables\Columns\TextColumn::make('count_days')->label('Number of Days')->alignCenter(true),
+                Tables\Columns\TextColumn::make('name')->label('Leave Type')
+                ->toggleable()
+                ,
+                Tables\Columns\TextColumn::make('count_days')->label('Number of Days')->alignCenter(true)->toggleable(),
 
-                Tables\Columns\TextColumn::make('type_label')->label('Type')->alignCenter(true),
+                Tables\Columns\TextColumn::make('type_label')->label('Type')->alignCenter(true)->toggleable(),
                 Tables\Columns\TextColumn::make('balance_period_label')->label('Accural cycle')->alignCenter(true),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->toggleable(isToggledHiddenByDefault: true)->dateTime(),
-                Tables\Columns\BooleanColumn::make('active')
+                Tables\Columns\BooleanColumn::make('active')->toggleable()
                     ->label('Active')->alignCenter(true)
                     ->boolean(),
                 Tables\Columns\BooleanColumn::make('is_paid')
-                    ->label('Active')->alignCenter(true)
+                    ->label('Is paid')->alignCenter(true)->toggleable()
                     ->boolean(),
 
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make('type')->options(LeaveType::getTypes()),
+                SelectFilter::make('balance_period')->options(LeaveType::getBalancePeriods())->label('Accural cycle'),
+            ],FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])

@@ -202,12 +202,45 @@ class EmployeeTaskReportResource extends Resource
                         );
                     }),
             ])
-            ->selectable()
+            ->selectable()->headerActions([
+                Action::make('printall')->label('Print all')->icon('heroicon-o-printer')
+                ->action(function () {
+                    $records = EmployeeTaskReportResource::getEloquentQuery()->get();
+                    // Fetch data for the report and add progress percentage
+                    $data = $records->map(function ($record) {
+                        $task = Task::find($record->task_id);
+                        $record->employee_name = $record->employee_name;
+                        $record->progress_percentage = ($task ? $task->progress_percentage : 0) . '%';
+                        return $record;
+                    });
+
+                    // Generate the PDF using a view
+                    $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report-print-all', ['data' => $data]);
+
+                    return response()->streamDownload(
+                        function () use ($pdf) {
+                            echo $pdf->output();
+                        },
+                        'employee_tasks_report.pdf',
+                        [
+                            'Content-Type' => 'application/pdf',
+                            'Charset' => 'UTF-8',
+                            'Content-Disposition' => 'inline; filename="employee_tasks_report.pdf"',
+                            'Content-Language' => 'ar',
+                            'Accept-Charset' => 'UTF-8',
+                            'Content-Encoding' => 'UTF-8',
+                            'direction' => 'rtl'
+                        ]
+                    );
+                }),
+            ])
+            ->selectCurrentPageOnly()
             ->bulkActions([
-                BulkAction::make('print')->button()->icon('heroicon-o-printer')
+                BulkAction::make('printselected')->label('Print selected')->button()->icon('heroicon-o-printer')
                     
                     // ->accessSelectedRecords()
                     ->deselectRecordsAfterCompletion()
+                    
                     ->action(function (Collection $records) {
                         
                         // Fetch data for the report and add progress percentage

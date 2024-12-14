@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Exports\EmployeesExport;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
@@ -18,6 +19,7 @@ use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -47,9 +49,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Maatwebsite\Excel\Facades\Excel;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
-
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class EmployeeResource extends Resource
@@ -573,20 +576,49 @@ class EmployeeResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
+
                 Tables\Filters\TrashedFilter::make()
                     ->visible(fn(): bool => (isSystemManager() || isSuperAdmin())),
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
+                    ->label(__('lang.branch'))->options(Branch::where('active', 1)->get()->pluck('name', 'id')->toArray()),
                 SelectFilter::make('nationality')
                     ->searchable()
                     ->multiple()
                     ->label(__('Nationality'))
                     ->options(getNationalities()),
+                SelectFilter::make('active')
+
+                    ->options([1 => 'Active', 0 => 'Inactive'])
+                    ->label('Active'),
             ], FiltersLayout::AboveContent)
+            ->headerActions([
+                ActionsAction::make('export_employees')
+                    ->label('Export to Excel')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('warning')
+                    ->action(function () {
+                        $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
+                        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EmployeesExport($data), 'employees.xlsx');
+                    }),
+                ActionsAction::make('export_employees_pdf')
+                    ->label('Print as PDF')
+                    ->icon('heroicon-o-document-text')
+                    ->color('primary')
+                    ->action(function () {
+                        $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
+                        $pdf = PDF::loadView('export.reports.hr.employees.export-employees-as-pdf', ['data' => $data]);
+                        return response()->streamDownload(function () use ($pdf) {
+                            echo $pdf->output();
+                        }, 'employees.pdf');
+                    }),
+                ActionsAction::make('import_employees')
+                    ->label('Import from Excel')
+                    ->icon('heroicon-o-document-arrow-up')
+                    ->color('success'),
+
+            ])
             ->actions([
                 ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                     ->color('info')
