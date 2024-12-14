@@ -69,32 +69,37 @@ class WorkPeriod extends Model
         return $result;
     }
 
-   
-      // Function to calculate the total supposed duration for a given number of days
-      public function calculateTotalSupposedDurationForDays(int $days)
-      {
-          // Parse start_at and end_at
-          $start = Carbon::parse($this->start_at);
-          $end = Carbon::parse($this->end_at);
-  
-          // Handle overnight shifts by adding a day if necessary
-          if ($end->lt($start)) {
-              $end->addDay();
-          }
-  
-          // Calculate total minutes for one day
-          $totalMinutesPerDay = $start->diffInMinutes($end);
-  
-          // Multiply total minutes by the number of days
-          $totalMinutes = $totalMinutesPerDay * $days;
-  
-          // Convert minutes to hours and minutes
-          $totalHours = intdiv($totalMinutes, 60);
-          $remainingMinutes = $totalMinutes % 60;
-  
-          // Return the total duration as a formatted string (e.g., 5 days as "12h 30m")
-          return sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
-      }
+
+    // Function to calculate the total supposed duration for a given number of days
+    public function calculateTotalSupposedDurationForDays(int $days)
+    {
+        // Parse start_at and end_at
+        $start = Carbon::parse($this->start_at);
+        $end = Carbon::parse($this->end_at);
+
+
+        // Handle overnight shifts by adding a day if necessary
+        if ($end->lt($start)) {
+            $end->addDay();
+        }
+
+        // Calculate total minutes for one day
+        $totalMinutesPerDay = $start->diffInMinutes($end);
+        
+
+        // Multiply total minutes by the number of days
+        $totalMinutes = $totalMinutesPerDay * $days;
+
+        return $totalMinutes;
+        // Convert minutes to hours and minutes
+        $totalHours = intdiv($totalMinutes, 60);
+        $remainingMinutes = $totalMinutes % 60;
+
+        // Return the total duration as a formatted string (e.g., 5 days as "12h 30m")
+        $result = sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
+    
+        return $result;
+    }
 
     protected static function booted()
     {
@@ -102,7 +107,7 @@ class WorkPeriod extends Model
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
-        }else if(isStuff()){
+        } else if (isStuff()) {
             // dd(auth()?->user()?->employee?->periods?->pluck('id')->toArray());
             // static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
             //     $builder->whereIn('id', auth()?->user()?->employee?->periods?->pluck('id')->toArray()); // Add your default query here

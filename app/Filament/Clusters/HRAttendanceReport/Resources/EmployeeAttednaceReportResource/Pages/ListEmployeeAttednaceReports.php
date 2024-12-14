@@ -73,27 +73,43 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
         // Initialize total counters
-        $totalSupposed = 0;
+        $totalSupposed = '0 h 0 m';
         $totalWorked = 0;
         $totalApproved = 0;
-
+        $totalMinutes = 0;
         // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
         $data = employeeAttendances($employee_id, $start_date, $end_date);
+        // dd($data);
 
-        $arr = [];
         // Calculate totals from the attendance data
         foreach ($data as $date => $dayData) {
+            $periodIds = collect($dayData['periods'])->pluck('period_id')->toArray();
+            foreach ($periodIds as $periodId) {
+
+                $totalMinutes += WorkPeriod::find($periodId)
+                    ->calculateTotalSupposedDurationForDays((count($data) - LeaveType::getMonthlyCountDaysSum()));
+            }
+            break;
+        }
+        // Now convert the total minutes to hours and minutes
+        $totalHours = intdiv($totalMinutes, 60); // Get the total hours
+        $remainingMinutes = $totalMinutes % 60; // Get the remaining minutes
+        // Format the result
+        $totalSupposed = sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
+      
+        foreach ($data as $date => $dayData) {
+
             foreach ($dayData['periods'] ?? [] as $period) {
 
-                $totalSupposed = WorkPeriod::find($period['period_id'])
-                    ->calculateTotalSupposedDurationForDays(count($data) - LeaveType::getMonthlyCountDaysSum());
-                
+
+
+                // $arr[] = $period['period_id'];
                 $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
 
                 $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
             }
         }
-        // dd($totalSupposed, $arr);
+        
         // dd($data);
         return [
             'report_data' => $data,
