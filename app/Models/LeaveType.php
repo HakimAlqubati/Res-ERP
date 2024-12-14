@@ -76,7 +76,7 @@ class LeaveType extends Model
     {
         switch ($this->type) {
             case self::TYPE_YEARLY:
-                return 'Yearly Leave';
+                return 'Annual Leave';
             case self::TYPE_MONTHLY:
                 return 'Monthly Leave';
             case self::TYPE_WEEKLY:

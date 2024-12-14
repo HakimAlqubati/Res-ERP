@@ -229,7 +229,7 @@ class EmployeeResource extends Resource
                                             ->searchable()
                                             ->required()->disabledOn('edit')
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
-                                        DatePicker::make('join_date')->columnSpan(1)->label('Start date')->nullable(),
+                                        DatePicker::make('join_date')->columnSpan(1)->label('Start date')->required(),
 
                                     ]),
                                 ]),

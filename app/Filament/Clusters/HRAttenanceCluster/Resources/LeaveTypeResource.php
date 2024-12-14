@@ -72,7 +72,7 @@ class LeaveTypeResource extends Resource
                 Tables\Columns\TextColumn::make('count_days')->label('Number of Days')->alignCenter(true),
 
                 Tables\Columns\TextColumn::make('type')->label('Type')->alignCenter(true),
-                Tables\Columns\TextColumn::make('balance_period')->label('Balance Period')->alignCenter(true),
+                Tables\Columns\TextColumn::make('balance_period')->label('Accural cycle')->alignCenter(true),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->toggleable(isToggledHiddenByDefault: true)->dateTime(),
                 Tables\Columns\BooleanColumn::make('active')
                     ->label('Active')->alignCenter(true)
