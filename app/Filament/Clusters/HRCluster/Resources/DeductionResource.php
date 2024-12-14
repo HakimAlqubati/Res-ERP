@@ -42,7 +42,7 @@ class DeductionResource extends Resource
                         Forms\Components\TextInput::make('name')->required(),
                         Select::make('condition_applied_v2')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
                             ->default(Deduction::CONDITION_APPLIED_V2_ALL),
-                        Select::make('applied_by')->live()->label('Applied by')->options(
+                        Select::make('applied_by')->live()->label('Bory by')->options(
                             Deduction::getAppliedByOptions()
                         )->default(Deduction::APPLIED_BY_EMPLOYEE),
                         TextInput::make('less_salary_to_apply')
