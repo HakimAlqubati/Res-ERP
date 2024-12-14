@@ -418,10 +418,12 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->toggleable(isToggledHiddenByDefault: false),
                     \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
                     ->chart(TaskWidgetChart::class)
+                    
+
                     ->maxWidth(100)
                     ->maxHeight(100)->alignCenter(true)
                     ->description('')
-                    ->toggleable(),
+                    ->toggleable()->hidden(),
                 Tables\Columns\TextColumn::make('title')->sortable()->wrap()->words(4)
                     ->color(Color::Blue)
                     ->size(TextColumnSize::Large)

@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\TaskLog;
+use Filament\Forms\Components\DatePicker;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 use Filament\Forms\Get;
 use Filament\Pages\SubNavigationPosition;
@@ -15,12 +16,15 @@ use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Minimum;
 
@@ -114,12 +118,14 @@ class EmployeeTaskReportResource extends Resource
 
                         return trim($formattedTime);
                     })->toggleable(isToggledHiddenByDefault: false),
-                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('last activities')
+                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
                     ->chart(TaskWidgetChart::class)
-                    ->maxWidth(350) // int, default 200
-                    ->maxHeight(90) // int, default 50
-                    ->description('description')
-                    ->toggleable(),
+
+
+                    ->maxWidth(80)
+                    ->maxHeight(100)->alignCenter(true)
+                    ->description('')->hidden()
+                    ->toggleable(false),
             ])
             ->filters([
                 SelectFilter::make('hr_employees.branch_id')->placeholder('Branch')
@@ -136,6 +142,27 @@ class EmployeeTaskReportResource extends Resource
                     ->label('Task id')->searchable()
                     ->getSearchResultsUsing(fn(string $search): array => Task::where('id', 'like', "%{$search}%")->limit(5)->pluck('id', 'id')->toArray())
                     ->getOptionLabelUsing(fn($value): ?string => Task::find($value)?->id),
+
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('created_from')
+                            ->label('From')->default(null)
+                            ->placeholder('From'),
+                        DatePicker::make('created_until')
+                            ->label('To')
+                            ->placeholder('To')->default(null),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('hr_tasks.created_at', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('hr_tasks.created_at', '<=', $date),
+                            );
+                    })
             ], FiltersLayout::AboveContent)
             ->actions([
                 Action::make('pdf')->label('PDF')
@@ -167,6 +194,32 @@ class EmployeeTaskReportResource extends Resource
                             ]
                         );
                     }),
+            ])
+            ->bulkActions([
+                BulkAction::make('print')->button()->icon('heroicon-o-printer')
+                    ->action(function (Collection $records) {
+                        // Fetch data for the report
+                        $data = $records;
+
+                        // Generate the PDF using a view
+                        $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report', ['data' => $data]);
+
+                        return response()->streamDownload(
+                            function () use ($pdf) {
+                                echo $pdf->output();
+                            },
+                            'employee_tasks_report.pdf',
+                            [
+                                'Content-Type' => 'application/pdf',
+                                'Charset' => 'UTF-8',
+                                'Content-Disposition' => 'inline; filename="employee_tasks_report.pdf"',
+                                'Content-Language' => 'ar',
+                                'Accept-Charset' => 'UTF-8',
+                                'Content-Encoding' => 'UTF-8',
+                                'direction' => 'rtl'
+                            ]
+                        );
+                    })
             ])
         ;
     }

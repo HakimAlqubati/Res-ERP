@@ -10,11 +10,10 @@ use LaraZeus\InlineChart\InlineChartWidget;
 class TaskWidgetChart extends InlineChartWidget
 {
     protected static ?string $heading = 'Chart';
-
-
+ 
     protected function getData(): array
     {
-        $task = Task::find($this->record->id);
+        $task = Model::find($this->record->task_id);
 
         if (!$task) {
             return [];
