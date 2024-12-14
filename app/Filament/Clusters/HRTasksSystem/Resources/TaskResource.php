@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeTaskReportResource\Widgets\TaskWidgetChart;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CommentsRelationManager;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskLogRelationManagerResource\RelationManagers\LogsRelationManager;
@@ -415,7 +416,12 @@ class TaskResource extends Resource implements HasShieldPermissions
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
-
+                    \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
+                    ->chart(TaskWidgetChart::class)
+                    ->maxWidth(100)
+                    ->maxHeight(100)->alignCenter(true)
+                    ->description('')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('title')->sortable()->wrap()->words(4)
                     ->color(Color::Blue)
                     ->size(TextColumnSize::Large)

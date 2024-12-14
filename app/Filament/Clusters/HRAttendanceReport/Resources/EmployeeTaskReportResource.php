@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport;
+use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeTaskReportResource\Widgets\TaskWidgetChart;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Task;
@@ -21,6 +22,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Minimum;
 
 class EmployeeTaskReportResource extends Resource
 {
@@ -42,11 +44,14 @@ class EmployeeTaskReportResource extends Resource
             ->defaultPaginationPageOption(50)
             ->emptyStateHeading('No data')->striped()
             ->columns([
-                TextColumn::make('employee_id')->label('Employee id')->searchable(isGlobal: true)->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('employee_no')->label('NO.')->searchable(isGlobal: true)->alignCenter(true),
+                TextColumn::make('employee_id')->label('Employee id')->searchable(isGlobal: true)->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('employee_no')->label('NO.')->searchable(isGlobal: true)->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('employee_name')->label('Employee name')
-                    ->searchable(isGlobal: true)->wrap(),
+                    ->searchable(isGlobal: true)->wrap()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('task_id')
                     ->tooltip(fn($record): string => $record->title . '  Task no #' . $record->id)
@@ -56,9 +61,11 @@ class EmployeeTaskReportResource extends Resource
                     // ->description('Click')
                     ->searchable()->icon('heroicon-o-eye')
                     ->label('Task id')->searchable(isGlobal: true)->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
 
                     ->url(fn($record): string => url('admin/h-r-tasks-system/tasks/' . $record->task_id . '/edit'))->openUrlInNewTab(),
                 TextColumn::make('task_title')->label('Task title')
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isGlobal: true)->wrap(),
                 TextColumn::make('task_status')->label('Status')->searchable(isGlobal: true)->alignCenter(true)
                     ->badge()->alignCenter(true)
@@ -77,35 +84,42 @@ class EmployeeTaskReportResource extends Resource
                         Task::STATUS_CLOSED => Task::COLOR_CLOSED,
                         Task::STATUS_REJECTED => Task::COLOR_REJECTED,
                         // default => 'gray', // Fallback color in case of unknown status
-                    }),
-                TextColumn::make('total_spent_seconds')->label('Time spent')->alignCenter(true)->formatStateUsing(function ($state) {
-                    if ($state === null) {
-                        return '-';
-                    }
+                    })
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('total_spent_seconds')
+                    ->label('Time spent')->alignCenter(true)->formatStateUsing(function ($state) {
+                        if ($state === null) {
+                            return '-';
+                        }
 
-                    $days = intdiv($state, 86400);
-                    $state %= 86400;
-                    $hours = intdiv($state, 3600);
-                    $state %= 3600;
-                    $minutes = intdiv($state, 60);
-                    $seconds = $state % 60;
+                        $days = intdiv($state, 86400);
+                        $state %= 86400;
+                        $hours = intdiv($state, 3600);
+                        $state %= 3600;
+                        $minutes = intdiv($state, 60);
+                        $seconds = $state % 60;
 
-                    // Format as d h m s
-                    $formattedTime = '';
-                    if ($days > 0) {
-                        $formattedTime .= sprintf("%dd ", $days);
-                    }
-                    if ($hours > 0 || $days > 0) {
-                        $formattedTime .= sprintf("%dh ", $hours);
-                    }
-                    if ($minutes > 0 || $hours > 0 || $days > 0) {
-                        $formattedTime .= sprintf("%dm ", $minutes);
-                    }
-                    $formattedTime .= sprintf("%ds", $seconds);
+                        // Format as d h m s
+                        $formattedTime = '';
+                        if ($days > 0) {
+                            $formattedTime .= sprintf("%dd ", $days);
+                        }
+                        if ($hours > 0 || $days > 0) {
+                            $formattedTime .= sprintf("%dh ", $hours);
+                        }
+                        if ($minutes > 0 || $hours > 0 || $days > 0) {
+                            $formattedTime .= sprintf("%dm ", $minutes);
+                        }
+                        $formattedTime .= sprintf("%ds", $seconds);
 
-                    return trim($formattedTime);
-                }),
-
+                        return trim($formattedTime);
+                    })->toggleable(isToggledHiddenByDefault: false),
+                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('last activities')
+                    ->chart(TaskWidgetChart::class)
+                    ->maxWidth(350) // int, default 200
+                    ->maxHeight(90) // int, default 50
+                    ->description('description')
+                    ->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('hr_employees.branch_id')->placeholder('Branch')

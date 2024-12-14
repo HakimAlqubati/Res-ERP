@@ -18,6 +18,7 @@
         "filament/tables": "^3.2",
         "hugomyb/filament-media-action": "^3.1",
         "joshembling/image-optimizer": "^1.4",
+        "lara-zeus/inline-chart": "^1.1",
         "laravel/framework": "^11.9",
         "laravel/passport": "^12.0",
         "laravel/tinker": "^2.9",

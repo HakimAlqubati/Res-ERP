@@ -80,7 +80,7 @@ class MonthSalaryResource extends Resource
 
                             // Map the months to a key-value pair with month names
                             return collect($months)->mapWithKeys(function ($month, $key) {
-                                return [$key => $month['name']]; // Using month key as the option key
+                                return [$key => $month['name'] .'-'. now()->year]; // Using month key as the option key
                             });
                         })
                         // ->searchable()
@@ -325,5 +325,16 @@ class MonthSalaryResource extends Resource
                 ->options($employeeOptions)
                 ->default(array_keys($employeeOptions)) ,
         ];
+    }
+
+
+
+    public static function canCreate(): bool
+    {
+
+        if (isSystemManager()  || isSuperAdmin() || isFinanceManager()) {
+            return true;
+        }
+        return false;
     }
 }

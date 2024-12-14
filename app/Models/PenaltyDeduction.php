@@ -129,7 +129,7 @@ class PenaltyDeduction extends Model
 
 
     // Constants for the 'deduction_type' enum values
-    const DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION = 'based_on_selected_deduction';
+    // const DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION = 'based_on_selected_deduction';
     const DEDUCTION_TYPE_FIXED_AMOUNT = 'fixed_amount';
     const DEDUCTION_TYPE_SPECIFIC_PERCENTAGE = 'specific_percentage';
 
@@ -141,7 +141,7 @@ class PenaltyDeduction extends Model
     public static function getDeductionTypeOptions()
     {
         return [
-            self::DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION => 'Based on Selected Deduction',
+            // self::DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION => 'Based on Selected Deduction',
             self::DEDUCTION_TYPE_FIXED_AMOUNT => 'Fixed Amount',
             self::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE => 'Specific Percentage',
         ];

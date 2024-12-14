@@ -324,10 +324,9 @@ class EmployeeResource extends Resource
                                 Grid::make()->label('')->columns(4)->schema([
                                     TextInput::make('salary')
                                         ->numeric()
-
                                         ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
                                     TextInput::make('tax_identification_number')
-                                        ->label('Tax Identification Number(TIN)')
+                                        ->label('Tax Identification Number(TIN)')->required()
                                         ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
                                             || ($get('has_employee_pass') == 1)
                                         ))

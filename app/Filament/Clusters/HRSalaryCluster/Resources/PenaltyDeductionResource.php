@@ -64,8 +64,9 @@ class PenaltyDeductionResource extends Resource
                             } else {
                                 $defaultAmount = $deduction->amount;
                             }
-                            $set('penalty_amount', $defaultAmount);
-                            $set('deduction_type', PenaltyDeduction::DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION);
+                            // $set('penalty_amount', $defaultAmount);
+                            $set('penalty_amount', 0);
+                            $set('deduction_type', PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT);
                         })
                         ->options(Deduction::penalty()->get()->pluck('name', 'id'))
                         ->required(),
@@ -74,7 +75,7 @@ class PenaltyDeductionResource extends Resource
 
                     DatePicker::make('date')->label('Date')->default(now()->toDateString())->maxDate(now()->toDateString()),
                     Forms\Components\Select::make('deduction_type')
-                        ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION)
+                        ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT)
                         ->required()
                         ->live()
                         ->afterStateUpdated(function ($set, $get, $state) {

@@ -39,12 +39,17 @@ class DeductionResource extends Resource
             ->schema([
                 Fieldset::make()->columns(4)
                     ->label('')->schema([
-                        Forms\Components\TextInput::make('name')->required(),
-                        Select::make('condition_applied_v2')->live()->label('Condition applied')->options(Deduction::getConditionAppliedV2Options())
-                            ->default(Deduction::CONDITION_APPLIED_V2_ALL),
+                        Forms\Components\TextInput::make('name')->required()
+                            ->columnSpan(fn($get): int => $get('is_penalty') ? 4 : 1),
+                        Select::make('condition_applied_v2')->live()
+                            ->label('Condition applied')
+                            ->options(Deduction::getConditionAppliedV2Options())
+                            ->default(Deduction::CONDITION_APPLIED_V2_ALL)
+                            ->hidden(fn($get): bool => $get('is_penalty')),
                         Select::make('applied_by')->live()->label('Bory by')->options(
                             Deduction::getAppliedByOptions()
-                        )->default(Deduction::APPLIED_BY_EMPLOYEE),
+
+                        )->default(Deduction::APPLIED_BY_EMPLOYEE)->hidden(fn($get): bool => $get('is_penalty')),
                         TextInput::make('less_salary_to_apply')
                             ->label('Less salary to apply')->numeric()
                             // ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)
@@ -53,37 +58,44 @@ class DeductionResource extends Resource
                         Forms\Components\TextInput::make('description')->columnSpan(4),
                     ]),
                 Fieldset::make()->label('')->columns(6)->schema([
-                    Forms\Components\Toggle::make('is_penalty')->default(false),
+                    Forms\Components\Toggle::make('is_penalty')
+                        ->live()
+                        ->default(false),
 
                     Forms\Components\Toggle::make('is_specific')->default(false)
-                        ->helperText('This means for specific employee or for general'),
+                        ->helperText('This means for specific employee or for general')
+                        ->hidden(fn($get): bool => $get('is_penalty')),
                     Forms\Components\Toggle::make('active')->default(true),
-                    Forms\Components\Toggle::make('has_brackets')->default(false)->live(),
+                    Forms\Components\Toggle::make('has_brackets')->default(false)->live()
+                        ->hidden(fn($get): bool => $get('is_penalty')),
                     Radio::make('is_percentage')->label('')->live()
                         ->helperText('Set deduction as a salary percentage or fixed amount')->options([
                             'is_percentage' => 'Is percentage',
                             'is_amount' => 'Is amount',
-                        ])->default('is_amount'),
+                        ])->default('is_amount')
+                        ->hidden(fn($get): bool => $get('is_penalty')),
 
-                    Grid::make()->schema([
+                    Grid::make()
+                        ->hidden(fn($get): bool => $get('is_penalty'))
+                        ->schema([
 
-                        TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
-                            ->suffixIcon('heroicon-o-calculator')
-                            ->suffixIconColor('success'),
-                        TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
-                            ->suffixIcon('heroicon-o-percent-badge')
-                            ->suffixIconColor('success'),
-                        TextInput::make('employer_amount')
-                            ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
-                            ->numeric()
-                            ->suffixIcon('heroicon-o-calculator')
-                            ->suffixIconColor('success'),
-                        TextInput::make('employer_percentage')
-                            ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
-                            ->numeric()
-                            ->suffixIcon('heroicon-o-percent-badge')
-                            ->suffixIconColor('success'),
-                    ]),
+                            TextInput::make('amount')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount'))->numeric()
+                                ->suffixIcon('heroicon-o-calculator')
+                                ->suffixIconColor('success'),
+                            TextInput::make('percentage')->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage'))->numeric()
+                                ->suffixIcon('heroicon-o-percent-badge')
+                                ->suffixIconColor('success'),
+                            TextInput::make('employer_amount')
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_amount') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
+                                ->numeric()
+                                ->suffixIcon('heroicon-o-calculator')
+                                ->suffixIconColor('success'),
+                            TextInput::make('employer_percentage')
+                                ->visible(fn(Get $get): bool => ($get('is_percentage') == 'is_percentage') && (in_array($get('applied_by'), [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])))
+                                ->numeric()
+                                ->suffixIcon('heroicon-o-percent-badge')
+                                ->suffixIconColor('success'),
+                        ]),
                     // Tax Brackets Repeater
                     Repeater::make('brackets')  // The relationship field for Deduction Brackets
                         ->label('Tax Brackets')

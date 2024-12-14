@@ -28,11 +28,11 @@ class Task extends Model
     const COLOR_IN_PROGRESS = 'info';
     const COLOR_CLOSED = 'success';
 
-    const ICON_NEW = 'heroicon-o-plus-circle';           
-    const ICON_REJECTED = 'heroicon-m-backspace';         
-    const ICON_PENDING = 'heroicon-o-clock';             
-    const ICON_IN_PROGRESS = 'heroicon-o-arrow-right-circle'; 
-    const ICON_CLOSED = 'heroicon-o-check-circle';   
+    const ICON_NEW = 'heroicon-o-plus-circle';
+    const ICON_REJECTED = 'heroicon-m-backspace';
+    const ICON_PENDING = 'heroicon-o-clock';
+    const ICON_IN_PROGRESS = 'heroicon-o-arrow-right-circle';
+    const ICON_CLOSED = 'heroicon-o-check-circle';
     protected $fillable = [
         'title',
         'description',
@@ -52,7 +52,7 @@ class Task extends Model
     ];
 
 
-     /**
+    /**
      * Get possible next statuses based on the current status
      *
      * @return array
@@ -65,18 +65,18 @@ class Task extends Model
                     // self::STATUS_PENDING => 'Pending',
                     self::STATUS_IN_PROGRESS => 'In Progress',
                 ];
-            // case self::STATUS_PENDING:
-            //     return [
-            //         self::STATUS_IN_PROGRESS => 'In Progress',
-            //     ];
+                // case self::STATUS_PENDING:
+                //     return [
+                //         self::STATUS_IN_PROGRESS => 'In Progress',
+                //     ];
             case self::STATUS_IN_PROGRESS:
                 return [
                     self::STATUS_CLOSED => 'Closed',
                 ];
-                case self::STATUS_REJECTED:
-                    return [
-                        self::STATUS_IN_PROGRESS => 'In progress',
-                    ];
+            case self::STATUS_REJECTED:
+                return [
+                    self::STATUS_IN_PROGRESS => 'In progress',
+                ];
             default:
                 return []; // No transitions available for final statuses
         }
@@ -114,20 +114,8 @@ class Task extends Model
         return $this->hasOne(TaskRating::class, 'task_id');
     }
 
-    
 
-    public function menus()
-    {
-        return $this->belongsToMany(TasksMenu::class, 'hr_tasks_menus')
-        // ->withPivot('price')
-        ;
-    }
 
-    // Define the relationship to TasksMenu through the TasksMenus pivot table
-    public function taskMenus()
-    {
-        return $this->hasManyThrough(TasksMenu::class, TasksMenus::class, 'task_id', 'id', 'id', 'menu_task_id');
-    }
     // Add this array to map all statuses for easier usage
     public static function getStatuses()
     {
@@ -167,7 +155,6 @@ class Task extends Model
     {
         // return $this->hasMany(TaskStep::class,'task_id');
         return $this->morphMany(TaskStep::class, 'morphable');
-
     }
 
     public function getStepCountAttribute()
@@ -181,10 +168,10 @@ class Task extends Model
     }
 
     protected static function booted()
-    { 
+    {
         // parent::boot();
-      
-    //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
+
+        //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
         if (auth()->check()) {
             if (isBranchManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
@@ -197,15 +184,13 @@ class Task extends Model
             } elseif (isFinanceManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                     $builder->where('assigned_to', auth()->user()->employee->id)
-                    ->orWhere('assigned_by',auth()->user()->id)->orWhere('created_by',auth()->user()->id)
+                        ->orWhere('assigned_by', auth()->user()->id)->orWhere('created_by', auth()->user()->id)
                     ; // Add your default query here
                 });
             }
             static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $builder->where('is_daily',0)
-                ;
+                $builder->where('is_daily', 0);
             });
-            
         }
     }
 
@@ -241,11 +226,11 @@ class Task extends Model
         }
     }
 
-      // Define a hasMany relationship with TaskLog
-      public function logs()
-      {
-          return $this->hasMany(TaskLog::class, 'task_id');
-      }
+    // Define a hasMany relationship with TaskLog
+    public function logs()
+    {
+        return $this->hasMany(TaskLog::class, 'task_id');
+    }
 
 
     /**
@@ -273,28 +258,28 @@ class Task extends Model
             throw new \InvalidArgumentException("Invalid log type: {$logType}");
         }
 
-         // Check if this is a "moved" log to calculate time difference
+        // Check if this is a "moved" log to calculate time difference
         $totalHoursTaken = null;
         // if ($logType === TaskLog::TYPE_MOVED || $logType == TaskLog::TYPE_REJECTED) {
-        if (in_array($logType ,[TaskLog::TYPE_MOVED ,TaskLog::TYPE_REJECTED]) && $this->status != Task::STATUS_CLOSED) {
+        if (in_array($logType, [TaskLog::TYPE_MOVED, TaskLog::TYPE_REJECTED]) && $this->status != Task::STATUS_CLOSED) {
             // Get the last "moved" log for this task, ordered by creation time
             $lastMovedLog = $this->logs()
-            ->where(function ($query) {
-                $query->where('log_type', TaskLog::TYPE_MOVED)
-                      ->orWhere('log_type', TaskLog::TYPE_REJECTED);
-            })
-            ->latest()
-            ->first();
+                ->where(function ($query) {
+                    $query->where('log_type', TaskLog::TYPE_MOVED)
+                        ->orWhere('log_type', TaskLog::TYPE_REJECTED);
+                })
+                ->latest()
+                ->first();
 
             if ($lastMovedLog) {
                 // Calculate the difference in hours and minutes
                 $timeDifference = now()->diff($lastMovedLog->created_at);
                 $totalHoursTaken = $timeDifference->format('%H:%I:%S');
-                
-    
-               // Update the total_hours_taken field of the previous log
-               $lastMovedLog->update([
-                'total_hours_taken' => $totalHoursTaken,
+
+
+                // Update the total_hours_taken field of the previous log
+                $lastMovedLog->update([
+                    'total_hours_taken' => $totalHoursTaken,
                 ]);
             }
         }
@@ -309,92 +294,112 @@ class Task extends Model
         ]);
     }
 
-    public static function canReject(){
-    if(isBranchManager()){
-        return true;
+    public static function canReject()
+    {
+        if (isBranchManager()) {
+            return true;
+        }
+        return false;
     }
-    return false;
+
+    // Accessor to check if all steps for the task are done
+    public function getIsAllDoneAttribute(): bool
+    {
+        // Check if all related TaskSteps are marked as done
+        return $this->steps()->where('done', false)->count() === 0;
     }
 
-      // Accessor to check if all steps for the task are done
-      public function getIsAllDoneAttribute(): bool
-      {
-          // Check if all related TaskSteps are marked as done
-          return $this->steps()->where('done', false)->count() === 0 ;
-      }
 
+    public function getTotalSpentTimeAttribute(): string
+    {
+        $totalSeconds = 0;
 
-      public function getTotalSpentTimeAttribute(): string
-      {
-          $totalSeconds = 0;
-      
-          // Loop through each TaskLog and accumulate time in seconds
-          foreach ($this->logs as $log) {
-            
-            $details =  json_decode($log->details,true);
+        // Loop through each TaskLog and accumulate time in seconds
+        foreach ($this->logs as $log) {
+
+            $details =  json_decode($log->details, true);
             // if (is_array($details) && array_key_exists('to', $details) && $details['to'] != Task::STATUS_CLOSED) {
             //     continue;
             // }
 
-              // Skip if the task is closed
+            // Skip if the task is closed
             if (is_array($details) && array_key_exists('to', $details) && $details['to'] === Task::STATUS_CLOSED) {
                 continue;
             }
-            if(in_array($log->log_type,[TaskLog::TYPE_MOVED,TaskLog::TYPE_REJECTED])) {
-             
+            if (in_array($log->log_type, [TaskLog::TYPE_MOVED, TaskLog::TYPE_REJECTED])) {
+
                 if ($log->total_hours_taken) {
-                  // Convert each time entry from HH:MM:SS format to seconds
-                  list($hours, $minutes, $seconds) = explode(':', $log->total_hours_taken);
-                  $totalSeconds += ($hours * 3600) + ($minutes * 60) + $seconds;
+                    // Convert each time entry from HH:MM:SS format to seconds
+                    list($hours, $minutes, $seconds) = explode(':', $log->total_hours_taken);
+                    $totalSeconds += ($hours * 3600) + ($minutes * 60) + $seconds;
                 }
             }
-          }
-          
-      
-          // Calculate days, hours, minutes, and seconds
-          $days = intdiv($totalSeconds, 86400);
-          $totalSeconds %= 86400;
-          $hours = intdiv($totalSeconds, 3600);
-          $totalSeconds %= 3600;
-          $minutes = intdiv($totalSeconds, 60);
-          $seconds = $totalSeconds % 60;
-      
-          // Format as d h m s
-          $formattedTime = '';
-          if ($days > 0) {
-              $formattedTime .= sprintf("%dd ", $days);
-          }
-          if ($hours > 0 || $days > 0) {
-              $formattedTime .= sprintf("%dh ", $hours);
-          }
-          if ($minutes > 0 || $hours > 0 || $days > 0) {
-              $formattedTime .= sprintf("%dm ", $minutes);
-          }
-          $formattedTime .= sprintf("%ds", $seconds);
-      
-          return trim($formattedTime);
-      }
+        }
 
-      public function getMoveCountAttribute(): int
-      {
-          // Count the number of logs where log_type is TYPE_MOVED
-          return $this->logs()->where('log_type', TaskLog::TYPE_MOVED)->count();
-      }
-      public function getRejectionCountAttribute(): int
-      {
-          // Count the number of logs where log_type is TYPE_MOVED
-          return $this->logs()->where('log_type', TaskLog::TYPE_REJECTED)->count();
-      }
-      public static function countMovesToStatus(int $taskId, string $status): int
-      {
-          return TaskLog::where('task_id', $taskId)
-              ->where('log_type', TaskLog::TYPE_MOVED)
-              ->whereJsonContains('details->to', $status)
-              ->count();
-      }
 
-      public function taskCards()
-      {
-          return $this->hasMany(TaskCard::class, 'task_id');
-      }
+        // Calculate days, hours, minutes, and seconds
+        $days = intdiv($totalSeconds, 86400);
+        $totalSeconds %= 86400;
+        $hours = intdiv($totalSeconds, 3600);
+        $totalSeconds %= 3600;
+        $minutes = intdiv($totalSeconds, 60);
+        $seconds = $totalSeconds % 60;
+
+        // Format as d h m s
+        $formattedTime = '';
+        if ($days > 0) {
+            $formattedTime .= sprintf("%dd ", $days);
+        }
+        if ($hours > 0 || $days > 0) {
+            $formattedTime .= sprintf("%dh ", $hours);
+        }
+        if ($minutes > 0 || $hours > 0 || $days > 0) {
+            $formattedTime .= sprintf("%dm ", $minutes);
+        }
+        $formattedTime .= sprintf("%ds", $seconds);
+
+        return trim($formattedTime);
+    }
+
+    public function getMoveCountAttribute(): int
+    {
+        // Count the number of logs where log_type is TYPE_MOVED
+        return $this->logs()->where('log_type', TaskLog::TYPE_MOVED)->count();
+    }
+    public function getRejectionCountAttribute(): int
+    {
+        // Count the number of logs where log_type is TYPE_MOVED
+        return $this->logs()->where('log_type', TaskLog::TYPE_REJECTED)->count();
+    }
+    public static function countMovesToStatus(int $taskId, string $status): int
+    {
+        return TaskLog::where('task_id', $taskId)
+            ->where('log_type', TaskLog::TYPE_MOVED)
+            ->whereJsonContains('details->to', $status)
+            ->count();
+    }
+
+    public function taskCards()
+    {
+        return $this->hasMany(TaskCard::class, 'task_id');
+    }
+
+    /**
+     * to get progress percentage of the task
+     */
+    public function getProgressPercentageAttribute(): float
+    {
+        // Count the total number of steps
+        $totalSteps = $this->steps()->count();
+
+        // Count the number of completed steps (is_done = true)
+        $completedSteps = $this->steps()->where('is_done', true)->count();
+
+        // Calculate the percentage of completed steps
+        if ($totalSteps > 0) {
+            return ($completedSteps / $totalSteps) * 100;
+        }
+
+        return 0; // If there are no steps, progress is 0%
+    }
 }
