@@ -67,25 +67,22 @@
 <body>
     <header>
         <div class="company-info">
-            <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo"
-                style="width: 100px; height: auto;" class="logo-left">
+            <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo" style="width: 100px; height: auto;" class="logo-left">
             <div class="company-details">
                 <h1>{{ setting('company_name') }}</h1>
                 <p>{{ setting('address') }}</p>
                 <p>{{ setting('company_phone') }}</p>
             </div>
-            <img src="{{ url('/storage/logo/default.png') }}" alt="Company Logo" style="width: 100px; height: auto;"
-                class="logo-right">
+            <img src="{{ url('/storage/logo/default.png') }}" alt="Company Logo" style="width: 100px; height: auto;" class="logo-right">
         </div>
         <h2>Employee Task Report</h2>
-        <h3> {{ $data[0]->employee_name ?? '' }} </h3>
     </header>
 
     <table>
         <thead>
             <tr>
 
-                <th>Task ID</th>
+                <th>Employee</th>
                 <th>Task Title</th>
                 <th>Status</th>
                 <th>Time Spent</th>
@@ -96,7 +93,7 @@
             @foreach ($data as $record)
                 <tr>
 
-                    <td>{{ $record->task_id }}</td>
+                    <td>{{ $record->employee_name }}</td>
                     <td>{{ $record->task_title }}</td>
                     <td>{{ $record->task_status }}</td>
                     <td>{{ gmdate('H:i:s', $record->total_spent_seconds ?? 0) }}</td>

@@ -25,7 +25,8 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Collection;
+
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Minimum;
 
@@ -201,13 +202,19 @@ class EmployeeTaskReportResource extends Resource
                         );
                     }),
             ])
+            ->selectable()
             ->bulkActions([
                 BulkAction::make('print')->button()->icon('heroicon-o-printer')
+                    
+                    // ->accessSelectedRecords()
+                    ->deselectRecordsAfterCompletion()
                     ->action(function (Collection $records) {
+                        
                         // Fetch data for the report and add progress percentage
-                        $data = $records->map(function($record) {
+                        $data = $records->map(function ($record) {
                             $task = Task::find($record->task_id);
-                            $record->progress_percentage = ($task ? $task->progress_percentage : 0).'%';
+                            $record->employee_name = $record->employee_name;
+                            $record->progress_percentage = ($task ? $task->progress_percentage : 0) . '%';
                             return $record;
                         });
 
