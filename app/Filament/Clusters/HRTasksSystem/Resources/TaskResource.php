@@ -7,6 +7,7 @@ use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResour
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskLogRelationManagerResource\RelationManagers\LogsRelationManager;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages\EditTask;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers\StepsRelationManager;
 use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
@@ -120,8 +121,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->default(auth()->user()->id)
                             ->columnSpan(2)
                             ->options(User::select('name', 'id')
-                            // ->whereIn('user_type',[1,2,3])
-                            ->get()->pluck('name', 'id'))->searchable()
+                                // ->whereIn('user_type',[1,2,3])
+                                ->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
                         Forms\Components\Select::make('assigned_to')
                             ->label('Assign to')
@@ -132,8 +133,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->selectablePlaceholder(false),
                         Toggle::make('is_daily')->live()->default(0)->label('Scheduled task?')
                             ->disabledOn('edit')
-                            ->hidden(fn(): bool => isStuff())
-                        ,
+                            ->hidden(fn(): bool => isStuff()),
 
                     ]),
                     Fieldset::make()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
@@ -156,8 +156,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                         $set('end_date', date('Y-m-d', strtotime('+9 days')));
                                         $set('recur_count', 7);
                                     }
-                                })
-                            ,
+                                }),
                             Grid::make()->columns(1)->columnSpan(1)->schema([
                                 DatePicker::make('start_date')
                                     ->default(date('Y-m-d', strtotime('+1 days')))
@@ -167,8 +166,55 @@ class TaskResource extends Resource implements HasShieldPermissions
                                     ->displayFormat('d/m/Y')
                                     ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
-                                    $date1 = new \DateTime($state);
-                                    $date2 = new \DateTime($get('end_date'));
+                                        $date1 = new \DateTime($state);
+                                        $date2 = new \DateTime($get('end_date'));
+
+                                        $interval = $date1->diff($date2);
+
+                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+
+                                            $set('recur_count', $interval->days + 2);
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            $weeks = floor($interval->days / 7);
+                                            $set('recur_count', $weeks);
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            $months = ($interval->y * 12) + $interval->m;
+                                            $set('recur_count', $months);
+                                        }
+                                    }),
+                                TextInput::make('recur_count')
+                                    ->default(7)
+                                    ->label(function (Get $get) {
+                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                            return 'Number of days';
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            return 'Number of weeks';
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            return 'Number of months';
+                                        }
+                                    })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                            $state += 1;
+                                            // $state= (integer) $state;
+                                            $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            $set('end_date', date('Y-m-d', strtotime("+$state months")));
+                                        }
+                                    })->required(),
+                            ]),
+                            DatePicker::make('end_date')
+                                ->native(false)
+                                ->displayFormat('d/m/Y')
+
+                                ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)
+                                // ->minDate(date('Y-m-d'))
+                                ->minDate(fn(Get $get) => $get('start_date') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
+                                ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
+
+                                    $date1 = new \DateTime($get('start_date'));
+                                    $date2 = new \DateTime($state);
 
                                     $interval = $date1->diff($date2);
 
@@ -182,62 +228,9 @@ class TaskResource extends Resource implements HasShieldPermissions
                                         $months = ($interval->y * 12) + $interval->m;
                                         $set('recur_count', $months);
                                     }
-                                })
-                                ,
-                                TextInput::make('recur_count')
-                                    ->default(7)
-                                    ->label(function (Get $get) {
-                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                            return 'Number of days';
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                            return 'Number of weeks';
-                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                            return 'Number of months';
-                                        }
+                                }),
 
-                                    })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        $state += 1;
-                                        // $state= (integer) $state;
-                                        $set('end_date', date('Y-m-d', strtotime("+$state days")));
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                        $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                        $set('end_date', date('Y-m-d', strtotime("+$state months")));
-                                    }
-
-                                })->required(),
-                            ]),
-                            DatePicker::make('end_date')
-                                ->native(false)
-                                ->displayFormat('d/m/Y')
-                                
-                                ->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)
-                                // ->minDate(date('Y-m-d'))
-                                ->minDate(fn (Get $get) => $get('start_date') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
-                                ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
-
-                                $date1 = new \DateTime($get('start_date'));
-                                $date2 = new \DateTime($state);
-
-                                $interval = $date1->diff($date2);
-
-                                if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-
-                                    $set('recur_count', $interval->days + 2);
-                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                    $weeks = floor($interval->days / 7);
-                                    $set('recur_count', $weeks);
-                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                    $months = ($interval->y * 12) + $interval->m;
-                                    $set('recur_count', $months);
-                                }
-                            })
-                            ,
-
-                        ])
-
-                        ,
+                        ]),
                         Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
                                 Grid::make()->label('')->columns(2)->schema([
@@ -251,8 +244,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
                                 Grid::make()->label('')->columns(2)->schema([
-                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required()
-                                    ,
+                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
                                     ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
                                 ]),
                             ]),
@@ -274,7 +266,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                                             'second' => 'second',
                                             'third' => 'third',
                                             'fourth' => 'fourth',
-                                            'fifth' => 'fifth'])->default('first'),
+                                            'fifth' => 'fifth'
+                                        ])->default('first'),
                                         Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
                                     ]),
                                 ]),
@@ -283,7 +276,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ]),
 
                     Forms\Components\Textarea::make('description')
-                    // ->required()
+                        // ->required()
                         ->disabledOn('edit')
                         ->maxLength(65535)
                         ->columnSpanFull(),
@@ -292,13 +285,13 @@ class TaskResource extends Resource implements HasShieldPermissions
                         DatePicker::make('due_date')->label('Due date')->required(false)
                             ->native(false)
                             ->displayFormat('d/m/Y')->disabled(function ($record) {
-                            if (isset($record, auth()->user()->employee)) {
-                                if ($record->assigned_to == auth()->user()->employee->id) {
-                                    return true;
+                                if (isset($record, auth()->user()->employee)) {
+                                    if ($record->assigned_to == auth()->user()->employee->id) {
+                                        return true;
+                                    }
                                 }
-                            }
-                            return false;
-                        })->minDate(now()->toDateString())
+                                return false;
+                            })->minDate(now()->toDateString())
                             ->helperText('Set due date for this task'),
                         Select::make('task_status')->options(
                             [
@@ -309,15 +302,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ]
                         )->default(Task::STATUS_NEW)
                             ->disabledOn('create')
-                            ->disabled()
-                        ,
+                            ->disabled(),
 
                     ]),
                     Hidden::make('created_by')->default(auth()->user()->id),
                     Hidden::make('updated_by')->default(auth()->user()->id),
 
                     Fieldset::make('task_rating')->relationship('task_rating')
-                    // ->hiddenOn('create')
+                        // ->hiddenOn('create')
                         ->hidden(function ($record) {
                             if (isset($record)) {
                                 if ($record->task_status != Task::STATUS_CLOSED) {
@@ -335,22 +327,22 @@ class TaskResource extends Resource implements HasShieldPermissions
                         })
                         ->visibleOn('edit')
                         ->label('')->schema([
-                        Rating::make('rating_value')
-                            ->theme(RatingTheme::HalfStars)
-                            ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                            ->helperText(function ($record) {
+                            Rating::make('rating_value')
+                                ->theme(RatingTheme::HalfStars)
+                                ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                                ->helperText(function ($record) {
 
-                                if (is_null($record?->rating_value)) {
-                                    return 'Rate this from 0 to 10';
-                                } else {
-                                    return "Your rating:" . $record->rating_value . "/10";
-                                }
-                            })
-                            ->live()
-                            ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                                $component->helperText("Your rating: $state/10");
-                            }),
-                    ])->hidden(),
+                                    if (is_null($record?->rating_value)) {
+                                        return 'Rate this from 0 to 10';
+                                    } else {
+                                        return "Your rating:" . $record->rating_value . "/10";
+                                    }
+                                })
+                                ->live()
+                                ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                                    $component->helperText("Your rating: $state/10");
+                                }),
+                        ])->hidden(),
 
                     FileUpload::make('file_path')
                         ->label('Add photos')
@@ -362,7 +354,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ->image()
                         ->resize(5)
                         ->loadingIndicatorPosition('left')
-                    // ->panelAspectRatio('2:1')
+                        // ->panelAspectRatio('2:1')
                         ->panelLayout('integrated')
                         ->removeUploadedFileButtonPosition('right')
                         ->uploadButtonPosition('left')
@@ -416,9 +408,9 @@ class TaskResource extends Resource implements HasShieldPermissions
             ->columns([
                 Tables\Columns\TextColumn::make('id')->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
-                    \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
+                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
                     ->chart(TaskWidgetChart::class)
-                    
+
 
                     ->maxWidth(80)
                     ->maxHeight(100)->alignCenter(true)
@@ -474,10 +466,10 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                 // Tables\Columns\TextColumn::make('photos_count')
 
-                    // ->icon('heroicon-o-camera')
+                // ->icon('heroicon-o-camera')
 
-                    // ->toggleable(isToggledHiddenByDefault: false)
-                    // ,
+                // ->toggleable(isToggledHiddenByDefault: false)
+                // ,
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -486,14 +478,14 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    TextColumn::make('total_spent_time')
-                    ->label('Time Spent')->toggleable(isToggledHiddenByDefault:true)
+                TextColumn::make('total_spent_time')
+                    ->label('Time Spent')->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(true)
-                    ->formatStateUsing(fn ($state) => $state ?? 'N/A'), 
-                    TextColumn::make('rejection_count')
-                    ->label('Rejection times')->toggleable(isToggledHiddenByDefault:true)
+                    ->formatStateUsing(fn($state) => $state ?? 'N/A'),
+                TextColumn::make('rejection_count')
+                    ->label('Rejection times')->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(true)
-          
+
             ])
             ->filters([
                 SelectFilter::make('task_status')->label('Status')->multiple()->options(
@@ -525,7 +517,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->modalWidth('lg') // Adjust modal size
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
-                // ->iconButton()
+                    // ->iconButton()
                     ->button()
                     ->icon('heroicon-o-camera')
                     ->modalContent(function ($record) {
@@ -537,7 +529,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
                         // if ($record->task_status == Task::STATUS_CLOSED) {
-                        if (in_array($record->task_status,[Task::STATUS_REJECTED, Task::STATUS_CLOSED]) ) {
+                        if (in_array($record->task_status, [Task::STATUS_REJECTED, Task::STATUS_CLOSED])) {
                             return true;
                         }
                         if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
@@ -601,7 +593,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
 
-                        if(!$record->task_status != Task::STATUS_REJECTED){
+                        if (!$record->task_status != Task::STATUS_REJECTED) {
                             return true;
                         }
                         // // if (!isSystemManager() && !isSuperAdmin() ||
@@ -620,20 +612,21 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return false;
                     })
                     ->fillForm(
-                        fn(Task $record): array=> [
+                        fn(Task $record): array => [
                             'task_employee' => $record->assigned->name,
                             // 'task_rating.employee_id' => $record->assigned_to,
                         ]
                     )
-                    ->visible(function($record){
-                        if($record->task_status == Task::STATUS_CLOSED 
-                        && ($record->assigned_by == auth()->user()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
-                         ){
+                    ->visible(function ($record) {
+                        if (
+                            $record->task_status == Task::STATUS_CLOSED
+                            && ($record->assigned_by == auth()->user()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
+                        ) {
                             return true;
                         }
                         return false;
                     })
-                // ->requiresConfirmation()
+                    // ->requiresConfirmation()
                     ->form(function ($record) {
                         // dd($record->assigned->name);
                         return [
@@ -662,9 +655,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                     ->live()
                                     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
                                         $component->helperText("Your rating: $state/10");
-                                    })
-
-                                ,
+                                    }),
                                 // TextInput::make('user')->default($record->assigned->name)->disabled()->label('Task employee'),
 
                                 Textarea::make('comment')->columnSpanFull(),
@@ -678,41 +669,41 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-m-star')
                     ->color('info'),
                 Action::make('MoveTask')
-                ->button()->requiresConfirmation()
+                    ->button()->requiresConfirmation()
                     ->hidden(function ($record) {
                         if ($record->is_daily) {
                             return true;
                         }
                         return false;
                     })
-                    ->label(function($record){
-                        if($record->task_status == Task::STATUS_CLOSED){
+                    ->label(function ($record) {
+                        if ($record->task_status == Task::STATUS_CLOSED) {
                             return 'Closed';
-                        } elseif($record->task_status == Task::STATUS_REJECTED){
+                        } elseif ($record->task_status == Task::STATUS_REJECTED) {
                             return 'Reopen';
-                        }else{
+                        } else {
                             return 'Move task';
                         }
                     })
                     // ->icon(fn($record): string => $record->task_status == Task::STATUS_CLOSED ? 'heroicon-m-check-badge' : 'heroicon-m-arrows-right-left')
-                 ->icon(function($record){
-                    if($record->task_status == Task::STATUS_CLOSED){
-                        return 'heroicon-m-check-badge';
-                    }elseif($record->task_status == Task::STATUS_REJECTED){
-                        return 'heroicon-m-lock-open';
-                    }else {
-                        return 'heroicon-m-arrows-right-left';
-                    }
-                 })
+                    ->icon(function ($record) {
+                        if ($record->task_status == Task::STATUS_CLOSED) {
+                            return 'heroicon-m-check-badge';
+                        } elseif ($record->task_status == Task::STATUS_REJECTED) {
+                            return 'heroicon-m-lock-open';
+                        } else {
+                            return 'heroicon-m-arrows-right-left';
+                        }
+                    })
                     // ->color(fn($record): string => ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) ? 'gray' : 'success')
-                    ->color(function($record){
+                    ->color(function ($record) {
                         // if($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW){
-                        if($record->task_status == Task::STATUS_CLOSED || $record->views == 0){
+                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0) {
                             return 'gray';
                         } else {
                             return 'success';
                         }
-                     })
+                    })
                     ->form(function () {
                         return [
                             Fieldset::make()->columns(2)->schema([
@@ -736,15 +727,15 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                     ->databaseTransaction()
                     ->action(function ($record) {
-                        
+
                         // dd($record->steps->update(['done'=>1]));
                         DB::beginTransaction();
                         try {
                             $currentStatus = $record->task_status;
                             $nextStatus = implode(', ', array_keys($record->getNextStatuses()));
                             $record->update(['task_status' => $nextStatus]);
-                            if($nextStatus == Task::STATUS_CLOSED){
-                                $record->steps()->update(['done'=>1]);
+                            if ($nextStatus == Task::STATUS_CLOSED) {
+                                $record->steps()->update(['done' => 1]);
                             }
                             $record->createLog(
                                 createdBy: auth()->id(), // ID of the user performing the action
@@ -760,7 +751,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->body("Task successfully moved to {$nextStatus}")
                                 ->success()
                                 ->send();
-                                DB::commit();
+                            DB::commit();
                         } catch (\Throwable $th) {
                             //throw $th;
 
@@ -769,32 +760,32 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->body('There was an error moving the task. Please try again.')
                                 ->danger()
                                 ->send();
-                                DB::rollBack();
+                            DB::rollBack();
                         }
                         // Add a log entry for the "moved" action
                     })
                     ->disabled(function ($record) {
                         // if ($record->task_status == Task::STATUS_CLOSED || $record->task_status == Task::STATUS_NEW) {
-                        if ($record->task_status == Task::STATUS_CLOSED || $record->views == 0 
-                        // || ($record->task_status && !$record->is_all_done)
-                       || ($record->task_status == Task::STATUS_REJECTED && $record->rejection_count == setting('task_rejection_times_red_card'))
+                        if (
+                            $record->task_status == Task::STATUS_CLOSED || $record->views == 0
+                            // || ($record->task_status && !$record->is_all_done)
+                            || ($record->task_status == Task::STATUS_REJECTED && $record->rejection_count == setting('task_rejection_times_red_card'))
                         ) {
                             return true;
                         }
                         return false;
-                    })
-                ,
+                    }),
 
                 Action::make('AddComment')->button()
                     ->hidden(function ($record) {
                         if ($record->is_daily) {
                             return true;
                         }
-                        if($record->task_status == Task::STATUS_CLOSED && auth()->user()?->employee?->id){
+                        if ($record->task_status == Task::STATUS_CLOSED && auth()->user()?->employee?->id) {
                             return true;
                         }
-                        if (in_array($record->task_status,[Task::STATUS_REJECTED, Task::STATUS_CLOSED]) ) {
-                        return true;
+                        if (in_array($record->task_status, [Task::STATUS_REJECTED, Task::STATUS_CLOSED])) {
+                            return true;
                         }
                         if (!isSuperAdmin() && !auth()->user()->can('add_comment_task')) {
                             return true;
@@ -817,50 +808,51 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ]);
                     }),
 
-                    Action::make('Reject')->button()->color(Color::Red)
+                Action::make('Reject')->button()->color(Color::Red)
                     ->icon('heroicon-m-backspace')
-                    ->visible(function($record){
-                        if($record->task_status == Task::STATUS_CLOSED 
-                        && ($record->assigned_by == auth()->user()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
-                         ){
+                    ->visible(function ($record) {
+                        if (
+                            $record->task_status == Task::STATUS_CLOSED
+                            && ($record->assigned_by == auth()->user()->id || $record->created_by == auth()->user()->id) || isSuperAdmin()
+                        ) {
                             return true;
                         }
                         return false;
                     })
                     ->color(Task::COLOR_REJECTED)
-                    ->form(function($record){
+                    ->form(function ($record) {
                         $defaultForm = [
-                            Fieldset::make()->visible(fn():bool=> (setting('show_warning_message') && $record->rejection_count== (setting('task_rejection_times_red_card')-1)))->schema([
-                              TextInput::make('message')->label('')
-                              ->extraInputAttributes(['style' => 'font-size:15px;color:red !important;padding:0.75em;font-weight:bold;'])
-                              ->disabled()->columnSpanFull()
-                              ->prefixIcon('heroicon-m-exclamation-circle')
-                              ->inputMode('decimal')
-                              ->prefixIconColor('warning')
-                              ->default('Rejecting this time will result in a penalty being applied to the employee handling it')
+                            Fieldset::make()->visible(fn(): bool => (setting('show_warning_message') && $record->rejection_count == (setting('task_rejection_times_red_card') - 1)))->schema([
+                                TextInput::make('message')->label('')
+                                    ->extraInputAttributes(['style' => 'font-size:15px;color:red !important;padding:0.75em;font-weight:bold;'])
+                                    ->disabled()->columnSpanFull()
+                                    ->prefixIcon('heroicon-m-exclamation-circle')
+                                    ->inputMode('decimal')
+                                    ->prefixIconColor('warning')
+                                    ->default('Rejecting this time will result in a penalty being applied to the employee handling it')
                             ]),
                             Fieldset::make()->schema([
                                 Textarea::make('reject_reason')
-                                ->label('Reject reason')->required()
-                                ->columnSpanFull(),
+                                    ->label('Reject reason')->required()
+                                    ->columnSpanFull(),
                             ]),
                         ];
                         return $defaultForm;;
                     })->modalIcon('heroicon-m-backspace')
-                    ->action(function($record,$data){
+                    ->action(function ($record, $data) {
                         DB::beginTransaction();
                         // dd($record->steps);
                         try {
                             $record->update(['task_status' => Task::STATUS_REJECTED]);
-                            $record->steps()->update(['done'=>0]);
-                          
+                            $record->steps()->update(['done' => 0]);
+
                             $record->createLog(
                                 createdBy: auth()->id(), // ID of the user performing the action
                                 description: "Task is rejected", // Log description
                                 logType: TaskLog::TYPE_MOVED, // Log type as "moved"
                                 details: [
                                     'reject_reason' => $data['reject_reason'], // Previous status
-                                    
+
                                 ]
                             );
                             $record->createLog(
@@ -869,17 +861,17 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 logType: TaskLog::TYPE_REJECTED, // Log type as "moved"
                                 details: [
                                     'reject_reason' => $data['reject_reason'], // Previous status
-                                    
+
                                 ]
                             );
-                            if($record->rejection_count == setting('task_rejection_times_yello_card')){
+                            if ($record->rejection_count == setting('task_rejection_times_yello_card')) {
                                 $record->taskCards()->create([
                                     'type' => TaskCard::TYPE_YELLOW,
                                     'employee_id' => $record->assigned_to,
                                     'active' => true,
                                 ]);
                             }
-                            if($record->rejection_count == setting('task_rejection_times_red_card')){
+                            if ($record->rejection_count == setting('task_rejection_times_red_card')) {
                                 $record->taskCards()->create([
                                     'type' => TaskCard::TYPE_RED,
                                     'employee_id' => $record->assigned_to,
@@ -893,7 +885,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             DB::rollBack();
                             Notification::make()->title('Error')->warning()->body($th->getMessage())->send();
                         }
-                    })->hidden(fn($record):bool=>$record->task_status == Task::STATUS_REJECTED),
+                    })->hidden(fn($record): bool => $record->task_status == Task::STATUS_REJECTED),
                 // ReplicateAction::make(),
                 // ActionGroup::make([
                 //     Tables\Actions\EditAction::make(),
@@ -906,8 +898,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                 Tables\Actions\ForceDeleteBulkAction::make(),
                 Tables\Actions\DeleteBulkAction::make()
-                    ->hidden(fn(): bool => (isStuff() || isBranchManager()))
-                ,
+                    ->hidden(fn(): bool => (isStuff() || isBranchManager())),
                 // ]),
             ])
             ->emptyStateActions([
@@ -983,9 +974,11 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function canEdit(Model $record): bool
     {
-        if (isSuperAdmin() || isSystemManager() || (isBranchManager() && ($record->assigned_by == auth()?->user()?->id || $record->assigned_to == auth()?->user()?->employee?->id))
+        if (
+            isSuperAdmin() || isSystemManager() || (isBranchManager() && ($record->assigned_by == auth()?->user()?->id || $record->assigned_to == auth()?->user()?->employee?->id))
             // (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
-            || isStuff() || isFinanceManager()) {
+            || isStuff() || isFinanceManager()
+        ) {
             return true;
         }
         return false;
@@ -1057,5 +1050,4 @@ class TaskResource extends Resource implements HasShieldPermissions
             Pages\EditTask::class,
         ]);
     }
-
 }

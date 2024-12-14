@@ -26,6 +26,7 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MonthSalaryResource extends Resource
@@ -333,6 +334,22 @@ class MonthSalaryResource extends Resource
     {
 
         if (isSystemManager()  || isSuperAdmin() || isFinanceManager()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSystemManager() || isSuperAdmin() || isFinanceManager()) {
             return true;
         }
         return false;

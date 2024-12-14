@@ -45,7 +45,7 @@ class LeaveTypeResource extends Resource
                             ->required(),
 
                         Select::make('type')->label('Type')->options(LeaveType::getTypes()),
-                        Select::make('balance_period')->label('Balance period')->options(LeaveType::getBalancePeriods()),
+                        Select::make('balance_period')->label('Accural cycle')->options(LeaveType::getBalancePeriods()),
                         Forms\Components\Toggle::make('active')
                             ->label('Active')->inline(false)
                             ->default(true),
