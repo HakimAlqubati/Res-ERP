@@ -1058,11 +1058,11 @@ class EmployeeApplicationResource extends Resource
                                     2026 => 2026
                                 ])->disabled()->dehydrated()
                                 ->live(),
-                            Select::make('detail_month')->label('Month')->disabled()
+                            Select::make('detail_month')->label('Month')
                                 ->options(getMonthArrayWithKeys())
                                 ->live()
                                 ->dehydrated()
-                                ->default(11),
+                                ,
                             TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 
                         ]),
