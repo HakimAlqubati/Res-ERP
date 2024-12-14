@@ -30,13 +30,12 @@ class TaskWidgetChart extends InlineChartWidget
                 [
                     'label' => 'Task Progress',
                     'data' => [$completedSteps, $pendingSteps],
-                    'backgroundColor' => ['#FF0000', '#00FF00'], // Red for completed, Green for pending
+                    'backgroundColor' => ['#00FF00', '#FF0000'],
                     'borderColor' => ['#FF0000', '#FFFF00'],
                 ],
             ],
             'labels' => ['Closed', 'Pending'],
         ];
-        
     }
     protected function getType(): string
     {
