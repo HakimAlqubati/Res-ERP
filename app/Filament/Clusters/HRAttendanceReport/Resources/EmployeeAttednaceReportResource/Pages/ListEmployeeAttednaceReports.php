@@ -86,12 +86,8 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
             foreach ($dayData['periods'] ?? [] as $period) {
 
                 $totalSupposed = WorkPeriod::find($period['period_id'])
-                    ->calculateTotalSupposedDurationForDays(1);
-                // $arr[] = $period['period_id'];
-                // $totalSupposed = collect($arr)->unique()->map(function($periodId) use($data) {
-                //     return WorkPeriod::find($periodId)->calculateTotalSupposedDurationForDays(count($data) - LeaveType::getMonthlyCountDaysSum());
-                // })->sum();
-
+                    ->calculateTotalSupposedDurationForDays(count($data) - LeaveType::getMonthlyCountDaysSum());
+                
                 $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
 
                 $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
