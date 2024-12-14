@@ -46,7 +46,7 @@ class DeductionResource extends Resource
                             ->options(Deduction::getConditionAppliedV2Options())
                             ->default(Deduction::CONDITION_APPLIED_V2_ALL)
                             ->hidden(fn($get): bool => $get('is_penalty')),
-                        Select::make('applied_by')->live()->label('Born by')->options(
+                        Select::make('applied_by')->live()->label('Borne by')->options(
                             Deduction::getAppliedByOptions()
 
                         )->default(Deduction::APPLIED_BY_EMPLOYEE)->hidden(fn($get): bool => $get('is_penalty')),
