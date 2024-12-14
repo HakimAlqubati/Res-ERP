@@ -13,7 +13,7 @@ class LeaveType extends Model
 
     protected $fillable = [
         'name',
-        'count_days',
+        'count_days', 
         'description',
         'active',
         'created_by',
@@ -22,6 +22,8 @@ class LeaveType extends Model
         'balance_period',
         'is_paid',
     ];
+
+    protected $appends = ['type_label', 'balance_period_label'];
 
     // Enum constants for 'type'
     const TYPE_YEARLY = 'yearly';
@@ -74,39 +76,30 @@ class LeaveType extends Model
      */
     public function getTypeLabelAttribute()
     {
-        switch ($this->type) {
-            case self::TYPE_YEARLY:
-                return 'Annual Leave';
-            case self::TYPE_MONTHLY:
-                return 'Monthly Leave';
-            case self::TYPE_WEEKLY:
-                return 'Weekly Leave';
-            case self::TYPE_SPECIAL:
-                return 'Special Leave';
-            default:
-                return 'Unknown Type';
-        }
+        return self::getTypes()[$this->type] ?? 'Unknown Type';
     }
+
+    public function getBalancePeriodLabelAttribute()
+    {
+        return self::getBalancePeriods()[$this->balance_period] ?? 'Unknown Period';
+    }
+
     public static function getTypes()
     {
-        return   [
-            self::TYPE_YEARLY =>  'Yearly Leave',
-            self::TYPE_MONTHLY
-            => 'Monthly Leave',
-            self::TYPE_WEEKLY =>
-            'Weekly Leave',
-            self::TYPE_SPECIAL
-            => 'Special Leave'
+        return [
+            self::TYPE_YEARLY => 'Annual Leave',
+            self::TYPE_MONTHLY => 'Monthly Leave', 
+            self::TYPE_WEEKLY => 'Weekly Leave',
+            self::TYPE_SPECIAL => 'Special Leave'
         ];
     }
+
     public static function getBalancePeriods()
     {
-        return   [
-            self::BALANCE_PERIOD_YEARLY =>  'Yearly',
-            self::BALANCE_PERIOD_MONTHLY
-            => 'Monthly',
-            self::BALANCE_PERIOD_OTHER =>
-            'Other'
+        return [
+            self::BALANCE_PERIOD_YEARLY => 'Annual',
+            self::BALANCE_PERIOD_MONTHLY => 'Monthly',
+            self::BALANCE_PERIOD_OTHER => 'Other'
         ];
     }
 }

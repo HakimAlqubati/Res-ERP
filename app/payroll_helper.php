@@ -40,7 +40,20 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
 
     $generalDeducationTypes = Deduction::where('is_specific', 0)
         ->where('active', 1)
-        ->select('name', 'is_percentage', 'amount', 'percentage', 'id', 'condition_applied_v2', 'nationalities_applied', 'less_salary_to_apply', 'has_brackets', 'applied_by')
+        ->select(
+            'name',
+            'is_percentage',
+            'amount',
+            'percentage',
+            'id',
+            'condition_applied_v2',
+            'nationalities_applied',
+            'less_salary_to_apply',
+            'has_brackets',
+            'applied_by',
+            'employer_percentage',
+            'employer_amount'
+        )
         ->with('brackets')
         ->get();
     // dd($generalDeducationTypes);
@@ -309,10 +322,10 @@ function calculateDeductionsEmployeer($deductions, float $basicSalary): array
     foreach ($deductions as $deduction) {
         if ($deduction['is_percentage']) {
             // Calculate the deduction based on the percentage
-            $deductionAmount = ($basicSalary * $deduction['percentage']) / 100;
+            $deductionAmount = ($basicSalary * $deduction['employer_percentage']) / 100;
         } else {
             // Use the fixed amount directly
-            $deductionAmount = (float) $deduction['amount'];
+            $deductionAmount = (float) $deduction['employer_amount'];
         }
 
         if (isset($deduction['has_brackets']) && $deduction['has_brackets'] && isset($deduction['brackets'])) {
@@ -327,11 +340,11 @@ function calculateDeductionsEmployeer($deductions, float $basicSalary): array
             'name' => $deduction['name'] . ' (Employer) ',
             'deduction_amount' => $deductionAmount,
             'is_percentage' => $deduction['is_percentage'],
-            'amount_value' => $deduction['amount'],
-            'percentage_value' => $deduction['percentage'],
+            'amount_value' => $deduction['employer_amount'],
+            'percentage_value' => $deduction['employer_percentage'],
         ];
     }
-    
+
     // Add the total deductions to the result
     $finalDeductions['result'] = $totalDeductions;
 
