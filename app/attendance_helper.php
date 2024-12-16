@@ -939,7 +939,7 @@ function calculateTotalEarlyLeave($attendanceData)
                 if (
                     isset($period['attendances']['checkout']['lastcheckout']['status'])
                     && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_DEPARTURE
-                    && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] >= setting('early_depature_deduction_minutes')
+                    && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] > setting('early_depature_deduction_minutes')
                 ) {
 
                     // dd($period['attendances']['checkout']['lastcheckout']);
