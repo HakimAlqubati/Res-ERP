@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * to calculate the salary
  */
-function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
+function calculateMonthlySalaryV2($employeeId, $date)
 {
     $generalAllowanceTypes = Allowance::where('is_specific', 0)
         ->where('active', 1)
@@ -181,6 +181,8 @@ function calculateMonthlySalaryV2($employeeId, $date, $createPayrol = false)
 
 
     $checkForMonthlyBalanceAntCreate['result'] = null;
+    $createPayrol = setting('create_auto_leave_when_create_payroll');
+
     if ($createPayrol) {
         $checkForMonthlyBalanceAntCreate =  checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
     }

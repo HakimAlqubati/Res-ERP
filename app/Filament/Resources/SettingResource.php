@@ -109,7 +109,7 @@ class SettingResource extends Resource
 
                                     ]),
                                 ]),
-                                Fieldset::make()->label('Salary')->columns(4)->schema([
+                                Fieldset::make()->label('Salary')->columns(5)->schema([
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
                                     TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),
                                     TextInput::make('overtime_hour_multiplier')
@@ -119,6 +119,11 @@ class SettingResource extends Resource
                                         ->minValue(1)
                                         ->placeholder('Enter multiplier (e.g., 2, 3, 4)')
                                         ->required(),
+                                    Toggle::make('create_auto_leave_when_create_payroll')
+                                        ->label('Create Auto Leave When Create Payroll')
+                                        ->helperText('Create auto leave when create payroll')
+                                        ->default(false),
+
                                 ]),
                                 Fieldset::make()->label('Face rekognation settings')->columns(4)->schema([
                                     Select::make('timeout_webcam_value')
@@ -264,7 +269,7 @@ class SettingResource extends Resource
                                         ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
                                 ]),
                             ]),
-                        Tab::make('Task Settings')->hidden(fn():bool=>isFinanceManager())
+                        Tab::make('Task Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema([
                                 Fieldset::make('')->columns(4)->schema([

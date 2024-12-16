@@ -70,7 +70,7 @@ class CreateMonthSalary extends CreateRecord
             DB::beginTransaction();
 
             try {
-                $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month, true);
+                $calculateSalary = calculateMonthlySalaryV2($employee->id, $this->record->end_month);
                 $specificDeducation = $generalDeducation = $specificAllowances = $generalAllowances = [];
                 // if ($employee->id == 96) {
 

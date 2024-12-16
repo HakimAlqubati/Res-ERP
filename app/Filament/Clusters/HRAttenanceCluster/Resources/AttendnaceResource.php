@@ -269,17 +269,18 @@ class AttendnaceResource extends Resource
                                 TextInput::make('check_in_date')->default($checkInDate),
                             ]),
 
-                            Grid::make()->disabled()->label('Checkout')->columns(2)->schema([
-                                TextInput::make('check_time')->default($checkOutTime),
-                                TextInput::make('check_date')->default($checkOutDate),
-                            ]),
                             Grid::make()->disabled()->label('Period')->columns(2)->schema([
                                 TextInput::make('period_start_at')->default($periodStartAt),
                                 TextInput::make('period_end_at')->default($periodEndAt),
                             ]),
-                            TextInput::make('early_minuts_departure')->default($earlyMinutsDepature)->columnSpanFull()->disabled(false),
-                            Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
-                                ->default(Attendance::STATUS_EARLY_DEPARTURE),
+                            Grid::make()->label('Checkout')->columns(4)->schema([
+                                TextInput::make('check_time')->default($checkOutTime),
+                                TextInput::make('check_date')->default($checkOutDate),
+                                TextInput::make('early_minuts_departure')->default($record->early_departure_minutes)
+                                    ->helperText('Current early departure minutes (' . $earlyMinutsDepature . ')'),
+                                Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
+                                    ->default($record->status),
+                            ]),
                         ];
                     })->modalCancelAction(false)
                     ->action(function ($record, $data) {
@@ -289,7 +290,9 @@ class AttendnaceResource extends Resource
                             //code...
                             $record->update([
                                 'status' => $data['status_2'],
-                                'early_departure_minutes' => $data['early_minuts_departure']
+                                'early_departure_minutes' => $data['early_minuts_departure'],
+                                'check_date' => $data['check_date'],
+                                'check_time' => $data['check_time'],
                             ]);
                             DB::commit();
                             showSuccessNotifiMessage('Done');
@@ -305,7 +308,7 @@ class AttendnaceResource extends Resource
                     ->form(function ($record) {
 
                         $checkInTime = $record?->check_time;
-                        
+
                         $checkInDate = $record?->check_date;
 
 
@@ -316,21 +319,21 @@ class AttendnaceResource extends Resource
 
                         $delayMinutes = round($checkINTimeDate->diffInMinutes($periodStartAtTimeDate), 2);
                         return [
-                            
+
 
                             Grid::make()->label('Checkout')->columns(4)->schema([
                                 TextInput::make('check_time')->default($checkInTime),
                                 TextInput::make('delay_minutes')->default($record->delay_minutes),
                                 TextInput::make('check_in_date_')->default($checkInDate),
                                 Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
-                                ->default($record->status),
+                                    ->default($record->status),
                             ]),
                             Grid::make()->disabled()->label('Period')->columns(2)->schema([
                                 TextInput::make('period_start_at')->default($periodStartAt),
                                 TextInput::make('period_end_at')->default($periodEndAt),
                             ]),
 
-                            
+
                         ];
                     })->modalCancelAction(false)
                     ->action(function ($record, $data) {
