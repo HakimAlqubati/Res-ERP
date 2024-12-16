@@ -206,7 +206,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
     $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions);
-    $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + $overtimeBasedOnMonthlyLeavePay);
+    $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + 0);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
     $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
