@@ -372,7 +372,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
     // Fetch leave applications within the date range
     $employee = Employee::find($employeeId);
-   
+
 
     // dd($leaveApplications);
     $leaveApplications =  $employee?->approvedLeaveApplications()
@@ -381,7 +381,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
             $query->whereBetween('hr_leave_requests.start_date', [$startDate, $endDate])
                 ->orWhereBetween('hr_leave_requests.end_date', [$startDate, $endDate]);
         })
-        ->join('hr_leave_types','hr_leave_requests.leave_type','=','hr_leave_types.id')
+        ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
         ->select(
             'hr_leave_requests.start_date as from_date',
             'hr_leave_requests.end_date as to_date',
@@ -434,7 +434,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 }
             }
         }
-       
+
 
         if ($leaveApplications) {
             foreach ($leaveApplications as $leaveApplication) {
@@ -448,7 +448,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                 }
             }
         }
-        
+
 
         $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
 
@@ -901,16 +901,13 @@ function calculateTotalLateArrival($attendanceData)
             foreach ($data['periods'] as $period) {
                 if (isset($period['attendances']['checkin'])) {
                     // Loop through each checkin record
-                    foreach ($period['attendances']['checkin'] as $checkin) {
-                        // Check if the status is 'late_arrival'
-                        if (isset($checkin['status']) && $checkin['status'] === Attendance::STATUS_LATE_ARRIVAL) {
-                            // Add the delay minutes to the total
-
-                            if ($checkin['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
-
-                                $totalDelayMinutes += $checkin['delay_minutes'];
-                                // $totalDelayMinutes += 2;
-                            }
+                    // dd($date, $period['attendances']['checkin'][0]);
+                    // Check if the status is 'late_arrival'
+                    if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
+                        // Add the delay minutes to the total
+                        if ($period['attendances']['checkin'][0]['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
+                            $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                            // $totalDelayMinutes += 2;
                         }
                     }
                 }
