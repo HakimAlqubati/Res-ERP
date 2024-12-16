@@ -162,6 +162,8 @@ class AttendnaceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 Tables\Columns\TextColumn::make('day')
                     ->label('Day'),
+                Tables\Columns\TextColumn::make('late_departure_minutes')
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
                 Tables\Columns\TextColumn::make('early_departure_minutes')
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -273,11 +275,11 @@ class AttendnaceResource extends Resource
                                 TextInput::make('period_start_at')->default($periodStartAt),
                                 TextInput::make('period_end_at')->default($periodEndAt),
                             ]),
-                            Grid::make()->label('Checkout')->columns(4)->schema([
+                            Grid::make()->label('Checkout')->columns(5)->schema([
                                 TextInput::make('check_time')->default($checkOutTime),
                                 TextInput::make('check_date')->default($checkOutDate),
-                                TextInput::make('early_minuts_departure')->default($record->early_departure_minutes)
-                                    ->helperText('Current early departure minutes (' . $earlyMinutsDepature . ')'),
+                                TextInput::make('early_minuts_departure')->default($record->early_departure_minutes),
+                                TextInput::make('late_departure_minutes')->default($record->late_departure_minutes),
                                 Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
                                     ->default($record->status),
                             ]),
@@ -293,6 +295,7 @@ class AttendnaceResource extends Resource
                                 'early_departure_minutes' => $data['early_minuts_departure'],
                                 'check_date' => $data['check_date'],
                                 'check_time' => $data['check_time'],
+                                'late_departure_minutes' => $data['late_departure_minutes'],
                             ]);
                             DB::commit();
                             showSuccessNotifiMessage('Done');
