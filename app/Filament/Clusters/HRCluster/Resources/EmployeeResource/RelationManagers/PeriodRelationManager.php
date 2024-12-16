@@ -47,10 +47,11 @@ class PeriodRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('id')->label('Id'),
 
-                TextColumn::make('name')->label('Work Period'),
+                TextColumn::make('name')->label('Work period'),
                 // TextColumn::make('description')->label('description'),
                 TextColumn::make('start_at')->label('Start time'),
                 TextColumn::make('end_at')->label('End time'),
+                TextColumn::make('creater.name')->label('Created by'),
 
             ])
             ->filters([

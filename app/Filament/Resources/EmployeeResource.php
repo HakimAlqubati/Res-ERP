@@ -225,13 +225,23 @@ class EmployeeResource extends Resource
                                         Select::make('employee_type')->columnSpan(1)->label('Role type')
                                             ->searchable()
                                             ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
-                                        Select::make('department_id')->columnSpan(1)->label('Department')
-                                            ->searchable()
-                                            ->options(Department::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
-                                            ->required()->disabledOn('edit')
+                                            ->disabledOn('edit')->live()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                        Select::make('department_id')->columnSpan(1)->label('Department')
+                                            ->searchable()
+                                            ->options(function ($get) {
+                                                $branchId = $get('branch_id');
+                                                if ($branchId) {
+                                                    return Department::where('active', 1)
+                                                        ->forBranch($branchId)
+                                                        ->select('id', 'name')->get()->pluck('name', 'id');
+                                                }
+                                                return  Department::where('active', 1)
+                                                    ->select('id', 'name')->get()->pluck('name', 'id');
+                                            }),
                                         DatePicker::make('join_date')->columnSpan(1)->label('Start date')->required(),
 
                                     ]),

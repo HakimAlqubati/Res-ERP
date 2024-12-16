@@ -58,8 +58,13 @@ class Attendance extends Model
         'checkinrecord_id',
         'total_actual_duration_hourly',
         'is_from_previous_day',
+        'attendance_method',
     ];
 
+    const ATTENDANCE_METHOD_FINGERPRINT = 'fingerprint';
+    const ATTENDANCE_METHOD_FACEPRINT = 'faceprint';
+    const ATTENDANCE_METHOD_RFID = 'rfid';
+    const ATTENDANCE_METHOD_EMPLOYEE_REQUEST = 'employee_request';
     public static function getMinutesByConstant($constantName)
     {
         switch ($constantName) {

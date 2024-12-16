@@ -24,6 +24,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -164,8 +165,7 @@ class AttendnaceResource extends Resource
                 Tables\Columns\TextColumn::make('early_departure_minutes')
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20)))
-                    ,
+                    ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -182,6 +182,14 @@ class AttendnaceResource extends Resource
                 Filter::make('month')
                     ->label('Filter by Month')
                     ->form([
+
+                        Forms\Components\Select::make('year')
+                            ->label('Year')
+                            ->options(function () {
+                                $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
+                                return array_combine($years, $years);
+                            })
+                            ->placeholder('Select a year'),
                         Forms\Components\Select::make('month')
                             ->label('Month')
                             ->options([
@@ -200,13 +208,12 @@ class AttendnaceResource extends Resource
                             ])
                             ->placeholder('Select a month'),
 
-                        Forms\Components\Select::make('year')
-                            ->label('Year')
-                            ->options(function () {
-                                $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
-                                return array_combine($years, $years);
-                            })
-                            ->placeholder('Select a year'),
+
+
+                        Forms\Components\DatePicker::make('check_date')
+                            ->label('Date')
+                            ->placeholder('Choose date'),
+
 
 
                     ])->query(function (Builder $query, array $data) {
@@ -215,8 +222,12 @@ class AttendnaceResource extends Resource
                             $endDate = $startDate->copy()->endOfMonth();
 
                             $query->whereBetween('check_date', [$startDate, $endDate]);
+                            if ($data['check_date']) {
+                                $query->where('check_date', $data['check_date']);
+                            }
                         }
                     })
+
                     ->indicateUsing(function (array $data): ?string {
                         if ($data['month'] && $data['year']) {
                             return 'Month: ' . Carbon::createFromDate($data['year'], $data['month'], 1)->format('F Y');
@@ -232,7 +243,7 @@ class AttendnaceResource extends Resource
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(Attendance::getStatuses()),
-            ])
+            ], FiltersLayout::AboveContent)
             ->actions([
 
                 Tables\Actions\Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
@@ -268,8 +279,7 @@ class AttendnaceResource extends Resource
                             ]),
                             TextInput::make('early_minuts_departure')->default($earlyMinutsDepature)->columnSpanFull()->disabled(false),
                             Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
-                            ->default(Attendance::STATUS_EARLY_DEPARTURE)
-                            ,
+                                ->default(Attendance::STATUS_EARLY_DEPARTURE),
                         ];
                     })->modalCancelAction(false)
                     ->action(function ($record, $data) {
@@ -280,6 +290,58 @@ class AttendnaceResource extends Resource
                             $record->update([
                                 'status' => $data['status_2'],
                                 'early_departure_minutes' => $data['early_minuts_departure']
+                            ]);
+                            DB::commit();
+                            showSuccessNotifiMessage('Done');
+                        } catch (\Exception $th) {
+                            DB::rollBack();
+                            showWarningNotifiMessage($th->getMessage());
+                            throw $th;
+                        }
+                    }),
+                Tables\Actions\Action::make('fixCheckin')
+                    ->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKIN))
+                    ->button()
+                    ->form(function ($record) {
+
+                        $checkInTime = $record?->check_time;
+                        
+                        $checkInDate = $record?->check_date;
+
+
+                        $periodStartAt = $record?->period?->start_at;
+                        $periodEndAt = $record?->period?->end_at;
+                        $checkINTimeDate = Carbon::parse($checkInDate . ' ' . $checkInTime);
+                        $periodStartAtTimeDate = Carbon::parse($checkInDate . ' ' . $checkInTime);
+
+                        $delayMinutes = round($checkINTimeDate->diffInMinutes($periodStartAtTimeDate), 2);
+                        return [
+                            
+
+                            Grid::make()->label('Checkout')->columns(4)->schema([
+                                TextInput::make('check_time')->default($checkInTime),
+                                TextInput::make('delay_minutes')->default($record->delay_minutes),
+                                TextInput::make('check_in_date_')->default($checkInDate),
+                                Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
+                                ->default($record->status),
+                            ]),
+                            Grid::make()->disabled()->label('Period')->columns(2)->schema([
+                                TextInput::make('period_start_at')->default($periodStartAt),
+                                TextInput::make('period_end_at')->default($periodEndAt),
+                            ]),
+
+                            
+                        ];
+                    })->modalCancelAction(false)
+                    ->action(function ($record, $data) {
+                        DB::beginTransaction();
+
+                        try {
+                            $record->update([
+                                'status' => $data['status_2'],
+                                'delay_minutes' => $data['delay_minutes'],
+                                'check_date' => $data['check_in_date_'],
+                                'check_time' => $data['check_time'],
                             ]);
                             DB::commit();
                             showSuccessNotifiMessage('Done');

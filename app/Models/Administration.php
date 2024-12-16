@@ -6,31 +6,31 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Department extends Model
+class Administration extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'hr_departments';
+    protected $table = 'hr_administrations';
     protected $fillable = [
         'name',
+        'manager_id',
         'description',
         'active',
-        'manager_id',
-        'max_employees',
-        'administration_id',
-        'branch_id',
-        'is_global'
+        'is_global',
+        'start_date',
+        'branch_id'
     ];
 
-    // Relationship to Employee (Manager of the department)
+
     public function manager()
     {
         return $this->belongsTo(Employee::class, 'manager_id');
     }
 
-    public function administration()
+
+    public function departments()
     {
-        return $this->belongsTo(Administration::class, 'administration_id');
+        return $this->hasMany(Department::class);
     }
 
     public function branch()
@@ -42,6 +42,7 @@ class Department extends Model
     {
         return $query->where('branch_id', $branchId);
     }
+
     public function scopeGlobal($query)
     {
         return $query->where('is_global', true);

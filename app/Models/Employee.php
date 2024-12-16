@@ -48,6 +48,7 @@ class Employee extends Model
         'tax_identification_number',
         'has_employee_pass',
         'working_hours',
+        'manager_id',
     ];
 
     protected $casts = [
@@ -436,6 +437,20 @@ class Employee extends Model
     }
 
 
+    /**
+     * Scope query to only include employees with manager-level employee types (1, 2, 3)
+     * 
+     * Example usage:
+     * Employee::employeeTypesManagers()->get(); // Gets all employees who are managers
+     * Employee::employeeTypesManagers()->where('active', 1)->get(); // Gets active manager employees
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeEmployeeTypesManagers($query)
+    {
+        return $query->whereIn('employee_type', [1, 2, 3]);
+    }
 
 
     protected static function booted()
@@ -545,5 +560,38 @@ class Employee extends Model
             ->where('year', $year)
             ->where('month', $month)
             ->get();
+    }
+
+    // علاقة الموظف بالمدير (كل موظف له مدير واحد)
+    public function manager()
+    {
+        return $this->belongsTo(Employee::class, 'manager_id');
+    }
+
+    // علاقة الموظف بالموظفين الذين يديرهم
+    public function subordinates()
+    {
+        return $this->hasMany(Employee::class, 'manager_id');
+    }
+
+    public function managedDepartment()
+    {
+        return $this->hasOne(Department::class, 'manager_id');
+    }
+
+    public function scopeForBranch($query, $branchId)
+    {
+        return $query->where('branch_id', $branchId);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+ 
+
+    public function managers()
+    {
+        return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
     }
 }

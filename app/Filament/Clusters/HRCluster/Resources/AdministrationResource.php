@@ -3,12 +3,12 @@
 namespace App\Filament\Clusters\HRCluster\Resources;
 
 use App\Filament\Clusters\HRCluster;
-use App\Filament\Clusters\HRCluster\Resources\DepartmentResource\Pages;
-use App\Models\Department;
-use App\Models\Employee;
+use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\Pages;
+use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\RelationManagers;
 use App\Models\Administration;
 use App\Models\Branch;
-use Filament\Forms\Components\Checkbox;
+use App\Models\Employee;
+use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -19,34 +19,28 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class DepartmentResource extends Resource
+class AdministrationResource extends Resource
 {
-    protected static ?string $model = Department::class;
+    protected static ?string $model = Administration::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRCluster::class;
-
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 4;
-
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
-    }
+    protected static ?int $navigationSort = 3;
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Fieldset::make('')->columns(3)->label('')->schema([
-                    TextInput::make('name')->required(),
-
-                    Toggle::make('active')->default(1)->inline(false),
-
+                Fieldset::make('')->columns(5)->label('')->schema([
+                    TextInput::make('name')
+                        ->label('Name')
+                        ->required()
+                        ->maxLength(255),
                     Toggle::make('is_global')
                         ->live()
                         ->helperText('If this is a global administration, it will be available to all branches')
@@ -56,10 +50,10 @@ class DepartmentResource extends Resource
                         ->label('Branch')->live()
                         ->options(Branch::where('active', 1)
                             ->select('id', 'name')->get()->pluck('name', 'id'))
-                        ->helperText('Choose branch')->live()
+                        ->helperText('Choose branch')
                         ->visible(fn($get) => $get('is_global') == 0),
-                    Select::make('manager_id')->label('Manager')
-                        ->searchable()
+                    Select::make('manager_id')->searchable()
+                        ->label('Manager')
                         ->options(function ($get) {
                             if ($get('is_global') == 1) {
                                 return Employee::employeeTypesManagers()->active()
@@ -70,35 +64,57 @@ class DepartmentResource extends Resource
                                     ->active()
                                     ->select('id', 'name')->get()->pluck('name', 'id');
                             }
-                        }),
-                    Select::make('administration_id')->label('Administration')
-                        ->required()
-                        ->searchable()->options(function ($get) {
-                            if ($get('is_global') == 1) {
-                                return Administration::select('id', 'name')->get()->pluck('name', 'id');
-                            } else {
-                                return Administration::forBranch($get('branch_id'))
-                                    ->select('id', 'name')->get()->pluck('name', 'id');
-                            }
-                        }),
-                    Textarea::make('description')->columnSpanFull(),
-                ]),
+                        })
+                        ->helperText('Enter manager'),
 
+                    Toggle::make('active')->default(1)->inline(false),
+
+
+
+                    Textarea::make('description')
+                        ->label('Description')->helperText('Enter description')
+                        ->columnSpanFull()
+                        ->nullable()
+                        ->maxLength(500),
+                ])
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->striped()
             ->columns([
-                TextColumn::make('id')->searchable()->sortable(),
-                TextColumn::make('name')->searchable(),
-                TextColumn::make('manager.name')->searchable(),
-                TextColumn::make('administration.name')->searchable(),
+                TextColumn::make('id')
+                    ->label('ID')
+                    ->searchable()
+                    ->sortable()->toggleable()->searchable(),
+                TextColumn::make('name')
+                    ->label('Name')
+                    ->searchable()
+                    ->sortable()->toggleable()->searchable(),
 
-                ToggleColumn::make('active'),
+                TextColumn::make('description')
+                    ->label('Description')
+                    ->limit(25)->toggleable()->wrap(),
+
+                TextColumn::make('manager.name')
+                    ->label('Manager')
+                    ->sortable()->searchable()->toggleable(),
+
+                TextColumn::make('branch.name')
+                    ->label('Branch')
+                    ->sortable()->searchable()->toggleable(),
+
+                TextColumn::make('created_at')
+                    ->label('Created At')->toggleable()
+                    ->dateTime('d/m/Y H:i'),
+
+
             ])
-            ->filters([])
+            ->filters([
+                //
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
@@ -109,6 +125,12 @@ class DepartmentResource extends Resource
             ]);
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+
     public static function getRelations(): array
     {
         return [
@@ -116,22 +138,12 @@ class DepartmentResource extends Resource
         ];
     }
 
-
-
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDepartments::route('/'),
-            // 'create' => Pages\CreateDepartment::route('/create'),
-            // 'edit' => Pages\EditDepartment::route('/{record}/edit'),
+            'index' => Pages\ListAdministrations::route('/'),
+            'create' => Pages\CreateAdministration::route('/create'),
+            'edit' => Pages\EditAdministration::route('/{record}/edit'),
         ];
-    }
-
-    public static function canViewAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
-            return true;
-        }
-        return false;
     }
 }
