@@ -16,6 +16,20 @@ class Attendance extends Model
     const CHECKTYPE_CHECKIN_LABLE = 'Check in';
     const CHECKTYPE_CHECKOUT_LABLE = 'Checkout';
 
+    public function scopeEarlyDepartures($query)
+    {
+        return $query->where('check_type', self::CHECKTYPE_CHECKOUT)
+                    ->where('status', self::STATUS_EARLY_DEPARTURE)
+                    ->where('early_departure_minutes', '<', 20);
+    }
+    public function scopeLateArrival($query)
+    {
+        return $query->where('check_type', self::CHECKTYPE_CHECKIN)
+                    // ->where('status', self::STATUS_EARLY_DEPARTURE)
+                    // ->where('delay_mintues', '<', 10)
+                    ;
+    }
+
     const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR = 'quarter_period';
     const PERIOD_ALLOWED_OVERTIME_HALF_HOUR = 'half_period';
     const PERIOD_ALLOWED_OVERTIME_HOUR = 'hour';

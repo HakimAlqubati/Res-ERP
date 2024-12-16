@@ -10,6 +10,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
@@ -38,7 +39,7 @@ Route::get('/totestpdf', function () {
     $employee = Employee::find(143);
     $branch = Employee::find(6);
     $task = Task::with('steps')->find(69);
-    return view('export.reports.hr.tasks.employee-task-report2', compact('employee','branch','task'));
+    return view('export.reports.hr.tasks.employee-task-report2', compact('employee', 'branch', 'task'));
     return view('export.reports.hr.salaries.salary-slip');
     $order = Order::find(52);
     $orderDetails = $order?->orderDetails;
@@ -447,3 +448,72 @@ Route::get('workbench_webcam_v2', function () {
 });
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage_old'])->name('upload.captured.image');
+
+
+Route::get('getAttendancesEarlyDeparture', function () {
+    $attendances = Attendance::earlyDepartures()
+        ->whereYear('check_date', '2024')
+        ->whereMonth('check_date', '11')
+        // ->where('employee_id', 83)
+        ->select('id', 'employee_id', 'check_date', 'check_time', 'early_departure_minutes', 'period_id')
+        ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
+        ->where('early_departure_minutes', '<=', 20)
+        ->get()
+        ->groupBy('employee_id')
+        ->map(function ($attendances) {
+            return $attendances->toArray();
+        })
+        ->toArray();
+    $result = [];
+    foreach ($attendances as $key => $value) {
+        $result[Employee::find($key)->name . '-' . $key] = $value;
+        foreach ($value as  $val) {
+            DB::beginTransaction();
+            try {
+                Attendance::find($val['id'])->update([
+                    'status' => Attendance::STATUS_ON_TIME,
+                ]);
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+        }
+    }
+
+    dd($result);
+});
+Route::get('getAttendancesLateArrival', function () {
+    $attendances = Attendance::lateArrival()
+        // ->whereYear('check_date', '2024')
+        // ->whereMonth('check_date', '11')
+        // ->where('employee_id', 83)
+        // ->select('id', 'employee_id', 'check_date', 'check_time', 'delay_minutes', 'period_id')
+        // ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+        // ->where('delay_minutes', '>=', 10)
+        ->get()
+        // ->groupBy('employee_id')
+        // ->map(function ($attendances) {
+        //     return $attendances->toArray();
+        // })
+        ->toArray();
+        dd($attendances);
+    $result = [];
+    foreach ($attendances as $key => $value) {
+        $result[Employee::find($key)->name . '-' . $key] = $value;
+        foreach ($value as  $val) {
+            DB::beginTransaction();
+            try {
+                // Attendance::find($val['id'])->update([
+                //     'status' => Attendance::STATUS_ON_TIME,
+                // ]);
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+        }
+    }
+
+    dd($result);
+});

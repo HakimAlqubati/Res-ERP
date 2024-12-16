@@ -15,10 +15,11 @@ class MonthlySalaryDeductionsDetail extends Model
     public const LATE_HOUR_DEDUCTIONS = -1;
     public const ABSENT_DAY_DEDUCTIONS = -2;
     public const ADVANCED_MONTHLY_DEDUCATION = -3;
-    
+
     // public const TAX_DEDUCTIONS = -4;
     public const EARLY_DEPATURE_EARLY_HOURS = -5;
-    
+    public const REDUCED_HOURS_DEDUCTION = -6;
+
     // Specify the fillable fields
     protected $fillable = [
         'month_salary_id',
@@ -53,6 +54,7 @@ class MonthlySalaryDeductionsDetail extends Model
         self::ABSENT_DAY_DEDUCTIONS => 'Absent day deduction',
         self::ADVANCED_MONTHLY_DEDUCATION => 'Advance deduction',
         // self::TAX_DEDUCTIONS => 'MTD', 
-        self::EARLY_DEPATURE_EARLY_HOURS => 'Early departure deduction', 
+        self::EARLY_DEPATURE_EARLY_HOURS => 'Early departure deduction',
+        self::REDUCED_HOURS_DEDUCTION => 'Reduced hours deduction',
     ];
 }
