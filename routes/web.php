@@ -485,12 +485,10 @@ Route::get('getAttendancesEarlyDeparture', function () {
 });
 Route::get('getAttendancesLateArrival', function () {
     $attendances = Attendance::lateArrival()
-        // ->whereYear('check_date', '2024')
-        // ->whereMonth('check_date', '11')
+        ->whereYear('check_date', '2024')
+        ->whereMonth('check_date', '11')
         // ->where('employee_id', 83)
-        // ->select('id', 'employee_id', 'check_date', 'check_time', 'delay_minutes', 'period_id')
-        // ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-        // ->where('delay_minutes', '>=', 10)
+        ->select('id', 'employee_id', 'check_date', 'check_time', 'delay_minutes', 'period_id')
         ->get()
         // ->groupBy('employee_id')
         // ->map(function ($attendances) {

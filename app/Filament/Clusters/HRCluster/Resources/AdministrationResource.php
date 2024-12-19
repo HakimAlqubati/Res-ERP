@@ -36,7 +36,7 @@ class AdministrationResource extends Resource
     {
         return $form
             ->schema([
-                Fieldset::make('')->columns(5)->label('')->schema([
+                Fieldset::make('')->columns(6)->label('')->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required()
@@ -66,6 +66,18 @@ class AdministrationResource extends Resource
                             }
                         })
                         ->helperText('Enter manager'),
+                    Select::make('parent_id')->searchable()
+                        ->label('Parent')
+                        ->options(function ($get) {
+                            if ($get('is_global') == 1) {
+                                return Administration::global()
+                                    ->select('id', 'name')->get()->pluck('name', 'id');
+                            } else {
+                                return Administration::forBranch($get('branch_id'))
+                                    ->select('id', 'name')->get()->pluck('name', 'id');
+                            }
+                        })
+                        ->helperText('Parent administration'),
 
                     Toggle::make('active')->default(1)->inline(false),
 
@@ -105,6 +117,9 @@ class AdministrationResource extends Resource
                 TextColumn::make('branch.name')
                     ->label('Branch')
                     ->sortable()->searchable()->toggleable(),
+                TextColumn::make('parent.name')
+                    ->label('Parent administration')
+                    ->searchable(),
 
                 TextColumn::make('created_at')
                     ->label('Created At')->toggleable()

@@ -18,7 +18,8 @@ class Administration extends Model
         'active',
         'is_global',
         'start_date',
-        'branch_id'
+        'branch_id',
+        'parent_id'
     ];
 
 
@@ -46,5 +47,10 @@ class Administration extends Model
     public function scopeGlobal($query)
     {
         return $query->where('is_global', true);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Administration::class, 'parent_id');
     }
 }

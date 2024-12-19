@@ -10,6 +10,7 @@ use App\Models\Administration;
 use App\Models\Branch;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -52,35 +53,48 @@ class DepartmentResource extends Resource
                         ->helperText('If this is a global administration, it will be available to all branches')
                         ->default(1)->inline(false),
 
-                    Select::make('branch_id')->searchable()
-                        ->label('Branch')->live()
-                        ->options(Branch::where('active', 1)
-                            ->select('id', 'name')->get()->pluck('name', 'id'))
-                        ->helperText('Choose branch')->live()
-                        ->visible(fn($get) => $get('is_global') == 0),
-                    Select::make('manager_id')->label('Manager')
-                        ->searchable()
-                        ->options(function ($get) {
-                            if ($get('is_global') == 1) {
-                                return Employee::employeeTypesManagers()->active()
-                                    ->select('id', 'name')->get()->pluck('name', 'id');
-                            } else {
-                                return Employee::forBranch($get('branch_id'))
-                                    ->employeeTypesManagers()
-                                    ->active()
-                                    ->select('id', 'name')->get()->pluck('name', 'id');
-                            }
-                        }),
-                    Select::make('administration_id')->label('Administration')
-                        ->required()
-                        ->searchable()->options(function ($get) {
-                            if ($get('is_global') == 1) {
-                                return Administration::select('id', 'name')->get()->pluck('name', 'id');
-                            } else {
-                                return Administration::forBranch($get('branch_id'))
-                                    ->select('id', 'name')->get()->pluck('name', 'id');
-                            }
-                        }),
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
+                        Select::make('branch_id')->searchable()
+                            ->label('Branch')->live()
+                            ->options(Branch::where('active', 1)
+                                ->select('id', 'name')->get()->pluck('name', 'id'))
+                            ->helperText('Choose branch')->live()
+                            ->visible(fn($get) => $get('is_global') == 0),
+                        Select::make('manager_id')->label('Manager')
+                            ->searchable()
+                            ->options(function ($get) {
+                                if ($get('is_global') == 1) {
+                                    return Employee::employeeTypesManagers()->active()->whereDoesntHave('managedDepartment')
+                                        ->select('id', 'name')->get()->pluck('name', 'id');
+                                } else {
+                                    return Employee::forBranch($get('branch_id'))
+                                        ->employeeTypesManagers()
+                                        ->whereDoesntHave('managedDepartment')
+                                        ->active()
+                                        ->select('id', 'name')->get()->pluck('name', 'id');
+                                }
+                            }),
+                        Select::make('administration_id')->label('Administration')
+                            ->required()
+                            ->searchable()->options(function ($get) {
+                                if ($get('is_global') == 1) {
+                                    return Administration::select('id', 'name')->get()->pluck('name', 'id');
+                                } else {
+                                    return Administration::forBranch($get('branch_id'))
+                                        ->select('id', 'name')->get()->pluck('name', 'id');
+                                }
+                            }),
+                        Select::make('parent_id')->label('Parent')
+                            ->searchable()->options(function ($get) {
+                                if ($get('is_global') == 1) {
+                                    return Department::global()
+                                        ->select('id', 'name')->get()->pluck('name', 'id');
+                                } else {
+                                    return Department::forBranch($get('branch_id'))
+                                        ->select('id', 'name')->get()->pluck('name', 'id');
+                                }
+                            }),
+                    ]),
                     Textarea::make('description')->columnSpanFull(),
                 ]),
 
@@ -89,12 +103,20 @@ class DepartmentResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // $dept  = Department::find(5);
+        // $ancestors = $dept->ancestors();
+        // foreach ($ancestors as $d) {
+        //     $arr[] = ($d->manager->name);
+        // }
         return $table
             ->columns([
                 TextColumn::make('id')->searchable()->sortable(),
                 TextColumn::make('name')->searchable(),
                 TextColumn::make('manager.name')->searchable(),
                 TextColumn::make('administration.name')->searchable(),
+                TextColumn::make('parent.name')
+                    ->label('Parent department')
+                    ->searchable(),
 
                 ToggleColumn::make('active'),
             ])

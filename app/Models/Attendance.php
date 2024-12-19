@@ -25,8 +25,8 @@ class Attendance extends Model
     public function scopeLateArrival($query)
     {
         return $query->where('check_type', self::CHECKTYPE_CHECKIN)
-                    // ->where('status', self::STATUS_EARLY_DEPARTURE)
-                    // ->where('delay_mintues', '<', 10)
+                    ->where('status', self::STATUS_LATE_ARRIVAL)
+                    ->where('delay_minutes', '<', 10)
                     ;
     }
 

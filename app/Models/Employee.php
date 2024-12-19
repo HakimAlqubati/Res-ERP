@@ -449,6 +449,7 @@ class Employee extends Model
      */
     public function scopeEmployeeTypesManagers($query)
     {
+        return;
         return $query->whereIn('employee_type', [1, 2, 3]);
     }
 
@@ -595,3 +596,4 @@ class Employee extends Model
         return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
     }
 }
+

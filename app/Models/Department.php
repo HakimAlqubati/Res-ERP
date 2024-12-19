@@ -19,7 +19,8 @@ class Department extends Model
         'max_employees',
         'administration_id',
         'branch_id',
-        'is_global'
+        'is_global',
+        'parent_id',
     ];
 
     // Relationship to Employee (Manager of the department)
@@ -45,5 +46,25 @@ class Department extends Model
     public function scopeGlobal($query)
     {
         return $query->where('is_global', true);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Department::class, 'parent_id');
+    }
+
+    // دالة لجلب الأقسام الأبوية بشكل تكراري
+    public function ancestors()
+    {
+        // إذا كان للقسم أب، استدعاء ancestors للقسم الأب بشكل تكراري
+        $ancestors = collect();
+        $current = $this;
+
+        while ($current->parent) {
+            $ancestors->push($current->parent);
+            $current = $current->parent;
+        }
+
+        return $ancestors;
     }
 }
