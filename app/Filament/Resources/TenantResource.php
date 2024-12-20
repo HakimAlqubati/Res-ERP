@@ -109,8 +109,13 @@ class TenantResource extends Resource
                 return "Database {$dbName} already exists.";
             }
 
-            // Create the database
-            DB::statement("CREATE DATABASE {$dbName}");
+            // Safely create the database
+            DB::statement("CREATE DATABASE `" . addslashes($dbName) . "`");
+
+            // Set the tenant database connection dynamically
+            config(['database.connections.tenant.database' => $dbName]);
+            DB::purge('tenant'); // Reset the tenant connection
+            DB::reconnect('tenant');
 
             // Set the database connection to the new database
             // config(['database.connections.tenant.database' => $dbName]);
