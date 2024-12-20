@@ -498,3 +498,9 @@ function showWarningNotifiMessage($title, $body = null)
     return Notification::make()->warning()->title($title)->body($body)->send();
 }
 
+function isLocal():bool{
+    if(env('APP_ENV') == 'local'){
+        return true;
+    }
+    return false;
+}

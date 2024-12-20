@@ -24,6 +24,7 @@ use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
+use App\Filament\Resources\TenantResource;
 use App\Filament\Resources\UserResource;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Coolsam\Modules\ModulesPlugin;
@@ -134,6 +135,11 @@ class AdminPanelProvider extends PanelProvider
                     NavigationGroup::make('System settings')
                         ->items(array_merge(
                          (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems(): [] ,
+                        ))
+                        ,
+                    NavigationGroup::make('Tenants')
+                        ->items(array_merge(
+                         (isSuperAdmin() && count(explode('.', request()->getHost())) == 1) ? TenantResource::getNavigationItems(): [] ,
                         ))
                         ,
                 ]);

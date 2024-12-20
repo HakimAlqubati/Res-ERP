@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
+use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
@@ -20,6 +22,25 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield;
 
+
+    // Use only the traits you need, or none if you handle it manually
+    use UsesLandlordConnection, UsesTenantConnection {
+        UsesLandlordConnection::getConnectionName insteadof UsesTenantConnection;
+        UsesTenantConnection::getConnectionName as getTenantConnectionName;
+    }
+
+
+    public function getConnectionName()
+    {
+        $explode = explode('.', request()->getHost());
+
+        // Example logic: Use tenant connection if tenant is active, otherwise use landlord
+        if ((count($explode) > 1)) {
+            return $this->getTenantConnectionName();
+        }
+
+        return 'landlord'; // Or explicitly return the landlord connection
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -37,8 +58,8 @@ class User extends Authenticatable implements FilamentUser
         'is_employee',
         'user_type',
         'active',
-        'gender',        
-        'nationality',   
+        'gender',
+        'nationality',
     ];
 
     /**
@@ -158,9 +179,7 @@ class User extends Authenticatable implements FilamentUser
         return false;
     }
 
-    public function getIsBranchManagerAttribute()
-    {
-    }
+    public function getIsBranchManagerAttribute() {}
     // public function canAccessFilament(): bool
     // {
     //     return true;

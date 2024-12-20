@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return;
         Schema::table('hr_leave_balances', function (Blueprint $table) {
             $table->dropUnique('unique_leave_balance');
 
@@ -22,6 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        return;
         Schema::table('hr_leave_balances', function (Blueprint $table) {
             $table->unique(['employee_id', 'leave_type_id', 'year']); 
         });
