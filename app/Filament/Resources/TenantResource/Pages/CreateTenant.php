@@ -6,11 +6,12 @@ use App\Filament\Resources\TenantResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CreateTenant extends CreateRecord
 {
     protected static string $resource = TenantResource::class;
-    protected ?bool $hasDatabaseTransactions = true;
+    protected ?bool $hasDatabaseTransactions = false;
 
     protected function getRedirectUrl(): string
     {
@@ -19,12 +20,13 @@ class CreateTenant extends CreateRecord
 
     public function create(bool $another = false): void
     {
-        DB::beginTransaction(); 
+        DB::beginTransaction();
         try {
             parent::create($another);
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::error('Error in CreateTenant:', ['message' => $th->getMessage(), 'trace' => $th->getTraceAsString()]);
             showWarningNotifiMessage($th->getMessage());
         }
     }
@@ -42,6 +44,7 @@ class CreateTenant extends CreateRecord
             DB::commit();
         } catch (\Throwable $th) {
             DB::rollBack();
+            Log::error('Error in afterCreate:', ['message' => $th->getMessage(), 'trace' => $th->getTraceAsString()]);
             showWarningNotifiMessage($th->getMessage());
         }
     }
