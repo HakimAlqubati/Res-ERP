@@ -32,12 +32,17 @@ class User extends Authenticatable implements FilamentUser
 
     public function getConnectionName()
     {
-        $explode = explode('.', request()->getHost());
-
+        $explodeHost = explode('.', request()->getHost());
+        $count = count($explodeHost);
         // Example logic: Use tenant connection if tenant is active, otherwise use landlord
-        if ((count($explode) > 1)) {
+        // dd($count, $explodeHost, $this->getTenantConnectionName(),env('APP_ENV'),env('APP_ENV') == 'local',Branch::all());
+        if (
+            env('APP_ENV') == 'local' && $count == 2
+            || env('APP_ENV') == 'production' && $count == 3
+        ) {
             return $this->getTenantConnectionName();
         }
+
 
         return 'landlord'; // Or explicitly return the landlord connection
     }

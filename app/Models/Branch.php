@@ -22,8 +22,8 @@ class Branch extends Model
     {
         $explodeHost = explode('.', request()->getHost());
         $count = count($explodeHost);
-
         // Example logic: Use tenant connection if tenant is active, otherwise use landlord
+        // dd($count, $explodeHost, $this->getTenantConnectionName(),env('APP_ENV'),env('APP_ENV') == 'local',Branch::all());
         if (
             env('APP_ENV') == 'local' && $count == 2
             || env('APP_ENV') == 'production' && $count == 3
