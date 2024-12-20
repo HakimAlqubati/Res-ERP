@@ -54,6 +54,7 @@ class TenantResource extends Resource
 
     public static function table(Table $table): Table
     {
+        dd(static::createDatabase($_GET['db']));
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
