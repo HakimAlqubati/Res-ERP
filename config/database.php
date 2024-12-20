@@ -46,8 +46,8 @@ return [
             'driver' => 'mysql',
             'database' => null,
             'host' => '127.0.0.1',
-            'username' => 'root',
-            'password' => '',
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
             // And other options if needed ...
         ],
 
