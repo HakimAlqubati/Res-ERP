@@ -20,13 +20,12 @@ class CreateTenant extends CreateRecord
 
     public function create(bool $another = false): void
     {
-        DB::beginTransaction();
         try {
-            parent::create($another);
-            DB::commit();
+            DB::transaction(function () use ($another) {
+                parent::create($another);
+            });
         } catch (\Throwable $th) {
-            DB::rollBack();
-            Log::error('Error in CreateTenant:', ['message' => $th->getMessage(), 'trace' => $th->getTraceAsString()]);
+            Log::error('Error in create method:', ['message' => $th->getMessage(), 'trace' => $th->getTraceAsString()]);
             showWarningNotifiMessage($th->getMessage());
         }
     }
@@ -38,14 +37,11 @@ class CreateTenant extends CreateRecord
     }
     protected function afterCreate(): void
     {
-        DB::beginTransaction();
         try {
             TenantResource::createDatabase($this->record->database);
-            DB::commit();
         } catch (\Throwable $th) {
-            DB::rollBack();
             Log::error('Error in afterCreate:', ['message' => $th->getMessage(), 'trace' => $th->getTraceAsString()]);
-            showWarningNotifiMessage($th->getMessage());
+            throw $th; // Let the main transaction handle rollback
         }
     }
 }
