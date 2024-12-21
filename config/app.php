@@ -19,6 +19,8 @@ return [
 
     'domain' => env('DOMAIN', 'localhost'),
 
+    'db_prefix' => env('DB_PREFIX', 'tenant_'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

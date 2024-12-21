@@ -34,6 +34,20 @@ use Spatie\Permission\Models\Role;
 |
  */
 
+ Route::middleware('tenant')->group(function() {
+    // routes
+    Route::get('/dd', function () {
+        
+        $tasks = Task::all();
+        
+        dd(app('currentTenant')->name,$tasks->pluck('name')->toArray());
+        // $tenant = Tenant::current();
+        // dd($tenant);
+        return view('welcome');
+        return "Welcome to tenant: " . $tenant;
+    });
+});
+return;
 Route::get('/totestpdf', function () {
     // return generateSalarySlipPdf_(82,170);
     $employee = Employee::find(143);

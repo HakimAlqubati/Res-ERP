@@ -3,21 +3,24 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TenantResource\Pages;
-use App\Filament\Resources\TenantResource\RelationManagers;
 use App\Models\CustomTenantModel;
-use App\Models\Tenant;
-use Filament\Forms;
+use App\Observers\TenantObserver;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class TenantResource extends Resource
 {
@@ -41,36 +44,100 @@ class TenantResource extends Resource
         return $form
             ->schema([
                 Fieldset::make('')->label('')->columns(3)->schema([
-                    TextInput::make('name')->required()->unique(ignoreRecord: true),
-                    TextInput::make('domain')->required()->unique(ignoreRecord: true)
+                    TextInput::make('name')->required()->unique(ignoreRecord: true)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (Set $set, ?string $state) {
+                            if ($state) {
+                                // Update the 'domain' field dynamically based on 'name'
+                                $set('domain', Str::slug($state));
+
+                                // Update the 'database' field dynamically based on 'name'
+                                $set('database', config('app.db_prefix') . Str::slug($state));
+                            }
+                        })
+
+                    ,
+                    TextInput::make('domain')->required()->unique(ignoreRecord: true)->disabled()
+
                         ->suffix('.' . config('app.domain'))
                         ->prefix(function () {
                             return (isLocal()) ? 'http://' : 'https://';
-                        }),
-                    TextInput::make('database')->required()->unique(ignoreRecord: true),
-                ])
+                        })->disabled()->dehydrated(),
+                    TextInput::make('database')->required()->unique(ignoreRecord: true)->disabled()->dehydrated(),
+                ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        dd(static::createDatabase($_GET['db']));
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->searchable()->toggleable(),
-                TextColumn::make('name')->sortable()->searchable()->toggleable(),
+                TextColumn::make('name')->sortable()->searchable()->toggleable()
+
+                ,
                 TextColumn::make('domain')->sortable()->searchable()->toggleable()
-                    ->url(fn($record) => (isLocal()) ? 'http://' . $record->domain : 'http://'  . $record->domain)
+                    ->url(fn($record) => (isLocal()) ? 'http://' . $record->domain : 'http://' . $record->domain)
 
                     ->openUrlInNewTab(),
                 TextColumn::make('database')->sortable()->searchable()->toggleable(),
+                IconColumn::make('database_created')->label('Database Created')->sortable()->searchable()->toggleable()->boolean()->alignCenter(true),
+                ToggleColumn::make('active')->sortable()->searchable()->toggleable(),
+
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('create_database')
+                    ->label('Create Database')->button()
+                    ->requiresConfirmation()
+
+                    ->action(function ($record) {
+                        try {
+                            TenantObserver::createDatabase($record);
+                            showSuccessNotifiMessage('Done');
+                        } catch (\Exception $th) {
+                            throw $th;
+                            showWarningNotifiMessage($th->getMessage());
+                        }
+
+                    })
+
+                    ->color('success')
+                    ->visible(fn($record) => !$record->database_created),
+
+                Tables\Actions\Action::make('importDatabase')
+                
+                ->button()->form([
+                    FileUpload::make('file')->required(),
+                ])
+
+                    ->action(function ($record, $data) {
+                        $filePath = $data['file'];
+                        
+                        if (!File::exists($filePath)) {
+                            showWarningNotifiMessage('File not found: $filePath');
+                            return;
+                        }
+                        DB::beginTransaction();
+                        try {
+                            // Read the SQL file
+                            $sql = File::get($filePath);
+                            dd($sql);
+                            // Execute the SQL commands
+                            DB::unprepared($sql);
+                            DB::commit();
+                            showSuccessNotifiMessage('Done');
+                        } catch (\Throwable $th) {
+                            DB::rollBack();
+                            showWarningNotifiMessage($th->getMessage());
+                            throw $th;
+                        }
+
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -99,7 +166,7 @@ class TenantResource extends Resource
         return static::getModel()::count();
     }
 
-    public static function createDatabase($dbName)
+    public static function createDatabase_($dbName)
     {
         DB::beginTransaction();
         try {
@@ -123,7 +190,6 @@ class TenantResource extends Resource
             Artisan::call('tenants:artisan', [
                 'artisanCommand' => 'migrate --database=tenant',
             ]);
-
 
             DB::commit();
             return "Database {$dbName} created and migrations applied successfully.";

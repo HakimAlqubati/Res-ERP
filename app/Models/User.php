@@ -22,27 +22,26 @@ class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield;
 
-
     // Use only the traits you need, or none if you handle it manually
     use UsesLandlordConnection, UsesTenantConnection {
         UsesLandlordConnection::getConnectionName insteadof UsesTenantConnection;
         UsesTenantConnection::getConnectionName as getTenantConnectionName;
     }
 
-
     public function getConnectionName()
     {
         $explodeHost = explode('.', request()->getHost());
+
         $count = count($explodeHost);
         // Example logic: Use tenant connection if tenant is active, otherwise use landlord
         // dd($count, $explodeHost, $this->getTenantConnectionName(),env('APP_ENV'),env('APP_ENV') == 'local',Branch::all());
+
         if (
             env('APP_ENV') == 'local' && $count == 2
             || env('APP_ENV') == 'production' && $count == 3
         ) {
             return $this->getTenantConnectionName();
         }
-
 
         return 'landlord'; // Or explicitly return the landlord connection
     }
@@ -184,7 +183,8 @@ class User extends Authenticatable implements FilamentUser
         return false;
     }
 
-    public function getIsBranchManagerAttribute() {}
+    public function getIsBranchManagerAttribute()
+    {}
     // public function canAccessFilament(): bool
     // {
     //     return true;

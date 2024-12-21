@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\CustomTenantModel;
 use App\Models\Employee;
 use App\Models\Task;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Notifications\NotificationAttendance;
 use App\Notifications\NotificationAttendanceCheck;
 use App\Observers\EmployeeObserver;
 use App\Observers\TaskObserver;
+use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use Filament\Livewire\DatabaseNotifications;
@@ -42,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
+        CustomTenantModel::observe(TenantObserver::class);
         // Task::observe(TaskObserver::class);
         // Employee::observe(EmployeeObserver::class);
         // User::observe(UserObserver::class);

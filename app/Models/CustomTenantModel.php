@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
@@ -9,9 +10,10 @@ use Spatie\Multitenancy\Models\Tenant;
 
 class CustomTenantModel extends Tenant
 {
+    use SoftDeletes;
     // use UsesLandlordConnection;
     protected $table = 'tenants';
-    protected $fillable = ['name', 'domain', 'database'];
+    protected $fillable = ['name', 'domain', 'database', 'active', 'database_created'];
     protected static function booted()
     {
         // static::creating(fn(CustomTenantModel $model) => $model->createDatabase());

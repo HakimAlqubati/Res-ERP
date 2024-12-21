@@ -44,10 +44,10 @@ return [
 
         'tenant' => [
             'driver' => 'mysql',
-            'database' => null,
+            'database' => '',
             'host' => '127.0.0.1',
-            'username' => env('DB_USERNAME'),
-            'password' => env('DB_PASSWORD'),
+            'username' => 'root',
+            'password' => '',
             // And other options if needed ...
         ],
 
