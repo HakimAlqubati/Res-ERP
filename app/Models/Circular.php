@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Circular extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes,DynamicConnection;
 
     protected $table = 'hr_circulars';
 

@@ -47,7 +47,7 @@ use Spatie\Permission\Models\Role;
         return "Welcome to tenant: " . $tenant;
     });
 });
-return;
+// return;
 Route::get('/totestpdf', function () {
     // return generateSalarySlipPdf_(82,170);
     $employee = Employee::find(143);

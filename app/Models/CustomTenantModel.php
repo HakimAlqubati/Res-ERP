@@ -64,4 +64,13 @@ class CustomTenantModel extends Tenant
     // {
     //     return $this->hasMany(Task::class);
     // }
+
+    public static function setDatabaseConnection($databaseName)
+    {
+        // Dynamically update the database connection to point to the specified database
+        config(['database.connections.mysql.database' => $databaseName]);
+
+        // Reconnect with the updated database connection
+        DB::reconnect('mysql');
+    }
 }

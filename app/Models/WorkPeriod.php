@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkPeriod extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,DynamicConnection;
     protected $table = 'hr_work_periods';
 
     // Define fillable fields

@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveBalance extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,DynamicConnection;
 
     // Define the table name if it's different from the convention
     protected $table = 'hr_leave_balances';

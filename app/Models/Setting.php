@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
+    use DynamicConnection;
     // The table associated with the model.
     protected $table = 'settings';
 

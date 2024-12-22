@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class WeeklyHoliday extends Model
 {
-    use HasFactory;
+    use HasFactory,DynamicConnection;
     protected $table = 'hr_weekly_holiday';
 
     protected $fillable = [

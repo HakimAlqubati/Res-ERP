@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Employee extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,DynamicConnection;
 
     /**
      * The attributes that are mass assignable.

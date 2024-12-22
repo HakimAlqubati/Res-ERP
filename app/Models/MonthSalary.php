@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MonthSalary extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,DynamicConnection;
     protected $table = 'hr_month_salaries';
 
     protected $fillable = [

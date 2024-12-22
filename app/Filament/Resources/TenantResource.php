@@ -19,7 +19,7 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class TenantResource extends Resource
@@ -110,23 +110,38 @@ class TenantResource extends Resource
                     ->visible(fn($record) => !$record->database_created),
 
                 Tables\Actions\Action::make('importDatabase')
-                
-                ->button()->form([
-                    FileUpload::make('file')->required(),
+
+                    ->button()->form([
+                    FileUpload::make('file')
+                        ->label('Upload SQL file')
+                        ->required()->directory('sql_database_imports')
+                        ->visibility('public'),
                 ])
 
                     ->action(function ($record, $data) {
-                        $filePath = $data['file'];
-                        
-                        if (!File::exists($filePath)) {
-                            showWarningNotifiMessage('File not found: $filePath');
-                            return;
-                        }
                         DB::beginTransaction();
                         try {
+                            $sql = 'public/' . $data['file'];
+                            $sql = Storage::path($sql);
+                            // Store the uploaded file
+                            // $filePath = $request->file('sql_file')->storeAs('sql_imports', $request->file('sql_file')->getClientOriginalName());
+                            $sql = file_get_contents($sql);
+                            // dd($sql);
+                            // Connect to the database dynamically
+                            CustomTenantModel::setDatabaseConnection($record->database);
+                            // Run the import using the SQL file
+
+                            // dd(DB::unprepared($sql));
+
+                            // DB::unprepared($sql); // Import the SQL directly
+
+                            // if (!Storage::exists($sql)) {
+                            //     showWarningNotifiMessage('File not found: $filePath');
+                            //     return;
+                            // }
+
                             // Read the SQL file
-                            $sql = File::get($filePath);
-                            dd($sql);
+
                             // Execute the SQL commands
                             DB::unprepared($sql);
                             DB::commit();

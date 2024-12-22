@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Traits\DynamicConnection;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -20,31 +21,9 @@ class User extends Authenticatable implements FilamentUser
 // implements FilamentUser
 
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield,DynamicConnection;
 
-    // Use only the traits you need, or none if you handle it manually
-    use UsesLandlordConnection, UsesTenantConnection {
-        UsesLandlordConnection::getConnectionName insteadof UsesTenantConnection;
-        UsesTenantConnection::getConnectionName as getTenantConnectionName;
-    }
-
-    public function getConnectionName()
-    {
-        $explodeHost = explode('.', request()->getHost());
-
-        $count = count($explodeHost);
-        // Example logic: Use tenant connection if tenant is active, otherwise use landlord
-        // dd($count, $explodeHost, $this->getTenantConnectionName(),env('APP_ENV'),env('APP_ENV') == 'local',Branch::all());
-
-        if (
-            env('APP_ENV') == 'local' && $count == 2
-            || env('APP_ENV') == 'production' && $count == 3
-        ) {
-            return $this->getTenantConnectionName();
-        }
-
-        return 'landlord'; // Or explicitly return the landlord connection
-    }
+     
     /**
      * The attributes that are mass assignable.
      *

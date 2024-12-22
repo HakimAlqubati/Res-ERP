@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class Task extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes,DynamicConnection;
 
     protected $table = 'hr_tasks';
 

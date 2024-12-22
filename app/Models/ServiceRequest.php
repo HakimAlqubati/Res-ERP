@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ServiceRequest extends Model
 {
-    use HasFactory;
+    use HasFactory,DynamicConnection;
     protected $table = 'hr_service_requests';
 
     // Fillable fields

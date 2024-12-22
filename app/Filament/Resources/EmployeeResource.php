@@ -242,7 +242,9 @@ class EmployeeResource extends Resource
                                                 return  Department::where('active', 1)
                                                     ->select('id', 'name')->get()->pluck('name', 'id');
                                             }),
-                                        DatePicker::make('join_date')->columnSpan(1)->label('Start date')->required(),
+                                        DatePicker::make('join_date')->columnSpan(1)->label('Start date')->required()
+                                        ->maxDate(now()->toDateString() )
+                                        ,
 
                                     ]),
                                 ]),

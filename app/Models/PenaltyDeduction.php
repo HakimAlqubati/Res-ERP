@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PenaltyDeduction extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes,DynamicConnection;
 
     // The table associated with the model.
     protected $table = 'hr_penalty_deductions';
