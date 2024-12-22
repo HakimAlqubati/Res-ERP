@@ -82,7 +82,7 @@ class TenantResource extends Resource
 
                     ->openUrlInNewTab(),
                 TextColumn::make('database')->sortable()->searchable()->toggleable(),
-                IconColumn::make('database_created')->label('Database Created')->sortable()->searchable()->toggleable()->boolean()->alignCenter(true),
+                IconColumn::make('database_created')->label('Database Created')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(true),
                 ToggleColumn::make('active')->sortable()->searchable()->toggleable(),
 
             ])

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
-use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
 use App\Filament\Pages\AttendanecEmployee2 as AttendanecEmployee;
 use App\Models\AdvanceRequest;
@@ -15,7 +14,6 @@ use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use Carbon\Carbon;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -29,7 +27,6 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Notifications\Notification;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -41,7 +38,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use PhpParser\Node\Expr\Throw_;
 
 class EmployeeApplicationResource extends Resource
 {
@@ -69,10 +65,10 @@ class EmployeeApplicationResource extends Resource
                         ->searchable()
                         ->required()
                         ->live()
-                        // ->afterStateUpdated(function ($get, $set, $state) {
-                        //     $employee = Employee::find($state);
-                        //     $set('basic_salary', $employee?->salary);
-                        // })
+                    // ->afterStateUpdated(function ($get, $set, $state) {
+                    //     $employee = Employee::find($state);
+                    //     $set('basic_salary', $employee?->salary);
+                    // })
                         ->disabled(function () {
                             if (isStuff() || isFinanceManager()) {
                                 return true;
@@ -86,7 +82,7 @@ class EmployeeApplicationResource extends Resource
                         })
                         ->options(Employee::select('name', 'id')
 
-                            ->get()->plucK('name', 'id')),
+                                ->get()->plucK('name', 'id')),
 
                     DatePicker::make('application_date')
                         ->label('Request date')
@@ -99,9 +95,8 @@ class EmployeeApplicationResource extends Resource
                             $dateTime = new \DateTime($state);
 
                             // Get the year and month
-                            $year = $dateTime->format('Y');  // Year (e.g., 2024)
+                            $year = $dateTime->format('Y'); // Year (e.g., 2024)
                             $month = $dateTime->format('m'); // Month (e.g., 12)
-
 
                             $set('leaveRequest.detail_year', $year);
                             $set('leaveRequest.detail_month', $month);
@@ -136,9 +131,8 @@ class EmployeeApplicationResource extends Resource
                             $dateTime = new \DateTime($get('application_date'));
 
                             // Get the year and month
-                            $year = $dateTime->format('Y');  // Year (e.g., 2024)
+                            $year = $dateTime->format('Y'); // Year (e.g., 2024)
                             $month = $dateTime->format('m'); // Month (e.g., 12)
-
 
                             $set('leaveRequest.detail_year', $year);
                             $set('leaveRequest.detail_month', $month);
@@ -187,7 +181,7 @@ class EmployeeApplicationResource extends Resource
                     Textarea::make('notes') // Add the new details field
                         ->label('Notes')
                         ->placeholder('Notes...')
-                        // ->rows(5)
+                    // ->rows(5)
                         ->columnSpanFull(),
                 ]),
             ]);
@@ -231,7 +225,7 @@ class EmployeeApplicationResource extends Resource
                 SelectFilter::make('status')->options([
                     EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
                     EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
-                    EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED
+                    EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED,
                 ]),
                 SelectFilter::make('branch_id')
                     ->label('Branch')
@@ -240,7 +234,6 @@ class EmployeeApplicationResource extends Resource
             ->actions([
                 Tables\Actions\RestoreAction::make(),
                 Tables\Actions\DeleteAction::make()->using(function ($record) {
-
 
                     $details = null;
                     switch ($record->application_type_id) {
@@ -260,7 +253,7 @@ class EmployeeApplicationResource extends Resource
 
                                     if (!is_null($leaveBalance)) {
                                         $leaveBalance->update([
-                                            'balance' => $remaning + $leaveBalance?->balance
+                                            'balance' => $remaning + $leaveBalance?->balance,
                                         ]);
                                     }
                                     $record->delete();
@@ -558,7 +551,7 @@ class EmployeeApplicationResource extends Resource
                     throw new \Exception('There was an error processing the attendance request. Please try again later.');
                 }
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
 
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
@@ -599,7 +592,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -669,7 +662,7 @@ class EmployeeApplicationResource extends Resource
 
                     ]),
                     Fieldset::make()->label('Notes')->columns(2)->schema([
-                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes)
+                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
                     ]),
                 ];
             })
@@ -689,7 +682,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -704,7 +697,6 @@ class EmployeeApplicationResource extends Resource
             ->color('success')
             ->icon('heroicon-o-check')
             ->action(function ($record, $data) {
-
 
                 // dd($record, $data);
                 DB::beginTransaction();
@@ -744,8 +736,8 @@ class EmployeeApplicationResource extends Resource
                 $toDate = $leaveRequest->end_date;
                 $fromDate = $leaveRequest->start_date;
                 $daysCount = $leaveRequest->days_count;
-                $year =  $leaveRequest->year;
-                $month =  getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
+                $year = $leaveRequest->year;
+                $month = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
                 return [
@@ -776,7 +768,7 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
@@ -887,7 +879,7 @@ class EmployeeApplicationResource extends Resource
                     Fieldset::make()->label('Request data')->columns(2)->schema([
                         DatePicker::make('request_check_date')->default($details->date)->label('Date'),
                         TimePicker::make('request_check_time')->default($details->time)->label('Time'),
-                    ])
+                    ]),
                 ];
             })
             ->modalSubmitAction(false)
@@ -908,8 +900,8 @@ class EmployeeApplicationResource extends Resource
                 $toDate = $leaveRequest->end_date;
                 $fromDate = $leaveRequest->start_date;
                 $daysCount = $leaveRequest->days_count;
-                $year =  $leaveRequest->year;
-                $month =  getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
+                $year = $leaveRequest->year;
+                $month = getMonthArrayWithKeys()[$leaveRequest->month] ?? '';
                 $leaveType = LeaveType::find($leaveTypeId)->name;
 
                 return [
@@ -924,8 +916,8 @@ class EmployeeApplicationResource extends Resource
                     ]),
                 ];
             })
-            // ->modalSubmitAction(false)
-            // ->modalCancelAction(false)
+        // ->modalSubmitAction(false)
+        // ->modalCancelAction(false)
         ;
     }
     private static function advancedRequestDetails(): Action
@@ -957,7 +949,7 @@ class EmployeeApplicationResource extends Resource
 
                     ]),
                     Fieldset::make()->label('Notes')->columns(2)->schema([
-                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes)
+                        TextInput::make('test')->label('Notes')->columnSpanFull()->default($notes),
                     ]),
                 ];
             })
@@ -979,14 +971,13 @@ class EmployeeApplicationResource extends Resource
                     'rejected_at' => now(),
                 ]);
             })
-            // ->disabledForm()
+        // ->disabledForm()
             ->form(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
                 ];
             });
     }
-
 
     public static function canDelete(Model $record): bool
     {
@@ -1022,20 +1013,20 @@ class EmployeeApplicationResource extends Resource
             Fieldset::make('leaveRequest')
                 ->relationship('leaveRequest')->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
 
-                    $data['application_type_id'] = 1;
-                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
+                $data['application_type_id'] = 1;
+                $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST];
 
-                    $data['employee_id'] = $get('employee_id');
-                    $data['leave_type'] = $data['detail_leave_type_id'];
-                    $data['start_date'] = $data['detail_from_date'];
-                    $data['end_date'] = $data['detail_to_date'];
+                $data['employee_id'] = $get('employee_id');
+                $data['leave_type'] = $data['detail_leave_type_id'];
+                $data['start_date'] = $data['detail_from_date'];
+                $data['end_date'] = $data['detail_to_date'];
 
-                    $data['year'] = $data['detail_year'];
-                    $data['month'] = $data['detail_month'];
-                    $data['days_count'] = $data['detail_days_count'];
+                $data['year'] = $data['detail_year'];
+                $data['month'] = $data['detail_month'];
+                $data['days_count'] = $data['detail_days_count'];
 
-                    return $data;
-                })
+                return $data;
+            })
                 ->schema(
 
                     [
@@ -1055,14 +1046,14 @@ class EmployeeApplicationResource extends Resource
                                 ->options([
                                     2024 => 2024,
                                     2025 => 2025,
-                                    2026 => 2026
+                                    2026 => 2026,
                                 ])->disabled()->dehydrated()
                                 ->live(),
                             Select::make('detail_month')->label('Month')
                                 ->options(getMonthArrayWithKeys())
                                 ->live()
                                 ->dehydrated()
-                                ,
+                            ,
                             TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 
                         ]),
@@ -1104,12 +1095,12 @@ class EmployeeApplicationResource extends Resource
                                 }),
 
                             TextInput::make('detail_days_count')
-                                // ->disabled()
+                            // ->disabled()
                                 ->label('Number of Days')
-                                // ->helperText('Type how many days this leave will be')
+                            // ->helperText('Type how many days this leave will be')
                                 ->helperText('Type how many days this leave will be')
                                 ->numeric()
-                                // ->default(2)
+                            // ->default(2)
                                 ->minValue(1)
                                 ->live()
                                 ->required()
@@ -1131,7 +1122,6 @@ class EmployeeApplicationResource extends Resource
         ];
     }
 
-
     public static function advanceRequestForm($set, $get)
     {
         $employee = Employee::find($get('employee_id'));
@@ -1148,7 +1138,6 @@ class EmployeeApplicationResource extends Resource
 
                     $data['employee_id'] = $get('employee_id');
 
-
                     $data['advance_amount'] = $data['detail_advance_amount'];
                     $data['monthly_deduction_amount'] = $data['detail_monthly_deduction_amount'];
                     $data['deduction_ends_at'] = $data['detail_deduction_ends_at'];
@@ -1161,79 +1150,79 @@ class EmployeeApplicationResource extends Resource
                     return $data;
                 })
                 ->label('')->schema([
-                    Grid::make()->columns(3)->schema([
-                        DatePicker::make('detail_date')
-                            ->label('Date')
-                            ->live()
-                            ->maxDate(now()->toDateString())
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
-                                $set('detail_deduction_starts_from', $endNextMonth);
-                            })
-                            ->default('Y-m-d'),
-                        TextInput::make('detail_advance_amount')->numeric()->required()
-                            ->label('Amount'),
-                        TextInput::make('basic_salary')->numeric()->disabled()
-                            ->default(0)
-                            ->label('Basic salary')->helperText('Employee basic salary'),
-
-                    ]),
-                    Grid::make()->columns(3)->schema([
-                        TextInput::make('detail_monthly_deduction_amount')
-                            ->numeric()
-                            ->label('Monthly deduction amount')->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                $advancedAmount = $get('detail_advance_amount');
-                                // dd($advancedAmount);
-                                if ($state > 0 && $advancedAmount > 0) {
-                                    $res = $advancedAmount / $state;
-
-                                    $set('detail_number_of_months_of_deduction', $res);
-                                    $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
-                                    $set('detail_deduction_ends_at', $toMonth);
-                                }
-                            }),
-                        Fieldset::make()->columnSpan(1)->columns(1)->schema([
-                            DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
-                                ->label('Deduction starts from')
-                                ->default('Y-m-d')
-                                ->live()
-                                ->afterStateUpdated(function ($get, $set, $state) {
-
-                                    $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
-
-                                    // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
-
-                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
-                                    $set('detail_deduction_ends_at', $endNextMonth);
-                                }),
-                            DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
-                                ->label('Deduction ends at')
-                                ->default('Y-m-d'),
-                        ]),
-                        TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
-                            ->numeric()
-                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                $advancedAmount = $get('detail_advance_amount');
-                                if ($advancedAmount > 0 && $state > 0) {
-
-                                    $res = $advancedAmount / $state;
-                                    // dd($res,$state);
-                                    $set('detail_monthly_deduction_amount', round($res, 2));
-                                    $state = (int) $state;
-
-                                    $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
-
-                                    $set('detail_deduction_ends_at', $toMonth);
-                                }
-                            })->minValue(1)
-                            ->label('Number of months of deduction'),
-
-                    ]),
+                Grid::make()->columns(3)->schema([
+                    DatePicker::make('detail_date')
+                        ->label('Date')
+                        ->live()
+                        ->maxDate(now()->toDateString())
+                        ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            // Parse the state as a Carbon date, add one month, and set it to the end of the month
+                            $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
+                            $set('detail_deduction_starts_from', $endNextMonth);
+                        })
+                        ->default('Y-m-d'),
+                    TextInput::make('detail_advance_amount')->numeric()->required()
+                        ->label('Amount'),
+                    TextInput::make('basic_salary')->numeric()->disabled()
+                        ->default(0)
+                        ->label('Basic salary')->helperText('Employee basic salary'),
 
                 ]),
+                Grid::make()->columns(3)->schema([
+                    TextInput::make('detail_monthly_deduction_amount')
+                        ->numeric()
+                        ->label('Monthly deduction amount')->required()
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            $advancedAmount = $get('detail_advance_amount');
+                            // dd($advancedAmount);
+                            if ($state > 0 && $advancedAmount > 0) {
+                                $res = $advancedAmount / $state;
+
+                                $set('detail_number_of_months_of_deduction', $res);
+                                $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
+                                $set('detail_deduction_ends_at', $toMonth);
+                            }
+                        }),
+                    Fieldset::make()->columnSpan(1)->columns(1)->schema([
+                        DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
+                            ->label('Deduction starts from')
+                            ->default('Y-m-d')
+                            ->live()
+                            ->afterStateUpdated(function ($get, $set, $state) {
+
+                                $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
+
+                                // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
+
+                                $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
+                                $set('detail_deduction_ends_at', $endNextMonth);
+                            }),
+                        DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
+                            ->label('Deduction ends at')
+                            ->default('Y-m-d'),
+                    ]),
+                    TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
+                        ->numeric()
+                        ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                            $advancedAmount = $get('detail_advance_amount');
+                            if ($advancedAmount > 0 && $state > 0) {
+
+                                $res = $advancedAmount / $state;
+                                // dd($res,$state);
+                                $set('detail_monthly_deduction_amount', round($res, 2));
+                                $state = (int) $state;
+
+                                $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
+
+                                $set('detail_deduction_ends_at', $toMonth);
+                            }
+                        })->minValue(1)
+                        ->label('Number of months of deduction'),
+
+                ]),
+
+            ]),
         ];
     }
     public static function departureRequestForm($set, $get)
@@ -1258,13 +1247,12 @@ class EmployeeApplicationResource extends Resource
                     $data['date'] = $data['detail_date'];
                     $data['time'] = $data['detail_time'];
 
-
                     return $data;
                 })
 
                 ->columns(count($form))->schema(
-                    $form
-                ),
+                $form
+            ),
         ];
     }
 
@@ -1278,7 +1266,8 @@ class EmployeeApplicationResource extends Resource
             // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
             ,
             TimePicker::make('detail_time')
-            ->default(now())
+                ->default(now())
+                ->seconds(false)
                 ->label('Time')->required(),
         ];
         return [
@@ -1294,13 +1283,12 @@ class EmployeeApplicationResource extends Resource
                     $data['date'] = $data['detail_date'];
                     $data['time'] = $data['detail_time'];
 
-
                     return $data;
                 })
 
                 ->columns(count($form))->schema(
-                    $form
-                ),
+                $form
+            ),
         ];
     }
 }

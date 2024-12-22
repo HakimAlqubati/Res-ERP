@@ -10,7 +10,6 @@ use App\Models\EmployeeApplicationV2;
 use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
-use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -30,8 +29,11 @@ class CreateEmployeeApplication extends CreateRecord
         if (isStuff() || isFinanceManager()) {
             $data['employee_id'] = auth()->user()->employee->id;
             $data['branch_id'] = auth()->user()->branch_id;
+            $employee = Employee::find($data['employee_id']);
+            if ($employee->branch()->exists()) {
+                $data['branch_id'] = $employee->branch->id;
+            }
         }
-
 
         $applicationType = EmployeeApplicationV2::APPLICATION_TYPES[$data['application_type_id']];
 
@@ -39,7 +41,6 @@ class CreateEmployeeApplication extends CreateRecord
         $data['application_type_name'] = $applicationType;
         $year = Carbon::parse($data['application_date'])->year;
         $month = Carbon::parse($data['application_date'])->month;
-
 
         // Check if an application already exists for the same employee and date
         $existingApplicationWithDate = EmployeeApplicationV2::where('employee_id', $data['employee_id'])
@@ -64,12 +65,11 @@ class CreateEmployeeApplication extends CreateRecord
             ->where('application_type_id', $data['application_type_id'])
             ->get();
 
-
         if ($existingApplications && $data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST) {
-            foreach ($existingApplications as  $existingApplication) {
+            foreach ($existingApplications as $existingApplication) {
                 $existedStartDate = $existingApplication->leaveRequest->start_date ?? null;
                 $existedEndDate = $existingApplication?->leaveRequest?->end_date;
-                $requestedStartDate =  $this->data['leaveRequest']['detail_from_date'];
+                $requestedStartDate = $this->data['leaveRequest']['detail_from_date'];
                 $requestedEndDate = $this->data['leaveRequest']['detail_to_date'];
                 // Check for nulls first
                 if ($existedStartDate && $existedEndDate && $requestedStartDate && $requestedEndDate) {
@@ -94,7 +94,6 @@ class CreateEmployeeApplication extends CreateRecord
             }
         }
 
-
         if ($data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
             $attendances = $employee->attendancesByDate($this->data['missedCheckinRequest']['detail_date'])->count();
 
@@ -110,7 +109,7 @@ class CreateEmployeeApplication extends CreateRecord
 
         if ($data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST) {
             $attendances = $employee->attendancesByDate($this->data['missedCheckoutRequest']['detail_date'])->get();
-            
+
             if (count($attendances) == 0) {
                 Notification::make()->body('Employee has not checked in today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')')->warning()->send();
                 throw ValidationException::withMessages([
@@ -118,7 +117,6 @@ class CreateEmployeeApplication extends CreateRecord
                 ]);
             }
 
-            
             if (count($attendances) > 0) {
                 $lastAttendance = $attendances->last();
                 if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKOUT) {
@@ -126,10 +124,9 @@ class CreateEmployeeApplication extends CreateRecord
                     throw ValidationException::withMessages([
                         'application_date' => 'Employee has already checked out today.(' . $this->data['missedCheckoutRequest']['detail_date'] . ')',
                     ]);
-                } 
+                }
             }
         }
-
 
         $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
