@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->text('avatar')->nullable()->after('email')->default('users/default/avatar.png');
+            $table->text('avatar')->nullable()->after('email');
         });
         Schema::table('hr_employees', function (Blueprint $table) {
-            $table->text('avatar')->nullable()->after('email')->default('employees/default/avatar.png');
+            $table->text('avatar')->nullable()->after('email');
         });
     }
 
