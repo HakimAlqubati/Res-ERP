@@ -70,6 +70,8 @@ class TenantResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $dbName = $_GET['dbName'];
+        dd(DB::statement('CREATE DATABASE IF NOT EXISTS ' . $dbName));
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
