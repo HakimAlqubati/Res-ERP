@@ -134,7 +134,7 @@ class EmployeeResource extends Resource
                                         // TextInput::make('nationality')
                                         // ->label('Nationality')
                                         // ->nullable(),
-                                        TextInput::make('working_hours')->label('Working hours')->numeric(),
+                                        TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
 
                                         Select::make('nationality')
                                             ->label('Nationality')->live()

@@ -49,6 +49,8 @@ use Spatie\Permission\Models\Role;
 });
 // return;
 Route::get('/totestpdf', function () {
+
+    return getNationalitiesAsCountries();
     // return generateSalarySlipPdf_(82,170);
     $employee = Employee::find(143);
     $branch = Employee::find(6);
