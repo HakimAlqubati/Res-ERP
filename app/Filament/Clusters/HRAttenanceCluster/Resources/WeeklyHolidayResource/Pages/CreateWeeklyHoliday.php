@@ -3,6 +3,8 @@
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\Pages;
 
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource;
+use App\Models\Holiday;
+use App\Models\WeeklyHoliday;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -12,6 +14,8 @@ class CreateWeeklyHoliday extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $last = WeeklyHoliday::orderBy('id', 'desc')->first();
+        $data['id'] = $last->id + 1;
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
         $data['days'] = json_encode($data['days']);

@@ -19,6 +19,8 @@ class CreateEmployeeApplication extends CreateRecord
     protected static string $resource = EmployeeApplicationResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $last = EmployeeApplicationV2::orderBy('id', 'desc')->first();
+        $data['id'] = $last->id + 1;
         if (!isStuff() && !isFinanceManager()) {
             $employee = Employee::find($data['employee_id']);
             if ($employee->branch()->exists()) {

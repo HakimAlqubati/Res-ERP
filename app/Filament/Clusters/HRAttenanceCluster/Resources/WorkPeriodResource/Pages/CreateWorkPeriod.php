@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
 
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource;
+use App\Models\WorkPeriod;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateWorkPeriod extends CreateRecord
@@ -11,6 +12,8 @@ class CreateWorkPeriod extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $lastPeriod = WorkPeriod::orderBy('id', 'desc')->first();
+        $data['id'] = $lastPeriod->id + 1;
         $data['days'] = json_encode($data['days']);
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
