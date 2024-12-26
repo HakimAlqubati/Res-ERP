@@ -12,6 +12,7 @@ class Holiday extends Model
     protected $table = 'hr_holidays';
 
     protected $fillable = [
+        'id',
         'name',
         'from_date',
         'to_date',

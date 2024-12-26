@@ -15,6 +15,7 @@ class WorkPeriod extends Model
 
     // Define fillable fields
     protected $fillable = [
+        'id',
         'name',
         'description',
         'active',

@@ -12,6 +12,7 @@ class WeeklyHoliday extends Model
     protected $table = 'hr_weekly_holiday';
 
     protected $fillable = [
+        'id',
         'days',
         'description',
         'created_by',
