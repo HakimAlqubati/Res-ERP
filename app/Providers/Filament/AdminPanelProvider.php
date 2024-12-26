@@ -137,18 +137,18 @@ class AdminPanelProvider extends PanelProvider
                          (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems(): [] ,
                         ))
                         ,
-                    // NavigationGroup::make('Tenants')
-                    //     ->items(array_merge(
-                    //      (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
-                    //     || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
-                    //      )) ? TenantResource::getNavigationItems(): [] ,
-                    //     ))
-                    //     ,
                     NavigationGroup::make('Tenants')
                         ->items(array_merge(
-                         
-                          TenantResource::getNavigationItems(),
+                         (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
+                        || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
+                         )) ? TenantResource::getNavigationItems(): [] ,
                         ))
+                        // ,
+                    // NavigationGroup::make('Tenants')
+                    //     ->items(array_merge(
+                         
+                    //       TenantResource::getNavigationItems(),
+                    //     ))
                         ,
                 ]);
                return $menu;
