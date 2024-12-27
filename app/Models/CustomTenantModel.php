@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Tenant;
 
@@ -19,8 +20,8 @@ class CustomTenantModel extends Tenant
         // static::creating(fn(CustomTenantModel $model) => $model->createDatabase());
     }
 
- 
-  
+
+
     public function createDatabase_()
     {
         // $dbName = 'tenant_' . $tenantName;
@@ -72,5 +73,24 @@ class CustomTenantModel extends Tenant
 
         // Reconnect with the updated database connection
         DB::reconnect('mysql');
+    }
+
+    public function importDatabase($record)
+    {
+        DB::beginTransaction();
+        try {
+            $sql = 'emptyworkbench.sql';
+            $sql = Storage::path($sql);
+            $sql = file_get_contents($sql);
+            CustomTenantModel::setDatabaseConnection($record->database);
+
+            DB::unprepared($sql);
+            DB::commit();
+            showSuccessNotifiMessage('Done');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            showWarningNotifiMessage($th->getMessage());
+            throw $th;
+        }
     }
 }

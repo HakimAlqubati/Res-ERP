@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TenantResource\Pages;
 
 use App\Filament\Resources\TenantResource;
+use App\Models\CustomTenantModel;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTenant extends CreateRecord
@@ -31,6 +32,11 @@ class CreateTenant extends CreateRecord
     {
         $data['domain'] = $data['domain'] . '.' . config('app.domain');
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        (new CustomTenantModel())->importDatabase($this->record);
     }
     // protected function afterCreate(): void
     // {
