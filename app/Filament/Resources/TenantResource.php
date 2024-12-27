@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TenantResource\Pages;
 use App\Models\CustomTenantModel;
 use App\Observers\TenantObserver;
+use Dompdf\FrameDecorator\Text;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -82,6 +83,8 @@ class TenantResource extends Resource
                 TextColumn::make('database')->sortable()->searchable()->toggleable(),
                 IconColumn::make('database_created')->label('Database Created')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(true),
                 ToggleColumn::make('active')->sortable()->searchable()->toggleable(),
+                TextColumn::make('updated_at')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
@@ -110,7 +113,7 @@ class TenantResource extends Resource
 
                     ->button()
                     ->action(function ($record) {
-                       (new CustomTenantModel)->importDatabase($record);
+                        (new CustomTenantModel)->importDatabase($record);
                     }),
             ])
             ->bulkActions([
