@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DailyTasksSettingUp extends Model
 {
-    use HasFactory,DynamicConnection;
+    use HasFactory, DynamicConnection;
     protected $table = 'daily_tasks_setting_up';
 
     const TYPE_SCHEDULE_DAILY = 'daily';
@@ -37,7 +37,7 @@ class DailyTasksSettingUp extends Model
     {
         return $this->steps?->count();
     }
-    
+
     public function assignedto()
     {
         return $this->belongsTo(Employee::class, 'assigned_to');
@@ -72,16 +72,16 @@ class DailyTasksSettingUp extends Model
 
     protected static function booted()
     {
-        
+
         if (auth()->check()) {
             if (isBranchManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
-            }else if (isFinanceManager()) {
+            } else if (isFinanceManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                     $builder->where('assigned_to', auth()->user()->employee->id)
-                    ->orWhere('assigned_by',auth()->user()->id)
+                        ->orWhere('assigned_by', auth()->user()->id)
                     ; // Add your default query here
                 });
             }

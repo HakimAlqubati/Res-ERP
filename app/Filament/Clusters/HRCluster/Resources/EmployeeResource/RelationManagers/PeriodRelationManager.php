@@ -43,6 +43,11 @@ class PeriodRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+
+        // $explodeHost = explode('.', request()->getHost());
+
+        // $count = count($explodeHost);
+        // dd($this->ownerRecord,$this->ownerRecord->branch_id,$count);
         return $table
             ->recordTitleAttribute('period_id')
             ->striped()
@@ -70,7 +75,7 @@ class PeriodRelationManager extends RelationManager
                                 ->columns(3)->multiple()
                                 ->options(
                                     WorkPeriod::select('name', 'id')
-                                        // ->where('branch_id', $this->ownerRecord->branch_id)
+                                        ->where('branch_id', $this->ownerRecord->branch_id)
                                         ->get()->pluck('name', 'id'),
                                 )->default(function () {
                                     return $this->ownerRecord?->periods?->plucK('id')?->toArray();
