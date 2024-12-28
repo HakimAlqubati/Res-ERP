@@ -6,7 +6,6 @@ use App\Filament\Resources\EmployeeResource;
 use App\Models\Employee;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Support\Facades\DB;
 
 class EditEmployee extends EditRecord
 {
@@ -73,13 +72,6 @@ class EditEmployee extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $explodeHost = explode('.', request()->getHost());
-
-        $count = count($explodeHost);
-        $per = DB::table('permissions')->orderBy('id','desc')
-        
-        ->first();
-        dd($this->record,$this->record->branch_id,$count,$per);
         return $data;
     }
 
