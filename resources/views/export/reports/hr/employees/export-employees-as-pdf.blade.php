@@ -67,7 +67,7 @@
 <body>
 
     <div class="header">
-        <img src="{{ public_path('images/logo.png') }}" class="logo" alt="Company Logo">
+        <img src="{{ asset('/storage/' . setting('company_logo') . '') }}" class="logo" alt="Company Logo">
         <div class="title">Employees Report</div>
         <div class="subtitle">Generated on {{ date('Y-m-d H:i:s') }}</div>
     </div>
