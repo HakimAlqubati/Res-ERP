@@ -228,6 +228,7 @@ class EmployeeResource extends Resource
 
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
+                                            ->required()
                                             // ->disabledOn('edit')
                                             ->live()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
@@ -244,8 +245,7 @@ class EmployeeResource extends Resource
                                                     ->select('id', 'name')->get()->pluck('name', 'id');
                                             }),
                                         DatePicker::make('join_date')->columnSpan(1)->label('Start date')->required()
-                                        ->maxDate(now()->toDateString() )
-                                        ,
+                                            ->maxDate(now()->toDateString()),
 
                                     ]),
                                 ]),
