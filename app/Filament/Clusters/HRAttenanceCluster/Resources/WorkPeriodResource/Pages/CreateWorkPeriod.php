@@ -12,8 +12,6 @@ class CreateWorkPeriod extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $lastPeriod = WorkPeriod::orderBy('id', 'desc')->first();
-        $data['id'] = $lastPeriod->id + 1;
         $data['days'] = json_encode($data['days']);
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;

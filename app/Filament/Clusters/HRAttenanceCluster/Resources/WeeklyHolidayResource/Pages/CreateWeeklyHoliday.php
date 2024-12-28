@@ -14,8 +14,7 @@ class CreateWeeklyHoliday extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $last = WeeklyHoliday::orderBy('id', 'desc')->first();
-        $data['id'] = $last->id + 1;
+        
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
         $data['days'] = json_encode($data['days']);

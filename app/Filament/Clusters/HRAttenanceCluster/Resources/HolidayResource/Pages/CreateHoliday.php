@@ -13,9 +13,6 @@ class CreateHoliday extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $last = Holiday::orderBy('id', 'desc')->first();
-        $data['id'] = $last->id + 1;
-
         if ($data['from_date'] && $data['to_date']) {
             $daysDiff = now()->parse($data['from_date'])->diffInDays(now()->parse($data['to_date'])) + 1;
             $data['count_days'] = $daysDiff;

@@ -24,8 +24,6 @@ class CreateUser extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $lastUser = User::orderBy('id', 'desc')->first();
-        $data['id'] = $lastUser->id + 1;
         if ($data['is_exist_employee']) {
             $data['name'] = $this->data['name'];
             $data['email'] = $this->data['email'];
