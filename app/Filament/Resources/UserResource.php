@@ -320,7 +320,7 @@ class UserResource extends Resource
                     ->copyMessageDuration(1500)
                      ,
 
-                TextColumn::make('branch.name')->searchable()->label('Branch')
+                TextColumn::make('branch2.name')->searchable()->label('Branch')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('owner.name')->searchable()->label('Manager')
                     ->toggleable(isToggledHiddenByDefault: false),

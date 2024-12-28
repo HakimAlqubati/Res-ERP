@@ -81,6 +81,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(Branch::class, 'manager_id');
     }
+    public function branch2(){
+        return $this->belongsTo(Branch::class, 'branch_id');
+    }
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

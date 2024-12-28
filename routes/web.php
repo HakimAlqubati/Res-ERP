@@ -21,6 +21,8 @@ use App\Models\UnitPrice;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Multitenancy\Contracts\IsTenant;
 use Spatie\Permission\Models\Role;
 
 /*
@@ -34,13 +36,32 @@ use Spatie\Permission\Models\Role;
 |
  */
 
- Route::middleware('tenant')->group(function() {
+Route::middleware('tenant')->group(function () {
     // routes
     Route::get('/dd', function () {
-        
-        $tasks = Task::all();
-        
-        dd(app('currentTenant')->name,$tasks->pluck('name')->toArray());
+
+        // $tasks = Task::all();
+        $per = DB::table('permissions')->orderBy('id', 'desc')->first();
+
+
+        config([
+            'database.connections.tenant.host' =>  $_ENV['DB_HOST'],
+            'database.connections.tenant.database' =>  'tenant_tenant108',
+            'database.connections.tenant.username' =>  $_ENV['DB_USERNAME'],
+            'database.connections.tenant.password' =>  $_ENV['DB_PASSWORD'],
+            'database.connections.tenant.port' =>  $_ENV['DB_PORT'],
+        ]);
+        dd(
+            DB::purge('tenant'),
+
+            DB::reconnect('tenant'),
+            Schema::connection('tenant')->getConnection()->reconnect(),
+            Schema::connection('tenant')->getConnection()->reconnect(),
+            app('currentTenant')->name,
+            $per,
+            app(IsTenant::class)::checkCurrent(),
+            DB::connection()->getDatabaseName()
+        );
         // $tenant = Tenant::current();
         // dd($tenant);
         return view('welcome');
@@ -511,7 +532,7 @@ Route::get('getAttendancesLateArrival', function () {
         //     return $attendances->toArray();
         // })
         ->toArray();
-        dd($attendances);
+    dd($attendances);
     $result = [];
     foreach ($attendances as $key => $value) {
         $result[Employee::find($key)->name . '-' . $key] = $value;

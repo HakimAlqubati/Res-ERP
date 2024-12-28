@@ -44,6 +44,7 @@ use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
@@ -193,6 +194,18 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            // ->middleware([
+            //     'tenant',
+            //     \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
+            //     \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
+            // ])
+            // ->middleware(function (Middleware $middleware) {
+            //     $middleware
+            //         ->group('tenant', [
+            //             \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
+            //             \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
+            //         ]);
+            // })
             ->authMiddleware([
                 Authenticate::class,
             ])
