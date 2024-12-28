@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EmployeePeriodHistory extends Model
 {
-    use HasFactory;
+    use HasFactory,DynamicConnection;
 
     protected $table = 'hr_employee_period_histories';
     protected $fillable = [
