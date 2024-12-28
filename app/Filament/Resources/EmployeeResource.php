@@ -228,7 +228,8 @@ class EmployeeResource extends Resource
 
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
-                                            ->disabledOn('edit')->live()
+                                            // ->disabledOn('edit')
+                                            ->live()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Select::make('department_id')->columnSpan(1)->label('Department')
                                             ->searchable()
