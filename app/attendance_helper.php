@@ -2,6 +2,7 @@
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\EmployeePeriodHistory;
 use App\Models\Holiday;
 use App\Models\Setting;
 use App\Models\WeeklyHoliday;
@@ -31,12 +32,11 @@ function formatDuration($duration)
 function getEmployeePeriods($employeeId, $startDate, $endDate): Collection
 {
     // Fetch periods from hr_employee_period_histories based on employee_id and date range
-    $periods = DB::table('hr_employee_period_histories')
-        ->select(
-            DB::raw("TIME(start_date) as start_at"), // Extract time from start_date
-            DB::raw("TIME(end_date) as end_at"), // Extract time from end_date
-            'period_id'
-        )
+    $periods = EmployeePeriodHistory::select(
+        DB::raw("TIME(start_date) as start_at"), // Extract time from start_date
+        DB::raw("TIME(end_date) as end_at"), // Extract time from end_date
+        'period_id'
+    )
         ->where('employee_id', $employeeId)
         ->whereBetween('start_date', [$startDate, $endDate])
         ->get();
@@ -59,8 +59,7 @@ function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate)
     // Loop through each date in the date range
     for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
         // Fetch periods that include the current date
-        $periods = DB::table('hr_employee_period_histories')
-            ->select('period_id', 'start_date', 'end_date', 'start_time', 'end_time')
+        $periods = EmployeePeriodHistory::select('period_id', 'start_date', 'end_date', 'start_time', 'end_time')
             ->where('employee_id', $employeeId)
             ->where('active', 1)
             ->where(function ($query) use ($date) {
