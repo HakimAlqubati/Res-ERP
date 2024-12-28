@@ -23,7 +23,7 @@ trait DynamicConnection
         $explodeHost = explode('.', request()->getHost());
 
         $count = count($explodeHost);
-
+dd($count);
         if (
             env('APP_ENV') === 'local' && $count === 2 ||
             env('APP_ENV') === 'production' && $count === 3
