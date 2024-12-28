@@ -77,7 +77,7 @@ class TenantResource extends Resource
                 TextColumn::make('id')->sortable()->searchable()->toggleable(),
                 TextColumn::make('name')->sortable()->searchable()->toggleable(),
                 TextColumn::make('domain')->sortable()->searchable()->toggleable()
-                    ->url(fn($record) => (isLocal()) ? 'http://' . $record->domain : 'http://' . $record->domain)
+                    ->url(fn($record) => (isLocal()) ? 'http://' . $record->domain : 'https://' . $record->domain)
 
                     ->openUrlInNewTab(),
                 TextColumn::make('database')->sortable()->searchable()->toggleable(),
