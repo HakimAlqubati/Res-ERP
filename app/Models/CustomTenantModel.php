@@ -93,4 +93,21 @@ class CustomTenantModel extends Tenant
             throw $th;
         }
     }
+    public function importDatabaseByForm($database, $sqlFile)
+    {
+        DB::beginTransaction();
+        try {
+            $sql = Storage::path($sqlFile);
+            $sql = file_get_contents($sql);
+            CustomTenantModel::setDatabaseConnection($database);
+
+            DB::unprepared($sql);
+            DB::commit();
+            showSuccessNotifiMessage('Done');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            showWarningNotifiMessage($th->getMessage());
+            throw $th;
+        }
+    }
 }

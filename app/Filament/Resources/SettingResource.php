@@ -159,7 +159,7 @@ class SettingResource extends Resource
                                 ]),
 
                             ]),
-                        Tab::make('Tax Settings')
+                        Tab::make('Tax Settings')->hidden()
                             ->icon('heroicon-o-calculator')
                             ->schema([
                                 Fieldset::make('MTD/PCB Tax Brackets')->columns(4)->schema([

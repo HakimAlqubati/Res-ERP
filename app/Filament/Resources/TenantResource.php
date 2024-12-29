@@ -78,7 +78,7 @@ class TenantResource extends Resource
                 TextColumn::make('name')->sortable()->searchable()->toggleable(),
                 TextColumn::make('domain')->sortable()->searchable()->toggleable()
                     // ->url(fn($record) => (isLocal()) ? 'https://' . $record->domain : 'https://' . $record->domain)
-                    ->url(fn($record) => ('http://'. $record->domain))
+                    ->url(fn($record) => ('http://' . $record->domain))
 
                     ->openUrlInNewTab(),
                 TextColumn::make('database')->sortable()->searchable()->toggleable(),
@@ -110,11 +110,26 @@ class TenantResource extends Resource
                     ->color('success')
                     ->visible(fn($record) => !$record->database_created),
 
-                Tables\Actions\Action::make('importDatabase')->hidden()
-
+                Tables\Actions\Action::make('importDatabase')
+                    ->form([
+                        FileUpload::make('sqlfile')->label('SQL File')
+                            ->visibility('public')
+                            ->required(),
+                    ])
                     ->button()
-                    ->action(function ($record) {
-                        (new CustomTenantModel)->importDatabase($record);
+                    ->action(function ($record, $data) {
+                        try {
+                            $sql = 'public/' . $data['sqlfile'];
+                            // $sql = Storage::path($sql);
+                            // $sql = file_get_contents($sql);
+                            // dd($sql);
+
+                            (new CustomTenantModel)->importDatabaseByForm($record->database, $sql);
+                            showSuccessNotifiMessage('done');
+                        } catch (\Throwable $th) {
+                            showWarningNotifiMessage($th->getMessage());
+                            throw $th;
+                        }
                     }),
             ])
             ->bulkActions([
