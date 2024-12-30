@@ -3,6 +3,10 @@
     {{-- {{ dd(request()->session()->all()) }} --}}
     <div class="flex justify-center items-center h-full">
         <img src="{{ asset('storage/logo/default.png') }}" style="height: 9.5rem;" alt="">
+        {{-- Time Display --}}
+        <div id="time-display" style="font-size: 5.125rem" class="flex items-center justify-center text-lg font-semibold text-gray-600">
+            <!-- The time will be dynamically updated here -->
+        </div>
     </div>
 
     <div style="padding-left:150px;" class="flex items-center justify-center h-full space-x-4">
@@ -15,10 +19,7 @@
                     color="success" />
         </div>
 
-        {{-- Time Display --}}
-        <div id="time-display" class="flex items-center justify-center text-lg font-semibold text-gray-600">
-            <!-- The time will be dynamically updated here -->
-        </div>
+
 
         {{-- Form Section --}}
         <x-filament::section>
