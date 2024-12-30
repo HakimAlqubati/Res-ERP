@@ -121,7 +121,7 @@ class TenantResource extends Resource
                         try {
                             // $sql = 'public/' . $data['sqlfile'];
                             // $sql = Storage::path($sql);
-                            // $sql = file_get_conte    nts($sql);
+                            // $sql = file_get_contents($sql);
                             // dd($sql);
 
                             // (new CustomTenantModel)->importDatabaseByForm($record->database, $sql);
