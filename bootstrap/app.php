@@ -19,9 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
                 \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
             ]);
-        // $middleware->alias([
-        //     'check' => \App\Http\Middleware\CheckAuthenticated::class,
-        // ]);
+        $middleware->alias([
+            'check' => \App\Http\Middleware\CheckAuthenticated::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
