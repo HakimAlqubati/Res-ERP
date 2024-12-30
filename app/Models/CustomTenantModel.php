@@ -82,7 +82,7 @@ class CustomTenantModel extends Tenant
             $sql = 'WorkbenchRomansiah.sql';
             $sql = Storage::path($sql);
             $sql = file_get_contents($sql);
-            CustomTenantModel::setDatabaseConnection($record->database);
+            CustomTenantModel::setDatabaseConnection('tenant_romansiah');
 
             DB::unprepared($sql);
             DB::commit();
