@@ -15,6 +15,11 @@
                     color="success" />
         </div>
 
+        {{-- Time Display --}}
+        <div id="time-display" class="flex items-center justify-center text-lg font-semibold text-gray-600">
+            <!-- The time will be dynamically updated here -->
+        </div>
+
         {{-- Form Section --}}
         <x-filament::section>
             {{ $this->form }}
@@ -24,3 +29,22 @@
 
     </div>
 </x-filament::card>
+
+
+<script>
+    // Function to update the time
+    function updateTime() {
+        const timeDisplay = document.getElementById('time-display');
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    // Update the time every second
+    setInterval(updateTime, 1000);
+
+    // Initialize the time immediately when the page loads
+    updateTime();
+</script>
