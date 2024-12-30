@@ -31,15 +31,13 @@ class EmployeeRatingReportResource extends Resource
 
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label = 'Task performance rating';
-    
+
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     public static function form(Form $form): Form
     {
         return $form
-            ->schema([
-
-            ]);
+            ->schema([]);
     }
 
     public static function table(Table $table): Table
@@ -50,7 +48,7 @@ class EmployeeRatingReportResource extends Resource
             // ->recordAction(function($record){
             //     return 'rating-report/view?employee_id=' . $record->employee_id;
             // })
-            ->recordUrl(function($record){
+            ->recordUrl(function ($record) {
                 return 'rating-report/view?employee_id=' . $record->employee_id;
             })
             ->columns([
@@ -64,22 +62,22 @@ class EmployeeRatingReportResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
-                        ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                        SelectFilter::make('employee_id')
-                        ->label('Employee')
-                        ->options(function (Get $get) {
-        
-                            // Query to get employees based on branch_id if it is selected
-                            $query = Employee::where('active', 1);
-                            
-                            // if ($branchId) {
-                            //     $query->where('branch_id', $branchId);
-                            // }
-                
-                            return $query->pluck('name', 'id');
-                        })
-                        ->searchable(),
-                    
+                    ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
+                SelectFilter::make('employee_id')
+                    ->label('Employee')
+                    ->options(function (Get $get) {
+
+                        // Query to get employees based on branch_id if it is selected
+                        $query = Employee::where('active', 1);
+
+                        // if ($branchId) {
+                        //     $query->where('branch_id', $branchId);
+                        // }
+
+                        return $query->pluck('name', 'id');
+                    })
+                    ->searchable(),
+
 
             ], FiltersLayout::AboveContent)
             ->actions([
@@ -90,9 +88,7 @@ class EmployeeRatingReportResource extends Resource
 
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-        
-                ]),
+                Tables\Actions\BulkActionGroup::make([]),
             ]);
     }
 
@@ -121,16 +117,25 @@ class EmployeeRatingReportResource extends Resource
         $query = TaskRating::select(
             DB::raw('SUM(hr_task_rating.rating_value) as rating_value'),
             DB::raw('count(hr_task_rating.task_id) as count_task'),
-            'hr_employees.id as employee_id', 'hr_employees.name as employee_name', 'hr_employees.employee_no as employee_no', 'hr_employees.branch_id as branch_id')
+            'hr_employees.id as employee_id',
+            'hr_employees.name as employee_name',
+            'hr_employees.employee_no as employee_no',
+            'hr_employees.branch_id as branch_id',
+            DB::raw('MAX(hr_task_rating.id) as max_task_id')
+        )
             ->join('hr_employees', 'hr_task_rating.employee_id', '=', 'hr_employees.id');
         if (isBranchManager()) {
             $query->where('hr_employees.branch_id', auth()->user()->branch_id);
         }
-        $query = $query->groupBy('hr_employees.id', 'hr_employees.name', 'hr_employees.employee_no', 'hr_employees.branch_id')
-
+        $query = $query->groupBy(
+            'hr_employees.id',
+            'hr_employees.name',
+            'hr_employees.employee_no',
+            'hr_employees.branch_id'
+        )
+            ->orderBy('max_task_id', 'asc')
         ;
         return $query;
-        
     }
 
     public static function canViewAny(): bool
