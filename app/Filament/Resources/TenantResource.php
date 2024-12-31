@@ -120,7 +120,7 @@ class TenantResource extends Resource
                     ->action(function ($record, $data) {
                         try {
                             // (new CustomTenantModel)->importDatabaseByForm($record->database, $sql);
-                            (new CustomTenantModel)->importDatabase($record->database);
+                            (new CustomTenantModel)->importDatabase($record);
                             showSuccessNotifiMessage('done');
                         } catch (\Throwable $th) {
                             showWarningNotifiMessage($th->getMessage());
