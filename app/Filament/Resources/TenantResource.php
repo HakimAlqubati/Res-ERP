@@ -115,15 +115,10 @@ class TenantResource extends Resource
                     //     FileUpload::make('sqlfile')->label('SQL File')
                     //         ->visibility('public')
                     //         ->required(),
-                    // ])
+                    // ])   
                     ->button()
                     ->action(function ($record, $data) {
                         try {
-                            // $sql = 'public/' . $data['sqlfile'];
-                            // $sql = Storage::path($sql);
-                            // $sql = file_get_contents($sql);
-                            // dd($sql);
-
                             // (new CustomTenantModel)->importDatabaseByForm($record->database, $sql);
                             (new CustomTenantModel)->importDatabase($record->database);
                             showSuccessNotifiMessage('done');

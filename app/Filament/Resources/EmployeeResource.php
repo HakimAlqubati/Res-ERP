@@ -20,6 +20,7 @@ use App\Models\Position;
 use App\Models\UserType;
 use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Actions\Action as ComponentsActionsAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -627,18 +628,26 @@ class EmployeeResource extends Resource
                             echo $pdf->output();
                         }, 'employees.pdf');
                     }),
+
                 ActionsAction::make('import_employees')
                     ->label('Import from Excel')
                     ->icon('heroicon-o-document-arrow-up')
                     ->form([
                         FileUpload::make('file')
-                            ->label('Select Excel file')
-                        // ->accept('.xlsx')
-                        // ->rules('required', 'mimes:xlsx')
-                        ,
+                            ->label('Select Excel file'),
+                        // ActionsAction::make('downloadexcel')->label(__('Download Example File'))
+                        //     // ->icon('heroicon-o-download')
+                        //     ->url(asset('storage/example.xlsx')) // URL to the existing file
+                        //     ->openUrlInNewTab()
+                    ])->extraModalFooterActions([
+                        ActionsAction::make('downloadexcel')->label(__('Download Example File'))
+                            // ->icon('heroicon-o-download')
+                            ->url(asset('storage/Sample import file.xlsx')) // URL to the existing file
+                            ->openUrlInNewTab()
                     ])
                     ->color('success')
-                    ->action(function (array $data) {
+                    ->action(function ($data) {
+
                         $file = 'public/' . $data['file'];
                         // dd($file);
                         // $file= file_get_contents($file);

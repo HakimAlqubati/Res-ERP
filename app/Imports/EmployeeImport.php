@@ -81,6 +81,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
     {
         return [
             'name' => 'required|string|unique:hr_employees,name',
+            'email' => 'unique:hr_employees,email',
         ];
     }
 }
