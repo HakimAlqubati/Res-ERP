@@ -75,14 +75,14 @@ class CustomTenantModel extends Tenant
         DB::reconnect('mysql');
     }
 
-    public function importDatabase($database)
+    public function importDatabase($tenant)
     {
         DB::beginTransaction();
         try {
             $sql = 'emptyworkbench.sql';
             $sql = Storage::path($sql);
             $sql = file_get_contents($sql);
-            CustomTenantModel::setDatabaseConnection($database);
+            CustomTenantModel::setDatabaseConnection($tenant->database);
 
             DB::unprepared($sql);
             DB::commit();
