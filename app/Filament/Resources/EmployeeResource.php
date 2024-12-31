@@ -47,6 +47,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Maatwebsite\Excel\Facades\Excel;
@@ -629,7 +630,41 @@ class EmployeeResource extends Resource
                 ActionsAction::make('import_employees')
                     ->label('Import from Excel')
                     ->icon('heroicon-o-document-arrow-up')
-                    ->color('success'),
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Select Excel file')
+                        // ->accept('.xlsx')
+                        // ->rules('required', 'mimes:xlsx')
+                        ,
+                    ])
+                    ->color('success')
+                    ->action(function (array $data) {
+                        $file = 'public/' . $data['file'];
+                        // dd($file);
+                        // $file= file_get_contents($file);
+                        try {
+                            //code...
+                            // $file = Storage::path($file);
+                            // Excel::import(new \App\Imports\EmployeeImport, $file);
+                            // showSuccessNotifiMessage('Employees imported successfully');
+
+                            // Create an instance of the import class
+                            $import = new \App\Imports\EmployeeImport;
+
+                            // Import the file
+                            Excel::import($import, $file);
+
+                            // Check the result and show the appropriate notification
+                            if ($import->getSuccessfulImportsCount() > 0) {
+                                showSuccessNotifiMessage("Employees imported successfully. {$import->getSuccessfulImportsCount()} rows added.");
+                            } else {
+                                showWarningNotifiMessage('No employees were added. Please check your file.');
+                            }
+                        } catch (\Throwable $th) {
+                            throw $th;
+                            showWarningNotifiMessage('Error importing employees');
+                        }
+                    }),
 
             ])
             ->actions([
