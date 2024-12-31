@@ -79,7 +79,7 @@ class CustomTenantModel extends Tenant
     {
         DB::beginTransaction();
         try {
-            $sql = 'emptyworkbench.sql';
+            $sql = 'sultanressys_db.sql';
             $sql = Storage::path($sql);
             $sql = file_get_contents($sql);
             CustomTenantModel::setDatabaseConnection($tenant->database);
