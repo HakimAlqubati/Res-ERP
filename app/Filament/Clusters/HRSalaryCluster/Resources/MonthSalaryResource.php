@@ -56,6 +56,7 @@ class MonthSalaryResource extends Resource
 
     public static function form(Form $form): Form
     {
+        // dd(getMonthsArray2());
         return $form
             ->schema([
 
@@ -76,13 +77,18 @@ class MonthSalaryResource extends Resource
                     Select::make('name')->label('Month')->hiddenOn('view')
                         ->required()
                         ->options(function () {
-                            // Get the array of months
-                            $months = getMonthsArray();
+                            $options = [];
+                            $currentDate = new \DateTime();
 
-                            // Map the months to a key-value pair with month names
-                            return collect($months)->mapWithKeys(function ($month, $key) {
-                                return [$key => $month['name'] .'-'. now()->year]; // Using month key as the option key
-                            });
+                            for ($i = 0; $i < 12; $i++) {
+                                $monthDate = (clone $currentDate)->sub(new \DateInterval("P{$i}M")); // Subtract months
+                                $monthName = $monthDate->format('F Y'); // Full month name with year
+                                $monthValue = $monthDate->format('Y-m'); // Value in Y-m format
+
+                                $options[$monthValue] = $monthName;
+                            }
+
+                            return $options;
                         })
                         // ->searchable()
                         ->default(now()->format('F')),
@@ -324,7 +330,7 @@ class MonthSalaryResource extends Resource
                 ->required()->columns(3)
                 ->label('Select Employees')->bulkToggleable()
                 ->options($employeeOptions)
-                ->default(array_keys($employeeOptions)) ,
+                ->default(array_keys($employeeOptions)),
         ];
     }
 

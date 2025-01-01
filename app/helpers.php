@@ -413,6 +413,26 @@ function getMonthsArray()
     ];
 }
 
+function getMonthsArray2()
+{
+    $months = [];
+    $currentDate = new DateTime(); // Current date
+    for ($i = 0; $i < 12; $i++) {
+        $monthDate = (clone $currentDate)->sub(new DateInterval("P{$i}M")); // Subtract months
+        $startMonth = $monthDate->format('Y-m-01');
+        $endMonth = $monthDate->format('Y-m-t');
+        $monthName = $monthDate->format('F'); // Full month name
+
+        $months[$monthName] = [
+            'name' => __("lang.month." . strtolower($monthName)), // Dynamic language key
+            'start_month' => $startMonth,
+            'end_month' => $endMonth,
+        ];
+    }
+
+    return array_reverse($months); // Reverse to keep the order from past to current
+}
+ 
 function getMonthArrayWithKeys()
 {
     return [
