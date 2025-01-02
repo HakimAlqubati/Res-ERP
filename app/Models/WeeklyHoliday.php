@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class WeeklyHoliday extends Model
 {
-    use HasFactory,DynamicConnection;
+    use HasFactory;
     protected $table = 'hr_weekly_holiday';
 
     protected $fillable = [

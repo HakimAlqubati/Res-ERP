@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveBalance extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
 
     // Define the table name if it's different from the convention
     protected $table = 'hr_leave_balances';

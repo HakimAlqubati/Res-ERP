@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkPeriod extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_work_periods';
 
     // Define fillable fields

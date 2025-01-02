@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveType extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_leave_types';
 
     protected $fillable = [

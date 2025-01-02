@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Employee extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

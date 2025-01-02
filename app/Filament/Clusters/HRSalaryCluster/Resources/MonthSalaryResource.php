@@ -79,13 +79,13 @@ class MonthSalaryResource extends Resource
                         ->options(function () {
                             $options = [];
                             $currentDate = new \DateTime();
-
                             for ($i = 0; $i < 12; $i++) {
                                 $monthDate = (clone $currentDate)->sub(new \DateInterval("P{$i}M")); // Subtract months
                                 $monthName = $monthDate->format('F Y'); // Full month name with year
-                                $monthValue = $monthDate->format('Y-m'); // Value in Y-m format
+                                $monthNameOnly = $monthDate->format('F'); // Full month name
+                                // $monthValue = $monthDate->format('Y-m'); // Value in Y-m format
 
-                                $options[$monthValue] = $monthName;
+                                $options[$monthNameOnly] = $monthName;
                             }
 
                             return $options;

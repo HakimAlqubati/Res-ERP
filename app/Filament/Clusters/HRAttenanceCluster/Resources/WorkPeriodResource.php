@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\WorkPeriod;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -21,6 +22,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\Yaml\Inline;
 
 class WorkPeriodResource extends Resource
@@ -135,8 +137,7 @@ class WorkPeriodResource extends Resource
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('branch.name')
-                    ->label('Branch')->searchable()->sortable()
-                    ,
+                    ->label('Branch')->searchable()->sortable(),
 
                 Tables\Columns\BooleanColumn::make('active')->alignCenter(true)
                     ->label('Active'),
@@ -161,25 +162,25 @@ class WorkPeriodResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Action::make('copy')
-                ->label('Copy')
-                ->hidden(fn():bool=>isBranchManager())
-                ->button()
-                ->icon('heroicon-o-clipboard-document-list')
-                ->form(function ($record) {
-                    return [
+                    ->label('Copy')
+                    ->hidden(fn(): bool => isBranchManager())
+                    ->button()
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->form(function ($record) {
+                        return [
 
-                        Fieldset::make()->label('')->columnSpan(3)->schema([
-                            Forms\Components\TextInput::make('name')->unique()
-                                ->label('Name')
-                                ->required()
-                                ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
-                            Forms\Components\Textarea::make('description')
-                                ->label('Description')
-                                ->default($record->description),
-                            Forms\Components\Toggle::make('active')
-                                ->label('Active')->inline()
-                                ->default($record->active),
-                                
+                            Fieldset::make()->label('')->columnSpan(3)->schema([
+                                Forms\Components\TextInput::make('name')->unique()
+                                    ->label('Name')
+                                    ->required()
+                                    ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Description')
+                                    ->default($record->description),
+                                Forms\Components\Toggle::make('active')
+                                    ->label('Active')->inline()
+                                    ->default($record->active),
+
                                 Forms\Components\TimePicker::make('start_at')
                                     ->label('Start Time')
                                     ->required()
@@ -195,31 +196,68 @@ class WorkPeriodResource extends Resource
                                 Forms\Components\TextInput::make('allowed_count_minutes_late')
                                     ->label('Allowed Delay (Minutes)')
                                     ->default($record->allowed_count_minutes_late),
-                        ]),
-                    ];
-                })
-                ->action(function ($record, array $data) {
-                    // Duplicate the record
-                    $newRecord = $record->replicate();
-                    // $newRecord->name = $record->name . ' - Copy'; // Modify as needed to differentiate
-                    $newRecord->name = $data['name'];
-                    $newRecord->description = $data['description'];
-                    $newRecord->active = $data['active'];
-                    $newRecord->start_at = $data['start_at'];
-                    $newRecord->end_at = $data['end_at'];
-                    $newRecord->branch_id = $data['branch_id'];
-                    $newRecord->allowed_count_minutes_late = $data['allowed_count_minutes_late'];
-        
-                    $newRecord->save();
-                })
-                
-                ->color('warning')
+                            ]),
+                        ];
+                    })
+                    ->action(function ($record, array $data) {
+                        // Duplicate the record
+                        $newRecord = $record->replicate();
+                        // $newRecord->name = $record->name . ' - Copy'; // Modify as needed to differentiate
+                        $newRecord->name = $data['name'];
+                        $newRecord->description = $data['description'];
+                        $newRecord->active = $data['active'];
+                        $newRecord->start_at = $data['start_at'];
+                        $newRecord->end_at = $data['end_at'];
+                        $newRecord->branch_id = $data['branch_id'];
+                        $newRecord->allowed_count_minutes_late = $data['allowed_count_minutes_late'];
+
+                        $newRecord->save();
+                    })
+
+                    ->color('warning')
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->headerActions([
+                Action::make('import_work_peirods')
+                    ->label('Import from Excel')
+                    ->icon('heroicon-o-document-arrow-up')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Select Excel file'),
+                    ])->extraModalFooterActions([
+                        Action::make('downloadexcel')->label(__('Download Example File'))
+                            ->icon('heroicon-o-arrow-down-on-square-stack')
+                            ->url(asset('storage/sample_file_imports/Sample import shifts.xlsx')) // URL to the existing file
+                            ->openUrlInNewTab()
+                    ])
+                    ->color('success')
+                    ->action(function ($data) {
+
+                        $file = 'public/' . $data['file'];
+                        try {
+                            // Create an instance of the import class
+                            $import = new \App\Imports\WorkPeriodImport;
+
+                            // Import the file
+                            Excel::import($import, $file);
+
+                            // Check the result and show the appropriate notification
+                            if ($import->getSuccessfulImportsCount() > 0) {
+                                showSuccessNotifiMessage("Shifts imported successfully. {$import->getSuccessfulImportsCount()} rows added.");
+                            } else {
+                                showWarningNotifiMessage('No shifts were added. Please check your file.');
+                            }
+                        } catch (\Throwable $th) {
+                            throw $th;
+                            showWarningNotifiMessage('Error importing shifts');
+                        }
+                    })
+            ])
+        ;
     }
 
     public static function getRelations(): array
@@ -244,7 +282,7 @@ class WorkPeriodResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager() ) {
+        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
             return true;
         }
         return false;

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Attendance extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_attendances';
 
     const CHECKTYPE_CHECKIN = 'checkin';

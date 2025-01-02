@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Allowance extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_allowances';
     protected $fillable = ['name', 'description', 'is_monthly', 'active','is_specific', 'amount', 'percentage','is_percentage'];
 }

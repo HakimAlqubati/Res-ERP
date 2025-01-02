@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmployeePeriodHistory extends Model
 {
-    use HasFactory,DynamicConnection;
+    use HasFactory;
 
     protected $table = 'hr_employee_period_histories';
     protected $fillable = [

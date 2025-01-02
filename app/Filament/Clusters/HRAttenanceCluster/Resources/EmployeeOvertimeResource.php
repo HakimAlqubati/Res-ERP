@@ -29,7 +29,10 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -54,18 +57,18 @@ class EmployeeOvertimeResource extends Resource
     //    }
     //     return HRAttenanceCluster::class;
     // }
-    
+
     // protected static ?string $label = 'Staff Overtime';
     // protected static ?string $pluralModelLabel = 'Staff Overtime';
     // protected static ?string $pluralLabel = 'Staff Overtime';
 
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My Overtime': 'Staff Overtime';
+        return isStuff() ? 'My Overtime' : 'Staff Overtime';
     }
     public static function getPluralLabel(): ?string
     {
-        return isStuff() ? 'My Overtime': 'Staff Overtime';
+        return isStuff() ? 'My Overtime' : 'Staff Overtime';
     }
     protected static ?int $navigationSort = 10;
     public static function form(Form $form): Form
@@ -123,8 +126,7 @@ class EmployeeOvertimeResource extends Resource
                                             'hours' => $employee['overtime_hours'],
                                         ];
                                     }, $employeesWithOvertime));
-                                })
-                            ,
+                                }),
                             DatePicker::make('date')
                                 ->label('Overtime Date')
                                 ->default(date('Y-m-d'))
@@ -170,9 +172,9 @@ class EmployeeOvertimeResource extends Resource
                                         ];
                                     }, $employeesWithOvertime));
                                 })
-                          
+
                         ]),
-                 
+
                     Repeater::make('employees')
                         ->label('')
                         ->required()
@@ -182,21 +184,21 @@ class EmployeeOvertimeResource extends Resource
                             [
                                 Grid::make()->columns(4)->schema([
                                     Select::make('employee_id')->live()
-                                    ->unique(
-                                        ignoreRecord: true,
-                                        modifyRuleUsing: function (Unique $rule,  Get $get,$state) {
-                                            return $rule->where('employee_id',$state)
-                                        ->where('date',$get('../../date'))
-                                        ;
-                                        }
+                                        ->unique(
+                                            ignoreRecord: true,
+                                            modifyRuleUsing: function (Unique $rule,  Get $get, $state) {
+                                                return $rule->where('employee_id', $state)
+                                                    ->where('date', $get('../../date'))
+                                                ;
+                                            }
                                         )
                                         ->relationship('employee', 'name')
                                         ->validationMessages([
-                                            'unique'=>'This overtime has been recorded'
-                                            ])
+                                            'unique' => 'This overtime has been recorded'
+                                        ])
                                         ->required(),
                                     TimePicker::make('start_time')->disabled()
-                                    ->dehydrated()
+                                        ->dehydrated()
                                         ->label('Checkin')
                                         ->live()
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
@@ -208,11 +210,10 @@ class EmployeeOvertimeResource extends Resource
 
                                             // Set the result in the hours_as_default field
                                             $set('hours', $hours);
-                                        })
-                                    ,
+                                        }),
 
                                     TimePicker::make('end_time')->disabled()
-                                    ->dehydrated()
+                                        ->dehydrated()
                                         ->label('Checkout')
                                         ->live()
                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
@@ -224,8 +225,7 @@ class EmployeeOvertimeResource extends Resource
 
                                             // Set the result in the hours_as_default field
                                             $set('hours', $hours);
-                                        })
-                                    ,
+                                        }),
                                     TextInput::make('hours')->label('Overtime Hours')->numeric()->required()->minValue(0.5),
                                 ]),
                                 Grid::make()->columns(2)->schema([
@@ -233,90 +233,116 @@ class EmployeeOvertimeResource extends Resource
                                         ->label('Notes')->columnSpanFull()
                                         ->nullable(),
                                 ]),
-                            ])
-
-                    ,
+                            ]
+                        ),
                 ]
-            )
-        ;
+            );
     }
 
     public static function table(Table $table): Table
     {
         return $table
-        ->striped()
-        ->defaultSort('id','desc')
+            ->striped()
+            ->defaultSort('id', 'desc')
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('id')
                     ->label('')
                     ->sortable()
                     ->wrap()
-                    ->searchable()->toggleable(isToggledHiddenByDefault:true),
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
                     ->wrap()
-                    ->searchable()->toggleable(isToggledHiddenByDefault:false),
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('date')
                     ->label('Date')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault:false),
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('start_time')
                     ->label('Checkin')
-                    ->sortable()->toggleable(isToggledHiddenByDefault:true),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('end_time')
                     ->label('Checkout')
-                    ->sortable()->toggleable(isToggledHiddenByDefault:true),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('hours')
                     ->label('Hours')
-                    ->sortable()->toggleable(isToggledHiddenByDefault:false),
-                IconColumn::make('approved')->toggleable(isToggledHiddenByDefault:false)
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false)
+                    ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
+                        return $query->select('hours');
+                    })),
+
+                IconColumn::make('approved')->toggleable(isToggledHiddenByDefault: false)
                     ->boolean()->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
                 TextColumn::make('approvedBy.name')
                     ->label('Approved by')
-                    ->wrap()->toggleable(isToggledHiddenByDefault:false)
-                ,
+                    ->wrap()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('approved_at')->wrap()
-                    ->label('Approved at')->toggleable(isToggledHiddenByDefault:false)
-                ,
+                    ->label('Approved at')->toggleable(isToggledHiddenByDefault: false),
 
             ])
             ->selectable()
             ->filters([
-                Tables\Filters\TrashedFilter::make()->visible(fn():bool=> isSuperAdmin())
-                
-                ,
+                Tables\Filters\TrashedFilter::make()->visible(fn(): bool => isSuperAdmin()),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->multiple()
                     ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
+                SelectFilter::make('status')
+                    ->label('Status')->multiple()
+                    ->options(
+                        [
+                            'approved' => 'Approved',
+                        ]
+                    ),
+
+                Filter::make('date')
+                    ->form([
+                        DatePicker::make('created_from')
+                            ->label('From')->default(null)
+                            ->placeholder('From'),
+                        DatePicker::make('created_until')
+                            ->label('To')
+                            ->placeholder('To')->default(null),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('hr_employee_overtime.date', '>=', $date),
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('hr_employee_overtime.date', '<=', $date),
+                            );
+                    }),
                 SelectFilter::make('employee_id')
                     ->searchable()
                     ->multiple()
                     ->label('Employee')
                     ->options(function (Get $get) {
                         return Employee::query()
-                        // ->where('branch_id', $get('branch_id'))
+                            // ->where('branch_id', $get('branch_id'))
                             ->pluck('name', 'id');
                     }),
-            ])
+                ],FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
-                Action::make('Edit')->visible(fn():bool=>(isSuperAdmin() || isBranchManager()))
-                ->form(function($record){
-                    return [
-                        TextInput::make('hours')->default($record->hours),
-                    ];
-                })->action(function($record,$data){
-// dd($data['hours'],$data,$record);
-                    return $record->update(['hours'=>$data['hours']]);
-                }),
+                Action::make('Edit')->visible(fn(): bool => (isSuperAdmin() || isBranchManager()))
+                    ->form(function ($record) {
+                        return [
+                            TextInput::make('hours')->default($record->hours),
+                        ];
+                    })->action(function ($record, $data) {
+                        // dd($data['hours'],$data,$record);
+                        return $record->update(['hours' => $data['hours']]);
+                    }),
                 Action::make('Approve')
                     ->databaseTransaction()
                     ->label(function ($record) {
@@ -333,12 +359,12 @@ class EmployeeOvertimeResource extends Resource
                             return 'heroicon-o-check-badge';
                         }
                     })->color(function ($record) {
-                    if ($record->approved == 1) {
-                        return 'gray';
-                    } else {
-                        return 'info';
-                    }
-                })
+                        if ($record->approved == 1) {
+                            return 'gray';
+                        } else {
+                            return 'info';
+                        }
+                    })
                     ->button()
                     ->requiresConfirmation()
                     ->size(ActionSize::Small)
@@ -353,45 +379,43 @@ class EmployeeOvertimeResource extends Resource
                     })
                     ->action(function (Model $record) {
                         if ($record->approved == 1) {
-                            $record->update(['approved' => 0, 'approved_by' => null,'approved_at'=> null]);
+                            $record->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]);
                         } else {
-                            $record->update(['approved' => 1, 'approved_by' => auth()->user()->id,'approved_at'=> now()]);
+                            $record->update(['approved' => 1, 'approved_by' => auth()->user()->id, 'approved_at' => now()]);
                         }
                     }),
 
-                    ActionGroup::make([
-                        Tables\Actions\DeleteAction::make(),
-                        Tables\Actions\ForceDeleteAction::make()->visible(fn():bool=> (isSuperAdmin())),
-                        Tables\Actions\RestoreAction::make()->visible(fn():bool=> (isSuperAdmin())),
-                    ]),
+                ActionGroup::make([
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\ForceDeleteAction::make()->visible(fn(): bool => (isSuperAdmin())),
+                    Tables\Actions\RestoreAction::make()->visible(fn(): bool => (isSuperAdmin())),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make()->visible(fn():bool=> (isSuperAdmin())),
-                    Tables\Actions\RestoreBulkAction::make()->visible(fn():bool=> (isSuperAdmin())),
+                    Tables\Actions\ForceDeleteBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
+                    Tables\Actions\RestoreBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
                     BulkAction::make('Approve')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-check-badge')
-                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id,'approved_at'=> now()]))
+                        ->action(fn(Collection $records) => $records->each->update(['approved' => 1, 'approved_by' => auth()->user()->id, 'approved_at' => now()]))
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;
                             }
                             return true;
-                        })
-                    ,
+                        }),
                     BulkAction::make('Rollback approved')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-x-mark')
-                        ->action(fn(Collection $records) => $records->each->update(['approved' => 0, 'approved_by' => null,'approved_at'=> null]))
+                        ->action(fn(Collection $records) => $records->each->update(['approved' => 0, 'approved_by' => null, 'approved_at' => null]))
                         ->hidden(function () {
                             if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
                                 return false;
                             }
                             return true;
-                        })
-                    ,
+                        }),
                 ]),
             ]);
     }
@@ -434,7 +458,7 @@ class EmployeeOvertimeResource extends Resource
         return static::can('create');
     }
 
-    
+
     public static function canForceDelete(Model $record): bool
     {
         if (isSuperAdmin()) {
@@ -450,7 +474,7 @@ class EmployeeOvertimeResource extends Resource
         }
         return false;
     }
-    
+
     public static function canDelete(Model $record): bool
     {
         if (isSuperAdmin()) {
@@ -465,5 +489,4 @@ class EmployeeOvertimeResource extends Resource
         }
         return false;
     }
-
 }

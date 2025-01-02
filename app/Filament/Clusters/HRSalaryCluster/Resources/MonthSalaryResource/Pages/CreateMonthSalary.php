@@ -24,17 +24,16 @@ class CreateMonthSalary extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
 
-        $monthsArray = getMonthsArray();
-
-
+        $monthsArray = getMonthsArray2();
+ 
         if (array_key_exists($data['name'], $monthsArray)) {
             $data['start_month'] = $monthsArray[$data['name']]['start_month'];
             $monthYear = Carbon::parse($data['start_month'])->format('Y-m');
-
             $data['end_month'] = $monthsArray[$data['name']]['end_month'];
             $data['name'] = 'Salary of month (' . $monthsArray[$data['name']]['name'] . ')';
             $data['month'] = $monthYear;
         }
+
         $isExist = MonthSalary::withTrashed()
             ->where('month', $data['month'])->where('branch_id', $data['branch_id'])->first();
         //    dd($isExist);
@@ -135,7 +134,7 @@ class CreateMonthSalary extends CreateRecord
                     && count($calculateSalary['details']['deducation_details']['general_deducation_employer']) > 0
                 ) {
                     foreach ($calculateSalary['details']['deducation_details']['general_deducation_employer'] as $deductionEmployer) {
-                        if (isset($deductionEmployer['name'])) { 
+                        if (isset($deductionEmployer['name'])) {
                             $this->record->deducationDetails()->create([
                                 'employee_id' => $employee->id,
                                 'deduction_id' => $deductionEmployer['id'],

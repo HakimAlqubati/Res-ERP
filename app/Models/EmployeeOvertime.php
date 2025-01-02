@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EmployeeOvertime extends Model
 {
-    use HasFactory,SoftDeletes,DynamicConnection;
+    use HasFactory,SoftDeletes;
     protected $table = 'hr_employee_overtime';
 
      // Fillable fields for mass assignment

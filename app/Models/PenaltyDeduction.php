@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PenaltyDeduction extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
 
     // The table associated with the model.
     protected $table = 'hr_penalty_deductions';

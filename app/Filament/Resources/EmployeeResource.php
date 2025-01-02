@@ -39,6 +39,7 @@ use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action as ActionsAction;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -475,6 +476,8 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // $sessionLifetime = config('session.lifetime');
+        // dd($sessionLifetime);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
@@ -488,11 +491,6 @@ class EmployeeResource extends Resource
                     ->label('Employee No.')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('name')
-                    ->sortable()->searchable()
-                    ->limit(20)
-                    ->searchable(isIndividual: true, isGlobal: true)
-                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')
                     ->label('Branch')
                     ->searchable()
@@ -500,8 +498,8 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('name')
                     ->sortable()->searchable()
-                    ->limit(12)
                     ->label('Full name')
+                    ->wrap()
                     ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
@@ -635,28 +633,17 @@ class EmployeeResource extends Resource
                     ->form([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
-                        // ActionsAction::make('downloadexcel')->label(__('Download Example File'))
-                        //     // ->icon('heroicon-o-download')
-                        //     ->url(asset('storage/example.xlsx')) // URL to the existing file
-                        //     ->openUrlInNewTab()
                     ])->extraModalFooterActions([
                         ActionsAction::make('downloadexcel')->label(__('Download Example File'))
-                            // ->icon('heroicon-o-download')
-                            ->url(asset('storage/Sample import file.xlsx')) // URL to the existing file
+                            ->icon('heroicon-o-arrow-down-on-square-stack')
+                            ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
                             ->openUrlInNewTab()
                     ])
                     ->color('success')
                     ->action(function ($data) {
 
                         $file = 'public/' . $data['file'];
-                        // dd($file);
-                        // $file= file_get_contents($file);
                         try {
-                            //code...
-                            // $file = Storage::path($file);
-                            // Excel::import(new \App\Imports\EmployeeImport, $file);
-                            // showSuccessNotifiMessage('Employees imported successfully');
-
                             // Create an instance of the import class
                             $import = new \App\Imports\EmployeeImport;
 
@@ -677,54 +664,51 @@ class EmployeeResource extends Resource
 
             ])
             ->actions([
-                ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
-                    ->color('info')
-                    ->icon('heroicon-m-banknotes')
-                    // ->form(function(): array{
-                    //     return [
+                ActionGroup::make([
+                    ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
+                        ->color('info')
+                        ->icon('heroicon-m-banknotes')
+                        ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
 
-                    //     ];
-                    // })->modalCancelAction(false)->modalSubmitAction(false)
-                    ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
+                        ->openUrlInNewTab(),
 
-                    ->openUrlInNewTab(),
+                    // Add the Change Branch action
+                    \Filament\Tables\Actions\Action::make('changeBranch')
+                        ->label('Change Branch') // Label for the action button
+                        ->visible(isSystemManager() || isSuperAdmin())
+                        // ->icon('heroicon-o-annotation') // Icon for the button
+                        ->modalHeading('Change Employee Branch') // Modal heading
+                        ->modalButton('Save') // Button inside the modal
+                        ->form([
+                            Select::make('branch_id')
+                                ->label('Select New Branch')
+                                ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $record) {
+                            // This is where you handle the logic to update the employee's branch and log the change
 
-                // Add the Change Branch action
-                \Filament\Tables\Actions\Action::make('changeBranch')
-                    ->label('Change Branch') // Label for the action button
-                    ->visible(isSystemManager() || isSuperAdmin())
-                    // ->icon('heroicon-o-annotation') // Icon for the button
-                    ->modalHeading('Change Employee Branch') // Modal heading
-                    ->modalButton('Save') // Button inside the modal
-                    ->form([
-                        Select::make('branch_id')
-                            ->label('Select New Branch')
-                            ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
-                            ->required(),
-                    ])
-                    ->action(function (array $data, $record) {
-                        // This is where you handle the logic to update the employee's branch and log the change
+                            $newBranchId = $data['branch_id'];
+                            $employee = $record; // The current employee record
 
-                        $newBranchId = $data['branch_id'];
-                        $employee = $record; // The current employee record
+                            // Create the employee branch log
+                            $employee->branchLogs()->create([
+                                'employee_id' => $employee->id,
+                                'branch_id' => $newBranchId,
+                                'start_at' => now(),
+                                'created_by' => auth()->user()->id,
+                            ]);
 
-                        // Create the employee branch log
-                        $employee->branchLogs()->create([
-                            'employee_id' => $employee->id,
-                            'branch_id' => $newBranchId,
-                            'start_at' => now(),
-                            'created_by' => auth()->user()->id,
-                        ]);
-
-                        // Update the employee's branch
-                        $employee->update([
-                            'branch_id' => $newBranchId,
-                        ]);
-                    }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                            // Update the employee's branch
+                            $employee->update([
+                                'branch_id' => $newBranchId,
+                            ]);
+                        }),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),

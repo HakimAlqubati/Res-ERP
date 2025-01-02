@@ -153,7 +153,10 @@ class PenaltyDeductionResource extends Resource
                 Tables\Columns\TextColumn::make('created_by')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn($record) => $record->created_by ? \App\Models\User::find($record->created_by)?->name : '-')
-                    ->sortable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')->toggleable()
+                    ->date()
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('employee_id')
