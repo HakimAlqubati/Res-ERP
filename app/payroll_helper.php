@@ -192,7 +192,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     if ($checkForMonthlyBalanceAntCreate['result'] && $createPayrol) {
         $totalAbsentDays -= $monthlyLeaveBalance;
     }
-    if (!$createPayrol) {
+    if ($createPayrol) {
         $totalAbsentDays -= $monthlyLeaveBalance;
     }
     // Calculate net salary including overtime
