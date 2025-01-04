@@ -94,10 +94,10 @@ class EmployeeResource extends Resource
 
                 Wizard::make([
                     Wizard\Step::make('Personal & Employeement data')
-                    ->icon('heroicon-o-user-circle')
+                        ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make('personal_data')->label('Personal data')
-                            
+
                                 ->schema([
                                     Grid::make()->columns(3)->schema([
                                         TextInput::make('name')->label('Full name')
@@ -111,7 +111,13 @@ class EmployeeResource extends Resource
                                             ])
                                             ->columnSpan(1)->required(),
                                         TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
-                                        TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
+
+                                        TextInput::make('phone_number')
+                                            ->unique(ignoreRecord: true)
+                                            ->columnSpan(1)
+                                            
+                                            // ->numeric()
+                                            ->maxLength(12)->minLength(8),
 
                                         // PhoneInput::make('phone_number')
                                         //     // ->numeric()
@@ -260,7 +266,7 @@ class EmployeeResource extends Resource
                         ]),
 
                     Wizard\Step::make('Employee files')
-                    ->icon('heroicon-o-document-plus')
+                        ->icon('heroicon-o-document-plus')
                         ->schema([
                             Repeater::make('files')
                                 ->relationship() // Define the relationship with the `files` table
@@ -344,7 +350,7 @@ class EmployeeResource extends Resource
                         ]),
 
                     Wizard\Step::make('Finance')
-                    ->icon('heroicon-o-banknotes')
+                        ->icon('heroicon-o-banknotes')
                         ->schema([
                             Fieldset::make()->label('Set salary data and account number')->schema([
                                 Grid::make()->label('')->columns(4)->schema([
@@ -498,7 +504,7 @@ class EmployeeResource extends Resource
                     ->label('Employee No.')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                
+
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label('Full name')
@@ -506,7 +512,7 @@ class EmployeeResource extends Resource
                     ->weight(FontWeight::Bold)
                     ->searchable(isIndividual: true, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
-                    TextColumn::make('branch.name')
+                TextColumn::make('branch.name')
                     ->label('Branch')
                     ->searchable()
                     ->sortable()
@@ -520,16 +526,14 @@ class EmployeeResource extends Resource
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500)
                     ->color('primary')
-                    ->weight(FontWeight::Bold)
-                    ,
+                    ->weight(FontWeight::Bold),
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()
                     ->copyMessage('Phone number copied')
                     ->copyMessageDuration(1500)
                     ->color('primary')
-                    ->weight(FontWeight::Bold)
-                    ,
+                    ->weight(FontWeight::Bold),
                 TextColumn::make('join_date')->sortable()->label('Start date')
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
