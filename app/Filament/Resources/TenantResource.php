@@ -92,7 +92,7 @@ class TenantResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->hidden(),
                 Tables\Actions\Action::make('create_database')->hidden()
                     ->label('Create Database')->button()
                     ->requiresConfirmation()
@@ -147,7 +147,7 @@ class TenantResource extends Resource
         return [
             'index' => Pages\ListTenants::route('/'),
             'create' => Pages\CreateTenant::route('/create'),
-            'edit' => Pages\EditTenant::route('/{record}/edit'),
+            // 'edit' => Pages\EditTenant::route('/{record}/edit'),
         ];
     }
     public static function getNavigationBadge(): ?string
