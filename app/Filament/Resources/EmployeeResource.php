@@ -119,6 +119,7 @@ class EmployeeResource extends Resource
                                                 'YE',
                                                 'AE',
                                                 'SA',
+                                                'PK',
                                             ])
                                             ->displayNumberFormat(PhoneInputNumberType::E164)
                                             ->autoPlaceholder('aggressive')

@@ -24,7 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 class EmployeeAttednaceReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
-
+    protected static ?string $slug = 'employee-attendance-reports';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
