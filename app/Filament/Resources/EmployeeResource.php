@@ -113,25 +113,25 @@ class EmployeeResource extends Resource
                                         TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
                                         TextInput::make('phone_number')->unique(ignoreRecord: true)->columnSpan(1)->numeric()->maxLength(12)->minLength(8),
 
-                                        PhoneInput::make('phone_number')
-                                            // ->numeric()
-                                            ->hidden()
-                                            ->initialCountry('MY')
-                                            ->onlyCountries([
-                                                'MY',
-                                                'US',
-                                                'YE',
-                                                'AE',
-                                                'SA',
-                                                'PK',
-                                            ])
-                                            ->displayNumberFormat(PhoneInputNumberType::E164)
-                                            ->autoPlaceholder('aggressive')
-                                            ->unique(ignoreRecord: true)
-                                            ->validateFor(
-                                                country: 'MY',
-                                                lenient: true, // default: false
-                                            ),
+                                        // PhoneInput::make('phone_number')
+                                        //     // ->numeric()
+                                        //     ->hidden()
+                                        //     ->initialCountry('MY')
+                                        //     ->onlyCountries([
+                                        //         'MY',
+                                        //         'US',
+                                        //         'YE',
+                                        //         'AE',
+                                        //         'SA',
+                                        //         'PK',
+                                        //     ])
+                                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
+                                        //     ->autoPlaceholder('aggressive')
+                                        //     ->unique(ignoreRecord: true)
+                                        //     ->validateFor(
+                                        //         country: 'MY',
+                                        //         lenient: true, // default: false
+                                        //     ),
                                         Select::make('gender')
                                             ->label('Gender')
                                             ->options([
