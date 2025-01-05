@@ -440,6 +440,8 @@ Route::get('/attendance', AttendanecEmployee::class)
     ->name('attendance')->middleware('check');
 Route::get('/attendanceSecret__', AttendanecEmployee2::class)
     ->name('attendanceSecret__');
+Route::get('/attendanceTest', AttendanecEmployee2::class)
+    ->name('attendanceTest')->middleware('check');
 
 
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
