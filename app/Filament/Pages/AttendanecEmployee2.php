@@ -87,17 +87,17 @@ class AttendanecEmployee2 extends BasePage
                 // ->required()
                     ->seconds(false)
                 ,
-                KeyPadTest::make('rfid')->default($this->rfid),
                 // KeyPadTest::make('rfid')->default($this->rfid),
-                // TextInput::make('rfid')
-                //     ->autocomplete(false)
-                //     ->label('Employee RFID')
-                //     ->prefixIcon('heroicon-m-identification')
-                //     ->prefixIconColor('success')
-                //     ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
-                //     ->required()
-                //     ->placeholder('RFID')
-                //     ->maxLength(255),
+                // KeyPadTest::make('rfid')->default($this->rfid),
+                TextInput::make('rfid')
+                    ->autocomplete(false)
+                    ->label('Employee RFID')
+                    ->prefixIcon('heroicon-m-identification')
+                    ->prefixIconColor('success')
+                    ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
+                    ->required()
+                    ->placeholder('RFID')
+                    ->maxLength(255),
                 ToggleButtons::make('type')
                     ->required()
                     ->hidden(function () {
@@ -158,6 +158,7 @@ class AttendanecEmployee2 extends BasePage
 
         $rfid = $data['rfid'];
         $empId = Employee::where('rfid', $rfid)->first()?->id;
+        // dd($rfid,$empId);
         // dd($date,$time);
         $this->handleCreationAttendance($empId, $date, $time);
     }
