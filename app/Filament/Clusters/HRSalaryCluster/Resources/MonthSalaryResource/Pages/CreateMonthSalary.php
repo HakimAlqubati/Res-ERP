@@ -154,6 +154,14 @@ class CreateMonthSalary extends CreateRecord
                         'deduction_amount' => $calculateSalary['details']['deduction_for_absent_days'],
                     ]);
                 }
+                if (isset($calculateSalary['details']['deductionForMissingHours']) && $calculateSalary['details']['deductionForMissingHours'] > 0) {
+                    $this->record->deducationDetails()->create([
+                        'employee_id' => $employee->id,
+                        'deduction_id' => MonthlySalaryDeductionsDetail::MISSED_HOURS_DEDUCTION,
+                        'deduction_name' => MonthlySalaryDeductionsDetail::DEDUCTION_TYPES[MonthlySalaryDeductionsDetail::MISSED_HOURS_DEDUCTION],
+                        'deduction_amount' => $calculateSalary['details']['deductionForMissingHours'],
+                    ]);
+                }
                 if (isset($calculateSalary['details']['tax_deduction']) && $calculateSalary['details']['tax_deduction'] > 0) {
                     $this->record->deducationDetails()->create([
                         'employee_id' => $employee->id,

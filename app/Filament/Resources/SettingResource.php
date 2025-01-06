@@ -122,7 +122,8 @@ class SettingResource extends Resource
                                     Toggle::make('create_auto_leave_when_create_payroll')
                                         ->label('Create Auto Leave When Create Payroll')
                                         ->helperText('Create auto leave when create payroll')
-                                        ->default(false)->hidden(),
+                                        ->default(false)
+                                        ->visible(fn(): bool => isSuperAdmin()),
 
                                 ]),
                                 Fieldset::make()->label('Face rekognation settings')->columns(4)->schema([

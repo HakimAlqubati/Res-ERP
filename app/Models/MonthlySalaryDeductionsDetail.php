@@ -19,6 +19,7 @@ class MonthlySalaryDeductionsDetail extends Model
     // public const TAX_DEDUCTIONS = -4;
     public const EARLY_DEPATURE_EARLY_HOURS = -5;
     public const REDUCED_HOURS_DEDUCTION = -6;
+    public const MISSED_HOURS_DEDUCTION = -7;
 
     // Specify the fillable fields
     protected $fillable = [
@@ -56,5 +57,6 @@ class MonthlySalaryDeductionsDetail extends Model
         // self::TAX_DEDUCTIONS => 'MTD', 
         self::EARLY_DEPATURE_EARLY_HOURS => 'Early departure deduction',
         self::REDUCED_HOURS_DEDUCTION => 'Reduced hours deduction',
+        self::MISSED_HOURS_DEDUCTION => 'Missed hours deduction',
     ];
 }

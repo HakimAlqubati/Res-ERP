@@ -167,6 +167,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
         $totalEarlyDepatureHours = calculateTotalEarlyLeave($attendances);
     }
 
+    $totalMissingHours = calculateTotalMissingHours($attendances);
+
 
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
@@ -176,7 +178,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employee, $date);
     $overtimeBasedOnMonthlyLeavePay = 0;
     if ($overtimeBasedOnMonthlyLeave > 0) {
-        $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
+        // $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
     }
 
 
@@ -203,9 +205,11 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $realDeductionForAbsentDays = $realTotalAbsentDays * $dailySalary; // Deduction for absent days
 
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
+    $deductionForMissingHours = round(($totalMissingHours['total_hours'] ?? 0) * $hourlySalary, 2);
+
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
-    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions);
+    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions + $deductionForMissingHours);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + 0);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
 
@@ -225,6 +229,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'ins' => $deducationInstallmentAdvancedMonthly?->installment_amount,
             'tax_deduction' => round($taxDeduction, 2), // Add tax deduction to the breakdown
 
+            'totalMissingHours' => $totalMissingHours,
+            'deductionForMissingHours' => $deductionForMissingHours,
             'total_deducation' => round($totalDeducations, 2),
             'totalPenaltyDeductions' => $totalPenaltyDeductions,
             'total_allowances' => round($totalAllowances, 2),
@@ -1077,4 +1083,31 @@ function ____($employee, $yearAndMonth, $totalAbsentDays, $monthlyLeaveBalance, 
         Log::error('failed_creating_auto_monthly', ['error' => $th]);
         return ['error' => $th->getMessage()];
     }
+}
+
+
+
+function calculateTotalMissingHours(array $data)
+{
+    $totalMissingMinutes = 0;
+
+    // Iterate through each date in the data
+    foreach ($data as $date => $details) {
+        foreach ($details['periods'] as $period) {
+            if (isset($period['attendances']['checkout']['lastcheckout']['missing_hours']['total_minutes'])) {
+                $totalMissingMinutes += $period['attendances']['checkout']['lastcheckout']['missing_hours']['total_minutes'];
+            }
+        }
+    }
+
+    // Convert total missing minutes into hours and minutes
+    $totalMissingHours = floor($totalMissingMinutes / 60);
+    $remainingMinutes = $totalMissingMinutes % 60;
+
+    // Return the result
+    return [
+        'formatted' => "{$totalMissingHours} h {$remainingMinutes} m",
+        'total_minutes' => $totalMissingMinutes,
+        'total_hours' => round($totalMissingMinutes / 60, 2), // Optional: Total in fractional hours
+    ];
 }

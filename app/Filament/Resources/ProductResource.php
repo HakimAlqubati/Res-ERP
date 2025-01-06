@@ -8,6 +8,7 @@ use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -22,6 +23,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action as ActionTable;
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class ProductResource extends Resource
@@ -52,6 +54,7 @@ class ProductResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
+        
             ->schema([
                 TextInput::make('name')->required()->label(__('lang.name'))
                    
@@ -100,6 +103,16 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->headerActions([
+            ActionTable::make('export_employees')
+                    ->label('Export to Excel')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('warning')
+                    ->action(function () {
+                        $data = Product::where('active', 1)->select('id', 'name', 'description', 'code')->get();
+                        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductsExport($data), 'products.xlsx');
+                    }),
+        ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label(__('lang.id'))

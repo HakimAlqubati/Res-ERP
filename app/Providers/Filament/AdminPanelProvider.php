@@ -21,6 +21,7 @@ use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Resources\BranchResource;
+use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
@@ -130,6 +131,7 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make(__('lang.branches'))
                     ->items(array_merge(
                      (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems(): [] ,
+                    //  ProductResource::getNavigationItems(),
                     ))
                     ,
                     

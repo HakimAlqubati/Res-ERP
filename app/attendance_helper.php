@@ -529,6 +529,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                         }
 
                         // dd($approvedOvertime);
+                        // dd($approvedOvertime);
                         $lastCheckout = [
                             'check_time' => $attendance->check_time ?? null, // Include check_time
                             'period_end_at' => $period->end_at,
@@ -539,6 +540,14 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
                             'approved_overtime' =>  $approvedOvertime,
+                            'missing_hours' =>   calculate_missing_hours(
+                                $attendance->status,
+                                $attendance->supposed_duration_hourly ?? $periodObject . ':00',
+                                $approvedOvertime,
+                                $date->toDateString(),
+                                $employeeId
+
+                            ),
                         ];
 
                         $periodData['attendances']['checkout'][] = [
@@ -550,6 +559,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
                             'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                             'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
                             'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
+
                         ];
 
                         $periodData['attendances']['checkout']['lastcheckout'] = $lastCheckout;
@@ -960,4 +970,78 @@ function calculateTotalEarlyLeave($attendanceData)
         'totalMinutes' => $totalEarlyLeaveMinutes,
         'totalHoursFloat' => round($totalHoursFloat, 1),
     ];
+}
+
+if (!function_exists('calculate_missing_hours')) {
+    /**
+     * Calculate the difference between supposed duration and approved overtime.
+     *
+     * @param string|null $supposedDuration The supposed duration in HH:mm:ss format.
+     * @param string|null $approvedOvertime The approved overtime in "X h Y m" format.
+     * @return string The difference in "X h Y m" format.
+     */
+    function calculate_missing_hours(
+        $status,
+        $supposedDuration,
+        $approvedOvertime,
+        $date,
+        $employeeId
+    ) {
+        $isMultiple = Attendance::where('check_date', $date)->where('employee_id', $employeeId)->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count() > 1 ? true : false;
+
+        if (!$isMultiple) {
+            return [
+                'formatted' => '0 h 0m',
+                'total_minutes' => 0,
+            ];
+        }
+        if (in_array($status, [
+            Attendance::STATUS_EARLY_DEPARTURE,
+            Attendance::STATUS_LATE_ARRIVAL
+        ])) {
+            return [
+                'formatted' => '0 h 0m',
+                'total_minutes' => 0,
+            ];
+        }
+        // Default the supposed duration if null
+        $supposedDuration = $supposedDuration ?? '00:00:00';
+
+
+        $approvedOvertimeParsed = convertToFormattedTime($approvedOvertime);
+        // dd($approvedOvertimeParsed);
+        if (!Carbon::parse($approvedOvertimeParsed)->lt(Carbon::parse($supposedDuration))) {
+            // dd(Carbon::parse($supposedDuration), Carbon::parse($approvedOvertimeParsed));
+            return [
+                'formatted' => '0 h 0m',
+                'total_minutes' => 0,
+            ];
+        }
+        // Calculate the difference
+        $difference = Carbon::parse($supposedDuration)->diff(Carbon::parse($approvedOvertimeParsed));
+
+        // Calculate the total number of minutes
+        $totalMinutes = $difference->h * 60 + $difference->i;
+        $totalHours = round($totalMinutes / 60, 1);
+        // Return both formatted difference and total minutes in an array
+        return [
+            'formatted' => $difference->format('%h h %i m'),
+            'total_minutes' => $totalMinutes,
+            'total_hours' => $totalHours,
+        ];
+        // Return the formatted difference
+        return $difference->format('%h h %i m');
+    }
+}
+
+function convertToFormattedTime($timeString)
+{
+    // Extract hours and minutes
+    $timeParts = explode(' h ', $timeString);
+    $hours = intval($timeParts[0] ?? 0); // Get hours
+    $minutes = intval(str_replace(' m', '', $timeParts[1] ?? 0)); // Get minutes
+
+    // Format as HH:mm
+    $sprint = Carbon::parse(sprintf('%02d:%02d', $hours, $minutes));
+    return $sprint;
 }
