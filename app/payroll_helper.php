@@ -178,7 +178,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employee, $date);
     $overtimeBasedOnMonthlyLeavePay = 0;
     if ($overtimeBasedOnMonthlyLeave > 0) {
-        // $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
+        $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
     }
 
 
