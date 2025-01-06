@@ -30,7 +30,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     if (!$employee) {
         return 'Employee not found!';
     }
-
+    $daysInMonth = getDaysMonthReal($date);
 
 
 
@@ -152,14 +152,20 @@ function calculateMonthlySalaryV2($employeeId, $date)
         return 'no_periods';
     }
     $totalAbsentDays = 0;
+    $totalAttendanceDays = 0;
+    $diffirenceBetweenAttendanceAbsentDays = 0;
     $absentDates = [];
     if (!$employee->discount_exception_if_absent) {
         // dd(calculateTotalAbsentDays($attendances));
         $totalAbsentDays = calculateTotalAbsentDays($attendances)['total_absent_days'];
+        $totalAttendanceDays = calculateTotalAbsentDays($attendances)['total_attendance_days'];
+        $diffirenceBetweenAttendanceAbsentDays = calculateTotalAbsentDays($attendances)['difference'];
+
         $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
     }
+    // dd($totalAbsentDays, $totalAttendanceDays, $diffirenceBetweenAttendanceAbsentDays); 
 
-
+    $differneceBetweenDaysMonthAndAttendanceDays = $daysInMonth - $totalAttendanceDays;
     $totalLateHours = 0;
     $totalEarlyDepatureHours = 0;
     if (!$employee->discount_exception_if_attendance_late) {
@@ -192,11 +198,15 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $realTotalAbsentDays = $totalAbsentDays;
     if ($checkForMonthlyBalanceAntCreate['result'] && $createPayrol) {
-        $totalAbsentDays -= $monthlyLeaveBalance;
+
+        if (
+            $differneceBetweenDaysMonthAndAttendanceDays == $totalAbsentDays &&
+            $differneceBetweenDaysMonthAndAttendanceDays <= $monthlyLeaveBalance
+        ) {
+            $totalAbsentDays -= $monthlyLeaveBalance;
+        }
     }
-    if ($createPayrol) {
-        $totalAbsentDays -= $monthlyLeaveBalance;
-    }
+
     // Calculate net salary including overtime
     // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
 
@@ -272,7 +282,8 @@ function calculateMonthlySalaryV2($employeeId, $date)
             'another_details' => [
                 'daily_salary' => $dailySalary,
                 'hourly_salary' => $hourlySalary,
-                'days_in_month' => getDaysInMonth($date),
+                'days_in_month' => $daysInMonth,
+                'differneceBetweenDaysMonthAndAttendanceDays' => $differneceBetweenDaysMonthAndAttendanceDays,
             ],
         ],
     ];
@@ -443,6 +454,9 @@ function calculateHourlySalary($employee, $date = null)
 function getDaysInMonth($date)
 {
     return setting('days_in_month');
+}
+function getDaysMonthReal($date)
+{
     // If date is not provided, use the current date
     $date = $date ?? date('Y-m-d');
 

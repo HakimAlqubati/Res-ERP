@@ -858,7 +858,7 @@ function calculateTotalAbsentDays($attendanceData)
 {
     // dd ($attendanceData);
     $totalAbsentDays = 0;
-
+    $totalAttendanceDays = 0;
     $result = [];
     foreach ($attendanceData as $date => $data) {
         // Check if periods exist for the date
@@ -887,12 +887,16 @@ function calculateTotalAbsentDays($attendanceData)
             // If all periods were absent, increment the count
             if ($allAbsent) {
                 $totalAbsentDays++;
+            } else {
+                $totalAttendanceDays++;
             }
         }
     }
 
     return [
         'total_absent_days' => $totalAbsentDays,
+        'total_attendance_days' => $totalAttendanceDays,
+        'difference' => $totalAttendanceDays - $totalAbsentDays,
         'absent_dates' => $result,
     ];
     dd($totalAbsentDays, $result);
