@@ -183,9 +183,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $monthlyLeaveBalance = getLeaveMonthlyBalance($employee, $date);
     $overtimeBasedOnMonthlyLeave = createEmployeeOverime($employee, $date);
     $overtimeBasedOnMonthlyLeavePay = 0;
-    if ($overtimeBasedOnMonthlyLeave > 0) {
-        $overtimeBasedOnMonthlyLeavePay = round($overtimeBasedOnMonthlyLeave * $hourlySalary, 2);
-    }
+    
 
 
     $checkForMonthlyBalanceAntCreate['result'] = null;
@@ -203,7 +201,10 @@ function calculateMonthlySalaryV2($employeeId, $date)
             $differneceBetweenDaysMonthAndAttendanceDays == $totalAbsentDays &&
             $differneceBetweenDaysMonthAndAttendanceDays <= $monthlyLeaveBalance
         ) {
-            $totalAbsentDays -= $monthlyLeaveBalance;
+            $totalAbsentDays -= $monthlyLeaveBalance - $differneceBetweenDaysMonthAndAttendanceDays;
+            if ($overtimeBasedOnMonthlyLeave > 0) {
+                $overtimeBasedOnMonthlyLeavePay = round($totalAbsentDays * $hourlySalary, 2);
+            }
         }
     }
 
