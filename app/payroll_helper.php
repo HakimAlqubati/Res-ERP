@@ -190,22 +190,22 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $createPayrol = setting('create_auto_leave_when_create_payroll');
 
     if ($createPayrol) {
-        $checkForMonthlyBalanceAntCreate =  checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
+        // $checkForMonthlyBalanceAntCreate =  checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $date, $totalAbsentDays, $monthlyLeaveBalance, $absentDates);
     }
 
 
     $realTotalAbsentDays = $totalAbsentDays;
     if ($checkForMonthlyBalanceAntCreate['result'] && $createPayrol) {
 
-        if (
-            $differneceBetweenDaysMonthAndAttendanceDays == $totalAbsentDays &&
-            $differneceBetweenDaysMonthAndAttendanceDays <= $monthlyLeaveBalance
-        ) {
-            $totalAbsentDays -= $monthlyLeaveBalance - $differneceBetweenDaysMonthAndAttendanceDays;
-            if ($overtimeBasedOnMonthlyLeave > 0) {
-                $overtimeBasedOnMonthlyLeavePay = round($totalAbsentDays * $hourlySalary, 2);
-            }
-        }
+        // if (
+        //     $differneceBetweenDaysMonthAndAttendanceDays == $totalAbsentDays &&
+        //     $differneceBetweenDaysMonthAndAttendanceDays <= $monthlyLeaveBalance
+        // ) {
+        //     $totalAbsentDays -= $monthlyLeaveBalance - $differneceBetweenDaysMonthAndAttendanceDays;
+        //     if ($overtimeBasedOnMonthlyLeave > 0) {
+        //         $overtimeBasedOnMonthlyLeavePay = round($totalAbsentDays * $hourlySalary, 2);
+        //     }
+        // }
     }
 
     // Calculate net salary including overtime
