@@ -8,6 +8,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -49,10 +50,15 @@ class EmployeeAttednaceReportResource extends Resource
             ->emptyStateHeading('No data')
             ->columns([])
             ->filters([
-                SelectFilter::make('employee_id')->label('Employee')->options(Employee::where('active', 1)
-                    ->select('name', 'id')
-
-                    ->get()->pluck('name', 'id'))
+                SelectFilter::make('employee_id')->label('Employee')->options(
+                    function () {
+                        return Employee::where('active', 1)
+                            ->get()
+                            ->mapWithKeys(function ($employee) {
+                                return [$employee->id => $employee->name . ' - ' . $employee->id];
+                            });
+                    }
+                )
 
                     ->hidden(fn() => isStuff())
                     ->searchable(),
@@ -67,6 +73,14 @@ class EmployeeAttednaceReportResource extends Resource
                         DatePicker::make('end_date')
                             ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
                             ->label('End Date'),
+
+                    ]),
+                Filter::make('show_extra_fields')
+                    ->label('Show Extra')
+                    ->form([
+                        Toggle::make('show_day')
+                            ->inline(false)
+                            ->label('Show Day')
                     ]),
 
             ], FiltersLayout::AboveContent)

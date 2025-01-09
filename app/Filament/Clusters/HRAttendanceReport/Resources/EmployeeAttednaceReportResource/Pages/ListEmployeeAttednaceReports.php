@@ -72,6 +72,8 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
+        $show_day = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
+        
         // Initialize total counters
         $totalSupposed = '0 h 0 m';
         $totalWorked = 0;
@@ -108,6 +110,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         // dd($data);
         return [
             'report_data' => $data,
+            'show_day' => $show_day,
             'employee_id' => $employee_id,
             'start_date' => $start_date,
             'end_date' => $end_date,
