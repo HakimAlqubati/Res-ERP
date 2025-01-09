@@ -83,14 +83,13 @@
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
+                    <th rowspan="2" style="display: {{ $show_day ? 'table-cell' : 'none' }};">{{ __('Day') }}
+                    </th>
                     <th rowspan="2">{{ __('Date') }}</th>
                     <th colspan="2">{{ __('Shift data') }}</th>
 
                     <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
                     <th colspan="3">{{ __('Work Hours Summary') }}</th>
-
-                    {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
-                    <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
                 </x-filament-tables::row>
                 <x-filament-tables::row>
@@ -116,6 +115,9 @@
                 @else
                     @foreach ($report_data as $date => $data)
                         <x-filament-tables::row>
+                            <x-filament-tables::cell style="display: {{ $show_day ? 'table-cell' : 'none' }};">
+                                {{ $data['day'] }}
+                            </x-filament-tables::cell>
                             <x-filament-tables::cell>
                                 {{ $date }}
                                 {{-- {{ dd($data['no_periods']) }} --}}
@@ -220,7 +222,7 @@
 
             <tfoot>
                 <x-filament-tables::row>
-                    <th colspan="7" class="text-right font-bold">{{ __('Total') }}</th>
+                    <th colspan="{{ $show_day ? 8 : 7 }}" class="text-right font-bold">{{ __('Total') }}</th>
                     <td class="text-center">{{ $totalSupposed }}</td>
                     <td class="text-center">{{ $totalWorked }}</td>
                     <td class="text-center">{{ $totalApproved }}</td>
