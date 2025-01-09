@@ -426,7 +426,6 @@ class AttendanecEmployee2 extends BasePage
 
         // Try to create the attendance record
         try {
-            dd($attendanceData);
             Attendance::create($attendanceData);
             // Send success notification
             return $this->sendAttendanceNotification($employee->name, $notificationMessage);
@@ -735,7 +734,6 @@ class AttendanecEmployee2 extends BasePage
      */
     private function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate, $currentRealDate)
     {
-        // dd($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate, $currentRealDate);
         $previousDate = $attendanceInPreviousDay?->check_date;
         $periodId = $attendanceInPreviousDay?->period_id;
         $employeId = $attendanceInPreviousDay?->employee_id;
@@ -751,7 +749,6 @@ class AttendanecEmployee2 extends BasePage
             ->latest('id')
             ->first();
 
-        // dd($latstAttendance);
         $lastCheckType = $latstAttendance->check_type;
 
         $dateTimeString = $attendanceInPreviousDay->check_date . ' ' . $latstAttendance->check_time;
@@ -759,13 +756,11 @@ class AttendanecEmployee2 extends BasePage
 
         $dateTimeString = $currentRealDate . ' ' . $currentCheckTime;
         $currentDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
-        // dd($lastCheckTime,$currentDateTime,$allowedTimeAfterPeriod);
+
         $diff = $this->calculateTimeDifference($periodEndTime, $currentCheckTime, $currentRealDate);
 
         $lastCheckedPeriodEndTimeDateTime = Carbon::parse($attendanceInPreviousDay->check_date . ' ' . $allowedTimeAfterPeriod);
 
-        // dd(Setting::getSetting('hours_count_after_period_after'),$currentCheckTime , $periodEndTime,$diff);
-        // dd($currentCheckTime,$periodEndTime,$diff);
         if ($currentCheckTime > $periodEndTime) {
             if ($diff >= Setting::getSetting('hours_count_after_period_after')) {
                 return true;
@@ -783,11 +778,6 @@ class AttendanecEmployee2 extends BasePage
                 }
             }
         } else {
-
-            // dd('hi');
-            // dd($currentDateTime,$lastCheckedPeriodEndTimeDateTime,$currentDateTime->toTimeString()>$lastCheckedPeriodEndTimeDateTime->toTimeString());
-            // dd('dd');
-            // if($currentDateTime->gt($lastCheckedPeriodEndTimeDateTime)){
             if ($currentDateTime->toTimeString() > $lastCheckedPeriodEndTimeDateTime->toTimeString()) {
                 return true;
             }
