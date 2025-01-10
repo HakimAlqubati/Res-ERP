@@ -74,9 +74,11 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $year = $yearMonthArr[0];
     $month = $yearMonthArr[1];
     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
-
+    $usedLeaves = 0;
     $allowedLeaves = $weeklyLeave->count_days;
-    $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+    if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
+        $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+    }
     $date = Carbon::parse($yearAndMonth);
     // Get the start of the month
     $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
