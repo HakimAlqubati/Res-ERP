@@ -197,9 +197,9 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $autoWeeklyLeaveData = calculateAutoWeeklyLeaveData($passedDate, $employeeId);
     $overtimeBasedOnMonthlyLeavePay = $dailySalary * $autoWeeklyLeaveData['remaining_leaves'];
     $realTotalAbsentDays = $totalAbsentDays;
-    if ($totalAbsentDays >= $autoWeeklyLeaveData['remaining_leaves']) {
-        $totalAbsentDays -= $autoWeeklyLeaveData['remaining_leaves'];
-    }
+    // if ($totalAbsentDays >= $autoWeeklyLeaveData['remaining_leaves']) {
+    $totalAbsentDays  = $autoWeeklyLeaveData['excess_absence_days'];
+    // }
     // Calculate deductions for absences and lateness
     $deductionForAbsentDays = ($totalAbsentDays) * $dailySalary;
     $realDeductionForAbsentDays = $realTotalAbsentDays * $dailySalary;
