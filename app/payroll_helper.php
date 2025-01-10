@@ -198,9 +198,6 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $overtimeBasedOnMonthlyLeavePay = $dailySalary * $autoWeeklyLeaveData['remaining_leaves'];
     $realTotalAbsentDays = $totalAbsentDays;
 
-    // Calculate net salary including overtime
-    // $netSalary = $basicSalary + $totalAllowances + $totalMonthlyIncentives + $overtimePay - $totalDeductions;
-
     // Calculate deductions for absences and lateness
     $deductionForAbsentDays = $totalAbsentDays * $dailySalary;
     $realDeductionForAbsentDays = $realTotalAbsentDays * $dailySalary;
@@ -212,7 +209,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions + $deductionForMissingHours);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + 0);
-    $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives);
+    $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives + $overtimeBasedOnMonthlyLeavePay);
 
     $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
     $remaningSalary = round($netSalary - round($totalDeducations, 2), 2);
@@ -678,8 +675,9 @@ function generateSalarySlipPdf($employeeId, $sid)
     $allallowanceTypes = array_reverse($allallowanceTypes, true);
     $employeeAllowances = collect($increaseDetails)->map(function ($allowance) use ($allallowanceTypes) {
         return [
-            'allowance_name' => $allallowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
+            // 'allowance_name' => $allallowanceTypes[$allowance['type_id']] ?? 'Unknown Allowance',
             'amount' => $allowance['amount'],
+            'allowance_name' => $allowance['name'],
         ];
     });
 
