@@ -73,7 +73,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
         $show_day = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
-        
+
         // Initialize total counters
         $totalSupposed = '0 h 0 m';
         $totalWorked = 0;
@@ -96,8 +96,13 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         // Now convert the total minutes to hours and minutes
         $totalHours = intdiv($totalMinutes, 60); // Get the total hours
         $remainingMinutes = $totalMinutes % 60; // Get the remaining minutes
-        // Format the result
+        // Ensure totalHours is positive
+        $totalHours = abs($totalHours);
+        // if ($totalHours > 0) {
+        // }
+        // dd($totalHours,$remainingMinutes);
         $totalSupposed = sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
+        // Format the result
 
         foreach ($data as $date => $dayData) {
             foreach ($dayData['periods'] ?? [] as $period) {
@@ -106,7 +111,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
                 $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
             }
         }
-
+        // dd($totalSupposed);
         // dd($data);
         return [
             'report_data' => $data,

@@ -14,7 +14,7 @@ class LeaveType extends Model
 
     protected $fillable = [
         'name',
-        'count_days', 
+        'count_days',
         'description',
         'active',
         'created_by',
@@ -89,7 +89,7 @@ class LeaveType extends Model
     {
         return [
             self::TYPE_YEARLY => 'Annual Leave',
-            self::TYPE_MONTHLY => 'Monthly Leave', 
+            self::TYPE_MONTHLY => 'Monthly Leave',
             self::TYPE_WEEKLY => 'Weekly Leave',
             self::TYPE_SPECIAL => 'Special Leave'
         ];
@@ -102,5 +102,13 @@ class LeaveType extends Model
             self::BALANCE_PERIOD_MONTHLY => 'Monthly',
             self::BALANCE_PERIOD_OTHER => 'Other'
         ];
+    }
+
+    public function scopeWeeklyLeave($query)
+    {
+        return $query->where('type', LeaveType::TYPE_WEEKLY)
+            ->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)
+            ->where('active', 1)->first()
+        ;
     }
 }

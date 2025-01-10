@@ -856,7 +856,6 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
 function calculateTotalAbsentDays($attendanceData)
 {
-    // dd ($attendanceData);
     $totalAbsentDays = 0;
     $totalAttendanceDays = 0;
     $result = [];
@@ -902,6 +901,42 @@ function calculateTotalAbsentDays($attendanceData)
     dd($totalAbsentDays, $result);
     return $totalAbsentDays;
 }
+
+
+function getAbsentDaysByWeeks($attendanceData)
+{
+    // $attendanceData = json_decode($attendanceData, true); 
+    $absentDaysByWeek = [];
+
+    // Convert attendance data to a collection for easier manipulation
+    $attendanceCollection = collect($attendanceData);
+
+    // Group data by weeks
+    $weeks = $attendanceCollection->chunk(7);
+
+    foreach ($weeks as $weekIndex => $weekData) {
+        $absentDays = [];
+
+        foreach ($weekData as $date => $details) {
+            // Check if the day is marked as absent
+            if (isset($details['periods'][0]['attendances']) && $details['periods'][0]['attendances'] === 'absent') {
+                $absentDays[] = [
+                    'date' => $details['date'],
+                    'day' => $details['day'],
+                ];
+            }
+        }
+
+        // Add the absent days for this week to the result
+        $absentDaysByWeek[] = [
+            'week' => $weekIndex + 1,
+            'absent_days' => $absentDays,
+        ];
+    }
+
+    return $absentDaysByWeek;
+}
+
 
 function calculateTotalLateArrival($attendanceData)
 {
@@ -1048,4 +1083,43 @@ function convertToFormattedTime($timeString)
     // Format as HH:mm
     $sprint = Carbon::parse(sprintf('%02d:%02d', $hours, $minutes));
     return $sprint;
+}
+
+function getWeeksAndDaysInMonth($yearMonth)
+{
+    // Extract the year and month
+    [$year, $month] = explode('-', $yearMonth);
+
+    // Get the total number of days in the month
+    $totalDays = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+
+    // Get the first day of the month
+    $firstDayOfMonth = new DateTime("$year-$month-01");
+
+    // Calculate the number of weeks
+    $weeks = [];
+    $weekIndex = 1;
+    for ($day = 1; $day <= $totalDays; $day++) {
+        $date = new DateTime("$year-$month-$day");
+        $weekNumber = (int)$date->format('W'); // ISO-8601 week number
+
+        if (!isset($weeks[$weekNumber])) {
+            $weeks[$weekNumber] = [
+                'week' => $weekIndex,
+                'days' => [],
+            ];
+            $weekIndex++;
+        }
+
+        $weeks[$weekNumber]['days'][] = [
+            'date' => $date->format('Y-m-d'),
+            'day' => $date->format('l'), // Full name of the day
+        ];
+    }
+
+    // Return the total weeks and their corresponding days
+    return [
+        'total_weeks' => count($weeks),
+        'weeks' => array_values($weeks),
+    ];
 }

@@ -25,7 +25,7 @@ class CreateMonthSalary extends CreateRecord
     {
 
         $monthsArray = getMonthsArray2();
- 
+
         if (array_key_exists($data['name'], $monthsArray)) {
             $data['start_month'] = $monthsArray[$data['name']]['start_month'];
             $monthYear = Carbon::parse($data['start_month'])->format('Y-m');
@@ -209,7 +209,7 @@ class CreateMonthSalary extends CreateRecord
                         'type' => MonthlySalaryIncreaseDetail::TYPE_ALLOWANCE,
                         'type_id' => MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_ID,
 
-                        'name' => MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_Name,
+                        'name' => MonthlySalaryIncreaseDetail::TYPE_MONTHLY_LEAVE_ALLOWANCE_Name . ' (' . $calculateSalary['details']['autoWeeklyLeaveData']['remaining_leaves'] . ' days)',
                         'amount' => $calculateSalary['details']['overtime_based_on_monthly_leave_pay'],
                     ]);
                 }

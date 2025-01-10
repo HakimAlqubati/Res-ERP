@@ -294,11 +294,11 @@ class EmployeeOvertimeResource extends Resource
                 SelectFilter::make('branch_id')
                     ->label('Branch')->multiple()
                     ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
-                SelectFilter::make('status')
+                SelectFilter::make('approved')
                     ->label('Status')->multiple()
                     ->options(
                         [
-                            'approved' => 'Approved',
+                            1=> 'Approved',
                         ]
                     ),
 

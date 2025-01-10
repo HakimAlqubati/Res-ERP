@@ -85,6 +85,7 @@ Route::get('/totestpdf', function () {
 Route::get('/to_test_salary_slip/{empId}/{sid}', [TestController2::class, 'to_test_salary_slip']);
 Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_schedule_task']);
 Route::get('/to_test_calculate_salary/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary']);
+Route::get('/to_test_calculate_auto_leave/{yearMonth}/{empId}', [TestController2::class, 'to_test_calculate_auto_leave']);
 Route::get('/to_test_calculate_salary_with_attendances_deducations/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary_with_attendances_deducations']);
 Route::get('/to_test_emplployee_attendance_time', [TestController2::class, 'to_test_emplployee_attendance_time']);
 Route::get('/to_get_employee_attendances', [TestController2::class, 'to_get_employee_attendances']);
@@ -483,7 +484,7 @@ Route::get('workbench_webcam/{date}/{time}', function () {
 ;
 Route::get('workbench_webcam_v2', function () {
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-    return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));
+    return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v5', compact('currentTime'));
 });
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage_old'])->name('upload.captured.image');

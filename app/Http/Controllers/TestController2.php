@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Allowance;
 use App\Models\Deduction;
 use App\Models\Employee;
+use App\Models\LeaveBalance;
+use App\Models\LeaveType;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
@@ -182,5 +184,11 @@ class TestController2 extends Controller
     public function reportAbsentEmployees($date, $branchId, $currentTime)
     {
         return reportAbsentEmployees($date, $branchId, $currentTime);
+    }
+
+    public function to_test_calculate_auto_leave($yearMonth, $empId)
+    {
+
+        return calculateAutoWeeklyLeaveData($yearMonth, $empId);
     }
 }

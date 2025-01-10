@@ -54,6 +54,7 @@
             "app/auth_helpers.php",
             "app/attendance_helper.php",
             "app/payroll_helper.php",
+            "app/leaves_helper.php",
             "app/Overrides/CustomChartWidget.php"
         ]
     },
