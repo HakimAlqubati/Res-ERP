@@ -191,4 +191,9 @@ class TestController2 extends Controller
 
         return calculateAutoWeeklyLeaveData($yearMonth, $empId);
     }
+    public function to_test_calculate_auto_leave_by_branch($yearMonth, $branchId)
+    {
+
+        return calculateAutoWeeklyLeaveDataForBranch($yearMonth, $branchId);
+    }
 }

@@ -260,11 +260,11 @@ class Employee extends Model
 
     public function overtimes()
     {
-        return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1);
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')->where('approved', 1)->day();
     }
     public function overtimesByDate($date)
     {
-        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')->day()
             ->where('approved', 1)
             ->where('date', $date);
     }
@@ -272,7 +272,7 @@ class Employee extends Model
     {
         $startOfMonth = Carbon::parse($date)->startOfMonth()->toDateString();
         $endOfMonth = Carbon::parse($date)->endOfMonth()->toDateString();
-        return $this->hasMany(EmployeeOvertime::class, 'employee_id')
+        return $this->hasMany(EmployeeOvertime::class, 'employee_id')->day()
             ->where('approved', 1)
             ->whereBetween('date', [$startOfMonth, $endOfMonth]);
     }

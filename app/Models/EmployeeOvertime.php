@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EmployeeOvertime extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
     protected $table = 'hr_employee_overtime';
 
-     // Fillable fields for mass assignment
-     protected $fillable = [
+    // Fillable fields for mass assignment
+    protected $fillable = [
         'employee_id',
         'date',
         'start_time',
@@ -28,6 +28,17 @@ class EmployeeOvertime extends Model
         'updated_by',
         'branch_id',
         'approved_at',
+        'type',
+    ];
+
+    // Enum values for the 'type' field
+    public const TYPE_BASED_ON_MONTH = 'based_on_month';
+    public const TYPE_BASED_ON_DAY = 'based_on_day';
+
+    // Array of all possible types
+    public const TYPES = [
+        self::TYPE_BASED_ON_MONTH,
+        self::TYPE_BASED_ON_DAY,
     ];
 
     // Relationships
@@ -55,6 +66,8 @@ class EmployeeOvertime extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+
+
     protected static function booted()
     {
         if (auth()->check()) {
@@ -68,5 +81,14 @@ class EmployeeOvertime extends Model
                 });
             }
         }
+    }
+
+    public function scopeDay($query)
+    {
+        return $query->where('type', static::TYPE_BASED_ON_DAY);
+    }
+    public function scopeMonth($query)
+    {
+        return $query->where('type', static::TYPE_BASED_ON_MONTH);
     }
 }
