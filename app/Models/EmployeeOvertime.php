@@ -91,4 +91,24 @@ class EmployeeOvertime extends Model
     {
         return $query->where('type', static::TYPE_BASED_ON_MONTH);
     }
+
+    // Accessor for the 'type' attribute
+    public function getTypeValueAttribute()
+    {
+        $type = $this->type;
+        switch ($type) {
+            case self::TYPE_BASED_ON_DAY:
+                $type = 'By Day';
+                break;
+
+            case self::TYPE_BASED_ON_MONTH:
+                $type = 'By Month';
+                break;
+
+            default:
+                $type = 'Unnkown';
+                break;
+        }
+        return $type;
+    }
 }

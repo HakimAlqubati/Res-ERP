@@ -44,7 +44,12 @@ class CreateEmployeeOvertime extends CreateRecord
         $data = $this->form->getState();
         switch ($data['type']) {
             case EmployeeOvertime::TYPE_BASED_ON_DAY:
-                $data = $this->handleOvertimeByDay($data);
+                $create = $this->handleOvertimeByDay($data);
+                if ($create) {
+                    showSuccessNotifiMessage('Done');
+                    $this->redirect(static::getResource()::getUrl('index'));
+                    return;
+                }
                 break;
             case EmployeeOvertime::TYPE_BASED_ON_MONTH:
                 $create = $this->handleOverTimeMonth($data);
@@ -63,44 +68,33 @@ class CreateEmployeeOvertime extends CreateRecord
         $this->getRedirectUrl();
     }
 
-    protected function handleOvertimeByDay(array $data): array
+    protected function handleOvertimeByDay(array $data): bool
     {
-        $employees = $data['employees'];
+        DB::beginTransaction();
+        try {
+            $employees = $data['employees'];
+            foreach ($employees as $index => $employee) {
+                EmployeeOvertime::create([
+                    'employee_id' => $employee['employee_id'],
+                    'date' => $data['date'],
+                    'start_time' => $employee['start_time'],
+                    'end_time' => $employee['end_time'],
+                    'hours' => $employee['hours'],
+                    'notes' => $employee['notes'],
+                    'branch_id' => $data['branch_id'],
+                    'created_by' => auth()->user()->id,
+                    'type' => EmployeeOvertime::TYPE_BASED_ON_DAY,
 
-        // Get the count of employees
-        $employeeCount = count($employees);
-
-        foreach ($employees as $index => $employee) {
-
-            // Check if this is the last employee
-            if ($index === $employeeCount - 1) {
-                continue; // Skip the last element
+                ]);
             }
-            EmployeeOvertime::create([
-                'employee_id' => $employee['employee_id'],
-                'date' => $data['date'],
-                'start_time' => $employee['start_time'],
-                'end_time' => $employee['end_time'],
-                'hours' => $employee['hours'],
-                // 'reason' => $employee['reason'],
-                'notes' => $employee['notes'],
-                'branch_id' => $data['branch_id'],
-                'created_by' => auth()->user()->id,
-
-            ]);
+            DB::commit();
+            return true;
+        } catch (\Exception $th) {
+            DB::rollBack();
+            showWarningNotifiMessage('error', $th->getMessage());
+            throw $th;
         }
-        $data['employee_id'] = $employee['employee_id'];
-        $data['date'] = $data['date'];
-        $data['start_time'] = $employee['start_time'];
-        $data['end_time'] = $employee['end_time'];
-        $data['hours'] = $employee['hours'];
-        // $data['reason'] = $employee['reason'];
-        $data['notes'] = $employee['notes'];
-        $data['branch_id'] = $data['branch_id'];
-        $data['created_by'] = auth()->user()->id;
-
-
-        return $data;
+        return false;
     }
 
     protected function handleOverTimeMonth(array $data): bool

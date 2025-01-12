@@ -447,6 +447,11 @@ class EmployeeOvertimeResource extends Resource
                     ->sortable()
                     ->wrap()
                     ->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('type_value')
+                    ->label('Type')
+                    ->sortable()
+                    ->wrap()
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
