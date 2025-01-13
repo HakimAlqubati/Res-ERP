@@ -104,6 +104,18 @@
                 </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr>
+
+                <td colspan="3">
+                    {{ 'Total spent time' }}
+                </td>
+                <td colspan="2">
+
+                    {{ $final_total_spent_time }}
+                </td>
+            </tr>
+        </tfoot>
     </table>
 </body>
 

@@ -18,6 +18,8 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Actions\HeaderActionsPosition;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\FiltersLayout;
@@ -93,6 +95,7 @@ class EmployeeTaskReportResource extends Resource
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('total_spent_seconds')
+
                     ->label('Time spent')->alignCenter(true)->formatStateUsing(function ($state) {
                         if ($state === null) {
                             return '-';
@@ -202,47 +205,11 @@ class EmployeeTaskReportResource extends Resource
                         );
                     }),
             ])
-            ->selectable()->headerActions([
+            ->selectable()
+            ->headerActions([
                 Action::make('printall')->label('Print all')->icon('heroicon-o-printer')
-                ->action(function () {
-                    $records = EmployeeTaskReportResource::getEloquentQuery()->get();
-                    // Fetch data for the report and add progress percentage
-                    $data = $records->map(function ($record) {
-                        $task = Task::find($record->task_id);
-                        $record->employee_name = $record->employee_name;
-                        $record->progress_percentage = ($task ? $task->progress_percentage : 0) . '%';
-                        return $record;
-                    });
-
-                    // Generate the PDF using a view
-                    $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report-print-all', ['data' => $data]);
-
-                    return response()->streamDownload(
-                        function () use ($pdf) {
-                            echo $pdf->output();
-                        },
-                        'employee_tasks_report.pdf',
-                        [
-                            'Content-Type' => 'application/pdf',
-                            'Charset' => 'UTF-8',
-                            'Content-Disposition' => 'inline; filename="employee_tasks_report.pdf"',
-                            'Content-Language' => 'ar',
-                            'Accept-Charset' => 'UTF-8',
-                            'Content-Encoding' => 'UTF-8',
-                            'direction' => 'rtl'
-                        ]
-                    );
-                }),
-            ])
-            ->selectCurrentPageOnly()
-            ->bulkActions([
-                BulkAction::make('printselected')->label('Print selected')->button()->icon('heroicon-o-printer')
-                    
-                    // ->accessSelectedRecords()
-                    ->deselectRecordsAfterCompletion()
-                    
-                    ->action(function (Collection $records) {
-                        
+                    ->action(function () {
+                        $records = EmployeeTaskReportResource::getEloquentQuery()->get();
                         // Fetch data for the report and add progress percentage
                         $data = $records->map(function ($record) {
                             $task = Task::find($record->task_id);
@@ -252,7 +219,67 @@ class EmployeeTaskReportResource extends Resource
                         });
 
                         // Generate the PDF using a view
-                        $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report', ['data' => $data]);
+                        $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report-print-all', ['data' => $data]);
+
+                        return response()->streamDownload(
+                            function () use ($pdf) {
+                                echo $pdf->output();
+                            },
+                            'employee_tasks_report.pdf',
+                            [
+                                'Content-Type' => 'application/pdf',
+                                'Charset' => 'UTF-8',
+                                'Content-Disposition' => 'inline; filename="employee_tasks_report.pdf"',
+                                'Content-Language' => 'ar',
+                                'Accept-Charset' => 'UTF-8',
+                                'Content-Encoding' => 'UTF-8',
+                                'direction' => 'rtl'
+                            ]
+                        );
+                    }),
+            ], HeaderActionsPosition::Adaptive)
+            ->selectCurrentPageOnly()
+            ->bulkActions([
+                BulkAction::make('printselected')->label('Print selected')->button()->icon('heroicon-o-printer')
+
+                    // ->accessSelectedRecords()
+                    ->deselectRecordsAfterCompletion()
+
+                    ->action(function (Collection $records) {
+
+                        // Fetch data for the report and add progress percentage
+                        $data = $records->map(function ($record) {
+                            $task = Task::find($record->task_id);
+                            $record->employee_name = $record->employee_name;
+                            $record->progress_percentage = ($task ? $task->progress_percentage : 0) . '%';
+                            return $record;
+                        });
+                        $sumSpentTime = $data->sum('total_spent_seconds');
+
+                        $days = intdiv($sumSpentTime, 86400);
+                        $sumSpentTime %= 86400;
+                        $hours = intdiv($sumSpentTime, 3600);
+                        $sumSpentTime %= 3600;
+                        $minutes = intdiv($sumSpentTime, 60);
+                        $seconds = $sumSpentTime % 60;
+
+                        // Format as d h m s
+                        $formattedTime = '';
+                        if ($days > 0) {
+                            $formattedTime .= sprintf("%dd ", $days);
+                        }
+                        if ($hours > 0 || $days > 0) {
+                            $formattedTime .= sprintf("%dh ", $hours);
+                        }
+                        if ($minutes > 0 || $hours > 0 || $days > 0) {
+                            $formattedTime .= sprintf("%dm ", $minutes);
+                        }
+                        $formattedTime .= sprintf("%ds", $seconds);
+
+                        $finalSpentTime = trim($formattedTime);
+
+                        // Generate the PDF using a view
+                        $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report', ['data' => $data, 'final_total_spent_time' => $finalSpentTime]);
 
                         return response()->streamDownload(
                             function () use ($pdf) {
