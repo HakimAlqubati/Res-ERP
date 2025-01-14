@@ -98,11 +98,11 @@ class EmployeeOvertime extends Model
         $type = $this->type;
         switch ($type) {
             case self::TYPE_BASED_ON_DAY:
-                $type = 'By Day';
+                $type = 'By Date';
                 break;
 
             case self::TYPE_BASED_ON_MONTH:
-                $type = 'By Month';
+                $type = 'By Day';
                 break;
 
             default:

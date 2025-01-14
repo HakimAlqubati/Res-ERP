@@ -26,7 +26,7 @@ class CategoryResource extends Resource
     protected static ?string $recordTitleAttribute = 'name';
     protected static ?string $cluster = ProductUnitCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
     public static function getNavigationLabel(): string
     {
         return __('lang.categories');

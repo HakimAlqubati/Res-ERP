@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\InventoryCluster;
+use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Models\Supplier;
 use Filament\Forms\Components\Textarea;
@@ -25,9 +26,9 @@ class SupplierResource extends Resource
     protected static ?string $model = Supplier::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Supplier & Roles';
-    protected static ?string $cluster = InventoryCluster::class;
+    protected static ?string $cluster = SupplierCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
     public static function getNavigationLabel(): string
     {
         return __('lang.suppliers');

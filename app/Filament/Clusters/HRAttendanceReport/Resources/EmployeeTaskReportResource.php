@@ -254,32 +254,46 @@ class EmployeeTaskReportResource extends Resource
                             $record->progress_percentage = ($task ? $task->progress_percentage : 0) . '%';
                             return $record;
                         });
+
+
+                        // Initialize variables for summing and counting
+                        $totalProgress = 0;
+                        $totalRecords = 0;
+
+                        // Iterate over $data to calculate the sum and count
+                        foreach ($data as $record) {
+
+                            $totalProgress += (float) $record->progress_percentage; // Add progress percentage
+                            $totalRecords++; // Increment the record count
+                        }
+
+                        // Calculate the average progress percentage
+                        $averageProgress = $totalRecords > 0 ? $totalProgress / $totalRecords : 0;
+
+                        // Format the average as a percentage
+                        $averageProgressFormatted = sprintf("%.2f%%", $averageProgress);
+
+
+
                         $sumSpentTime = $data->sum('total_spent_seconds');
 
-                        $days = intdiv($sumSpentTime, 86400);
-                        $sumSpentTime %= 86400;
+                        // Calculate hours and minutes
                         $hours = intdiv($sumSpentTime, 3600);
                         $sumSpentTime %= 3600;
                         $minutes = intdiv($sumSpentTime, 60);
-                        $seconds = $sumSpentTime % 60;
 
-                        // Format as d h m s
-                        $formattedTime = '';
-                        if ($days > 0) {
-                            $formattedTime .= sprintf("%dd ", $days);
-                        }
-                        if ($hours > 0 || $days > 0) {
-                            $formattedTime .= sprintf("%dh ", $hours);
-                        }
-                        if ($minutes > 0 || $hours > 0 || $days > 0) {
-                            $formattedTime .= sprintf("%dm ", $minutes);
-                        }
-                        $formattedTime .= sprintf("%ds", $seconds);
+                        // Format as Hours:Minutes
+                        $formattedTime = sprintf("%02d:%02d", $hours, $minutes);
 
-                        $finalSpentTime = trim($formattedTime);
+                        $finalSpentTime = $formattedTime;
+                        // $finalSpentTime = trim($formattedTime);
 
                         // Generate the PDF using a view
-                        $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report', ['data' => $data, 'final_total_spent_time' => $finalSpentTime]);
+                        $pdf = PDF::loadView('export.reports.hr.tasks.employee-task-report', [
+                            'data' => $data,
+                            'final_total_spent_time' => $finalSpentTime,
+                            'average_progress' => $averageProgressFormatted,
+                        ]);
 
                         return response()->streamDownload(
                             function () use ($pdf) {

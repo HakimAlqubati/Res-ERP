@@ -98,7 +98,7 @@ return [
     'open_report' => 'Report',
     'default' => 'Default?',
     'reports' => 'Reports',
-    'order_reports' => 'Order reports',
+    'order_reports' => 'Order Reports',
     'report_product_quantities' => 'Report by product',
     'general_report_of_products' => 'Report by category',
     'choose_product' => 'Choose product',
@@ -143,4 +143,6 @@ return [
         'november' => 'November',
         'december' => 'December',
     ],
+    'supplier_supplier_invoice' => 'Suppliers - Invoices',
+    'purchasing_stores_reports' => 'Reports (Stores - Purchasing)'
 ];

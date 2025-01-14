@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Reports;
 
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Models\FakeModelReports\StoreReportReport;
 use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListStoresReport;
 use App\Models\Branch;
@@ -22,7 +23,7 @@ class StoresReportResource extends Resource
     protected static ?string $model = StoreReportReport::class;
     protected static ?string $slug = 'stores-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = InventoryReportsCluster::class;
+    protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     /**

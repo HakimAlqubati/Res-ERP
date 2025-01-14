@@ -143,5 +143,6 @@ return [
         'november' => 'نوفمبر',
         'december' => 'ديسمبر',
     ],
-
+    'supplier_supplier_invoice' => 'الموردين - المشتروات',
+    'purchasing_stores_reports' => 'تقارير (المشتروات - المخزون)'
 ];

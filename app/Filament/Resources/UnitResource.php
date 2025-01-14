@@ -49,20 +49,20 @@ class UnitResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable()
-                    ->searchable(isIndividual: true, isGlobal: false),
+                Tables\Columns\TextColumn::make('id')->sortable()->alignCenter(true)
+                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\TextColumn::make('code')
+                Tables\Columns\TextColumn::make('code')->alignCenter(true)
                     ->searchable(isIndividual: true, isGlobal: false),
                 Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable(),
+                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('active')),
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

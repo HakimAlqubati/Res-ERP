@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Reports;
 
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListBranchStoreReport;
 use App\Models\FakeModelReports\BranchStoreReport;
 use Filament\Pages\SubNavigationPosition;
@@ -12,11 +13,11 @@ use Filament\Resources\Resource;
 class BranchStoreReportResource extends Resource
 {
     protected static ?string $model = BranchStoreReport::class;
-    protected static ?string $cluster = InventoryReportsCluster::class;
+    protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static ?string $slug = 'branch-store-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
      
     /**
      * @deprecated Use `getModelLabel()` instead.

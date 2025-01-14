@@ -107,13 +107,15 @@
         <tfoot>
             <tr>
 
-                <td colspan="3">
-                    {{ 'Total spent time' }}
-                </td>
-                <td colspan="2">
-
+                <th colspan="3">
+                    {{-- {{ 'Total spent time' }} --}}
+                </th>
+                <th>
                     {{ $final_total_spent_time }}
-                </td>
+                </th>
+                <th>
+                    {{ $average_progress }}
+                </th>
             </tr>
         </tfoot>
     </table>

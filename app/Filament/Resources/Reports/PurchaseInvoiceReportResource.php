@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Reports;
 
 use App\Filament\Clusters\InventoryReportsCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListPurchaseInvoiceReport;
 use App\Models\FakeModelReports\PurchaseInvoiceReport;
 use App\Models\Product;
@@ -23,7 +24,7 @@ class PurchaseInvoiceReportResource extends Resource
     protected static ?string $slug = 'purchase-invoice-reports';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = InventoryReportsCluster::class;
+    protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 

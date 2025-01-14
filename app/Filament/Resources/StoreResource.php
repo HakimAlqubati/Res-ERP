@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\InventoryCluster;
+use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Resources\StoreResource\Pages;
 use App\Filament\Resources\StoreResource\RelationManagers;
 use App\Models\Store;
@@ -25,9 +26,9 @@ class StoreResource extends Resource
     protected static ?string $model = Store::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = InventoryCluster::class;
+    protected static ?string $cluster = SupplierCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
     public static function getNavigationLabel(): string
     {
         return __('lang.stores');

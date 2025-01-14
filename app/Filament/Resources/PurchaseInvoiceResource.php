@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\InventoryCluster;
+use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers\PurchaseInvoiceDetailsRelationManager;
@@ -41,9 +42,9 @@ class PurchaseInvoiceResource extends Resource
     protected static ?string $model = PurchaseInvoice::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = InventoryCluster::class;
+    protected static ?string $cluster = SupplierCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
     public static function getPluralLabel(): ?string
     {
         return __('lang.purchase_invoice');

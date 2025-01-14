@@ -18,6 +18,9 @@ use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
+use App\Filament\Clusters\SupplierCluster;
+use App\Filament\Clusters\SupplierStoresReportsCluster;
+use App\Filament\Pages\CustomLogin;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Resources\BranchResource;
@@ -98,30 +101,29 @@ class AdminPanelProvider extends PanelProvider
                 //         ...InventoryCluster::getNavigationItems(),
                 //         ...InventoryReportsCluster::getNavigationItems(),
                 //     ]),
-                NavigationGroup::make(__('menu.hr_ms'))
-                        // ->icon('heroicon-o-user-group')
+                NavigationGroup::make(__('menu.hr_ms')) 
                         ->items(array_merge(
                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  HRCluster::getNavigationItems(): [], 
                         (getCurrentRole() != 17) ?  HRTasksSystem::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRServiceRequestCluster::getNavigationItems(): [], 
                          (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) ? HRAttenanceCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRAttendanceReport::getNavigationItems(): [], 
-                        //   (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? EmployeeRecords::getNavigationItems(): [], 
-                        //   (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HrClusteReport::getNavigationItems(): [], 
                          (getCurrentRole() != 17) ? HRCircularCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems(): [], 
                           (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRApplicationsCluster::getNavigationItems(): [], 
-                        ))
-                    // ->items([
-                    //     ...HRCluster::getNavigationItems(), 
-                    //     ...HRTasksSystem::getNavigationItems(), 
-                    //     ...HRServiceRequestCluster::getNavigationItems(), 
-                    //     ...HRAttenanceCluster::getNavigationItems(), 
-                    //     ...HRAttendanceReport::getNavigationItems(), 
-                    //     ...HRCircularCluster::getNavigationItems(), 
-                    
-                    // ])
+                        )) 
                     ,
+                   NavigationGroup::make(__('menu.supply_and_inventory')) 
+                        ->items(array_merge(
+                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  ProductUnitCluster::getNavigationItems(): [], 
+                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  MainOrdersCluster::getNavigationItems(): [], 
+                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
+                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  SupplierCluster::getNavigationItems(): [], 
+                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  SupplierStoresReportsCluster::getNavigationItems(): [], 
+                      
+                        )) 
+                    ,
+                
                 NavigationGroup::make(__('lang.user_and_roles'))
                 ->items(array_merge(
                     (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems(): [],
@@ -145,14 +147,7 @@ class AdminPanelProvider extends PanelProvider
                          (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')
                         || (count(explode('.', request()->getHost())) == 2 && env('APP_ENV') == 'production')
                          )) ? TenantResource::getNavigationItems(): [] ,
-                        ))
-                        // ,
-                    // NavigationGroup::make('Tenants')
-                    //     ->items(array_merge(
-                         
-                    //       TenantResource::getNavigationItems(),
-                    //     ))
-                        ,
+                        )) 
                 ]);
                return $menu;
         })
@@ -160,6 +155,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->path('admin')
             ->login()
+            // ->login(CustomLogin::class)
             ->defaultThemeMode(ThemeMode::Dark)
             ->colors([
                 'primary' => Color::Green,

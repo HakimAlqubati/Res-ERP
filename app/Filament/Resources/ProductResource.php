@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as ActionTable;
+use Filament\Tables\Actions\ActionGroup;
+
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class ProductResource extends Resource
@@ -54,14 +56,12 @@ class ProductResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-        
+
             ->schema([
-                TextInput::make('name')->required()->label(__('lang.name'))
-                   
-                    ,
+                TextInput::make('name')->required()->label(__('lang.name')),
                 TextInput::make('code')->required()->label(__('lang.code'))
-                    // ->disabledOn('edit')
-                    ,
+                // ->disabledOn('edit')
+                ,
 
                 Textarea::make('description')->label(__('lang.description'))
                     ->rows(2)
@@ -89,12 +89,12 @@ class ProductResource extends Resource
                             })->searchable(),
                         TextInput::make('price')->type('number')->default(1)
                             ->label(__('lang.price'))
-                            // ->mask(
-                            //     fn (TextInput\Mask $mask) => $mask
-                            //         ->numeric()
-                            //         ->decimalPlaces(2)
-                            //         ->thousandsSeparator(',')
-                            // ),
+                        // ->mask(
+                        //     fn (TextInput\Mask $mask) => $mask
+                        //         ->numeric()
+                        //         ->decimalPlaces(2)
+                        //         ->thousandsSeparator(',')
+                        // ),
                     ])
 
             ]);
@@ -102,9 +102,9 @@ class ProductResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
-        ->headerActions([
-            ActionTable::make('export_employees')
+        return $table->striped()
+            ->headerActions([
+                ActionTable::make('export_employees')
                     ->label('Export to Excel')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
@@ -112,7 +112,7 @@ class ProductResource extends Resource
                         $data = Product::where('active', 1)->select('id', 'name', 'description', 'code')->get();
                         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductsExport($data), 'products.xlsx');
                     }),
-        ])
+            ])
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label(__('lang.id'))
@@ -126,19 +126,19 @@ class ProductResource extends Resource
                     ->toggleable()
                     ->searchable()
                     ->searchable(isIndividual: true)
-                    ->tooltip(fn (Model $record): string => "By {$record->name}"),
+                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
                 Tables\Columns\TextColumn::make('code')->searchable()
                     ->label(__('lang.code'))
                     ->searchable(isIndividual: true, isGlobal: false),
 
                 Tables\Columns\TextColumn::make('description')->searchable()->label(__('lang.description')),
-                Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))
-                    ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active')),
+                Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
+                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
+                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')->label(__('lang.active'))
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('active')),
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 SelectFilter::make('category_id')
                     ->searchable()
                     ->multiple()
@@ -146,9 +146,11 @@ class ProductResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                ])
                 // Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
