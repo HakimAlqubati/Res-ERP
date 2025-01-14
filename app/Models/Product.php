@@ -11,9 +11,9 @@ class Product extends Model
 {
     use HasFactory,
         SoftDeletes
-        // , HasTranslations
+        , HasTranslations
         ;
-    // public $translatable = ['name', 'description'];
+    public $translatable = ['name', 'description'];
 
     protected $fillable = [
         'name',
