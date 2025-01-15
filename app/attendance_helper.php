@@ -1045,11 +1045,20 @@ if (!function_exists('calculate_missing_hours')) {
         $date,
         $employeeId
     ) {
-        $isMultiple = Attendance::where('check_date', $date)
+        // $isMultiple = Attendance::where('check_date', $date)
+        //     ->where('employee_id', $employeeId)
+        //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+        //     ->groupBy('period_id')
+        //     ->havingRaw('COUNT(*) > 1')
+        //     ->exists();
+
+
+        $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
+            ->where('check_date', $date)
             ->where('employee_id', $employeeId)
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->groupBy('period_id')
-            ->havingRaw('COUNT(*) > 1')
+            ->having('total', '>', 1)
             ->exists();
 
         // $isMultipleOld = Attendance::where('check_date', $date)
