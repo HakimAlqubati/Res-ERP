@@ -8,6 +8,7 @@ use App\Models\Setting;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
@@ -124,8 +125,7 @@ class SettingResource extends Resource
                                         ->helperText('Create auto leave when create payroll')
                                         ->default(false)
                                         ->visible(fn(): bool => isSuperAdmin())
-                                        ->hidden()
-                                        ,
+                                        ->hidden(),
 
                                 ]),
                                 Fieldset::make()->label('Face rekognation settings')->columns(4)->schema([
@@ -325,6 +325,40 @@ class SettingResource extends Resource
                                 //         ->helperText('Specify the number of tasks an employee must complete to earn the "Hero of the Month" title.'),
 
                                 // ]),
+                            ]),
+                        Tab::make('Orders Settings')->hidden(fn(): bool => isFinanceManager())
+                            ->icon('heroicon-o-shopping-cart')
+                            ->schema([
+                                Fieldset::make('')->columns(3)->schema([
+                                    Select::make('calculating_orders_price_method')
+                                        ->label(__('system_settings.calculating_orders_price_method'))
+                                        ->options([
+                                            'from_unit_prices' => __('system_settings.from_unit_prices'),
+                                            'fifo' => __('system_settings.fifo'),
+                                        ])
+                                        ->default('from_unit_prices') // Default to 1 second
+                                        ->helperText('Choose method calculating orders.')
+                                        ->native(false)
+                                        ->required(),
+                                    TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
+                                    TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
+                                    Grid::make()->columns(2)->schema([
+                                        Toggle::make('completed_order_if_not_qty')->inline(false)
+                                            ->label(__('system_settings.completed_order_if_not_qty'))
+                                            // ->onIcon('heroicon-s-lightning-bolt')
+                                            ->offIcon('heroicon-s-user')
+                                            ->onColor('success')
+                                            ->offColor('danger')
+                                            ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
+                                        Toggle::make('enable_user_orders_to_store')->inline(false)
+                                            ->label(__('system_settings.enable_user_orders_to_store'))
+                                            // ->onIcon('heroicon-s-lightning-bolt')
+                                            ->offIcon('heroicon-s-user')
+                                            ->onColor('success')
+                                            ->offColor('danger')
+                                            ->helperText(__('system_settings.enable_user_orders_to_store')),
+                                    ])
+                                ]),
                             ]),
 
                     ]),
