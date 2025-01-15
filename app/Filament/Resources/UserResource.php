@@ -56,54 +56,53 @@ class UserResource extends Resource
                 Fieldset::make()->visible(fn(Get $get): bool => $get('is_exist_employee'))->schema([
 
                     Fieldset::make()->schema([Select::make('search_employee')->label('Search for employee')
-                            ->helperText('You can search using .. Employee (Name, Email, ID, Employee number)...')
+                        ->helperText('You can search using .. Employee (Name, Email, ID, Employee number)...')
                         // ->options(Employee::where('active', 1)->select('name', 'id', 'phone_number', 'email')->get()->pluck('name', 'id'))
-                            ->getSearchResultsUsing(
-                                fn(string $search): array=>
-                                Employee::where('active', 1)
-                                    ->whereDoesntHave('user')
-                                    ->where(function ($query) use ($search) {
-                                        $query->where('name', 'like', "%{$search}%")
-                                            ->orWhere('email', 'like', "%{$search}%")
-                                            ->orWhere('id', $search)
-                                            ->orWhere('phone_number', 'like', "%{$search}%")
-                                            ->orWhere('job_title', 'like', "%{$search}%");
-                                    })
-                                    ->limit(5)
-                                    ->pluck('name', 'id')
-                                    ->toArray()
-                            )
-                            ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name)
-                            ->columnSpanFull()
-                            ->searchable()
-                            ->reactive()
-                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+                        ->getSearchResultsUsing(
+                            fn(string $search): array =>
+                            Employee::where('active', 1)
+                                ->whereDoesntHave('user')
+                                ->where(function ($query) use ($search) {
+                                    $query->where('name', 'like', "%{$search}%")
+                                        ->orWhere('email', 'like', "%{$search}%")
+                                        ->orWhere('id', $search)
+                                        ->orWhere('phone_number', 'like', "%{$search}%")
+                                        ->orWhere('job_title', 'like', "%{$search}%");
+                                })
+                                ->limit(5)
+                                ->pluck('name', 'id')
+                                ->toArray()
+                        )
+                        ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name)
+                        ->columnSpanFull()
+                        ->searchable()
+                        ->reactive()
+                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 
-                                $employee = Employee::find($state);
-                                if ($employee) {
-                                    $set('name', $employee->name);
-                                    $set('email', $employee->email);
-                                    $set('phone_number', $employee->phone_number);
-                                    $set('branch_id', $employee->branch_id);
-                                    $positionId = $employee?->position_id;
-                                    if ($positionId == 2) {
-                                        if (isset($employee?->branch_id)) {
-                                            $branchManagerId = Branch::find($employee?->branch_id)?->user?->id;
-                                            if ($branchManagerId) {
-                                                $set('owner_id', $branchManagerId);
-                                            }
+                            $employee = Employee::find($state);
+                            if ($employee) {
+                                $set('name', $employee->name);
+                                $set('email', $employee->email);
+                                $set('phone_number', $employee->phone_number);
+                                $set('branch_id', $employee->branch_id);
+                                $positionId = $employee?->position_id;
+                                if ($positionId == 2) {
+                                    if (isset($employee?->branch_id)) {
+                                        $branchManagerId = Branch::find($employee?->branch_id)?->user?->id;
+                                        if ($branchManagerId) {
+                                            $set('owner_id', $branchManagerId);
                                         }
-                                        $set('roles', [8]);
                                     }
+                                    $set('roles', [8]);
                                 }
-
-                            })]),
+                            }
+                        })]),
                     Fieldset::make('')->label('')->schema([
                         Grid::make()->columns(3)->schema([
                             TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                             TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email()->required(),
                             PhoneInput::make('phone_number')->disabled()
-                            // ->numeric()
+                                // ->numeric()
                                 ->initialCountry('MY')
                                 ->onlyCountries([
                                     'MY',
@@ -128,8 +127,7 @@ class UserResource extends Resource
                                 ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 
                                     //  dd($roles,$state);
-                                })
-                            ,
+                                }),
                             CheckboxList::make('roles')
                                 ->label('Role')
                                 ->relationship('roles')->required()
@@ -143,8 +141,7 @@ class UserResource extends Resource
                                             ->orderBy('name', 'asc')
                                             ->get()->pluck('name', 'id');
                                     }
-                                })
-                            ,
+                                }),
                             Select::make('owner_id')
                                 ->label('Manager')
                                 ->searchable()
@@ -182,7 +179,7 @@ class UserResource extends Resource
                             TextInput::make('name')->required()->unique(ignoreRecord: true),
                             TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
                             PhoneInput::make('phone_number')
-                            // ->numeric()
+                                // ->numeric()
                                 ->initialCountry('MY')
                                 ->onlyCountries([
                                     'MY',
@@ -198,7 +195,7 @@ class UserResource extends Resource
                                     country: 'MY',
                                     lenient: true, // default: false
                                 ),
-                                Select::make('gender')
+                            Select::make('gender')
                                 ->label('Gender')
                                 ->options([
                                     1 => 'Male',
@@ -206,7 +203,7 @@ class UserResource extends Resource
                                 ])
                                 ->default(1)
                                 ->required(),
-                            
+
                             Select::make('nationality')
                                 ->label('Nationality')
                                 ->options(getNationalities()) // Loads nationalities from JSON file
@@ -229,16 +226,15 @@ class UserResource extends Resource
                             // ->options(getUserTypes())
                             ->options(
                                 UserType::select('name', 'id')
-                                // ->whereNotIn('id', [2,3,4])
-                                ->get()->pluck('name', 'id')
+                                    // ->whereNotIn('id', [2,3,4])
+                                    ->get()->pluck('name', 'id')
                             )
                             ->required()
                             ->live()
                             ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 
                                 //  dd($roles,$state);
-                            })
-                        ,
+                            }),
                         CheckboxList::make('roles')->required()
                             ->label('Role')
                             ->relationship('roles')
@@ -253,8 +249,7 @@ class UserResource extends Resource
                                         ->orderBy('name', 'asc')
                                         ->get()->pluck('name', 'id');
                                 }
-                            })
-                        ,
+                            }),
                     ]),
                     Grid::make()->columns(2)->schema([
 
@@ -306,27 +301,24 @@ class UserResource extends Resource
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
-                ->copyMessage('Email address copied')
-                ->copyMessageDuration(1500)
+                    ->copyMessage('Email address copied')
+                    ->copyMessageDuration(1500)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false)
-                    ->toggleable(isToggledHiddenByDefault: false)
-                    ,
+                    ->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)
                     ->toggleable(isToggledHiddenByDefault: false)->default('_')->copyable()
                     ->copyable()
                     ->copyMessage('Phone number copied')
-                    ->copyMessageDuration(1500)
-                     ,
+                    ->copyMessageDuration(1500),
 
                 TextColumn::make('branch2.name')->searchable()->label('Branch')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('owner.name')->searchable()->label('Manager')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('first_role.name')->label('Role')
-                    ->toggleable(isToggledHiddenByDefault: false)
-                ,
+                    ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_employee')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
@@ -336,6 +328,17 @@ class UserResource extends Resource
                 Tables\Filters\Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('role')
+                    ->label('Filter by Role')
+                    ->options(Role::query()->pluck('name', 'id')->toArray())
+                    ->query(function (Builder $query, $data) {
+                        if ($data) {
+                            return $query->whereHas('roles', function ($q) use ($data) {
+                                $q->where('id', $data);
+                            });
+                        }
+                        return $query;
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
