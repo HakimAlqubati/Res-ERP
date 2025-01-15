@@ -28,9 +28,9 @@ class AttendanecEmployee2 extends BasePage
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.attendanec-employee';
-    // private $date = '';
+    private $date = '';
     // private $date ;
-    // private $time = '';
+    private $time = '';
     // private $time ;
 
     public bool $typeHidden = true;
@@ -85,18 +85,21 @@ class AttendanecEmployee2 extends BasePage
                     ->default(now())
                     ->prefixIconColor('success')
                     ->required()
-                    ->seconds(false),
+                    ->seconds(false)
+                    ->hidden(function () {
+                        return isSuperAdmin() ? false : true;
+                    }),
+                KeyPadTest::make('rfid')->default($this->rfid),
                 // KeyPadTest::make('rfid')->default($this->rfid),
-                // KeyPadTest::make('rfid')->default($this->rfid),
-                TextInput::make('rfid')
-                    ->autocomplete(false)
-                    ->label('Employee RFID')
-                    ->prefixIcon('heroicon-m-identification')
-                    ->prefixIconColor('success')
-                    ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
-                    ->required()
-                    ->placeholder('RFID')
-                    ->maxLength(255),
+                // TextInput::make('rfid')
+                //     ->autocomplete(false)
+                //     ->label('Employee RFID')
+                //     ->prefixIcon('heroicon-m-identification')
+                //     ->prefixIconColor('success')
+                //     ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
+                //     ->required()
+                //     ->placeholder('RFID')
+                //     ->maxLength(255),
                 ToggleButtons::make('type')
                     ->required()
                     ->hidden(function () {
@@ -130,8 +133,10 @@ class AttendanecEmployee2 extends BasePage
         // Only handle submission if input is valid
         $formData = $this->form->getState();
 
-        $rfid = $formData['rfid'];
+        // $rfid = $formData['rfid'];
+        $rfid = $this->rfid;
         $formData['rfid'] = $rfid;
+
 
         if (is_null($rfid)) {
             return showWarningNotifiMessage('RFID cannot be null');
@@ -148,9 +153,11 @@ class AttendanecEmployee2 extends BasePage
 
     public function handleEmployeePeriodData($data)
     {
-        // $dateTime = now();
+        $dateTime = now();
 
-        $dateTime = $data['date_time'];
+        if (isSuperAdmin()) {
+            $dateTime = $data['date_time'];
+        }
 
         // Create a Carbon instance
         $carbonDateTime = Carbon::parse($dateTime);
