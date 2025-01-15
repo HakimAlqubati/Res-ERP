@@ -136,9 +136,9 @@ class AttendanecEmployee2 extends BasePage
         $rfid = $formData['rfid'];
         $formData['rfid'] = $rfid;
 
-        if (is_null($rfid)) {
-            return showWarningNotifiMessage('RFID cannot be null');
-        }
+        // if (is_null($rfid)) {
+        //     return showWarningNotifiMessage('RFID cannot be null');
+        // }
         if (!$this->typeHidden && $formData['type'] != '') {
             $this->type = $formData['type'];
         }
@@ -153,7 +153,12 @@ class AttendanecEmployee2 extends BasePage
     {
         // $dateTime = now();
 
-        $dateTime = $data['date_time'];
+        $dateTime = now();
+
+        if (isSuperAdmin()) {
+            $dateTime = $data['date_time'];
+        }
+
 
         // Create a Carbon instance
         $carbonDateTime = Carbon::parse($dateTime);
