@@ -19,6 +19,7 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -330,20 +331,45 @@ class UserResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('role')
                     ->label('Filter by Role')
-                    ->options(Role::query()->pluck('name', 'id')->toArray())
+                    ->options(Role::query()->pluck('name', 'id')->toArray()) // Fetch roles as options
                     ->query(function (Builder $query, $data) {
-                        if ($data) {
+                        if (!empty($data['value'])) { // Check if a role is selected
                             return $query->whereHas('roles', function ($q) use ($data) {
-                                $q->where('id', $data);
+                                $q->where('id', $data['value']); // Filter users by the selected role
                             });
                         }
-                        return $query;
+                        return $query; // Return the query unchanged if no role is selected
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                    // Add a custom action for updating password
+                    Tables\Actions\Action::make('updatePassword')
+                        ->form([
+                            TextInput::make('password')
+                                ->label('New Password')
+                                ->password()
+                                ->required()
+                                ->minLength(6)
+                                ->suffixIcon('heroicon-o-lock-closed'),
+                            TextInput::make('password_confirmation')
+                                ->label('Confirm New Password')
+                                ->password()
+                                ->required()->suffixIcon('heroicon-o-lock-closed')
+                                ->same('password'),
+                        ])
+                        ->action(function (User $user, array $data): void {
+                            // Update the user's password
+                            $user->update([
+                                'password' => Hash::make($data['password']),
+                            ]);
+                        })
+                        ->icon('heroicon-s-lock-closed') // Optional: Add an icon
+                        ->label('Update Password'), // Optional: Add a label
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
