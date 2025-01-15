@@ -164,7 +164,6 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
         $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
     }
-    // dd($totalAbsentDays, $totalAttendanceDays, $diffirenceBetweenAttendanceAbsentDays); 
 
     $differneceBetweenDaysMonthAndAttendanceDays = $daysInMonth - $totalAttendanceDays;
     $totalLateHours = 0;
@@ -175,7 +174,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     }
 
     $totalMissingHours = calculateTotalMissingHours($attendances);
-
+    
 
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
@@ -196,6 +195,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $weekendOverTimeDays = 0;
     $autoWeeklyLeaveData = calculateAutoWeeklyLeaveData($passedDate, $employeeId);
     $overtimeBasedOnMonthlyLeavePay = $dailySalary * $autoWeeklyLeaveData['remaining_leaves'];
+
     $realTotalAbsentDays = $totalAbsentDays;
     // if ($totalAbsentDays >= $autoWeeklyLeaveData['remaining_leaves']) {
     $totalAbsentDays  = $autoWeeklyLeaveData['excess_absence_days'];

@@ -41,6 +41,13 @@ class EmployeeOvertime extends Model
         self::TYPE_BASED_ON_DAY,
     ];
 
+    public static function getTypes()
+    {
+        return [
+            EmployeeOvertime::TYPE_BASED_ON_DAY => 'Daily',
+            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Hourly',
+        ];
+    }
     // Relationships
     // Relationship with the Employee model
     public function employee()
@@ -98,11 +105,11 @@ class EmployeeOvertime extends Model
         $type = $this->type;
         switch ($type) {
             case self::TYPE_BASED_ON_DAY:
-                $type = 'By Date';
+                $type = 'Houly';
                 break;
 
             case self::TYPE_BASED_ON_MONTH:
-                $type = 'By Day';
+                $type = 'Daily';
                 break;
 
             default:

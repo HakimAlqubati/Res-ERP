@@ -1,8 +1,8 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
     {{-- @if (isset($branch_id)) --}}
-    <x-filament-tables::table class="w-full text-sm text-left pretty  ">
-        <thead>
+    <x-filament-tables::table class="w-full text-sm text-left pretty reports"   id="report-table">
+        <thead style="top:64px;" class="fixed-header">
 
             <x-filament-tables::row>
                 <th colspan="3">

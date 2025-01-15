@@ -860,25 +860,44 @@ function calculateTotalAbsentDays($attendanceData)
     $totalAttendanceDays = 0;
     $result = [];
     foreach ($attendanceData as $date => $data) {
+
         // Check if periods exist for the date
         if (isset($data['periods']) && !empty($data['periods'])) {
             $allAbsent = true; // Assume all are absent initially
 
             // Loop through each period to check attendance
             foreach ($data['periods'] as $period) {
+
+
                 // dd(array_intersect_key(array_flip(['checkin', 'checkout']), $period['attendances']),$period['attendances']);
                 if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
 
-                    $allAbsent = true; // Found a period that is not absent
-                    break; // No need to check further
+                    if (count($data['periods']) == 1) {
+                        $allAbsent = true; // Found a period that is not absent
+                        break; // No need to check further
+                    }
 
+                    if (count($data['periods']) > 1) {
+                        foreach ($data['periods'] as $value) {
+                            if ($value['total_hours'] == '0 h 0 m') {
+                                $period = WorkPeriod::find($value['period_id']);
+                                $periodSupposedDupration = $period->supposed_duration;
+                                // dd($periodSupposedDupration);
+                            }
+                        }
+                        // $allAbsent = true; // Found a period that is not absent
+                        // break; // No need to check further
+                    }
                 }
                 if (isset($period['attendances']) && ($period['attendances'] !== 'absent')) {
                     $allAbsent = false; // Found a period that is not absent
                     break; // No need to check further
                 }
                 // Collect absent periods
-                if (isset($period['attendances']) && $period['attendances'] === 'absent') {
+                if (
+                    isset($period['attendances']) && $period['attendances'] === 'absent'
+                    // || (!array_key_exists('checkout', $period['attendances']))
+                ) {
                     $result[] = $period['date'];  // Save the absent period for later use
                 }
             }
@@ -1026,8 +1045,17 @@ if (!function_exists('calculate_missing_hours')) {
         $date,
         $employeeId
     ) {
-        $isMultiple = Attendance::where('check_date', $date)->where('employee_id', $employeeId)->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count() > 1 ? true : false;
+        $isMultiple = Attendance::where('check_date', $date)
+            ->where('employee_id', $employeeId)
+            ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+            ->groupBy('period_id')
+            ->havingRaw('COUNT(*) > 1')
+            ->exists();
 
+        // $isMultipleOld = Attendance::where('check_date', $date)
+        //     ->where('employee_id', $employeeId)
+        //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count() > 1 ? true : false;
+        // dd($isMultiple,$isMultiple2);
         if (!$isMultiple) {
             return [
                 'formatted' => '0 h 0m',

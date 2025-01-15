@@ -301,7 +301,7 @@ class EmployeeApplicationResource extends Resource
 
                             DB::beginTransaction();
                             try {
-                                //code...
+                                //code... 
                                 $record->delete();
                                 $record->missedCheckoutRequest()->delete();
                                 showSuccessNotifiMessage('Done');

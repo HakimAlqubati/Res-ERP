@@ -1,8 +1,8 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
     @if (isset($branch_id) && is_numeric($branch_id))
-        <x-filament-tables::table class="w-full text-sm text-left pretty  ">
-            <thead>
+        <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table">
+            <thead class="fixed-header" style="top:64px;">
 
 
 
@@ -20,9 +20,7 @@
                     </th>
                     <th style="text-align: center; vertical-align: middle;"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                        <img class="circle-image"
-                            src="https://w7.pngwing.com/pngs/882/726/png-transparent-chef-cartoon-chef-photography-cooking-fictional-character-thumbnail.png"
-                            alt="">
+                        <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
@@ -35,14 +33,15 @@
             <tbody>
 
                 @foreach ($report_data as $data)
-                    
                     <x-filament-tables::row>
 
                         <x-filament-tables::cell>
-                            <a target="_blank" href="{{ url($data?->url_report_details) }}"> {{ $data?->category }}</a>
+                            <a target="_blank" href="{{ url($data?->url_report_details) }}">
+                                {{ $data?->category }}</a>
                         </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data?->amount . ' ' . $data?->symbol }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ $data?->amount . ' ' . $data?->symbol }}
+                        </x-filament-tables::cell>
                     </x-filament-tables::row>
                 @endforeach
                 <x-filament-tables::row>

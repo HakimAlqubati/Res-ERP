@@ -132,10 +132,7 @@ class EmployeeOvertimeResource extends Resource
 
                             Select::make('type')
                                 ->label('Type')
-                                ->options([
-                                    EmployeeOvertime::TYPE_BASED_ON_DAY => 'By Date',
-                                    EmployeeOvertime::TYPE_BASED_ON_MONTH => 'By Day',
-                                ])
+                                ->options(EmployeeOvertime::getTypes())
                                 ->live()
                                 ->default(EmployeeOvertime::TYPE_BASED_ON_DAY)
                                 ->required(),
@@ -497,10 +494,7 @@ class EmployeeOvertimeResource extends Resource
                 SelectFilter::make('branch_id')
                     ->label('Branch')->multiple()
                     ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
-                SelectFilter::make('type')->label('Type')->options([
-                    EmployeeOvertime::TYPE_BASED_ON_DAY => 'By Date',
-                    EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Basd On Month',
-                ]),
+                SelectFilter::make('type')->label('Type')->options(EmployeeOvertime::getTypes()),
                 SelectFilter::make('approved')
                     ->label('Status')->multiple()
                     ->options(
