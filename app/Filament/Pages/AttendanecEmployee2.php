@@ -85,21 +85,18 @@ class AttendanecEmployee2 extends BasePage
                     ->default(now())
                     ->prefixIconColor('success')
                     ->required()
-                    ->seconds(false)
-                    ->hidden(function () {
-                        return isSuperAdmin() ? false : true;
-                    }),
-
-                KeyPadTest::make('rfid')->default($this->rfid),
-                // TextInput::make('rfid')
-                //     ->autocomplete(false)
-                //     ->label('Employee RFID')
-                //     ->prefixIcon('heroicon-m-identification')
-                //     ->prefixIconColor('success')
-                //     ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
-                //     ->required()
-                //     ->placeholder('RFID')
-                //     ->maxLength(255),
+                    ->seconds(false),
+                // KeyPadTest::make('rfid')->default($this->rfid),
+                // KeyPadTest::make('rfid')->default($this->rfid),
+                TextInput::make('rfid')
+                    ->autocomplete(false)
+                    ->label('Employee RFID')
+                    ->prefixIcon('heroicon-m-identification')
+                    ->prefixIconColor('success')
+                    ->label('قم بإدخال رقم التحضير  الخاص بك واضغط على زر البصمة')
+                    ->required()
+                    ->placeholder('RFID')
+                    ->maxLength(255),
                 ToggleButtons::make('type')
                     ->required()
                     ->hidden(function () {
@@ -136,9 +133,9 @@ class AttendanecEmployee2 extends BasePage
         $rfid = $formData['rfid'];
         $formData['rfid'] = $rfid;
 
-        // if (is_null($rfid)) {
-        //     return showWarningNotifiMessage('RFID cannot be null');
-        // }
+        if (is_null($rfid)) {
+            return showWarningNotifiMessage('RFID cannot be null');
+        }
         if (!$this->typeHidden && $formData['type'] != '') {
             $this->type = $formData['type'];
         }
@@ -153,12 +150,7 @@ class AttendanecEmployee2 extends BasePage
     {
         // $dateTime = now();
 
-        $dateTime = now();
-
-        if (isSuperAdmin()) {
-            $dateTime = $data['date_time'];
-        }
-
+        $dateTime = $data['date_time'];
 
         // Create a Carbon instance
         $carbonDateTime = Carbon::parse($dateTime);
