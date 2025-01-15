@@ -241,12 +241,7 @@ function getDefaultStore()
  */
 function getDefaultCurrency()
 {
-    $defaultCurrency = 'RM';
-    $systemSettingsCurrency = SystemSetting::select('currency_symbol')->first();
-    if ($systemSettingsCurrency) {
-        $defaultCurrency = $systemSettingsCurrency->currency_symbol;
-    }
-    return $defaultCurrency;
+    return setting('currency_symbol');
 }
 
 /**
@@ -254,14 +249,7 @@ function getDefaultCurrency()
  */
 function getCalculatingPriceOfOrdersMethod()
 {
-    $defaultMethod = 'from_unit_prices';
-
-    $systemSettingsCalculatingMethod = SystemSetting::select('calculating_orders_price_method')->first()->calculating_orders_price_method;
-
-    if ($systemSettingsCalculatingMethod != null && ($systemSettingsCalculatingMethod != $defaultMethod)) {
-        $defaultMethod = $systemSettingsCalculatingMethod;
-    }
-    return $defaultMethod;
+    return setting('calculating_orders_price_method');
 }
 
 /**
@@ -293,11 +281,7 @@ function checkIfUserHasPendingForApprovalOrder($branchId)
  */
 function getLimitDaysOrders()
 {
-    $limitDays = SystemSetting::select('limit_days_orders')?->first()?->limit_days_orders;
-    if ($limitDays) {
-        return $limitDays;
-    }
-    return 30; // 30 days as default
+    return setting('limit_days_orders');
 }
 
 /**
@@ -305,7 +289,7 @@ function getLimitDaysOrders()
  */
 function getEnableUserOrdersToStore()
 {
-    return SystemSetting::select('enable_user_orders_to_store')?->first()?->enable_user_orders_to_store;
+    return setting('enable_user_orders_to_store');
 }
 
 /**
@@ -432,7 +416,7 @@ function getMonthsArray2()
 
     return array_reverse($months); // Reverse to keep the order from past to current
 }
- 
+
 function getMonthArrayWithKeys()
 {
     return [
@@ -518,8 +502,9 @@ function showWarningNotifiMessage($title, $body = null)
     return Notification::make()->warning()->title($title)->body($body)->send();
 }
 
-function isLocal():bool{
-    if(env('APP_ENV') == 'local'){
+function isLocal(): bool
+{
+    if (env('APP_ENV') == 'local') {
         return true;
     }
     return false;
