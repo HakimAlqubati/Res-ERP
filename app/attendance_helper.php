@@ -873,7 +873,9 @@ function calculateTotalAbsentDays($attendanceData)
                 if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
 
                     if (count($data['periods']) == 1) {
+                        // dd($data);
                         $allAbsent = true; // Found a period that is not absent
+                        $result[] = $period['date'];
                         break; // No need to check further
                     }
 
@@ -898,6 +900,7 @@ function calculateTotalAbsentDays($attendanceData)
                     isset($period['attendances']) && $period['attendances'] === 'absent'
                     // || (!array_key_exists('checkout', $period['attendances']))
                 ) {
+
                     $result[] = $period['date'];  // Save the absent period for later use
                 }
             }

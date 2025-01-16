@@ -9,6 +9,7 @@ use App\Models\LeaveType;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
+use App\Models\WorkPeriod;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -164,7 +165,6 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
         $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
     }
-
     $differneceBetweenDaysMonthAndAttendanceDays = $daysInMonth - $totalAttendanceDays;
     $totalLateHours = 0;
     $totalEarlyDepatureHours = 0;
@@ -174,7 +174,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     }
 
     $totalMissingHours = calculateTotalMissingHours($attendances);
-    
+
 
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
@@ -206,7 +206,6 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $deductionForLateHours = $totalLateHours * $hourlySalary; // Deduction for late hours
     $deductionForMissingHours = round(($totalMissingHours['total_hours'] ?? 0) * $hourlySalary, 2);
-
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
     $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions + $deductionForMissingHours);
@@ -910,9 +909,24 @@ function calculateTotalMissingHours(array $data)
 
     // Iterate through each date in the data
     foreach ($data as $date => $details) {
-        foreach ($details['periods'] as $period) {
-            if (isset($period['attendances']['checkout']['lastcheckout']['missing_hours']['total_minutes'])) {
-                $totalMissingMinutes += $period['attendances']['checkout']['lastcheckout']['missing_hours']['total_minutes'];
+
+        if (count($details['periods']) > 1) {
+            foreach ($details['periods'] as $detail) {
+                if (count($detail['attendances']) <= 1) {
+                    $period = WorkPeriod::find($detail['period_id']);
+                    $periodSupposedDupration = $period->supposed_duration;
+
+                    list($hours, $minutes) = explode(':', $periodSupposedDupration);
+                    $totalMinutes = ($hours * 60) + $minutes;
+                    $totalMissingMinutes += $totalMinutes;
+                }
+            }
+        } else {
+
+            foreach ($details['periods'] as $period) {
+                if (isset($period['attendances']['checkout']['lastcheckout']['missing_hours']['total_minutes'])) {
+                    $totalMissingMinutes += $period['attendances']['checkout']['lastcheckout']['missing_hours']['total_minutes'];
+                }
             }
         }
     }
@@ -920,7 +934,6 @@ function calculateTotalMissingHours(array $data)
     // Convert total missing minutes into hours and minutes
     $totalMissingHours = floor($totalMissingMinutes / 60);
     $remainingMinutes = $totalMissingMinutes % 60;
-
     // Return the result
     return [
         'formatted' => "{$totalMissingHours} h {$remainingMinutes} m",
