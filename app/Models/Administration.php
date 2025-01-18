@@ -1,15 +1,14 @@
 <?php
 
 namespace App\Models;
-
-use App\Traits\DynamicConnection;
+ 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Administration extends Model
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'hr_administrations';
     protected $fillable = [

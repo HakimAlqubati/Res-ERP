@@ -144,7 +144,7 @@ class AttendanecEmployee2 extends BasePage
         if (!$this->typeHidden && $formData['type'] != '') {
             $this->type = $formData['type'];
         }
-
+        $this->clearDisplay();
         $handle = $this->handleEmployeePeriodData($formData);
         if (isset($handle['success']) && !$handle['success']) {
             return $this->sendWarningNotification($handle['message']);
@@ -265,7 +265,7 @@ class AttendanecEmployee2 extends BasePage
         // dd($this->checkTimeIfOutOfAllowedAttedance($closestPeriod,$time));
         if ($this->checkTimeIfOutOfAllowedAttedance($closestPeriod, $time)) {
 
-            return $this->sendWarningNotification('You cannot checkin right now');
+            return $this->sendWarningNotification('You cannot check in right now.<br> Please contact your manager to adjust your shift.');
         }
 
 
@@ -348,6 +348,21 @@ class AttendanecEmployee2 extends BasePage
         // Ensure that $checkTime is a Carbon instance
         // $checkTime = \Carbon\Carbon::parse($checkTime);
         $checkTime = Carbon::parse($date . ' ' . $checkTime);
+
+        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(15))->where('employee_id', $employee->id)->first();
+
+        if ($lastRecord) {
+            // // Calculate the remaining seconds until a new record can be created
+            $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(15)->diffInSeconds(Carbon::now());
+
+            // Convert seconds to minutes and seconds
+            $remainingMinutes = floor($remainingSeconds / 60);
+            $remainingSeconds = $remainingSeconds % 60;
+            $remainingMinutes *= -1;
+            $remainingSeconds *= -1;
+
+            return $this->sendWarningNotification(__('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second'));
+        }
 
         // dd($checkTime,$date);
         // Prepare attendance data
