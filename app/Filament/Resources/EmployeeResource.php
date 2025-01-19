@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Exports\EmployeesExport;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
@@ -751,6 +752,7 @@ class EmployeeResource extends Resource
             'index' => Pages\ListEmployees::route('/'),
             'create' => Pages\CreateEmployee::route('/create'),
             'edit' => Pages\EditEmployee::route('/{record}/edit'),
+            'org_chart' => OrgChart::route('/org_chart'),
             // 'view' => Pages\ViewEmployee::route('/{record}'),
             'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here
 

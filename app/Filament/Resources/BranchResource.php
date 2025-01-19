@@ -7,6 +7,7 @@ use App\Filament\Resources\BranchResource\RelationManagers\AreasRelationManager;
 use App\Models\Branch;
 use App\Models\User;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -35,13 +36,20 @@ class BranchResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')->required()->label(__('lang.name')),
-                Textarea::make('address')->label(__('lang.address')),
-                Checkbox::make('active')->label(__('lang.active')),
-                Select::make('manager_id')
-                    ->label(__('lang.branch_manager'))
-                    ->options(User::all()->pluck('name', 'id'))
-                    ->searchable(),
+
+                Fieldset::make()->columns(2)->schema([
+                    TextInput::make('name')->required()->label(__('lang.name')),
+                    Select::make('manager_id')
+                        ->label(__('lang.branch_manager'))
+                        ->options(User::all()->pluck('name', 'id'))
+                        ->searchable(),
+                    Checkbox::make('active')->label(__('lang.active')),
+                    Checkbox::make('is_hq')->label(__('lang.is_hq')),
+                    Textarea::make('address')
+                        ->columnSpanFull()
+                        ->label(__('lang.address')),
+                ])
+
             ]);
     }
 
@@ -52,7 +60,7 @@ class BranchResource extends Resource
                 TextColumn::make('id')->label(__('lang.branch_id')),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('address')->label(__('lang.address'))
-                // ->limit(100)
+                    // ->limit(100)
                     ->words(5),
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
@@ -71,32 +79,31 @@ class BranchResource extends Resource
                     ->button()
                     ->icon('heroicon-o-plus')
                     ->label('Add area')->form([
-                    Repeater::make('branch_areas')
-                        ->minItems(1)
-                        ->maxItems(1)
-                        ->disableItemCreation(true)
-                        ->disableItemDeletion(true)
-                        
-                        ->schema([
-                            TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
-                            Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
-                        ])
-                        ->afterStateUpdated(function ($state, $record) {
+                        Repeater::make('branch_areas')
+                            ->minItems(1)
+                            ->maxItems(1)
+                            ->disableItemCreation(true)
+                            ->disableItemDeletion(true)
 
-                            // Custom logic to handle saving without deleting existing records
-                            $branch = $record; // Get the branch being updated
-                            $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
+                            ->schema([
+                                TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
+                                Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
+                            ])
+                            ->afterStateUpdated(function ($state, $record) {
 
-                            foreach ($state as $areaData) {
-                                if (!isset($areaData['id'])) {
-                                    // If it's a new area, create it
-                                    $branch->areas()->create($areaData);
-                                } else {
+                                // Custom logic to handle saving without deleting existing records
+                                $branch = $record; // Get the branch being updated
+                                $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
 
+                                foreach ($state as $areaData) {
+                                    if (!isset($areaData['id'])) {
+                                        // If it's a new area, create it
+                                        $branch->areas()->create($areaData);
+                                    } else {
+                                    }
                                 }
-                            }
-                        }),
-                ]),
+                            }),
+                    ]),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),

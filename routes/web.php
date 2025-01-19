@@ -10,6 +10,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
+use App\Models\Approval;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Order;
@@ -19,6 +20,8 @@ use App\Models\PurchaseInvoiceDetail;
 use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -475,14 +478,68 @@ Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImag
 Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
 
 
+Route::get('workbench_webcam_check/{date}/{time}', function (Request $request, $date, $time) {
+
+    // Check if the user is authenticated
+    if (!Auth::check()) {
+        return redirect()->route('login')->with('error', 'You need to be logged in to access this page.');
+    }
+
+    $userId = auth()->id();
+    // Check if an approval record exists for the user
+    $approval = Approval::where('route_name', 'workbench_webcam_check')
+        // ->where('date', $date)
+        // ->where('time', $time)
+        ->where('created_by', $userId)
+        ->first();
+
+    if (!$approval) {
+        // If no approval record exists, create one
+        $approval = Approval::create([
+            'route_name' => 'workbench_webcam_check',
+            'date' => now()->toDateString(),
+            'time' => now()->toTimeString(),
+            'is_approved' => false,
+            'approved_by' => null,
+            'created_by' => $userId,
+        ]);
+
+        // Optionally, you can log this action or notify the admin
+        // For simplicity, we'll just inform the user
+        return redirect()->back()->with('info', 'Your request for access has been submitted for approval.');
+    } elseif ($approval->is_approved) {
+        // If the approval is approved, allow access and log the visit
+        \App\Models\VisitLog::create([
+            'user_id' => $userId,
+            'route_name' => 'workbench_webcam_check',
+            'date' => now()->toDateString(),
+            'time' => now()->toTimeString(),
+            'visited_at' => Carbon::now(),
+        ]);
+
+        // Retrieve settings
+        $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
+        $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
+        $currentTime = Carbon::now()->format('H'); // Current hour in 24-hour format
+
+        return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
+    } else {
+        // If the approval is pending, inform the user
+        return redirect()->back()->with('warning', 'Your request for access is still pending approval.');
+    }
+})
+    ->middleware('check')
+;
 Route::get('workbench_webcam/{date}/{time}', function () {
     $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
     $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
 })
-    // ->middleware('check')
+    ->middleware('check')
 ;
+
+
 Route::get('workbench_webcam_v2', function () {
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));

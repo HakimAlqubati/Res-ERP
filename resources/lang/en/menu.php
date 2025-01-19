@@ -5,5 +5,6 @@ return [
     'accountant_s' => 'Accountant system',
     'hr_ms' => 'People & Collaboration',
     'supply_and_inventory' => 'Supply & Inventory',
+    'stores_cluster' => 'Stores',
     
 ];

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\OrderReportsResource;
 
+use App\Filament\Clusters\MainOrdersCluster;
+use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
 use App\Models\Branch;
@@ -23,10 +25,10 @@ class ReportProductQuantitiesResource extends Resource
     protected static ?string $model = ReportProductQuantities::class;
     protected static ?string $slug = 'report-product-quantities';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = ReportOrdersCluster::class;
+    protected static ?string $cluster = MainOrdersCluster::class;
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 5;
 
     /**
      * @deprecated Use `getModelLabel()` instead.

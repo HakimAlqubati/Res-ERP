@@ -5,5 +5,5 @@ return [
     'accountant_s' => 'النظام المحاسبي',
     'hr_ms' => 'نظام إدارة الموارد البشرية',
     'supply_and_inventory' => 'التوريد والمخزون',
-    
+    'stores_cluster' => 'المخازن',
 ];

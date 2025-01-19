@@ -21,6 +21,7 @@ class Branch extends Model
         'address',
         'manager_id',
         'active',
+        'is_hq',
     ];
 
     public function user()

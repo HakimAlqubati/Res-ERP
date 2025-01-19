@@ -23,6 +23,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Pages\CustomLogin;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
+use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
@@ -30,6 +31,7 @@ use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\TenantResource;
 use App\Filament\Resources\UserResource;
+use App\Filament\Resources\VisitLogResource;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Coolsam\Modules\ModulesPlugin;
 use Filament\Enums\ThemeMode;
@@ -117,7 +119,7 @@ class AdminPanelProvider extends PanelProvider
                         ->items(array_merge(
                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  ProductUnitCluster::getNavigationItems(): [], 
                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  MainOrdersCluster::getNavigationItems(): [], 
-                         (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
+                        //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  SupplierCluster::getNavigationItems(): [], 
                          (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  SupplierStoresReportsCluster::getNavigationItems(): [], 
                       
@@ -136,6 +138,12 @@ class AdminPanelProvider extends PanelProvider
                     //  ProductResource::getNavigationItems(),
                     ))
                     ,
+                NavigationGroup::make('Requests of Visits')
+                    ->items(array_merge(
+                     (isSuperAdmin() || isSystemManager() || isBranchManager()) ? ApprovalResource::getNavigationItems(): [] ,
+                     (isSuperAdmin() || isSystemManager() || isBranchManager()) ? VisitLogResource::getNavigationItems(): [] ,
+                    ))
+                    , 
                     
                     NavigationGroup::make('System settings')
                         ->items(array_merge(

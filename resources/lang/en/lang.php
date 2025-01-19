@@ -88,7 +88,7 @@ return [
     'purchased_qty' => 'Purchased qty',
     'qty_sent_to_branches' => 'Qty sent to branches',
     'total_quantity' => 'Total quantity',
-    'stores' => 'Stores',
+    'stores' => 'Stores Setting',
     'start_date' => 'Start date',
     'end_date' => 'End date',
     'unit_price' => 'Unit price',
@@ -144,5 +144,6 @@ return [
         'december' => 'December',
     ],
     'supplier_supplier_invoice' => 'Suppliers - Invoices',
-    'purchasing_stores_reports' => 'Reports (Stores - Purchasing)'
+    'purchasing_stores_reports' => 'Reports (Stores - Purchasing)',
+    'is_hq' => 'Is HQ' ,
 ];
