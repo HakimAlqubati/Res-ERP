@@ -174,8 +174,8 @@ class AttendnaceResource extends Resource
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
-                    0 => 'Rejected',
-                    1 => 'Accepted',
+                    0 => 'Yes',
+                    1 => 'No',
                 ])->default(1),
                 SelectFilter::make('employee_id')->searchable()->label('Employee')->options(function (Get $get) {
                     return Employee::query()
