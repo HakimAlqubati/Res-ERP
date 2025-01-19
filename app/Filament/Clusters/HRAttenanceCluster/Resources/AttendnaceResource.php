@@ -164,6 +164,8 @@ class AttendnaceResource extends Resource
                     ->label('Day'),
                 Tables\Columns\TextColumn::make('late_departure_minutes')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
+                Tables\Columns\TextColumn::make('message')
+                    ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true)->limit(50)->tooltip(fn($state): string => $state),
                 Tables\Columns\TextColumn::make('early_departure_minutes')
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -171,6 +173,10 @@ class AttendnaceResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
+                    0 => 'Rejected',
+                    1 => 'Accepted',
+                ]),
                 SelectFilter::make('employee_id')->searchable()->label('Employee')->options(function (Get $get) {
                     return Employee::query()
                         ->pluck('name', 'id');

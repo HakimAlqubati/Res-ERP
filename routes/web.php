@@ -478,7 +478,7 @@ Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImag
 Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
 
 
-Route::get('workbench_webcam_check/{date}/{time}', function (Request $request, $date, $time) {
+Route::get('workbench_webcam_check', function () {
 
     // Check if the user is authenticated
     if (!Auth::check()) {
@@ -504,9 +504,8 @@ Route::get('workbench_webcam_check/{date}/{time}', function (Request $request, $
             'created_by' => $userId,
         ]);
 
-        // Optionally, you can log this action or notify the admin
         // For simplicity, we'll just inform the user
-        return redirect()->back()->with('info', 'Your request for access has been submitted for approval.');
+        return redirect()->route('pending.approval')->with('info', 'Your request for access has been submitted for approval.');
     } elseif ($approval->is_approved) {
         // If the approval is approved, allow access and log the visit
         \App\Models\VisitLog::create([
@@ -527,9 +526,14 @@ Route::get('workbench_webcam_check/{date}/{time}', function (Request $request, $
         // If the approval is pending, inform the user
         return redirect()->back()->with('warning', 'Your request for access is still pending approval.');
     }
-})
+})->name('workbench_webcam_check')
     ->middleware('check')
 ;
+
+Route::get('pending_approval', function () {
+    return view('pending-approval.v1.pending-approval');
+})->name('pending.approval');
+
 Route::get('workbench_webcam/{date}/{time}', function () {
     $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
     $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
