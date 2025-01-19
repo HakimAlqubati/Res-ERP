@@ -461,6 +461,7 @@ function employeeAttendances($employeeId, $startDate, $endDate)
 
             // Get attendances for the current period and date
             $attendances = DB::table('hr_attendances as a')
+                ->where('accepted', 1)
                 ->where('a.employee_id', '=', $employeeId)
                 ->whereDate('a.check_date', '=', $date)
                 ->where('a.period_id', '=', $period->period_id)
@@ -770,6 +771,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
                 // Get attendances for the current period and date
                 $attendances = DB::table('hr_attendances as a')
+                    ->where('accepted', 1)
                     ->where('a.employee_id', '=', $employeeId)
                     ->whereDate('a.check_date', '=', $date)
                     ->where('a.period_id', '=', $period->period_id)

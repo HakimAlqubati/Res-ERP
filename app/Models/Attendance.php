@@ -20,15 +20,15 @@ class Attendance extends Model
     public function scopeEarlyDepartures($query)
     {
         return $query->where('check_type', self::CHECKTYPE_CHECKOUT)
-                    ->where('status', self::STATUS_EARLY_DEPARTURE)
-                    ->where('early_departure_minutes', '<', 20);
+            ->where('status', self::STATUS_EARLY_DEPARTURE)
+            ->where('early_departure_minutes', '<', 20);
     }
     public function scopeLateArrival($query)
     {
         return $query->where('check_type', self::CHECKTYPE_CHECKIN)
-                    ->where('status', self::STATUS_LATE_ARRIVAL)
-                    ->where('delay_minutes', '<', 10)
-                    ;
+            ->where('status', self::STATUS_LATE_ARRIVAL)
+            ->where('delay_minutes', '<', 10)
+        ;
     }
 
     const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR = 'quarter_period';
@@ -74,6 +74,9 @@ class Attendance extends Model
         'total_actual_duration_hourly',
         'is_from_previous_day',
         'attendance_method',
+        'accepted',
+        'message',
+
     ];
 
     const ATTENDANCE_METHOD_FINGERPRINT = 'fingerprint';
@@ -151,5 +154,29 @@ class Attendance extends Model
             self::STATUS_LATE_DEPARTURE => self::STATUS_LATE_DEPARTURE,
             self::STATUS_TEST => self::STATUS_TEST,
         ];
+    }
+
+    /**
+     * Store a new attendance record with 'accepted' set to false.
+     *
+     * @param array $attributes
+     * @return Attendance
+     */
+    public static function storeNotAccepted($employee, $date, $time, $day, $message, $periodId)
+    {
+        // Ensure that 'accepted' is set to false
+        $attributes['accepted'] = false;
+
+        $attributes['created_by'] = auth()->id();
+        $attributes['employee_id'] = $employee->id;
+        $attributes['check_date'] = $date;
+        $attributes['check_time'] = $time;
+        $attributes['day'] = $day;
+        $attributes['message'] = $message;
+        $attributes['period_id'] = $periodId;
+        $attributes['branch_id'] = $employee?->branch_id;
+
+        // Create and return the new attendance record
+        return self::create($attributes);
     }
 }
