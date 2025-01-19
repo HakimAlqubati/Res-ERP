@@ -401,7 +401,7 @@ class AttendanecEmployee2 extends BasePage
             if (
                 !$this->checkIfPeriodAllowenceMinutesBeforePeriod($nearestPeriod, $date, $checkTimeStr) && ($nearestPeriod?->start_at != '00:00:00')
             ) {
-                $message = 'You cannot checkin right now';
+                $message = 'You cannot check in right now.<br> Please contact your manager to adjust your shift.';
                 Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id);
 
                 return $this->sendWarningNotification($message);
