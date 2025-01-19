@@ -102,9 +102,8 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
         'absent_days' => $absentDays,
         'absent_dates' => $absentDates,
     ];
-    
     // Case 1: If the employee used fewer leaves than allowed
-    if ($usedLeaves < $allowedLeaves) {
+    if ($absentDays < $allowedLeaves) {
         $remainingLeaves = $allowedLeaves - $usedLeaves;
 
         // Sub-case 1.1: Employee did not have any absences
@@ -123,7 +122,8 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     } else {
         // Case 2: If the employee used all allowed leave
         if ($absentDays > $allowedLeaves) {
-            $results['excess_absence_days'] = $absentDays - $allowedLeaves;
+            // $results['excess_absence_days'] = $absentDays - $allowedLeaves;
+            $results['excess_absence_days'] = $absentDays;
         }
     }
 
