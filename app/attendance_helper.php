@@ -864,7 +864,6 @@ function calculateTotalAbsentDays($attendanceData)
         // Check if periods exist for the date
         if (isset($data['periods']) && !empty($data['periods'])) {
             $allAbsent = true; // Assume all are absent initially
-
             // Loop through each period to check attendance
             foreach ($data['periods'] as $period) {
 
@@ -874,7 +873,7 @@ function calculateTotalAbsentDays($attendanceData)
 
                     if (count($data['periods']) == 1) {
                         // dd($data);
-                        $allAbsent = true; // Found a period that is not absent
+                        // $allAbsent = true; // Found a period that is not absent
                         $result[] = $period['date'];
                         break; // No need to check further
                     }
@@ -902,6 +901,9 @@ function calculateTotalAbsentDays($attendanceData)
                 ) {
 
                     $result[] = $period['date'];  // Save the absent period for later use
+                }
+                if (count($data['periods']) > 1) {
+                    break;
                 }
             }
 
