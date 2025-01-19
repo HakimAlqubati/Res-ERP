@@ -44,8 +44,8 @@ class EmployeeOvertime extends Model
     public static function getTypes()
     {
         return [
-            EmployeeOvertime::TYPE_BASED_ON_DAY => 'Daily',
-            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Hourly',
+            EmployeeOvertime::TYPE_BASED_ON_DAY => 'Hourly',
+            EmployeeOvertime::TYPE_BASED_ON_MONTH => 'Daily',
         ];
     }
     // Relationships
