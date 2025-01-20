@@ -29,8 +29,7 @@
 
         body {
             margin: 0;
-            padding: 30px;
-            width: 100vw;
+            padding: 30px; 
             height: 100vh;
             display: flex;
             justify-content: center;

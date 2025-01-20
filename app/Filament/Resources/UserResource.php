@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\Branch;
+use App\Models\BranchArea;
 use App\Models\Employee;
 use App\Models\User;
 use App\Models\UserType;
@@ -49,9 +50,12 @@ class UserResource extends Resource
         return $form
             ->schema([
 
-                Fieldset::make()->label('Check if you want to create a user account for existing employee')->schema([
+                Fieldset::make()->label('')->columns(2)->schema([
                     Toggle::make('is_exist_employee')->label('')
-                        ->inline(false)
+                        ->inline(false)->helperText('Check if you want to create a user account for existing employee')
+                        ->live(),
+                    Toggle::make('is_attendance_user')->label('')
+                        ->inline(false)->helperText('Check if you want to create a user account for attendance webcam')
                         ->live(),
                 ])->hiddenOn('edit'),
                 Fieldset::make()->visible(fn(Get $get): bool => $get('is_exist_employee'))->schema([
@@ -173,7 +177,7 @@ class UserResource extends Resource
                     ]),
 
                 ]),
-                Fieldset::make()->visible(fn(Get $get): bool => !$get('is_exist_employee'))->schema([
+                Fieldset::make()->visible(fn(Get $get): bool => !$get('is_exist_employee') && !$get('is_attendance_user'))->schema([
 
                     Grid::make()->columns(3)->schema([
                         Fieldset::make()->label('Personal data')->schema([
@@ -267,6 +271,65 @@ class UserResource extends Resource
                             }),
 
                     ]),
+                    Fieldset::make()->label('')->schema([
+                        Grid::make()->columns(2)->schema([
+                            TextInput::make('password')
+                                ->password()
+                                ->required(fn(string $context) => $context === 'create')
+                                ->reactive()
+                                ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+                            TextInput::make('password_confirmation')
+                                ->password()
+                                ->required(fn(string $context) => $context === 'create')
+                                ->same('password')
+                                ->label('Confirm Password'),
+                        ]),
+                    ]),
+                ]),
+                Fieldset::make()->visible(fn(Get $get): bool =>  $get('is_attendance_user'))->schema([
+
+                    Grid::make()->columns(3)->schema([
+                        Fieldset::make()->label('')->schema([
+                            TextInput::make('name')->required()->unique(ignoreRecord: true),
+                            TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+
+
+                            Select::make('branch_id')->label('Branch')
+                                ->disabled(function ($record) {
+                                    if (isset($record)) {
+                                        if ($record->created_by == auth()->user()->id) {
+                                            return false;
+                                        }
+                                        return true;
+                                    }
+                                })
+                                ->options(Branch::select('name', 'id')->pluck('name', 'id'))
+                                ->default(function () {
+                                    if (isStuff()) {
+                                        return auth()->user()->branch_id;
+                                    }
+                                })
+                                ->live()
+                                ->required(),
+                            Select::make('branch_area_id')->label('Branch area')->required()
+                                ->options(function (Get $get) {
+                                    return BranchArea::query()
+                                        ->where('branch_id', $get('branch_id'))
+                                        ->pluck('name', 'id');
+                                })
+                                ->disabled(function ($record) {
+                                    if (isset($record)) {
+                                        if ($record->created_by == auth()->user()->id) {
+                                            return false;
+                                        }
+                                        return true;
+                                    }
+                                }),
+                        ]),
+
+                    ]),
+
+
                     Fieldset::make()->label('')->schema([
                         Grid::make()->columns(2)->schema([
                             TextInput::make('password')
