@@ -32,6 +32,7 @@ class CreateUser extends CreateRecord
             $data['phone_number'] = $this->data['phone_number'];
             $data['branch_id'] = $this->data['branch_id'];
         }
+        // dd($data);
         return $data;
     }
 
@@ -41,6 +42,12 @@ class CreateUser extends CreateRecord
             Employee::find($this->data['search_employee'])->update([
                 'user_id' => $this->record->id,
             ]);
+        }
+        if ($this->record->is_attendance_user) {
+            $user = $this->record;
+            // Assign role 17 to the user
+            $user->assignRole(17);
+            $user->removeRole(11);
         }
     }
 }

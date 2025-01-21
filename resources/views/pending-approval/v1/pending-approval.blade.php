@@ -91,11 +91,11 @@
     <div class="alert-container">
         <div class="alert alert-warning" role="alert">
             <h4 class="alert-heading">Request Pending Approval</h4>
-            <p>Your request for access is still pending approval.</p>
+            <p>Your request for access is still pending approval. Please contact system admin</p>
             <hr>
             <p class="mb-0">
 
-                <a href="{{ route('workbench_webcam_check') }}" class="alert-link">click here to check</a>.
+                <a href="{{ route('workbench_webcam_check') }}" class="alert-link">Refresh</a>.
             </p>
         </div>
     </div>

@@ -11,12 +11,16 @@ use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Pages\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -40,6 +44,7 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationGroup = 'User & Roles';
     // protected static ?string $cluster = UserCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     public static function getNavigationLabel(): string
     {
         return __('lang.users');
@@ -286,65 +291,54 @@ class UserResource extends Resource
                         ]),
                     ]),
                 ]),
-                Fieldset::make()->visible(fn(Get $get): bool =>  $get('is_attendance_user'))->schema([
+                Fieldset::make()
+                    ->visible(fn(Get $get): bool =>  $get('is_attendance_user'))->schema([
 
-                    Grid::make()->columns(3)->schema([
+                        Grid::make()->columns(3)->schema([
+                            Fieldset::make()->label('')->schema([
+                                TextInput::make('name')->live()->afterStateUpdated(fn($set, $state) => $set('attendanceDevice.name', $state))->required()->unique(ignoreRecord: true),
+                                TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+
+
+                                Select::make('branch_id')->label('Branch')
+                                    ->options(Branch::select('name', 'id')->pluck('name', 'id'))
+                                    ->default(function () {
+                                        if (isStuff()) {
+                                            return auth()->user()->branch_id;
+                                        }
+                                    })
+                                    ->live()
+                                    ->required(),
+                                Select::make('branch_area_id')->label('Branch area')
+                                    ->options(function (Get $get) {
+                                        return BranchArea::query()
+                                            ->where('branch_id', $get('branch_id'))
+                                            ->pluck('name', 'id');
+                                    }),
+                            ]),
+
+                        ]),
+                        Fieldset::make()->relationship('attendanceDevice')->schema([
+                            TextInput::make('name')->columnSpanFull()->label('Device Name'),
+                            Textarea::make('description')->columnSpanFull()->label('Device Description'),
+                        ]),
+
+
                         Fieldset::make()->label('')->schema([
-                            TextInput::make('name')->required()->unique(ignoreRecord: true),
-                            TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-
-
-                            Select::make('branch_id')->label('Branch')
-                                ->disabled(function ($record) {
-                                    if (isset($record)) {
-                                        if ($record->created_by == auth()->user()->id) {
-                                            return false;
-                                        }
-                                        return true;
-                                    }
-                                })
-                                ->options(Branch::select('name', 'id')->pluck('name', 'id'))
-                                ->default(function () {
-                                    if (isStuff()) {
-                                        return auth()->user()->branch_id;
-                                    }
-                                })
-                                ->live()
-                                ->required(),
-                            Select::make('branch_area_id')->label('Branch area')->required()
-                                ->options(function (Get $get) {
-                                    return BranchArea::query()
-                                        ->where('branch_id', $get('branch_id'))
-                                        ->pluck('name', 'id');
-                                })
-                                ->disabled(function ($record) {
-                                    if (isset($record)) {
-                                        if ($record->created_by == auth()->user()->id) {
-                                            return false;
-                                        }
-                                        return true;
-                                    }
-                                }),
-                        ]),
-
-                    ]),
-
-
-                    Fieldset::make()->label('')->schema([
-                        Grid::make()->columns(2)->schema([
-                            TextInput::make('password')
-                                ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->reactive()
-                                ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                            TextInput::make('password_confirmation')
-                                ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->same('password')
-                                ->label('Confirm Password'),
+                            Grid::make()->columns(2)->schema([
+                                TextInput::make('password')
+                                    ->password()
+                                    ->required(fn(string $context) => $context === 'create')
+                                    ->reactive()
+                                    ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+                                TextInput::make('password_confirmation')
+                                    ->password()
+                                    ->required(fn(string $context) => $context === 'create')
+                                    ->same('password')
+                                    ->label('Confirm Password'),
+                            ]),
                         ]),
                     ]),
-                ]),
             ]);
     }
 
@@ -456,6 +450,16 @@ class UserResource extends Resource
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListUsers::class,
+            Pages\CreateUser::class,
+            Pages\EditUser::class,
+        ]);
+    }
+
 
     public static function getNavigationBadge(): ?string
     {

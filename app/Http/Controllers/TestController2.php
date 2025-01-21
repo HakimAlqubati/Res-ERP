@@ -10,6 +10,7 @@ use App\Models\LeaveType;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
+use App\Services\DeductionService;
 use Carbon\Carbon;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
@@ -195,5 +196,26 @@ class TestController2 extends Controller
     {
 
         return calculateAutoWeeklyLeaveDataForBranch($yearMonth, $branchId);
+    }
+
+
+    public function getDeductionEmployeeMonthly($employeeId, $startMonth, $endMonth)
+    {
+        $deductionService = new DeductionService();
+        $deductions = $deductionService->getDeductionsForEmployee($employeeId, $startMonth, $endMonth);
+        return $deductions;
+    }
+
+    public function showDeductions($employeeId, $startMonth, $endMonth)
+    {
+        $deductionService = new DeductionService();
+
+        $deductions = $deductionService->getDeductionsForEmployee($employeeId, $startMonth, $endMonth);
+
+        return view('reports.deductions.deductions', [
+            'summedDeductions' => $deductions['summed_deductions'],
+            'lastMonthDeductions' => $deductions['last_month_deductions'],
+            'totalDeductions' => $deductions['total_deductions'],
+        ]);
     }
 }

@@ -27,37 +27,40 @@ class EditUser extends EditRecord
         return $data;
     }
 
-    public function afterSave():void{
-           // Access the related employee model
+    public function afterSave(): void
+    {
+        // Access the related employee model
         $user = $this->record;
-           $employee = $user->employee;
-// dd($user,$employee);
+        $employee = $user->employee;
+        // dd($user,$employee);
         if ($employee) {
 
             // Check if 'email' or 'phone_number' has changed in the user model
             // if ($user->isDirty('email')) {
-                $employee->email = $user->email;
+            $employee->email = $user->email;
             // }
             // if ($user->isDirty('phone_number')) {
-                $employee->phone_number = $user->phone_number;
+            $employee->phone_number = $user->phone_number;
             // }
             // if ($user->isDirty('name')) {
-                $employee->name = $user->name;
+            $employee->name = $user->name;
             // }
 
             // if ($user->isDirty('branch_id')) {
-                $employee->branch_id = $user->branch_id;
-                
-                if(!is_null($employee?->gender)){
-                    $employee->gender = $user->gender;
-                }
-                
-                if(!is_null($employee?->nationality)){
-                    $employee->nationality = $user->nationality;
-                }
+            $employee->branch_id = $user->branch_id;
+
+            if (!is_null($employee?->gender)) {
+                $employee->gender = $user->gender;
+            }
+
+            if (!is_null($employee?->nationality)) {
+                $employee->nationality = $user->nationality;
+            }
             // Save changes to the employee model
             $employee->save();
         }
+
+       
     }
     protected function getRedirectUrl(): string
     {

@@ -351,16 +351,16 @@ class AttendanecEmployee2 extends BasePage
         return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, $checkType);
     }
 
-    public function createAttendance($employee, $nearestPeriod, $date, $checkTime, $day, $checkType, $previousRecord = null)
+    public function createAttendance($employee, $nearestPeriod, $date, $checkTime, $day, $checkType, $previousRecord = null, $isRequest = false)
     {
         $checkTimeStr = $checkTime;
         // Ensure that $checkTime is a Carbon instance
         // $checkTime = \Carbon\Carbon::parse($checkTime);
         $checkTime = Carbon::parse($date . ' ' . $checkTime);
 
-        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(15))->where('employee_id', $employee->id)->first();
+        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(15))->where('accepted', 1)->where('employee_id', $employee->id)->first();
 
-        if ($lastRecord) {
+        if ($lastRecord && !$isRequest) {
             // // Calculate the remaining seconds until a new record can be created
             $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(15)->diffInSeconds(Carbon::now());
 

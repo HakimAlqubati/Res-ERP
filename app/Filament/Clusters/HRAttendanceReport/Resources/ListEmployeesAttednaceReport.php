@@ -57,24 +57,24 @@ class ListEmployeesAttednaceReport extends ListRecords
         if ($branch_id != '') {
             $employees = $query->where('branch_id', $branch_id);
         }
-        
-        
+
+
         $employees = $query->get()->pluck('id')->toArray();
 
         $report_data = employeeAttendancesByDate($employees, $date);
 
-           // Calculate totals
-            $totalSupposed = 0;
-            $totalWorked = 0;
-            $totalApproved = 0;
+        // Calculate totals
+        $totalSupposed = 0;
+        $totalWorked = 0;
+        $totalApproved = 0;
 
-            foreach ($report_data as $empData) {
-                foreach ($empData as $periods) {
-                    foreach ($periods['periods'] as $period) {
+        foreach ($report_data as $empData) {
+            foreach ($empData as $periods) {
+                foreach ($periods['periods'] as $period) {
                     //     dd($period['attendances']['checkout']['lastcheckout']['approved_overtime'],$period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'],
                     //     $period['total_hours']
                     // );
-                         // Parse supposed_duration_hourly
+                    // Parse supposed_duration_hourly
                     $supposedDuration = $this->parseDuration($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '0 h 0 m');
                     $totalSupposed += $supposedDuration;
 
@@ -85,10 +85,10 @@ class ListEmployeesAttednaceReport extends ListRecords
                     // Parse approved_overtime
                     $approvedDuration = $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
                     $totalApproved += $approvedDuration;
-                    }
                 }
             }
-            // dd($totalSupposed,$totalWorked,$totalApproved);
+        }
+        // dd($totalSupposed,$totalWorked,$totalApproved);
         return [
             'report_data' => $report_data,
             'branch_id' => $branch_id,
@@ -99,7 +99,7 @@ class ListEmployeesAttednaceReport extends ListRecords
             'totalApproved' => $this->formatDuration($totalApproved),
         ];
     }
-    
+
 
     public function getEmployeeAttendance($employees, $date)
     {
@@ -138,6 +138,7 @@ class ListEmployeesAttednaceReport extends ListRecords
 
                     // Fetch attendance data for the employee on the given date and period
                     $attendances = DB::table('hr_attendances')
+                        ->where('accepted', 1)
                         ->join('hr_employees', 'hr_attendances.employee_id', '=', 'hr_employees.id')
                         ->select(
                             'hr_attendances.employee_id',
@@ -275,15 +276,13 @@ class ListEmployeesAttednaceReport extends ListRecords
 
 
     // Add a method to handle showing the modal with data
-   
+
     public function showDetails($date, $employeeId, $periodId)
-{
-    // Replace with your actual data-fetching logic if needed
-    $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-    $this->modalData = $AttendanceDetails->toArray();
-//  dd($this->modalData);
-    $this->showDetailsModal = true; // This opens the modal
-}
-
-
+    {
+        // Replace with your actual data-fetching logic if needed
+        $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
+        $this->modalData = $AttendanceDetails->toArray();
+        //  dd($this->modalData);
+        $this->showDetailsModal = true; // This opens the modal
+    }
 }

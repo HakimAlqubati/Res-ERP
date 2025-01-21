@@ -44,6 +44,8 @@ class User extends Authenticatable implements FilamentUser
         'active',
         'gender',
         'nationality',
+        'branch_area_id',
+        'is_attendance_user',
     ];
 
     /**
@@ -191,5 +193,10 @@ class User extends Authenticatable implements FilamentUser
             return true;
         }
         return false;
+    }
+
+    public function attendanceDevice()
+    {
+        return $this->hasOne(AttendanceDevice::class);
     }
 }

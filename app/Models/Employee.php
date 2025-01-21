@@ -573,7 +573,7 @@ class Employee extends Model
     // علاقة الموظف بالموظفين الذين يديرهم
     public function subordinates()
     {
-        return $this->hasMany(Employee::class, 'manager_id');
+        return $this->hasMany(Employee::class, 'manager_id', 'id');
     }
 
     public function managedDepartment()
@@ -590,11 +590,10 @@ class Employee extends Model
     {
         return $query->where('active', true);
     }
- 
+
 
     public function managers()
     {
         return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
     }
 }
-

@@ -188,6 +188,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 
                 // Fetch attendance data for the employee within the date range
                 $employee_attendances = DB::table('hr_attendances')
+                    ->where('accepted', 1)
                     ->join('hr_employees', 'hr_attendances.employee_id', '=', 'hr_employees.id')
                     ->select(
                         'hr_attendances.employee_id',

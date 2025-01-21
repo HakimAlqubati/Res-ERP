@@ -531,7 +531,7 @@ class EmployeeApplicationResource extends Resource
 
                         $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
 
-                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT);
+                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT, null, true);
                         $record->update([
                             'status' => EmployeeApplication::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
@@ -806,7 +806,7 @@ class EmployeeApplicationResource extends Resource
 
                         $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
 
-                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN);
+                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN, null, true);
                         $record->update([
                             'status' => EmployeeApplication::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,

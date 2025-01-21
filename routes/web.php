@@ -72,9 +72,12 @@ Route::middleware('tenant')->group(function () {
     });
 });
 // return;
-Route::get('/totestpdf', function () {
+Route::get('/test_deduction_report/{empId}/{startMonth}/{endMonth}', function ($employeeId, $startMonth, $endMonth) {
+    return (new TestController2())->showDeductions($employeeId, $startMonth, $endMonth);
+});
+Route::get('/totestpdf/{empId}/{startMonth}/{endMonth}', function ($employeeId, $startMonth, $endMonth) {
+    return (new TestController2())->getDeductionEmployeeMonthly($employeeId, $startMonth, $endMonth);
 
-    return getNationalitiesAsCountries();
     // return generateSalarySlipPdf_(82,170);
     $employee = Employee::find(143);
     $branch = Employee::find(6);
@@ -508,13 +511,13 @@ Route::get('workbench_webcam_check', function () {
         return redirect()->route('pending.approval')->with('info', 'Your request for access has been submitted for approval.');
     } elseif ($approval->is_approved) {
         // If the approval is approved, allow access and log the visit
-        \App\Models\VisitLog::create([
-            'user_id' => $userId,
-            'route_name' => 'workbench_webcam_check',
-            'date' => now()->toDateString(),
-            'time' => now()->toTimeString(),
-            'visited_at' => Carbon::now(),
-        ]);
+        // \App\Models\VisitLog::create([
+        //     'user_id' => $userId,
+        //     'route_name' => 'workbench_webcam_check',
+        //     'date' => now()->toDateString(),
+        //     'time' => now()->toTimeString(),
+        //     'visited_at' => Carbon::now(),
+        // ]);
 
         // Retrieve settings
         $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
@@ -549,7 +552,7 @@ Route::get('workbench_webcam_v2', function () {
     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));
 });
 
-Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage_old'])->name('upload.captured.image');
+Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage'])->name('upload.captured.image');
 
 
 Route::get('getAttendancesEarlyDeparture', function () {
