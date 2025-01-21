@@ -481,7 +481,7 @@ Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImag
 Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
 
 
-Route::get('workbench_webcam_check', function () {
+Route::get('workbench_webcam', function () {
 
     // Check if the user is authenticated
     if (!Auth::check()) {
@@ -490,7 +490,7 @@ Route::get('workbench_webcam_check', function () {
 
     $userId = auth()->id();
     // Check if an approval record exists for the user
-    $approval = Approval::where('route_name', 'workbench_webcam_check')
+    $approval = Approval::where('route_name', 'workbench_webcam')
         // ->where('date', $date)
         // ->where('time', $time)
         ->where('created_by', $userId)
@@ -499,7 +499,7 @@ Route::get('workbench_webcam_check', function () {
     if (!$approval) {
         // If no approval record exists, create one
         $approval = Approval::create([
-            'route_name' => 'workbench_webcam_check',
+            'route_name' => 'workbench_webcam',
             'date' => now()->toDateString(),
             'time' => now()->toTimeString(),
             'is_approved' => false,
@@ -513,7 +513,7 @@ Route::get('workbench_webcam_check', function () {
         // If the approval is approved, allow access and log the visit
         // \App\Models\VisitLog::create([
         //     'user_id' => $userId,
-        //     'route_name' => 'workbench_webcam_check',
+        //     'route_name' => 'workbench_webcam',
         //     'date' => now()->toDateString(),
         //     'time' => now()->toTimeString(),
         //     'visited_at' => Carbon::now(),
@@ -529,7 +529,7 @@ Route::get('workbench_webcam_check', function () {
         // If the approval is pending, inform the user
         return redirect()->back()->with('warning', 'Your request for access is still pending approval.');
     }
-})->name('workbench_webcam_check')
+})->name('workbench_webcam')
     ->middleware('check')
 ;
 
@@ -537,14 +537,14 @@ Route::get('pending_approval', function () {
     return view('pending-approval.v1.pending-approval');
 })->name('pending.approval');
 
-Route::get('workbench_webcam/{date}/{time}', function () {
-    $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
-    $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
-    $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-    return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
-})
-    ->middleware('check')
-;
+// Route::get('workbench_webcam/{date}/{time}', function () {
+//     $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
+//     $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
+//     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
+//     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
+// })
+//     ->middleware('check')
+// ;
 
 
 Route::get('workbench_webcam_v2', function () {
@@ -552,7 +552,7 @@ Route::get('workbench_webcam_v2', function () {
     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));
 });
 
-Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage'])->name('upload.captured.image');
+Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage_old'])->name('upload.captured.image');
 
 
 Route::get('getAttendancesEarlyDeparture', function () {
@@ -561,7 +561,7 @@ Route::get('getAttendancesEarlyDeparture', function () {
         ->whereMonth('check_date', '11')
         // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'early_departure_minutes', 'period_id')
-        ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
+        ->where('check_type', Attendance::CHECKTYPEOUT)
         ->where('early_departure_minutes', '<=', 20)
         ->get()
         ->groupBy('employee_id')

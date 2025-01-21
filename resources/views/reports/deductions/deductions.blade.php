@@ -51,7 +51,7 @@
         </tbody>
     </table> --}}
 
-    {{-- <h2>Last Month Deductions</h2>
+    <h2>Current Month Deductions</h2>
     <table>
         <thead>
             <tr>
@@ -71,9 +71,9 @@
                 </tr>
             @endforelse
         </tbody>
-    </table> --}}
+    </table>
 
-    <h2>Total Deductions (All Months Combined)</h2>
+    <h2>Total Deductions (Year To Date)</h2>
     <table>
         <thead>
             <tr>

@@ -95,7 +95,7 @@
             <hr>
             <p class="mb-0">
 
-                <a href="{{ route('workbench_webcam_check') }}" class="alert-link">Refresh</a>.
+                <a href="{{ route('workbench_webcam') }}" class="alert-link">Refresh</a>.
             </p>
         </div>
     </div>

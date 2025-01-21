@@ -35,9 +35,9 @@ class EmployeeAWSController extends Controller
         // Static employee data
         $employees = [
             [
-                'rekognition_id' => 96,
-                'name' => 'Sapna',
-                'avatar_url' => 's3://workbenchemps/employee-korian-girl.jpeg',
+                'rekognition_id' => '146',
+                'name' => '146-yahia',
+                'avatar_url' => 's3://workbenchemps2/yahia.jpeg',
             ],
         ];
 
@@ -234,7 +234,10 @@ class EmployeeAWSController extends Controller
                 // $date = now()->toDateString();
                 // $time = now()->toTimeString();
                 // $time = $_GET['time'];
-                // (new AttendanecEmployee2())->handleCreationAttendance($employeeId, $request->date, $request->time);
+                // $date = $_GET['date'];
+                $time = now()->toTimeString();
+                $date = now()->toDateString();
+                (new AttendanecEmployee2())->handleCreationAttendance($employeeId, $date, $time);
 
                 Log::info('employee_data_captured', [$employee]);
             } else {
