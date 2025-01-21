@@ -248,125 +248,33 @@ any siblings*/
                 -moz-border-radius: 5px 0 0 0 !important;
             }
         }
+
+        .outer {
+            overflow-x: auto;
+            /* Enables horizontal scrolling if content overflows */
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .tree {
+            display: inline-block;
+            /* Makes width adjust to the content dynamically */
+            white-space: nowrap;
+            /* Ensures child elements stay on one line and don't wrap */
+            text-align: center;
+            width: 300%;
+        }
     </style>
-
-    {{-- {{ dd($this->getEmployees()) }} --}}
-
-
     {{-- @if (is_string($this->generate()))
         <p>Please assign employees to the users first.</p>
     @else --}}
-    <div class="tree">
-        {!! $this->generate() !!}
+    <div class="outer">
+        <div class="tree">
+            {!! $this->generate() !!}
+        </div>
+
     </div>
     {{-- @endif --}}
 
-    {{-- <div class="tree">
-        <ul>
-            <li>
-                <a href="#">Parent</a>
-                <ul>
-                    <li>
-                        <a href="#">Child</a>
-                        <ul>
-                            <li><a href="#">Grand Child</a>
-                                <ul>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child Example</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li>
-                                <a href="#">Grand Child</a>
-                                <ul>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li><a href="#">Grand Child</a>
-                                <ul>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#">Child2</a>
-                        <ul>
-                            <li><a href="#">Grand Child</a>
-                                <ul>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child Example</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li>
-                                <a href="#">Grand Child</a>
-                                <ul>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li><a href="#">Grand Child</a>
-                                <ul>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                    <li>
-                                        <a href="#">Great Grand Child</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#">Child2</a>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-    </div> --}}
 </x-filament-panels::page>

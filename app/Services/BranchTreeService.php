@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Branch;
+use App\Models\Employee;
 
 class BranchTreeService
 {
@@ -94,5 +95,51 @@ class BranchTreeService
 
         // Take only the first two words and join them back into a string
         return implode(' ', array_slice($words, 0, 2));
+    }
+
+    /**
+     * Get the hierarchical structure of employees.
+     *
+     * @return array
+     */
+    public static function getEmployeeHierarchy()
+    {
+        // Fetch all employees once to minimize database queries
+        $employees = Employee::all();
+
+        // Start with employees who have no manager (top-level)
+        $topLevelEmployees = $employees->where('manager_id', null);
+
+        // Build the hierarchy
+        $hierarchy = $topLevelEmployees->map(function ($employee) use ($employees) {
+            return self::buildEmployeeTree($employee, $employees);
+        });
+
+        return $hierarchy->toArray();
+    }
+
+    /**
+     * Recursively build the tree structure for an employee.
+     *
+     * @param Employee $employee
+     * @param \Illuminate\Support\Collection $employees
+     * @return array
+     */
+    protected static function buildEmployeeTree($employee, $employees)
+    {
+        return [
+            'id' => $employee->id,
+            'name' => $employee->name,
+            'image' => 'http://sultan.localhost/storage/employees/default/avatar.png',
+            'emp_no' => $employee->emp_no,
+            'job_title' => $employee->job_title,
+            'position' => $employee->position ?? 'Unknown', // Example of additional data
+            'children' => $employees
+                ->where('manager_id', $employee->id)
+                ->map(function ($subordinate) use ($employees) {
+                    return self::buildEmployeeTree($subordinate, $employees);
+                })
+                ->toArray(),
+        ];
     }
 }

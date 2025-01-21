@@ -16,7 +16,7 @@ class OrgChart extends Page
     // If you need to pass data to the view, you can define a method here
     public function getEmployees()
     {
-        $branchTree = BranchTreeService::getBranchTreeV2();
+        $branchTree = BranchTreeService::getEmployeeHierarchy();
         return $branchTree;
     }
 
@@ -54,78 +54,7 @@ class OrgChart extends Page
 
         return $data;
     }
-    public function getData()
-    {
-        $data = [
-            [
-                'name' => 'Parent',
-                'children' => [
-                    [
-                        'name' => 'Child',
-                        'children' => [
-                            [
-                                'name' => 'Grand Child',
-                                'children' => [
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child Example'],
-                                    ['name' => 'Great Grand Child'],
-                                ],
-                            ],
-                            [
-                                'name' => 'Grand Child',
-                                'children' => [
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                ],
-                            ],
-                            [
-                                'name' => 'Grand Child',
-                                'children' => [
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                ],
-                            ],
-                        ],
-                    ],
-                    [
-                        'name' => 'Child2',
-                        'children' => [
-                            [
-                                'name' => 'Grand Child',
-                                'children' => [
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child Example'],
-                                    ['name' => 'Great Grand Child'],
-                                ],
-                            ],
-                            [
-                                'name' => 'Grand Child',
-                                'children' => [
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                ],
-                            ],
-                            [
-                                'name' => 'Grand Child',
-                                'children' => [
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                    ['name' => 'Great Grand Child'],
-                                ],
-                            ],
-                        ],
-                    ],
-                    ['name' => 'Child2'],
-                ],
-            ],
-        ];
-        return $data;
-    }
+
     function generateTree($nodes)
     {
         $html = '<ul>';
@@ -133,6 +62,34 @@ class OrgChart extends Page
         foreach ($nodes as $node) {
             $html .= '<li>';
             $html .= '<a href="#">' . htmlspecialchars($node['name']) . '</a>';
+
+            // Check if the node has children
+            if (!empty($node['children'])) {
+                $html .= $this->generateTree($node['children']); // Recursive call for children
+            }
+
+            $html .= '</li>';
+        }
+
+        $html .= '</ul>';
+
+        return $html;
+    }
+
+    function generateTreeCard($nodes)
+    {
+        $html = '<ul>';
+
+        foreach ($nodes as $node) {
+            $html .= '<li>';
+            $html .= '<div class="employee-card">';
+            $html .= '<img src="' . htmlspecialchars($node['image'] ?? 'default-avatar.png') . '" alt="Employee Image" class="employee-image">';
+            $html .= '<div class="employee-info">';
+            $html .= '<h4>' . htmlspecialchars($node['name']) . '</h4>';
+            $html .= '<p>' . htmlspecialchars($node['job_title'] ?? 'Unknown Job Title') . '</p>';
+            $html .= '<p>Emp No: ' . htmlspecialchars($node['emp_no'] ?? 'N/A') . '</p>';
+            $html .= '</div>';
+            $html .= '</div>';
 
             // Check if the node has children
             if (!empty($node['children'])) {
