@@ -337,7 +337,7 @@
             noFaceTimeout = setTimeout(() => {
                 // Capture time from the database
                 // await stopVideo();
-                video.style.display = 'none'; 
+                video.style.display = 'none';
                 reopenButton.style.display = 'block';
             }, timeoutWebCamValue); //
         }
@@ -500,8 +500,8 @@
                 // Only process detections if the loader is not active
                 if (!loaderActive) {
                     const detections = await faceapi.detectAllFaces(video, new faceapi
-                            .TinyFaceDetectorOptions());
-                        // .withFaceLandmarks();
+                        .TinyFaceDetectorOptions());
+                    // .withFaceLandmarks();
                     // .withFaceExpressions();
                     const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
@@ -515,19 +515,19 @@
                         // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
                         // faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
                     }
-                    if (detections.length > 0 && !hasCaptured) {
+                    // Only capture the frame if it hasn't been captured yet and a face is detected
+                    if (!hasCaptured) {
                         hasCaptured = true;
 
-
-                        if (detections.length > 0) {
-                            resetNoFaceTimer(); // Reset the timer when a face is detected
-                        }
-
-                        // Capture time from the database
-
-                        // Wait for 5 seconds before capturing
+                        // Wait for a short delay before capturing to ensure stability
                         setTimeout(() => {
-                            captureFullFrame();
+                            // Check again to confirm face is still detected before capturing
+                            if (detections.length > 0) {
+                                captureFullFrame();
+                            } else {
+                                hasCaptured = false; // Reset flag if no face detected
+                                console.log('No face detected at the time of capture.');
+                            }
                         }, webCamCaptureTime);
                     }
                 }
