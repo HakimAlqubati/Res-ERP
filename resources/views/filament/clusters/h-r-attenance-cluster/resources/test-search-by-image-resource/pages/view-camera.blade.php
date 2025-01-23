@@ -29,7 +29,7 @@
 
         body {
             margin: 0;
-            padding: 30px; 
+            padding: 30px;
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -225,7 +225,8 @@
                 opacity: 1;
             }
         }
-        #icon{
+
+        #icon {
             display: none;
         }
     </style>
@@ -315,7 +316,8 @@
         reopenButton.addEventListener('click', () => {
             reopenButton.style.display = 'none'; // Hide the button
             console.log('show up again')
-            startVideo(); // Restart the camera
+            video.style.display = 'block';
+            // startVideo(); // Restart the camera
         });
         // Add an event listener to reopen the camera
         nextEmployeeButton.addEventListener('click', () => {
@@ -325,7 +327,7 @@
             location.reload(true);
         });
 
-      
+
         const timeoutWebCamValue = @json($timeoutWebCamValue);
         console.log('Timeout Value:', timeoutWebCamValue);
         // Function to reset the timer for no face detection
@@ -334,7 +336,8 @@
             clearTimeout(noFaceTimeout);
             noFaceTimeout = setTimeout(() => {
                 // Capture time from the database
-                stopVideo();
+                // await stopVideo();
+                video.style.display = 'none'; 
                 reopenButton.style.display = 'block';
             }, timeoutWebCamValue); //
         }
@@ -359,9 +362,9 @@
 
         Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri('{{ asset('models') }}'),
-            faceapi.nets.faceLandmark68Net.loadFromUri('{{ asset('models') }}'),
-            faceapi.nets.faceRecognitionNet.loadFromUri('{{ asset('models') }}'),
-            faceapi.nets.faceExpressionNet.loadFromUri('{{ asset('models') }}')
+            // faceapi.nets.faceLandmark68Net.loadFromUri('{{ asset('models') }}'),
+            // faceapi.nets.faceRecognitionNet.loadFromUri('{{ asset('models') }}'),
+            // faceapi.nets.faceExpressionNet.loadFromUri('{{ asset('models') }}')
         ]).then(startVideo);
 
 
@@ -481,7 +484,7 @@
             }
         }
         const webCamCaptureTime = @json($webCamCaptureTime);
-        console.log('his',webCamCaptureTime)
+        console.log('his', webCamCaptureTime)
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video);
             document.body.append(canvas);
@@ -497,9 +500,9 @@
                 // Only process detections if the loader is not active
                 if (!loaderActive) {
                     const detections = await faceapi.detectAllFaces(video, new faceapi
-                            .TinyFaceDetectorOptions())
-                        .withFaceLandmarks()
-                        .withFaceExpressions();
+                            .TinyFaceDetectorOptions());
+                        // .withFaceLandmarks();
+                    // .withFaceExpressions();
                     const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
                     const ctx = canvas.getContext('2d', {
@@ -509,8 +512,8 @@
                     // Draw detections only if loader is not active
                     if (!loaderActive) {
                         faceapi.draw.drawDetections(canvas, resizedDetections);
-                        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-                        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+                        // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                        // faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
                     }
                     if (detections.length > 0 && !hasCaptured) {
                         hasCaptured = true;
@@ -521,14 +524,14 @@
                         }
 
                         // Capture time from the database
-                        
+
                         // Wait for 5 seconds before capturing
                         setTimeout(() => {
                             captureFullFrame();
                         }, webCamCaptureTime);
                     }
                 }
-            }, 100);
+            }, 500);
         });
     </script>
 
