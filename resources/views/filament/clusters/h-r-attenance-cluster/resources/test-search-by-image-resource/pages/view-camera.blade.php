@@ -158,8 +158,8 @@
         }
 
         #logo {
-            width: 190px;
-            height: 150px;
+            width: 90px;
+            height: 50px;
             /* border-radius: 50%; */
             /* border: 2px solid #ffffff; */
             /* box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3); */
@@ -224,6 +224,9 @@
                 transform: scale(1);
                 opacity: 1;
             }
+        }
+        #icon{
+            display: none;
         }
     </style>
 </head>
