@@ -271,7 +271,7 @@
     </div>
 
     <button id="reopen" style="z-index: 10;"></button>
-    <button id="nextEmployee" style="z-index: 11;">{{ 'Next employee' }}</button>
+    <button id="nextEmployee" style="z-index: 11;margin-top: 30%;">{{ 'Next employee' }}</button>
 
 
     <script src="{{ asset('/js/faceapi.js') }}"></script>
@@ -484,7 +484,6 @@
             }
         }
         const webCamCaptureTime = @json($webCamCaptureTime);
-        console.log('his', webCamCaptureTime)
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video);
             document.body.append(canvas);
@@ -539,13 +538,15 @@
 
     <script>
         // Laravel-passed current time in 24-hour format
-        const currentHour = @json($currentTime);
+        const currentTimePassed = @json($currentTime);
 
         document.addEventListener("DOMContentLoaded", function() {
             const icon = document.getElementById("icon");
             const greetingText = document.getElementById("greetingText");
-
-            if (currentHour >= 6 && currentHour < 18) {
+            const currentHour = parseInt(currentTimePassed.split(":")[0], 10);
+            
+            console.log('sd', currentHour)
+            if (currentHour >= 0 && currentHour < 11) { // Morning (6:00 to 17:59)
                 icon.src = 'storage/icons/sun.png'; // Add path to sun icon
                 greetingText.textContent = "Good Morning";
             } else {

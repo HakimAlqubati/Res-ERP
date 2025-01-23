@@ -4,6 +4,7 @@ use App\Filament\Pages\AttendanecEmployee;
 use App\Filament\Pages\AttendanecEmployee2;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
+use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
@@ -72,8 +73,8 @@ Route::middleware('tenant')->group(function () {
     });
 });
 // return;
-Route::get('/test_deduction_report/{empId}/{startMonth}/{endMonth}', function ($employeeId, $startMonth, $endMonth) {
-    return (new TestController2())->showDeductions($employeeId, $startMonth, $endMonth);
+Route::get('/test_deduction_report/{empId}/{year}', function ($employeeId, $year) {
+    return (new TestController2())->showDeductions($employeeId, $year);
 });
 Route::get('/totestpdf/{empId}/{startMonth}/{endMonth}', function ($employeeId, $startMonth, $endMonth) {
     return (new TestController2())->getDeductionEmployeeMonthly($employeeId, $startMonth, $endMonth);
@@ -522,8 +523,7 @@ Route::get('workbench_webcam', function () {
         // Retrieve settings
         $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
         $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
-        $currentTime = Carbon::now()->format('H'); // Current hour in 24-hour format
-
+        $currentTime = now()->toTimeString(); // Current hour in 24-hour format
         return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
     } else {
         // If the approval is pending, inform the user
@@ -537,6 +537,8 @@ Route::get('pending_approval', function () {
     return view('pending-approval.v1.pending-approval');
 })->name('pending.approval');
 
+Route::get('/images', [ImageController::class, 'displayAllImages']);
+
 // Route::get('workbench_webcam/{date}/{time}', function () {
 //     $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
 //     $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
@@ -549,6 +551,7 @@ Route::get('pending_approval', function () {
 
 Route::get('workbench_webcam_v2', function () {
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
+    
     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));
 });
 

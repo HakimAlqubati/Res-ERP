@@ -974,14 +974,19 @@ function calculateTotalLateArrival($attendanceData)
             // Loop through each period for the date
             foreach ($data['periods'] as $period) {
                 if (isset($period['attendances']['checkin'])) {
-                    // Loop through each checkin record
-                    // dd($date, $period['attendances']['checkin'][0]);
+                    // Loop through each checkin record 
                     // Check if the status is 'late_arrival'
                     if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
                         // Add the delay minutes to the total
+
                         if ($period['attendances']['checkin'][0]['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
-                            $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                            // $totalDelayMinutes += 2;
+                            if (setting('flix_hours')) {
+                                if (timeToHours($period['total_hours']) < timeToHours($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+                                    $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                                }
+                            } else {
+                                $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                            }
                         }
                     }
                 }
@@ -1166,4 +1171,30 @@ function getWeeksAndDaysInMonth($yearMonth)
         'total_weeks' => count($weeks),
         'weeks' => array_values($weeks),
     ];
+}
+
+
+if (!function_exists('timeToHours')) {
+    function timeToHours(string $time): float
+    {
+        // Check if the time is in "H:i:s" format
+        if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
+            $carbonTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
+
+            return $carbonTime->hour
+                + ($carbonTime->minute / 60)
+                + ($carbonTime->second / 3600);
+        }
+
+        // Check if the time is in "X h Y m" format
+        if (preg_match('/(\d+)\s*h\s*(\d*)\s*m*/i', $time, $matches)) {
+            $hours = isset($matches[1]) ? (int) $matches[1] : 0;
+            $minutes = isset($matches[2]) ? (int) $matches[2] : 0;
+
+            return $hours + ($minutes / 60);
+        }
+
+        // If format is invalid
+        throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
+    }
 }

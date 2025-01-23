@@ -61,13 +61,17 @@ class OrgChart extends Page
 
         foreach ($nodes as $node) {
             $html .= '<li>';
-            $html .= '<a href="#">' . htmlspecialchars($node['name']) . '</a>';
+            $html .= '<a href="#">';
+            $html .= '<img src="https://romansiahdev.nltworkbench.com/storage/employees/default/avatar.png"></img>';
+            $html .= '<p>' .  htmlspecialchars($node['name']) . '</p>';
+            $html .= '<p>' .  htmlspecialchars($node['emp_no']) . '</p>';
 
             // Check if the node has children
             if (!empty($node['children'])) {
                 $html .= $this->generateTree($node['children']); // Recursive call for children
             }
 
+            $html .= '</a>';
             $html .= '</li>';
         }
 

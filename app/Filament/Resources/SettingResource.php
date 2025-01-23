@@ -110,7 +110,7 @@ class SettingResource extends Resource
 
                                     ]),
                                 ]),
-                                Fieldset::make()->label('Salary')->columns(5)->schema([
+                                Fieldset::make()->label('Salary')->columns(4)->schema([
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
                                     TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),
                                     TextInput::make('overtime_hour_multiplier')
@@ -126,6 +126,11 @@ class SettingResource extends Resource
                                         ->default(false)
                                         ->visible(fn(): bool => isSuperAdmin())
                                         ->hidden(),
+                                    Toggle::make('flix_hours')
+                                        ->label('Flix Hours')
+                                        ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')
+                                        ->default(false)
+                                        ,
 
                                 ]),
                                 Fieldset::make()->label('Face rekognation settings')->columns(4)->schema([

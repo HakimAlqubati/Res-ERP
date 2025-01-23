@@ -95,10 +95,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
     }
     // dd($deduction);
     $generalAllowanceResultCalculated = calculateAllowances($generalAllowanceTypes, $basicSalary);
-    $deductionEmployer = collect($deduction)->whereIn('applied_by', [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])->toArray();
 
-    $generalDedeucationResultCalculated = calculateDeductions($deduction, $basicSalary);
-    $dedeucationResultCalculatedEmployer = calculateDeductionsEmployeer($deductionEmployer, $basicSalary);
 
     $approvedPenaltyDeductions = $employee->getApprovedPenaltyDeductionsForPeriod(date('Y', strtotime($date)), date('m', strtotime($date)));
     $totalPenaltyDeductions = collect($approvedPenaltyDeductions)->sum('penalty_amount');
@@ -208,14 +205,22 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $deductionForMissingHours = round(($totalMissingHours['total_hours'] ?? 0) * $hourlySalary, 2);
     $deductionForEarlyDepatureHours = $totalEarlyDepatureHours * $hourlySalary; // Deduction for late hours
 
-    $totalDeducations = ($specificDeducationCalculated['result'] + $generalDedeucationResultCalculated['result'] + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions + $deductionForMissingHours);
+    $totalDeducations = ($specificDeducationCalculated['result']  + $deductionForLateHours + $deductionForEarlyDepatureHours + $deductionForAbsentDays + ($deducationInstallmentAdvancedMonthly?->installment_amount ?? 0) + $taxDeduction + $totalPenaltyDeductions + $deductionForMissingHours);
     $totalAllowances = ($specificAlloanceCalculated['result'] + $generalAllowanceResultCalculated['result'] + 0);
     $totalOtherAdding = ($overtimePay + $totalMonthlyIncentives + $overtimeBasedOnMonthlyLeavePay);
 
     $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
     $remaningSalary = round($netSalary - round($totalDeducations, 2), 2);
-    $netSalary = replaceZeroInstedNegative($netSalary);
+    
     // Return the details and net salary breakdown
+
+    $deductionEmployer = collect($deduction)->whereIn('applied_by', [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])->toArray();
+
+    $generalDedeucationResultCalculated = calculateDeductions($deduction, $netSalary);
+    $dedeucationResultCalculatedEmployer = calculateDeductionsEmployeer($deductionEmployer, $netSalary);
+    $totalDeducations +=  $generalDedeucationResultCalculated['result'];
+    $netSalary = replaceZeroInstedNegative($netSalary) - $generalDedeucationResultCalculated['result'];
+    // dd($deduction);
     $result = [
         'net_salary' => round($netSalary, 2),
         'details' => [

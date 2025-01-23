@@ -206,14 +206,13 @@ class TestController2 extends Controller
         return $deductions;
     }
 
-    public function showDeductions($employeeId, $startMonth, $endMonth)
+    public function showDeductions($employeeId, $year)
     {
         $deductionService = new DeductionService();
-
-        $deductions = $deductionService->getDeductionsForEmployee($employeeId, $startMonth, $endMonth);
-
+        $employee = Employee::find($employeeId);
+        $deductions = $deductionService->getDeductionsForEmployeeByYear($employeeId, $year);
         return view('reports.deductions.deductions', [
-            'summedDeductions' => $deductions['summed_deductions'],
+            'employee' => $employee,
             'lastMonthDeductions' => $deductions['last_month_deductions'],
             'totalDeductions' => $deductions['total_deductions'],
         ]);

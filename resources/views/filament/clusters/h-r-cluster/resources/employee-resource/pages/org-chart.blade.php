@@ -119,7 +119,7 @@ any siblings*/
             white-space: nowrap;
             /* Prevent text from wrapping */
 
-            writing-mode: vertical-rl;
+            /* writing-mode: vertical-rl; */
             /* Vertical orientation */
         }
 
