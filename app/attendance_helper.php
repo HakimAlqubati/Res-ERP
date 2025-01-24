@@ -981,7 +981,7 @@ function calculateTotalLateArrival($attendanceData)
 
                         if ($period['attendances']['checkin'][0]['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
                             if (setting('flix_hours')) {
-                                if (timeToHours($period['total_hours']) < timeToHours($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+                                if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHours($period['total_hours']) < timeToHours($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
                                     $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                                 }
                             } else {
