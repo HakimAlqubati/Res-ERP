@@ -45,6 +45,7 @@ use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -116,7 +117,7 @@ class EmployeeResource extends Resource
                                         TextInput::make('phone_number')
                                             ->unique(ignoreRecord: true)
                                             ->columnSpan(1)
-                                            
+
                                             // ->numeric()
                                             ->maxLength(12)->minLength(8),
 
@@ -582,6 +583,7 @@ class EmployeeResource extends Resource
 
                         return '(' . $state . ') docs of ' . EmployeeFileType::getCountByRequirement()['required_count'];
                     }),
+                ToggleColumn::make('active')->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_user')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
