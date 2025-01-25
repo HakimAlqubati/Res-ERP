@@ -131,7 +131,7 @@ class BranchTreeService
             'id' => $employee->id,
             'name' => $employee->name,
             'image' => 'http://sultan.localhost/storage/employees/default/avatar.png',
-            'emp_no' => $employee->emp_no,
+            'employee_no' => $employee->employee_no,
             'job_title' => $employee->job_title,
             'position' => $employee->position ?? 'Unknown', // Example of additional data
             'children' => $employees

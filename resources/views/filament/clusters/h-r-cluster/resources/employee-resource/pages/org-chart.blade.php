@@ -105,7 +105,7 @@ any siblings*/
             transform: translateX(-50%);
             padding: 5px 10px;
             text-decoration: none;
-            color: #666;
+            /* color: #666; */
             font-family: arial, verdana, tahoma;
             font-size: 11px;
             border: 1px solid #ccc;
