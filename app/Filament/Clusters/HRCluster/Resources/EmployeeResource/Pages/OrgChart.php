@@ -61,6 +61,7 @@ class OrgChart extends Page
 
         foreach ($nodes as $node) {
             $html .= '<li>';
+            // $html .= '<a href="#">' . htmlspecialchars($node['name']) . '</a>';
             $html .= '<a href="#">';
             $html .= '<img src="https://romansiahdev.nltworkbench.com/storage/employees/default/avatar.png"></img>';
             $html .= '<p>' .  htmlspecialchars($node['name']) . '</p>';

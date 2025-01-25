@@ -386,12 +386,12 @@ class EmployeeOvertimeResource extends Resource
                                                         ];
                                                     }, $state));
                                                 }
-                                            }),
+                                            })->maxItems(4),
                                         Repeater::make('attendances_dates')
                                             ->label('')
                                             ->addable(false)
                                             ->minItems(1)->deletable()
-                                            // ->defaultItems(4)
+                                            ->defaultItems(4)
                                             ->columnSpan(4)->grid(2)
                                             ->schema([
                                                 Grid::make()->columns(4)->schema([
@@ -411,9 +411,10 @@ class EmployeeOvertimeResource extends Resource
                                                         ->label('Total Hours')
                                                         // ->numeric()
                                                         ->required()
-                                                        // ->minValue(0.5)
-                                                        ->disabled()
-                                                        ->dehydrated(),
+                                                    // ->minValue(0.5)
+                                                    // ->disabled()
+                                                    // ->dehydrated()
+                                                    ,
                                                 ]),
                                             ]),
 

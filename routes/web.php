@@ -2,6 +2,7 @@
 
 use App\Filament\Pages\AttendanecEmployee;
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Filament\Pages\AttendanecEmployeeTest;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\ImageController;
@@ -449,7 +450,7 @@ Route::get('/attendance', AttendanecEmployee2::class)
     ->name('attendance')->middleware('check');
 Route::get('/attendanceSecret__', AttendanecEmployee2::class)
     ->name('attendanceSecret__');
-Route::get('/attendanceTest', AttendanecEmployee2::class)
+Route::get('/attendanceTest', AttendanecEmployeeTest::class)
     ->name('attendanceTest')->middleware('check');
 
 

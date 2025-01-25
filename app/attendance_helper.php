@@ -1025,8 +1025,17 @@ function calculateTotalEarlyLeave($attendanceData)
                     // Check if the status is 'early_arrival' (early leave)
 
                     // Add the early leave minutes to the total
-
-                    $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                    // dd($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'], $period['total_hours']);
+                    if (setting('flix_hours')) {
+                        if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHours($period['total_hours']) < timeToHours($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+                            // $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                            $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                        }
+                    } else {
+                        // $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                        $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                    }
+                    // $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
                 }
             }
         }

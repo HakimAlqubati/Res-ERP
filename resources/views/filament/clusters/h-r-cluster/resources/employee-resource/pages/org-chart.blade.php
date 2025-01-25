@@ -132,12 +132,12 @@ any siblings*/
         }
 
         .tree ul ul ul::before {
-            content: '';
+            /* content: '';
             position: absolute;
             left: 50%;
             bottom: -20px;
             border-left: 1px solid #ccc;
-            height: 20px;
+            height: 20px; */
         }
 
         /*Remove left connector from first child and
@@ -264,6 +264,10 @@ any siblings*/
             /* Ensures child elements stay on one line and don't wrap */
             text-align: center;
             width: 300%;
+        }
+
+        .tree li a:empty {
+            display: none;
         }
     </style>
     {{-- @if (is_string($this->generate()))
