@@ -76,7 +76,8 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $month = $yearMonthArr[1];
     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
     $usedLeaves = 0;
-    $allowedLeaves = $weeklyLeave->count_days;
+    // $allowedLeaves = $weeklyLeave->count_days;
+    $allowedLeaves = $leaveBalance->balance ?? 0;
 
     if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
         $usedLeaves = $allowedLeaves - $leaveBalance->balance;
@@ -123,6 +124,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
         // Case 2: If the employee used all allowed leave
         if ($absentDays > $allowedLeaves) {
             $results['excess_absence_days'] = $absentDays - $allowedLeaves;
+            // $results['excess_absence_days'] = $absentDays;
             // $results['excess_absence_days'] = $absentDays;
         }
     }
