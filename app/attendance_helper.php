@@ -978,10 +978,9 @@ function calculateTotalLateArrival($attendanceData)
                     // Check if the status is 'late_arrival'
                     if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
                         // Add the delay minutes to the total
-
                         if ($period['attendances']['checkin'][0]['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
                             if (setting('flix_hours')) {
-                                if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHours($period['total_hours']) < timeToHours($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+                                if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHoursForLateArrival($period['total_hours']) < timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
                                     $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                                 }
                             } else {
@@ -1027,7 +1026,10 @@ function calculateTotalEarlyLeave($attendanceData)
                     // Add the early leave minutes to the total
                     // dd($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'], $period['total_hours']);
                     if (setting('flix_hours')) {
-                        if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHours($period['total_hours']) < timeToHours($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+                        if (
+                            isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
+                            timeToHoursForEarlyDeparture($period['total_hours']) < timeToHoursForEarlyDeparture($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])
+                        ) {
                             // $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                             $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
                         }
@@ -1183,8 +1185,8 @@ function getWeeksAndDaysInMonth($yearMonth)
 }
 
 
-if (!function_exists('timeToHours')) {
-    function timeToHours(string $time): float
+if (!function_exists('timeToHoursForEarlyDeparture')) {
+    function timeToHoursForEarlyDeparture(string $time): float
     {
         // Check if the time is in "H:i:s" format
         if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
@@ -1199,6 +1201,33 @@ if (!function_exists('timeToHours')) {
         if (preg_match('/(\d+)\s*h\s*(\d*)\s*m*/i', $time, $matches)) {
             $hours = isset($matches[1]) ? (int) $matches[1] : 0;
             $minutes = isset($matches[2]) ? (int) $matches[2] : 0;
+            $minutes +=  setting('early_depature_deduction_minutes');
+
+            return $hours + ($minutes / 60);
+        }
+
+        // If format is invalid
+        throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
+    }
+}
+
+if (!function_exists('timeToHoursForLateArrival')) {
+    function timeToHoursForLateArrival(string $time): float
+    {
+        // Check if the time is in "H:i:s" format
+        if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
+            $carbonTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
+
+            return $carbonTime->hour
+                + ($carbonTime->minute / 60)
+                + ($carbonTime->second / 3600);
+        }
+
+        // Check if the time is in "X h Y m" format
+        if (preg_match('/(\d+)\s*h\s*(\d*)\s*m*/i', $time, $matches)) {
+            $hours = isset($matches[1]) ? (int) $matches[1] : 0;
+            $minutes = isset($matches[2]) ? (int) $matches[2] : 0;
+            $minutes +=  setting('early_attendance_minutes');
 
             return $hours + ($minutes / 60);
         }
