@@ -74,15 +74,6 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $yearMonthArr = explode('-', $yearAndMonth);
     $year = $yearMonthArr[0];
     $month = $yearMonthArr[1];
-    $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
-    $usedLeaves = 0;
-    $allowedLeaves = $weeklyLeave->count_days;
-    // $allowedLeaves = $leaveBalance->balance ?? 0;
-
-    if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
-        $usedLeaves = $allowedLeaves - $leaveBalance->balance;
-    }
-
     $date = Carbon::parse($yearAndMonth);
     // Get the start of the month
     $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
@@ -90,12 +81,27 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     // Get the end of the month
     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+
+    $absendCalculated = calculateTotalAbsentDays($attendances);
+
+    $absentDates = $absendCalculated['absent_dates'];
+    $totalAttendanceDays = $absendCalculated['total_attendance_days'];
+
+    $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
+    $usedLeaves = 0;
+    // $allowedLeaves = $weeklyLeave->count_days;
+    // $allowedLeaves = $leaveBalance->balance ?? 0;
+    $allowedLeaves = (int) round($totalAttendanceDays / 7);
+
+    if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
+        $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+    }
+
+
     if ($attendances == 'no_periods') {
         return 'no_periods';
     }
 
-    $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
-    $totalAttendanceDays = calculateTotalAbsentDays($attendances)['total_attendance_days'];
     // $balanceDays = round($totalAttendanceDays / 7);
     // dd($absentDates, $totalAttendanceDays, $balanceDays);
     $absentDays = count($absentDates);
@@ -127,9 +133,11 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     } else {
         // Case 2: If the employee used all allowed leave
         if ($absentDays > $allowedLeaves) {
-            // $results['excess_absence_days'] = $absentDays - $allowedLeaves;
+            $results['excess_absence_days'] = $absentDays - $allowedLeaves;
             // $results['excess_absence_days'] = $absentDays;
-            $results['excess_absence_days'] = (int) round($totalAttendanceDays / 7);
+            // dd('d');
+            // dd($totalAttendanceDays, round($totalAttendanceDays / 7));
+            // $results['excess_absence_days'] = (int) round($totalAttendanceDays / 7);
         }
     }
     // Return the final results as an array
