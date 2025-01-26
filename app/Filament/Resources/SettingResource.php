@@ -129,42 +129,43 @@ class SettingResource extends Resource
                                     Toggle::make('flix_hours')
                                         ->label('Flix Hours')
                                         ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')
-                                        ->default(false)
-                                        ,
+                                        ->default(false),
 
                                 ]),
-                                Fieldset::make()->label('Face rekognation settings')->columns(4)->schema([
-                                    Select::make('timeout_webcam_value')
-                                        ->label('Camera Auto-Off Timer (minutes)')
-                                        ->options([
-                                            '30000' => 'Half Minute',
-                                            '60000' => 'One Minute',
-                                            '120000' => 'Two Minutes',
-                                            '180000' => 'Three Minutes',
-                                            '300000' => 'Five Minutes',
-                                            '600000' => 'Ten Minutes',
-                                        ])
-                                        ->default('30000')
-                                        ->native(false)
-                                        ->required()
-                                        ->helperText('Select the camera timeout duration.'),
-                                    Select::make('webcam_capture_time')
-                                        ->label('Image Capture Delay (Seconds)')
-                                        ->options([
-                                            '500' => 'Half a Second',
-                                            '1000' => 'One Second',
-                                            '2000' => 'Two Seconds',
-                                            '3000' => 'Three Seconds',
-                                            '5000' => 'Five Seconds',
-                                            '7000' => 'Seven Seconds',
-                                            '8000' => 'Eight Seconds',
-                                            '10000' => 'Ten Seconds',
-                                        ])
-                                        ->default('1000') // Default to 1 second
-                                        ->helperText('Choose the delay before capturing an image.')
-                                        ->native(false)
-                                        ->required(),
-                                ]),
+                                Fieldset::make()->label('Face rekognation settings')
+                                    ->hidden(fn(): bool => isFinanceManager())
+                                    ->columns(4)->schema([
+                                        Select::make('timeout_webcam_value')
+                                            ->label('Camera Auto-Off Timer (minutes)')
+                                            ->options([
+                                                '30000' => 'Half Minute',
+                                                '60000' => 'One Minute',
+                                                '120000' => 'Two Minutes',
+                                                '180000' => 'Three Minutes',
+                                                '300000' => 'Five Minutes',
+                                                '600000' => 'Ten Minutes',
+                                            ])
+                                            ->default('30000')
+                                            ->native(false)
+                                            ->required()
+                                            ->helperText('Select the camera timeout duration.'),
+                                        Select::make('webcam_capture_time')
+                                            ->label('Image Capture Delay (Seconds)')
+                                            ->options([
+                                                '500' => 'Half a Second',
+                                                '1000' => 'One Second',
+                                                '2000' => 'Two Seconds',
+                                                '3000' => 'Three Seconds',
+                                                '5000' => 'Five Seconds',
+                                                '7000' => 'Seven Seconds',
+                                                '8000' => 'Eight Seconds',
+                                                '10000' => 'Ten Seconds',
+                                            ])
+                                            ->default('1000') // Default to 1 second
+                                            ->helperText('Choose the delay before capturing an image.')
+                                            ->native(false)
+                                            ->required(),
+                                    ]),
 
                             ]),
                         Tab::make('Tax Settings')->hidden()

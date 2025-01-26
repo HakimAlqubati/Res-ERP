@@ -208,7 +208,7 @@ class EmployeeAdvanceReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
             return true;
         }
         return false;

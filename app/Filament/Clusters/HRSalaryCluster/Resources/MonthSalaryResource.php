@@ -347,7 +347,7 @@ class MonthSalaryResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+        if (isSystemManager() || isBranchManager() || isSuperAdmin() || isFinanceManager()) {
             return true;
         }
         return false;

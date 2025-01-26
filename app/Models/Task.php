@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class Task extends Model
 {
-    use SoftDeletes,DynamicConnection;
+    use SoftDeletes, DynamicConnection;
 
     protected $table = 'hr_tasks';
 
@@ -184,9 +184,11 @@ class Task extends Model
                 });
             } elseif (isFinanceManager()) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    $builder->where('assigned_to', auth()->user()->employee->id)
-                        ->orWhere('assigned_by', auth()->user()->id)->orWhere('created_by', auth()->user()->id)
-                    ; // Add your default query here
+                    if (isset(auth()->user()->employee)) {
+                        $builder->where('assigned_to', auth()->user()->employee->id)
+                            ->orWhere('assigned_by', auth()->user()->id)->orWhere('created_by', auth()->user()->id)
+                        ; // Add your default query here
+                    }
                 });
             }
             static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {

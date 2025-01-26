@@ -653,6 +653,7 @@ class EmployeeResource extends Resource
                 ActionsAction::make('import_employees')
                     ->label('Import from Excel')
                     ->icon('heroicon-o-document-arrow-up')
+                    ->visible(fn(): bool => isSystemManager() || isBranchManager() || isSuperAdmin())
                     ->form([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
