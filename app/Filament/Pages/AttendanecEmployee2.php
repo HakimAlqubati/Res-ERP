@@ -482,6 +482,7 @@ class AttendanecEmployee2 extends BasePage
         $attendances = Attendance::where('employee_id', $employee->id)
             ->where('period_id', $closestPeriod->id) // Using array key if closestPeriod is an array
             ->where('check_date', $date)
+            ->where('accepted', 1)
             ->where('day', $day)
             ->select('check_type', 'check_date')
             ->get();
@@ -491,6 +492,7 @@ class AttendanecEmployee2 extends BasePage
             $previousDate = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
             $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
             $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
+                ->where('accepted', 1)
                 ->where('period_id', $closestPeriod->id)
                 ->where('check_date', $previousDate)
                 ->latest('id')
@@ -581,6 +583,7 @@ class AttendanecEmployee2 extends BasePage
         // Find the corresponding check-in record
         $checkinRecord = Attendance::where('employee_id', $employeeId)
             ->where('period_id', $nearestPeriod->id)
+            ->where('accepted', 1)
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->whereDate('check_date', $date) // Use the provided check date
             ->latest('id')
@@ -735,6 +738,7 @@ class AttendanecEmployee2 extends BasePage
     {
 
         $previousActualDurationHours = Attendance::where('check_date', $date)
+            ->where('accepted', 1)
             ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
             ->where('period_id', $nearestPeriod->id)
             ->where('employee_id', $employeeId)
@@ -762,6 +766,7 @@ class AttendanecEmployee2 extends BasePage
     private function checkHasCheckoutInDate($nearestPeriod, $employeeId, $date)
     {
         return Attendance::where('employee_id', $employeeId)
+            ->where('accepted', 1)
             ->where('period_id', $nearestPeriod->id)
             ->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
             ->whereDate('check_date', $date)->exists();
@@ -781,6 +786,7 @@ class AttendanecEmployee2 extends BasePage
         $allowedTimeAfterPeriod = Carbon::createFromFormat('H:i:s', $periodEndTime)->addHours((int) Setting::getSetting('hours_count_after_period_after'))->format('H:i:s');
 
         $latstAttendance = Attendance::where('employee_id', $employeId)
+            ->where('accepted', 1)
             ->where('period_id', $periodId)
             ->where('check_date', $previousDate)
             ->select('id', 'check_type', 'check_date', 'check_time', 'is_from_previous_day')
@@ -844,6 +850,7 @@ class AttendanecEmployee2 extends BasePage
     {
         // dd($employeeId, $attendanceInPreviousDay, $period, $date, $currentDate, $checkTime);
         $latstAttendance = Attendance::where('employee_id', $employeeId)
+            ->where('accepted', 1)
             ->select('id', 'check_type', 'check_date', 'check_time', 'period_id')
             ->latest('id')
             ->first();
