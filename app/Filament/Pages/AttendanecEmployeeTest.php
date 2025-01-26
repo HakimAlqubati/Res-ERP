@@ -20,7 +20,7 @@ use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\IconPosition;
 use Filament\Support\Enums\IconSize;
 
-class AttendanecEmployee2 extends BasePage
+class AttendanecEmployeeTest extends BasePage
 // implements HasForms
 
 {
