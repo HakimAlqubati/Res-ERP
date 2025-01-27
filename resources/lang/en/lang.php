@@ -4,7 +4,7 @@ return [
     'orders' => 'Orders',
     'transfers' => 'Transfers',
     'transfers_list' => 'Transfers list',
-    'products_and_units' => 'Products - Units',
+    'products_and_units' => 'Products & Units',
     'products' => 'Products',
     'units' => 'Units',
     'categories' => 'Categories',
@@ -143,7 +143,7 @@ return [
         'november' => 'November',
         'december' => 'December',
     ],
-    'supplier_supplier_invoice' => 'Suppliers - Invoices',
-    'purchasing_stores_reports' => 'Reports (Stores - Purchasing)',
+    'supplier_supplier_invoice' => 'Suppliers & Invoices',
+    'purchasing_stores_reports' => 'Reports (Stores & Purchasing)',
     'is_hq' => 'Is HQ' ,
 ];
