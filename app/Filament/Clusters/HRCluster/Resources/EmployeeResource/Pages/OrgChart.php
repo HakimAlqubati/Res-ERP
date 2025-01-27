@@ -11,7 +11,7 @@ class OrgChart extends Page
     protected static string $resource = EmployeeResource::class;
     protected $branchTreeService;
 
-    protected static string $view = 'filament.clusters.h-r-cluster.resources.employee-resource.pages.org-chart';
+    protected static string $view = 'filament.clusters.h-r-cluster.resources.employee-resource.pages.org-chart3';
 
     // If you need to pass data to the view, you can define a method here
     public function getEmployees()
