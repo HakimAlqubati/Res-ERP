@@ -211,7 +211,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $netSalary = ($basicSalary + $totalAllowances + $totalOtherAdding) - $totalDeducations;
     $remaningSalary = round($netSalary - round($totalDeducations, 2), 2);
-
+    
     // Return the details and net salary breakdown
 
     $deductionEmployer = collect($deduction)->whereIn('applied_by', [Deduction::APPLIED_BY_BOTH, Deduction::APPLIED_BY_EMPLOYER])->toArray();
@@ -658,7 +658,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
         // Use `response()->streamDownload()`
         return response()->streamDownload(function () use ($pdfContent) {
             echo $pdfContent;
-        }, $data->month . '-salary-slip_' . $employee->name . '.pdf');
+        }, 'salary-slip_' . $employee->name . '.pdf');
     } catch (\Exception $e) {
         dd($e->getMessage());
     }
