@@ -635,7 +635,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
     // Calculate the total deduction amount
     $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');
 
-    try {
+    // try {
         // Prepare Data for the Blade View
         $viewData = compact(
             'data',
@@ -659,9 +659,9 @@ function generateSalarySlipPdf_($employeeId, $sid)
         return response()->streamDownload(function () use ($pdfContent) {
             echo $pdfContent;
         }, $data->month . '-salary-slip_' . $employee->name . '.pdf');
-    } catch (\Exception $e) {
-        dd($e->getMessage());
-    }
+    // } catch (\Exception $e) {
+    //     dd($e->getMessage());
+    // }
 }
 
 
