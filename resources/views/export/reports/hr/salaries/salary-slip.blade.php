@@ -23,7 +23,9 @@
                     <p>{{ setting('company_phone') }}</p>
                 </div>
 
-
+                <!-- Right Logo -->
+                <img style="top: 24px;width: 102px;" src="{{ url('/') . '/storage/logo/default.png' }}"
+                    alt="Company Logo" class="logo-right">
             </div>
 
             <h2>SALARY SLIP</h2>
@@ -102,31 +104,13 @@
         </section>
 
         <footer>
-                <tr>
-                    <td style="width: 50%">
-                        <div class="net-salary">
-                            <p>Net Salary (RM): {{ number_format(round($data?->details[0]['net_salary'], 2), 2) ?? 0 }}
-                            </p>
-                            <!-- Right Logo -->
+            <div class="net-salary">
+                <p>Net Salary (RM): {{ number_format(round($data?->details[0]['net_salary'], 2), 2) ?? 0 }}</p>
 
-                        </div>
-                    </td>
-                    <td>
-                        <div class="signature">
-                            <p>Employee Signature </p>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="100%">
-                        <img style="top: 12px;width: 51px;" src="{{ url('/') . '/storage/logo/default.png' }}"
-                            alt="Company Logo" class="logo-right">
-                    </td>
-                </tr>
-            </table>
-
-
-
+            </div>
+            <div class="signature">
+                <p>Employee Signature </p>
+            </div>
         </footer>
     </div>
 </body>
