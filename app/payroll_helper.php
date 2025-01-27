@@ -648,7 +648,7 @@ function generateSalarySlipPdf_($employeeId, $sid)
             'employee',
             'branch'
         );
-        dd($viewData);
+        // dd($viewData);
         $utf8Data = convertToUtf8($viewData);
         // Generate PDF
         // Generate the PDF content
