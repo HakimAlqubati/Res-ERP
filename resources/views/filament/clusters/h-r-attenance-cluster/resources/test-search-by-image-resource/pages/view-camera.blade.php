@@ -33,7 +33,7 @@
         body {
             margin: 0;
             padding: 30px;
-            height: 100vh;
+            height: 80vh;
             display: flex;
             justify-content: center;
             align-items: center;
