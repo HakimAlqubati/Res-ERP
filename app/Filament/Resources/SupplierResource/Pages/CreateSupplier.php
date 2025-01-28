@@ -11,22 +11,9 @@ use Illuminate\Support\Facades\DB;
 class CreateSupplier extends CreateRecord
 {
     protected static string $resource = SupplierResource::class;
-
-    protected function afterCreate(): void
+    protected function getRedirectUrl(): string
     {
-        $user_id = $this->record->id;
-        User::find($user_id)->update(['role_id' => 10]);
-        DB::table('model_has_roles')->insert([
-            'role_id' => 10,
-            'model_id' => $user_id,
-            'model_type' => 'App\Models\User'
-        ]);
+        return $this->getResource()::getUrl('index');
     }
-
-    // protected function mutateFormDataBeforeSave(array $data): array
-    // {
-    //     dd($data);
-    //     return $data;
-    // }
 
 }

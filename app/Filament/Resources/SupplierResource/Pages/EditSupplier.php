@@ -19,11 +19,8 @@ class EditSupplier extends EditRecord
         ];
     }
 
-    // protected function mutateFormDataBeforeSave(array $data): array
-    // {
-    //     if (is_null($this->data['password'])) {
-    //         unset($data['password']);
-    //     }
-    //     return $data;
-    // }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

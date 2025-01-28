@@ -51,7 +51,7 @@ class SupplierResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 TextColumn::make('id')
                     ->sortable()->searchable()
