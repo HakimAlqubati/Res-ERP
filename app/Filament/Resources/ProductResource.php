@@ -122,7 +122,7 @@ class ProductResource extends Resource
                                             return Unit::pluck('name', 'id');
                                         })->searchable(),
                                     TextInput::make('price')->type('number')->default(1)->required()
-                                        ->label(__('lang.price'))->readOnly()
+                                        ->label(__('lang.price'))
                                         ->mask(RawJs::make('$money($input)'))
                                         ->stripCharacters(',')
                                 ])
