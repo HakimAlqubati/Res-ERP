@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Face Capture</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
         * {
             /* box-sizing: border-box; */
@@ -274,8 +277,14 @@
         <img id="uploadedImage" />
     </div>
 
-    <button id="reopen" style="z-index: 10;"></button>
-    <button id="nextEmployee" style="z-index: 11;">{{ 'Next employee' }}</button>
+    <button id="reopen" style="z-index: 10;">
+        {{ 'Reopen Camera' }}
+        <i class="fas fa-redo-alt"></i>
+    </button>
+    <button id="nextEmployee" style="z-index: 11;">{{ 'Next employee' }}
+        <i class="fas fa-arrow-right"></i>
+
+    </button>
 
 
     <script src="{{ asset('/js/faceapi.js') }}"></script>
@@ -285,7 +294,6 @@
         const reopenButton = document.getElementById('reopen');
         const nextEmployeeButton = document.getElementById('nextEmployee');
         // Style the button
-        reopenButton.textContent = 'Reopen Camera';
         reopenButton.style.display = 'none';
         reopenButton.style.position = 'absolute';
         reopenButton.style.top = '15%';
