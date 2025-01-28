@@ -12,7 +12,7 @@ class Product extends Model
     use HasFactory,
         SoftDeletes
         // , HasTranslations
-        ;
+    ;
     // public $translatable = ['name', 'description'];
 
     protected $fillable = [
@@ -23,6 +23,8 @@ class Product extends Model
         'category_id',
         'product_code',
         'category_code',
+        'main_unit_id',
+        'basic_price',
     ];
 
     public function units()
@@ -71,5 +73,42 @@ class Product extends Model
     public function scopeHasUnitPrices($query)
     {
         return $query->has('unitPrices');
+    }
+
+    public function productItems()
+    {
+        return $this->hasMany(ProductItem::class, 'parent_product_id');
+    }
+
+    // Scope to return products belonging to manufacturing categories
+    public function scopemanufacturingCategory($query)
+    {
+        return $query->whereHas('category', function ($query) {
+            $query->where('is_manafacturing', true);
+        });
+    }
+    public function scopeUnmanufacturingCategory($query)
+    {
+        return $query->whereHas('category', function ($query) {
+            $query->where('is_manafacturing', false);
+        });
+    }
+
+    /**
+     * Relation to the Unit model for the main unit.
+     */
+    public function mainUnit()
+    {
+        return $this->belongsTo(Unit::class, 'main_unit_id');
+    }
+
+    /**
+     * Get the final price as the sum of 'total_price' from related ProductItems.
+     *
+     * @return float
+     */
+    public function getFinalPriceAttribute()
+    {
+        return $this->productItems->sum('total_price');
     }
 }

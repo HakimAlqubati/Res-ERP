@@ -11,15 +11,16 @@ use Illuminate\Support\Traits\Localizable;
 class Category extends Model
 {
     use HasFactory, SoftDeletes
-    //  HasTranslations,Localizable
-     ;
-    public $translatable = ['name','description'];
+        //  HasTranslations,Localizable
+    ;
+    public $translatable = ['name', 'description'];
     public $localizable = ['name'];
     protected $fillable = [
         'name',
         'code',
         'description',
-        'active'
+        'active',
+        'is_manafacturing',
     ];
 
     public function products()
@@ -40,5 +41,11 @@ class Category extends Model
     public function scopeActive($query)
     {
         return $query->where('active', '=', 1);
+    }
+
+    // Scope to filter manufacturing categories
+    public function scopeManufacturing($query)
+    {
+        return $query->where('is_manafacturing', '=', true);
     }
 }

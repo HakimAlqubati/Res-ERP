@@ -8,15 +8,21 @@ use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
+use App\Models\UnitPrice;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\RawJs;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
@@ -25,6 +31,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as ActionTable;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\TextColumn;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -55,18 +62,168 @@ class ProductResource extends Resource
 
     public static function form(Form $form): Form
     {
+        return $form->schema([
+            Wizard::make()->skippable()
+                ->columnSpanFull()
+                ->schema([
+                    Step::make('')
+                        ->columns(4)
+                        ->schema([
+                            TextInput::make('name')->required()->label(__('lang.name')),
+                            TextInput::make('code')->required()->label(__('lang.code')),
+                            Select::make('category_id')->required()->label(__('lang.category'))
+                                ->searchable()->live()
+                                ->options(function () {
+                                    return Category::pluck('name', 'id');
+                                }),
+                            Toggle::make('active')
+                                ->inline(false)->default(true)
+                                ->label(__('lang.active')),
+                            Textarea::make('description')->label(__('lang.description'))->columnSpanFull()
+                                ->rows(2),
+
+
+                        ]),
+                    Step::make('units')
+                        ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
+                        ->schema([
+                            Grid::make()->columns(2)->schema([
+                                Select::make('main_unit_id')->label('Basic Unit')->required()
+                                    ->options(Unit::active()->parents()->pluck('name', 'id'))
+                                    ->live(debounce: 500)
+                                    ->afterStateUpdated(function ($set, $state, $get) {
+                                        $basicPrice = $get('basic_price') ?? 0;
+                                        $unitPrices = static::recalculateUnitPrices($basicPrice, $state);
+                                        $set('units', $unitPrices);
+                                    }),
+                                TextInput::make('basic_price')->label('Basic Price')->live(debounce: 500)
+                                    ->numeric()->required()
+                                    ->suffixIcon('heroicon-o-percent-badge')
+                                    ->suffixIconColor('success')
+                                    ->afterStateUpdated(function ($set, $state, $get) {
+                                        $unitId = $get('main_unit_id');
+                                        $state = $state ?? 0;
+                                        $unitPrices = \App\Filament\Resources\ProductResource::recalculateUnitPrices($state, $unitId);
+                                        $set('units', $unitPrices);
+                                    }),
+                            ]),
+                            Repeater::make('units')->label(__('lang.units_prices'))
+                                ->columns(2)
+                                // ->hiddenOn(Pages\EditProduct::class)
+                                ->columnSpanFull()
+                                ->collapsible()->defaultItems(0)
+                                ->relationship('unitPrices')
+                                ->orderable('product_id')
+                                ->schema([
+                                    Select::make('unit_id')->required()
+                                        ->label(__('lang.unit'))
+                                        ->searchable()
+                                        ->options(function () {
+                                            return Unit::pluck('name', 'id');
+                                        })->searchable(),
+                                    TextInput::make('price')->type('number')->default(1)->required()
+                                        ->label(__('lang.price'))->readOnly()
+                                        ->mask(RawJs::make('$money($input)'))
+                                        ->stripCharacters(',')
+                                ])
+                        ]),
+                    Step::make('products')
+                        ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
+                        ->label('Items')
+                        ->schema([
+                            Repeater::make('productItems')->relationship('productItems')
+                                ->label('Product Items')->schema([
+                                    Select::make('product_id')
+                                        ->label(__('lang.product'))
+                                        ->searchable()
+                                        // ->disabledOn('edit')
+                                        ->options(function () {
+                                            return Product::where('active', 1)
+                                                ->unmanufacturingCategory()
+                                                ->pluck('name', 'id');
+                                        })
+                                        ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
+                                            ->unmanufacturingCategory()
+                                            ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                                        ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                        ->reactive()
+                                        ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                        ->searchable(),
+                                    Select::make('unit_id')
+                                        ->label(__('lang.unit'))
+                                        // ->disabledOn('edit')
+                                        ->options(
+                                            function (callable $get) {
+
+                                                $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
+
+                                                if ($unitPrices)
+                                                    return array_column($unitPrices, 'unit_name', 'unit_id');
+                                                return [];
+                                            }
+                                        )
+                                        ->searchable()
+                                        ->reactive()
+                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                            $unitPrice = UnitPrice::where(
+                                                'product_id',
+                                                $get('product_id')
+                                            )->where('unit_id', $state)->first()->price;
+                                            $set('price', $unitPrice);
+
+                                            $set('total_price', ((float) $unitPrice) * ((float) $get('quantity')));
+                                        }),
+                                    TextInput::make('quantity')
+                                        ->label(__('lang.quantity'))
+                                        ->type('text')
+                                        ->default(1)
+                                        // ->disabledOn('edit')
+                                        // ->mask(
+                                        //     fn (TextInput\Mask $mask) => $mask
+                                        //         ->numeric()
+                                        //         ->decimalPlaces(2)
+                                        //         ->thousandsSeparator(',')
+                                        // )
+                                        ->reactive()
+                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                            $set('total_price', ((float) $state) * ((float)$get('price')));
+                                        }),
+                                    TextInput::make('price')
+                                        ->label(__('lang.price'))
+                                        ->type('text')
+                                        ->default(1)
+                                        ->integer()
+                                        // ->disabledOn('edit')
+                                        // ->mask(
+                                        //     fn (TextInput\Mask $mask) => $mask
+                                        //         ->numeric()
+                                        //         ->decimalPlaces(2)
+                                        //         ->thousandsSeparator(',')
+                                        // )
+                                        ->reactive()
+
+                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                            $set('total_price', ((float) $state) * ((float)$get('quantity')));
+                                        }),
+                                    TextInput::make('total_price')->default(1)
+                                        ->type('text')
+                                        ->extraInputAttributes(['readonly' => true]),
+                                ])
+                                ->columns(5) // Adjusts how fields are laid out in each row
+                                ->createItemButtonLabel('New Item') // Custom button label
+                                ->minItems(1)
+
+                        ]),
+                ])
+        ]);
         return $form
 
             ->schema([
                 TextInput::make('name')->required()->label(__('lang.name')),
-                TextInput::make('code')->required()->label(__('lang.code'))
-                // ->disabledOn('edit')
-                ,
+                TextInput::make('code')->required()->label(__('lang.code')),
 
                 Textarea::make('description')->label(__('lang.description'))
-                    ->rows(2)
-                // ->cols(20)
-                ,
+                    ->rows(2),
                 Checkbox::make('active')->label(__('lang.active')),
                 Select::make('category_id')->required()->label(__('lang.category'))
                     ->searchable()
@@ -77,7 +234,7 @@ class ProductResource extends Resource
                     ->columns(2)
                     ->hiddenOn(Pages\EditProduct::class)
                     ->columnSpanFull()
-                    ->collapsible()
+                    ->collapsible()->defaultItems(0)
                     ->relationship('unitPrices')
                     ->orderable('product_id')
                     ->schema([
@@ -89,12 +246,6 @@ class ProductResource extends Resource
                             })->searchable(),
                         TextInput::make('price')->type('number')->default(1)
                             ->label(__('lang.price'))
-                        // ->mask(
-                        //     fn (TextInput\Mask $mask) => $mask
-                        //         ->numeric()
-                        //         ->decimalPlaces(2)
-                        //         ->thousandsSeparator(',')
-                        // ),
                     ])
 
             ]);
@@ -103,6 +254,7 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
+            ->defaultSort('id', 'desc')
             ->headerActions([
                 ActionTable::make('export_employees')
                     ->label('Export to Excel')
@@ -135,6 +287,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
                     ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),
+                TextColumn::make('final_price')->label('Final Price')->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')->label(__('lang.active'))
@@ -173,7 +326,7 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\UnitPricesRelationManager::class,
+            // RelationManagers\UnitPricesRelationManager::class,
         ];
     }
 
@@ -192,5 +345,34 @@ class ProductResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+    }
+
+    /**
+     * Recalculate unit prices based on the updated basic price.
+     *
+     * @param float $basicPrice
+     * @param int $mainUnitId
+     * @return array
+     */
+    public static function recalculateUnitPrices(float $basicPrice, int $mainUnitId): array
+    {
+        $units = Unit::find($mainUnitId)->getParentAndChildrenWithNested();
+
+        return array_map(function ($unit) use ($basicPrice) {
+            $operation = $unit['operation'];
+            $conversion_factor = $unit['conversion_factor'];
+
+            $price = $basicPrice;
+            if ($operation === '*') {
+                $price = $basicPrice * $conversion_factor;
+            } elseif ($operation === '/') {
+                $price = $conversion_factor != 0 ? $basicPrice / $conversion_factor : 0;
+            }
+
+            return [
+                'unit_id' => $unit['id'],
+                'price' => round($price, 2),
+            ];
+        }, $units);
     }
 }

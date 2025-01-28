@@ -77,13 +77,13 @@ class PurchaseInvoiceResource extends Resource
                     // ->disabledOn('edit')
                     ->format('Y-m-d'),
                 Select::make('supplier_id')->label(__('lang.supplier'))
-                    ->getSearchResultsUsing(fn (string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
-                    ->getOptionLabelUsing(fn ($value): ?string => Supplier::find($value)?->name)
+                    ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
+                    ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
                     ->searchable()
                     ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
-                    // ->disabledOn('edit')
-,
-                
+                // ->disabledOn('edit')
+                ,
+
                 Select::make('store_id')->label(__('lang.store'))
                     ->searchable()
                     ->default(getDefaultStore())
@@ -123,12 +123,16 @@ class PurchaseInvoiceResource extends Resource
                             ->searchable()
                             // ->disabledOn('edit')
                             ->options(function () {
-                                return Product::limit(10)->pluck('name', 'id');
+                                return Product::where('active', 1)
+                                    ->unmanufacturingCategory()
+                                    ->pluck('name', 'id');
                             })
-                            ->getSearchResultsUsing(fn (string $search): array => Product::where('active',1)->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                            ->getOptionLabelUsing(fn ($value): ?string => Product::find($value)?->name)
+                            ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
+                                ->unmanufacturingCategory()
+                                ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                            ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
                             ->reactive()
-                            ->afterStateUpdated(fn (callable $set) => $set('unit_id', null))
+                            ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
                             ->searchable(),
                         Select::make('unit_id')
                             ->label(__('lang.unit'))
@@ -206,9 +210,9 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('description')->searchable(),
                 IconColumn::make('has_attachment')->label(__('lang.has_attachment'))
                     ->boolean()
-                    // ->trueIcon('heroicon-o-badge-check')
-                    // ->falseIcon('heroicon-o-x-circle')
-                    ,
+                // ->trueIcon('heroicon-o-badge-check')
+                // ->falseIcon('heroicon-o-x-circle')
+                ,
 
             ])
             ->filters([
@@ -230,7 +234,7 @@ class PurchaseInvoiceResource extends Resource
                                 }
                                 return redirect(url($file_link));
                             }
-                        })->hidden(fn ($record) => !(strlen($record['attachment']) > 0))
+                        })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
                         // ->icon('heroicon-o-download')
                         ->color('green')
                 ]),

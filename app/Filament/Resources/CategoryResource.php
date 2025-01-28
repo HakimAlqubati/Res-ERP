@@ -8,6 +8,8 @@ use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -35,12 +37,21 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')->required()->label(__('lang.name')),
-                Forms\Components\TextInput::make('code')->required()->label(__("lang.code")),
-                Forms\Components\Textarea::make('description')->label(__("lang.description"))
-                    ->rows(10)
-                    ->cols(20),
-                Checkbox::make('active')->label(__("lang.active")),
+                Fieldset::make()->schema([
+                    Forms\Components\TextInput::make('name')->required()->label(__('lang.name')),
+                    Forms\Components\TextInput::make('code')->required()->label(__("lang.code")),
+                    Toggle::make('active')
+                        ->inline(false)->default(true)
+                        ->label(__("lang.active")),
+                    Toggle::make('is_manafacturing')
+                        ->inline(false)
+                        ->label('Is manafacturing')->default(false),
+
+                    Forms\Components\Textarea::make('description')->label(__("lang.description"))->columnSpanFull()
+                        ->rows(10)
+                        ->cols(20),
+                ])
+
             ]);
     }
 
@@ -60,7 +71,7 @@ class CategoryResource extends Resource
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')->label(__('lang.active'))
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('active')),
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

@@ -8,11 +8,18 @@ use App\Filament\Resources\UnitResource\RelationManagers;
 use App\Models\Unit;
 use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
@@ -40,36 +47,62 @@ class UnitResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\TextInput::make('code')->required(),
-                Forms\Components\Textarea::make('description')->required(),
-                Checkbox::make('active'),
+                Fieldset::make()->columns(3)->schema([
+                    Forms\Components\TextInput::make('name')->required()->columnSpan(1),
+                    Forms\Components\TextInput::make('code')->required(),
+                    Toggle::make('active')->inline(false)->default(true),
+
+                    Select::make('parent_unit_id')->options(Unit::active()->pluck('name', 'id'))
+                        ->label('Parent Unit')
+                        ->searchable(),
+                    Select::make('operation')->options(Unit::OPERATIONS)->label('Operation')->requiredIf('parent_unit_id', true),
+                    TextInput::make('conversion_factor')->type('number')->label('Convertion Factor'),
+
+
+
+                    Forms\Components\Textarea::make('description')->label('Description')->columnSpanFull(),
+
+                ])
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped()->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable()->alignCenter(true)
-                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
+                Tables\Columns\TextColumn::make('id')->sortable()->alignCenter(true)->toggleable(isToggledHiddenByDefault: true)
+                    ->searchable(isIndividual: true, isGlobal: false),
                 Tables\Columns\TextColumn::make('name')
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: false, isGlobal: false),
                 Tables\Columns\TextColumn::make('code')->alignCenter(true)
-                    ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\TextColumn::make('description'),
+                    ->searchable(isIndividual: false, isGlobal: false),
+                Tables\Columns\BooleanColumn::make('is_main')->toggleable()
+                    ->label('Is main')->alignCenter(true),
+                TextColumn::make('parent.name')->toggleable()
+                    ->label('Parent')->alignCenter(true),
+                Tables\Columns\TextColumn::make('operation')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('conversion_factor')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('parent_unit_id')
+                    ->options(Unit::active()
+                        ->where('parent_unit_id', null)
+                        ->pluck('name', 'id'))->searchable()
+                    ->label('Parent Unit'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                // Tables\Actions\ForceDeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    // Tables\Actions\ForceDeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
