@@ -36,7 +36,7 @@
             align-items: center;
             /* background-color: #0b65ed; */
             /* background: linear-gradient(20deg, rgb(0, 100, 46), rgb(0, 255, 128)); */
-            background: linear-gradient(135deg, rgba(0, 150, 70, 1), rgba(0, 100, 46, 0.8) 50%, rgba(0, 50, 30, 1));
+            background: linear-gradient(135deg, rgb(7 54 29), rgb(4 54 27 / 80%) 50%, rgba(0, 50, 30, 1));
 
             color: #ffffff;
         }
@@ -133,6 +133,10 @@
             /* border: 5px solid rgba(0, 60, 30, 0.7); */
             /* إطار مناسب مع اللون الأخضر */
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+            transform: scaleX(-1);
+            /* Flip the video horizontally */
+            -webkit-transform: scaleX(-1);
+            /* For older browsers */
         }
 
 
@@ -271,7 +275,7 @@
     </div>
 
     <button id="reopen" style="z-index: 10;"></button>
-    <button id="nextEmployee" style="z-index: 11;margin-top: 30%;">{{ 'Next employee' }}</button>
+    <button id="nextEmployee" style="z-index: 11;">{{ 'Next employee' }}</button>
 
 
     <script src="{{ asset('/js/faceapi.js') }}"></script>
@@ -284,7 +288,7 @@
         reopenButton.textContent = 'Reopen Camera';
         reopenButton.style.display = 'none';
         reopenButton.style.position = 'absolute';
-        reopenButton.style.top = '50%';
+        reopenButton.style.top = '15%';
         reopenButton.style.left = '50%';
         reopenButton.style.transform = 'translate(-50%, -50%)';
         reopenButton.style.padding = '10px 20px';
@@ -298,7 +302,7 @@
 
         nextEmployeeButton.style.display = 'none';
         nextEmployeeButton.style.position = 'absolute';
-        nextEmployeeButton.style.top = '50%';
+        nextEmployeeButton.style.top = '15%';
         nextEmployeeButton.style.left = '50%';
         nextEmployeeButton.style.transform = 'translate(-50%, -50%)';
         nextEmployeeButton.style.padding = '10px 20px';
@@ -449,18 +453,19 @@
                     console.log(result)
                     // Show the success message with the result from Rekognition
                     messageDiv.textContent = result.message;
-                    currentDate.textContent = date;
-                    currentTime.textContent = time;
+                    // currentDate.textContent = date;
+                    // currentTime.textContent = time;
                     // document.getElementById('helloEmployee').style.display = 'block'
                     timeDiv.textContent = `Time used :(${elapsedTime}) seconds`;
                     document.getElementById('nextEmployee').style.display = 'block';
+                    document.getElementById('reopen').style.display = 'none';
                     // timeDiv.textContent = result.message;
                 } else {
                     // Show the error message
                     messageDiv.textContent = result.message;
                     // messageDiv.textContent = `${result.message} Task completed in ${elapsedTime} seconds.`;
                     timeDiv.textContent = `Time used :(${elapsedTime}) seconds`;
-                    messageDiv.style.color = "red";
+                    messageDiv.style.color = "white";
                     document.getElementById('nextEmployee').style.display = 'block';
                 }
 
@@ -476,7 +481,7 @@
             } catch (error) {
                 console.error("Error uploading image:", error);
                 messageDiv.textContent = "Error uploading image!";
-                messageDiv.style.color = "red";
+                messageDiv.style.color = "white";
                 document.getElementById('nextEmployee').style.display = 'block';
             } finally {
                 // Hide the loader after uploading is complete
@@ -544,7 +549,7 @@
             const icon = document.getElementById("icon");
             const greetingText = document.getElementById("greetingText");
             const currentHour = parseInt(currentTimePassed.split(":")[0], 10);
-            
+
             console.log('sd', currentHour)
             if (currentHour >= 0 && currentHour < 11) { // Morning (6:00 to 17:59)
                 icon.src = 'storage/icons/sun.png'; // Add path to sun icon
