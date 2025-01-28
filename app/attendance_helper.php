@@ -109,7 +109,12 @@ function reportAbsentEmployees($date, $branchId, $currentTime)
 
         // Check if any of the periods' end time is less than the current time
         foreach ($employee->periods as $period) {
-            if ($currentTime > $period->start_at) {
+            if ($date == now()->toDateString()) {
+                if ($currentTime > $period->start_at) {
+                    $isPeriodEnded = true;
+                    break;
+                }
+            } else if (now()->toDateString() > $date) {
                 $isPeriodEnded = true;
                 break;
             }
