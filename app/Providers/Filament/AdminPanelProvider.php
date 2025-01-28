@@ -237,7 +237,7 @@ class AdminPanelProvider extends PanelProvider
                         'sm' => 2,
                     ]),
             ])->spa()
-            ->databaseNotifications()
+            ->databaseNotifications()->globalSearch(false)
             ->databaseTransactions()
             // ->renderHook( name: 'panels::topbar.start', hook: fn (): View => view('livewire.credits'), )
             ;
