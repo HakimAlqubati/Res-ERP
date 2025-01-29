@@ -19,7 +19,7 @@
                 <th colspan="1" style="text-align: center; vertical-align: middle;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                     <img class="circle-image"
-                        src="https://w7.pngwing.com/pngs/882/726/png-transparent-chef-cartoon-chef-photography-cooking-fictional-character-thumbnail.png"
+                        src="{{ url('/') . '/storage/logo/default.png' }}"
                         alt="">
                 </th>
             </x-filament-tables::row>

@@ -16,9 +16,7 @@
                 </th>
                 <th style="text-align: center; vertical-align: middle;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                    <img class="circle-image"
-                        src="https://w7.pngwing.com/pngs/882/726/png-transparent-chef-cartoon-chef-photography-cooking-fictional-character-thumbnail.png"
-                        alt="">
+                    <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                 </th>
             </x-filament-tables::row>
             <x-filament-tables::row>
@@ -46,5 +44,3 @@
 
     </x-filament-tables::table>
 </x-filament::page>
-
- 

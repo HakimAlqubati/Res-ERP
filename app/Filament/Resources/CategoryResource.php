@@ -45,7 +45,7 @@ class CategoryResource extends Resource
                         ->label(__("lang.active")),
                     Toggle::make('is_manafacturing')
                         ->inline(false)
-                        ->label('Is manafacturing')->default(false),
+                        ->label('Manafacturing')->default(false),
 
                     Forms\Components\Textarea::make('description')->label(__("lang.description"))->columnSpanFull()
                         ->rows(10)

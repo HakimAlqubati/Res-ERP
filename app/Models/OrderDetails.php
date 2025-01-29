@@ -37,12 +37,12 @@ class OrderDetails extends Model
     {
         return $this->belongsTo(Product::class);
     }
-  
+
     public function unit()
     {
         return $this->belongsTo(Unit::class);
     }
-  
+
 
     public function order()
     {
@@ -84,11 +84,58 @@ class OrderDetails extends Model
     }
     public function ordered_product()
     {
-        return $this->belongsTo(Product::class,'orderd_product_id');
+        return $this->belongsTo(Product::class, 'orderd_product_id');
     }
 
     public function orderd_unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+
+
+    protected static function booted()
+    {
+        // Handle inventory update on create
+        static::created(function ($detail) {
+            $inventory = Inventory::where('product_id', $detail->product_id)
+                ->where('unit_id', $detail->unit_id)
+                ->first();
+
+            if ($inventory) {
+                // Deduct the ordered quantity from inventory
+                $inventory->quantity -= $detail->quantity;
+                $inventory->save();
+            }
+        });
+
+        // Handle inventory adjustment on update
+        static::updated(function ($detail) {
+            $inventory = Inventory::where('product_id', $detail->product_id)
+                ->where('unit_id', $detail->unit_id)
+                ->first();
+
+            if ($inventory) {
+                // Reverse the old quantity
+                $originalQuantity = $detail->getOriginal('quantity');
+                $inventory->quantity += $originalQuantity;
+
+                // Deduct the new quantity
+                $inventory->quantity -= $detail->quantity;
+                $inventory->save();
+            }
+        });
+
+        // Handle inventory adjustment on delete
+        static::deleted(function ($detail) {
+            $inventory = Inventory::where('product_id', $detail->product_id)
+                ->where('unit_id', $detail->unit_id)
+                ->first();
+
+            if ($inventory) {
+                // Add back the quantity when an order is deleted
+                $inventory->quantity += $detail->quantity;
+                $inventory->save();
+            }
+        });
     }
 }

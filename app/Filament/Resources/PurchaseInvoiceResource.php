@@ -177,7 +177,7 @@ class PurchaseInvoiceResource extends Resource
                             ->label(__('lang.price'))
                             ->type('text')
                             ->default(1)
-                            ->integer()
+                            // ->integer()
                             // ->disabledOn('edit')
                             // ->mask(
                             //     fn (TextInput\Mask $mask) => $mask
@@ -249,7 +249,7 @@ class PurchaseInvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            PurchaseInvoiceDetailsRelationManager::class,
+            // PurchaseInvoiceDetailsRelationManager::class,
         ];
     }
     public static function getPages(): array

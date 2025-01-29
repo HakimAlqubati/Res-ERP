@@ -9,6 +9,7 @@ use App\Models\FakeModelReports\StoreReportReport;
 use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListStoresReport;
 use App\Models\Branch;
 use App\Models\Product;
+use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -51,11 +52,11 @@ class StoresReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->filters([
-            SelectFilter::make("branch_id")
-                ->label(__('lang.branch'))
+            SelectFilter::make("store_id")
+                ->label(__('lang.store'))
                 ->query(function (Builder $q, $data) {
                     return $q;
-                })->options(Branch::get()->pluck('name', 'id')),
+                })->options(Store::active()->get()->pluck('name', 'id')),
             Filter::make('date')
                 ->form([
                     DatePicker::make('start_date')
@@ -68,7 +69,7 @@ class StoresReportResource extends Resource
                 }),
             SelectFilter::make("product_id")
                 ->label(__('lang.product'))
-                ->multiple()
+                ->multiple()->hidden()
                 ->query(function (Builder $q, $data) {
                     return $q;
                 })->options(Product::where('active', 1)->get()->pluck('name', 'id')),

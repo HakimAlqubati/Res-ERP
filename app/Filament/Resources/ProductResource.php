@@ -69,13 +69,13 @@ class ProductResource extends Resource
                     Step::make('')
                         ->columns(4)
                         ->schema([
-                            TextInput::make('name')->required()->label(__('lang.name')),
-                            TextInput::make('code')->required()->label(__('lang.code')),
+                            TextInput::make('name')->required()->label(__('lang.name'))->live(debounce: 500)->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state))),
                             Select::make('category_id')->required()->label(__('lang.category'))
                                 ->searchable()->live()
                                 ->options(function () {
                                     return Category::pluck('name', 'id');
                                 }),
+                            TextInput::make('code')->required()->label(__('lang.code')),
                             Toggle::make('active')
                                 ->inline(false)->default(true)
                                 ->label(__('lang.active')),
@@ -210,7 +210,7 @@ class ProductResource extends Resource
                                         ->extraInputAttributes(['readonly' => true]),
                                 ])
                                 ->columns(5) // Adjusts how fields are laid out in each row
-                                ->createItemButtonLabel('New Item') // Custom button label
+                                ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
 
                         ]),
@@ -220,16 +220,17 @@ class ProductResource extends Resource
 
             ->schema([
                 TextInput::make('name')->required()->label(__('lang.name')),
-                TextInput::make('code')->required()->label(__('lang.code')),
-
-                Textarea::make('description')->label(__('lang.description'))
-                    ->rows(2),
-                Checkbox::make('active')->label(__('lang.active')),
                 Select::make('category_id')->required()->label(__('lang.category'))
                     ->searchable()
                     ->options(function () {
                         return Category::pluck('name', 'id');
                     }),
+                TextInput::make('code')->required()->label(__('lang.code')),
+
+                Textarea::make('description')->label(__('lang.description'))
+                    ->rows(2),
+                Checkbox::make('active')->label(__('lang.active')),
+
                 Repeater::make('units')->label(__('lang.units_prices'))
                     ->columns(2)
                     ->hiddenOn(Pages\EditProduct::class)

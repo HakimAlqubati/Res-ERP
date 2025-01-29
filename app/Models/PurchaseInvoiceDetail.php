@@ -36,4 +36,23 @@ class PurchaseInvoiceDetail extends Model
     {
         return $this->quantity * $this->price;
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::created(function ($detail) {
+            
+            // Find the original quantity before update
+            $originalQuantity = $detail->getOriginal('quantity');
+
+            $inventory = Inventory::firstOrNew([
+                'product_id' => $detail->product_id,
+                'unit_id' => $detail->unit_id,
+            ]);
+
+            // Adjust inventory: Remove old quantity and add new quantity
+            $inventory->quantity = ($inventory->quantity ?? 0) - $originalQuantity + $detail->quantity;
+            $inventory->save();
+        });
+    }
 }

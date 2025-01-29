@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PurchaseInvoice extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'date',
@@ -42,4 +42,6 @@ class PurchaseInvoice extends Model
             return 0;
         }
     }
+
+  
 }

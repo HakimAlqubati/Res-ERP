@@ -52,12 +52,14 @@ class ListStoresReport extends ListRecords
 
     protected function getViewData(): array
     {
-        $store_id = __filament_request_select('store_id', 'all');
+        $store_id = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? 'all';
+        // $store_id = __filament_request_select('store_id', 'all');
         $supplier_id = __filament_request_select('supplier_id', 'all');
-        $product_id = __filament_request_select('product_id', 'all');
+        // $product_id = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? 'all';
+        $product_id = 'all';
 
         $stores_report_data = $this->getStoresReportData($product_id, $store_id, $supplier_id);
-
+        // dd($stores_report_data, $store_id, $product_id);
 
 
         return [
@@ -122,7 +124,7 @@ class ListStoresReport extends ListRecords
                 DB::raw('COALESCE(o.ordered_quantity, 0) AS ordered'),
                 DB::raw('(COALESCE(p.purchase_quantity, 0) - COALESCE(o.ordered_quantity, 0)) AS remaining')
             ]);
-        
+
 
         $results = $query->get();
         // $results2 = Product::where('active',1)->select('id','name')->get()->toArray();
