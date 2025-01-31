@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Response;
 
 class TenantResource extends Resource
 {
@@ -127,6 +130,47 @@ class TenantResource extends Resource
                             throw $th;
                         }
                     }),
+
+                // Inside the `table` method:
+                Tables\Actions\Action::make('download_backup')
+                    ->label('Download Backup')
+                    ->requiresConfirmation()
+                    ->button()
+                    ->action(function ($record) {
+                        $dbName = $record->database;
+
+                        // Define the backup file path and filename
+                        $backupPath = 'backups/' . $dbName . '_' . now()->format('Y_m_d_His') . '.sql';
+
+                        try {
+                            // Run the mysqldump command
+                            $process = new Process([
+                                'mysqldump',
+                                '--user=' . env('DB_USERNAME'),
+                                '--password=' . env('DB_PASSWORD'),
+                                '--host=' . env('DB_HOST'),
+                                $dbName
+                            ]);
+
+                            $process->setTimeout(3600); // Set timeout to 1 hour if large databases
+                            $process->run();
+
+                            // Check for errors
+                            if (!$process->isSuccessful()) {
+                                throw new ProcessFailedException($process);
+                            }
+
+                            // Store the output to a temporary backup file
+                            Storage::disk('local')->put($backupPath, $process->getOutput());
+
+                            // Return the file as a downloadable response
+                            return Response::download(storage_path('app/' . $backupPath));
+                        } catch (\Throwable $th) {
+                            showWarningNotifiMessage($th->getMessage());
+                            throw $th;
+                        }
+                    }),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
