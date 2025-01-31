@@ -20,6 +20,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
+use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\RawJs;
@@ -87,28 +88,9 @@ class ProductResource extends Resource
                     Step::make('units')
                         ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
                         ->schema([
-                            Grid::make()->columns(2)->schema([
-                                Select::make('main_unit_id')->label('Basic Unit')->required()
-                                    ->options(Unit::active()->parents()->pluck('name', 'id'))
-                                    ->live(debounce: 500)
-                                    ->afterStateUpdated(function ($set, $state, $get) {
-                                        $basicPrice = $get('basic_price') ?? 0;
-                                        $unitPrices = static::recalculateUnitPrices($basicPrice, $state);
-                                        $set('units', $unitPrices);
-                                    }),
-                                TextInput::make('basic_price')->label('Basic Price')->live(debounce: 500)
-                                    ->numeric()->required()
-                                    ->suffixIcon('heroicon-o-percent-badge')
-                                    ->suffixIconColor('success')
-                                    ->afterStateUpdated(function ($set, $state, $get) {
-                                        $unitId = $get('main_unit_id');
-                                        $state = $state ?? 0;
-                                        $unitPrices = \App\Filament\Resources\ProductResource::recalculateUnitPrices($state, $unitId);
-                                        $set('units', $unitPrices);
-                                    }),
-                            ]),
+
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(2)
+                                ->columns(3)
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->columnSpanFull()
                                 ->collapsible()->defaultItems(0)
@@ -124,8 +106,12 @@ class ProductResource extends Resource
                                     TextInput::make('price')->type('number')->default(1)->required()
                                         ->label(__('lang.price'))
                                         ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(',')
-                                ])
+                                        ->stripCharacters(','),
+                                    TextInput::make('package_size')->type('number')->default(1)->required()
+                                        ->label(__('lang.package_size'))
+                                ])->orderColumn('order')->reorderable()
+
+
                         ]),
                     Step::make('products')
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
@@ -323,6 +309,17 @@ class ProductResource extends Resource
             'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ManageProducts::class,
+            Pages\CreateProduct::class,
+            Pages\EditProduct::class,
+            // Pages\ViewEmployee::class,
+        ]);
+    }
+
 
     public static function getRelations(): array
     {

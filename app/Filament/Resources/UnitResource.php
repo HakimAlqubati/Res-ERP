@@ -48,18 +48,11 @@ class UnitResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->columns(3)->schema([
-                    Forms\Components\TextInput::make('name')->required()->columnSpan(1),
+                    Forms\Components\TextInput::make('name')->required()
+                    ->live(debounce: 500)->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state)))
+                    ->columnSpan(1),
                     Forms\Components\TextInput::make('code')->required(),
                     Toggle::make('active')->inline(false)->default(true),
-
-                    Select::make('parent_unit_id')->options(Unit::active()->pluck('name', 'id'))
-                        ->label('Parent Unit')
-                        ->searchable(),
-                    Select::make('operation')->options(Unit::OPERATIONS)->label('Operation')->requiredIf('parent_unit_id', true),
-                    TextInput::make('conversion_factor')->type('number')->label('Convertion Factor'),
-
-
-
                     Forms\Components\Textarea::make('description')->label('Description')->columnSpanFull(),
 
                 ])
@@ -76,25 +69,14 @@ class UnitResource extends Resource
                     ->searchable(isIndividual: false, isGlobal: false),
                 Tables\Columns\TextColumn::make('code')->alignCenter(true)
                     ->searchable(isIndividual: false, isGlobal: false),
-                Tables\Columns\BooleanColumn::make('is_main')->toggleable()
-                    ->label('Is main')->alignCenter(true),
-                TextColumn::make('parent.name')->toggleable()
-                    ->label('Parent')->alignCenter(true),
-                Tables\Columns\TextColumn::make('operation')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('conversion_factor')->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
+                
+                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
-                SelectFilter::make('parent_unit_id')
-                    ->options(Unit::active()
-                        ->where('parent_unit_id', null)
-                        ->pluck('name', 'id'))->searchable()
-                    ->label('Parent Unit'),
+               
             ])
             ->actions([
                 ActionGroup::make([

@@ -49,8 +49,8 @@ class ViewOrder extends ViewRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['customer_id'] = $this?->record?->customer?->name;
-        $data['branch_id'] = $this?->record?->branch?->name;
+        // $data['customer_id'] = $this?->record?->customer?->name;
+        // $data['branch_id'] = $this?->record?->branch?->name;
         return $data;
     }
 }

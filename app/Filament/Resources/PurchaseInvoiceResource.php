@@ -9,6 +9,7 @@ use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers\PurchaseInvoiceDetailsRelationManager;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
+use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\Store;
@@ -19,13 +20,17 @@ use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Notifications\Actions\ActionGroup;
+use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
@@ -61,140 +66,148 @@ class PurchaseInvoiceResource extends Resource
     }
     public static function form(Form $form): Form
     {
+        // dd(InventoryTransaction::getInventoryTrackingData(505, 21));
         return $form
             ->schema([
-                TextInput::make('invoice_no')->label(__('lang.invoice_no'))
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->placeholder('Enter invoice number')
-                // ->disabledOn('edit')
-                ,
-                DatePicker::make('date')
-                    ->required()
-                    ->placeholder('Select date')
-                    ->default(date('Y-m-d'))
-                    ->format('Y-m-d')
-                    // ->disabledOn('edit')
-                    ->format('Y-m-d'),
-                Select::make('supplier_id')->label(__('lang.supplier'))
-                    ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
-                    ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
-                    ->searchable()
-                    ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
-                // ->disabledOn('edit')
-                ,
-
-                Select::make('store_id')->label(__('lang.store'))
-                    ->searchable()
-                    ->default(getDefaultStore())
-                    ->options(
-                        Store::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')
-                    )
-                    ->disabledOn('edit')
-                    ->searchable(),
-                Textarea::make('description')->label(__('lang.description'))
-                    ->placeholder('Enter description')
-                    ->columnSpanFull(),
-                FileUpload::make('attachment')
-                    ->label(__('lang.attachment'))
-                    // ->enableOpen()
-                    // ->enableDownload()
-                    ->directory('purchase-invoices')
-                    ->columnSpanFull()
-                    ->acceptedFileTypes(['application/pdf'])
-                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                        return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
-                    }),
-                Repeater::make('units')
-                    ->createItemButtonLabel(__('lang.add_item'))
-                    ->columns(5)
-                    ->defaultItems(0)
-                    ->hiddenOn([
-                        // Pages\EditPurchaseInvoice::class,
-                        Pages\ViewPurchaseInvoice::class
-                    ])
-                    ->columnSpanFull()
-                    ->collapsible()
-                    ->relationship('purchaseInvoiceDetails')
-                    ->label(__('lang.purchase_invoice_details'))
-                    ->schema([
-                        Select::make('product_id')
-                            ->label(__('lang.product'))
+                Fieldset::make()->schema([
+                    Grid::make()->columns(5)->schema([
+                        TextInput::make('invoice_no')->label(__('lang.invoice_no'))
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->placeholder('Enter invoice number')
+                        // ->disabledOn('edit')
+                        ,
+                        DatePicker::make('date')
+                            ->required()
+                            ->placeholder('Select date')
+                            ->default(date('Y-m-d'))
+                            ->format('Y-m-d')
+                            // ->disabledOn('edit')
+                            ->format('Y-m-d'),
+                        Select::make('supplier_id')->label(__('lang.supplier'))
+                            ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
+                            ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
                             ->searchable()
-                            // ->disabledOn('edit')
-                            ->options(function () {
-                                return Product::where('active', 1)
-                                    ->unmanufacturingCategory()
-                                    ->pluck('name', 'id');
-                            })
-                            ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                ->unmanufacturingCategory()
-                                ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                            ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
-                            ->reactive()
-                            ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                            ->searchable(),
-                        Select::make('unit_id')
-                            ->label(__('lang.unit'))
-                            // ->disabledOn('edit')
+                            ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
+                        // ->disabledOn('edit')
+                        ,
+
+                        Select::make('store_id')->label(__('lang.store'))
+                            ->searchable()
+                            ->default(getDefaultStore())
                             ->options(
-                                function (callable $get) {
-
-                                    $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
-
-                                    if ($unitPrices)
-                                        return array_column($unitPrices, 'unit_name', 'unit_id');
-                                    return [];
-                                }
+                                Store::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')
                             )
-                            ->searchable()
-                            ->reactive()
-                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                $unitPrice = UnitPrice::where(
-                                    'product_id',
-                                    $get('product_id')
-                                )->where('unit_id', $state)->first()->price;
-                                $set('price', $unitPrice);
+                            ->disabledOn('edit')
+                            ->searchable(),
+                        Toggle::make('has_attachment')->label('Has Attachment')->inline(false)->live(),
 
-                                $set('total_price', ((float) $unitPrice) * ((float) $get('quantity')));
-                            }),
-                        TextInput::make('quantity')
-                            ->label(__('lang.quantity'))
-                            ->type('text')
-                            ->default(1)
-                            // ->disabledOn('edit')
-                            // ->mask(
-                            //     fn (TextInput\Mask $mask) => $mask
-                            //         ->numeric()
-                            //         ->decimalPlaces(2)
-                            //         ->thousandsSeparator(',')
-                            // )
-                            ->reactive()
-                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                $set('total_price', ((float) $state) * ((float)$get('price')));
-                            }),
-                        TextInput::make('price')
-                            ->label(__('lang.price'))
-                            ->type('text')
-                            ->default(1)
-                            // ->integer()
-                            // ->disabledOn('edit')
-                            // ->mask(
-                            //     fn (TextInput\Mask $mask) => $mask
-                            //         ->numeric()
-                            //         ->decimalPlaces(2)
-                            //         ->thousandsSeparator(',')
-                            // )
-                            ->reactive()
+                    ]),
+                    Textarea::make('description')->label(__('lang.description'))
+                        ->placeholder('Enter description')
+                        ->columnSpanFull(),
+                    FileUpload::make('attachment')
+                        ->label(__('lang.attachment'))
+                        // ->enableOpen()
+                        // ->enableDownload()
+                        ->directory('purchase-invoices')->visible(fn($get): bool => $get('has_attachment'))
+                        ->columnSpanFull()
+                        ->acceptedFileTypes(['application/pdf'])
+                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                            return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
+                        })->hiddenOn('view'),
+                    Repeater::make('units')
+                        ->createItemButtonLabel(__('lang.add_item'))
+                        ->columns(8)
+                        ->defaultItems(1)
+                        ->columnSpanFull()
+                        ->collapsible()
+                        ->relationship('purchaseInvoiceDetails')
+                        ->label(__('lang.purchase_invoice_details'))
+                        ->schema([
+                            Select::make('product_id')
+                                ->label(__('lang.product'))
+                                ->searchable()
+                                // ->disabledOn('edit')
+                                ->options(function () {
+                                    return Product::where('active', 1)
+                                        ->unmanufacturingCategory()
+                                        ->pluck('name', 'id');
+                                })
+                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
+                                    ->unmanufacturingCategory()
+                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->reactive()
+                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                ->searchable()->columnSpan(2),
+                            Select::make('unit_id')
+                                ->label(__('lang.unit'))
+                                // ->disabledOn('edit')
+                                ->options(
+                                    function (callable $get) {
 
-                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                $set('total_price', ((float) $state) * ((float)$get('quantity')));
-                            }),
-                        TextInput::make('total_price')->default(1)
-                            ->type('text')
-                            ->extraInputAttributes(['readonly' => true]),
+                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
 
-                    ])
+                                        if ($unitPrices)
+                                            return array_column($unitPrices, 'unit_name', 'unit_id');
+                                        return [];
+                                    }
+                                )
+                                ->searchable()
+                                ->reactive()
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $unitPrice = UnitPrice::where(
+                                        'product_id',
+                                        $get('product_id')
+                                    )->where('unit_id', $state)->first();
+                                    $set('price', $unitPrice->price);
+
+                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                })->columnSpan(2),
+                            TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
+                                ->label(__('lang.package_size')),
+                            TextInput::make('quantity')
+                                ->label(__('lang.quantity'))
+                                ->type('text')
+                                ->minValue(1)
+                                ->default(1)
+                                // ->disabledOn('edit')
+                                // ->mask(
+                                //     fn (TextInput\Mask $mask) => $mask
+                                //         ->numeric()
+                                //         ->decimalPlaces(2)
+                                //         ->thousandsSeparator(',')
+                                // )
+                                ->reactive()
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+
+                                    $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
+                                })->columnSpan(1),
+                            TextInput::make('price')
+                                ->label(__('lang.price'))
+                                ->type('text')
+                                ->minValue(1)
+                                // ->integer()
+                                // ->disabledOn('edit')
+                                // ->mask(
+                                //     fn (TextInput\Mask $mask) => $mask
+                                //         ->numeric()
+                                //         ->decimalPlaces(2)
+                                //         ->thousandsSeparator(',')
+                                // )
+                                ->reactive()
+
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $set('total_price', ((float) $state) * ((float)$get('quantity')));
+                                })->columnSpan(1),
+                            TextInput::make('total_price')->minValue(1)
+                                ->type('text')
+                                ->extraInputAttributes(['readonly' => true])->columnSpan(1),
+
+                        ])
+                ])
             ]);
     }
 
@@ -262,6 +275,15 @@ class PurchaseInvoiceResource extends Resource
         ];
     }
 
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListPurchaseInvoices::class,
+            Pages\CreatePurchaseInvoice::class,
+            Pages\EditPurchaseInvoice::class,
+            Pages\ViewPurchaseInvoice::class,
+        ]);
+    }
 
     public static function canDeleteAny(): bool
     {

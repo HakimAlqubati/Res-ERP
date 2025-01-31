@@ -25,6 +25,7 @@ class OrderDetails extends Model
         'negative_inventory_quantity',
         'orderd_product_id',
         'ordered_unit_id',
+        'package_size',
     ];
 
 
@@ -91,51 +92,21 @@ class OrderDetails extends Model
     {
         return $this->belongsTo(Unit::class);
     }
-
-
-    protected static function booted()
+    protected static function boot()
     {
-        // Handle inventory update on create
-        static::created(function ($detail) {
-            $inventory = Inventory::where('product_id', $detail->product_id)
-                ->where('unit_id', $detail->unit_id)
-                ->first();
+        parent::boot();
 
-            if ($inventory) {
-                // Deduct the ordered quantity from inventory
-                $inventory->quantity -= $detail->quantity;
-                $inventory->save();
-            }
-        });
-
-        // Handle inventory adjustment on update
-        static::updated(function ($detail) {
-            $inventory = Inventory::where('product_id', $detail->product_id)
-                ->where('unit_id', $detail->unit_id)
-                ->first();
-
-            if ($inventory) {
-                // Reverse the old quantity
-                $originalQuantity = $detail->getOriginal('quantity');
-                $inventory->quantity += $originalQuantity;
-
-                // Deduct the new quantity
-                $inventory->quantity -= $detail->quantity;
-                $inventory->save();
-            }
-        });
-
-        // Handle inventory adjustment on delete
-        static::deleted(function ($detail) {
-            $inventory = Inventory::where('product_id', $detail->product_id)
-                ->where('unit_id', $detail->unit_id)
-                ->first();
-
-            if ($inventory) {
-                // Add back the quantity when an order is deleted
-                $inventory->quantity += $detail->quantity;
-                $inventory->save();
-            }
+        static::created(function ($orderDetail) {
+            // Subtract from inventory transactions
+            \App\Models\InventoryTransaction::create([
+                'product_id' => $orderDetail->product_id,
+                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
+                'quantity' =>  $orderDetail->quantity,
+                'unit_id' => $orderDetail->unit_id,
+                'package_size' => $orderDetail->package_size,
+                'reference_id' => $orderDetail->order_id,
+                'notes' => 'Order Detail created and quantity deducted',
+            ]);
         });
     }
 }

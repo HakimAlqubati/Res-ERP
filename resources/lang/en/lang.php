@@ -145,5 +145,6 @@ return [
     ],
     'supplier_supplier_invoice' => 'Suppliers & Invoices',
     'purchasing_stores_reports' => 'Reports (Stores & Purchasing)',
-    'is_hq' => 'Is HQ' ,
+    'is_hq' => 'Is HQ',
+    'package_size' => 'Package Size',
 ];

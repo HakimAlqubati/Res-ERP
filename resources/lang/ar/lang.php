@@ -146,4 +146,5 @@ return [
     'supplier_supplier_invoice' => 'الموردين - المشتروات',
     'purchasing_stores_reports' => 'تقارير (المشتروات - المخزون)',
     'is_hq' => 'الفرع الرئيسي؟',
+    'package_size' => 'العبوة',
 ];

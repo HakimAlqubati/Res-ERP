@@ -11,6 +11,7 @@ use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
 use App\Services\DeductionService;
+use App\Services\InventoryService;
 use Carbon\Carbon;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
@@ -216,5 +217,17 @@ class TestController2 extends Controller
             'lastMonthDeductions' => $deductions['last_month_deductions'],
             'totalDeductions' => $deductions['total_deductions'],
         ]);
+    }
+
+    public function testInventory($productId, $unitId)
+    {
+
+        $inventoryService = new InventoryService($productId, $unitId);
+
+        // Get report for a specific product and unit
+        $report = $inventoryService->getInventoryReport();
+
+        // Print or return the report as JSON
+        return response()->json($report);
     }
 }

@@ -6,6 +6,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
 use App\Models\Inventory;
+use App\Models\InventoryTransaction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
@@ -18,11 +19,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InventoryResource extends Resource
 {
-    protected static ?string $model = Inventory::class;
+    protected static ?string $model = InventoryTransaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = SupplierStoresReportsCluster::class;
+    // protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
     public static function form(Form $form): Form
@@ -36,25 +37,36 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-            ->defaultSort('last_updated', 'desc')
+            ->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product Name')
-                    ->sortable()
-                    ->searchable(),
 
-                Tables\Columns\TextColumn::make('unit.name')->alignCenter(true)
-                    ->label('Unit Name')
-                    ->sortable()
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('product.name')
+                    ->label('Product'),
+
+                Tables\Columns\TextColumn::make('movement_type_title')->alignCenter(true)
+                    ->label('Movement Type')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label('Quantity')->alignCenter(true)
+                    ->label('Qty')->alignCenter(true)
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('last_updated')
-                    ->label('Last Updated')
+                Tables\Columns\TextColumn::make('unit.name')
+                    ->label('Unit'),
+
+                Tables\Columns\TextColumn::make('package_size')->alignCenter(true)
+                    ->label('Package Size'),
+
+                Tables\Columns\TextColumn::make('movement_date')
+                    ->label('Movement Date')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('remaining_qty')->hidden()
+                    ->label('Remaining Qty')->alignCenter(true)
+                    ->getStateUsing(fn($record) => $record->getRemainingQtyAttribute()),
+
+                Tables\Columns\TextColumn::make('notes')
+                    ->label('Notes'),
             ])
             ->filters([
                 Filter::make('product')
@@ -69,7 +81,7 @@ class InventoryResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

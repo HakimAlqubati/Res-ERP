@@ -18,7 +18,7 @@ class PurchaseInvoice extends Model
         'store_id',
         'attachment',
     ];
-
+    protected $appends = ['has_attachment'];
     public function purchaseInvoiceDetails()
     {
         return $this->hasMany(PurchaseInvoiceDetail::class, 'purchase_invoice_id');
@@ -42,6 +42,4 @@ class PurchaseInvoice extends Model
             return 0;
         }
     }
-
-  
 }

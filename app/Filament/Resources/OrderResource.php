@@ -14,11 +14,13 @@ use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -63,78 +65,82 @@ class OrderResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Select::make('branch_id')->required()
-                    ->label(__('lang.branch'))
-                    ->options(Branch::select('id', 'name')->get()->pluck('name', 'id')),
-                Select::make('status')->required()
-                    ->label(__('lang.order_status'))
-                    ->options([
-                        Order::ORDERED => 'Ordered',
-                        Order::READY_FOR_DELEVIRY => 'Ready for delivery',
-                        Order::PROCESSING => 'processing',
-                        Order::DELEVIRED => 'delevired',
-                    ])->default(Order::ORDERED),
-                // Repeater for Order Details
-                Repeater::make('orderDetails')->columnSpanFull()
-                    ->label(__('lang.order_details'))->columns(5)
-                    ->relationship('orderDetails') // Relationship with the OrderDetails model
-                    ->schema([
-                        Select::make('product_id')
-                            ->label(__('lang.product'))
-                            ->searchable()
-                            // ->disabledOn('edit')
-                            ->options(function () {
-                                return Product::where('active', 1)
+                Fieldset::make()->schema([
+                    Select::make('branch_id')->required()
+                        ->label(__('lang.branch'))
+                        ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
+                    Select::make('status')->required()
+                        ->label(__('lang.order_status'))
+                        ->options([
+                            Order::ORDERED => 'Ordered',
+                            Order::READY_FOR_DELEVIRY => 'Ready for delivery',
+                            Order::PROCESSING => 'processing',
+                            Order::DELEVIRED => 'delevired',
+                        ])->default(Order::ORDERED),
+                    // Repeater for Order Details
+                    Repeater::make('orderDetails')->columnSpanFull()
+                        ->label(__('lang.order_details'))->columns(6)
+                        ->relationship('orderDetails') // Relationship with the OrderDetails model
+                        ->schema([
+                            Select::make('product_id')
+                                ->label(__('lang.product'))
+                                ->searchable()
+                                // ->disabledOn('edit')
+                                ->options(function () {
+                                    return Product::where('active', 1)
+                                        ->unmanufacturingCategory()
+                                        ->pluck('name', 'id');
+                                })
+                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
                                     ->unmanufacturingCategory()
-                                    ->pluck('name', 'id');
-                            })
-                            ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                ->unmanufacturingCategory()
-                                ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                            ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
-                            ->reactive()
-                            ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                            ->searchable(),
-                        Select::make('unit_id')
-                            ->label(__('lang.unit'))
-                            // ->disabledOn('edit')
-                            ->options(
-                                function (callable $get) {
+                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->reactive()
+                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                ->searchable(),
+                            Select::make('unit_id')
+                                ->label(__('lang.unit'))
+                                // ->disabledOn('edit')
+                                ->options(
+                                    function (callable $get) {
 
-                                    $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
+                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
 
-                                    if ($unitPrices)
-                                        return array_column($unitPrices, 'unit_name', 'unit_id');
-                                    return [];
-                                }
-                            )
-                            ->searchable()
-                            ->reactive()
-                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                $unitPrice = UnitPrice::where(
-                                    'product_id',
-                                    $get('product_id')
-                                )->where('unit_id', $state)->first()->price;
-                                $set('price', $unitPrice);
-                            }),
+                                        if ($unitPrices)
+                                            return array_column($unitPrices, 'unit_name', 'unit_id');
+                                        return [];
+                                    }
+                                )
+                                ->searchable()
+                                ->reactive()
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $unitPrice = UnitPrice::where(
+                                        'product_id',
+                                        $get('product_id')
+                                    )->where('unit_id', $state)->first();
+                                    $set('price', $unitPrice->price);
+                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                }),
+                            TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
+                                ->label(__('lang.package_size')),
+                            TextInput::make('quantity')
+                                ->label(__('lang.quantity'))
+                                ->numeric()->live()->afterStateUpdated(fn($set, $state): string => $set('available_quantity', $state))
+                                ->required(),
+                            TextInput::make('available_quantity')->readOnly()
+                                ->label('available_quantity')
+                                ->numeric()
+                                ->required(),
 
-                        TextInput::make('quantity')
-                            ->label(__('lang.quantity'))
-                            ->numeric()->live()->afterStateUpdated(fn($set, $state): string => $set('available_quantity', $state))
-                            ->required(),
-                        TextInput::make('available_quantity')->readOnly()
-                            ->label('available_quantity')
-                            ->numeric()
-                            ->required(),
+                            TextInput::make('price')
+                                ->label(__('lang.price'))
+                                ->numeric()
+                                ->required(),
+                        ])
+                        ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
+                        ->required(),
 
-                        TextInput::make('price')
-                            ->label(__('lang.price'))
-                            ->numeric()
-                            ->required(),
-                    ])
-                    ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
-                    ->required(),
-
+                ])
             ]);
     }
 
@@ -229,7 +235,7 @@ class OrderResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            RelationManagers\OrderDetailsRelationManager::class,
+            // RelationManagers\OrderDetailsRelationManager::class,
         ];
     }
 
@@ -245,6 +251,16 @@ class OrderResource extends Resource implements HasShieldPermissions
 
         ];
     }
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListOrders::class,
+            Pages\CreateOrder::class,
+            Pages\ViewOrder::class,
+            Pages\EditOrder::class,
+        ]);
+    }
+
 
     protected function getTableReorderColumn(): ?string
     {
@@ -274,10 +290,13 @@ class OrderResource extends Resource implements HasShieldPermissions
 
         return $query;
     }
-    // public static function canCreate(): bool
-    // {
-    //     return false;
-    // }
+    public static function canCreate(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 
     public static function getEloquentQuery(): Builder
     {

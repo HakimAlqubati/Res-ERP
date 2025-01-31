@@ -15,7 +15,10 @@ class PurchaseInvoiceDetail extends Model
         'unit_id',
         'quantity',
         'price',
+        'package_size',
     ];
+    protected $appends = ['total_price'];
+
 
     public function purchaseInvoice()
     {
@@ -37,22 +40,33 @@ class PurchaseInvoiceDetail extends Model
         return $this->quantity * $this->price;
     }
 
+
+
+    /**
+     * Calculate the total price (quantity * price).
+     *
+     * @return float
+     */
+    public function getTotalPriceAttribute()
+    {
+        return $this->quantity * $this->price;
+    }
+
     protected static function boot()
     {
         parent::boot();
-        static::created(function ($detail) {
-            
-            // Find the original quantity before update
-            $originalQuantity = $detail->getOriginal('quantity');
 
-            $inventory = Inventory::firstOrNew([
-                'product_id' => $detail->product_id,
-                'unit_id' => $detail->unit_id,
+        static::created(function ($purchaseInvoiceDetail) {
+            // Add a record to the inventory transactions table
+            \App\Models\InventoryTransaction::create([
+                'product_id' => $purchaseInvoiceDetail->product_id,
+                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_PURCHASE_INVOICE,
+                'quantity' => $purchaseInvoiceDetail->quantity,
+                'package_size' => $purchaseInvoiceDetail->package_size,
+                'unit_id' => $purchaseInvoiceDetail->unit_id,
+                'reference_id' => $purchaseInvoiceDetail->purchase_invoice_id,
+                'notes' => 'Purchase Invoice Detail added',
             ]);
-
-            // Adjust inventory: Remove old quantity and add new quantity
-            $inventory->quantity = ($inventory->quantity ?? 0) - $originalQuantity + $detail->quantity;
-            $inventory->save();
         });
     }
 }
