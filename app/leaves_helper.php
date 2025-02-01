@@ -161,23 +161,29 @@ function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
         $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
         $usedLeaves = 0;
         $allowedLeaves = $weeklyLeave->count_days;
-
-        if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
-            $usedLeaves = $allowedLeaves - $leaveBalance->balance;
-        }
-
         $date = Carbon::parse($yearAndMonth);
         $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
 
         $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+        $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
+        $absendCalculated = calculateTotalAbsentDays($attendances);
+
+        $absentDates = $absendCalculated['absent_dates']; 
+        $totalAttendanceDays = $absendCalculated['total_attendance_days'];
+        $absentDays = count($absentDates);
+
+        $allowedLeaves = (int) round($totalAttendanceDays / 7);
+        if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
+            $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+        }
+
+
         if ($attendances == 'no_periods') {
             $branchResults[$employeeId] = 'no_periods';
             continue;
         }
 
-        $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
-        $absentDays = count($absentDates);
 
         if ($absentDays < $allowedLeaves) {
             $results = [
