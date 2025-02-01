@@ -198,7 +198,12 @@ class TestController2 extends Controller
 
         return calculateAutoWeeklyLeaveDataForBranch_($yearMonth, $branchId);
     }
+    public function to_test_make_leaves_applications_based_on_branch($yearMonth, $branchId)
+    {
+        $data = calculateAutoWeeklyLeaveDataForBranch_($yearMonth, $branchId);
 
+        return makeLeavesApplicationsBasedOnBranch($data, $yearMonth, $branchId);
+    }
 
     public function getDeductionEmployeeMonthly($employeeId, $startMonth, $endMonth)
     {

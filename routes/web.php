@@ -95,6 +95,7 @@ Route::get('/to_test_schedule_task/{date}', [TestController::class, 'to_test_sch
 Route::get('/to_test_calculate_salary/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary']);
 Route::get('/to_test_calculate_auto_leave/{yearMonth}/{empId}', [TestController2::class, 'to_test_calculate_auto_leave']);
 Route::get('/to_test_calculate_auto_leave_by_branch/{yearMonth}/{branchId}', [TestController2::class, 'to_test_calculate_auto_leave_by_branch']);
+Route::get('/to_test_make_leaves_applications_based_on_branch/{yearMonth}/{branchId}', [TestController2::class, 'to_test_make_leaves_applications_based_on_branch']);
 Route::get('/to_test_calculate_salary_with_attendances_deducations/{empId}/{date}', [TestController2::class, 'to_test_calculate_salary_with_attendances_deducations']);
 Route::get('/to_test_emplployee_attendance_time', [TestController2::class, 'to_test_emplployee_attendance_time']);
 Route::get('/to_get_employee_attendances', [TestController2::class, 'to_get_employee_attendances']);

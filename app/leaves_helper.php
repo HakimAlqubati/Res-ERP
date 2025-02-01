@@ -8,56 +8,47 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-function checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $yearAndMonth, $totalAbsentDays, $monthlyLeaveBalance, $absentDates)
+function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance)
 {
-    $date = new \DateTime($yearAndMonth . '-01');
-    $year = $date->format('Y');
-    $month = $date->format('m');
-    $totalDaysOfMonth = $date->format('t');
-    $leaveTypeId = LeaveType::where('active', 1)->where('type', LeaveType::TYPE_WEEKLY)->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)->first()?->id;
-    $leaveBalance = LeaveBalance::where('employee_id', $employee->id)
-        ->where('year', $year)
-        ->where('month', $month)
-        ->where('leave_type_id', $leaveTypeId)
-        ->first();
-    // dd($year, $month, $totalDaysOfMonth, $totalAbsentDays, $monthlyLeaveBalance, $absentDates, $leaveBalance->balance - $monthlyLeaveBalance);
     DB::beginTransaction();
     try {
-        //code...
-        DB::commit();
+        if (is_numeric($allowedLeaves) && $allowedLeaves > 0) {
 
-        for ($i = 0; $i < $monthlyLeaveBalance; $i++) {
-            // dd($absentDates[$i]);
-            EmployeeApplicationV2::create([
-                'employee_id' => $employee->id,
-                'branch_id' => $employee->branch_id,
-                'application_date' => now()->toDateString(),
-                'status' => EmployeeApplicationV2::STATUS_APPROVED,
-                'notes' => 'Auto generated',
-                'application_type_id' => 1,
-                'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
-                'created_by' => 1,
-                'approved_by' => 1,
-                'approved_at' => now(),
-            ])->leaveRequest()->create([
-                'application_type_id' => 1,
-                'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
-                'employee_id' => $employee->id,
-                'leave_type' => $leaveTypeId,
-                'year' => $year,
-                'month' => $month,
-                'start_date' => $absentDates[$i],
-                'end_date' => $absentDates[$i],
-                'days_count' => 1,
-            ])
-            ;
+            for ($i = 0; $i < $allowedLeaves; $i++) {
+                // dd($absentDates[$i]);
+                EmployeeApplicationV2::create([
+                    'employee_id' => $employeeId,
+                    'branch_id' => $branchId,
+                    'application_date' => now()->toDateString(),
+                    'status' => EmployeeApplicationV2::STATUS_APPROVED,
+                    'notes' => 'Auto generated',
+                    'application_type_id' => 1,
+                    'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+                    'created_by' => 1,
+                    'approved_by' => 1,
+                    'approved_at' => now(),
+                ])->leaveRequest()->create([
+                    'application_type_id' => 1,
+                    'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+                    'employee_id' => $employeeId,
+                    'leave_type' => $leaveTypeId,
+                    'year' => $year,
+                    'month' => $month,
+                    'start_date' => $absentDates[$i],
+                    'end_date' => $absentDates[$i],
+                    'days_count' => 1,
+                ])
+                ;
+            }
+            $leaveBalance
+                ->update([
+                    'balance' => $leaveBalance->balance - $allowedLeaves,
+                ]);
+            Log::alert('done_created_auto_monthly_leave', ['employee' => [$employeeId], 'absentDates' => $absentDates]);
+
+            DB::commit();
+            return ['result' => true];
         }
-        $leaveBalance
-            ->update([
-                'balance' => $leaveBalance->balance - $monthlyLeaveBalance,
-            ]);
-        Log::alert('done_created_auto_monthly_leave', ['employee' => $employee, 'absentDates' => $absentDates]);
-        return ['result' => true];
     } catch (\Throwable $th) {
         //throw $th;
         DB::rollBack();
@@ -109,7 +100,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
         'remaining_leaves' => 0,        // Remaining leave days after accounting for used leave and absences
         'compensated_days' => 0,       // Days to be compensated (unused leave days)
         'excess_absence_days' => 0,    // Days of absence exceeding allowed leave
-        'allowed_leaves'=> $allowedLeaves,
+        'allowed_leaves' => $allowedLeaves,
         'absent_days' => $absentDays,
         'absent_dates' => $absentDates,
     ];
@@ -143,7 +134,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
 function calculateAutoWeeklyLeaveDataForBranch_($yearAndMonth, $branchId)
 {
     $branchResults = [];
-    foreach (Employee::where('branch_id', $branchId)->get() as $employee) {
+    foreach (Employee::where('branch_id', $branchId)->active()->get() as $employee) {
         $results = calculateAutoWeeklyLeaveData($yearAndMonth, $employee->id);
         if ($results != 'no_periods') {
             $branchResults[$employee->id] = $results;
@@ -229,4 +220,26 @@ function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
     }
 
     return $branchResults;
+}
+
+function makeLeavesApplicationsBasedOnBranch($data, $yearMonth, $branchId)
+{
+    $date = new \DateTime($yearMonth . '-01');
+    $year = $date->format('Y');
+    $month = $date->format('m');
+
+    $leaveTypeId = LeaveType::where('active', 1)->where('type', LeaveType::TYPE_WEEKLY)
+        ->where('balance_period', LeaveType::BALANCE_PERIOD_MONTHLY)
+        ->first()?->id;
+    foreach ($data as $employeeId => $value) {
+        $leaveBalance = LeaveBalance::where('employee_id', $employeeId)
+            ->where('year', $year)
+            ->where('month', $month)
+            ->where('leave_type_id', $leaveTypeId)
+            ->first();
+        $allowedLeaves = $value['allowed_leaves'];
+        $absentDates = $value['absent_dates'];
+        checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance);
+    }
+    return $data;
 }
