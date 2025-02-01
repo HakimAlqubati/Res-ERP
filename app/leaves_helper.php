@@ -105,6 +105,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $absentDays = count($absentDates);
     // Final results to return
     $results = [
+        'employee' => Employee::find($employeeId)->name,
         'remaining_leaves' => 0,        // Remaining leave days after accounting for used leave and absences
         'compensated_days' => 0,       // Days to be compensated (unused leave days)
         'excess_absence_days' => 0,    // Days of absence exceeding allowed leave
@@ -138,6 +139,17 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     return $results;
 }
 
+function calculateAutoWeeklyLeaveDataForBranch_($yearAndMonth, $branchId)
+{
+    $branchResults = [];
+    foreach (Employee::where('branch_id', $branchId)->get() as $employee) {
+        $results = calculateAutoWeeklyLeaveData($yearAndMonth, $employee->id);
+        if ($results != 'no_periods') {
+            $branchResults[$employee->id] = $results;
+        }
+    }
+    return $branchResults;
+}
 function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
 {
     $yearMonthArr = explode('-', $yearAndMonth);
