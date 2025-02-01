@@ -68,7 +68,7 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employee, $yearAndMonth,
 
 
 function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
-{ 
+{
     $yearMonthArr = explode('-', $yearAndMonth);
     $year = $yearMonthArr[0];
     $month = $yearMonthArr[1];
@@ -132,10 +132,6 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
         // Case 2: If the employee used all allowed leave
         if ($absentDays > $allowedLeaves) {
             $results['excess_absence_days'] = $absentDays - $allowedLeaves;
-            // $results['excess_absence_days'] = $absentDays;
-            // dd('d');
-            // dd($totalAttendanceDays, round($totalAttendanceDays / 7));
-            // $results['excess_absence_days'] = (int) round($totalAttendanceDays / 7);
         }
     }
     // Return the final results as an array
@@ -143,7 +139,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
 }
 
 function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
-{ 
+{
     $yearMonthArr = explode('-', $yearAndMonth);
     $year = $yearMonthArr[0];
     $month = $yearMonthArr[1];
@@ -157,7 +153,7 @@ function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
         $employeeName = $employee->name;
         $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
         $usedLeaves = 0;
-        
+
         $date = Carbon::parse($yearAndMonth);
         $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
         $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
@@ -192,20 +188,24 @@ function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
                 'absent_dates' => $absentDates,
             ];
 
-            if ($usedLeaves < $allowedLeaves) {
+            if ($absentDays < $allowedLeaves) {
                 $remainingLeaves = $allowedLeaves - $usedLeaves;
 
+                // Sub-case 1.1: Employee did not have any absences
                 if ($absentDays == 0) {
                     $results['remaining_leaves'] = $remainingLeaves;
                     $results['compensated_days'] = $remainingLeaves;
                 } elseif ($absentDays <= $remainingLeaves) {
+                    // Sub-case 1.2: Absences are within the remaining leave allowance
                     $results['remaining_leaves'] = $remainingLeaves - $absentDays;
                     $results['compensated_days'] = $remainingLeaves - $absentDays;
                 } else {
+                    // Sub-case 1.3: Absences exceed the remaining leave allowance
                     $results['remaining_leaves'] = 0;
                     $results['excess_absence_days'] = $absentDays - $remainingLeaves;
                 }
             } else {
+                // Case 2: If the employee used all allowed leave
                 if ($absentDays > $allowedLeaves) {
                     $results['excess_absence_days'] = $absentDays - $allowedLeaves;
                 }
