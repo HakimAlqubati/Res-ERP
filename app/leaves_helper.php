@@ -109,6 +109,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
         'remaining_leaves' => 0,        // Remaining leave days after accounting for used leave and absences
         'compensated_days' => 0,       // Days to be compensated (unused leave days)
         'excess_absence_days' => 0,    // Days of absence exceeding allowed leave
+        'allowed_leaves'=> $allowedLeaves,
         'absent_days' => $absentDays,
         'absent_dates' => $absentDates,
     ];
