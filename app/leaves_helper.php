@@ -78,7 +78,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
 
     $absentDates = $absendCalculated['absent_dates'];
     $totalAttendanceDays = $absendCalculated['total_attendance_days'] + $absendCalculated['total_leave_days'];
-    
+
     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
     $usedLeaves = 0;
     // $allowedLeaves = $weeklyLeave->count_days;
@@ -96,7 +96,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
 
     // $balanceDays = round($totalAttendanceDays / 7);
     $absentDays = count($absentDates);
-    dd($absentDates, $totalAttendanceDays, $allowedLeaves,$absentDays);
+    dd($absentDates, $totalAttendanceDays, $allowedLeaves, $absentDays, $usedLeaves);
     // Final results to return
     $results = [
         'employee' => Employee::find($employeeId)->name,
