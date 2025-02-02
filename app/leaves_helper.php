@@ -88,7 +88,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
         $usedLeaves = $allowedLeaves - $leaveBalance->balance;
     }
-
+    dd($usedLeaves);
 
     if ($attendances == 'no_periods') {
         return 'no_periods';
