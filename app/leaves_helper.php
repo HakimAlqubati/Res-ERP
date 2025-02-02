@@ -12,7 +12,7 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $
 {
     // DB::beginTransaction();
     // try {
-    if (is_numeric($allowedLeaves) && $allowedLeaves > 0) {
+    if (is_numeric($allowedLeaves) && $allowedLeaves > 0 && is_array($absentDates) && count($absentDates) > 0) {
 
         $i = 1;
         foreach ($absentDates as  $date) {
