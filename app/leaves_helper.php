@@ -73,7 +73,12 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     // Get the end of the month
     $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
     $attendances = employeeAttendances($employeeId, $startDate, $endDate);
-
+    $employee = Employee::find($employeeId);
+    $leaveRequestsCount = $employee->leaveApplications()->whereHas('leaveRequest', function ($query) use ($year, $month) {
+        $query->where('year', $year)
+            ->where('month', $month);
+    })->count();
+    
     $absendCalculated = calculateTotalAbsentDays($attendances);
 
     $absentDates = $absendCalculated['absent_dates'];
@@ -85,8 +90,11 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     // $allowedLeaves = $leaveBalance->balance ?? 0;
     $allowedLeaves = (int) round($totalAttendanceDays / 7);
 
-    if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
+    if (isset($leaveBalance->balance) && $leaveBalance->balance > 0 && $leaveRequestsCount == 0) {
         $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+    }
+    if($leaveRequestsCount>0){
+        $usedLeaves = $leaveRequestsCount;
     }
     dd($usedLeaves);
 
