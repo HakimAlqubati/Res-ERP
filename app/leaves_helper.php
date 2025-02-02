@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance)
+function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance,$absentDays)
 {
     // DB::beginTransaction();
     // try {
@@ -47,7 +47,7 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $
 
         $leaveBalance
             ->update([
-                'balance' => $leaveBalance->balance -  count($absentDates),
+                'balance' => $leaveBalance->balance -  $absentDays,
             ]);
         // Log::alert('done_created_auto_monthly_leave', ['employee' => [$employeeId], 'absentDates' => $absentDates]);
 
@@ -254,7 +254,8 @@ function makeLeavesApplicationsBasedOnBranch($data, $yearMonth, $branchId)
             ->first();
         $allowedLeaves = $value['allowed_leaves'];
         $absentDates = $value['absent_dates'];
-        checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance);
+        $absentDays = $value['absent_days'];
+        checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance,$absentDays);
     }
     return $data;
 }
