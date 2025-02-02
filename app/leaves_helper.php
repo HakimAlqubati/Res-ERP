@@ -78,7 +78,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
         $query->where('year', $year)
             ->where('month', $month);
     })->count();
-    
+
     $absendCalculated = calculateTotalAbsentDays($attendances);
 
     $absentDates = $absendCalculated['absent_dates'];
@@ -93,10 +93,9 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     if (isset($leaveBalance->balance) && $leaveBalance->balance > 0 && $leaveRequestsCount == 0) {
         $usedLeaves = $allowedLeaves - $leaveBalance->balance;
     }
-    if($leaveRequestsCount>0){
+    if ($leaveRequestsCount > 0) {
         $usedLeaves = $leaveRequestsCount;
     }
-    dd($usedLeaves);
 
     if ($attendances == 'no_periods') {
         return 'no_periods';
