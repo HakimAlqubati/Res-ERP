@@ -86,7 +86,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $allowedLeaves = (int) round($totalAttendanceDays / 7);
 
     if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
-        $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+        // $usedLeaves = $allowedLeaves - $leaveBalance->balance;
     }
 
 
