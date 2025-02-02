@@ -17,6 +17,7 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $
         $i = 1;
         foreach ($absentDates as  $date) {
             if ($i <= $allowedLeaves) {
+
                 EmployeeApplicationV2::create([
                     'employee_id' => $employeeId,
                     'branch_id' => $branchId,
@@ -42,11 +43,12 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $
             }
             $i++;
         }
+        $leaveBalance->decrement('balance', $allowedLeaves);
 
-        $leaveBalance
-            ->update([
-                'balance' =>  $allowedLeaves,
-            ]);
+        // $leaveBalance
+        //     ->update([
+        //         'balance' =>  $allowedLeaves,
+        //     ]);
         // Log::alert('done_created_auto_monthly_leave', ['employee' => [$employeeId], 'absentDates' => $absentDates]);
 
         // DB::commit();
