@@ -47,7 +47,7 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $
 
         $leaveBalance
             ->update([
-                'balance' => $leaveBalance->balance -  $allowedLeaves,
+                'balance' => $leaveBalance->balance -  count($absentDates),
             ]);
         // Log::alert('done_created_auto_monthly_leave', ['employee' => [$employeeId], 'absentDates' => $absentDates]);
 
