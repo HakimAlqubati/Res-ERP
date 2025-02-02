@@ -865,15 +865,18 @@ function calculateTotalAbsentDays($attendanceData)
 {
     $totalAbsentDays = 0;
     $totalAttendanceDays = 0;
+    $totalLeaveDays = 0;
     $result = [];
     foreach ($attendanceData as $date => $data) {
 
-        // Check if periods exist for the date
+        if (isset($data['leave']) && is_array(($data['leave'])) && count($data['leave']) > 0) {
+            $totalLeaveDays++;
+            // break;
+        }
         if (isset($data['periods']) && !empty($data['periods'])) {
             $allAbsent = true; // Assume all are absent initially
             // Loop through each period to check attendance
             foreach ($data['periods'] as $period) {
-
 
                 // dd(array_intersect_key(array_flip(['checkin', 'checkout']), $period['attendances']),$period['attendances']);
                 if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
@@ -922,13 +925,15 @@ function calculateTotalAbsentDays($attendanceData)
             }
         }
     }
-
-    return [
+    // dd($totalAttendanceDays);
+    $finalResult = [
+        'total_leave_days' => $totalLeaveDays,
         'total_absent_days' => $totalAbsentDays,
         'total_attendance_days' => $totalAttendanceDays,
         'difference' => $totalAttendanceDays - $totalAbsentDays,
         'absent_dates' => $result,
     ];
+    return $finalResult;
     dd($totalAbsentDays, $result);
     return $totalAbsentDays;
 }
