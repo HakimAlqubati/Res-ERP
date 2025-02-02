@@ -77,7 +77,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $absendCalculated = calculateTotalAbsentDays($attendances);
 
     $absentDates = $absendCalculated['absent_dates'];
-    $totalAttendanceDays = $absendCalculated['total_attendance_days'] + $absendCalculated['total_leave_days'];
+    $totalAttendanceDays = $absendCalculated['total_attendance_days'];
 
     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
     $usedLeaves = 0;
@@ -86,7 +86,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     $allowedLeaves = (int) round($totalAttendanceDays / 7);
 
     if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
-        // $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+        $usedLeaves = $allowedLeaves - $leaveBalance->balance;
     }
 
 
@@ -95,8 +95,8 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     }
 
     // $balanceDays = round($totalAttendanceDays / 7);
+    // dd($absentDates, $totalAttendanceDays, $balanceDays);
     $absentDays = count($absentDates);
-    // dd($absentDates, $totalAttendanceDays, $allowedLeaves, $absentDays, $usedLeaves);
     // Final results to return
     $results = [
         'employee' => Employee::find($employeeId)->name,
@@ -139,7 +139,6 @@ function calculateAutoWeeklyLeaveDataForBranch_($yearAndMonth, $branchId)
     $branchResults = [];
     foreach (
         Employee::where('branch_id', $branchId)
-
             ->active()->get() as $employee
     ) {
         $results = calculateAutoWeeklyLeaveData($yearAndMonth, $employee->id);
