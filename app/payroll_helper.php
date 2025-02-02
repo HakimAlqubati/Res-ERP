@@ -918,7 +918,10 @@ function calculateTotalMissingHours(array $data)
 
         if (count($details['periods']) > 1) {
             foreach ($details['periods'] as $detail) {
-                dd($detail);
+
+                if ($date == '2025-01-04') {
+                    dd($detail);
+                }
                 if (is_array($detail['attendances']) && count($detail['attendances']) <= 1) {
                     $period = WorkPeriod::find($detail['period_id']);
                     $periodSupposedDupration = $period->supposed_duration;
