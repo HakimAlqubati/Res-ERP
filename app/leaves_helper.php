@@ -95,7 +95,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     }
 
     // $balanceDays = round($totalAttendanceDays / 7);
-    // dd($absentDates, $totalAttendanceDays, $balanceDays);
+    dd($absentDates, $totalAttendanceDays, $allowedLeaves);
     $absentDays = count($absentDates);
     // Final results to return
     $results = [
