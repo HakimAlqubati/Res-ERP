@@ -172,7 +172,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $totalMissingHours = calculateTotalMissingHours($attendances);
 
-
+    dd($totalMissingHours);
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * setting('overtime_hour_multiplier');
