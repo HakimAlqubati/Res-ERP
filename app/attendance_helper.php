@@ -877,7 +877,7 @@ function calculateTotalAbsentDays($attendanceData)
             $allAbsent = true; // Assume all are absent initially
             // Loop through each period to check attendance
             foreach ($data['periods'] as $period) {
-                dd(count($period['attendances']));
+
                 // dd(array_intersect_key(array_flip(['checkin', 'checkout']), $period['attendances']),$period['attendances']);
                 if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
 
@@ -925,7 +925,6 @@ function calculateTotalAbsentDays($attendanceData)
             }
         }
     }
-    dd($totalAbsentDays);
     $finalResult = [
         'total_leave_days' => $totalLeaveDays,
         'total_absent_days' => $totalAbsentDays,
