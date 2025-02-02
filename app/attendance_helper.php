@@ -874,7 +874,11 @@ function calculateTotalAbsentDays($attendanceData)
             // break;
         }
         if (isset($data['periods']) && !empty($data['periods'])) {
-            $allAbsent = true; // Assume all are absent initially
+            if (count($data['periods']) == 1) {
+                $allAbsent = true; // Assume all are absent initially
+            } else {
+                $allAbsent = false;
+            }
             // Loop through each period to check attendance
             foreach ($data['periods'] as $period) {
 
