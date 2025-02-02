@@ -10,12 +10,13 @@ use Illuminate\Support\Facades\Log;
 
 function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $year, $month, $allowedLeaves, $leaveTypeId, $absentDates, $leaveBalance)
 {
-    DB::beginTransaction();
-    try {
-        if (is_numeric($allowedLeaves) && $allowedLeaves > 0) {
+    // DB::beginTransaction();
+    // try {
+    if (is_numeric($allowedLeaves) && $allowedLeaves > 0) {
 
-            for ($i = 0; $i < $allowedLeaves; $i++) {
-                // dd($absentDates[$i]);
+        $i = 1;
+        foreach ($absentDates as  $date) {
+            if ($i <= $allowedLeaves) {
                 EmployeeApplicationV2::create([
                     'employee_id' => $employeeId,
                     'branch_id' => $branchId,
@@ -34,27 +35,29 @@ function checkForMonthlyBalanceAndCreateToCancelAbsent($employeeId, $branchId, $
                     'leave_type' => $leaveTypeId,
                     'year' => $year,
                     'month' => $month,
-                    'start_date' => $absentDates[$i],
-                    'end_date' => $absentDates[$i],
+                    'start_date' => $date,
+                    'end_date' => $date,
                     'days_count' => 1,
-                ])
-                ;
-            }
-            $leaveBalance
-                ->update([
-                    'balance' => $leaveBalance->balance - $allowedLeaves,
                 ]);
-            Log::alert('done_created_auto_monthly_leave', ['employee' => [$employeeId], 'absentDates' => $absentDates]);
-
-            DB::commit();
-            return ['result' => true];
+            }
+            $i++;
         }
-    } catch (\Throwable $th) {
-        //throw $th;
-        DB::rollBack();
-        Log::error('failed_creating_auto_monthly', ['error' => $th]);
-        return ['result' => false];
+
+        $leaveBalance
+            ->update([
+                'balance' => $leaveBalance->balance - $allowedLeaves,
+            ]);
+        // Log::alert('done_created_auto_monthly_leave', ['employee' => [$employeeId], 'absentDates' => $absentDates]);
+
+        // DB::commit();
+        return ['result' => true];
     }
+    // } catch (\Throwable $th) {
+    //     //throw $th;
+    //     DB::rollBack();
+    //     Log::error('failed_creating_auto_monthly', ['error' => $th]);
+    //     return ['result' => false];
+    // }
 }
 
 
@@ -134,7 +137,11 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
 function calculateAutoWeeklyLeaveDataForBranch_($yearAndMonth, $branchId)
 {
     $branchResults = [];
-    foreach (Employee::where('branch_id', $branchId)->active()->get() as $employee) {
+    foreach (
+        Employee::where('branch_id', $branchId)
+            
+            ->active()->get() as $employee
+    ) {
         $results = calculateAutoWeeklyLeaveData($yearAndMonth, $employee->id);
         if ($results != 'no_periods') {
             $branchResults[$employee->id] = $results;
