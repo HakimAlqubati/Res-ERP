@@ -139,7 +139,7 @@ function calculateAutoWeeklyLeaveDataForBranch_($yearAndMonth, $branchId)
     $branchResults = [];
     foreach (
         Employee::where('branch_id', $branchId)
-            ->active()->get() as $employee
+            ->active()->select('id')->get(['id']) as $employee
     ) {
         $results = calculateAutoWeeklyLeaveData($yearAndMonth, $employee->id);
         if ($results != 'no_periods') {
