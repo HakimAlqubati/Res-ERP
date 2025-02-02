@@ -925,7 +925,7 @@ function calculateTotalAbsentDays($attendanceData)
             }
         }
     }
-    // dd($totalAttendanceDays);
+    dd($totalAbsentDays);
     $finalResult = [
         'total_leave_days' => $totalLeaveDays,
         'total_absent_days' => $totalAbsentDays,

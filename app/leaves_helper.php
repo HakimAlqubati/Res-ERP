@@ -86,7 +86,7 @@ function calculateAutoWeeklyLeaveData($yearAndMonth, $employeeId)
     })->count();
 
     $absendCalculated = calculateTotalAbsentDays($attendances);
-dd($absendCalculated);
+
     $absentDates = $absendCalculated['absent_dates'];
     $totalAttendanceDays = $absendCalculated['total_attendance_days'];
 
