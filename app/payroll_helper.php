@@ -919,10 +919,16 @@ function calculateTotalMissingHours(array $data)
         if (count($details['periods']) > 1) {
             foreach ($details['periods'] as $detail) {
 
-                if ($date == '2025-01-04') {
-                    dd($detail);
-                }
                 if (is_array($detail['attendances']) && count($detail['attendances']) <= 1) {
+                    $period = WorkPeriod::find($detail['period_id']);
+                    $periodSupposedDupration = $period->supposed_duration;
+
+                    list($hours, $minutes) = explode(':', $periodSupposedDupration);
+                    $totalMinutes = ($hours * 60) + $minutes;
+                    $totalMissingMinutes += $totalMinutes;
+                }
+
+                if ($detail['attendances'] == 'absent') {
                     $period = WorkPeriod::find($detail['period_id']);
                     $periodSupposedDupration = $period->supposed_duration;
 
