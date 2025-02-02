@@ -172,7 +172,7 @@ function calculateMonthlySalaryV2($employeeId, $date)
 
     $totalMissingHours = calculateTotalMissingHours($attendances);
 
-    dd($totalMissingHours);
+
     $overtimeHours = getEmployeeOvertimes($date, $employee);
     // Calculate overtime pay (overtime hours paid at double the regular hourly rate)
     $overtimePay = $overtimeHours * $hourlySalary * setting('overtime_hour_multiplier');
@@ -918,6 +918,7 @@ function calculateTotalMissingHours(array $data)
 
         if (count($details['periods']) > 1) {
             foreach ($details['periods'] as $detail) {
+                dd($detail);
                 if (is_array($detail['attendances']) && count($detail['attendances']) <= 1) {
                     $period = WorkPeriod::find($detail['period_id']);
                     $periodSupposedDupration = $period->supposed_duration;
