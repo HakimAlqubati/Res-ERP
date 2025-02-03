@@ -49,8 +49,9 @@ class UnitResource extends Resource
             ->schema([
                 Fieldset::make()->columns(3)->schema([
                     Forms\Components\TextInput::make('name')->required()
-                    ->live(debounce: 500)->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state)))
-                    ->columnSpan(1),
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state)))
+                        ->columnSpan(1),
                     Forms\Components\TextInput::make('code')->required(),
                     Toggle::make('active')->inline(false)->default(true),
                     Forms\Components\Textarea::make('description')->label('Description')->columnSpanFull(),
@@ -69,14 +70,14 @@ class UnitResource extends Resource
                     ->searchable(isIndividual: false, isGlobal: false),
                 Tables\Columns\TextColumn::make('code')->alignCenter(true)
                     ->searchable(isIndividual: false, isGlobal: false),
-                
-                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
+
+                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
-               
+
             ])
             ->actions([
                 ActionGroup::make([
