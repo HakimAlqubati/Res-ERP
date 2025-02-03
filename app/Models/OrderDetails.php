@@ -103,6 +103,7 @@ class OrderDetails extends Model
                 'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
                 'quantity' =>  $orderDetail->quantity,
                 'unit_id' => $orderDetail->unit_id,
+                'movement_date' => now(),
                 'package_size' => $orderDetail->package_size,
                 'reference_id' => $orderDetail->order_id,
                 'notes' => 'Order Detail created and quantity deducted',

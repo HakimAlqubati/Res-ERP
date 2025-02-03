@@ -140,7 +140,8 @@ class PurchaseInvoiceResource extends Resource
                                 ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                                ->searchable()->columnSpan(2),
+                                ->searchable()->columnSpan(2)
+                                ->required(),
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
                                 // ->disabledOn('edit')
