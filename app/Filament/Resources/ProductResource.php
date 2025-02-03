@@ -70,7 +70,9 @@ class ProductResource extends Resource
                     Step::make('')
                         ->columns(4)
                         ->schema([
-                            TextInput::make('name')->required()->label(__('lang.name'))->live(debounce: 500)->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state))),
+                            TextInput::make('name')->required()->label(__('lang.name'))
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state))),
                             Select::make('category_id')->required()->label(__('lang.category'))
                                 ->searchable()->live()
                                 ->options(function () {
