@@ -67,8 +67,7 @@
     </div>
 
     {{-- <div class="table-container"> --}}
-    <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table"
-        style="padding-top: 5px;">
+    <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table" style="padding-top: 5px;">
         <thead class="fixed-header" style="padding-top: 5px;;top:64px;">
             <x-filament-tables::row class="header_report">
                 <th colspan="3"
@@ -215,7 +214,6 @@
                         </x-filament-tables::cell>
                     @elseif (count($data[0]['periods']) > 0 && isset($data[0]['leave']))
                         <x-filament-tables::cell colspan="9">
-                            123
                             {{ $data[0]['leave']['transaction_description'] }}
                         </x-filament-tables::cell>
                         {{-- @elseif (isset($data[0]['no_periods']) && $data['no_periods']) --}}

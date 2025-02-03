@@ -690,18 +690,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
         // dd($employee);
         if ($employee) {
 
-            // if (!$employee) {
-            //     // Skip if the employee doesn't exist or doesn't have periods
-            //     $result[$employeeId] = ['error' => 'Employee not found or has no periods'];
-            //     continue;
-            // }
 
-            // $employee = Employee::find($employeeId)->wherehas('periods');
-            // if (!$employee) {
-            //     // Skip if the employee doesn't exist
-            //     $result[$employeeId] = ['error' => 'Employee not found'];
-            //     continue;
-            // }
 
             // Initialize the result for the current employee and date
             $result[$employeeId][$date->toDateString()] = [
@@ -725,6 +714,21 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                 ];
                 continue; // Skip to the next employee if it's a holiday
             }
+
+            $leaveApplications =  $employee?->approvedLeaveApplications()
+                ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
+                ->where(function ($query) use ($date) {
+                    $query->whereBetween('hr_leave_requests.start_date', [$date, $date])
+                        ->orWhereBetween('hr_leave_requests.end_date', [$date, $date]);
+                })
+                ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
+                ->select(
+                    'hr_leave_requests.start_date as from_date',
+                    'hr_leave_requests.end_date as to_date',
+                    'hr_leave_requests.leave_type',
+                    'hr_leave_types.name as transaction_description',
+                )->first();
+
 
             // // Fetch leave applications for the specific date
             // $leave = $employee->approvedLeaveApplications()
@@ -750,15 +754,27 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             //     continue; // Skip to the next employee if it's a leave day
             // }
 
-            // if ($leaveTransactions) {
+            if ($leaveApplications) {
 
-            //     $result[$employeeId][$date->toDateString()]['leave'] = [
-            //         'transaction_type_id' => $leaveTransactions->leave_type,
-            //         'transaction_description' => $leaveTransactions->transaction_description,
-            //     ];
-            //     // continue; // Skip to the next employee if it's a leave day
+                $result[$employeeId][$date->toDateString()]['leave'] = [
+                    'leave_type_id' => $leaveApplications?->leave_type,
+                    'transaction_description' => $leaveApplications?->transaction_description,
+                ];
+                // continue; // Skip to the next employee if it's a leave day
+            }
+
+            // if ($leaveApplications) {
+            //     foreach ($leaveApplications as $leaveApplication) {
+            //         // dd($leaveApplication->transaction_description,$leaveApplication);
+            //         if ($date->isBetween($leaveApplication->from_date, $leaveApplication->to_date, true)) {
+            //             $result[$date->toDateString()]['leave'] = [
+            //                 'leave_type_id' => $leaveApplication->leave_type_id,
+            //                 'transaction_description' => $leaveApplication->transaction_description, // Include leave type name
+            //             ];
+            //             continue 2; // Skip to the next date if it's a leave day
+            //         }
+            //     }
             // }
-
             $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()] ?? [];
             // dd($employeePeriods, $employeePeriods2);
 
