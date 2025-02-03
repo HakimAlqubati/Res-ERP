@@ -65,7 +65,7 @@ class CommentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('comment')
             ->columns([
-                Tables\Columns\TextColumn::make('comment'),
+                Tables\Columns\TextColumn::make('comment')->wrap(),
                 Tables\Columns\TextColumn::make('user.name'),
                 Tables\Columns\TextColumn::make('created_at'),
             ])

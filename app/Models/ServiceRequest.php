@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ServiceRequest extends Model
 {
-    use HasFactory,DynamicConnection;
+    use HasFactory, DynamicConnection;
     protected $table = 'hr_service_requests';
 
     // Fillable fields
@@ -23,9 +23,11 @@ class ServiceRequest extends Model
         'status',
         'created_by',
         'updated_by',
+        'accepted',
+        'equipment_id',
     ];
 
-    
+
     // Status constants
     const STATUS_NEW = 'New';
     const STATUS_PENDING = 'Pending';
@@ -122,19 +124,25 @@ class ServiceRequest extends Model
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
-        } 
+        }
         if (isStuff()) {
             static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('assigned_to', auth()->user()->employee->id)
-                ->orWhere('created_by',auth()->user()->id)
+                    ->orWhere('created_by', auth()->user()->id)
                 ; // Add your default query here
             });
-        }  elseif (isFinanceManager()) {
+        } elseif (isFinanceManager()) {
             static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('assigned_to', auth()->user()->employee->id)
-                ->orWhere('created_by',auth()->user()->id)
+                    ->orWhere('created_by', auth()->user()->id)
                 ; // Add your default query here
             });
         }
+    }
+
+    // Scope for accepted service requests
+    public function scopeAccepted($query)
+    {
+        return $query->where('accepted', true);
     }
 }

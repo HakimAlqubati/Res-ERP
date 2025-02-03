@@ -46,6 +46,10 @@ class Branch extends Model
     {
         return $this->hasMany(BranchArea::class);
     }
+    public function equipments()
+    {
+        return $this->hasMany(Equipment::class);
+    }
 
     public function scopeWithUserCheck($query)
     {
@@ -83,4 +87,10 @@ class Branch extends Model
             }
         }
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
+
 }
