@@ -147,4 +147,5 @@ return [
     'purchasing_stores_reports' => 'تقارير (المشتروات - المخزون)',
     'is_hq' => 'الفرع الرئيسي؟',
     'package_size' => 'العبوة',
+    'purchase_invoice_id' => 'رقم فاتورة المورد',
 ];

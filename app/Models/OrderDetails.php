@@ -28,7 +28,7 @@ class OrderDetails extends Model
         'package_size',
     ];
 
-
+    protected $appends = ['total_price'];
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -92,22 +92,35 @@ class OrderDetails extends Model
     {
         return $this->belongsTo(Unit::class);
     }
-    protected static function boot()
-    {
-        parent::boot();
+    // protected static function boot()
+    // {
+    //     parent::boot();
 
-        static::created(function ($orderDetail) {
-            // Subtract from inventory transactions
-            \App\Models\InventoryTransaction::create([
-                'product_id' => $orderDetail->product_id,
-                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
-                'quantity' =>  $orderDetail->quantity,
-                'unit_id' => $orderDetail->unit_id,
-                'movement_date' => now(),
-                'package_size' => $orderDetail->package_size,
-                'reference_id' => $orderDetail->order_id,
-                'notes' => 'Order Detail created and quantity deducted',
-            ]);
-        });
+    //     static::creating(function ($orderDetail) {
+    //         $orderDetail->available_quantity = $orderDetail->quantity;
+    //     });
+    //     static::created(function ($orderDetail) {
+    //         $notes = 'Order with id ' . $orderDetail->order_id;
+    //         if (isset($orderDetail->order->store_id)) {
+    //             $notes .= ' in (' . $orderDetail->order->store->name . ')';
+    //         }
+    //         // Subtract from inventory transactions
+    //         \App\Models\InventoryTransaction::create([
+    //             'product_id' => $orderDetail->product_id,
+    //             'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
+    //             'quantity' =>  $orderDetail->quantity,
+    //             'unit_id' => $orderDetail->unit_id,
+    //             'movement_date' => now(),
+    //             'package_size' => $orderDetail->package_size,
+    //             'reference_id' => $orderDetail->order_id,
+    //             'store_id' => $orderDetail->order?->store_id,
+    //             'notes' => $notes,
+    //         ]);
+    //     });
+    // }
+
+    public function getTotalPriceAttribute()
+    {
+        return $this->quantity * $this->price;
     }
 }

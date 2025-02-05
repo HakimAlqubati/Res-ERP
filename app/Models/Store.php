@@ -26,4 +26,15 @@ class Store extends Model
     {
         return $query->where('active', true);
     }
+
+    /**
+     * Scope to get the default store.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeDefaultStore($query)
+    {
+        return $query->where('default_store', true)->first();
+    }
 }

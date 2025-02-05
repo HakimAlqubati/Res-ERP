@@ -55,8 +55,11 @@ class PurchaseInvoiceDetail extends Model
     protected static function boot()
     {
         parent::boot();
-
         static::created(function ($purchaseInvoiceDetail) {
+            $notes = 'Purchase invoice with id ' . $purchaseInvoiceDetail->purchase_invoice_id;
+            if (isset($purchaseInvoiceDetail->purchaseInvoice->store_id)) {
+                $notes .= ' in (' . $purchaseInvoiceDetail->purchaseInvoice->store->name . ')';
+            }
             // Add a record to the inventory transactions table
             \App\Models\InventoryTransaction::create([
                 'product_id' => $purchaseInvoiceDetail->product_id,
@@ -66,7 +69,8 @@ class PurchaseInvoiceDetail extends Model
                 'movement_date' => now(),
                 'unit_id' => $purchaseInvoiceDetail->unit_id,
                 'reference_id' => $purchaseInvoiceDetail->purchase_invoice_id,
-                'notes' => 'Purchase Invoice Detail added',
+                'store_id' => $purchaseInvoiceDetail->purchaseInvoice?->store_id,
+                'notes' => $notes,
             ]);
         });
     }

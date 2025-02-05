@@ -147,4 +147,5 @@ return [
     'purchasing_stores_reports' => 'Reports (Stores & Purchasing)',
     'is_hq' => 'Is HQ',
     'package_size' => 'Package Size',
+    'purchase_invoice_id' => 'Purchase ID',
 ];

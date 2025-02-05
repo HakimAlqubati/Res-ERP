@@ -3,12 +3,13 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages; 
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
-use App\Models\Product; 
+use App\Models\Product;
+use App\Models\Store;
 use Filament\Pages\SubNavigationPosition;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,10 +46,17 @@ class InventoryTransactionReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(Product::active()->get()->pluck('name', 'id')),
+                SelectFilter::make("store_id")
+                    ->label(__('lang.store'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
             ]);
     }
 
-  
+
     public static function getPages(): array
     {
         return [

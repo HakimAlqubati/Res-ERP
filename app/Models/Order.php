@@ -30,6 +30,7 @@ class Order extends Model
         'transfer_date',
         'is_purchased',
         'order_date',
+        'store_id',
     ];
 
     public function orderDetails()
@@ -93,5 +94,8 @@ class Order extends Model
     {
         
         return $this->orderDetails?->sum('price');
+    }
+    public function store(){
+        return $this->belongsTo(Store::class);
     }
 }

@@ -9,12 +9,17 @@ use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\UnitPrice;
 use App\Models\User;
+use App\Services\FifoMethodService;
+use App\Services\InventoryService;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -63,24 +68,44 @@ class OrderResource extends Resource implements HasShieldPermissions
     }
     public static function form(Form $form): Form
     {
+        // Define product, unit, and store
+        $productId = 1;
+        $unitId = 1;
+        $storeId = 1;
+        $requestedQuantity = 3581;
+
+
+        // Instantiate the FifoMethodService using InventoryService
+        $fifoService = new FifoMethodService($productId, $unitId, $requestedQuantity);
+
+        // Calculate the allocation using FIFO
+        $result = $fifoService->calculateRemainingQuantity($requestedQuantity);
+        // dd($result);
         return $form
             ->schema([
                 Fieldset::make()->schema([
-                    Select::make('branch_id')->required()
-                        ->label(__('lang.branch'))
-                        ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
-                    Select::make('status')->required()
-                        ->label(__('lang.order_status'))
-                        ->options([
-                            Order::ORDERED => 'Ordered',
-                            Order::READY_FOR_DELEVIRY => 'Ready for delivery',
-                            Order::PROCESSING => 'processing',
-                            Order::DELEVIRED => 'delevired',
-                        ])->default(Order::ORDERED),
+                    Grid::make()->columns(3)->schema([
+                        Select::make('branch_id')->required()
+                            ->label(__('lang.branch'))
+                            ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
+                        Select::make('status')->required()
+                            ->label(__('lang.order_status'))
+                            ->options([
+                                Order::ORDERED => 'Ordered',
+                                Order::READY_FOR_DELEVIRY => 'Ready for delivery',
+                                Order::PROCESSING => 'processing',
+                                Order::DELEVIRED => 'delevired',
+                            ])->default(Order::ORDERED),
+                        Select::make('store_id')->required()
+                            ->label(__('lang.store'))->disabledOn('edit')
+                            ->options([
+                                Store::active()->get()->pluck('name', 'id')->toArray()
+                            ])->default(Store::defaultStore()?->id),
+                    ]),
                     // Repeater for Order Details
                     Repeater::make('orderDetails')->columnSpanFull()
-                        ->label(__('lang.order_details'))->columns(6)
-                        ->relationship('orderDetails') // Relationship with the OrderDetails model
+                        ->label(__('lang.order_details'))->columns(8)
+                        ->relationship() // Relationship with the OrderDetails model
                         ->schema([
                             Select::make('product_id')
                                 ->label(__('lang.product'))
@@ -97,7 +122,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                                 ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                                ->searchable(),
+                                ->searchable()->columnSpan(2),
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
                                 // ->disabledOn('edit')
@@ -119,24 +144,76 @@ class OrderResource extends Resource implements HasShieldPermissions
                                         $get('product_id')
                                     )->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price);
+                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
                                     $set('package_size',  $unitPrice->package_size ?? 0);
-                                }),
-                            TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
-                                ->label(__('lang.package_size')),
+                                })->columnSpan(1),
+                            TextInput::make('purchase_invoice_id')->label(__('lang.purchase_invoice_id'))->readOnly()->visibleOn('view'),
+                            Hidden::make('package_size'),
+                            Hidden::make('available_quantity')->default(1),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
-                                ->numeric()->live()->afterStateUpdated(fn($set, $state): string => $set('available_quantity', $state))
-                                ->required(),
-                            TextInput::make('available_quantity')->readOnly()
-                                ->label('available_quantity')
-                                ->numeric()
-                                ->required(),
+                                ->numeric()->live()
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $set('available_quantity', $state);
+
+                                    $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
+                                })
+                                ->rules([
+                                    fn($get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+
+                                        $fifoService = new FifoMethodService($get('product_id'), $get('unit_id'), $value);
+                                        $result = $fifoService->calculateRemainingQuantity($value);
+
+                                        if ($result['status'] === 'error') {
+                                            $fail(__('The quantity exceeds available stock: ') . $result['total_remaining_quantity']);
+                                        }
+                                    },
+                                ])
+                                ->required()->default(1),
 
                             TextInput::make('price')
-                                ->label(__('lang.price'))
+                                ->label(__('lang.price'))->readOnly()
                                 ->numeric()
                                 ->required(),
+                            TextInput::make('total_price')
+                                ->label(__('lang.total_price'))
+                                ->numeric()
+                                ->readOnly(),
                         ])
+                        ->saveRelationshipsUsing(function ($state, $get, $livewire) {
+                            $record = $livewire->form->getRecord();
+
+                            $allocatedRows = [];
+                            foreach ($state as $key => $allocation) {
+
+                                $fifoService = new FifoMethodService($allocation['product_id'], $allocation['unit_id'], $allocation['quantity']);
+
+                                // Calculate the allocation using FIFO
+                                $result = $fifoService->calculateRemainingQuantity($allocation['quantity']);
+
+                                if ($result['status'] === 'success') {
+                                    $allocatedRowsRes = $result['allocated'];
+
+                                    foreach ($allocatedRowsRes as $value) {
+
+                                        $allocatedRows = [
+                                            'purchase_invoice_id' => $value['reference_id'],
+                                            'quantity' => $value['allowed_quantity'],
+                                            'available_quantity' => $value['allowed_quantity'],
+                                            // 'allowed_quantity' => $value['allowed_quantity'],
+                                            'price' => $value['purchase_invoice_detail']['price'],
+                                            'package_size' => $value['purchase_invoice_detail']['package_size'],
+                                            'unit_id' => $value['purchase_invoice_detail']['unit_id'],
+                                            'product_id' =>  $allocation['product_id'],
+
+                                        ];
+                                        if (isset($allocatedRows['product_id'])) {
+                                            $record->orderDetails()->create($allocatedRows);
+                                        }
+                                    }
+                                }
+                            }
+                        })
                         ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
                         ->required(),
 

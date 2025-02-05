@@ -17,28 +17,38 @@ class InventoryService
      */
     public $productId;
     public $unitId;
+    public $storeId;
 
-    public function __construct($productId, $unitId)
+    public function __construct($productId, $unitId, $storeId = null)
     {
         $this->productId = $productId;
         $this->unitId = $unitId;
+        $this->storeId = $storeId;
     }
+
     public function getInventoryReport()
     {
         return  $this->getRemainingQty();
     }
 
     private function getRemainingQty()
-    { 
-        $totalIn = DB::table('inventory_transactions')
+    {
+        $queryIn = DB::table('inventory_transactions')
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
-            ->sum(DB::raw('quantity * package_size'));
+            ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE);
 
-        $totalOut = DB::table('inventory_transactions')
+        $queryOut = DB::table('inventory_transactions')
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_ORDERS)
-            ->sum(DB::raw('quantity * package_size'));
+            ->where('movement_type', InventoryTransaction::MOVEMENT_ORDERS);
+
+        if (!is_null($this->storeId)) {
+            $queryIn->where('store_id', $this->storeId);
+            $queryOut->where('store_id', $this->storeId);
+        }
+
+        $totalIn = $queryIn->sum(DB::raw('quantity * package_size'));
+        $totalOut = $queryOut->sum(DB::raw('quantity * package_size'));
+
         $remQty = $totalIn - $totalOut;
         $unitPrices = $this->getProductUnitPrices();
         $result = [];
@@ -54,8 +64,8 @@ class InventoryService
         return $result;
         return;
     }
-    private function getProductUnitPrices()
-    { 
+    public function getProductUnitPrices()
+    {
         // Fetch the product with its unitPrices and related unit information
         $query = Product::find($this->productId)
             ->unitPrices()->orderBy('order', 'asc')
