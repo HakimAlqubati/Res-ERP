@@ -183,34 +183,41 @@ class OrderResource extends Resource implements HasShieldPermissions
                         ->saveRelationshipsUsing(function ($state, $get, $livewire) {
                             $record = $livewire->form->getRecord();
 
-                            $allocatedRows = [];
-                            foreach ($state as $key => $allocation) {
+                            if (setting('calculating_orders_price_method') == 'fifo') {
 
-                                $fifoService = new FifoMethodService($allocation['product_id'], $allocation['unit_id'], $allocation['quantity']);
+                                $allocatedRows = [];
+                                foreach ($state as $key => $allocation) {
 
-                                // Calculate the allocation using FIFO
-                                $result = $fifoService->calculateRemainingQuantity($allocation['quantity']);
+                                    $fifoService = new FifoMethodService($allocation['product_id'], $allocation['unit_id'], $allocation['quantity']);
 
-                                if ($result['status'] === 'success') {
-                                    $allocatedRowsRes = $result['allocated'];
+                                    // Calculate the allocation using FIFO
+                                    $result = $fifoService->calculateRemainingQuantity($allocation['quantity']);
 
-                                    foreach ($allocatedRowsRes as $value) {
+                                    if ($result['status'] === 'success') {
+                                        $allocatedRowsRes = $result['allocated'];
 
-                                        $allocatedRows = [
-                                            'purchase_invoice_id' => $value['reference_id'],
-                                            'quantity' => $value['allowed_quantity'],
-                                            'available_quantity' => $value['allowed_quantity'],
-                                            // 'allowed_quantity' => $value['allowed_quantity'],
-                                            'price' => $value['purchase_invoice_detail']['price'],
-                                            'package_size' => $value['purchase_invoice_detail']['package_size'],
-                                            'unit_id' => $value['purchase_invoice_detail']['unit_id'],
-                                            'product_id' =>  $allocation['product_id'],
+                                        foreach ($allocatedRowsRes as $value) {
 
-                                        ];
-                                        if (isset($allocatedRows['product_id'])) {
-                                            $record->orderDetails()->create($allocatedRows);
+                                            $allocatedRows = [
+                                                'purchase_invoice_id' => $value['reference_id'],
+                                                'quantity' => $value['allowed_quantity'],
+                                                'available_quantity' => $value['allowed_quantity'],
+                                                // 'allowed_quantity' => $value['allowed_quantity'],
+                                                'price' => $value['purchase_invoice_detail']['price'],
+                                                'package_size' => $value['purchase_invoice_detail']['package_size'],
+                                                'unit_id' => $value['purchase_invoice_detail']['unit_id'],
+                                                'product_id' =>  $allocation['product_id'],
+
+                                            ];
+                                            if (isset($allocatedRows['product_id'])) {
+                                                $record->orderDetails()->create($allocatedRows);
+                                            }
                                         }
                                     }
+                                }
+                            } else {
+                                foreach ($state as $item) {
+                                    $record->orderDetails()->create($item);
                                 }
                             }
                         })

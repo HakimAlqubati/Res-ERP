@@ -92,32 +92,32 @@ class OrderDetails extends Model
     {
         return $this->belongsTo(Unit::class);
     }
-    // protected static function boot()
-    // {
-    //     parent::boot();
+    protected static function boot()
+    {
+        parent::boot();
 
-    //     static::creating(function ($orderDetail) {
-    //         $orderDetail->available_quantity = $orderDetail->quantity;
-    //     });
-    //     static::created(function ($orderDetail) {
-    //         $notes = 'Order with id ' . $orderDetail->order_id;
-    //         if (isset($orderDetail->order->store_id)) {
-    //             $notes .= ' in (' . $orderDetail->order->store->name . ')';
-    //         }
-    //         // Subtract from inventory transactions
-    //         \App\Models\InventoryTransaction::create([
-    //             'product_id' => $orderDetail->product_id,
-    //             'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
-    //             'quantity' =>  $orderDetail->quantity,
-    //             'unit_id' => $orderDetail->unit_id,
-    //             'movement_date' => now(),
-    //             'package_size' => $orderDetail->package_size,
-    //             'reference_id' => $orderDetail->order_id,
-    //             'store_id' => $orderDetail->order?->store_id,
-    //             'notes' => $notes,
-    //         ]);
-    //     });
-    // }
+        static::creating(function ($orderDetail) {
+            $orderDetail->available_quantity = $orderDetail->quantity;
+        });
+        static::created(function ($orderDetail) {
+            $notes = 'Order with id ' . $orderDetail->order_id;
+            if (isset($orderDetail->order->store_id)) {
+                $notes .= ' in (' . $orderDetail->order->store->name . ')';
+            }
+            // Subtract from inventory transactions
+            \App\Models\InventoryTransaction::create([
+                'product_id' => $orderDetail->product_id,
+                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
+                'quantity' =>  $orderDetail->quantity,
+                'unit_id' => $orderDetail->unit_id,
+                'movement_date' => now(),
+                'package_size' => $orderDetail->package_size,
+                'reference_id' => $orderDetail->order_id,
+                'store_id' => $orderDetail->order?->store_id,
+                'notes' => $notes,
+            ]);
+        });
+    }
 
     public function getTotalPriceAttribute()
     {
