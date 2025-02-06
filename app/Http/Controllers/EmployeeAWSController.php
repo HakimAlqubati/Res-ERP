@@ -161,10 +161,27 @@ class EmployeeAWSController extends Controller
         // Generate a unique filename
         $fileName = 'captured_face_' . time() . '.png';
 
+        // Save the image to S3 and generate URL
+        $path = "uploads/{$fileName}";
         // Save the image to the S3 bucket
-        Storage::disk('s3')->put("uploads/{$fileName}", $imageData, [
+        Storage::disk('s3')->put($path, $imageData, [
             'visibility' => 'private',
             'ContentType' => 'image/jpeg',
+        ]);
+
+        // Log::info('image_uploaded', [$path]);
+
+        // Generate the S3 URL for the uploaded image
+        // Generate a temporary signed URL
+        // $imgUrl = Storage::disk('s3')->temporaryUrl(
+        //     $path,
+        //     now()->addMinutes(60)  // Expire after 60 minutes
+        // );
+        // Store image details in attendance_images_uploaded table
+
+        $uploadedImage = \App\Models\AttendanceImagesUploaded::create([
+            'img_url' => $path,
+            'datetime' => now(),
         ]);
 
         // Initialize Rekognition client
@@ -230,6 +247,10 @@ class EmployeeAWSController extends Controller
 
 
             $employee = Employee::find($employeeId);
+            if ($uploadedImage && $employee) {
+                $uploadedImage->employee_id = $employeeId;
+                $uploadedImage->save();
+            }
             if ($employee) {
                 // $date = now()->toDateString();
                 // $time = now()->toTimeString();

@@ -18,7 +18,7 @@ class ImageController extends Controller
      * Display all images from the S3 bucket, optionally filtered by date.
      *
      * @param Request $request
-     * @return \Illuminate\View\View
+     * @return \Illuminate\View\V iew
      */
     public function displayAllImages(Request $request)
     {
@@ -28,7 +28,7 @@ class ImageController extends Controller
 
         // Fetch images using the service
         $imageUrls = $this->s3ImageService->getAllImages($startDate, $endDate);
-        return $imageUrls;
+        // return $imageUrls;
         return view('images.display', compact('imageUrls', 'startDate', 'endDate'));
     }
 }
