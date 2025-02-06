@@ -23,7 +23,7 @@ class AttendanceImagesUploadedResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRAttenanceCluster::class;
+    // protected static ?string $cluster = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 20;
 
