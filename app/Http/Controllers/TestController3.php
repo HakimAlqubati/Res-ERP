@@ -24,9 +24,9 @@ class TestController3 extends Controller
 
     public function testFifo()
     {
-        $productId = 1;
-        $unitId = 3;
-        $requestedQuantity = 1200;
+        $productId = $_GET['p'];
+        $unitId = $_GET['u'];
+        $requestedQuantity = $_GET['q'];
         $fifoService = new FifoInventoryService($productId, $unitId, $requestedQuantity);
         $response = $fifoService->allocateOrder();
         return $response;
