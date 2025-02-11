@@ -50,7 +50,7 @@ class FifoInventoryService
 
             // Step 2: Determine remaining quantity available for allocation
             $availableQty = ($purchase->quantity * $purchase->package_size) - $totalOrderedQty;
-
+            $adjustedPrice = ($purchase->price / $purchase->package_size) * $packageSize;
             // تحويل الكمية المتاحة إلى الوحدة المطلوبة باستخدام package_size
             $availableQtyInUnit = $availableQty / $packageSize;
 
@@ -61,11 +61,15 @@ class FifoInventoryService
             // Step 3: Determine the quantity to allocate
             $allocatedQty = min($availableQtyInUnit, $remainingQuantity);
 
+
             // Step 4: Record allocation details
             $allocations[] = [
                 'purchase_invoice_id' => $purchase->reference_id,
                 'allocated_qty' => $allocatedQty,
-                'unit_price' => $purchase->price,
+                'unit_id' => $this->unitId,
+                'product_id' => $this->productId,
+                'unit_price' => round($adjustedPrice, 2),
+                'package_size' => $packageSize,
                 'movement_date' => $purchase->movement_date,
             ];
 
@@ -135,7 +139,10 @@ class FifoInventoryService
     {
         try {
             $this->inventoryService = new InventoryService($this->productId, $this->unitId);
-            return $this->allocateFIFOOrder();
+            return [
+                'success' => true,
+                'result' => $this->allocateFIFOOrder(),
+            ];
         } catch (Exception $e) {
             return [
                 'success' => false,

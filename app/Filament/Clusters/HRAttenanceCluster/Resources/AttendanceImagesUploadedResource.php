@@ -26,7 +26,9 @@ class AttendanceImagesUploadedResource extends Resource
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 20;
+    protected static ?string $pluralLabel = 'Attendance Images Uploaded';
 
+    protected static ?string $pluralModelLabel = 'Attendance Images Uploaded';
 
     public static function table(Table $table): Table
     {

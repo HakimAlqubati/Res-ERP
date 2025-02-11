@@ -11,7 +11,8 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User; 
+use App\Models\User;
+use App\Services\FifoInventoryService;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
@@ -89,7 +90,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                     ]),
                     // Repeater for Order Details
                     Repeater::make('orderDetails')->columnSpanFull()
-                        ->label(__('lang.order_details'))->columns(8)
+                        ->label(__('lang.order_details'))->columns(9)
                         ->relationship() // Relationship with the OrderDetails model
                         ->schema([
                             Select::make('product_id')
@@ -107,7 +108,14 @@ class OrderResource extends Resource implements HasShieldPermissions
                                 ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                                ->searchable()->columnSpan(2),
+                                ->searchable()->columnSpan(function ($record) {
+                                    
+                                    if ($record) {
+                                        return 2;
+                                    } else {
+                                        return 3;
+                                    }
+                                }),
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
                                 // ->disabledOn('edit')
@@ -145,17 +153,15 @@ class OrderResource extends Resource implements HasShieldPermissions
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
                                 })
-                                // ->rules([
-                                //     fn($get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
-
-                                //         $fifoService = new FifoMethodService($get('product_id'), $get('unit_id'), $value);
-                                //         $result = $fifoService->calculateRemainingQuantity($value);
-
-                                //         if ($result['status'] === 'error') {
-                                //             $fail(__('The quantity exceeds available stock: ') . $result['total_remaining_quantity']);
-                                //         }
-                                //     },
-                                // ])
+                                ->rules([
+                                    fn($get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+                                        $fifoService = new FifoInventoryService($get('product_id'), $get('unit_id'), $value);
+                                        $result = $fifoService->allocateOrder();
+                                        if (!$result['success']) {
+                                            $fail($result['message']);
+                                        }
+                                    },
+                                ])
                                 ->required()->default(1),
 
                             TextInput::make('price')
@@ -167,47 +173,44 @@ class OrderResource extends Resource implements HasShieldPermissions
                                 ->numeric()
                                 ->readOnly()->columnSpan(1),
                         ])
-                        // ->saveRelationshipsUsing(function ($state, $get, $livewire) {
-                        //     $record = $livewire->form->getRecord();
+                        ->saveRelationshipsUsing(function ($state, $get, $livewire) {
+                            $record = $livewire->form->getRecord();
 
-                        //     if (setting('calculating_orders_price_method') == 'fifo') {
+                            if (setting('calculating_orders_price_method') == 'fifo') {
 
-                        //         $allocatedRows = [];
-                        //         foreach ($state as $key => $allocation) {
+                                $allocatedRows = [];
+                                foreach ($state as $key => $allocation) {
 
-                        //             $fifoService = new FifoMethodService($allocation['product_id'], $allocation['unit_id'], $allocation['quantity']);
 
-                        //             // Calculate the allocation using FIFO
-                        //             $result = $fifoService->calculateRemainingQuantity($allocation['quantity']);
+                                    $fifoService = new FifoInventoryService($allocation['product_id'], $allocation['unit_id'], $allocation['quantity']);
+                                    $result = $fifoService->allocateOrder();
 
-                        //             if ($result['status'] === 'success') {
-                        //                 $allocatedRowsRes = $result['allocated'];
+                                    if ($result['success']) {
 
-                        //                 foreach ($allocatedRowsRes as $value) {
+                                        foreach ($result['result'] as $value) {
 
-                        //                     $allocatedRows = [
-                        //                         'purchase_invoice_id' => $value['reference_id'],
-                        //                         'quantity' => $value['allowed_quantity'],
-                        //                         'available_quantity' => $value['allowed_quantity'],
-                        //                         // 'allowed_quantity' => $value['allowed_quantity'],
-                        //                         'price' => $value['purchase_invoice_detail']['price'],
-                        //                         'package_size' => $value['purchase_invoice_detail']['package_size'],
-                        //                         'unit_id' => $value['purchase_invoice_detail']['unit_id'],
-                        //                         'product_id' =>  $allocation['product_id'],
+                                            $allocatedRows = [
+                                                'purchase_invoice_id' => $value['purchase_invoice_id'],
+                                                'quantity' => $value['allocated_qty'],
+                                                'available_quantity' => $value['allocated_qty'],
+                                                'price' => $value['unit_price'],
+                                                'package_size' => $value['package_size'],
+                                                'unit_id' => $value['unit_id'],
+                                                'product_id' =>  $allocation['product_id'],
 
-                        //                     ];
-                        //                     if (isset($allocatedRows['product_id'])) {
-                        //                         $record->orderDetails()->create($allocatedRows);
-                        //                     }
-                        //                 }
-                        //             }
-                        //         }
-                        //     } else {
-                        //         foreach ($state as $item) {
-                        //             $record->orderDetails()->create($item);
-                        //         }
-                        //     }
-                        // })
+                                            ];
+                                            if (isset($allocatedRows['product_id'])) {
+                                                $record->orderDetails()->create($allocatedRows);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                foreach ($state as $item) {
+                                    $record->orderDetails()->create($item);
+                                }
+                            }
+                        })
                         ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
                         ->required(),
 
