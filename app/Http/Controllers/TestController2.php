@@ -224,15 +224,5 @@ class TestController2 extends Controller
         ]);
     }
 
-    public function testInventory($productId, $unitId)
-    {
-
-        $inventoryService = new InventoryService($productId, $unitId);
-
-        // Get report for a specific product and unit
-        $report = $inventoryService->getInventoryReport();
-
-        // Print or return the report as JSON
-        return response()->json($report);
-    }
+  
 }

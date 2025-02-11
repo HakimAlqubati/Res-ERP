@@ -208,3 +208,5 @@ Route::get('/branches', function () {
 //         return 1;
 //     }
 // }
+
+require base_path('routes/custom_route.php');

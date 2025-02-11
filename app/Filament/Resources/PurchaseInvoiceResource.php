@@ -66,14 +66,18 @@ class PurchaseInvoiceResource extends Resource
     }
     public static function form(Form $form): Form
     {
-        // dd(InventoryTransaction::getInventoryTrackingData(505, 21));
+
         return $form
             ->schema([
                 Fieldset::make()->schema([
                     Grid::make()->columns(5)->schema([
-                        TextInput::make('invoice_no')->label(__('lang.invoice_no'))
+                        TextInput::make('invoice_no')
+                            ->label(__('lang.invoice_no'))
                             ->required()
                             ->unique(ignoreRecord: true)
+                            ->default(fn(): int => (PurchaseInvoice::query()
+                                ->orderBy('id', 'desc')
+                                ->value('id') + 1 ?? 1))
                             ->placeholder('Enter invoice number')
                         // ->disabledOn('edit')
                         ,
@@ -166,7 +170,7 @@ class PurchaseInvoiceResource extends Resource
 
                                     $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
                                     $set('package_size',  $unitPrice->package_size ?? 0);
-                                })->columnSpan(2),
+                                })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size')),
                             TextInput::make('quantity')
@@ -185,7 +189,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
-                                })->columnSpan(1),
+                                })->columnSpan(1)->required(),
                             TextInput::make('price')
                                 ->label(__('lang.price'))
                                 ->type('text')
@@ -202,7 +206,7 @@ class PurchaseInvoiceResource extends Resource
 
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $set('total_price', ((float) $state) * ((float)$get('quantity')));
-                                })->columnSpan(1),
+                                })->columnSpan(1)->required(),
                             TextInput::make('total_price')->minValue(1)
                                 ->type('text')
                                 ->extraInputAttributes(['readonly' => true])->columnSpan(1),

@@ -11,10 +11,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User;
-use App\Services\FifoInventoryService;
-use App\Services\FifoMethodService;
-use App\Services\InventoryService;
+use App\Models\User; 
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
@@ -69,21 +66,6 @@ class OrderResource extends Resource implements HasShieldPermissions
     }
     public static function form(Form $form): Form
     {
-        // // Define product, unit, and store
-        // $productId = 1;
-        // $unitId = 2;
-        // $storeId = 1;
-        // $requestedQuantity = 3000;
-
-
-        // // // Instantiate the FifoMethodService using InventoryService
-        // // $fifoService = new FifoMethodService($productId, $unitId, $requestedQuantity);
-
-        // // // Calculate the allocation using FIFO
-        // // $result = $fifoService->calculateRemainingQuantity($requestedQuantity);
-        // $fifoService = new FifoInventoryService($productId, $requestedQuantity, $unitId);
-        // $fifoService->allocateFIFOOrder();
-        // dd($fifoService);
         return $form
             ->schema([
                 Fieldset::make()->schema([
@@ -149,10 +131,11 @@ class OrderResource extends Resource implements HasShieldPermissions
                                     $set('price', $unitPrice->price);
                                     $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
                                     $set('package_size',  $unitPrice->package_size ?? 0);
-                                })->columnSpan(1),
+                                })->columnSpan(2),
                             TextInput::make('purchase_invoice_id')->label(__('lang.purchase_invoice_id'))->readOnly()->visibleOn('view'),
-                            Hidden::make('package_size'),
-                            Hidden::make('available_quantity')->default(1),
+                            TextInput::make('package_size')->label(__('lang.package_size'))->readOnly()->columnSpan(1),
+                            Hidden::make('available_quantity')
+                                ->default(1),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
                                 ->numeric()
@@ -178,11 +161,11 @@ class OrderResource extends Resource implements HasShieldPermissions
                             TextInput::make('price')
                                 ->label(__('lang.price'))->readOnly()
                                 ->numeric()
-                                ->required(),
+                                ->required()->columnSpan(1),
                             TextInput::make('total_price')
                                 ->label(__('lang.total_price'))
                                 ->numeric()
-                                ->readOnly(),
+                                ->readOnly()->columnSpan(1),
                         ])
                         // ->saveRelationshipsUsing(function ($state, $get, $livewire) {
                         //     $record = $livewire->form->getRecord();

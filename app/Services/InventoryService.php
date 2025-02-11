@@ -50,7 +50,7 @@ class InventoryService
         $totalOut = $queryOut->sum(DB::raw('quantity * package_size'));
 
         $remQty = $totalIn - $totalOut;
-        $unitPrices = $this->getProductUnitPrices();
+        $unitPrices = $this->getProductUnitPrices($this->productId);
         $result = [];
         foreach ($unitPrices as  $unitPrice) {
             $result[] = [
@@ -64,10 +64,10 @@ class InventoryService
         return $result;
         return;
     }
-    public function getProductUnitPrices()
+    public function getProductUnitPrices($productId)
     {
         // Fetch the product with its unitPrices and related unit information
-        $query = Product::find($this->productId)
+        $query = Product::find($productId)
             ->unitPrices()->orderBy('order', 'asc')
             ->with('unit'); // Assuming 'unitPrices' has a relationship to 'Unit'
 

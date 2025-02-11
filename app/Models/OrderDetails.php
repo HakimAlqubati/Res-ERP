@@ -110,10 +110,12 @@ class OrderDetails extends Model
                 'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_ORDERS,
                 'quantity' =>  $orderDetail->quantity,
                 'unit_id' => $orderDetail->unit_id,
+                'purchase_invoice_id' => $orderDetail?->purchase_invoice_id,
                 'movement_date' => now(),
                 'package_size' => $orderDetail->package_size,
                 'reference_id' => $orderDetail->order_id,
                 'store_id' => $orderDetail->order?->store_id,
+                'transaction_date' => $orderDetail->order->date ?? now(),
                 'notes' => $notes,
             ]);
         });

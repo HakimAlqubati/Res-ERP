@@ -66,11 +66,13 @@ class PurchaseInvoiceDetail extends Model
                 'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_PURCHASE_INVOICE,
                 'quantity' => $purchaseInvoiceDetail->quantity,
                 'package_size' => $purchaseInvoiceDetail->package_size,
+                'price' => $purchaseInvoiceDetail->price,
                 'movement_date' => now(),
                 'unit_id' => $purchaseInvoiceDetail->unit_id,
                 'reference_id' => $purchaseInvoiceDetail->purchase_invoice_id,
                 'store_id' => $purchaseInvoiceDetail->purchaseInvoice?->store_id,
                 'notes' => $notes,
+                'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
             ]);
         });
     }

@@ -22,6 +22,8 @@ class InventoryTransaction extends Model
         'package_size',
         'store_id',
         'price',
+        'transaction_date',
+        'purchase_invoice_id',
     ];
     protected $appends = ['remaining_qty', 'movement_type_title'];
 
