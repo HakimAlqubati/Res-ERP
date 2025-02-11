@@ -42,6 +42,7 @@
             background: linear-gradient(135deg, rgb(7 54 29), rgb(4 54 27 / 80%) 50%, rgba(0, 50, 30, 1));
 
             color: #ffffff;
+
         }
 
         canvas {
@@ -235,6 +236,79 @@
 
         #icon {
             display: none;
+        }
+
+        /* Ensure full-screen responsive layout */
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, rgb(7, 54, 29), rgb(4, 54, 27, 0.8) 50%, rgba(0, 50, 30, 1));
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* Video Wrapper: Responsive and centered */
+        #videoWrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 75%;
+            max-width: 1200px;
+            aspect-ratio: 16/9;
+            border-radius: 30px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Video & Captured Image: Rounded and properly scaled */
+        #video,
+        #capturedImage {
+            width: 100%;
+            height: auto;
+            border-radius: 30px;
+            object-fit: cover;
+        }
+
+        /* Loader: Positioned at center */
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+
+        /* Greeting and Header */
+        #greeting {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        /* Buttons: Styled and positioned properly */
+        button {
+            position: absolute;
+            bottom: 5%;
+            padding: 12px 24px;
+            font-size: 1.2em;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3e8e41;
         }
     </style>
 </head>
