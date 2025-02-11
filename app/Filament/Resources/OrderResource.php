@@ -115,7 +115,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                                     } else {
                                         return 3;
                                     }
-                                }),
+                                })->required(),
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
                                 // ->disabledOn('edit')
@@ -139,7 +139,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                                     $set('price', $unitPrice->price);
                                     $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
                                     $set('package_size',  $unitPrice->package_size ?? 0);
-                                })->columnSpan(2),
+                                })->columnSpan(2)->required(),
                             TextInput::make('purchase_invoice_id')->label(__('lang.purchase_invoice_id'))->readOnly()->visibleOn('view'),
                             TextInput::make('package_size')->label(__('lang.package_size'))->readOnly()->columnSpan(1),
                             Hidden::make('available_quantity')
