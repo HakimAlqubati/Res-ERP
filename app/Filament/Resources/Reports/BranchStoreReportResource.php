@@ -18,6 +18,7 @@ class BranchStoreReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
+    protected static bool $shouldRegisterNavigation = false;
      
     /**
      * @deprecated Use `getModelLabel()` instead.

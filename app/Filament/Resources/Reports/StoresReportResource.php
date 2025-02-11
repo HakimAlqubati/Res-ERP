@@ -27,6 +27,7 @@ class StoresReportResource extends Resource
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
+    protected static bool $shouldRegisterNavigation = false;
     /**
      * @deprecated Use `getModelLabel()` instead.
      */

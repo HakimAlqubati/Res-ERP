@@ -23,7 +23,7 @@ class InventoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    // protected static ?string $cluster = SupplierStoresReportsCluster::class;
+    protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
     public static function form(Form $form): Form
@@ -81,7 +81,7 @@ class InventoryResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -100,5 +100,13 @@ class InventoryResource extends Resource
             // 'create' => Pages\CreateInventory::route('/create'),
             // 'edit' => Pages\EditInventory::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        if (auth()->id() == 1) {
+            return true;
+        }
+        return false;
     }
 }
