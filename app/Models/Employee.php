@@ -104,15 +104,15 @@ class Employee extends Model
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
             return Storage::disk('s3')->url($this?->avatar);
         }
-
-        $filePath = 'public/' . $this->avatar;
         if (!$this->avatar) {
             return url('/storage') . '/' . 'employees/default/avatar.png';
         }
-        if (Storage::exists($filePath)) {
-            return url('/storage') . '/' . $this->avatar;
-        }
-        return url('/storage') . '/' . 'employees/default/avatar.png';
+
+        // $filePath = 'public/' . $this->avatar;
+        // if (Storage::exists($filePath)) {
+        //     return url('/storage') . '/' . $this->avatar;
+        // }
+        // return url('/storage') . '/' . 'employees/default/avatar.png';
     }
     public function getAvatarImage2Attribute()
     {
