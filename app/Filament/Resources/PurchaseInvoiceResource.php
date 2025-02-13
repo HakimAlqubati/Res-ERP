@@ -112,6 +112,10 @@ class PurchaseInvoiceResource extends Resource
                             ->label('Has Description')->inline(false)->live(),
 
                     ]),
+                    Textarea::make('cancel_reason')->label('Cancel Reason')
+                        ->placeholder('Cancel Reason')->hiddenOn('create')
+                        ->visible(fn($record): bool => $record->cancelled)->readOnly()
+                        ->columnSpanFull(),
                     Textarea::make('description')->label(__('lang.description'))
                         ->placeholder('Enter description')->visible(fn($get): bool => $get('has_description'))
                         ->columnSpanFull(),
@@ -253,31 +257,31 @@ class PurchaseInvoiceResource extends Resource
                 Tables\Filters\TrashedFilter::make()
             ])
             ->actions([
+                Tables\Actions\Action::make('cancel')
+                    ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
+                    ->icon('heroicon-o-backspace')->button()->color(Color::Red)
+                    ->form([
+                        Textarea::make('cancel_reason')->required()->label('Cancel Reason')
+                    ])
+                    ->action(function ($record, $data) {
+                        $result = $record->cancelInvoice($data['cancel_reason']);
+
+                        if ($result['status'] === 'success') {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Success')
+                                ->body($result['message'])
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Error')
+                                ->body($result['message'])
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Tables\Actions\ActionGroup::make([
 
-                    Tables\Actions\Action::make('cancel')
-                        ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
-                        ->icon('heroicon-o-backspace')->button()->color(Color::Red)
-                        ->form([
-                            Textarea::make('cancel_reason')->required()->label('Cancel Reason')
-                        ])
-                        ->action(function ($record, $data) {
-                            $result = $record->cancelInvoice($data['cancel_reason']);
-
-                            if ($result['status'] === 'success') {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Success')
-                                    ->body($result['message'])
-                                    ->success()
-                                    ->send();
-                            } else {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Error')
-                                    ->body($result['message'])
-                                    ->danger()
-                                    ->send();
-                            }
-                        }),
                     Tables\Actions\EditAction::make()
                         ->icon('heroicon-s-pencil'),
                     Tables\Actions\Action::make('download')
