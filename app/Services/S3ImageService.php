@@ -83,12 +83,12 @@ class S3ImageService
             ],
         ]);
 
-        
+
         // Define employee image details
         $imageName = $employee->avatar; // Assuming the avatar path is stored in the `avatar` field
         // $filenameWithoutExtension = pathinfo($imageName, PATHINFO_FILENAME);
         $externalImageId = pathinfo($imageName, PATHINFO_FILENAME);
-        $employeeName = "{$employee->id}-{$employee->name}";
+        $employeeName = "{$employee->name}-{$employee->id}";
 
         try {
             // Index face in Rekognition
@@ -126,7 +126,7 @@ class S3ImageService
 
             return response()->json([
                 'success' => true,
-                'message' => "Indexed and stored data for Employee ID: {$employee->id} successfully.",
+                'message' => "Indexed and stored data for {$employeeName} successfully.\n",
                 'face_id' => $faceId,
             ]);
         } catch (Exception $e) {
