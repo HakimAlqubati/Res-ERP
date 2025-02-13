@@ -39,7 +39,7 @@ class TestController3 extends Controller
 
         $qrCode = [
             'id' => $equipment->id,
-            'data' => url('/') . 'admin/h-r-service-request/equipment/' . $equipment->id,
+            'data' => url('/') . '/admin/h-r-service-request/equipment/' . $equipment->id,
             'name' => $equipment->name
         ];
 
