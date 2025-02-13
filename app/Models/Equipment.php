@@ -59,6 +59,7 @@ class Equipment extends Model
 
         static::creating(function ($equipment) {
             $equipment->creatd_by = Auth::id();
+            $equipment->qr_code = Auth::id();
         });
     }
 }
