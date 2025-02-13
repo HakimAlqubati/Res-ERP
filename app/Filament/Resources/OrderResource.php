@@ -27,6 +27,8 @@ use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -109,7 +111,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
                                 ->searchable()->columnSpan(function ($record) {
-                                    
+
                                     if ($record) {
                                         return 2;
                                     } else {
@@ -220,17 +222,19 @@ class OrderResource extends Resource implements HasShieldPermissions
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->copyable()
+                    ->copyable()->alignCenter(true)
+                    ->color('primary')
+                    ->weight(FontWeight::Bold)
                     ->copyMessage(__('lang.order_id_copied'))
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('customer.name')->label(__('lang.branch_manager'))->toggleable()
-                    ->searchable(isIndividual: true)
+                    ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 BadgeColumn::make('status')
@@ -242,11 +246,12 @@ class OrderResource extends Resource implements HasShieldPermissions
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
                         'danger' => static fn($state): bool => $state === Order::PROCESSING,
                     ])
-                    ->iconPosition('after'),
-                TextColumn::make('item_count')->label(__('lang.item_counts')),
-                TextColumn::make('total_amount')->label(__('lang.total_amount')),
+                    ->iconPosition('after')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
+                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
@@ -296,9 +301,34 @@ class OrderResource extends Resource implements HasShieldPermissions
 
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('cancel')
+                    ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
+                    ->icon('heroicon-o-backspace')->button()->color(Color::Red)
+                    ->form([
+                        Textarea::make('cancel_reason')->required()->label('Cancel Reason')
+                    ])
+                    ->action(function ($record, $data) {
+                        $result = $record->cancelOrder($data['cancel_reason']);
+
+                        if ($result['status'] === 'success') {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Success')
+                                ->body($result['message'])
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Error')
+                                ->body($result['message'])
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
                 // Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
@@ -384,5 +414,14 @@ class OrderResource extends Resource implements HasShieldPermissions
     public static function getGlobalSearchResultTitle(Model $record): string
     {
         return $record->id;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }

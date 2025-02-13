@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoice extends Model
 {
@@ -17,8 +19,10 @@ class PurchaseInvoice extends Model
         'invoice_no',
         'store_id',
         'attachment',
+        'cancelled',
+        'cancel_reason',
     ];
-    protected $appends = ['has_attachment'];
+    protected $appends = ['has_attachment', 'has_description'];
     public function purchaseInvoiceDetails()
     {
         return $this->hasMany(PurchaseInvoiceDetail::class, 'purchase_invoice_id');
@@ -42,4 +46,56 @@ class PurchaseInvoice extends Model
             return 0;
         }
     }
+
+    public function getHasDescriptionAttribute()
+    {
+        return !empty($this->description) ? 1 : 0;
+    }
+
+    public function cancelInvoice(string $reason)
+    {
+        DB::beginTransaction();
+
+        try {
+
+            // Check if there is an inventory transaction of type order for this purchase invoice
+            $orderExists = \App\Models\InventoryTransaction::where('purchase_invoice_id', $this->id)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_ORDERS)
+                ->exists();
+
+            if ($orderExists) {
+                return ['status' => 'error', 'message' => 'Cannot cancel purchase invoice because there are related inventory transactions of type order.'];
+            }
+
+            $this->cancelled = true;
+            $this->cancel_reason = $reason;
+            $this->save();
+
+            // Delete related inventory transactions
+            \App\Models\InventoryTransaction::where('reference_id', $this->id)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+                ->delete();
+
+            DB::commit();
+
+            return ['status' => 'success', 'message' => 'Purchase invoice canceled successfully.'];
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            return ['status' => 'error', 'message' => 'Failed to cancel purchase invoice: ' . $e->getMessage()];
+        }
+    }
+
+    // protected static function boot()
+    // {
+    //     parent::boot();
+
+    //     static::updated(function ($purchaseInvoice) {
+    //         if ($purchaseInvoice->cancelled) {
+    //             \App\Models\InventoryTransaction::where('reference_id', $purchaseInvoice->id)
+    //                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+    //                 ->delete();
+    //         }
+    //     });
+    // }
 }

@@ -34,10 +34,12 @@ class InventoryService
     private function getRemainingQty()
     {
         $queryIn = DB::table('inventory_transactions')
+            ->whereNull('deleted_at')
             ->where('product_id', $this->productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE);
 
         $queryOut = DB::table('inventory_transactions')
+            ->whereNull('deleted_at')
             ->where('product_id', $this->productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_ORDERS);
 

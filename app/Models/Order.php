@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -31,6 +33,8 @@ class Order extends Model
         'is_purchased',
         'order_date',
         'store_id',
+        'cancelled',
+        'cancel_reason',
     ];
 
     public function orderDetails()
@@ -92,10 +96,73 @@ class Order extends Model
     // attribute to get total amount
     public function getTotalAmountAttribute()
     {
-        
+
         return $this->orderDetails?->sum('price');
     }
-    public function store(){
+    public function store()
+    {
         return $this->belongsTo(Store::class);
+    }
+
+
+    // Status Labels
+    public static function getStatusLabels(): array
+    {
+        return [
+            self::ORDERED => 'Ordered',
+            self::PROCESSING => 'Processing',
+            self::READY_FOR_DELEVIRY => 'Ready for Delivery',
+            self::DELEVIRED => 'Delivered',
+            self::PENDING_APPROVAL => 'Pending Approval',
+        ];
+    }
+
+    public static function getBadgeColor(string $status): string
+    {
+        return match ($status) {
+            self::ORDERED => 'blue',
+            self::PROCESSING => 'yellow',
+            self::READY_FOR_DELEVIRY => 'orange',
+            self::DELEVIRED => 'green',
+            self::PENDING_APPROVAL => 'purple',
+            default => 'gray',
+        };
+    }
+
+    public static function getStatusIcon(string $status): string
+    {
+        return match ($status) {
+            self::ORDERED => 'heroicon-o-shopping-cart',
+            self::PROCESSING => 'heroicon-o-cog',
+            self::READY_FOR_DELEVIRY => 'heroicon-o-truck',
+            self::DELEVIRED => 'heroicon-o-check-circle',
+            self::PENDING_APPROVAL => 'heroicon-o-clock',
+            default => 'heroicon-o-exclamation-circle',
+        };
+    }
+
+    public function cancelOrder(string $reason)
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $this->cancelled = true;
+            $this->cancel_reason = $reason;
+            $this->save();
+
+            // Delete related inventory transactions
+            \App\Models\InventoryTransaction::where('reference_id', $this->id)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_ORDERS)
+                ->delete();
+
+            DB::commit();
+
+            return ['status' => 'success', 'message' => 'Order canceled successfully.'];
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            return ['status' => 'error', 'message' => 'Failed to cancel order: ' . $e->getMessage()];
+        }
     }
 }

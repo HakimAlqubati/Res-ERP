@@ -14,7 +14,12 @@ class EditPurchaseInvoice extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            
+
         ];
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

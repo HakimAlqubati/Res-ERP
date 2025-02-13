@@ -33,6 +33,8 @@ use Filament\Notifications\Actions\ActionGroup;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -70,7 +72,7 @@ class PurchaseInvoiceResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->schema([
-                    Grid::make()->columns(5)->schema([
+                    Grid::make()->columns(6)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
                             ->required()
@@ -79,36 +81,39 @@ class PurchaseInvoiceResource extends Resource
                                 ->orderBy('id', 'desc')
                                 ->value('id') + 1 ?? 1))
                             ->placeholder('Enter invoice number')
-                        // ->disabledOn('edit')
-                        ,
+                            ->disabledOn('edit'),
                         DatePicker::make('date')
                             ->required()
                             ->placeholder('Select date')
                             ->default(date('Y-m-d'))
                             ->format('Y-m-d')
-                            // ->disabledOn('edit')
+                            ->disabledOn('edit')
                             ->format('Y-m-d'),
                         Select::make('supplier_id')->label(__('lang.supplier'))
                             ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
                             ->searchable()
                             ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
-                        // ->disabledOn('edit')
-                        ,
+                            ->disabledOn('edit'),
 
                         Select::make('store_id')->label(__('lang.store'))
                             ->searchable()
+                            ->disabledOn('edit')
                             ->default(getDefaultStore())
                             ->options(
                                 Store::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')
                             )
                             ->disabledOn('edit')
                             ->searchable(),
-                        Toggle::make('has_attachment')->label('Has Attachment')->inline(false)->live(),
+                        Toggle::make('has_attachment')
+                            ->label('Has Attachment')
+                            ->inline(false)->live(),
+                        Toggle::make('has_description')
+                            ->label('Has Description')->inline(false)->live(),
 
                     ]),
                     Textarea::make('description')->label(__('lang.description'))
-                        ->placeholder('Enter description')
+                        ->placeholder('Enter description')->visible(fn($get): bool => $get('has_description'))
                         ->columnSpanFull(),
                     FileUpload::make('attachment')
                         ->label(__('lang.attachment'))
@@ -124,6 +129,12 @@ class PurchaseInvoiceResource extends Resource
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(8)
                         ->defaultItems(1)
+                        ->deletable(function ($record) {
+                            if (is_null($record)) {
+                                return true;
+                            }
+                            return false;
+                        })
                         ->columnSpanFull()
                         ->collapsible()
                         ->relationship('purchaseInvoiceDetails')
@@ -132,7 +143,7 @@ class PurchaseInvoiceResource extends Resource
                             Select::make('product_id')
                                 ->label(__('lang.product'))
                                 ->searchable()
-                                // ->disabledOn('edit')
+                                ->disabledOn('edit')
                                 ->options(function () {
                                     return Product::where('active', 1)
                                         ->unmanufacturingCategory()
@@ -148,7 +159,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->required(),
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
-                                // ->disabledOn('edit')
+                                ->disabledOn('edit')
                                 ->options(
                                     function (callable $get) {
 
@@ -178,7 +189,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->type('text')
                                 ->minValue(1)
                                 ->default(1)
-                                // ->disabledOn('edit')
+                                ->disabledOn('edit')
                                 // ->mask(
                                 //     fn (TextInput\Mask $mask) => $mask
                                 //         ->numeric()
@@ -195,7 +206,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->type('text')
                                 ->minValue(1)
                                 // ->integer()
-                                // ->disabledOn('edit')
+                                ->disabledOn('edit')
                                 // ->mask(
                                 //     fn (TextInput\Mask $mask) => $mask
                                 //         ->numeric()
@@ -220,14 +231,19 @@ class PurchaseInvoiceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->striped()
+            ->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('invoice_no')->searchable()->sortable(),
-                TextColumn::make('supplier.name')->label('Supplier'),
-                TextColumn::make('store.name')->label('Store'),
-                TextColumn::make('date')->sortable(),
-                TextColumn::make('description')->searchable(),
-                IconColumn::make('has_attachment')->label(__('lang.has_attachment'))
-                    ->boolean()
+                TextColumn::make('invoice_no')
+                    ->color('primary')
+                    ->weight(FontWeight::Bold)->alignCenter(true)
+                    ->searchable()->sortable()->toggleable(),
+                TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-'),
+                TextColumn::make('store.name')->label('Store')->toggleable(),
+                TextColumn::make('date')->sortable()->toggleable(),
+                TextColumn::make('description')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
+                    ->boolean()->toggleable()
                 // ->trueIcon('heroicon-o-badge-check')
                 // ->falseIcon('heroicon-o-x-circle')
                 ,
@@ -239,6 +255,29 @@ class PurchaseInvoiceResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
 
+                    Tables\Actions\Action::make('cancel')
+                        ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
+                        ->icon('heroicon-o-backspace')->button()->color(Color::Red)
+                        ->form([
+                            Textarea::make('cancel_reason')->required()->label('Cancel Reason')
+                        ])
+                        ->action(function ($record, $data) {
+                            $result = $record->cancelInvoice($data['cancel_reason']);
+
+                            if ($result['status'] === 'success') {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Success')
+                                    ->body($result['message'])
+                                    ->success()
+                                    ->send();
+                            } else {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Error')
+                                    ->body($result['message'])
+                                    ->danger()
+                                    ->send();
+                            }
+                        }),
                     Tables\Actions\EditAction::make()
                         ->icon('heroicon-s-pencil'),
                     Tables\Actions\Action::make('download')
@@ -292,15 +331,21 @@ class PurchaseInvoiceResource extends Resource
 
     public static function canDeleteAny(): bool
     {
-        return static::can('deleteAny');
+        return false;
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+
+        return $query;
     }
     public static function getNavigationBadge(): ?string
     {
