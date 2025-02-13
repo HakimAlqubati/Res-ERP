@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Equipment;
 use App\Services\FifoInventoryService;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
@@ -30,5 +31,18 @@ class TestController3 extends Controller
         $fifoService = new FifoInventoryService($productId, $unitId, $requestedQuantity);
         $response = $fifoService->allocateOrder();
         return $response;
+    }
+
+    public function testQRCode($id)
+    {
+        $equipment = Equipment::findOrFail($id); // Fetch all equipment
+
+        $qrCode = [
+            'id' => $equipment->id,
+            'data' => url('/') . 'admin/h-r-service-request/equipment/' . $equipment->id,
+            'name' => $equipment->name
+        ];
+
+        return view('qr-code.qrcode', compact('qrCode'));
     }
 }

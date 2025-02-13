@@ -38,7 +38,7 @@ class EquipmentResource extends Resource
                     Grid::make()->columns(3)->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Name')
-                            ->required()->prefixIconColor('primary')
+                            ->required()->prefixIconColor('primary')->columnSpan(2)
                             ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-information-circle'),
                         Forms\Components\TextInput::make('asset_tag')
                             ->label('Asset Tag')
@@ -48,7 +48,7 @@ class EquipmentResource extends Resource
                         Forms\Components\TextInput::make('qr_code')->prefixIcon('heroicon-s-qr-code')->prefixIconColor('primary')
                             ->label('QR Code')
                             ->required()
-                            ->unique(ignoreRecord: true),
+                            ->unique(ignoreRecord: true)->hidden(),
                     ]),
 
                     Forms\Components\TextInput::make('serial_number')
@@ -110,31 +110,31 @@ class EquipmentResource extends Resource
             ->columns([
                 TextColumn::make('name')->toggleable()
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('asset_tag')
                     ->searchable()->toggleable()
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('qr_code')
-                    ->searchable()->toggleable(),
+                    ->searchable()->toggleable()->hidden(),
                 TextColumn::make('make')->toggleable()
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('model')->toggleable()
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('serial_number')->toggleable()
-                    ->searchable(),
+                    ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('purchase_price')->toggleable()
                     ->money('USD')
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('profile_picture')->toggleable()
                     ->label('Profile Picture')
-                    ->rounded(),
+                    ->rounded()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('branch.name')->toggleable()
                     ->label('Branch')
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')->toggleable()
                     ->label('Created At')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('branch_id')
@@ -143,6 +143,10 @@ class EquipmentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('qrCodePrint')
+                    ->button()->icon('heroicon-o-qr-code')
+                    ->url(fn($record): string => route('testQRCode', ['id' => $record->id]), true),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -164,6 +168,7 @@ class EquipmentResource extends Resource
             'index' => Pages\ListEquipment::route('/'),
             'create' => Pages\CreateEquipment::route('/create'),
             'edit' => Pages\EditEquipment::route('/{record}/edit'),
+            'view' => Pages\ViewEquipment::route('/{record}'),
         ];
     }
 
@@ -173,7 +178,8 @@ class EquipmentResource extends Resource
             Pages\ListEquipment::class,
             Pages\CreateEquipment::class,
             Pages\EditEquipment::class,
-            // Pages\ViewEmployee::class,
+            Pages\ViewEquipment::class,
+
         ]);
     }
     public static function getNavigationBadge(): ?string
