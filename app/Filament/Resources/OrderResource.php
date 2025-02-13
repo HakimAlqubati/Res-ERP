@@ -416,6 +416,11 @@ class OrderResource extends Resource implements HasShieldPermissions
         return $record->id;
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
     public static function canDeleteAny(): bool
     {
         return false;
