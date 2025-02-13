@@ -32,30 +32,10 @@ class EmployeeImageAwsIndexesController extends Controller
 
         // Define the images and employee details
         $images = [
-            // [
-            //     'ImageName' => 'employee-employee-korian-girl.jpeg',
-            //     'ExternalImageId' => 'employee-korian-girl',
-            //     'EmployeeName' => 'Jane Smith',
-            // ],
-            // [
-            //     'ImageName' => 'employee-girl-green-hejab.jpeg',
-            //     'ExternalImageId' => 'employee-green-hejab',
-            //     'EmployeeName' => 'Sapna-96',
-            // ],
-            // [
-            //     'ImageName' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c.jpg',
-            //     'ExternalImageId' => '9654879698723-10-06accf102caaa970ce65d217b9ae9a8e9a57caa67c',
-            //     'EmployeeName' => 'Kadem-125',
-            // ],
-            // [
-            //     'ImageName' => 'Almawqea2017-12-10-08-33-02-243608.jpg',
-            //     'ExternalImageId' => 'Almawqea2017-12-10-08-33-02-243608',
-            //     'EmployeeName' => 'Abo Bakr Salem-119',
-            // ],
             [
-                'ImageName' => 'yahia.jpeg',
-                'ExternalImageId' => 'Yahia',
-                'EmployeeName' => 'يحيى القباطي حلاوة-146',
+                'ImageName' => 'employees/puJRdBPtlXkoWjJ3.jpg',
+                'ExternalImageId' => 'OOOOOOOOOOO',
+                'EmployeeName' =>'144-OOOOOOOOOOOOOO OOOOOOOOOOOO',
             ],
         ];
 

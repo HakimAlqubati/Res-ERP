@@ -19,6 +19,7 @@ use App\Models\EmployeeFileTypeField;
 use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
+use App\Services\S3ImageService;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Actions\Action as ComponentsActionsAction;
@@ -35,6 +36,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
@@ -52,6 +54,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -183,7 +186,7 @@ class EmployeeResource extends Resource
                                                     // ->avatar()
                                                     ->imageEditor()
                                                     ->circleCropper()
-                                                    ->disk('public')
+                                                    // ->disk('public')
                                                     ->directory('employees')
                                                     ->visibility('public')
                                                     ->imageEditorAspectRatios([
@@ -191,42 +194,20 @@ class EmployeeResource extends Resource
                                                         '4:3',
                                                         '1:1',
                                                     ])
-
+                                                    ->disk('s3') // Change disk to S3
+                                                    ->directory('employees')
+                                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                        return  Str::random(15) . "." . $file->getClientOriginalExtension();
+                                                    })
                                                     // ->imagePreviewHeight('250')
                                                     ->resize(5)
 
-                                                    // ->loadingIndicatorPosition('left')
-                                                    // ->panelLayout('integrated')
-                                                    // ->removeUploadedFileButtonPosition('right')
-                                                    // ->uploadButtonPosition('left')
-                                                    // ->uploadProgressIndicatorPosition('left')
-
-                                                    // ->openable()
-                                                    // ->downloadable()
-                                                    // ->default('https://dummyimage.com/900x700')
-                                                    // ->previewable(false)
-                                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                        // return (string) str($file->getClientOriginalName())->prepend('employee-');
-                                                        return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                    })
-                                                    // ->formatStateUsing(function ($record,Get $get){
-                                                    //     dd($get);
-                                                    //     return url('/').'/storage/'. $record->avatar;
+                                                    // ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                    //     // return (string) str($file->getClientOriginalName())->prepend('employee-');
+                                                    //     return Str::random(15) . "." . $file->getClientOriginalExtension();
                                                     // })
                                                     ->columnSpan(2)
                                                     ->reactive(),
-                                                // ViewField::make('avatar_view')
-                                                //     ->columnSpan(1)
-
-                                                //     ->view('filament.images.employee-avatar')
-                                                //     ->formatStateUsing(function (Get $get, $record) { //adds the initial state on page load
-
-                                                //       if(count($get('avatar'))> 0){
-                                                //           return url('/') . '/storage/' . array_values($get('avatar'))[0];
-                                                //       }
-                                                //       return '';
-                                                //     })
-                                                // ,
                                             ]),
                                         ]),
                                 ]),
@@ -630,6 +611,7 @@ class EmployeeResource extends Resource
                     ->label('Active'),
             ], FiltersLayout::AboveContent)
             ->headerActions([
+
                 ActionsAction::make('export_employees')
                     ->label('Export to Excel')
                     ->icon('heroicon-o-document-arrow-down')
@@ -688,6 +670,31 @@ class EmployeeResource extends Resource
 
             ])
             ->actions([
+                ActionsAction::make('index')
+                    ->label('AWS Indexing')->button()
+                    ->icon('heroicon-o-user-plus')
+                    ->color('success')
+                    ->visible(fn($record):bool=>$record->avatar && Storage::disk('s3')->exists($record->avatar))
+                    ->action(function ($record) {
+                        $response = S3ImageService::indexEmployeeImage($record->id);
+
+                        if (isset($response->original['success']) && $response->original['success']) {
+                            Log::info('Employee image indexed successfully.', ['employee_id' => $record->id]);
+                            Notification::make()
+                                ->title('Success')
+                                ->body($response->original['message'])
+                                ->success()
+                                ->send();
+                        } else {
+                            Log::error('Failed to index employee image.', ['employee_id' => $record->id]);
+                            Notification::make()
+                                ->title('Error')
+                                ->body($response->original['message'] ?? 'An error occurred.')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
                 ActionGroup::make([
                     ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                         ->color('info')

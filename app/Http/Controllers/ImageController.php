@@ -28,7 +28,7 @@ class ImageController extends Controller
 
         // Fetch images using the service
         $imageUrls = $this->s3ImageService->getAllImages($startDate, $endDate);
-        // return $imageUrls;
+        return $imageUrls;
         return view('images.display', compact('imageUrls', 'startDate', 'endDate'));
     }
 }

@@ -100,6 +100,11 @@ class Employee extends Model
 
     public function getAvatarImageAttribute()
     {
+
+        if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
+            return Storage::disk('s3')->url($this?->avatar);
+        }
+
         $filePath = 'public/' . $this->avatar;
         if (!$this->avatar) {
             return url('/storage') . '/' . 'employees/default/avatar.png';
