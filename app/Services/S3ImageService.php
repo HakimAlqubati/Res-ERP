@@ -83,10 +83,12 @@ class S3ImageService
             ],
         ]);
 
+        
         // Define employee image details
         $imageName = $employee->avatar; // Assuming the avatar path is stored in the `avatar` field
-        $externalImageId = "EMP-" . $employee->id;
-        $employeeName = "{$employee->id} - {$employee->name}";
+        // $filenameWithoutExtension = pathinfo($imageName, PATHINFO_FILENAME);
+        $externalImageId = pathinfo($imageName, PATHINFO_FILENAME);
+        $employeeName = "{$employee->id}-{$employee->name}";
 
         try {
             // Index face in Rekognition
