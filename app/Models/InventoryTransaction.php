@@ -47,16 +47,17 @@ class InventoryTransaction extends Model
     public static function getInventoryTrackingData($productId)
     {
         $transactions = DB::table('inventory_transactions')
+            ->whereNull('deleted_at')
             ->where('product_id', $productId)
             ->orderBy('movement_date', 'asc')
-            
+
             ->get();
 
         $trackingData = [];
         $remainingQty = 0;
 
         foreach ($transactions as $transaction) {
-            
+
             $quantityImpact = $transaction->quantity * $transaction->package_size;
             $remainingQty += ($transaction->movement_type === self::MOVEMENT_PURCHASE_INVOICE) ? $quantityImpact : -$quantityImpact;
 
