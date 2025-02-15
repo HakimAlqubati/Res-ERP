@@ -605,6 +605,7 @@ function formatHoursMinuts($totalHours)
 function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
 {
     $attenance = Attendance::where('employee_id', $employeeId)
+        ->where('accepted', 1)
         ->where('period_id', $periodId)
         ->where('check_date', $date)
         ->select('check_time', 'check_type', 'period_id')
