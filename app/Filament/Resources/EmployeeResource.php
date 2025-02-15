@@ -185,10 +185,11 @@ class EmployeeResource extends Resource
                                                     ->label('')
                                                     // ->avatar()
                                                     ->imageEditor()
+                                                    
                                                     ->circleCropper()
                                                     // ->disk('public')
-                                                    ->directory('employees')
-                                                    ->visibility('public')
+                                                    // ->directory('employees')
+                                                    ->visibility('private')
                                                     ->imageEditorAspectRatios([
                                                         '16:9',
                                                         '4:3',
@@ -201,11 +202,6 @@ class EmployeeResource extends Resource
                                                     })
                                                     // ->imagePreviewHeight('250')
                                                     ->resize(5)
-
-                                                    // ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                    //     // return (string) str($file->getClientOriginalName())->prepend('employee-');
-                                                    //     return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                    // })
                                                     ->columnSpan(2)
                                                     ->reactive(),
                                             ]),
@@ -476,7 +472,7 @@ class EmployeeResource extends Resource
         // dd($sessionLifetime);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
-            ->defaultSort('id', 'desc')
+            ->defaultSort('id', 'asc')
             ->columns([
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
