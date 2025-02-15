@@ -304,6 +304,7 @@ class Employee extends Model
     {
         // Get attendances for the specified period and date, sorted by check_time
         $attendances = $this->attendances()
+            ->where('accepted', 1)
             ->where('period_id', $periodId)
             ->where('check_date', $date)
             ->orderBy('id')
