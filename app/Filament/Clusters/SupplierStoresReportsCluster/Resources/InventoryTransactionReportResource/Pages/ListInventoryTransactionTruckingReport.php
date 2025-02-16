@@ -25,7 +25,6 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         if (isset($productId) && $productId != '') {
             $reportData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
         }
-
         return ['reportData' => $reportData, 'product' => $product];
     }
 }

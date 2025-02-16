@@ -11,6 +11,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ApprovalResource extends Resource
@@ -106,5 +107,22 @@ class ApprovalResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    public static function canView(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
+    }
+
+
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin() || isSystemManager()) {
+            return true;
+        }
+        return false;
     }
 }

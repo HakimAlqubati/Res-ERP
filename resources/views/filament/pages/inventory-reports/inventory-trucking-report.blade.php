@@ -26,9 +26,13 @@
                 @foreach ($reportData as $data)
                     <x-filament-tables::row>
                         <x-filament-tables::cell> {{ $data->movement_date }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data->movement_type === 'purchase_invoice' ? 'Purchase' : 'Order' }} </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+                            {{ $data->movement_type === 'purchase_invoice' ? 'Purchase' : 'Order' }}
+                        </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data->reference_id }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data->unit_id ? \App\Models\Unit::find($data->unit_id)->name : '' }} </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+                            {{ $data->unit_id ? \App\Models\Unit::find($data->unit_id)->name : '' }}
+                        </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data->quantity }} </x-filament-tables::cell>
                         <x-filament-tables::cell colspan="2"> {{ $data->notes }} </x-filament-tables::cell>
                     </x-filament-tables::row>
@@ -37,8 +41,10 @@
         </x-filament-tables::table>
 
         {{-- Pagination Links --}}
-        <div class="mt-4">
+        <div class="mb-4 text-sm text-gray-700">
             {{ $reportData->links() }}
+
+            {{-- Showing {{ $reportData->firstItem() }} to {{ $reportData->lastItem() }} of {{ $reportData->total() }} results --}}
         </div>
     @else
         <div class="please_select_message_div" style="text-align: center;">
