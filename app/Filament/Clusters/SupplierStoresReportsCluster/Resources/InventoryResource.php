@@ -104,7 +104,7 @@ class InventoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (auth()->id() == 1) {
+        if (isSuperAdmin()) {
             return true;
         }
         return false;

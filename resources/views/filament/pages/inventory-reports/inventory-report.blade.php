@@ -1,7 +1,7 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
     @if (isset($product) && $product != null)
-        <x-filament-tables::table class="w-full text-sm text-left pretty  ">
+        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped">
             <thead>
 
                 <x-filament-tables::row class="header_report">
