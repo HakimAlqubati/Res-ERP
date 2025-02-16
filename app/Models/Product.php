@@ -26,7 +26,19 @@ class Product extends Model
         'main_unit_id',
         'basic_price',
     ];
+    protected $appends = ['unit_prices_count'];
 
+    /**
+     * Scope to filter products with at least 2 unit prices.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWithMinimumUnitPrices($query, $count = 2)
+    {
+        return $query->withCount('unitPrices') // Count unitPrices
+            ->having('unit_prices_count', '>=', $count); // Filter based on the count
+    }
     public function units()
     {
         return $this->belongsToMany(Unit::class, 'unit_prices')
@@ -110,5 +122,15 @@ class Product extends Model
     public function getFinalPriceAttribute()
     {
         return $this->productItems->sum('total_price');
+    }
+
+    /**
+     * Get the count of unit prices for the product.
+     *
+     * @return int
+     */
+    public function getUnitPricesCountAttribute()
+    {
+        return $this->unitPrices()->count();
     }
 }

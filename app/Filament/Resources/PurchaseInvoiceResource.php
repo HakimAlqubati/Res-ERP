@@ -245,7 +245,10 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-'),
                 TextColumn::make('store.name')->label('Store')->toggleable(),
                 TextColumn::make('date')->sortable()->toggleable(),
-                TextColumn::make('description')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('description')->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('details_count')->searchable()->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()
                 // ->trueIcon('heroicon-o-badge-check')
@@ -348,7 +351,7 @@ class PurchaseInvoiceResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-
+        // $query->withDetails();
         return $query;
     }
     public static function getNavigationBadge(): ?string

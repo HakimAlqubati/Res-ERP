@@ -22,7 +22,30 @@ class PurchaseInvoice extends Model
         'cancelled',
         'cancel_reason',
     ];
-    protected $appends = ['has_attachment', 'has_description'];
+    protected $appends = ['has_attachment', 'has_description', 'details_count'];
+
+    /**
+     * Get the count of purchase invoice details.
+     *
+     * @return int
+     */
+    public function getDetailsCountAttribute()
+    {
+        return $this->purchaseInvoiceDetails()->count();
+    }
+
+    /**
+     * Scope to filter purhchase invoices with details only.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWithDetails($query)
+    {
+        return $query->withCount('purchaseInvoiceDetails') // Count unitPrices
+            ->having('purchase_invoice_details_count', '>', 1); // Filter based on the count
+    }
+
     public function purchaseInvoiceDetails()
     {
         return $this->hasMany(PurchaseInvoiceDetail::class, 'purchase_invoice_id');

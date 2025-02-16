@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Models\UnitPrice;
+use App\Services\MigrationScripts\ProductMigrationService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Grid;
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as ActionTable;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\Collection;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -268,11 +270,22 @@ class ProductResource extends Resource
                     ->searchable()
                     ->searchable(isIndividual: true)
                     ->tooltip(fn(Model $record): string => "By {$record->name}"),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('lang.name'))
+                    ->toggleable()
+                    ->searchable()
+                    ->searchable(isIndividual: true)
+                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
                 Tables\Columns\TextColumn::make('code')->searchable()
                     ->label(__('lang.code'))
                     ->searchable(isIndividual: true, isGlobal: false),
 
-                Tables\Columns\TextColumn::make('description')->searchable()->label(__('lang.description')),
+                Tables\Columns\TextColumn::make('unit_prices_count')
+                    ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(true),
+                Tables\Columns\TextColumn::make('description')->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(__('lang.description')),
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
                     ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),
@@ -288,6 +301,16 @@ class ProductResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('updateUnitPrice')
+                    ->label('Update Unit Price')->button()->action(function ($record) {
+                        $update = ProductMigrationService::updatePackageSizeForProduct($record->id);
+                        if ($update) {
+                            showSuccessNotifiMessage('Done');
+                        } else {
+                            showWarningNotifiMessage('Faild');
+                        }
+                    })->hidden(),
+
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
@@ -296,6 +319,30 @@ class ProductResource extends Resource
                 // Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
+                Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
+                    ->action(function (Collection $records) {
+                        $productIds = $records->pluck('id')->toArray();
+                        $allUpdated = true;
+                        foreach ($productIds as $productId) {
+                            $update = ProductMigrationService::updatePackageSizeForProduct($productId);
+                            if (!$update) {
+                                $allUpdated = false;
+                            }
+                        }
+                        if ($allUpdated) {
+                            showSuccessNotifiMessage('done');
+                        } else {
+                            showWarningNotifiMessage('faild');
+                        }
+                    })->hidden(),
+                Tables\Actions\BulkAction::make('updateUnirPriceOrder')->label('Update Order Unit')->button()
+                    ->action(function (Collection $records) {
+                        $productIds = $records->pluck('id')->toArray();
+
+                        foreach ($productIds as $productId) {
+                            ProductMigrationService::updateOrderBasedOnPackageSize($productId);
+                        }
+                    }),
                 Tables\Actions\DeleteBulkAction::make(),
                 // ExportBulkAction::make(),
                 // Tables\Actions\ForceDeleteBulkAction::make(),
@@ -341,10 +388,12 @@ class ProductResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+        // $query->withMinimumUnitPrices();
+        return $query;
     }
 
     /**
