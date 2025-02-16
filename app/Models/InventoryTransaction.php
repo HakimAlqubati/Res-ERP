@@ -44,6 +44,14 @@ class InventoryTransaction extends Model
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
+    public static function getInventoryTrackingDataPagination($productId, $perPage = 15)
+    {
+        return DB::table('inventory_transactions')
+            ->whereNull('deleted_at')
+            ->where('product_id', $productId)
+            ->orderBy('movement_date', 'asc')
+            ->paginate($perPage);
+    }
     public static function getInventoryTrackingData($productId)
     {
         $transactions = DB::table('inventory_transactions')

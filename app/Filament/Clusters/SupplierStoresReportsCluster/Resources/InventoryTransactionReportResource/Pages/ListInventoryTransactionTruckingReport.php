@@ -20,10 +20,10 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
 
         $product = Product::find($productId);
- 
+
         $reportData = [];
         if (isset($productId) && $productId != '') {
-            $reportData = InventoryTransaction::getInventoryTrackingData($productId);
+            $reportData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
         }
 
         return ['reportData' => $reportData, 'product' => $product];
