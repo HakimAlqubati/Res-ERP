@@ -19,6 +19,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\Supplier;
 use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
@@ -103,7 +104,7 @@ Route::get('/to_get_employee_attendance_period_details', [TestController2::class
 Route::get('/to_get_multi_employees_attendances', [TestController2::class, 'to_get_multi_employees_attendances']);
 
 
-Route::get('/to_test_inventory/{product}/{unit}',[TestController2::class,'testInventory']);
+Route::get('/to_test_inventory/{product}/{unit}', [TestController2::class, 'testInventory']);
 Route::get('/migrateEmployeePeriodHistory', [MigrateDataController::class, 'migrateEmployeePeriodHistory']);
 Route::get('/toviewrepeated', function () {
     /**
@@ -397,6 +398,34 @@ Route::get('/migration_store_users', function () {
 
     dd($users);
 });
+Route::get('/migration_suppliers_users', function () {
+    DB::beginTransaction();
+
+    try {
+        $users = Role::findOrFail(10)->users;
+
+        foreach ($users as $user) {
+            Supplier::create([
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'whatsapp_number' =>  random_int(100000000, 999999999),
+                'phone_number' => random_int(100000000, 999999999),
+                'job_title' => 'Store responsible',
+                'user_id' => $user->id,
+                'address' => $user->supplier_address,
+            ]);
+        }
+ 
+        DB::commit();
+    } catch (\Exception $e) {
+        DB::rollBack();
+        // Handle the exception as needed, e.g., log the error or display a message
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+
+    return response()->json(['message' => 'Suppliers migrated successfully.']);
+});
 
 Route::get('/migration_accountants_users', function () {
     $users = Role::find(9)->users;
@@ -556,7 +585,7 @@ Route::get('/images', [ImageController::class, 'displayAllImages']);
 
 Route::get('workbench_webcam_v2', function () {
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
-    
+
     return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera-v3', compact('currentTime'));
 });
 

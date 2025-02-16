@@ -85,12 +85,12 @@ class OrderMigrationService
                         'quantity' => $detail->quantity,
                         'package_size' => $detail->package_size,
                         'price' => $detail->price,
-                        'movement_date' => $detail->updated_at,
+                        'movement_date' => $detail->order->created_at,
                         'unit_id' => $detail->unit_id,
                         'reference_id' => $detail->order_id,
                         'store_id' => $storeId, // Get from nearest purchase transaction
                         'notes' => $notes,
-                        'transaction_date' => $detail->updated_at,
+                        'transaction_date' => $detail->order->created_at,
                     ]);
 
                     // DB::commit();
