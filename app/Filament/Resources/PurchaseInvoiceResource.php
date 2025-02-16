@@ -222,7 +222,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $set('total_price', ((float) $state) * ((float)$get('quantity')));
                                 })->columnSpan(1)->required(),
-                            TextInput::make('total_price')->minValue(1)
+                            TextInput::make('total_price')->minValue(1)->label('Total Price')
                                 ->type('text')
                                 ->extraInputAttributes(['readonly' => true])->columnSpan(1),
 
