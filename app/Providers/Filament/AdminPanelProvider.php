@@ -140,7 +140,7 @@ class AdminPanelProvider extends PanelProvider
                     ,
                 NavigationGroup::make('Requests of Visits')
                     ->items(array_merge(
-                     (isSuperAdmin() || isSystemManager() || isBranchManager()) ? ApprovalResource::getNavigationItems(): [] ,
+                     (isSuperAdmin() || isSystemManager()) ? ApprovalResource::getNavigationItems(): [] ,
                     //  (isSuperAdmin() || isSystemManager() || isBranchManager()) ? VisitLogResource::getNavigationItems(): [] ,
                     ))
                     , 
