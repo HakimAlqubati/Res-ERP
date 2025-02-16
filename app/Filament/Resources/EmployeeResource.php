@@ -185,7 +185,7 @@ class EmployeeResource extends Resource
                                                     ->label('')
                                                     // ->avatar()
                                                     ->imageEditor()
-                                                    
+
                                                     ->circleCropper()
                                                     // ->disk('public')
                                                     // ->directory('employees')
@@ -631,7 +631,7 @@ class EmployeeResource extends Resource
                 ActionsAction::make('import_employees')
                     ->label('Import from Excel')
                     ->icon('heroicon-o-document-arrow-up')
-                    ->visible(fn(): bool => isSystemManager() || isBranchManager() || isSuperAdmin())
+                    ->visible(fn(): bool => isSystemManager()  || isSuperAdmin())
                     ->form([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
@@ -670,7 +670,7 @@ class EmployeeResource extends Resource
                     ->label('AWS Indexing')->button()
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
-                    ->visible(fn($record):bool=>$record->avatar && Storage::disk('s3')->exists($record->avatar))
+                    ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
                     ->action(function ($record) {
                         $response = S3ImageService::indexEmployeeImage($record->id);
 
@@ -795,7 +795,7 @@ class EmployeeResource extends Resource
     public static function canCreate(): bool
     {
 
-        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+        if (isSystemManager()  || isSuperAdmin()) {
             return true;
         }
         return false;
