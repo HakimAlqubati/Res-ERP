@@ -475,7 +475,7 @@ class EmployeeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'asc')
             ->columns([
-                ImageColumn::make('avatar')->label('')
+                ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
                 // TextColumn::make('avatar')->copyable()->label('avatar name')->hidden(),
