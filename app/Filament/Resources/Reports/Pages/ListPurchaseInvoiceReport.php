@@ -20,7 +20,7 @@ use niklasravnsborg\LaravelPdf\Facades\Pdf;
 class ListPurchaseInvoiceReport extends ListRecords
 {
     protected static string $resource = PurchaseInvoiceReportResource::class;
-    protected static string $view = 'filament.pages.stock-report.purchase-invoice-report';
+    protected static string $view = 'filament.pages.stock-report.purchase-invoice-report-with-pagination';
 
 
 
@@ -33,7 +33,7 @@ class ListPurchaseInvoiceReport extends ListRecords
         $product_ids = __filament_request_select_multiple('product_id', [], true);
         $show_invoice_no = $this->getTable()->getFilters()['show_invoice_no']->getState()['isActive'];
         $invoice_no = __filament_request_select('invoice_no', 'all');
-        $purchase_invoice_data = $this->getPurchasesInvoiceData($product_ids, $store_id, $supplier_id, $invoice_no);
+        $purchase_invoice_data = $this->getPurchasesInvoiceDataWithPagination($product_ids, $store_id, $supplier_id, $invoice_no);
 
 
         return [
@@ -42,7 +42,7 @@ class ListPurchaseInvoiceReport extends ListRecords
         ];
     }
 
- 
+
 
     public function getPurchasesInvoiceData($product_ids, $store_id, $supplier_id, $invoice_no)
     {
@@ -121,5 +121,60 @@ class ListPurchaseInvoiceReport extends ListRecords
             ->streamDownload(function () use ($pdf) {
                 $pdf->stream("purchase-invoice-report" . '.pdf');
             }, "purchase-invoice-report" . '.pdf');
+    }
+
+    public function getPurchasesInvoiceDataWithPagination($product_ids, $store_id, $supplier_id, $invoice_no)
+    {
+        $store_name = 'All';
+        $supplier_name = 'All';
+
+        $query = DB::table('purchase_invoices')
+            ->select(
+                'purchase_invoice_details.product_id as product_id',
+                DB::raw("IF(JSON_VALID(products.name), REPLACE(JSON_EXTRACT(products.name, '$." . app()->getLocale() . "'), '\"', ''), products.name) AS product_name"),
+                'units.name as unit_name',
+                'purchase_invoice_details.quantity as quantity',
+                'purchase_invoice_details.price as unit_price',
+                'purchase_invoices.date as purchase_date',
+                'purchase_invoices.id as purchase_invoice_id',
+                'purchase_invoices.invoice_no as invoice_no',
+                'users.name as supplier_name',
+                'stores.name as store_name'
+            )
+            ->join('purchase_invoice_details', 'purchase_invoices.id', '=', 'purchase_invoice_details.purchase_invoice_id')
+            ->join('products', 'purchase_invoice_details.product_id', '=', 'products.id')
+            ->join('units', 'purchase_invoice_details.unit_id', '=', 'units.id')
+            ->join('users', 'purchase_invoices.supplier_id', '=', 'users.id')
+            ->join('stores', 'purchase_invoices.store_id', '=', 'stores.id')
+            ->where('purchase_invoices.active', 1);
+
+        if (is_numeric($store_id)) {
+            $query->where('purchase_invoices.store_id', $store_id);
+            $store_name = Store::find($store_id)?->name;
+        }
+
+        if (is_numeric($supplier_id)) {
+            $query->where('purchase_invoices.supplier_id', $supplier_id);
+            $supplier_name = Supplier::find($supplier_id)?->name;
+        }
+
+        if (count($product_ids) > 0) {
+            $query->whereIn('purchase_invoice_details.product_id', $product_ids);
+        }
+
+        if (isset($invoice_no) && $invoice_no !== 'all') {
+            $query->where('purchase_invoices.invoice_no', $invoice_no);
+        }
+
+        $query->whereNull('purchase_invoices.deleted_at');
+
+        // 🔹 Apply pagination (change `10` to the number of records per page)
+        $results = $query->paginate(15);
+
+        return [
+            'results' => $results,
+            'supplier_name' => $supplier_name,
+            'store_name' => $store_name,
+        ];
     }
 }
