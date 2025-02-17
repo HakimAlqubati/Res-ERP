@@ -103,7 +103,7 @@ class ListPurchaseInvoiceReport extends ListRecords
     protected function getActions(): array
     {
         return  [Action::make('Export to PDF')->label(__('lang.export_pdf'))
-            ->action('exportToPdf')
+            ->action('exportToPdf')->hidden()
             ->color('success'),];
     }
 
