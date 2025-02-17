@@ -52,6 +52,7 @@ class Employee extends Model
         'manager_id',
     ];
 
+    public $appends = ['avatar_image'];
     protected $casts = [
         'bank_information' => 'array',
     ];

@@ -178,7 +178,7 @@ class EmployeeResource extends Resource
                                     ]),
                                     Fieldset::make()->label('Upload avatar image')
                                         ->columnSpanFull()
-                                        ->schema([
+                                        ->schema([ 
                                             Grid::make()->columns(2)->schema([
                                                 FileUpload::make('avatar')
                                                     ->image()
@@ -189,7 +189,7 @@ class EmployeeResource extends Resource
                                                     ->circleCropper()
                                                     // ->disk('public')
                                                     // ->directory('employees')
-                                                    ->visibility('private')
+                                                    ->visibility('public')
                                                     ->imageEditorAspectRatios([
                                                         '16:9',
                                                         '4:3',
@@ -202,6 +202,7 @@ class EmployeeResource extends Resource
                                                     })
                                                     // ->imagePreviewHeight('250')
                                                     ->resize(5)
+                                                    ->maxSize(333)
                                                     ->columnSpan(2)
                                                     ->reactive(),
                                             ]),
@@ -474,10 +475,10 @@ class EmployeeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'asc')
             ->columns([
-                ImageColumn::make('avatar_image')->label('')
+                ImageColumn::make('avatar')->label('')
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
-                TextColumn::make('avatar_image2')->copyable()->label('avatar name')->hidden(),
+                // TextColumn::make('avatar')->copyable()->label('avatar name')->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')
