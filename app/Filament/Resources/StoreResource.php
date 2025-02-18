@@ -29,7 +29,7 @@ class StoreResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 0;
+        
     public static function getNavigationLabel(): string
     {
         return __('lang.stores');
