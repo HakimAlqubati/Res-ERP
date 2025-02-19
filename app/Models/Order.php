@@ -152,7 +152,7 @@ class Order extends Model
             $this->save();
 
             // Delete related inventory transactions
-            \App\Models\InventoryTransaction::where('reference_id', $this->id)
+            \App\Models\InventoryTransaction::where('transactionable_id', $this->id)
                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
                 ->delete();
 

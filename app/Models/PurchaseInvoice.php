@@ -95,7 +95,7 @@ class PurchaseInvoice extends Model
             $this->save();
 
             // Delete related inventory transactions
-            \App\Models\InventoryTransaction::where('reference_id', $this->id)
+            \App\Models\InventoryTransaction::where('transactionable_id', $this->id)
                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
                 ->delete();
 
@@ -115,7 +115,7 @@ class PurchaseInvoice extends Model
 
     //     static::updated(function ($purchaseInvoice) {
     //         if ($purchaseInvoice->cancelled) {
-    //             \App\Models\InventoryTransaction::where('reference_id', $purchaseInvoice->id)
+    //             \App\Models\InventoryTransaction::where('referetransactionable_idnce_id', $purchaseInvoice->id)
     //                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
     //                 ->delete();
     //         }

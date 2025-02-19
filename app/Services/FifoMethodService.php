@@ -52,8 +52,8 @@ class FifoMethodService
             $this->requestedQuantityLargerThanAvailable = true;
         }
 
-        // Pre-fetch purchase details for all reference_ids to avoid multiple queries
-        $purchaseDetails = PurchaseInvoiceDetail::whereIn('purchase_invoice_id', array_column($inventoryReport, 'reference_id'))
+        // Pre-fetch purchase details for all transactionable_id to avoid multiple queries
+        $purchaseDetails = PurchaseInvoiceDetail::whereIn('purchase_invoice_id', array_column($inventoryReport, 'transactionable_id'))
             ->where('product_id', $this->productId)
             ->get()
             ->keyBy('purchase_invoice_id');
@@ -154,7 +154,7 @@ class FifoMethodService
         $result = [];
         foreach ($purchaseData as $data) {
             $result[] = [
-                'reference_id' => $data->reference_id,
+                'transactionable_id' => $data->transactionable_id,
                 'remaining_qty' => $data->quantity,
             ];
         }

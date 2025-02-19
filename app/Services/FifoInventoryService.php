@@ -45,7 +45,7 @@ class FifoInventoryService
             }
 
             // Step 1: Calculate already ordered quantities from this purchase
-            $previousOrders = $this->getOrderedQuantities($purchase->reference_id);
+            $previousOrders = $this->getOrderedQuantities($purchase->transactionable_id);
             $totalOrderedQty = $previousOrders->sum(fn($order) => $order->quantity * $order->package_size);
 
             // Step 2: Determine remaining quantity available for allocation
@@ -64,7 +64,7 @@ class FifoInventoryService
 
             // Step 4: Record allocation details
             $allocations[] = [
-                'purchase_invoice_id' => $purchase->reference_id,
+                'purchase_invoice_id' => $purchase->transactionable_id,
                 'allocated_qty' => $allocatedQty,
                 'unit_id' => $this->unitId,
                 'product_id' => $this->productId,
@@ -113,7 +113,7 @@ class FifoInventoryService
             ->where('product_id', $this->productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->orderBy('movement_date', 'asc')
-            ->get(['id', 'quantity', 'package_size', 'price', 'movement_date', 'reference_id', 'store_id']);
+            ->get(['id', 'quantity', 'package_size', 'price', 'movement_date', 'transactionable_id', 'store_id']);
     }
 
     /**

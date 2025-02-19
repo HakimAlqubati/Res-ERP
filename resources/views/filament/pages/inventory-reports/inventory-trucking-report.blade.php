@@ -29,7 +29,7 @@
                         <x-filament-tables::cell>
                             {{ $data->movement_type === 'purchase_invoice' ? 'Purchase' : 'Order' }}
                         </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data->reference_id }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ $data->transactionable_id }} </x-filament-tables::cell>
                         <x-filament-tables::cell>
                             {{ $data->unit_id ? \App\Models\Unit::find($data->unit_id)->name : '' }}
                         </x-filament-tables::cell>

@@ -19,8 +19,7 @@ class InventoryTransaction extends Model
         'movement_type',
         'quantity',
         'unit_id',
-        'movement_date',
-        'reference_id',
+        'movement_date', 
         'notes',
         'package_size',
         'store_id',
@@ -81,7 +80,7 @@ class InventoryTransaction extends Model
                 'package_size' => $transaction->package_size,
                 'quantity_impact' => $quantityImpact,
                 'remaining_qty' => $remainingQty,
-                'reference_id' => $transaction->reference_id,
+                'transactionable_id' => $transaction->transactionable_id,
                 'notes' => $transaction->notes,
             ];
         }
