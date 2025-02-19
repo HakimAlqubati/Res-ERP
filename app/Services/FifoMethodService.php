@@ -102,8 +102,8 @@ class FifoMethodService
         $query = DB::table('inventory_transactions')
             ->where('product_id', $this->productId)
             ->whereIn('movement_type', [
-                InventoryTransaction::MOVEMENT_PURCHASE_INVOICE,
-                InventoryTransaction::MOVEMENT_ORDERS,
+                InventoryTransaction::MOVEMENT_IN,
+                InventoryTransaction::MOVEMENT_OUT,
             ])
             ->select(
                 'reference_id',
@@ -111,8 +111,8 @@ class FifoMethodService
                 'package_size',
                 DB::raw("SUM(
                     CASE 
-                        WHEN movement_type = '" . InventoryTransaction::MOVEMENT_PURCHASE_INVOICE . "' THEN quantity * package_size 
-                        WHEN movement_type = '" . InventoryTransaction::MOVEMENT_ORDERS . "' THEN quantity * package_size 
+                        WHEN movement_type = '" . InventoryTransaction::MOVEMENT_IN . "' THEN quantity * package_size 
+                        WHEN movement_type = '" . InventoryTransaction::MOVEMENT_OUT . "' THEN quantity * package_size 
                         ELSE 0 
                     END
                 ) as quantity")
@@ -131,12 +131,12 @@ class FifoMethodService
         $inventoryService = new InventoryService($this->productId, $this->unitId);
         $queryIn = DB::table('inventory_transactions')
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->select('reference_id', 'unit_id', 'package_size', DB::raw('SUM(quantity * package_size) as quantity'));
 
         $queryOut = DB::table('inventory_transactions')
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_ORDERS)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->select('reference_id', 'unit_id', 'package_size', DB::raw('SUM(quantity * package_size) as quantity'));
 
 

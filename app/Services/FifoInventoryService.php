@@ -111,7 +111,7 @@ class FifoInventoryService
     {
         return InventoryTransaction::query()
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->orderBy('movement_date', 'asc')
             ->get(['id', 'quantity', 'package_size', 'price', 'movement_date', 'reference_id', 'store_id']);
     }
@@ -126,7 +126,7 @@ class FifoInventoryService
     {
         return InventoryTransaction::query()
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_ORDERS)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->where('purchase_invoice_id', $purchaseId)
             ->get(['id', 'quantity', 'unit_id', 'package_size']);
     }

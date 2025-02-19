@@ -14,7 +14,10 @@ class StockInventory extends Model
         'store_id',
         'responsible_user_id',
         'finalized',
+        'created_by',
     ];
+
+    protected $appends = ['details_count'];
 
     public function store()
     {
@@ -30,4 +33,17 @@ class StockInventory extends Model
     {
         return $this->hasMany(StockInventoryDetail::class, 'stock_inventory_id');
     }
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($stockSupplyOrder) {
+            $stockSupplyOrder->created_by = auth()->id();
+        });
+    }
+
+    public function getDetailsCountAttribute()
+    {
+        return $this->details()->count();
+    }
+
 }

@@ -1,26 +1,30 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class StockInventoryDetail extends Model
+class StockAdjustmentDetail extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'stock_inventory_id',
+        'stock_adjustment_id',
         'product_id',
         'unit_id',
-        'system_quantity',
-        'physical_quantity',
-        'difference',
         'package_size',
+        'quantity',
+        'notes',
     ];
 
-    public function inventory()
+    /**
+     * Relationships
+     */
+    public function stockAdjustment()
     {
-        return $this->belongsTo(StockInventory::class, 'stock_inventory_id');
+        return $this->belongsTo(StockAdjustment::class, 'stock_adjustment_id');
     }
 
     public function product()
@@ -32,5 +36,6 @@ class StockInventoryDetail extends Model
     {
         return $this->belongsTo(Unit::class);
     }
- 
+
+   
 }

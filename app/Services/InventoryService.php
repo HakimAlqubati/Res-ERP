@@ -36,12 +36,12 @@ class InventoryService
         $queryIn = DB::table('inventory_transactions')
             ->whereNull('deleted_at')
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE);
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN);
 
         $queryOut = DB::table('inventory_transactions')
             ->whereNull('deleted_at')
             ->where('product_id', $this->productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_ORDERS);
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT);
 
         if (!is_null($this->storeId)) {
             $queryIn->where('store_id', $this->storeId);

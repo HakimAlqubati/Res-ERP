@@ -23,9 +23,7 @@ return new class extends Migration
             $table->float('package_size')->nullable()->after('unit_id');
         });
 
-        Schema::table('stock_adjustment_details', function (Blueprint $table) {
-            $table->float('package_size')->nullable()->after('unit_id');
-        });
+    
     }
 
     /**
@@ -45,8 +43,6 @@ return new class extends Migration
             $table->dropColumn('package_size');
         });
 
-        Schema::table('stock_adjustment_details', function (Blueprint $table) {
-            $table->dropColumn('package_size');
-        });
+    
     }
 };

@@ -83,7 +83,7 @@ class PurchaseInvoice extends Model
 
             // Check if there is an inventory transaction of type order for this purchase invoice
             $orderExists = \App\Models\InventoryTransaction::where('purchase_invoice_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_ORDERS)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
                 ->exists();
 
             if ($orderExists) {
@@ -96,7 +96,7 @@ class PurchaseInvoice extends Model
 
             // Delete related inventory transactions
             \App\Models\InventoryTransaction::where('reference_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
                 ->delete();
 
             DB::commit();
@@ -116,7 +116,7 @@ class PurchaseInvoice extends Model
     //     static::updated(function ($purchaseInvoice) {
     //         if ($purchaseInvoice->cancelled) {
     //             \App\Models\InventoryTransaction::where('reference_id', $purchaseInvoice->id)
-    //                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+    //                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
     //                 ->delete();
     //         }
     //     });

@@ -16,10 +16,10 @@ return new class extends Migration
             $table->foreignId('stock_adjustment_id')->constrained('stock_adjustments')->onDelete('cascade');
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
             $table->foreignId('unit_id')->constrained('units')->onDelete('cascade');
-            $table->integer('system_quantity');
-            $table->integer('physical_quantity');
-            $table->integer('difference');
-            $table->string('adjustment_type');
+            $table->float('package_size')->nullable();
+            $table->decimal('system_quantity', 8, 2);
+            $table->decimal('physical_quantity', 8, 2);
+            $table->decimal('difference', 8, 2);
             $table->timestamps();
         });
     }

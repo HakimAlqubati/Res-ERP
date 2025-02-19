@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
@@ -26,12 +27,14 @@ class InventoryTransaction extends Model
         'price',
         'transaction_date',
         'purchase_invoice_id',
+        'transactionable_id',
+        'transactionable_type',
     ];
     protected $appends = ['remaining_qty', 'movement_type_title'];
 
     // Constant movement types
-    const MOVEMENT_ORDERS = 'orders';
-    const MOVEMENT_PURCHASE_INVOICE = 'purchase_invoice';
+    const MOVEMENT_OUT = 'out';
+    const MOVEMENT_IN = 'in';
 
     // Relationships
     public function product()
@@ -67,11 +70,11 @@ class InventoryTransaction extends Model
         foreach ($transactions as $transaction) {
 
             $quantityImpact = $transaction->quantity * $transaction->package_size;
-            $remainingQty += ($transaction->movement_type === self::MOVEMENT_PURCHASE_INVOICE) ? $quantityImpact : -$quantityImpact;
+            $remainingQty += ($transaction->movement_type === self::MOVEMENT_IN) ? $quantityImpact : -$quantityImpact;
 
             $trackingData[] = [
                 'date' => $transaction->movement_date,
-                'type' => $transaction->movement_type === self::MOVEMENT_PURCHASE_INVOICE ? 'Purchase' : 'Order',
+                'type' => $transaction->movement_type === self::MOVEMENT_IN ? 'Purchase' : 'Order',
                 'quantity' => $transaction->quantity,
                 'unit_id' => $transaction->unit_id,
                 'unit_name' => Unit::find($transaction->unit_id)->name,
@@ -97,13 +100,13 @@ class InventoryTransaction extends Model
         $totalIn = DB::table('inventory_transactions')
             ->where('product_id', $this->product_id)
             ->where('unit_id', $this->unit_id)
-            ->where('movement_type', self::MOVEMENT_PURCHASE_INVOICE)
+            ->where('movement_type', self::MOVEMENT_IN)
             ->sum(DB::raw('quantity * package_size'));
 
         $totalOut = DB::table('inventory_transactions')
             ->where('product_id', $this->product_id)
             ->where('unit_id', $this->unit_id)
-            ->where('movement_type', self::MOVEMENT_ORDERS)
+            ->where('movement_type', self::MOVEMENT_OUT)
             ->sum(DB::raw('quantity * package_size'));
 
         return $totalIn - $totalOut;
@@ -121,13 +124,13 @@ class InventoryTransaction extends Model
         $totalIn = DB::table('inventory_transactions')
             ->where('product_id', $productId)
             ->where('unit_id', $unitId)
-            ->where('movement_type', self::MOVEMENT_PURCHASE_INVOICE)
+            ->where('movement_type', self::MOVEMENT_IN)
             ->sum(DB::raw('quantity * package_size'));
 
         $totalOut = DB::table('inventory_transactions')
             ->where('product_id', $productId)
             ->where('unit_id', $unitId)
-            ->where('movement_type', self::MOVEMENT_ORDERS)
+            ->where('movement_type', self::MOVEMENT_OUT)
             ->sum(DB::raw('quantity * package_size'));
 
         return $totalIn - $totalOut;
@@ -135,6 +138,12 @@ class InventoryTransaction extends Model
 
     public function getMovementTypeTitleAttribute()
     {
-        return $this->movement_type == static::MOVEMENT_PURCHASE_INVOICE ? 'In' : 'Out';
+        return $this->movement_type == static::MOVEMENT_IN ? 'In' : 'Out';
+    }
+
+    // Define Polymorphic Relation
+    public function transactionable(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

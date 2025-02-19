@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->date('adjustment_date');
             $table->foreignId('store_id')->constrained('stores')->onDelete('cascade');
-            $table->foreignId('responsible_user_id')->constrained('users')->onDelete('cascade');
+            $table->bigInteger('created_by');
+            $table->enum('adjustment_type', ['increase', 'decrease']);
+            $table->bigInteger('reason_id')->nullable();
             $table->text('notes')->nullable();
-            $table->boolean('finalized')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

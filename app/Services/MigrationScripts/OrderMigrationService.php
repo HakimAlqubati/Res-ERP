@@ -65,7 +65,7 @@ class OrderMigrationService
             // try {
                 // Find the nearest inventory transaction from purchases
                 $nearestTransaction = InventoryTransaction::where('product_id', $detail->product_id)
-                    ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+                    ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                     ->orderBy('movement_date', 'desc') // Get the most recent purchase transaction
                     ->first();
 
@@ -81,7 +81,7 @@ class OrderMigrationService
                     // Create new inventory transaction for the order
                     InventoryTransaction::create([
                         'product_id' => $detail->product_id,
-                        'movement_type' => InventoryTransaction::MOVEMENT_ORDERS,
+                        'movement_type' => InventoryTransaction::MOVEMENT_OUT,
                         'quantity' => $detail->quantity,
                         'package_size' => $detail->package_size,
                         'price' => $detail->price,

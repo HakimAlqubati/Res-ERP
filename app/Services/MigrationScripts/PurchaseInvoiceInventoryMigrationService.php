@@ -44,7 +44,7 @@ class PurchaseInvoiceInventoryMigrationService
             // Check if an inventory transaction already exists for this detail
             // $exists = InventoryTransaction::where('product_id', $detail->product_id)
             //     ->where('reference_id', $detail->purchase_invoice_id)
-            //     ->where('movement_type', InventoryTransaction::MOVEMENT_PURCHASE_INVOICE)
+            //     ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             //     ->exists();
 
             // if ($exists) {
@@ -64,7 +64,7 @@ class PurchaseInvoiceInventoryMigrationService
                 // Create inventory transaction
                 InventoryTransaction::create([
                     'product_id' => $detail->product_id,
-                    'movement_type' => InventoryTransaction::MOVEMENT_PURCHASE_INVOICE,
+                    'movement_type' => InventoryTransaction::MOVEMENT_IN,
                     'quantity' => $detail->quantity,
                     'package_size' => $detail->package_size,
                     'price' => $detail->price,

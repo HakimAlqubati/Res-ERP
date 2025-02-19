@@ -12,7 +12,7 @@ class StockIssueOrder extends Model
     protected $fillable = [
         'order_date',
         'store_id',
-        'issued_by',
+        'created_by',
         'notes',
         'cancelled',
         'cancel_reason',
@@ -23,13 +23,21 @@ class StockIssueOrder extends Model
         return $this->belongsTo(Store::class);
     }
 
-    public function issuedBy()
+    public function createdBy()
     {
-        return $this->belongsTo(User::class, 'issued_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function details()
     {
         return $this->hasMany(StockIssueOrderDetail::class, 'stock_issue_order_id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($stockSupplyOrder) {
+            $stockSupplyOrder->created_by = auth()->id();
+        });
     }
 }

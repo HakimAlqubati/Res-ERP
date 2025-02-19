@@ -3,17 +3,20 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\RelationManagers;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Models\Product;
-use App\Models\StockIssueOrder;
+use App\Models\StockInventory;
+use App\Models\Unit;
 use App\Models\UnitPrice;
+use App\Services\InventoryService;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
@@ -25,42 +28,39 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class StockIssueOrderResource extends Resource
+class StockInventoryResource extends Resource
 {
-    protected static ?string $model = StockIssueOrder::class;
+    protected static ?string $model = StockInventory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 8;
-    public static function form(Forms\Form $form): Forms\Form
+    protected static ?int $navigationSort = 9;
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Fieldset::make()->label('')->schema([
-                    DatePicker::make('order_date')
-                        ->required()->default(now())
-                        ->label('Order Date'),
+                    Grid::make()->columns(3)->schema([
+                        DatePicker::make('inventory_date')
+                            ->required()->default(now())
+                            ->label('Inventory Date'),
 
-                    Select::make('store_id')
-                        ->relationship('store', 'name')
-                        ->default(getDefaultStore())
-                        ->required()
-                        ->label('Store'),
+                        Select::make('store_id')
+                            ->relationship('store', 'name')
+                            ->required()->default(getDefaultStore())
+                            ->label('Store'),
 
-                    
+                        Select::make('responsible_user_id')->searchable()->default(auth()->id())
+                            ->relationship('responsibleUser', 'name')
+                            ->required()
+                            ->label('Responsible'),
+                    ]),
 
-                    Textarea::make('notes')
-                        ->label('Notes')
-                        ->columnSpanFull(), 
-
-                    Textarea::make('cancel_reason')
-                        ->label('Cancel Reason')
-                        ->hidden(fn($get) => $get('cancelled') == 0),
-
-                    Repeater::make('details')
-                        ->relationship('details')->columnSpanFull()
+                    Repeater::make('details')->hiddenOn('edit')
+                        ->relationship('details')
+                        ->label('Inventory Details')->columnSpanFull()
                         ->schema([
                             Select::make('product_id')
                                 ->required()->columnSpan(2)
@@ -97,37 +97,46 @@ class StockIssueOrderResource extends Resource
                                     )->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price);
 
-                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+                                    $inventoryService = new InventoryService($get('product_id'), $state, $get('store_id'));
+                                    // Get report for a specific product and unit
+                                    $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
+                                    $set('system_quantity', $remaningQty);
+                                    $difference = round($remaningQty - $get('physical_quantity'), 2);
+                                    $set('difference', $difference);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size')),
-                            TextInput::make('quantity')
+
+
+                            TextInput::make('physical_quantity')->default(0)
+                                ->numeric()->live()
+                                ->label('Physical Qty')
+                                ->required(),
+
+                            TextInput::make('system_quantity')->readOnly()
                                 ->numeric()
-                                ->required()
-                                ->label('Quantity'),
-
-
+                                ->label('System Qty')
+                                ->required(),
+                            TextInput::make('difference')->readOnly()
+                                ->numeric(),
                         ])
-                        ->minItems(1)
-                        ->label('Issued Items')
-                        ->columns(6),
+                        ->columns(8),
                 ])
             ]);
     }
-
 
     public static function table(Table $table): Table
     {
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('order_date')->sortable()->label('Order Date'),
-                TextColumn::make('store.name')->label('Store'),
-                TextColumn::make('issuedBy.name')->label('Issued By'),
-                TextColumn::make('notes')->limit(50)->label('Notes'),
-                IconColumn::make('cancelled')
-                    ->label('Cancelled')
+                TextColumn::make('inventory_date')->sortable()->label('Date'),
+                TextColumn::make('store.name')->sortable()->label('Store'),
+                TextColumn::make('responsibleUser.name')->sortable()->label('Responsible'),
+                TextColumn::make('details_count')->label('Products No')->alignCenter(true),
+                IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true),
+
             ])
             ->filters([
                 //
@@ -145,16 +154,16 @@ class StockIssueOrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            DetailsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockIssueOrders::route('/'),
-            'create' => Pages\CreateStockIssueOrder::route('/create'),
-            'edit' => Pages\EditStockIssueOrder::route('/{record}/edit'),
+            'index' => Pages\ListStockInventories::route('/'),
+            'create' => Pages\CreateStockInventory::route('/create'),
+            'edit' => Pages\EditStockInventory::route('/{record}/edit'),
         ];
     }
 

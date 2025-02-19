@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,10 +23,18 @@ class StockSupplyOrder extends Model
         return $this->belongsTo(Store::class);
     }
 
-    
+
 
     public function details()
     {
         return $this->hasMany(StockSupplyOrderDetail::class, 'stock_supply_order_id');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($stockSupplyOrder) {
+            $stockSupplyOrder->created_by = auth()->id();
+        });
     }
 }

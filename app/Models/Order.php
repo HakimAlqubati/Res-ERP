@@ -153,7 +153,7 @@ class Order extends Model
 
             // Delete related inventory transactions
             \App\Models\InventoryTransaction::where('reference_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_ORDERS)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
                 ->delete();
 
             DB::commit();
