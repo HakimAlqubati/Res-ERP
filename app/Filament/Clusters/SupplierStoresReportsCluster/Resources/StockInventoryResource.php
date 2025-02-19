@@ -111,6 +111,14 @@ class StockInventoryResource extends Resource
 
                             TextInput::make('physical_quantity')->default(0)
                                 ->numeric()->live()
+                                ->afterStateUpdated(function($set,$state,$get){
+                                    $inventoryService = new InventoryService($get('product_id'), $get('unit_id'), $get('store_id'));
+                                    // Get report for a specific product and unit
+                                    $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
+                                    $set('system_quantity', $remaningQty);
+                                    $difference = round($remaningQty - $state, 2);
+                                    $set('difference', $difference);
+                                })
                                 ->label('Physical Qty')
                                 ->required(),
 
