@@ -120,7 +120,7 @@ class DetailsRelationManager extends RelationManager
                         DB::beginTransaction();
                         try {
                             $stockAdjustment = StockAdjustment::create([
-                                'store_id' => $records->first()->stock_inventory_id, // Adjust this based on your relationship
+                                'store_id' => $data['store_id'], // Adjust this based on your relationship
                                 'reason_id' => $data['reason_id'], // You can set a reason if needed 
                                 'adjustment_type' => $data['adjustment_type'],
                                 'created_by' => auth()->id(),
