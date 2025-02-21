@@ -11,29 +11,42 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
-            <x-filament-tables::table
-                class="w-full text-sm text-left pretty reports table-striped border border-gray-300">
-                <thead class="bg-gray-200">
+            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped">
+                <thead>
                     <x-filament-tables::row class="header_report">
-                        <th colspan="5" class="text-center">
+                        <th></th>
+                        <th colspan="3" class="no_border_right_left" style="text-align: center;">
                             <h3>Inventory Movement Report</h3>
+                        </th>
+                        <th>
+                            <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                         </th>
                     </x-filament-tables::row>
                     <x-filament-tables::row>
-                        <th class="border border-gray-400 px-4 py-2">Product Name</th>
-                        <th class="border border-gray-400 px-4 py-2">Unit ID</th>
-                        <th class="border border-gray-400 px-4 py-2">Unit Name</th>
-                        <th class="border border-gray-400 px-4 py-2">Package Size</th>
-                        <th class="border border-gray-400 px-4 py-2">Quantity in Stock</th>
+                        <th>Product Name</th>
+                        <th>Unit ID</th>
+                        <th>Unit Name</th>
+                        <th>Package Size</th>
+                        <th>Quantity in Stock</th>
                     </x-filament-tables::row>
                 </thead>
                 <tbody>
                     @foreach ($reportData as $productReport)
-                        @foreach ($productReport as $data)
+                        @php
+                            $rowSpan = count($productReport);
+                        @endphp
+                        @foreach ($productReport as $index => $data)
                             <x-filament-tables::row>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    <strong>{{ $data['product_name'] }}</strong>
-                                </x-filament-tables::cell>
+                                {{-- Product Name (Only on the first row for each product) --}}
+                                @if ($index === 0)
+                                    <x-filament-tables::cell
+                                        class="border border-gray-300 px-4 py-2 font-bold text-center"
+                                        rowspan="{{ $rowSpan }}">
+                                        {{ $data['product_name'] }}
+                                    </x-filament-tables::cell>
+                                @endif
+
+                                {{-- Unit Details --}}
                                 <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                     {{ $data['unit_id'] }}
                                 </x-filament-tables::cell>
