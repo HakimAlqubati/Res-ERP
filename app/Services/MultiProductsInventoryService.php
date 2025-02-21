@@ -29,20 +29,25 @@ class MultiProductsInventoryService
 
         // Fetch all products or filter by category if provided
         $query = Product::query();
-        
+
         if ($this->categoryId) {
             $query->where('category_id', $this->categoryId);
         }
 
-        $products = $query->get();
-        $report = [];
+        // Use pagination (5 products per page)
+        $products = $query->paginate(5);
 
+        $report = [];
         foreach ($products as $product) {
             $report[] = $this->getInventoryForProduct($product->id);
         }
 
-        return $report;
+        return [
+            'reportData' => $report,
+            'pagination' => $products, // Pass pagination data
+        ];
     }
+
 
     private function getInventoryForProduct($productId)
     {

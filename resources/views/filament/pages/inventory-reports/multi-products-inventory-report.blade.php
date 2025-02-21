@@ -11,7 +11,7 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border ">
+            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
                     <x-filament-tables::row class="header_report">
                         <th></th>
@@ -55,6 +55,12 @@
                 </tbody>
             </x-filament-tables::table>
         </div>
+
+        {{-- Pagination Controls --}}
+        <div class="mt-4">
+            {{ $pagination->links() }}
+        </div>
+
     @else
         <div class="please_select_message_div text-center">
             <h1 class="please_select_message_text">No inventory data available.</h1>

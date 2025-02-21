@@ -24,11 +24,14 @@ class ListInventoryTransactionReport extends ListRecords
         $unitId = 'all';
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
 
-        // Get report for all products if no specific product is selected
-        $reportData = $inventoryService->getInventoryReport();
+        // Get paginated report data
+        $report = $inventoryService->getInventoryReport();
+        $reportData = $report['reportData'];
+        $pagination = $report['pagination']; // Get pagination object
 
-        return ['reportData' => $reportData];
+        return ['reportData' => $reportData, 'pagination' => $pagination];
     }
+
 
     protected function getViewData_One_product(): array
     {
