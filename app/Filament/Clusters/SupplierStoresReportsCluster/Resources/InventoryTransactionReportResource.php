@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\Store;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,7 +54,7 @@ class InventoryTransactionReportResource extends Resource
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
-            ]);
+            ], FiltersLayout::AboveContent);
     }
 
 
