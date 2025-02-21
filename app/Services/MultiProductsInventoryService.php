@@ -35,7 +35,7 @@ class MultiProductsInventoryService
         }
 
         // Use pagination (5 products per page)
-        $products = $query->paginate(5);
+        $products = $query->paginate(15);
 
         $report = [];
         foreach ($products as $product) {
