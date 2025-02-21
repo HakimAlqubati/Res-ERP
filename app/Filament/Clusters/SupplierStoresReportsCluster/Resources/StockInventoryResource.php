@@ -19,6 +19,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -37,6 +38,22 @@ class StockInventoryResource extends Resource
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 9;
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Stock Takes';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Stock Takes';
+    }
+
+    protected static ?string $pluralLabel = 'Stock Take';
+
+    public static function getModelLabel(): string
+    {
+        return 'Stock Take';
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -77,7 +94,7 @@ class StockInventoryResource extends Resource
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
 
-                            Select::make('unit_id')
+                            Select::make('unit_id')->label('Unit')
                                 ->options(
                                     function (callable $get) {
 
@@ -94,14 +111,12 @@ class StockInventoryResource extends Resource
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
-                                    )->where('unit_id', $state)->first();
-                                    $set('price', $unitPrice->price);
+                                    )->where('unit_id', $state)->first(); 
 
                                     $inventoryService = new InventoryService($get('product_id'), $state, $get('store_id'));
-                                    // Get report for a specific product and unit
                                     $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
                                     $set('system_quantity', $remaningQty);
-                                    $difference = round($remaningQty - $get('physical_quantity'), 2);
+                                    $difference =  static::getDifference($inventoryService, $get('physical_quantity'));
                                     $set('difference', $difference);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
                                 })->columnSpan(2)->required(),
@@ -111,12 +126,9 @@ class StockInventoryResource extends Resource
 
                             TextInput::make('physical_quantity')->default(0)
                                 ->numeric()->live()
-                                ->afterStateUpdated(function($set,$state,$get){
+                                ->afterStateUpdated(function ($set, $state, $get) {
                                     $inventoryService = new InventoryService($get('product_id'), $get('unit_id'), $get('store_id'));
-                                    // Get report for a specific product and unit
-                                    $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
-                                    $set('system_quantity', $remaningQty);
-                                    $difference = round($remaningQty - $state, 2);
+                                    $difference =  static::getDifference($inventoryService, $state);
                                     $set('difference', $difference);
                                 })
                                 ->label('Physical Qty')
@@ -128,7 +140,7 @@ class StockInventoryResource extends Resource
                                 ->required(),
                             TextInput::make('difference')->readOnly()
                                 ->numeric(),
-                        ])
+                        ])->addActionLabel('Add Item')
                         ->columns(8),
                 ])
             ]);
@@ -139,6 +151,7 @@ class StockInventoryResource extends Resource
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
+                TextColumn::make('id')->sortable()->label('ID')->searchable(),
                 TextColumn::make('inventory_date')->sortable()->label('Date'),
                 TextColumn::make('store.name')->sortable()->label('Store'),
                 TextColumn::make('responsibleUser.name')->sortable()->label('Responsible'),
@@ -175,6 +188,15 @@ class StockInventoryResource extends Resource
         ];
     }
 
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListStockInventories::class,
+            Pages\CreateStockInventory::class,
+            Pages\EditStockInventory::class,
+        ]);
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -186,5 +208,12 @@ class StockInventoryResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+
+    public static function getDifference($inventoryService, $physicalQty)
+    {
+        $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
+        $difference = round($physicalQty - $remaningQty, 2);
+        return $difference;
     }
 }

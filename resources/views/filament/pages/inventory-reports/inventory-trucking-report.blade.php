@@ -27,7 +27,7 @@
                     <x-filament-tables::row>
                         <x-filament-tables::cell> {{ $data->movement_date }} </x-filament-tables::cell>
                         <x-filament-tables::cell>
-                            {{ $data->movement_type === 'purchase_invoice' ? 'Purchase' : 'Order' }}
+                            {{ $data->formatted_transactionable_type }}
                         </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data->transactionable_id }} </x-filament-tables::cell>
                         <x-filament-tables::cell>

@@ -17,7 +17,16 @@ class StockAdjustmentDetail extends Model
         'package_size',
         'quantity',
         'notes',
+        'adjustment_type',
+        'created_by',
+        'adjustment_date',
+        'store_id',
+        'reason_id',
     ];
+
+    // Constants for adjustment types
+    const ADJUSTMENT_TYPE_INCREASE = 'increase';
+    const ADJUSTMENT_TYPE_DECREASE = 'decrease';
 
     /**
      * Relationships
@@ -36,6 +45,4 @@ class StockAdjustmentDetail extends Model
     {
         return $this->belongsTo(Unit::class);
     }
-
-   
 }

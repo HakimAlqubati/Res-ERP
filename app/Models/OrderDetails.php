@@ -111,7 +111,7 @@ class OrderDetails extends Model
                 'quantity' =>  $orderDetail->quantity,
                 'unit_id' => $orderDetail->unit_id,
                 'purchase_invoice_id' => $orderDetail?->purchase_invoice_id,
-                'movement_date' => now(),
+                'movement_date' => $orderDetail->order->date ?? now(),
                 'package_size' => $orderDetail->package_size,
                 'store_id' => $orderDetail->order?->store_id,
                 'transaction_date' => $orderDetail->order->date ?? now(),

@@ -49,11 +49,11 @@ class StockIssueOrderResource extends Resource
                         ->required()
                         ->label('Store'),
 
-                    
+
 
                     Textarea::make('notes')
                         ->label('Notes')
-                        ->columnSpanFull(), 
+                        ->columnSpanFull(),
 
                     Textarea::make('cancel_reason')
                         ->label('Cancel Reason')
@@ -77,7 +77,7 @@ class StockIssueOrderResource extends Resource
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
 
-                            Select::make('unit_id')
+                            Select::make('unit_id')->label('Unit')
                                 ->options(
                                     function (callable $get) {
 
@@ -124,10 +124,11 @@ class StockIssueOrderResource extends Resource
             ->columns([
                 TextColumn::make('order_date')->sortable()->label('Order Date'),
                 TextColumn::make('store.name')->label('Store'),
-                TextColumn::make('issuedBy.name')->label('Issued By'),
+                TextColumn::make('createdBy.name')->label('Created By'),
+                TextColumn::make('item_count')->label('Products Count')->alignCenter(true),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
                 IconColumn::make('cancelled')
-                    ->label('Cancelled')
+                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
                 //

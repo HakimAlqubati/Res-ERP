@@ -17,6 +17,7 @@ class StockSupplyOrder extends Model
         'cancelled',
         'cancel_reason',
     ];
+    protected $appends = ['item_count']; // Appending the custom attribute
 
     public function store()
     {
@@ -36,5 +37,15 @@ class StockSupplyOrder extends Model
         static::creating(function ($stockSupplyOrder) {
             $stockSupplyOrder->created_by = auth()->id();
         });
+    }
+
+    /**
+     * Accessor for item count.
+     *
+     * @return int
+     */
+    public function getItemCountAttribute()
+    {
+        return $this->details()->count();
     }
 }

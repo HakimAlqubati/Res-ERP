@@ -48,7 +48,7 @@ class StockSupplyOrderDetail extends Model
                 'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
                 'quantity' =>  $stockSupplyDetail->quantity,
                 'unit_id' => $stockSupplyDetail->unit_id,
-                'movement_date' => now(),
+                'movement_date' => $stockSupplyDetail->order->date ?? now(),
                 'package_size' => $stockSupplyDetail->package_size,
                 'store_id' => $stockSupplyDetail->order?->store_id,
                 'transaction_date' => $stockSupplyDetail->order->date ?? now(),

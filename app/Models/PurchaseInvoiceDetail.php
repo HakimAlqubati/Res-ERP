@@ -67,7 +67,7 @@ class PurchaseInvoiceDetail extends Model
                 'quantity' => $purchaseInvoiceDetail->quantity,
                 'package_size' => $purchaseInvoiceDetail->package_size,
                 'price' => $purchaseInvoiceDetail->price,
-                'movement_date' => now(),
+                'movement_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
                 'unit_id' => $purchaseInvoiceDetail->unit_id,
                 'store_id' => $purchaseInvoiceDetail->purchaseInvoice?->store_id,
                 'notes' => $notes,

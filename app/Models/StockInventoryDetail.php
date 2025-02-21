@@ -16,6 +16,7 @@ class StockInventoryDetail extends Model
         'physical_quantity',
         'difference',
         'package_size',
+        'is_adjustmented',
     ];
 
     public function inventory()

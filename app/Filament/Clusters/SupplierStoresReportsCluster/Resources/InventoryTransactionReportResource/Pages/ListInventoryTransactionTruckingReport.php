@@ -21,9 +21,14 @@ class ListInventoryTransactionTruckingReport extends ListRecords
 
         $product = Product::find($productId);
 
-        $reportData = [];
-        if (isset($productId) && $productId != '') {
-            $reportData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
+        $reportData = collect();
+
+        if (!empty($productId)) {
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
+            $reportData = $rawData->through(function ($item) {
+                $item->formatted_transactionable_type = class_basename($item->transactionable_type);
+                return $item;
+            });
         }
         return ['reportData' => $reportData, 'product' => $product];
     }

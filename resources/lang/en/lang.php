@@ -148,4 +148,5 @@ return [
     'is_hq' => 'Is HQ',
     'package_size' => 'Qty per Pack',
     'purchase_invoice_id' => 'Purchase ID',
+    
 ];

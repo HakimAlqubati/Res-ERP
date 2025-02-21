@@ -19,7 +19,7 @@ class InventoryTransaction extends Model
         'movement_type',
         'quantity',
         'unit_id',
-        'movement_date', 
+        'movement_date',
         'notes',
         'package_size',
         'store_id',
@@ -29,7 +29,7 @@ class InventoryTransaction extends Model
         'transactionable_id',
         'transactionable_type',
     ];
-    protected $appends = ['remaining_qty', 'movement_type_title'];
+    protected $appends = ['remaining_qty', 'movement_type_title', 'formatted_transactionable_type'];
 
     // Constant movement types
     const MOVEMENT_OUT = 'out';
@@ -48,35 +48,36 @@ class InventoryTransaction extends Model
 
     public static function getInventoryTrackingDataPagination($productId, $perPage = 15)
     {
-        return DB::table('inventory_transactions')
+        return self::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
             ->where('product_id', $productId)
             ->orderBy('movement_date', 'asc')
             ->paginate($perPage);
     }
+
+
+
     public static function getInventoryTrackingData($productId)
     {
-        $transactions = DB::table('inventory_transactions')
+        $transactions = self::query() // Using Eloquent instead of DB::table()
             ->whereNull('deleted_at')
             ->where('product_id', $productId)
             ->orderBy('movement_date', 'asc')
-
             ->get();
 
         $trackingData = [];
         $remainingQty = 0;
 
         foreach ($transactions as $transaction) {
-
             $quantityImpact = $transaction->quantity * $transaction->package_size;
             $remainingQty += ($transaction->movement_type === self::MOVEMENT_IN) ? $quantityImpact : -$quantityImpact;
 
             $trackingData[] = [
                 'date' => $transaction->movement_date,
-                'type' => $transaction->movement_type === self::MOVEMENT_IN ? 'Purchase' : 'Order',
+                'type' => $transaction->formatted_transactionable_type, // Now it works!
                 'quantity' => $transaction->quantity,
                 'unit_id' => $transaction->unit_id,
-                'unit_name' => Unit::find($transaction->unit_id)->name,
+                'unit_name' => $transaction->unit?->name ?? '',
                 'package_size' => $transaction->package_size,
                 'quantity_impact' => $quantityImpact,
                 'remaining_qty' => $remainingQty,
@@ -87,6 +88,7 @@ class InventoryTransaction extends Model
 
         return $trackingData;
     }
+
 
     /**
      * Get the remaining inventory for a given product and unit.
@@ -144,5 +146,32 @@ class InventoryTransaction extends Model
     public function transactionable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // When retrieving the model, modify the `transactionable_type`
+        static::retrieved(function ($transaction) {
+            if ($transaction->transactionable_type) {
+                $transaction->transactionable_type = class_basename($transaction->transactionable_type);
+            }
+        });
+    }
+
+    // public function getFormattedTransactionableTypeAttribute()
+    // {
+    //     return $this->transactionable_type ? class_basename($this->transactionable_type) : null;
+    // }
+
+    public function getFormattedTransactionableTypeAttribute()
+    {
+        if (!$this->transactionable_type) {
+            return null;
+        }
+
+        // Convert "StockSupplyOrder" to "Stock Supply Order"
+        return preg_replace('/(?<!\ )[A-Z]/', ' $0', class_basename($this->transactionable_type));
     }
 }

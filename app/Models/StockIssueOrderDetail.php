@@ -45,7 +45,7 @@ class StockIssueOrderDetail extends Model
                 'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
                 'quantity' =>  $stockIssueDetail->quantity,
                 'unit_id' => $stockIssueDetail->unit_id,
-                'movement_date' => now(),
+                'movement_date' => $stockIssueDetail->order->date ?? now(),
                 'package_size' => $stockIssueDetail->package_size,
                 'store_id' => $stockIssueDetail->order?->store_id,
                 'transaction_date' => $stockIssueDetail->order->date ?? now(),

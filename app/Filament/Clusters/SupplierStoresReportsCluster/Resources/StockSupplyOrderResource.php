@@ -72,7 +72,7 @@ class StockSupplyOrderResource extends Resource
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
 
-                            Select::make('unit_id')
+                            Select::make('unit_id')->label('Unit')
                                 ->options(
                                     function (callable $get) {
 
@@ -98,7 +98,7 @@ class StockSupplyOrderResource extends Resource
 
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size')),
-                                
+
                             TextInput::make('quantity')
                                 ->numeric()
                                 ->required()
@@ -119,9 +119,10 @@ class StockSupplyOrderResource extends Resource
             ->columns([
                 TextColumn::make('order_date')->sortable()->label('Order Date'),
                 TextColumn::make('store.name')->label('Store'),
+                TextColumn::make('item_count')->label('Products Count')->alignCenter(true),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
                 IconColumn::make('cancelled')
-                    ->label('Cancelled'),
+                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
                 //
