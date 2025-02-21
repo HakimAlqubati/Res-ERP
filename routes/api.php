@@ -48,8 +48,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
     Route::apiResource('products', ProductController::class);
     Route::apiResource('orders', OrderController::class);
+    Route::post('orders2', [OrderController::class,'index']);
+    Route::post('orders2/{id}', [OrderController::class,'index']);
+    Route::post('orders2/update/{id}', [OrderController::class,'update']);
     Route::resource('orderDetails', OrderDetailsController::class);
     Route::patch('patch', [OrderDetailsController::class, 'update']);
+    Route::post('patch2', [OrderDetailsController::class, 'update']);
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/v2/report_products', [ProductController::class, 'reportProductsv2']);
     Route::get('/v2/report_products/details/{category_id}', [ProductController::class, 'reportProductsv2Details']);
