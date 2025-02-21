@@ -11,14 +11,14 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped">
+            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border ">
                 <thead>
                     <x-filament-tables::row class="header_report">
                         <th></th>
-                        <th colspan="3" class="no_border_right_left" style="text-align: center;">
+                        <th colspan="3" class="text-center">
                             <h3>Inventory Movement Report</h3>
                         </th>
-                        <th>
+                        <th colspan="2" style="text-align: center;">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                         </th>
                     </x-filament-tables::row>
@@ -32,21 +32,11 @@
                 </thead>
                 <tbody>
                     @foreach ($reportData as $productReport)
-                        @php
-                            $rowSpan = count($productReport);
-                        @endphp
-                        @foreach ($productReport as $index => $data)
+                        @foreach ($productReport as $data)
                             <x-filament-tables::row>
-                                {{-- Product Name (Only on the first row for each product) --}}
-                                @if ($index === 0)
-                                    <x-filament-tables::cell
-                                        class="border border-gray-300 px-4 py-2 font-bold text-center"
-                                        rowspan="{{ $rowSpan }}">
-                                        {{ $data['product_name'] }}
-                                    </x-filament-tables::cell>
-                                @endif
-
-                                {{-- Unit Details --}}
+                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                    <strong>{{ $data['product_name'] }}</strong>
+                                </x-filament-tables::cell>
                                 <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                     {{ $data['unit_id'] }}
                                 </x-filament-tables::cell>
