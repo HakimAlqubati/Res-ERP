@@ -8,7 +8,8 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransa
 use App\Models\InventoryTransaction;
 use App\Models\Product; 
 use Filament\Pages\SubNavigationPosition;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -45,7 +46,7 @@ class InventoryTransactionTruckingReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(Product::active()->get()->pluck('name', 'id')),
-            ]);
+            ],FiltersLayout::AboveContent);
     }
 
   

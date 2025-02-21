@@ -19,10 +19,11 @@ class ListInventoryTransactionReport extends ListRecords
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
 
         $unitId = 'all';
-        $inventoryService = new MultiProductsInventoryService($productId, $unitId, $storeId);
-        
+        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
+
         // Get report for all products if no specific product is selected
         $reportData = $inventoryService->getInventoryReport();
 

@@ -11,9 +11,11 @@ class MultiProductsInventoryService
     public $productId;
     public $unitId;
     public $storeId;
+    public $categoryId;
 
-    public function __construct($productId = null, $unitId = 'all', $storeId = null)
+    public function __construct($categoryId = null, $productId = null, $unitId = 'all', $storeId = null)
     {
+        $this->categoryId = $categoryId;
         $this->productId = $productId;
         $this->unitId = $unitId;
         $this->storeId = $storeId;
@@ -25,8 +27,14 @@ class MultiProductsInventoryService
             return [$this->getInventoryForProduct($this->productId)];
         }
 
-        // Fetch all products if no specific product ID is given
-        $products = Product::all();
+        // Fetch all products or filter by category if provided
+        $query = Product::query();
+        
+        if ($this->categoryId) {
+            $query->where('category_id', $this->categoryId);
+        }
+
+        $products = $query->get();
         $report = [];
 
         foreach ($products as $product) {

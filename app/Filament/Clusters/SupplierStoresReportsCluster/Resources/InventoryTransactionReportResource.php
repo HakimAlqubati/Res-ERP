@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
+use App\Models\Category;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
@@ -42,6 +43,11 @@ class InventoryTransactionReportResource extends Resource
         return $table
             ->filters([
 
+                SelectFilter::make("category_id")
+                    ->label(__('lang.category'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(Category::active()->get()->pluck('name', 'id')),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))->searchable()
                     ->query(function (Builder $q, $data) {
