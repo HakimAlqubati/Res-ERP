@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
 
-class ListReportProductQuantities extends ListRecords 
+class ListReportProductQuantities extends ListRecords
 {
     protected static string $resource = ReportProductQuantitiesResource::class;
 
@@ -69,9 +69,9 @@ class ListReportProductQuantities extends ListRecords
         $branch_ids = __filament_request_select_multiple('branch_id', [], true);
 
         $start_date = __filament_request_key("date.start_date", null);
-        
+
         $end_date = __filament_request_key("date.end_date", null);
-// dd($product_id,$start_date,$end_date);
+        // dd($product_id,$start_date,$end_date);
         $report_data = $this->getReportData($product_id, $start_date, $end_date, $branch_ids);
 
         if (isset($report_data['total_price'])) {
@@ -116,7 +116,8 @@ class ListReportProductQuantities extends ListRecords
                 'branches.name AS branch',
                 'units.name AS unit',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-                DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS price')
+                DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS price'),
+                DB::raw('ANY_VALUE(orders_details.id) AS order_id')
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
@@ -129,11 +130,11 @@ class ListReportProductQuantities extends ListRecords
             // ->when($branch_ids && is_array($branch_ids), function ($query) use ($branch_ids) {
             //     return $query->whereIn('orders.branch_id', $branch_ids);
             // })
-        // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-        // ->where('orders.active', 1)
+            // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
-            ->groupBy('orders.branch_id', 'products.name', 'products.id','branches.name', 'units.name', 'orders_details.price')
-            ->orderBy(DB::raw('ANY_VALUE(orders_details.id)'), 'asc')
+            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
+            ->orderBy('order_id', 'asc')
             ->get();
 
         $final['data'] = [];
@@ -160,8 +161,8 @@ class ListReportProductQuantities extends ListRecords
     protected function getActions(): array
     {
         return [Action::make('Export to PDF')->label(__('lang.export_pdf'))
-                ->action('exportToPdf')
-                ->color('success')];
+            ->action('exportToPdf')
+            ->color('success')];
     }
 
     public function exportToPdf()
