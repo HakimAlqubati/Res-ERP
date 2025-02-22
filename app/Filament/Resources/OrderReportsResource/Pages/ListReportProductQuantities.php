@@ -133,7 +133,8 @@ class ListReportProductQuantities extends ListRecords
                 'units.name',
                 'orders_details.price'
             )
-            ->orderBy('order_id', 'asc') // ✅ Order by MIN(orders_details.id) instead of orders_details.id
+            ->orderBy(DB::raw('MIN(orders_details.id)'), 'asc') // ✅ Use raw MIN instead of alias
+
             ->limit(10) // ✅ Ensure only 10 records are retrieved
             ->offset(0)
             ->get();
