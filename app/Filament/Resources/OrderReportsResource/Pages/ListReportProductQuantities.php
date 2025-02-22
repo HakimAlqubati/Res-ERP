@@ -103,7 +103,6 @@ class ListReportProductQuantities extends ListRecords
 
     public function getReportData($product_id, $start_date, $end_date, $branch_ids)
     {
-        return [];
         // $currnetRole = getCurrentRole();
         // if ($currnetRole == 7)
         //     $branch_id = [getBranchId()];
@@ -125,14 +124,14 @@ class ListReportProductQuantities extends ListRecords
             ->join('branches', 'orders.branch_id', '=', 'branches.id')
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->whereNull('orders.deleted_at')
-            ->groupBy(
-                'orders.branch_id',
-                'products.name',
-                'products.id',
-                'branches.name',
-                'units.name',
-                'orders_details.price'
-            )
+            // ->groupBy(
+            //     'orders.branch_id',
+            //     'products.name',
+            //     'products.id',
+            //     'branches.name',
+            //     'units.name',
+            //     'orders_details.price'
+            // )
             ->orderBy('order_id', 'asc') // ✅ Order by MIN(orders_details.id) instead of orders_details.id
             ->limit(10) // ✅ Ensure only 10 records are retrieved
             ->offset(0)
