@@ -38,6 +38,7 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
                 Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
                 Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity')),
+                Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size')),
                 Tables\Columns\TextColumn::make('price')->label(__('lang.price')),
                 Tables\Columns\TextColumn::make('total_amount')->label(__('lang.total_amount')),
             ])

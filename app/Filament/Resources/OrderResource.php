@@ -91,7 +91,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                             ])->default(Store::defaultStore()?->id),
                     ]),
                     // Repeater for Order Details
-                    Repeater::make('orderDetails')->columnSpanFull()
+                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn('view')
                         ->label(__('lang.order_details'))->columns(9)
                         ->relationship() // Relationship with the OrderDetails model
                         ->schema([
@@ -339,7 +339,7 @@ class OrderResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            // RelationManagers\OrderDetailsRelationManager::class,
+            RelationManagers\OrderDetailsRelationManager::class,
         ];
     }
 

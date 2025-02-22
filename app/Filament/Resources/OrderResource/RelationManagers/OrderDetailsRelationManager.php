@@ -37,13 +37,17 @@ class OrderDetailsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
-                Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
-                Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),
+                // Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
+                // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
+                Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
+                // Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),
                 Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
-                Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch')),
-                Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification')),
-                Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price')),
+                // Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch')),
+                Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
+                // Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification')),
+                Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
             ])
             ->filters([
                 //

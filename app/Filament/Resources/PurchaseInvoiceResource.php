@@ -129,7 +129,7 @@ class PurchaseInvoiceResource extends Resource
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
                         })->hiddenOn('view'),
-                    Repeater::make('units')
+                    Repeater::make('units')->hiddenOn(['view','edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(8)
                         ->defaultItems(1)
@@ -313,7 +313,7 @@ class PurchaseInvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // PurchaseInvoiceDetailsRelationManager::class,
+            PurchaseInvoiceDetailsRelationManager::class,
         ];
     }
     public static function getPages(): array
