@@ -109,7 +109,7 @@ class ListReportProductQuantities extends ListRecords
         // else
         //     $branch_id = explode(',', $request->input('branch_id'));
 
-        $data = DB::table('orders_details')
+        $subquery = DB::table('orders_details')
             ->select(
                 'products.name AS product',
                 'products.id AS product_id',
@@ -117,7 +117,7 @@ class ListReportProductQuantities extends ListRecords
                 'units.name AS unit',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
                 DB::raw('SUM(orders_details.available_quantity * orders_details.price) AS price'),
-                DB::raw('MIN(orders_details.id) AS order_id') // Ensure ordering by a grouped column
+                DB::raw('MIN(orders_details.id) AS order_id') // Get the lowest order_details.id
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
@@ -132,10 +132,13 @@ class ListReportProductQuantities extends ListRecords
                 'units.id',
                 'units.name',
                 'orders_details.price'
-            )
-            ->orderBy(DB::raw('MIN(orders_details.id)'), 'asc') // ✅ Use raw MIN instead of alias
+            );
 
-            ->limit(10) // ✅ Ensure only 10 records are retrieved
+        // Wrap in an outer query to enforce ordering
+        $data = DB::table(DB::raw("({$subquery->toSql()}) as grouped_data"))
+            ->mergeBindings($subquery) // Ensure bindings are passed correctly
+            ->orderBy('order_id', 'asc') // Now order by order_id (MIN(orders_details.id))
+            ->limit(10)
             ->offset(0)
             ->get();
 
