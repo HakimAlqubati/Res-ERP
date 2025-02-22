@@ -117,7 +117,7 @@ class ListReportProductQuantities extends ListRecords
                 'units.name AS unit',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
                 DB::raw('SUM(orders_details.available_quantity * orders_details.price) AS price'),
-                DB::raw('MIN(orders_details.id) AS order_id') // Use MIN to get the lowest id in the group
+                DB::raw('MIN(orders_details.id) AS order_id') // Using MIN to get a consistent ID for ordering
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
@@ -125,8 +125,9 @@ class ListReportProductQuantities extends ListRecords
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->whereNull('orders.deleted_at')
             ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
-            ->orderBy('order_id', 'asc')
+            ->orderBy('order_id', 'asc') // ✅ FIX: Ordering by MIN(orders_details.id)
             ->get();
+
 
         $final['data'] = [];
         $total_price = 0;
