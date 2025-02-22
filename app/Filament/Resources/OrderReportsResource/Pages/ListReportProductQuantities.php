@@ -117,15 +117,24 @@ class ListReportProductQuantities extends ListRecords
                 'units.name AS unit',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
                 DB::raw('SUM(orders_details.available_quantity * orders_details.price) AS price'),
-                DB::raw('MIN(orders_details.id) AS order_id') // Using MIN to get a consistent ID for ordering
+                DB::raw('MIN(orders_details.id) AS order_id') // Ensure ordering by a grouped column
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
             ->join('branches', 'orders.branch_id', '=', 'branches.id')
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->whereNull('orders.deleted_at')
-            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
-            ->orderBy('order_id', 'asc') // ✅ FIX: Ordering by MIN(orders_details.id)
+            ->groupBy(
+                'orders.branch_id',
+                'products.name',
+                'products.id',
+                'branches.name',
+                'units.name',
+                'orders_details.price'
+            )
+            ->orderBy('order_id', 'asc') // ✅ Order by MIN(orders_details.id) instead of orders_details.id
+            ->limit(10) // ✅ Ensure only 10 records are retrieved
+            ->offset(0)
             ->get();
 
 
