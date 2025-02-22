@@ -103,6 +103,7 @@ class ListReportProductQuantities extends ListRecords
 
     public function getReportData($product_id, $start_date, $end_date, $branch_ids)
     {
+        return [];
         // $currnetRole = getCurrentRole();
         // if ($currnetRole == 7)
         //     $branch_id = [getBranchId()];
