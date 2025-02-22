@@ -112,6 +112,7 @@ class ListReportProductQuantities extends ListRecords
         $data = DB::table('orders_details')
             ->select(
                 'products.name AS product',
+                'products.id AS product_id',
                 'branches.name AS branch',
                 'units.name AS unit',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
