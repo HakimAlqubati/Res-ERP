@@ -42,7 +42,7 @@ class DetailsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('product.name'),
                 Tables\Columns\TextColumn::make('unit.name'),
-                Tables\Columns\TextColumn::make('package_size')->alignCenter(true),
+                Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size')),
                 Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true),
                 Tables\Columns\TextColumn::make('physical_quantity')->alignCenter(true),
                 Tables\Columns\TextColumn::make('difference')->alignCenter(true),

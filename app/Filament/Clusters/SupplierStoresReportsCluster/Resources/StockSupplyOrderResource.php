@@ -165,4 +165,13 @@ class StockSupplyOrderResource extends Resource
     {
         return static::getModel()::count();
     }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 }
