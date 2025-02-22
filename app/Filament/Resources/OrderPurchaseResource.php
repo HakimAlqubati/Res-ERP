@@ -63,9 +63,8 @@ class OrderPurchaseResource extends Resource
                     ->placeholder('Select date')
                     ->default(date('Y-m-d'))
                     ->format('Y-m-d')
-                // ->disabledOn('edit')
-                    ->columnSpanFull()
-                ,
+                    // ->disabledOn('edit')
+                    ->columnSpanFull(),
                 Select::make('branch_id')->label(__('lang.branch'))
                     ->searchable()
                     ->required()
@@ -77,13 +76,10 @@ class OrderPurchaseResource extends Resource
                     ->hidden(function () {
                         return !in_array(getCurrentRole(), [1, 3]);
                     })
-                    ->columnSpanFull()
-                ,
+                    ->columnSpanFull(),
                 Textarea::make('notes')->label(__('lang.notes'))
                     ->placeholder('Enter notes')
-                    ->columnSpanFull()
-
-                ,
+                    ->columnSpanFull(),
 
                 Repeater::make('orderDetails')
                     ->createItemButtonLabel(__('lang.add_item'))
@@ -101,7 +97,7 @@ class OrderPurchaseResource extends Resource
                         Select::make('product_id')
                             ->label(__('lang.product'))
                             ->searchable()
-                        // ->disabledOn('edit')
+                            // ->disabledOn('edit')
                             ->options(function () {
                                 return Product::pluck('name', 'id');
                             })
@@ -112,7 +108,7 @@ class OrderPurchaseResource extends Resource
                         Select::make('unit_id')
                             ->label(__('lang.unit'))
                             ->required()
-                        // ->disabledOn('edit')
+                            // ->disabledOn('edit')
                             ->options(
                                 function (callable $get) {
 
@@ -127,7 +123,7 @@ class OrderPurchaseResource extends Resource
                             )
                             ->searchable()
                             ->reactive()
-                            ->afterStateUpdated(function (Closure $set, $state, $get) {
+                            ->afterStateUpdated(function ($set, $state, $get) {
                                 $unitPrice = UnitPrice::where(
                                     'product_id',
                                     $get('product_id')
@@ -141,13 +137,13 @@ class OrderPurchaseResource extends Resource
                             ->label(__('lang.quantity'))
                             ->type('text')
                             ->default(1)
-                        // ->disabledOn('edit')
-                        // ->mask(
-                        //     fn (TextInput\Mask $mask) => $mask
-                        //         ->numeric()
-                        //         ->decimalPlaces(2)
-                        //         ->thousandsSeparator(',')
-                        // )
+                            // ->disabledOn('edit')
+                            // ->mask(
+                            //     fn (TextInput\Mask $mask) => $mask
+                            //         ->numeric()
+                            //         ->decimalPlaces(2)
+                            //         ->thousandsSeparator(',')
+                            // )
                             ->reactive()
                             ->required()
                             ->afterStateUpdated(function (Closure $set, $state, $get) {
@@ -160,13 +156,13 @@ class OrderPurchaseResource extends Resource
                             ->default(1)
                             ->integer()
                             ->required()
-                        // ->disabledOn('edit')
-                        // ->mask(
-                        //     fn (TextInput\Mask $mask) => $mask
-                        //         ->numeric()
-                        //         ->decimalPlaces(2)
-                        //         ->thousandsSeparator(',')
-                        // )
+                            // ->disabledOn('edit')
+                            // ->mask(
+                            //     fn (TextInput\Mask $mask) => $mask
+                            //         ->numeric()
+                            //         ->decimalPlaces(2)
+                            //         ->thousandsSeparator(',')
+                            // )
                             ->reactive()
 
                             ->afterStateUpdated(function (Closure $set, $state, $get) {
@@ -210,8 +206,7 @@ class OrderPurchaseResource extends Resource
                 // DeleteAction::make(),
                 // Tables\Actions\RestoreAction::make(),
             ])
-            ->bulkActions([
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array
