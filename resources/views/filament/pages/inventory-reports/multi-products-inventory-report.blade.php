@@ -16,7 +16,7 @@
                     <x-filament-tables::row class="header_report">
                         <th></th>
                         <th colspan="3" class="text-center">
-                            <h3>Inventory Movement Report</h3>
+                            <h3>Inventory Report</h3>
                         </th>
                         <th colspan="2" style="text-align: center;">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
