@@ -61,4 +61,9 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
     {
         return false;
     }
+
+    protected function isTablePaginationEnabled(): bool 
+    {
+        return false;
+    } 
 }
