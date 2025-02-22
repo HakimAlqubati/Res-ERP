@@ -133,7 +133,7 @@ class ListReportProductQuantities extends ListRecords
             // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
-            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
+            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price','orders_details.id')
             ->orderBy('order_id', 'asc')
             ->get();
 
