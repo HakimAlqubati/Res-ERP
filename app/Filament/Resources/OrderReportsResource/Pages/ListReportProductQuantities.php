@@ -132,7 +132,7 @@ class ListReportProductQuantities extends ListRecords
         // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
             ->groupBy('orders.branch_id', 'products.name', 'products.id','branches.name', 'units.name', 'orders_details.price')
-            // ->orderBy(DB::raw('ANY_VALUE(orders_details.id)'), 'asc')
+            ->orderBy(DB::raw('ANY_VALUE(orders_details.id)'), 'asc')
             ->get();
 
         $final['data'] = [];
