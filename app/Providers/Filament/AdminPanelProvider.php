@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttendanceReport;
@@ -136,6 +137,12 @@ class AdminPanelProvider extends PanelProvider
                     ->items(array_merge(
                      (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems(): [] ,
                     //  ProductResource::getNavigationItems(),
+                    ))
+                    ,
+                    
+                NavigationGroup::make(__('menu.area_management'))
+                    ->items(array_merge(
+                     (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems(): [] ,
                     ))
                     ,
                 NavigationGroup::make('Requests of Visits')

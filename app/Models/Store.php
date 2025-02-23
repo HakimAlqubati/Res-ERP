@@ -14,8 +14,10 @@ class Store extends Model
         'location',
         'active',
         'default_store',
+        'storekeeper_id',
     ];
 
+    protected $appends = ['storekeeper_name'];
     /**
      * Scope to get only active stores.
      *
@@ -36,5 +38,15 @@ class Store extends Model
     public function scopeDefaultStore($query)
     {
         return $query->where('default_store', true)->first();
+    }
+
+    public function storekeeper()
+    {
+        return $this->belongsTo(User::class, 'storekeeper_id');
+    }
+
+    public function getStorekeeperNameAttribute()
+    {
+        return $this->storekeeper->name ?? '';
     }
 }

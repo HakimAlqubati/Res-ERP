@@ -6,4 +6,5 @@ return [
     'hr_ms' => 'نظام إدارة الموارد البشرية',
     'supply_and_inventory' => 'التوريد والمخزون',
     'stores_cluster' => 'المخازن',
+    'area_management' => 'إدارة المناطق',
 ];

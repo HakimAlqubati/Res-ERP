@@ -14,11 +14,21 @@
             <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
                     <x-filament-tables::row class="header_report">
-                        <th></th>
-                        <th colspan="3" class="text-center">
+                        <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+
+                            <div style="width: 100%;">
+
+                                <img style="display: inline-block;"
+                                    src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
+                                    class="logo-left">
+                            </div>
+                        </th>
+                        <th colspan="2" class="no_border_right_left text-center">
                             <h3>Inventory Report</h3>
                         </th>
-                        <th colspan="2" style="text-align: center;">
+                        <th colspan="3"
+                            class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
+                            style="text-align: center;">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                         </th>
                     </x-filament-tables::row>

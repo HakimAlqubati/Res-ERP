@@ -5,13 +5,18 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\BranchResource\Pages;
 use App\Filament\Resources\BranchResource\RelationManagers\AreasRelationManager;
 use App\Models\Branch;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\District;
 use App\Models\User;
+use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -37,18 +42,78 @@ class BranchResource extends Resource
         return $form
             ->schema([
 
-                Fieldset::make()->columns(2)->schema([
-                    TextInput::make('name')->required()->label(__('lang.name')),
-                    Select::make('manager_id')
-                        ->label(__('lang.branch_manager'))
-                        ->options(User::all()->pluck('name', 'id'))
-                        ->searchable(),
-                    Checkbox::make('active')->label(__('lang.active')),
-                    Checkbox::make('is_hq')->label(__('lang.is_hq')),
-                    Textarea::make('address')
-                        ->columnSpanFull()
-                        ->label(__('lang.address')),
-                ])
+                Wizard::make([
+                    Wizard\Step::make('Basic data')
+                        ->icon('heroicon-o-user-circle')
+                        ->schema([
+                            Fieldset::make()->columns(2)->schema([
+                                TextInput::make('name')->required()->label(__('lang.name')),
+                                Select::make('manager_id')
+                                    ->label(__('lang.branch_manager'))
+                                    ->options(User::all()->pluck('name', 'id'))
+                                    ->searchable(),
+                                Checkbox::make('active')->label(__('lang.active')),
+                                Checkbox::make('is_hq')->label(__('lang.is_hq')),
+                                Textarea::make('address')
+                                    ->columnSpanFull()
+                                    ->label(__('lang.address')),
+                            ]),
+
+                        ]),
+                    Wizard\Step::make('Location')
+                        ->icon('heroicon-o-map-pin')
+                        ->schema([
+                            Fieldset::make()
+                                ->relationship('location')
+                                ->columns(3)->schema([
+                                    Select::make('country_id')
+                                        ->label(__('Country'))->searchable()
+                                        // ->relationship('city', 'name')
+                                        ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
+                                        ->reactive()
+                                        ->required(false),
+                                    Select::make('city_id')
+                                        ->label(__('City'))->searchable()
+                                        // ->relationship('city', 'name')
+                                        ->options(function (callable $get) {
+                                            $countryId = $get('country_id');
+                                            return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
+                                        })
+                                        ->reactive()
+                                        ->required(false),
+
+                                    Select::make('district_id')
+                                        ->label(__('District')) 
+                                        ->searchable()
+                                        ->options(function (callable $get) {
+                                            $cityId = $get('city_id');
+                                            return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
+                                        })
+                                        ->reactive()
+                                        ->required(false),
+                                        TextInput::make('address')->label(__('lang.address')),
+                                        LocationPickr::make('location')->columnSpanFull()
+                                        ->mapControls([
+                                            'mapTypeControl'    => true,
+                                            'scaleControl'      => true,
+                                            'streetViewControl' => true,
+                                            'rotateControl'     => true,
+                                            'fullscreenControl' => true,
+                                            'zoomControl'       => false,
+                                        ])
+                                        ->defaultZoom(5)
+                                        ->draggable()
+                                        ->clickable()
+                                        ->height('40vh')
+                                        // ->defaultLocation([41.32836109345274, 19.818383186960773])
+                                        ->myLocationButtonLabel('My location'),
+                                        // Add other location fields as needed (district_id, city_id, etc.)
+                                  
+
+                                ]),
+
+                        ]),
+                ])->columnSpanFull()->skippable(),
 
             ]);
     }

@@ -6,5 +6,6 @@ return [
     'hr_ms' => 'People & Collaboration',
     'supply_and_inventory' => 'Supply & Inventory',
     'stores_cluster' => 'Stores',
+    'area_management'=> 'Area Management',
     
 ];

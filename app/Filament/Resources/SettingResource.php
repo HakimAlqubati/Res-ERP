@@ -56,10 +56,12 @@ class SettingResource extends Resource
                                     Select::make('default_nationality')->label('Locale')->searchable()->options(getNationalitiesAsCountries()),
                                     FileUpload::make('company_logo')
                                         ->label('Logo')->required()
-                                        ->image()
+                                        ->directory('company_logo')
+                                        ->image()->disk('local')
+                                        // ->visibility('public')
                                         ->columnSpan(3)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                            return "company_logo/" . Str::random(15) . "." . $file->getClientOriginalExtension();
+                                            return  Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
                                     Fieldset::make()->columnSpanFull()->label('Address')->schema([
                                         Textarea::make('address')->label('')->columnSpanFull()->required(),

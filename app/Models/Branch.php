@@ -13,7 +13,7 @@ class Branch extends Model
 {
     use HasFactory, SoftDeletes, DynamicConnection;
 
-   
+
 
     protected $fillable = [
         'id',
@@ -93,4 +93,8 @@ class Branch extends Model
         return $query->where('active', true);
     }
 
+    public function location()
+    {
+        return $this->morphOne(Location::class, 'locationable');
+    }
 }

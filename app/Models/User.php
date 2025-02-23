@@ -21,9 +21,9 @@ class User extends Authenticatable implements FilamentUser
 // implements FilamentUser
 
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield,DynamicConnection;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield, DynamicConnection;
 
-     
+
     /**
      * The attributes that are mass assignable.
      *
@@ -83,7 +83,8 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(Branch::class, 'manager_id');
     }
-    public function branch2(){
+    public function branch2()
+    {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
     public function owner()
@@ -168,8 +169,7 @@ class User extends Authenticatable implements FilamentUser
         return false;
     }
 
-    public function getIsBranchManagerAttribute()
-    {}
+    public function getIsBranchManagerAttribute() {}
     // public function canAccessFilament(): bool
     // {
     //     return true;
@@ -198,5 +198,10 @@ class User extends Authenticatable implements FilamentUser
     public function attendanceDevice()
     {
         return $this->hasOne(AttendanceDevice::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
     }
 }

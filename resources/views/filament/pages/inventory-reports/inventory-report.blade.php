@@ -8,10 +8,10 @@
                     <th colspan="1" class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         {{ $product->name }}
                     </th>
-                    <th colspan="2" class="no_border_right_left" style="text-align: center; vertical-align: middle;">
+                    <th colspan="2" class="no_border_right_left" style="text-align: center; vertical-align: middle;border:none;">
                         <h3>({{ 'Inventory Movement Report' }})</h3>
                     </th>
-                    <th colspan="1" style="text-align: center; vertical-align: middle;"
+                    <th colspan="1" style="text-align: center; vertical-align: middle;border:none;"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                         <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                     </th>

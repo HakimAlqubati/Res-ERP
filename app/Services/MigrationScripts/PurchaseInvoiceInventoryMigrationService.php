@@ -4,6 +4,7 @@ namespace App\Services\MigrationScripts;
 
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\InventoryTransaction;
+use App\Models\PurchaseInvoice;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +23,6 @@ class PurchaseInvoiceInventoryMigrationService
 
         // Retrieve all purchase invoice details
         $purchaseDetails = PurchaseInvoiceDetail::with('purchaseInvoice.store')->get();
-        
         foreach ($purchaseDetails as $detail) {
             self::migrateTransactionForDetail($detail);
         }
@@ -41,45 +41,46 @@ class PurchaseInvoiceInventoryMigrationService
         // DB::beginTransaction(); // Start database transaction
 
         // try {
-            // Check if an inventory transaction already exists for this detail
-            // $exists = InventoryTransaction::where('product_id', $detail->product_id)
-            //     ->where('reference_id', $detail->purchase_invoice_id)
-            //     ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-            //     ->exists();
+        // Check if an inventory transaction already exists for this detail
+        // $exists = InventoryTransaction::where('product_id', $detail->product_id)
+        //     ->where('reference_id', $detail->purchase_invoice_id)
+        //     ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+        //     ->exists();
 
-            // if ($exists) {
-            //     Log::info("Inventory transaction already exists for Purchase Invoice ID: {$detail->purchase_invoice_id}, Product ID: {$detail->product_id}");
-            //     DB::rollBack(); // Rollback transaction as no change was made
-            //     return;
-            // }
+        // if ($exists) {
+        //     Log::info("Inventory transaction already exists for Purchase Invoice ID: {$detail->purchase_invoice_id}, Product ID: {$detail->product_id}");
+        //     DB::rollBack(); // Rollback transaction as no change was made
+        //     return;
+        // }
 
-            // Prepare transaction notes
-            $notes = "Purchase invoice ID {$detail->purchase_invoice_id}";
-            if (isset($detail->purchaseInvoice->store_id)) {
-                $notes .= " in ({$detail->purchaseInvoice->store->name})";
-            }
+        // Prepare transaction notes
+        $notes = "Purchase invoice ID {$detail->purchase_invoice_id}";
+        if (isset($detail->purchaseInvoice->store_id)) {
+            $notes .= " in ({$detail->purchaseInvoice->store->name})";
+        }
 
-            if ($detail->package_size) {
+        if ($detail->package_size) {
 
-                // Create inventory transaction
-                InventoryTransaction::create([
-                    'product_id' => $detail->product_id,
-                    'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                    'quantity' => $detail->quantity,
-                    'package_size' => $detail->package_size,
-                    'price' => $detail->price,
-                    'movement_date' => $detail->purchaseInvoice->date ?? now(),
-                    'unit_id' => $detail->unit_id,
-                    'reference_id' => $detail->purchase_invoice_id,
-                    'store_id' => $detail->purchaseInvoice?->store_id,
-                    'notes' => $notes,
-                    'transaction_date' => $detail->purchaseInvoice->date ?? now(),
-                ]);
+            // Create inventory transaction
+            InventoryTransaction::create([
+                'product_id' => $detail->product_id,
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                'quantity' => $detail->quantity,
+                'package_size' => $detail->package_size,
+                'price' => $detail->price,
+                'movement_date' => $detail->purchaseInvoice->date ?? now(),
+                'unit_id' => $detail->unit_id,
+                'store_id' => $detail->purchaseInvoice?->store_id,
+                'notes' => $notes,
+                'transaction_date' => $detail->purchaseInvoice->date ?? now(),
+                'transactionable_id' => $detail->purchase_invoice_id,
+                'transactionable_type' => PurchaseInvoice::class,
+            ]);
 
-                // DB::commit(); // Commit transaction if successful
+            // DB::commit(); // Commit transaction if successful
 
-                Log::info("Inventory transaction created for Purchase Invoice ID: {$detail->purchase_invoice_id}, Product ID: {$detail->product_id}");
-            }
+            Log::info("Inventory transaction created for Purchase Invoice ID: {$detail->purchase_invoice_id}, Product ID: {$detail->product_id}");
+        }
         // } catch (Exception $e) {
         //     DB::rollBack(); // Rollback transaction on error
         //     Log::error("Error migrating transaction for Purchase Invoice ID: {$detail->purchase_invoice_id}, Product ID: {$detail->product_id}. Error: " . $e->getMessage());

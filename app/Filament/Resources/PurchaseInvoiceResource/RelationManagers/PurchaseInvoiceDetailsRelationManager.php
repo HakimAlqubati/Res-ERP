@@ -7,6 +7,7 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -27,26 +28,27 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
             ]);
     }
 
-    public static function getTitle(Model $ownerRecord, string $pageClass): string
-    {
-        return __('lang.purchase_invoice_details');
-    }
+    // public static function getTitle(Model $ownerRecord, string $pageClass): string
+    // {
+    //     return __('lang.purchase_invoice_details');
+    // }
     public function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
-                Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
-                Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity')),
-                Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size')),
-                Tables\Columns\TextColumn::make('price')->label(__('lang.price')),
-                Tables\Columns\TextColumn::make('total_amount')->label(__('lang.total_amount')),
+                TextColumn::make('id'),
+                // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
+                // Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
+                // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity')),
+                // Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size')),
+                // Tables\Columns\TextColumn::make('price')->label(__('lang.price')),
+                // Tables\Columns\TextColumn::make('total_amount')->label(__('lang.total_amount')),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                // Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),

@@ -122,7 +122,9 @@ class StockSupplyOrderResource extends Resource
                 TextColumn::make('item_count')->label('Products Count')->alignCenter(true),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
                 IconColumn::make('cancelled')
-                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
                 //

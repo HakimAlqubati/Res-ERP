@@ -248,7 +248,7 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('description')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->searchable()->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()
                 // ->trueIcon('heroicon-o-badge-check')

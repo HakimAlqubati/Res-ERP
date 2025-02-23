@@ -6,6 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "arbermustafa/filament-locationpickr-field": "^2.0",
         "arcanedev/log-viewer": "^11.0",
         "barryvdh/laravel-dompdf": "^3.0",
         "bezhansalleh/filament-language-switch": "^3.1",
@@ -15,6 +16,7 @@
         "coolsam/modules": "4",
         "filament/filament": "^3.2",
         "filament/forms": "^3.2",
+        "filament/spatie-laravel-media-library-plugin": "^3.2",
         "filament/tables": "^3.2",
         "hugomyb/filament-media-action": "^3.1",
         "joshembling/image-optimizer": "^1.4",
@@ -29,6 +31,7 @@
         "nwidart/laravel-modules": "^11.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-backup": "^9.1",
+        "spatie/laravel-medialibrary": "^11.12",
         "spatie/laravel-multitenancy": "4.0",
         "spatie/laravel-permission": "^6.9",
         "spatie/laravel-translatable": "^6.8",
