@@ -37,6 +37,11 @@ class Order extends Model
         'cancel_reason',
     ];
 
+    protected $appends = [
+        'status_log_date_time',
+        'status_log_creator_name'
+    ];
+
     public function orderDetails()
     {
         return $this->hasMany(OrderDetails::class);
@@ -164,5 +169,112 @@ class Order extends Model
 
             return ['status' => 'error', 'message' => 'Failed to cancel order: ' . $e->getMessage()];
         }
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($order) {
+            OrderLog::create([
+                'order_id'   => $order->id,
+                'created_by' => auth()->id() ?? null,
+                'log_type'   => OrderLog::TYPE_CREATED,
+                'message'    => OrderLog::TYPE_CREATED,
+                'new_status' => $order->status,
+            ]);
+        });
+
+        static::updated(function ($order) {
+            if (
+                $order->status === self::READY_FOR_DELEVIRY &&
+                $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
+            ) {
+                foreach ($order->orderDetails as $orderDetail) {
+                    \App\Models\InventoryTransaction::create([
+                        'product_id'           => $orderDetail->product_id,
+                        'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                        'quantity'             => $orderDetail->available_quantity,
+                        'unit_id'              => $orderDetail->unit_id,
+                        'purchase_invoice_id'  => $orderDetail->purchase_invoice_id,
+                        'movement_date'        => $order->order_date ?? now(),
+                        'package_size'         => $orderDetail->package_size,
+                        'store_id'             => $order->store_id,
+                        'transaction_date'     => $order->order_date ?? now(),
+                        'notes'                => 'Inventory created for order ' . $order->id,
+                        'transactionable_id'   => $order->id,
+                        'transactionable_type' => Order::class,
+                    ]);
+                }
+            }
+
+            if ($order->isDirty('status')) {
+                OrderLog::create([
+                    'order_id'   => $order->id,
+                    'created_by' => auth()->id() ?? null,
+                    'log_type'   => 'change_status',
+                    'message'    => 'Order status changed from ' .
+                        $order->getOriginal('status') .
+                        ' to ' . $order->status,
+                    'new_status' => $order->status,
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Get possible next statuses based on the current status
+     *
+     * @return array
+     */
+    public function getNextStatuses()
+    {
+        switch ($this->status) {
+            case self::ORDERED:
+                return [
+                    // self::STATUS_PENDING => 'Pending',
+                    self::PROCESSING => 'PROCESSING',
+                ];
+            case self::PROCESSING:
+                return [
+                    // self::STATUS_PENDING => 'Pending',
+                    self::READY_FOR_DELEVIRY => 'Ready For Delivery',
+                ];
+                //     ];
+            case self::READY_FOR_DELEVIRY:
+                return [
+                    self::DELEVIRED => 'Delevired',
+                ];
+            default:
+                return []; // No transitions available for final statuses
+        }
+    }
+    public function logs()
+    {
+        return $this->hasMany(OrderLog::class);
+    }
+
+    public function getStatusLogDateTimeAttribute()
+    {
+        $log = $this->logs()
+            ->where('new_status', $this->status)
+            ->latest('created_at')
+            ->first();
+        return $log ? $log->created_at->format('Y-m-d H:i:s') : null;
+    }
+
+    public function getStatusLogCreatorNameAttribute()
+    {
+        $log = $this->logs()
+            ->where('new_status', $this->status)
+            ->latest('created_at')
+            ->first();
+        return $log && $log->creator ? $log->creator->name : null;
+    }
+
+    public function getNextStatusLabel()
+    {
+        $nextStatuses = $this->getNextStatuses();
+        return $nextStatuses ? reset($nextStatuses) : null;
     }
 }

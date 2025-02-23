@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
@@ -35,17 +37,17 @@ class OrderDetailsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 // Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
                 // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
                 Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
                 // Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),
                 Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
-                // Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch')),
-                Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch'))->alignCenter(true),
+                // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
-                // Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification')),
                 Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
             ])
@@ -56,6 +58,21 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('edit')->button()->form([
+                    Fieldset::make()->schema([
+                        TextInput::make('available_quantity')->label(__('lang.quantity'))
+                        ->numeric()
+                        ->default(fn($record) => $record->available_quantity),
+                    ])
+                ])->action(function ($record, $data) {
+                    try {
+                        $record->update($data);
+                        showSuccessNotifiMessage('done');
+                    } catch (\Exception $e) {
+                        showWarningNotifiMessage('faild',$e->getMessage());
+                        throw $e;
+                    }
+                })
                 // Tables\Actions\EditAction::make()->label(__('lang.change_or_add_purchase_supplier'))
                 //     ->using(function (Model $record, array $data): Model {
 
@@ -92,7 +109,7 @@ class OrderDetailsRelationManager extends RelationManager
                 //             $action->halt();
                 //         }
                 //     })
-                
+
                 // ,
                 // Tables\Actions\DeleteAction::make(),
                 // Tables\Actions\ViewAction::make(),
@@ -107,8 +124,8 @@ class OrderDetailsRelationManager extends RelationManager
         return false;
     }
 
-    protected function isTablePaginationEnabled(): bool 
+    protected function isTablePaginationEnabled(): bool
     {
         return false;
-    } 
+    }
 }

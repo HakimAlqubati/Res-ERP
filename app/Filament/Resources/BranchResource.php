@@ -91,8 +91,8 @@ class BranchResource extends Resource
                                         })
                                         ->reactive()
                                         ->required(false),
-                                        TextInput::make('address')->label(__('lang.address')),
-                                        LocationPickr::make('location')->columnSpanFull()
+                                        Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
+                                        LocationPickr::make('location')->label('')->columnSpanFull()
                                         ->mapControls([
                                             'mapTypeControl'    => true,
                                             'scaleControl'      => true,

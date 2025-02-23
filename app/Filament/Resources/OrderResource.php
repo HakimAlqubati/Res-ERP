@@ -39,6 +39,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class OrderResource extends Resource implements HasShieldPermissions
 {
@@ -91,7 +92,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                             ])->default(Store::defaultStore()?->id),
                     ]),
                     // Repeater for Order Details
-                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn('view')
+                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view','edit'])
                         ->label(__('lang.order_details'))->columns(9)
                         ->relationship() // Relationship with the OrderDetails model
                         ->schema([
@@ -324,10 +325,63 @@ class OrderResource extends Resource implements HasShieldPermissions
                                 ->send();
                         }
                     }),
+                Tables\Actions\Action::make('Move')
+                    ->button()->requiresConfirmation()
+                    ->label(function ($record) {
+                        return $record->getNextStatusLabel();
+                    })
+                    ->icon('heroicon-o-chevron-double-left')
+
+                    ->form(function () {
+                        return [
+                            Fieldset::make()->columns(2)->schema([
+                                TextInput::make('status')->label('From') // current status
+
+                                    ->default(function ($record) {
+                                        return $record->status;
+                                    })
+                                    ->disabled(),
+                                // Input for next status with placeholder showing allowed statuses
+                                TextInput::make('next_status')
+                                    ->label('To')
+                                    ->default(function ($record) {
+                                        return implode(', ', array_keys($record->getNextStatuses()));
+                                    })->disabled(),
+
+                            ]),
+
+                        ];
+                    })
+
+                    ->databaseTransaction()
+                    ->action(function ($record) {
+
+                        DB::beginTransaction();
+                        try {
+                            $currentStatus = $record->STATUS;
+                            $nextStatus = implode(', ', array_keys($record->getNextStatuses()));
+                            $record->update(['status' => $nextStatus]);
+                            showSuccessNotifiMessage('done', 'Done Moved to {$nextStatus}');
+                            DB::commit();
+                        } catch (\Throwable $th) {
+                            //throw $th;
+
+                            showWarningNotifiMessage('Error', 'There was an error moving the task. Please try again.');
+                            DB::rollBack();
+                        }
+                        // Add a log entry for the "moved" action
+                    })
+                    ->disabled(function ($record) {
+                        if ($record->status == Order::DELEVIRED) {
+                            return true;
+                        }
+                        return false;
+                    }),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
+
                 ]),
                 // Tables\Actions\RestoreAction::make(),
             ])
@@ -429,4 +483,15 @@ class OrderResource extends Resource implements HasShieldPermissions
         }
         return false;
     }
+
+    
+    public static function canEdit(Model $record): bool
+    {
+        return false;
+        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
+            return true;
+        }
+        return false;
+    }
+
 }

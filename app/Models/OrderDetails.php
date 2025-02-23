@@ -97,33 +97,54 @@ class OrderDetails extends Model
         parent::boot();
 
         static::creating(function ($orderDetail) {
+            $orderDetail->orderd_product_id = $orderDetail->product_id;
+            $orderDetail->ordered_unit_id = $orderDetail->unit_id;
             $orderDetail->available_quantity = $orderDetail->quantity;
         });
-        static::created(function ($orderDetail) {
-            $notes = 'Order with id ' . $orderDetail->order_id;
-            if (isset($orderDetail->order->store_id)) {
-                $notes .= ' in (' . $orderDetail->order->store->name . ')';
+        static::updated(function ($orderDetail) {
+            $order = $orderDetail->order;
+            $dirty = $orderDetail->getDirty();
+            $messageParts = [];
+            foreach ($dirty as $field => $newValue) {
+                $oldValue = $orderDetail->getOriginal($field);
+                $messageParts[] = "$field: $oldValue -> $newValue";
             }
-            // Subtract from inventory transactions
-            \App\Models\InventoryTransaction::create([
-                'product_id' => $orderDetail->product_id,
-                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                'quantity' =>  $orderDetail->quantity,
-                'unit_id' => $orderDetail->unit_id,
-                'purchase_invoice_id' => $orderDetail?->purchase_invoice_id,
-                'movement_date' => $orderDetail->order->date ?? now(),
-                'package_size' => $orderDetail->package_size,
-                'store_id' => $orderDetail->order?->store_id,
-                'transaction_date' => $orderDetail->order->date ?? now(),
-                'notes' => $notes,
-                'transactionable_id' => $orderDetail->order_id,
-                'transactionable_type' => Order::class,
-            ]);
+            $message = "Updated fields: " . implode(', ', $messageParts);
+            if ($order) {
+                OrderLog::create([
+                    'order_id'   => $order->id,
+                    'created_by' => auth()->id() ?? null,
+                    'log_type'   => OrderLog::TYPE_UPDATED,
+                    'message'    => $message,
+                    'new_status' => 'NOT',
+                ]);
+            }
         });
+        // static::created(function ($orderDetail) {
+        //     $notes = 'Order with id ' . $orderDetail->order_id;
+        //     if (isset($orderDetail->order->store_id)) {
+        //         $notes .= ' in (' . $orderDetail->order->store->name . ')';
+        //     }
+        //     // Subtract from inventory transactions
+        //     \App\Models\InventoryTransaction::create([
+        //         'product_id' => $orderDetail->product_id,
+        //         'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+        //         'quantity' =>  $orderDetail->quantity,
+        //         'unit_id' => $orderDetail->unit_id,
+        //         'purchase_invoice_id' => $orderDetail?->purchase_invoice_id,
+        //         'movement_date' => $orderDetail->order->date ?? now(),
+        //         'package_size' => $orderDetail->package_size,
+        //         'store_id' => $orderDetail->order?->store_id,
+        //         'transaction_date' => $orderDetail->order->date ?? now(),
+        //         'notes' => $notes,
+        //         'transactionable_id' => $orderDetail->order_id,
+        //         'transactionable_type' => Order::class,
+        //     ]);
+        // });
     }
 
     public function getTotalPriceAttribute()
     {
-        return $this->quantity * $this->price;
+        return $this->available_quantity * $this->price;
     }
 }
