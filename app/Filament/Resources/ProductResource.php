@@ -109,8 +109,9 @@ class ProductResource extends Resource
                                         })->searchable(),
                                     TextInput::make('price')->type('number')->default(1)->required()
                                         ->label(__('lang.price'))
-                                        ->mask(RawJs::make('$money($input)'))
-                                        ->stripCharacters(','),
+                                        // ->mask(RawJs::make('$money($input)'))
+                                        // ->stripCharacters(',')
+                                        ,
                                     TextInput::make('package_size')->type('number')->default(1)->required()
                                         ->label(__('lang.package_size'))
                                 ])->orderColumn('order')->reorderable()
@@ -180,9 +181,9 @@ class ProductResource extends Resource
                                         }),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
-                                        ->type('text')
+                                        ->type('number')
                                         ->default(1)
-                                        ->integer()
+                                        // ->integer()
                                         // ->disabledOn('edit')
                                         // ->mask(
                                         //     fn (TextInput\Mask $mask) => $mask
