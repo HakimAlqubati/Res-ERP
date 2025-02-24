@@ -27,7 +27,7 @@ class StockAdjustmentReportResource extends Resource
 
     protected static ?string $cluster = InventoryManagementCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 9;
 
     public static function getPluralLabel(): ?string
     {

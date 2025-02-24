@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryCluster;
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\RelationManagers;
@@ -33,9 +34,9 @@ class StockIssueOrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = InventoryCluster::class;
+    protected static ?string $cluster = InventoryManagementCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 7;
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form
