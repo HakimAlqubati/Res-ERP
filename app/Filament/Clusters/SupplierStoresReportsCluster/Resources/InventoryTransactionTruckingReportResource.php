@@ -33,7 +33,7 @@ class InventoryTransactionTruckingReportResource extends Resource
     }
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 2;
 
 
     public static function table(Table $table): Table
