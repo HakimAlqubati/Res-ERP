@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -121,6 +122,23 @@ class TenantResource extends Resource
                     ->color('success')
                     ->visible(fn($record) => !$record->database_created),
 
+                Tables\Actions\Action::make('setModules')->label('Set Modules')->button()->form([
+                    Select::make('modules')
+                        ->label('Modules')->columnSpanFull()
+                        ->options(CustomTenantModel::getModules())
+                        ->multiple()
+                        ->preload()
+                        ->searchable(),
+                ])
+                    ->action(function ($record, $data) {
+                        try {
+                            $record->update(['modules' => $data['modules']]);
+                            showSuccessNotifiMessage('done');
+                        } catch (\Exception $th) {
+                            showWarningNotifiMessage('error', $th->getMessage());
+                            throw $th;
+                        }
+                    })->color(Color::Green),
                 Tables\Actions\Action::make('importDatabase')
                     // ->form([
                     //     FileUpload::make('sqlfile')->label('SQL File')
