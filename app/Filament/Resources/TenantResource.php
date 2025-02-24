@@ -123,7 +123,7 @@ class TenantResource extends Resource
                     ->visible(fn($record) => !$record->database_created),
 
                 Tables\Actions\Action::make('setModules')->label('Set Modules')->button()->form([
-                    Select::make('modules')
+                    Select::make('modules')->default(fn($record) => $record->modules)
                         ->label('Modules')->columnSpanFull()
                         ->options(CustomTenantModel::getModules())
                         ->multiple()
