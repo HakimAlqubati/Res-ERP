@@ -36,12 +36,20 @@ class StockSupplyOrderDetail extends Model
     protected static function boot()
     {
         parent::boot();
- 
+
         static::created(function ($stockSupplyDetail) {
-            $notes = 'Stock supply with id ' . $stockSupplyDetail->order_id;
+            $order = $stockSupplyDetail->order;
+            $notes = 'Stock supply with ID ' . $stockSupplyDetail->stock_supply_order_id;
             if (isset($stockSupplyDetail->order->store_id)) {
                 $notes .= ' in (' . $stockSupplyDetail->order->store->name . ')';
             }
+
+
+            // Check if the order was created by a StockAdjustment
+            if ($order->created_using_model_type === StockAdjustmentDetail::class) {
+                $notes .= ' (Created due to Stock Adjustment ID: ' . $order->created_using_model_id . ')';
+            }
+
             // Subtract from inventory transactions
             \App\Models\InventoryTransaction::create([
                 'product_id' => $stockSupplyDetail->product_id,

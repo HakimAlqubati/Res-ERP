@@ -1,8 +1,10 @@
-<?php 
+<?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockIssueOrder extends Model
@@ -16,6 +18,8 @@ class StockIssueOrder extends Model
         'notes',
         'cancelled',
         'cancel_reason',
+        'created_using_model_id', // Ensure it's fillable
+        'created_using_model_type', // Ensure it's fillable
     ];
     protected $appends = ['item_count']; // Appending the custom attribute
 
@@ -42,7 +46,7 @@ class StockIssueOrder extends Model
         });
     }
 
-       /**
+    /**
      * Accessor for item count.
      *
      * @return int
@@ -50,5 +54,10 @@ class StockIssueOrder extends Model
     public function getItemCountAttribute()
     {
         return $this->details()->count();
+    }
+
+    public function createdUsingModel(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

@@ -50,6 +50,10 @@ class PurchaseInvoice extends Model
     {
         return $this->hasMany(PurchaseInvoiceDetail::class, 'purchase_invoice_id');
     }
+    public function details()
+    {
+        return $this->hasMany(PurchaseInvoiceDetail::class, 'purchase_invoice_id');
+    }
 
     public function supplier()
     {

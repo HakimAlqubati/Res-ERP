@@ -86,14 +86,13 @@ class DetailsRelationManager extends RelationManager
                                     ->label('Reason')->default(StockAdjustmentReason::getFirstId())
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
                                     ->required(),
-                                Forms\Components\Select::make('store_id')->label(__('lang.store'))
-                                    ->searchable()
-                                    ->disabledOn('edit')
-                                    ->default(getDefaultStore())
+                                Forms\Components\Select::make('store_id')
+                                ->default(getDefaultStore())
                                     ->options(
-                                        Store::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')
-                                    )
-                                    ->searchable(),
+                                        Store::active()
+                                            ->withManagedStores()
+                                            ->get(['name', 'id'])->pluck('name', 'id')
+                                    ),
 
                             ]),
                             Repeater::make('stock_adjustment_details')
@@ -162,6 +161,8 @@ class DetailsRelationManager extends RelationManager
                                         'notes' => $stockAdjustment->notes,
                                         'cancelled' => false,
                                         'created_by' => $stockAdjustment->created_by,
+                                        'created_using_model_id' => $stockAdjustment->id,
+                                        'created_using_model_type' => StockAdjustmentDetail::class,
                                     ]);
 
 
@@ -181,6 +182,8 @@ class DetailsRelationManager extends RelationManager
                                         'notes' => $stockAdjustment->notes,
                                         'cancelled' => false,
                                         'created_by' => $stockAdjustment->created_by,
+                                        'created_using_model_id' => $stockAdjustment->id,
+                                        'created_using_model_type' => StockAdjustmentDetail::class,
                                     ]);
 
                                     // Create StockIssueOrderDetail for each detail

@@ -55,7 +55,8 @@ class StoreResource extends Resource
                     TextInput::make('name')->label(__('lang.name'))->required(),
                     Select::make('storekeeper_id')->searchable()
                         ->label(__('stock.storekeeper'))
-                        ->options(User::select('name','id')->pluck('name', 'id')),
+                        ->options(User::select('name', 'id')
+                            ->stores()->pluck('name', 'id')),
                     Toggle::make('active')->label(__('lang.active'))->default(1)->inline(false),
                     Toggle::make('default_store')->label(__('lang.default'))->default(0)->inline(false),
 
@@ -76,7 +77,8 @@ class StoreResource extends Resource
                 TextColumn::make('location')->searchable()->label(__('lang.location'))->toggleable(),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
                 TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable(),
-                CheckboxColumn::make('default_store')->label(__('lang.default'))->disableClick()->toggleable(),
+                CheckboxColumn::make('default_store')
+                    ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
 
             ])
             ->filters([
@@ -119,10 +121,12 @@ class StoreResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+        $query->withManagedStores();
+        return $query;
     }
 
     public static function getNavigationBadge(): ?string

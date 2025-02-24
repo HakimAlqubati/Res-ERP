@@ -7,6 +7,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrder
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\RelationManagers;
 use App\Models\Product;
 use App\Models\StockIssueOrder;
+use App\Models\Store;
 use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -44,7 +45,12 @@ class StockIssueOrderResource extends Resource
                         ->label('Order Date'),
 
                     Select::make('store_id')
-                        ->relationship('store', 'name')
+                        // ->relationship('store', 'name')
+                        ->options(
+                            Store::active()
+                                ->withManagedStores()
+                                ->get(['name', 'id'])->pluck('name', 'id')
+                        )
                         ->default(getDefaultStore())
                         ->required()
                         ->label('Store'),

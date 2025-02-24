@@ -14,13 +14,18 @@ class CustomTenantModel extends Tenant
     use SoftDeletes;
     // use UsesLandlordConnection;
     protected $table = 'tenants';
-    protected $fillable = ['name', 'domain', 'database', 'active', 'database_created'];
+    protected $fillable = ['name', 'domain', 'database', 'active', 'database_created', 'modules'];
+    protected $casts = [
+        'modules' => 'array',
+    ];
     protected static function booted()
     {
         // static::creating(fn(CustomTenantModel $model) => $model->createDatabase());
     }
 
 
+    public const MODULE_HR = 'hr';
+    public const MODULE_STOCK = 'stock';
 
     public function createDatabase_()
     {
@@ -109,5 +114,18 @@ class CustomTenantModel extends Tenant
             showWarningNotifiMessage($th->getMessage());
             throw $th;
         }
+    }
+
+    public static function getModules(): array
+    {
+        return [
+            'stock' => 'Stock',
+            'hr' => 'HR',
+        ];
+    }
+
+    public function getModulesTitlesAttribute(): string
+    {
+        return is_array($this->modules) ? implode(', ', $this->modules) : 'No Modules Set';
     }
 }

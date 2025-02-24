@@ -88,11 +88,13 @@ class OrderResource extends Resource implements HasShieldPermissions
                         Select::make('store_id')->required()
                             ->label(__('lang.store'))->disabledOn('edit')
                             ->options([
-                                Store::active()->get()->pluck('name', 'id')->toArray()
+                                Store::active()
+                                    ->withManagedStores()
+                                    ->get()->pluck('name', 'id')->toArray()
                             ])->default(Store::defaultStore()?->id),
                     ]),
                     // Repeater for Order Details
-                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view','edit'])
+                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
                         ->label(__('lang.order_details'))->columns(9)
                         ->relationship() // Relationship with the OrderDetails model
                         ->schema([
@@ -484,7 +486,7 @@ class OrderResource extends Resource implements HasShieldPermissions
         return false;
     }
 
-    
+
     public static function canEdit(Model $record): bool
     {
         return false;
@@ -493,5 +495,4 @@ class OrderResource extends Resource implements HasShieldPermissions
         }
         return false;
     }
-
 }

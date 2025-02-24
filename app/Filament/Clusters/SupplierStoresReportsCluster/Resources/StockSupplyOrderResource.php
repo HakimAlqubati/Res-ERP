@@ -7,6 +7,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrde
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\RelationManagers;
 use App\Models\Product;
 use App\Models\StockSupplyOrder;
+use App\Models\Store;
 use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -44,10 +45,12 @@ class StockSupplyOrderResource extends Resource
                         ->label('Order Date'),
 
                     Select::make('store_id')
-                        ->relationship('store', 'name')
-                        ->required()
-                        ->default(getDefaultStore())
-                        ->label('Store'),
+                    ->default(getDefaultStore())
+                        ->options(
+                            Store::active()
+                                ->withManagedStores()
+                                ->get(['name', 'id'])->pluck('name', 'id')
+                        ),
 
                     Textarea::make('notes')
                         ->label('Notes')

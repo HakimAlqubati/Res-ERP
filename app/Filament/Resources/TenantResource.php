@@ -9,6 +9,7 @@ use Dompdf\FrameDecorator\Text;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Set;
@@ -58,7 +59,7 @@ class TenantResource extends Resource
                                 // Update the 'database' field dynamically based on 'name'
                                 $set('database', config('app.db_prefix') . Str::slug($state));
                             }
-                        }),
+                        })->disabledOn('edit'),
                     TextInput::make('domain')->required()->unique(ignoreRecord: true)->disabled()
 
                         ->suffix('.' . config('app.domain'))
@@ -66,6 +67,12 @@ class TenantResource extends Resource
                             return (isLocal()) ? 'http://' : 'https://';
                         })->disabled()->dehydrated(),
                     TextInput::make('database')->required()->unique(ignoreRecord: true)->disabled()->dehydrated(),
+                    Select::make('modules')
+                        ->label('Modules')->columnSpanFull()
+                        ->options(CustomTenantModel::getModules())
+                        ->multiple()
+                        ->preload()
+                        ->searchable(),
                 ]),
             ]);
     }
@@ -85,6 +92,7 @@ class TenantResource extends Resource
 
                     ->openUrlInNewTab(),
                 TextColumn::make('database')->sortable()->searchable()->toggleable(),
+                TextColumn::make('modules_titles')->label('Modules')->searchable()->toggleable(),
                 IconColumn::make('database_created')->label('Database Created')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(true),
                 ToggleColumn::make('active')->sortable()->searchable()->toggleable(),
                 TextColumn::make('updated_at')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
@@ -95,7 +103,7 @@ class TenantResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->hidden(),
+                Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('create_database')->hidden()
                     ->label('Create Database')->button()
                     ->requiresConfirmation()
@@ -129,7 +137,7 @@ class TenantResource extends Resource
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
-                    }),
+                    })->hidden(),
 
                 // Inside the `table` method:
                 Tables\Actions\Action::make('download_backup')
@@ -191,7 +199,7 @@ class TenantResource extends Resource
         return [
             'index' => Pages\ListTenants::route('/'),
             'create' => Pages\CreateTenant::route('/create'),
-            // 'edit' => Pages\EditTenant::route('/{record}/edit'),
+            'edit' => Pages\EditTenant::route('/{record}/edit'),
         ];
     }
     public static function getNavigationBadge(): ?string

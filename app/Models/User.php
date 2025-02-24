@@ -67,6 +67,7 @@ class User extends Authenticatable implements FilamentUser
         'email_verified_at' => 'datetime',
     ];
 
+    protected $appends = ['managed_stores_ids'];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
     public static $filamentAdminColumn = 'is_filament_admin'; // The name of a boolean column in your database.
@@ -203,5 +204,23 @@ class User extends Authenticatable implements FilamentUser
     public function scopeActive($query)
     {
         return $query->where('active', 1);
+    }
+
+    public function scopeStores($query)
+    {
+        return $query->whereHas('roles', function ($q) {
+            $q->where('id', 5); // Filter users by the selected role
+        });
+    }
+
+    public function managedStores()
+    {
+        return $this->hasMany(Store::class, 'storekeeper_id');
+    }
+
+    public function getManagedStoresIdsAttribute()
+    {
+        $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
+        return $ids;
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,12 +34,19 @@ class StockIssueOrderDetail extends Model
 
     protected static function boot()
     {
-        parent::boot(); 
+        parent::boot();
         static::created(function ($stockIssueDetail) {
-            $notes = 'Stock issue with id ' . $stockIssueDetail->order_id;
+            $order = $stockIssueDetail->order;
+            $notes = 'Stock issue with id ' . $stockIssueDetail->stock_issue_order_id;
             if (isset($stockIssueDetail->order->store_id)) {
                 $notes .= ' in (' . $stockIssueDetail->order->store->name . ')';
             }
+
+            // Check if the order was created by a StockAdjustment
+            if ($order->created_using_model_type === StockAdjustmentDetail::class) {
+                $notes .= ' (Created due to Stock Adjustment ID: ' . $order->created_using_model_id . ')';
+            }
+
             // Subtract from inventory transactions
             \App\Models\InventoryTransaction::create([
                 'product_id' => $stockIssueDetail->product_id,

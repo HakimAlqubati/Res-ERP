@@ -147,4 +147,14 @@ class OrderDetails extends Model
     {
         return $this->available_quantity * $this->price;
     }
+
+    public function getPriceWithCurrencyAttribute()
+    {
+        return formatMoney($this->price);
+    }
+    public function getTotalPriceWithCurrencyAttribute()
+    {
+        $res = $this->available_quantity * $this->price;
+        return formatMoney($res);
+    }
 }

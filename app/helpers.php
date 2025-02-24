@@ -27,8 +27,9 @@ function getName()
 /**
  * to format money
  */
-function formatMoney($amount, $currency = '$')
+function formatMoney($amount)
 {
+    $currency = setting('currency_symbol');
     return $currency . ' ' . number_format($amount, 2);
 }
 

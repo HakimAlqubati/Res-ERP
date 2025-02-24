@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 
+use App\Models\PurchaseInvoice;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PurchaseInvoiceDetailsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'purchaseInvoiceDetails';
+    
 
     protected static ?string $recordTitleAttribute = 'purchase_invoice_id';
 
@@ -34,7 +35,7 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
     // }
     public function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped() 
             ->columns([
                 TextColumn::make('id'),
                 // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
@@ -64,8 +65,8 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
         return false;
     }
 
-    protected function isTablePaginationEnabled(): bool 
+    protected function isTablePaginationEnabled(): bool
     {
         return false;
-    } 
+    }
 }

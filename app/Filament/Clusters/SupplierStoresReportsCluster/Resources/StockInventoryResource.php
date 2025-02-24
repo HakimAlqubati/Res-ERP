@@ -8,6 +8,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryR
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Models\Product;
 use App\Models\StockInventory;
+use App\Models\Store;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use App\Services\InventoryService;
@@ -63,11 +64,13 @@ class StockInventoryResource extends Resource
                         DatePicker::make('inventory_date')
                             ->required()->default(now())
                             ->label('Inventory Date'),
-
-                        Select::make('store_id')
-                            ->relationship('store', 'name')
-                            ->required()->default(getDefaultStore())
-                            ->label('Store'),
+                            Select::make('store_id')
+                            ->default(getDefaultStore())
+                            ->options(
+                                Store::active()
+                                    ->withManagedStores()
+                                    ->get(['name', 'id'])->pluck('name', 'id')
+                            ),
 
                         Select::make('responsible_user_id')->searchable()->default(auth()->id())
                             ->relationship('responsibleUser', 'name')

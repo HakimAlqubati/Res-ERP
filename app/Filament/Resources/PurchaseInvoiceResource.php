@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\SupplierCluster;
+use App\Filament\Clusters\SupplierCluster\Resources\PurchaseInvoiceResource\RelationManagers\DetailsRelationManager;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers\PurchaseInvoiceDetailsRelationManager;
@@ -67,8 +68,7 @@ class PurchaseInvoiceResource extends Resource
         return __('lang.purchase_invoice');
     }
     public static function form(Form $form): Form
-    {
-
+    { 
         return $form
             ->schema([
                 Fieldset::make()->schema([
@@ -101,7 +101,9 @@ class PurchaseInvoiceResource extends Resource
                             ->disabledOn('edit')
                             ->default(getDefaultStore())
                             ->options(
-                                Store::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')
+                                Store::where('active', 1)
+                                ->withManagedStores()
+                                ->get(['id', 'name'])->pluck('name', 'id')
                             )
                             ->disabledOn('edit')
                             ->searchable(),
@@ -313,7 +315,8 @@ class PurchaseInvoiceResource extends Resource
     public static function getRelations(): array
     {
         return [
-            PurchaseInvoiceDetailsRelationManager::class,
+            // PurchaseInvoiceDetailsRelationManager::class,
+            DetailsRelationManager::class,
         ];
     }
     public static function getPages(): array

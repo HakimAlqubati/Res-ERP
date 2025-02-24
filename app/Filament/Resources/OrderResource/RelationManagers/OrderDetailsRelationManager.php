@@ -48,8 +48,11 @@ class OrderDetailsRelationManager extends RelationManager
                 // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('price_with_currency')->label(__('lang.unit_price'))
+
+                    ->alignCenter(true),
+                // Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true),
             ])
             ->filters([
                 //
@@ -61,15 +64,15 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Actions\Action::make('edit')->button()->form([
                     Fieldset::make()->schema([
                         TextInput::make('available_quantity')->label(__('lang.quantity'))
-                        ->numeric()
-                        ->default(fn($record) => $record->available_quantity),
+                            ->numeric()
+                            ->default(fn($record) => $record->available_quantity),
                     ])
                 ])->action(function ($record, $data) {
                     try {
                         $record->update($data);
                         showSuccessNotifiMessage('done');
                     } catch (\Exception $e) {
-                        showWarningNotifiMessage('faild',$e->getMessage());
+                        showWarningNotifiMessage('faild', $e->getMessage());
                         throw $e;
                     }
                 })
