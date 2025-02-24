@@ -14,6 +14,7 @@ use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
@@ -21,11 +22,13 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class BranchResource extends Resource
 {
@@ -83,7 +86,7 @@ class BranchResource extends Resource
                                         ->required(false),
 
                                     Select::make('district_id')
-                                        ->label(__('District')) 
+                                        ->label(__('District'))
                                         ->searchable()
                                         ->options(function (callable $get) {
                                             $cityId = $get('city_id');
@@ -91,8 +94,8 @@ class BranchResource extends Resource
                                         })
                                         ->reactive()
                                         ->required(false),
-                                        Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                        LocationPickr::make('location')->label('')->columnSpanFull()
+                                    Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
+                                    LocationPickr::make('location')->label('')->columnSpanFull()
                                         ->mapControls([
                                             'mapTypeControl'    => true,
                                             'scaleControl'      => true,
@@ -107,11 +110,50 @@ class BranchResource extends Resource
                                         ->height('40vh')
                                         // ->defaultLocation([41.32836109345274, 19.818383186960773])
                                         ->myLocationButtonLabel('My location'),
-                                        // Add other location fields as needed (district_id, city_id, etc.)
-                                  
+                                    // Add other location fields as needed (district_id, city_id, etc.)
+
 
                                 ]),
 
+                        ]),
+                    Wizard\Step::make('Images')
+                        ->icon('heroicon-o-user-circle')
+                        ->schema([
+                            Fieldset::make()->columns(1)->schema([
+                                SpatieMediaLibraryFileUpload::make('images')
+                                    ->disk('public')
+                                    ->label('')
+                                    ->directory('branches')
+                                    ->columnSpanFull()
+                                    ->image()
+                                    ->multiple()
+                                    ->downloadable()
+                                    ->moveFiles()
+                                    ->previewable()
+                                    ->imagePreviewHeight('250')
+                                    ->loadingIndicatorPosition('right')
+                                    ->panelLayout('integrated')
+                                    ->removeUploadedFileButtonPosition('right')
+                                    ->uploadButtonPosition('right')
+                                    ->uploadProgressIndicatorPosition('right')
+                                    ->panelLayout('grid')
+                                    ->reorderable()
+                                    ->openable()
+                                    ->downloadable(true)
+                                    ->previewable(true)
+                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                        return (string) str($file->getClientOriginalName())->prepend('branch-');
+                                    })
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])->maxSize(800)
+                                    ->imageEditorMode(2)
+                                    ->imageEditorEmptyFillColor('#fff000')
+                                    ->circleCropper()
+                            ])
                         ]),
                 ])->columnSpanFull()->skippable(),
 
@@ -123,6 +165,10 @@ class BranchResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id')),
+                SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
+                ->circular()->alignCenter(true)->getStateUsing(function () {
+                    return null;
+                })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('address')->label(__('lang.address'))
                     // ->limit(100)

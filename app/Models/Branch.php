@@ -6,12 +6,15 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
-class Branch extends Model
+class Branch extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, DynamicConnection;
+
+    use HasFactory, SoftDeletes, DynamicConnection,InteractsWithMedia;
 
 
 
