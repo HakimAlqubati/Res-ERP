@@ -169,7 +169,10 @@ class SettingResource extends Resource
                                             ->required(),
                                     ]),
 
-                            ]),
+                            ])
+                            ->hidden(function () {
+                                return hideHrForTenant();
+                            }),
                         Tab::make('Tax Settings')->hidden()
                             ->icon('heroicon-o-calculator')
                             ->schema([
@@ -333,7 +336,9 @@ class SettingResource extends Resource
                                 //         ->helperText('Specify the number of tasks an employee must complete to earn the "Hero of the Month" title.'),
 
                                 // ]),
-                            ]),
+                            ])->hidden(function () {
+                                return hideHrForTenant();
+                            }),
                         Tab::make('Orders Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([

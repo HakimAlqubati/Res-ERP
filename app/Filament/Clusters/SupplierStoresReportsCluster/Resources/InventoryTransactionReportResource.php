@@ -70,4 +70,6 @@ class InventoryTransactionReportResource extends Resource
             'index' => Pages\ListInventoryTransactionReport::route('/'),
         ];
     }
+
+
 }

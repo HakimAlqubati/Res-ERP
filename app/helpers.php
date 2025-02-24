@@ -2,6 +2,7 @@
 
 use App\Models\Allowance;
 use App\Models\Attendance;
+use App\Models\CustomTenantModel;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\Holiday;
@@ -18,6 +19,7 @@ use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Spatie\Multitenancy\Contracts\IsTenant;
 
 function getName()
 {
@@ -506,6 +508,24 @@ function showWarningNotifiMessage($title, $body = null)
 function isLocal(): bool
 {
     if (env('APP_ENV') == 'local') {
+        return true;
+    }
+    return false;
+}
+
+function hideHrForTenant()
+{
+    if (!app(IsTenant::class)::checkCurrent()) {
+        return false;
+    }
+    $currentTenant = app(IsTenant::class)::current();
+    if ($currentTenant) {
+        $currentTenant = CustomTenantModel::find($currentTenant->id);
+    }
+    
+    if ($currentTenant && is_array($currentTenant->modules) && !in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules)) {
+        return true;
+    } elseif ($currentTenant && is_null($currentTenant->modules)) {
         return true;
     }
     return false;
