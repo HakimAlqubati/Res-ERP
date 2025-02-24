@@ -7,4 +7,5 @@ return [
     'supply_and_inventory' => 'التوريد والمخزون',
     'stores_cluster' => 'المخازن',
     'area_management' => 'إدارة المناطق',
+    'inventory_management' => 'إدارة المخزون',
 ];

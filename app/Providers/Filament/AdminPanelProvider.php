@@ -13,6 +13,7 @@ use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\InventoryCluster;
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
@@ -113,6 +114,7 @@ class AdminPanelProvider extends PanelProvider
             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
              (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierCluster::getNavigationItems(): [], 
              (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems(): [], 
+             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryManagementCluster::getNavigationItems(): [], 
           
             )) ;
         }
