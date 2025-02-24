@@ -109,9 +109,9 @@ class ProductResource extends Resource
                                         })->searchable(),
                                     TextInput::make('price')->type('number')->default(1)->required()
                                         ->label(__('lang.price'))
-                                        // ->mask(RawJs::make('$money($input)'))
-                                        // ->stripCharacters(',')
-                                        ,
+                                    // ->mask(RawJs::make('$money($input)'))
+                                    // ->stripCharacters(',')
+                                    ,
                                     TextInput::make('package_size')->type('number')->default(1)->required()
                                         ->label(__('lang.package_size'))
                                 ])->orderColumn('order')->reorderable()
@@ -177,7 +177,8 @@ class ProductResource extends Resource
                                         // )
                                         ->reactive()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                            $set('total_price', ((float) $state) * ((float)$get('price')));
+                                            $res = ((float) $state) * ((float)$get('price'));
+                                            $set('total_price', $res);
                                         }),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
@@ -194,7 +195,9 @@ class ProductResource extends Resource
                                         ->reactive()
 
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                            $set('total_price', ((float) $state) * ((float)$get('quantity')));
+                                            $res = ((float) $state) * ((float)$get('quantity'));
+                                            $res = round($res, 2);
+                                            $set('total_price', $res);
                                         }),
                                     TextInput::make('total_price')->default(1)
                                         ->type('text')
