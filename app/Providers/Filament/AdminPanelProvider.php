@@ -81,7 +81,7 @@ class AdminPanelProvider extends PanelProvider
          $group = [];
  
         if(
-            ($currentTenant && in_array(CustomTenantModel::MODULE_HR,$currentTenant->modules))
+            ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR,$currentTenant->modules))
             ||
             is_null($currentTenant)
 
@@ -100,7 +100,7 @@ class AdminPanelProvider extends PanelProvider
         }
         
         if(
-            ($currentTenant && in_array(CustomTenantModel::MODULE_STOCK,$currentTenant->modules))
+            ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_STOCK,$currentTenant->modules))
             ||
             is_null($currentTenant)
 
