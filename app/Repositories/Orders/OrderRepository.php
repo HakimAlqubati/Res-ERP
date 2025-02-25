@@ -8,6 +8,7 @@ use App\Interfaces\Orders\OrderRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use App\Models\UnitPrice;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -232,6 +233,8 @@ class OrderRepository implements OrderRepositoryInterface
                     'available_quantity' => $orderDetail['quantity'],
                     'created_by' => auth()->user()->id,
                     'price' => (getUnitPrice($orderDetail['product_id'], $orderDetail['unit_id'])),
+                    'package_size' => UnitPrice::where('product_id', $orderDetail['product_id'])
+                        ->where('unit_id', $orderDetail['unit_id'])->value('package_size'),
                 ];
             }
             if (count($orderDetailsData) > 0) {
@@ -333,7 +336,7 @@ class OrderRepository implements OrderRepositoryInterface
         $order_status = $order->status;
         $file_name = __('lang.order-no-') . $id;
         if (in_array($order_status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-            $file_name = __('lang.transfer-no-') . $id. ' - '. $order->transfer_date;
+            $file_name = __('lang.transfer-no-') . $id . ' - ' . $order->transfer_date;
         }
         return Excel::download(new OrdersExport($id), $order_branch . ' - ' . $file_name . '.xlsx');
     }

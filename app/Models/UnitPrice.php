@@ -27,6 +27,7 @@ class UnitPrice extends Model
             'unit_id' => $this->unit_id,
             'unit_name' => $this->unit->name,
             'price' => $this->price,
+            'package_size' => $this->package_size,
         ];
     }
 }

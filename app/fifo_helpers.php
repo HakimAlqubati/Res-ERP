@@ -5,6 +5,7 @@ use App\Models\OrderDetails;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\SystemSetting;
+use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -30,7 +31,7 @@ function getSumQtyOfProductFromPurchases($product_id, $unit_id, $latest = false)
         ->where('unit_id', $unit_id)
         ->groupBy('price', 'purchase_invoice_id')
         ->orderBy('purchase_invoice_id', 'asc');
-        $query->whereNull('purchase_invoices.deleted_at');
+    $query->whereNull('purchase_invoices.deleted_at');
     if (!$latest) {
         $result = $query->get();
     } else {
@@ -145,6 +146,9 @@ function calculateFifoMethod($req_array, $orderId)
                 'purchase_invoice_id' => $comparedData[0]['purchase_invoice_id'],
                 'price' =>  $comparedData[0]['price'],
                 'negative_inventory_quantity' => true,
+                'package_size' => UnitPrice::where('product_id', $comparedData[0]['product_id'])
+                    ->where('unit_id', $comparedData[0]['unit_id'])
+                    ->value('package_size'),
             ];
             $finalOrderDetailData[] = $orderDetailsData;
             continue;
@@ -166,6 +170,12 @@ function calculateFifoMethod($req_array, $orderId)
                     'purchase_invoice_id' => $purchase_invoice_id,
                     'price' =>  $price,
                     'negative_inventory_quantity' => false,
+                    'package_size' => UnitPrice::where(
+                        'product_id',
+                        $value['product_id']
+                    )
+                        ->where('unit_id', $value['unit_id'])
+                        ->value('package_size'),
                 ];
                 break;
             } else if ($already_ordered_qty > $remaning_qty) {
@@ -208,6 +218,11 @@ function calculateIfAlreadyQtyBiggerThanRemaning($comparedData, $already_ordered
             'purchase_invoice_id' => $comparedData[$i]['purchase_invoice_id'],
             'price' => $comparedData[$i]['price'],
             'negative_inventory_quantity' => false,
+            'package_size' => UnitPrice::where(
+                'product_id',
+                $product_id
+            )
+                ->where('unit_id', $unit_id)->value('package_size'),
         ];
         $already_ordered_qty = ($already_ordered_qty - $qty);
 
@@ -222,6 +237,10 @@ function calculateIfAlreadyQtyBiggerThanRemaning($comparedData, $already_ordered
                 'purchase_invoice_id' => $comparedData[$i]['purchase_invoice_id'],
                 'price' => $comparedData[$i]['price'],
                 'negative_inventory_quantity' => true,
+                'package_size' => UnitPrice::where(
+                    'product_id',
+                    $product_id
+                )->where('unit_id', $unit_id)->value('package_size'),
             ];
         }
 

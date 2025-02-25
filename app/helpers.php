@@ -252,7 +252,7 @@ function getDefaultCurrency()
  */
 function getCalculatingPriceOfOrdersMethod()
 {
-    return setting('calculating_orders_price_method');
+    return setting('calculating_orders_price_method')?? Order::METHOD_UNIT_PRICE;
 }
 
 /**

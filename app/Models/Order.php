@@ -17,6 +17,9 @@ class Order extends Model
     public const READY_FOR_DELEVIRY = 'ready_for_delivery';
     public const DELEVIRED = 'delevired';
     public const PENDING_APPROVAL = 'pending_approval';
+
+    public const METHOD_FIFO = 'fifo';
+    public const METHOD_UNIT_PRICE = 'from_unit_prices';
     protected $fillable = [
         'customer_id',
         'status',
