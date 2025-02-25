@@ -66,9 +66,12 @@ class FifoInventoryService
             $allocations[] = [
                 'purchase_invoice_id' => $purchase->transactionable_id,
                 'allocated_qty' => $allocatedQty,
+                'quantity' => $allocatedQty,
+                'available_quantity' => $allocatedQty,
                 'unit_id' => $this->unitId,
                 'product_id' => $this->productId,
                 'unit_price' => round($adjustedPrice, 2),
+                'price' => round($adjustedPrice, 2),
                 'package_size' => $packageSize,
                 'movement_date' => $purchase->movement_date,
             ];

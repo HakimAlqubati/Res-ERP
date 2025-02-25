@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\UnitPrice;
 use App\Models\User;
+use App\Services\FifoInventoryService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -117,11 +118,33 @@ class OrderRepository implements OrderRepositoryInterface
                     $message = 'done successfully';
                 }
             }
+            $orderDetailsData = [];
+            foreach ($request->input('order_details') as $key =>  $detail) {
+                
+                $fifoService = new FifoInventoryService($detail['product_id'], $detail['unit_id'], $detail['quantity']);
+                $result =  $fifoService->allocateOrder();
+                if ($result['success'] == true) {
+                    $orderDetailsData[] = $result['result'][0];
+                    $orderDetailsData[$key]['order_id'] = $orderId;
+                } else {
+                    continue;
+                }
+            }
 
-            $orderDetailsData = calculateFifoMethod($request->input('order_details'), $orderId);
+            $orderDetailsData_old = calculateFifoMethod($request->input('order_details'), $orderId);
+            dd($orderDetailsData, $orderDetailsData_old);
+            $orderDetailsData = array_map(function ($item) {
+                unset(
+                    $item['movement_date'],
+                    $item['allocated_qty'],
+                    $item['unit_price'],
+                );
+                return $item;
+            }, $orderDetailsData);
 
-
-            if (count($orderDetailsData) > 0 && !($pendingOrderId > 0)) {
+            // dd($orderDetailsData);
+            // if (count($orderDetailsData) > 0 && !($pendingOrderId > 0)) {
+            if (count($orderDetailsData) > 0) {
                 // to store (order details) new order 
                 OrderDetails::insert($orderDetailsData);
             }
