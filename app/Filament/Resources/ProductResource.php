@@ -94,7 +94,7 @@ class ProductResource extends Resource
                         ->schema([
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(3)
+                                ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->columnSpanFull()
                                 ->collapsible()->defaultItems(0)
@@ -113,7 +113,9 @@ class ProductResource extends Resource
                                     // ->stripCharacters(',')
                                     ,
                                     TextInput::make('package_size')->type('number')->default(1)->required()
-                                        ->label(__('lang.package_size'))
+                                        ->label(__('lang.package_size')),
+                                    TextInput::make('minimum_quantity')->type('number')->default(0)->required()
+                                        ->label(__('stock.minimum_quantity'))->helperText(__('stock.minimum_quantity_desc')),
                                 ])->orderColumn('order')->reorderable()
 
 

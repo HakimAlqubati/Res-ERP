@@ -10,3 +10,6 @@ Route::get('/custom-route', function () {
 
 Route::get('/testfifo', [TestController3::class, 'testFifo']);
 Route::get('/testQRCode/{id}', [TestController3::class, 'testQRCode'])->name('testQRCode');
+
+Route::get('/currntStock', [TestController3::class, 'currntStock'])->name('currntStock');
+Route::get('/lowStock', [TestController3::class, 'lowStock']);

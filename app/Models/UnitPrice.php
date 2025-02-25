@@ -11,7 +11,7 @@ class UnitPrice extends Model
     use HasFactory, SoftDeletes;
     protected $table = 'unit_prices';
     public $primaryKey = 'id';
-    protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order'];
+    protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
     public function product()
     {
         return $this->belongsTo(Product::class);

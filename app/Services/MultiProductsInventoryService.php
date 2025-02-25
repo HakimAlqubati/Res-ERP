@@ -83,6 +83,7 @@ class MultiProductsInventoryService
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
                 'remaining_qty' => round($remQty / $unitPrice['package_size'], 2),
+                'minimum_quantity' => $unitPrice['minimum_quantity']
             ];
         }
         return $result;
@@ -102,7 +103,7 @@ class MultiProductsInventoryService
             }
         }
 
-        $productUnitPrices = $query->get(['unit_id', 'order', 'package_size']);
+        $productUnitPrices = $query->get(['unit_id', 'order', 'package_size','minimum_quantity']);
 
         return $productUnitPrices->map(function ($unitPrice) {
             return [
@@ -110,7 +111,25 @@ class MultiProductsInventoryService
                 'order' => $unitPrice->order,
                 'package_size' => $unitPrice->package_size,
                 'unit_name' => $unitPrice->unit->name,
+                'minimum_quantity' => $unitPrice->minimum_quantity ?? 0,
             ];
         });
+    }
+
+
+    public function getProductsBelowMinimumQuantity()
+    {
+        $inventory = $this->getInventoryReport();
+        $lowStockProducts = [];
+
+        foreach ($inventory['reportData'] as $productData) {
+            foreach ($productData as $product) {
+                if ($product['remaining_qty'] <= $product['minimum_quantity']) {
+                    $lowStockProducts[] = $product;
+                }
+            }
+        }
+
+        return $lowStockProducts;
     }
 }

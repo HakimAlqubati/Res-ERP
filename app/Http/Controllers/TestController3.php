@@ -45,4 +45,16 @@ class TestController3 extends Controller
 
         return view('qr-code.qrcode', compact('qrCode'));
     }
+
+    public function currntStock(){
+        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $currentStock = $inventoryService->getInventoryReport();
+        return $currentStock;
+    }
+    public function lowStock()
+    {
+        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantity();
+        return $lowStockProducts;
+    }
 }
