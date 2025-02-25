@@ -1,10 +1,10 @@
-<x-filament::page>
+<x-filament-panels::page>
 
     {{-- @if (isset($branch_id)) --}}
     {{-- <button wire:click="goBack">back</button> --}}
-    <tables::table class="w-full text-sm text-left pretty  ">
-        <thead>
-            <tables::row class="header_report">
+    <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table">
+        <thead class="fixed-header">
+            <x-filament-tables::row class="header_report">
                 <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                     <p>{{ __('lang.general_report_of_products') }}</p>
                     <p>({{ $branch }})
@@ -21,33 +21,33 @@
                 </th>
                 <th style="text-align: center; vertical-align: middle;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                    <img class="circle-image"
-                        src="https://w7.pngwing.com/pngs/882/726/png-transparent-chef-cartoon-chef-photography-cooking-fictional-character-thumbnail.png"
-                        alt="">
+                    <img style="display: inline-block;"
+                            src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo"
+                            class="logo-left">
                 </th>
-            </tables::row>
-            <tables::row>
+            </x-filament-tables::row>
+            <x-filament-tables::row>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
                 <th>{{ __('lang.quantity') }}</th>
                 <th>{{ __('lang.price') }}</th>
-            </tables::row>
+            </x-filament-tables::row>
         </thead>
         <tbody>
             @foreach ($report_data as $data)
-                <tables::row>
-                    <tables::cell> {{ $data?->product_name }} </tables::cell>
-                    <tables::cell> {{ $data?->unit_name }} </tables::cell>
-                    <tables::cell> {{ $data?->quantity }} </tables::cell>
-                    <tables::cell> {{ $data?->price }} </tables::cell>
-                </tables::row>
+                <x-filament-tables::row>
+                    <x-filament-tables::cell> {{ $data?->product_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $data?->unit_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $data?->price }} </x-filament-tables::cell>
+                </x-filament-tables::row>
             @endforeach
-            <tables::row>
-                <tables::cell colspan="2"> {{ __('lang.total') }} </tables::cell>
-                <tables::cell> {{ $total_quantity }} </tables::cell>
-                <tables::cell> {{ $total_price }} </tables::cell>
-            </tables::row>
+            <x-filament-tables::row>
+                <x-filament-tables::cell colspan="2"> {{ __('lang.total') }} </x-filament-tables::cell>
+                <x-filament-tables::cell> {{ $total_quantity }} </x-filament-tables::cell>
+                <x-filament-tables::cell> {{ $total_price }} </x-filament-tables::cell>
+            </x-filament-tables::row>
         </tbody>
 
-    </tables::table>
-</x-filament::page>
+    </x-filament-tables::table>
+</x-filament-panels::page>

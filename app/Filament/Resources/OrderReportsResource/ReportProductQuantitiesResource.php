@@ -93,13 +93,14 @@ class ReportProductQuantitiesResource extends Resource
                         DatePicker::make('end_date')
                             ->label('End Date'),
                     ])
-                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                    // ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
 
-                        return $query->when(
-                            isset($data['start_date']) && isset($data['end_date']),
-                            fn($query) => $query->whereBetween('orders.created_at', [$data['start_date'], $data['end_date']])
-                        );
-                    }),
+                    //     return $query->when(
+                    //         isset($data['start_date']) && isset($data['end_date']),
+                    //         fn($query) => $query->whereBetween('orders.created_at', [$data['start_date'], $data['end_date']])
+                    //     );
+                    // })
+                    ,
             ], layout: FiltersLayout::AboveContent);
     }
 

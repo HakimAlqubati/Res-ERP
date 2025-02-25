@@ -57,24 +57,26 @@ class ListGeneralReportOfProducts extends ListRecords
 
     protected function getViewData(): array
     {
-       
-     
+
+
         // $branch_id = __filament_request_select('branch_id', 'choose');
         // $start_date =  __filament_request_key("date.start_date", null);
         // $end_date = __filament_request_key("date.end_date", null);
 
 
         $updates = request()->input('components.0.updates', []);
-        $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
-        $branch_id = $updates['tableFilters.branch_id.value'] ?? null;
-        $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
-
+        
+        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
+        
+        $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
+        $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
+        
         $report_data['data'] = [];
         $total_quantity = 0;
         $total_price = 0;
 
         // $report_data  = $this->getReportData($start_date, $end_date, $branch_id);
-        $report_data  = GeneralReportOfProductsResource::processReportData($start_date,$end_date,$branch_id);
+        $report_data  = GeneralReportOfProductsResource::processReportData($start_date, $end_date, $branch_id);
 
 
         // dd($report_data);
@@ -87,8 +89,8 @@ class ListGeneralReportOfProducts extends ListRecords
             $total_quantity = $report_data['total_quantity'];
         }
 
-        
-         
+
+
         // dd($branch_id,$dd);
         return [
             'report_data' => $report_data['data'],
@@ -109,7 +111,7 @@ class ListGeneralReportOfProducts extends ListRecords
         ];
     }
 
-  
+
 
     function getReportData($start_date, $end_date, $branch_id)
     {

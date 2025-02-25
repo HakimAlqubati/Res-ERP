@@ -140,6 +140,7 @@ class GeneralReportProductDetails extends Page
 
     protected function getActions(): array
     {
+        return [];
         return  [Action::make('Export to PDF')->label(__('lang.export_pdf'))
             ->action('exportToPdf')
             ->color('success'),];

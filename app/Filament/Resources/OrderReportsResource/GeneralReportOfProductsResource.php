@@ -69,12 +69,13 @@ class GeneralReportOfProductsResource extends Resource
                         return $q;
                     })->options(Branch::where('active', 1)
                         ->get()->pluck('name', 'id')),
-                        SelectFilter::make("branch_id")
-                                    ->label(__('lang.branch'))
-                                    ->query(function (Builder $q, $data) {
-                                        return $q;
-                                    })->options(Branch::where('active', 1)
-                                        ->get()->pluck('name', 'id')),
+                SelectFilter::make("branch_id")
+                    ->label(__('lang.branch'))
+                    // ->query(function (Builder $q, $data) {
+                    //     return $q;
+                    // })
+                    ->options(Branch::where('active', 1)
+                        ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->form([
                         DatePicker::make('start_date')
@@ -87,7 +88,7 @@ class GeneralReportOfProductsResource extends Resource
                     })
             ], layout: FiltersLayout::AboveContent)
             // ->query(fn() => self::getReportQuery())
-            ;
+        ;
     }
 
 
@@ -125,10 +126,21 @@ class GeneralReportOfProductsResource extends Resource
 
 
 
-    public static function processReportData($start_date, $end_date, $branch_id) 
+    public static function processReportData($start_date, $end_date, $branch_id)
     {
         // Step 1: Get the query results
-        $get_data = self::getEloquentQuery()->get();
+        $get_data = self::getEloquentQuery()
+            ->when($branch_id, function ($query) use ($branch_id) {
+                return $query->where('orders.branch_id', $branch_id);
+            })
+            ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
+
+                $s_d = date('Y-m-d', strtotime($start_date)) . ' 00:00:00';
+                $e_d = date('Y-m-d', strtotime($end_date)) . ' 23:59:59';
+
+                return $query->whereBetween('orders.created_at', [$s_d, $e_d]);
+            })
+            ->get();
 
         $data = [];
         $sum_price = 0;
@@ -157,7 +169,7 @@ class GeneralReportOfProductsResource extends Resource
         foreach ($categories as $cat_id => $cat_name) {
             $obj = new \stdClass();
             $obj->category_id = $cat_id;
-            $obj->url_report_details = "admin/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id";
+            $obj->url_report_details = "admin/main-orders/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id";
             $obj->category = $cat_name;
             $obj->quantity = round(isset($data[$cat_id]) ? $data[$cat_id]['available_quantity'] : 0, 0);
             $price = (isset($data[$cat_id]) ? $data[$cat_id]['price'] : '0.00');
@@ -176,7 +188,7 @@ class GeneralReportOfProductsResource extends Resource
         return $final_result;
     }
 
-    
+
 
     public static function getPages(): array
     {
