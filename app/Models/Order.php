@@ -193,6 +193,10 @@ class Order extends Model
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
+
+                if (!$order->store_id && isStoreManager() && !is_null(getDefaultStoreForCurrentStoreKeeper())) {
+                    $order->update(['store_id' => getDefaultStoreForCurrentStoreKeeper()]);
+                }
                 foreach ($order->orderDetails as $orderDetail) {
                     \App\Models\InventoryTransaction::create([
                         'product_id'           => $orderDetail->product_id,

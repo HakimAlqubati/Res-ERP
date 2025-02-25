@@ -252,7 +252,7 @@ function getDefaultCurrency()
  */
 function getCalculatingPriceOfOrdersMethod()
 {
-    return setting('calculating_orders_price_method')?? Order::METHOD_UNIT_PRICE;
+    return setting('calculating_orders_price_method') ?? Order::METHOD_UNIT_PRICE;
 }
 
 /**
@@ -522,11 +522,37 @@ function hideHrForTenant()
     if ($currentTenant) {
         $currentTenant = CustomTenantModel::find($currentTenant->id);
     }
-    
+
     if ($currentTenant && is_array($currentTenant->modules) && !in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules)) {
         return true;
     } elseif ($currentTenant && is_null($currentTenant->modules)) {
         return true;
     }
     return false;
+}
+
+function getDefaultStoreForCurrentStoreKeeper()
+{
+    if (isStoreManager()) {
+        $stores = auth()->user()->managedStores()->get(['id', 'default_store'])->toArray() ?? [];
+
+        switch (count($stores)) {
+            case 0:
+                return null; // No stores
+
+            case 1:
+                return $stores[0]['id']; // Only one store, return it
+
+            default:
+                // More than one store, check for a default store
+                foreach ($stores as $store) {
+                    if ($store['default_store'] == 1) {
+                        return $store['id']; // Return the default store
+                    }
+                }
+                return $stores[0]['id']; // No default store, return the first one
+        }
+    }
+
+    return null;
 }
