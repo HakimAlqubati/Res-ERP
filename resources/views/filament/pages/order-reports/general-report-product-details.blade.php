@@ -21,9 +21,9 @@
                 </th>
                 <th style="text-align: center; vertical-align: middle;"
                     class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                    <img style="display: inline-block;"
+                    {{-- <img style="display: inline-block;"
                             src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt="Company Logo"
-                            class="logo-left">
+                            class="logo-left"> --}}
                 </th>
             </x-filament-tables::row>
             <x-filament-tables::row>
