@@ -124,7 +124,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $fifoService = new FifoInventoryService($detail['product_id'], $detail['unit_id'], $detail['quantity']);
                 $result =  $fifoService->allocateOrder();
 
-                dd($result);
+                // dd($result);
                 if ($result['success'] == true) {
                     $orderDetailsData[] = $result['result'][0];
                     $orderDetailsData[$key]['order_id'] = $orderId;
