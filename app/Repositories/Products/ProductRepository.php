@@ -29,9 +29,9 @@ class ProductRepository implements ProductRepositoryInterface
 
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
         $products = Product::active()
-            ->when($isManufacturing, function ($query) {
-                return $query->manufacturingCategory()->hasProductItems();
-            })
+            // ->when($isManufacturing, function ($query) {
+            //     return $query->manufacturingCategory()->hasProductItems();
+            // })
             ->HasUnitPrices()->when($id, function ($query) use ($id) {
                 return $query->where('id', $id);
             })->when($categoryId, function ($query) use ($categoryId) {

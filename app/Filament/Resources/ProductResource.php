@@ -184,7 +184,7 @@ class ProductResource extends Resource
 
                         ]),
 
-                    Step::make('units')
+                    Step::make('units')->label('Units')
                         // ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
                         ->schema([
 
