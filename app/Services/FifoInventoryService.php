@@ -83,14 +83,16 @@ class FifoInventoryService
             // Step 5: Reduce the remaining quantity
             $remainingQuantity -= $allocatedQty;
         }
+
         // If there is remaining quantity that couldn't be allocated, throw an exception
         if ($remainingQuantity > 0) {
+
             // Step 5: Record allocation details
             $allocations[0] = [
                 'purchase_invoice_id' => $purchase->transactionable_id,
-                'allocated_qty' => $allocatedQty,
-                'quantity' => $allocatedQty + $remainingQuantity,
-                'available_quantity' => $allocatedQty + $remainingQuantity,
+                'allocated_qty' => $allocatedQty ?? 0,
+                'quantity' => ($allocatedQty ?? 0) + $remainingQuantity,
+                'available_quantity' => ($allocatedQty ?? 0) + $remainingQuantity,
                 'unit_id' => $this->unitId,
                 'product_id' => $this->productId,
                 'unit_price' => round($adjustedPrice, 2),
