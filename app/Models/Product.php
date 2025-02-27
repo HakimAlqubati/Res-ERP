@@ -74,6 +74,7 @@ class Product extends Model
             'product_name' => $this->name,
             'description' => $this->description,
             'unit_prices' => $this->unitPrices,
+            'product_items' => $this->productItems,
         ];
     }
     //new code
@@ -86,6 +87,11 @@ class Product extends Model
     public function scopeHasUnitPrices($query)
     {
         return $query->has('unitPrices');
+    }
+
+    public function scopeHasProductItems($query)
+    {
+        return $query->has('productItems');
     }
 
     public function productItems()

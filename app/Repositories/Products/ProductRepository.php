@@ -25,13 +25,18 @@ class ProductRepository implements ProductRepositoryInterface
         // Get the value of the ID and category ID filters from the request, or null if they're not set.
         $id = $request->input('id');
         $categoryId = $request->input('category_id');
+        $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
 
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
-        $products = Product::active()->HasUnitPrices()->when($id, function ($query) use ($id) {
-            return $query->where('id', $id);
-        })->when($categoryId, function ($query) use ($categoryId) {
-            return $query->where('category_id', $categoryId);
-        })->get();
+        $products = Product::active()
+            ->when($isManufacturing, function ($query) {
+                return $query->manufacturingCategory()->hasProductItems();
+            })
+            ->HasUnitPrices()->when($id, function ($query) use ($id) {
+                return $query->where('id', $id);
+            })->when($categoryId, function ($query) use ($categoryId) {
+                return $query->where('category_id', $categoryId);
+            })->get();
 
         // Return a collection of product resources.
         return ProductResource::collection($products);

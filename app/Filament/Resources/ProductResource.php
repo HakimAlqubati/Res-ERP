@@ -92,40 +92,7 @@ class ProductResource extends Resource
 
 
                         ]),
-                    Step::make('units')
-                        ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
-                        ->schema([
 
-
-                            Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(3)
-                                // ->hiddenOn(Pages\EditProduct::class)
-                                ->columnSpanFull()
-                                ->collapsible()->defaultItems(0)
-                                ->relationship('unitPrices')
-                                ->orderable('product_id')
-                                ->schema([
-                                    Select::make('unit_id')->required()
-                                        ->label(__('lang.unit'))
-                                        ->searchable()
-                                        ->options(function () {
-                                            return Unit::pluck('name', 'id');
-                                        })->searchable(),
-                                    TextInput::make('price')->type('number')->default(1)->required()
-                                        ->label(__('lang.price'))
-                                    // ->mask(RawJs::make('$money($input)'))
-                                    // ->stripCharacters(',')
-                                    ,
-                                    TextInput::make('package_size')->type('number')->default(1)->required()
-                                        ->label(__('lang.package_size')),
-                                    TextInput::make('minimum_quantity')
-                                        ->type('number')->default(0)->required()
-                                        ->label(__('stock.minimum_quantity'))
-                                        ->helperText(__('stock.minimum_quantity_desc'))->hidden(),
-                                ])->orderColumn('order')->reorderable()
-
-
-                        ]),
                     Step::make('products')
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
                         ->label('Items')
@@ -214,6 +181,41 @@ class ProductResource extends Resource
                                 ->columns(5) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
+
+                        ]),
+
+                    Step::make('units')
+                        // ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
+                        ->schema([
+
+
+                            Repeater::make('units')->label(__('lang.units_prices'))
+                                ->columns(3)
+                                // ->hiddenOn(Pages\EditProduct::class)
+                                ->columnSpanFull()
+                                ->collapsible()->defaultItems(0)
+                                ->relationship('unitPrices')
+                                ->orderable('product_id')
+                                ->schema([
+                                    Select::make('unit_id')->required()
+                                        ->label(__('lang.unit'))
+                                        ->searchable()
+                                        ->options(function () {
+                                            return Unit::pluck('name', 'id');
+                                        })->searchable(),
+                                    TextInput::make('price')->type('number')->default(1)->required()
+                                        ->label(__('lang.price'))
+                                    // ->mask(RawJs::make('$money($input)'))
+                                    // ->stripCharacters(',')
+                                    ,
+                                    TextInput::make('package_size')->type('number')->default(1)->required()
+                                        ->label(__('lang.package_size')),
+                                    TextInput::make('minimum_quantity')
+                                        ->type('number')->default(0)->required()
+                                        ->label(__('stock.minimum_quantity'))
+                                        ->helperText(__('stock.minimum_quantity_desc'))->hidden(),
+                                ])->orderColumn('order')->reorderable()
+
 
                         ]),
                 ])
