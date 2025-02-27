@@ -85,12 +85,13 @@ class InventoryService
         }
 
         // Get the results and map them to include unit_name
-        $productUnitPrices = $query->get(['unit_id', 'order', 'package_size']);
+        $productUnitPrices = $query->get(['unit_id', 'order','price', 'package_size']);
 
         $result = $productUnitPrices->map(function ($unitPrice) {
             return [
                 'unit_id' => $unitPrice->unit_id,
                 'order' => $unitPrice->order,
+                'price' => $unitPrice->price,
                 'package_size' => $unitPrice->package_size,
                 'unit_name' => $unitPrice->unit->name, // Assuming the unit name is stored in the 'name' column
             ];

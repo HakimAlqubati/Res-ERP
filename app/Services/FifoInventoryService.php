@@ -39,11 +39,25 @@ class FifoInventoryService
         // جلب تفاصيل الوحدات المرتبطة بالمنتج
         $unitPrices = $this->inventoryService->getProductUnitPrices($this->productId);
         $packageSize = $this->getPackageSizeForUnit($unitPrices, $this->unitId);
-
         // If no available purchases, allocate from negative stock using unit price
         if ($availablePurchases->isEmpty()) {
-            throw new Exception("Prouct" . Product::find($this->productId)?->name . " Is Not Available In Purchase Invoice");
+            $unitPrice = $unitPrices->where('unit_id', $this->unitId)->first()['price'] ?? 0;
+            // Step 5: Record allocation details
+            return [[
+                'purchase_invoice_id' => null,
+                'allocated_qty' => $allocatedQty ?? 0,
+                'quantity' => $this->orderQuantity,
+                'available_quantity' => $this->orderQuantity,
+                'unit_id' => $this->unitId,
+                'product_id' => $this->productId,
+                'unit_price' => $unitPrice,
+                'price' => $unitPrice,
+                'package_size' => $packageSize,
+                'movement_date' => now(),
+            ]];
+            // throw new Exception("Prouct" . Product::find($this->productId)?->name . " Is Not Available In Purchase Invoice");
         }
+
         foreach ($availablePurchases as $purchase) {
             if ($remainingQuantity <= 0) {
                 break;
