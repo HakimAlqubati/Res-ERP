@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InventoryTransaction;
+use App\Models\Product;
 use Exception;
 use App\Services\InventoryService;
 
@@ -39,6 +40,10 @@ class FifoInventoryService
         $unitPrices = $this->inventoryService->getProductUnitPrices($this->productId);
         $packageSize = $this->getPackageSizeForUnit($unitPrices, $this->unitId);
 
+        // If no available purchases, allocate from negative stock using unit price
+        if ($availablePurchases->isEmpty()) {
+            throw new Exception("Prouct" . Product::find($this->productId)?->name . " Is Not Available In Purchase Invoice");
+        }
         foreach ($availablePurchases as $purchase) {
             if ($remainingQuantity <= 0) {
                 break;
@@ -176,18 +181,23 @@ class FifoInventoryService
     /**
      * تسجيل الطلبية بالكامل عند عدم توفر الكمية المطلوبة في المخزون، مما يسمح بأن يصبح المخزون بالسالب.
      */
-    private function allocateNegativeStock(): array
+
+    /**
+     * تسجيل الطلبية بالكامل عند عدم توفر الكمية المطلوبة في المخزون، مما يسمح بأن يصبح المخزون بالسالب.
+     */
+    private function allocateNegativeStock($remainingQuantity, $lastPurchase, $packageSize): array
     {
-        // نحصل على سعر الوحدة الحالي، وإذا لم يكن متوفرًا، نعين قيمة افتراضية
+        // نحصل على السعر من آخر عملية شراء إذا وجدت، وإلا نعطي سعر افتراضي
         $unitPrices = $this->inventoryService->getProductUnitPrices($this->productId);
-        $packageSize = $this->getPackageSizeForUnit($unitPrices, $this->unitId);
-        $defaultPrice = count($unitPrices) > 0 ? $unitPrices[0]['price'] : 0;
+        $defaultPrice = $lastPurchase
+            ? ($lastPurchase->price / $lastPurchase->package_size) * $packageSize
+            : (count($unitPrices) > 0 ? $unitPrices[0]['price'] : 0);
 
         return [[
             'purchase_invoice_id' => null, // لا يوجد مصدر حقيقي للكمية
-            'allocated_qty' => $this->orderQuantity,
-            'quantity' => $this->orderQuantity,
-            'available_quantity' => $this->orderQuantity, // ستتحول إلى قيمة سالبة
+            'allocated_qty' => $remainingQuantity,
+            'quantity' => $remainingQuantity,
+            'available_quantity' => -$remainingQuantity, // المخزون بالسالب
             'unit_id' => $this->unitId,
             'product_id' => $this->productId,
             'unit_price' => round($defaultPrice, 2),
