@@ -42,6 +42,7 @@ class FifoInventoryService
         foreach ($availablePurchases as $purchase) {
             if ($remainingQuantity <= 0) {
                 break;
+                // dd($remainingQuantity);
             }
 
             // Step 1: Calculate already ordered quantities from this purchase
@@ -62,6 +63,7 @@ class FifoInventoryService
             $allocatedQty = min($availableQtyInUnit, $remainingQuantity);
 
 
+
             // Step 4: Record allocation details
             $allocations[] = [
                 'purchase_invoice_id' => $purchase->transactionable_id,
@@ -76,13 +78,27 @@ class FifoInventoryService
                 'movement_date' => $purchase->movement_date,
             ];
 
+
+
             // Step 5: Reduce the remaining quantity
             $remainingQuantity -= $allocatedQty;
         }
-
         // If there is remaining quantity that couldn't be allocated, throw an exception
         if ($remainingQuantity > 0) {
-            throw new Exception("Insufficient inventory. {$remainingQuantity} units could not be allocated.");
+            // Step 5: Record allocation details
+            $allocations[0] = [
+                'purchase_invoice_id' => $purchase->transactionable_id,
+                'allocated_qty' => $allocatedQty,
+                'quantity' => $allocatedQty + $remainingQuantity,
+                'available_quantity' => $allocatedQty + $remainingQuantity,
+                'unit_id' => $this->unitId,
+                'product_id' => $this->productId,
+                'unit_price' => round($adjustedPrice, 2),
+                'price' => round($adjustedPrice, 2),
+                'package_size' => $packageSize,
+                'movement_date' => $purchase->movement_date,
+            ];
+            // throw new Exception("Insufficient inventory. {$remainingQuantity} units could not be allocated.");
         }
 
         return $allocations;
@@ -152,5 +168,30 @@ class FifoInventoryService
                 'message' => $e->getMessage(),
             ];
         }
+    }
+
+
+    /**
+     * تسجيل الطلبية بالكامل عند عدم توفر الكمية المطلوبة في المخزون، مما يسمح بأن يصبح المخزون بالسالب.
+     */
+    private function allocateNegativeStock(): array
+    {
+        // نحصل على سعر الوحدة الحالي، وإذا لم يكن متوفرًا، نعين قيمة افتراضية
+        $unitPrices = $this->inventoryService->getProductUnitPrices($this->productId);
+        $packageSize = $this->getPackageSizeForUnit($unitPrices, $this->unitId);
+        $defaultPrice = count($unitPrices) > 0 ? $unitPrices[0]['price'] : 0;
+
+        return [[
+            'purchase_invoice_id' => null, // لا يوجد مصدر حقيقي للكمية
+            'allocated_qty' => $this->orderQuantity,
+            'quantity' => $this->orderQuantity,
+            'available_quantity' => $this->orderQuantity, // ستتحول إلى قيمة سالبة
+            'unit_id' => $this->unitId,
+            'product_id' => $this->productId,
+            'unit_price' => round($defaultPrice, 2),
+            'price' => round($defaultPrice, 2),
+            'package_size' => $packageSize,
+            'movement_date' => now(),
+        ]];
     }
 }
