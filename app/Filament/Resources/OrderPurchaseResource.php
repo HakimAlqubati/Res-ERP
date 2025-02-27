@@ -41,6 +41,7 @@ class OrderPurchaseResource extends Resource
     protected static ?string $cluster = MainOrdersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
+    protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
     {
         return __('lang.purchased_orders');
