@@ -2,7 +2,7 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (!empty($reportData) && count($reportData) > 0)
-        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped">
+        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
             <thead>
                 <x-filament-tables::row class="header_report">
                     <th colspan="3" class="no_border_right">
@@ -13,10 +13,10 @@
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
-                    <th>{{ __('lang.product_name') }}</th>
+                    <th>{{ __('lang.product') }}</th>
                     <th>{{ __('lang.unit_name') }}</th>
                     <th>{{ __('lang.qty_in_stock') }}</th>
-                    <th>{{ __('lang.minimum_quantity') }}</th>
+                    <th>{{ __('stock.minimum_quantity') }}</th>
                 </x-filament-tables::row>
             </thead>
             <tbody>
