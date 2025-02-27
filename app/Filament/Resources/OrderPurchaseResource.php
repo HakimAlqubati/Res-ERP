@@ -154,7 +154,6 @@ class OrderPurchaseResource extends Resource
                             ->label(__('lang.price'))
                             ->type('text')
                             ->default(1)
-                            ->integer()
                             ->required()
                             // ->disabledOn('edit')
                             // ->mask(
