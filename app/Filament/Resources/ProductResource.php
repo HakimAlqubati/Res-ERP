@@ -177,8 +177,13 @@ class ProductResource extends Resource
                                     TextInput::make('total_price')->default(1)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
+                                    TextInput::make('qty_waste_percentage')->default(0)
+                                        ->type('number')
+                                        ->suffixIcon('heroicon-o-percent-badge')
+                                    // ->extraInputAttributes(['readonly' => true])
+                                    ,
                                 ])
-                                ->columns(5) // Adjusts how fields are laid out in each row
+                                ->columns(6) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
 

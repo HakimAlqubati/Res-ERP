@@ -13,6 +13,7 @@ class ProductItem extends Model
         'price',
         'total_price',
         'parent_product_id',
+        'qty_waste_percentage',
     ];
 
     /**
