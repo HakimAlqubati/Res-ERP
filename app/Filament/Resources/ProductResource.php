@@ -70,7 +70,7 @@ class ProductResource extends Resource
                 ->columnSpanFull()
                 ->schema([
                     Step::make('')
-                        ->columns(4)
+                        ->columns(5)
                         ->schema([
                             TextInput::make('name')->required()->label(__('lang.name'))
                                 ->live(onBlur: true)
@@ -81,6 +81,9 @@ class ProductResource extends Resource
                                     return Category::pluck('name', 'id');
                                 }),
                             TextInput::make('code')->required()->label(__('lang.code')),
+                            TextInput::make('minimum_stock_qty')->type('number')->default(0)->required()
+                                ->label(__('stock.minimum_quantity'))
+                                ->helperText(__('stock.minimum_quantity_desc')),
                             Toggle::make('active')
                                 ->inline(false)->default(true)
                                 ->label(__('lang.active')),
@@ -93,8 +96,9 @@ class ProductResource extends Resource
                         ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
                         ->schema([
 
+
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(4)
+                                ->columns(3)
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->columnSpanFull()
                                 ->collapsible()->defaultItems(0)
@@ -114,8 +118,10 @@ class ProductResource extends Resource
                                     ,
                                     TextInput::make('package_size')->type('number')->default(1)->required()
                                         ->label(__('lang.package_size')),
-                                    TextInput::make('minimum_quantity')->type('number')->default(0)->required()
-                                        ->label(__('stock.minimum_quantity'))->helperText(__('stock.minimum_quantity_desc')),
+                                    TextInput::make('minimum_quantity')
+                                        ->type('number')->default(0)->required()
+                                        ->label(__('stock.minimum_quantity'))
+                                        ->helperText(__('stock.minimum_quantity_desc'))->hidden(),
                                 ])->orderColumn('order')->reorderable()
 
 

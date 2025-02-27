@@ -41,7 +41,6 @@ class MultiProductsInventoryService
         foreach ($products as $product) {
             $report[] = $this->getInventoryForProduct($product->id);
         }
-
         return [
             'reportData' => $report,
             'pagination' => $products, // Pass pagination data
@@ -83,7 +82,8 @@ class MultiProductsInventoryService
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
                 'remaining_qty' => round($remQty / $unitPrice['package_size'], 2),
-                'minimum_quantity' => $unitPrice['minimum_quantity']
+                'minimum_quantity' => $unitPrice['minimum_quantity'],
+                'is_last_unit' => $unitPrice['is_last_unit']
             ];
         }
         return $result;
@@ -103,15 +103,18 @@ class MultiProductsInventoryService
             }
         }
 
-        $productUnitPrices = $query->get(['unit_id', 'order', 'package_size','minimum_quantity']);
+        $productUnitPrices = $query->get(['unit_id', 'order', 'package_size', 'minimum_quantity']);
+        // Find the highest order value to determine the last unit
+        $maxOrder = $productUnitPrices->max('order');
 
-        return $productUnitPrices->map(function ($unitPrice) {
+        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder) {
             return [
                 'unit_id' => $unitPrice->unit_id,
                 'order' => $unitPrice->order,
                 'package_size' => $unitPrice->package_size,
                 'unit_name' => $unitPrice->unit->name,
                 'minimum_quantity' => $unitPrice->minimum_quantity ?? 0,
+                'is_last_unit' => $unitPrice->order == $maxOrder, // True if this is the last unit
             ];
         });
     }
@@ -120,11 +123,13 @@ class MultiProductsInventoryService
     public function getProductsBelowMinimumQuantity()
     {
         $inventory = $this->getInventoryReport();
+
         $lowStockProducts = [];
 
         foreach ($inventory['reportData'] as $productData) {
+
             foreach ($productData as $product) {
-                if ($product['remaining_qty'] <= $product['minimum_quantity']) {
+                if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
                     $lowStockProducts[] = $product;
                 }
             }

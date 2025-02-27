@@ -55,6 +55,7 @@ class TestController3 extends Controller
     {
         $inventoryService = new \App\Services\MultiProductsInventoryService();
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantity();
+        // dd($lowStockProducts);
         return $lowStockProducts;
     }
 }

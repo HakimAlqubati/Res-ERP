@@ -25,6 +25,7 @@ class Product extends Model
         'category_code',
         'main_unit_id',
         'basic_price',
+        'minimum_stock_qty',
     ];
     protected $appends = ['unit_prices_count'];
 

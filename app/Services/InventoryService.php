@@ -85,15 +85,21 @@ class InventoryService
         }
 
         // Get the results and map them to include unit_name
-        $productUnitPrices = $query->get(['unit_id', 'order','price', 'package_size']);
+        $productUnitPrices = $query->get(['unit_id', 'order', 'price', 'package_size']);
 
-        $result = $productUnitPrices->map(function ($unitPrice) {
+        // Find the highest order value to determine the last unit
+        $maxOrder = $productUnitPrices->max('order');
+
+
+        $result = $productUnitPrices->map(function ($unitPrice) use ($maxOrder) {
             return [
                 'unit_id' => $unitPrice->unit_id,
                 'order' => $unitPrice->order,
                 'price' => $unitPrice->price,
                 'package_size' => $unitPrice->package_size,
                 'unit_name' => $unitPrice->unit->name, // Assuming the unit name is stored in the 'name' column
+                'is_last_unit' => $unitPrice->order == $maxOrder, // True if this is the last unit
+
             ];
         });
 
