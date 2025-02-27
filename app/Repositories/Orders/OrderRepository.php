@@ -135,7 +135,7 @@ class OrderRepository implements OrderRepositoryInterface
                 }
             }
 
-            $orderDetailsData_old = calculateFifoMethod($request->input('order_details'), $orderId);
+            // $orderDetailsData_old = calculateFifoMethod($request->input('order_details'), $orderId);
             // dd($orderDetailsData, $orderDetailsData_old);
             $orderDetailsData = array_map(function ($item) {
                 unset(
