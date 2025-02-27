@@ -146,7 +146,7 @@ class OrderPurchaseResource extends Resource
                             // )
                             ->reactive()
                             ->required()
-                            ->afterStateUpdated(function (Closure $set, $state, $get) {
+                            ->afterStateUpdated(function ($set, $state, $get) {
                                 $set('total_price', ((float) $state) * ((float) $get('price')));
                                 $set('available_quantity', $state);
                             }),
