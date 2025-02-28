@@ -145,7 +145,7 @@ class ProductResource extends Resource
                                             }
                                             $set('total_price', $total);
                                             // $set('package_size', $unitPrice->package_size ?? 0);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $get('qty_waste_percentage')));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $get('qty_waste_percentage') ?? 0));
                                         })->columnSpan(1),
                                     // TextInput::make('package_size')->numeric()->default(1)->required()
                                     // ->label(__('lang.package_size'))->readOnly(),
@@ -160,7 +160,7 @@ class ProductResource extends Resource
                                                 $set('total_price_after_waste', $res);
                                             }
                                             $set('total_price', $res);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state, $get('qty_waste_percentage')));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state, $get('qty_waste_percentage') ?? 0));
                                         }),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
@@ -204,7 +204,7 @@ class ProductResource extends Resource
                                             $res = (1 - ($state / 100)) * $totalPrice;
                                             $res = round($res, 2);
                                             $set('total_price_after_waste', $res);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $state));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $state ?? 0));
                                         }),
 
                                     TextInput::make('total_price_after_waste')->default(0)
