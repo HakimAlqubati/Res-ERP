@@ -84,7 +84,7 @@ class ProductItem extends Model
      */
     public static function calculateQuantityAfterWaste(float $quantity, float $wastePercentage): float
     {
-        return round($quantity * (1 - ($wastePercentage / 100)), 2);
+        return round($quantity * (1 + ($wastePercentage / 100)), 2);
     }
 
     public function toArray()

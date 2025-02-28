@@ -14,6 +14,7 @@ use App\Services\MigrationScripts\ProductMigrationService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -25,6 +26,7 @@ use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Support\RawJs;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -115,7 +117,7 @@ class ProductResource extends Resource
                                         ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
                                         ->reactive()
                                         ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                                        ->searchable(),
+                                        ->searchable()->columnSpan(3),
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
                                         // ->disabledOn('edit')
@@ -144,7 +146,7 @@ class ProductResource extends Resource
                                             $set('total_price', $total);
                                             // $set('package_size', $unitPrice->package_size ?? 0);
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $get('qty_waste_percentage')));
-                                        }),
+                                        })->columnSpan(1),
                                     // TextInput::make('package_size')->numeric()->default(1)->required()
                                     // ->label(__('lang.package_size'))->readOnly(),
                                     TextInput::make('quantity')
@@ -186,8 +188,10 @@ class ProductResource extends Resource
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
-                                    TextInput::make('qty_waste_percentage')->default(0)
-                                        ->numeric()
+                                    TextInput::make('qty_waste_percentage')
+                                        ->label('Waste')
+                                        ->default(0)
+                                        ->numeric()->suffixIconColor(Color::Green)
                                         ->suffixIcon('heroicon-o-percent-badge')
                                         ->live()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
@@ -197,14 +201,16 @@ class ProductResource extends Resource
                                             $set('total_price_after_waste', $res);
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $state));
                                         }),
+
                                     TextInput::make('total_price_after_waste')->default(0)
-                                        ->type('text')
+                                        ->type('text')->label('Net Price')
                                         ->extraInputAttributes(['readonly' => true]),
-                                    TextInput::make('quantity_after_waste')->default(0)
-                                        ->type('text')
-                                        ->extraInputAttributes(['readonly' => true]),
+                                    Hidden::make('quantity_after_waste'),
+                                    // TextInput::make('quantity_after_waste')->default(0)
+                                    //     ->type('text')
+                                    //     ->extraInputAttributes(['readonly' => true]),
                                 ])
-                                ->columns(5) // Adjusts how fields are laid out in each row
+                                ->columns(9) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
 
@@ -271,7 +277,7 @@ class ProductResource extends Resource
                                         })
                                         ->label(__('lang.package_size')),
                                     TextInput::make('price')
-                                    ->numeric()
+                                        ->numeric()
                                         ->default(function ($record, $livewire) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             return $finalPrice;
