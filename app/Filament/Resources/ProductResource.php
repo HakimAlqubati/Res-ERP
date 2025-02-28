@@ -205,6 +205,7 @@ class ProductResource extends Resource
                             Repeater::make('units')->label(__('lang.units_prices'))
                                 ->columns(3)
                                 // ->hiddenOn(Pages\EditProduct::class)
+                                ->helperText('Note: Please add units in order from smallest to largest.')
                                 ->columnSpanFull()
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
