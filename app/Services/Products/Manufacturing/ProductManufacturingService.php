@@ -8,7 +8,7 @@ class ProductManufacturingService
 {
     public function getProductItems($id)
     {
-        $product = Product::with('productItems')->find($id);
-        return $product;
+        $data = Product::with(['productItems', 'unitPrices'])->find($id)->toArray();
+        return $data;
     }
 }

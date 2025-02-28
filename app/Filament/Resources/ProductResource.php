@@ -82,7 +82,7 @@ class ProductResource extends Resource
                                     return Category::pluck('name', 'id');
                                 }),
                             TextInput::make('code')->required()->label(__('lang.code')),
-                            TextInput::make('minimum_stock_qty')->type('number')->default(0)->required()
+                            TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
                                 ->label(__('stock.minimum_quantity'))
                                 ->helperText(__('stock.minimum_quantity_desc')),
                             Toggle::make('active')
@@ -142,11 +142,11 @@ class ProductResource extends Resource
                                                 $set('total_price_after_waste', $total);
                                             }
                                             $set('total_price', $total);
-                                            $set('package_size', $unitPrice->package_size ?? 0);
+                                            // $set('package_size', $unitPrice->package_size ?? 0);
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $get('qty_waste_percentage')));
                                         }),
-                                    TextInput::make('package_size')->type('number')->default(1)->required()
-                                        ->label(__('lang.package_size'))->readOnly(),
+                                    // TextInput::make('package_size')->numeric()->default(1)->required()
+                                    // ->label(__('lang.package_size'))->readOnly(),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
                                         ->type('text')
@@ -162,7 +162,7 @@ class ProductResource extends Resource
                                         }),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
-                                        // ->type('number')
+                                        // ->numeric()
                                         ->numeric()
                                         ->default(1)
                                         // ->integer()
@@ -187,7 +187,7 @@ class ProductResource extends Resource
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
                                     TextInput::make('qty_waste_percentage')->default(0)
-                                        ->type('number')
+                                        ->numeric()
                                         ->suffixIcon('heroicon-o-percent-badge')
                                         ->live()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
@@ -230,12 +230,12 @@ class ProductResource extends Resource
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
                                         })->searchable(),
-                                    TextInput::make('price')->type('number')->default(1)->required()
+                                    TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
                                     // ->mask(RawJs::make('$money($input)'))
                                     // ->stripCharacters(',')
                                     ,
-                                    TextInput::make('package_size')->type('number')->default(1)->required()
+                                    TextInput::make('package_size')->numeric()->default(1)->required()
                                         ->label(__('lang.package_size')),
 
                                 ])->orderColumn('order')->reorderable()
@@ -263,14 +263,15 @@ class ProductResource extends Resource
                                             return Unit::pluck('name', 'id');
                                         })->searchable(),
                                     TextInput::make('package_size')
-                                        ->type('number')->default(1)->required()
+                                        ->numeric()->default(1)->required()
                                         ->reactive()
                                         ->afterStateUpdated(function ($record, $livewire, $set, $state) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             $set('price', $state * $finalPrice);
                                         })
                                         ->label(__('lang.package_size')),
-                                    TextInput::make('price')->type('number')
+                                    TextInput::make('price')
+                                    ->numeric()
                                         ->default(function ($record, $livewire) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             return $finalPrice;
@@ -314,7 +315,7 @@ class ProductResource extends Resource
                             ->options(function () {
                                 return Unit::pluck('name', 'id');
                             })->searchable(),
-                        TextInput::make('price')->type('number')->default(1)
+                        TextInput::make('price')->numeric()->default(1)
                             ->label(__('lang.price'))
                     ])
 

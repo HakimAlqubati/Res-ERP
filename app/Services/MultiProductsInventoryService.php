@@ -35,7 +35,8 @@ class MultiProductsInventoryService
         }
 
         // Use pagination (5 products per page)
-        $products = $query->paginate(15);
+        // $products = $query->paginate(15);
+        $products = $query->get();
 
         $report = [];
         foreach ($products as $product) {
@@ -123,18 +124,18 @@ class MultiProductsInventoryService
     public function getProductsBelowMinimumQuantity()
     {
         $inventory = $this->getInventoryReport();
-
         $lowStockProducts = [];
-
+        
         foreach ($inventory['reportData'] as $productData) {
-
+            
             foreach ($productData as $product) {
                 if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
                     $lowStockProducts[] = $product;
                 }
             }
         }
-
+        
+        // dd($inventory,$lowStockProducts);
         return $lowStockProducts;
     }
 }

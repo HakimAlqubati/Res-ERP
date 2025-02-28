@@ -47,7 +47,8 @@ class TestController3 extends Controller
         return view('qr-code.qrcode', compact('qrCode'));
     }
 
-    public function currntStock(){
+    public function currntStock()
+    {
         $inventoryService = new \App\Services\MultiProductsInventoryService();
         $currentStock = $inventoryService->getInventoryReport();
         return $currentStock;
@@ -60,8 +61,11 @@ class TestController3 extends Controller
         return $lowStockProducts;
     }
 
-    public function getProductItems($id){
+    public function getProductItems($id)
+    {
         $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
-        return $manufacturingService->getProductItems($id);
+        $response = $manufacturingService->getProductItems($id);
+        // dd($response['product_items'],$response['unit_prices']);
+        return $response;
     }
 }

@@ -327,7 +327,7 @@ class OrderResource extends Resource implements HasShieldPermissions
                                 ->send();
                         }
                     }),
-                Tables\Actions\Action::make('Move')->hidden()
+                Tables\Actions\Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
                         return $record->getNextStatusLabel();

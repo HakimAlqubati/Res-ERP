@@ -87,19 +87,21 @@ class ProductItem extends Model
         return round($quantity * (1 - ($wastePercentage / 100)), 2);
     }
 
-    // public function toArray()
-    // {
-    //     return [
-    //         'product_id'=> $this->product_id,
-    //         'unit_id'=> $this->unit_id,
-    //         'quantity'=> $this->quantity,
-    //         'price'=> $this->price,
-    //         'total_price'=> $this->total_price,
-    //         'parent_product_id'=> $this->parent_product_id,
-    //         'qty_waste_percentage'=> $this->qty_waste_percentage,
-    //         'total_price_after_waste'=> $this->total_price_after_waste,
-    //         'package_size'=> $this->package_size,
-    //         'quantity_after_waste'=> $this->quantity_after_waste,
-    //     ];
-    // }
+    public function toArray()
+    {
+        return [
+            'product_id' => $this->product_id,
+            'product_name' => $this?->product?->name ?? '',
+            'unit_id' => $this->unit_id,
+            'unit_name' => $this->unit->name??'',
+            'quantity' => $this->quantity,
+            'price' => $this->price,
+            'total_price' => $this->total_price,
+            'parent_product_id' => $this->parent_product_id,
+            'qty_waste_percentage' => $this->qty_waste_percentage,
+            'total_price_after_waste' => $this->total_price_after_waste,
+            'package_size' => $this->package_size,
+            'quantity_after_waste' => $this->quantity_after_waste,
+        ];
+    }
 }
