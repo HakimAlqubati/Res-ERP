@@ -190,14 +190,15 @@ class ProductResource extends Resource
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
                                     TextInput::make('qty_waste_percentage')
-                                        ->label('Waste')
+                                        ->label('Waste %')
                                         ->default(0)
                                         ->maxLength(2)
                                         ->minLength(1)
                                         ->maxValue(100)
                                         ->minValue(0)
-                                        ->numeric()->suffixIconColor(Color::Green)
-                                        ->suffixIcon('heroicon-o-percent-badge')
+                                        ->numeric()
+                                        // ->suffixIconColor(Color::Green)
+                                        // ->suffixIcon('heroicon-o-percent-badge')
                                         ->live()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
