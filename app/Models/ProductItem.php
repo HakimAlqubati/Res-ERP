@@ -76,7 +76,7 @@ class ProductItem extends Model
      */
     public static function calculateTotalPriceAfterWaste(float $totalPrice, float $wastePercentage): float
     {
-        return round($totalPrice * (1 - ($wastePercentage / 100)), 2);
+        return round($totalPrice * (1 + ($wastePercentage / 100)), 2);
     }
 
     /**

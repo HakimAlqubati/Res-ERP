@@ -202,7 +202,8 @@ class ProductResource extends Resource
                                         ->live()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
-                                            $res = (1 - ($state / 100)) * $totalPrice;
+
+                                            $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice, $state ?? 0);
                                             $res = round($res, 2);
                                             $set('total_price_after_waste', $res);
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $state ?? 0));
