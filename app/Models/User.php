@@ -46,6 +46,7 @@ class User extends Authenticatable implements FilamentUser
         'nationality',
         'branch_area_id',
         'is_attendance_user',
+        'fcm_token',
     ];
 
     /**

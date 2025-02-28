@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FcmController;
 use App\Http\Controllers\TestController3;
 use Illuminate\Support\Facades\Route;
 
@@ -15,3 +16,6 @@ Route::get('/currntStock', [TestController3::class, 'currntStock'])->name('currn
 Route::get('/lowStock', [TestController3::class, 'lowStock']);
 
 Route::get('/getProductItems/{id}', [TestController3::class, 'getProductItems']);
+
+Route::put('update-device-token', [FcmController::class, 'updateDeviceToken']);
+Route::post('send-fcm-notification', [FcmController::class, 'sendFcmNotification']);

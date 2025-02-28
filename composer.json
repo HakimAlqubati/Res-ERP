@@ -18,6 +18,7 @@
         "filament/forms": "^3.2",
         "filament/spatie-laravel-media-library-plugin": "^3.2",
         "filament/tables": "^3.2",
+        "google/apiclient": "^2.18",
         "hugomyb/filament-media-action": "^3.1",
         "joshembling/image-optimizer": "^1.4",
         "lara-zeus/inline-chart": "^1.1",
