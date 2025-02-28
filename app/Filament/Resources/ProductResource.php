@@ -136,8 +136,11 @@ class ProductResource extends Resource
                                                 $get('product_id')
                                             )->where('unit_id', $state)->first()->price;
                                             $set('price', $unitPrice);
-
-                                            $set('total_price', ((float) $unitPrice) * ((float) $get('quantity')));
+                                            $total = ((float) $unitPrice) * ((float) $get('quantity'));
+                                            if ($get('qty_waste_percentage') == 0) {
+                                                $set('total_price_after_waste', $total);
+                                            }
+                                            $set('total_price', $total);
                                         }),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
@@ -153,6 +156,9 @@ class ProductResource extends Resource
                                         ->reactive()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('price'));
+                                            if ($get('qty_waste_percentage') == 0) {
+                                                $set('total_price_after_waste', $res);
+                                            }
                                             $set('total_price', $res);
                                         }),
                                     TextInput::make('price')
@@ -172,9 +178,12 @@ class ProductResource extends Resource
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('quantity'));
                                             $res = round($res, 1);
+                                            if ($get('qty_waste_percentage') == 0) {
+                                                $set('total_price_after_waste', $res);
+                                            }
                                             $set('total_price', $res);
                                         }),
-                                    TextInput::make('total_price')->default(1)
+                                    TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
                                     TextInput::make('qty_waste_percentage')->default(0)
@@ -187,7 +196,7 @@ class ProductResource extends Resource
                                             $res = round($res, 2);
                                             $set('total_price_after_waste', $res);
                                         }),
-                                    TextInput::make('total_price_after_waste')->default(1)
+                                    TextInput::make('total_price_after_waste')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
                                 ])
@@ -198,7 +207,7 @@ class ProductResource extends Resource
                         ]),
 
                     Step::make('units')->label('Units')
-                        // ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
+                        ->visible(fn($get): bool => ($get('category_id') !== null && !Category::find($get('category_id'))->is_manafacturing))
                         ->schema([
 
 
@@ -224,10 +233,48 @@ class ProductResource extends Resource
                                     ,
                                     TextInput::make('package_size')->type('number')->default(1)->required()
                                         ->label(__('lang.package_size')),
-                                    TextInput::make('minimum_quantity')
-                                        ->type('number')->default(0)->required()
-                                        ->label(__('stock.minimum_quantity'))
-                                        ->helperText(__('stock.minimum_quantity_desc'))->hidden(),
+
+                                ])->orderColumn('order')->reorderable()
+
+
+                        ]),
+                    Step::make('manafacturingProductunits')->label('Units')
+                        ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
+                        ->schema([
+
+
+                            Repeater::make('units')->label(__('lang.units_prices'))
+                                ->columns(3)
+                                // ->hiddenOn(Pages\EditProduct::class)
+                                ->helperText('Note: Please add units in order from smallest to largest.')
+                                ->columnSpanFull()->minItems(1)
+                                ->collapsible()->defaultItems(0)
+                                ->relationship('unitPrices')
+                                ->orderable('product_id')
+                                ->schema([
+                                    Select::make('unit_id')->required()
+                                        ->label(__('lang.unit'))
+                                        ->searchable()
+                                        ->options(function () {
+                                            return Unit::pluck('name', 'id');
+                                        })->searchable(),
+                                    TextInput::make('package_size')
+                                        ->type('number')->default(1)->required()
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($record, $livewire, $set,$state) {
+                                            $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
+                                            $set('price',$state * $finalPrice);
+                                        })
+                                        ->label(__('lang.package_size')),
+                                    TextInput::make('price')->type('number')
+                                        ->default(function ($record, $livewire) {
+                                            $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
+                                            return $finalPrice;
+                                        })
+                                        ->required()
+                                        ->label(__('lang.price'))
+
+
                                 ])->orderColumn('order')->reorderable()
 
 
