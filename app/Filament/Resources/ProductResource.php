@@ -171,7 +171,7 @@ class ProductResource extends Resource
 
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('quantity'));
-                                            $res = round($res, 2);
+                                            $res = round($res, 1);
                                             $set('total_price', $res);
                                         }),
                                     TextInput::make('total_price')->default(1)
@@ -180,10 +180,18 @@ class ProductResource extends Resource
                                     TextInput::make('qty_waste_percentage')->default(0)
                                         ->type('number')
                                         ->suffixIcon('heroicon-o-percent-badge')
-                                    // ->extraInputAttributes(['readonly' => true])
-                                    ,
+                                        ->live()
+                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                            $totalPrice = (float) $get('total_price');
+                                            $res = (1 - ($state / 100)) * $totalPrice;
+                                            $res = round($res, 2);
+                                            $set('total_price_after_waste', $res);
+                                        }),
+                                    TextInput::make('total_price_after_waste')->default(1)
+                                        ->type('text')
+                                        ->extraInputAttributes(['readonly' => true]),
                                 ])
-                                ->columns(6) // Adjusts how fields are laid out in each row
+                                ->columns(7) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
 
