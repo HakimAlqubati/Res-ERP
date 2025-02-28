@@ -13,3 +13,5 @@ Route::get('/testQRCode/{id}', [TestController3::class, 'testQRCode'])->name('te
 
 Route::get('/currntStock', [TestController3::class, 'currntStock'])->name('currntStock');
 Route::get('/lowStock', [TestController3::class, 'lowStock']);
+
+Route::get('/getProductItems/{id}', [TestController3::class, 'getProductItems']);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipment;
+use App\Models\Product;
 use App\Services\FifoInventoryService;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
@@ -57,5 +58,10 @@ class TestController3 extends Controller
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantity();
         // dd($lowStockProducts);
         return $lowStockProducts;
+    }
+
+    public function getProductItems($id){
+        $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
+        return $manufacturingService->getProductItems($id);
     }
 }

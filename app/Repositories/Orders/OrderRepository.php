@@ -95,6 +95,9 @@ class OrderRepository implements OrderRepositoryInterface
                 'notes' => $request->input('notes'),
                 'description' => $request->input('description'),
             ];
+            if ($request->input('order_type') && $request->input('order_type') == Order::TYPE_MANUFACTURING) {
+                $orderData['type'] = Order::TYPE_MANUFACTURING;
+            }
 
             // Create new order
             if (!($pendingOrderId > 0)) {
@@ -120,7 +123,7 @@ class OrderRepository implements OrderRepositoryInterface
             }
             $orderDetailsData = [];
             foreach ($request->input('order_details') as $key =>  $detail) {
-                
+
                 $fifoService = new FifoInventoryService($detail['product_id'], $detail['unit_id'], $detail['quantity']);
                 $result =  $fifoService->allocateOrder();
 
@@ -129,8 +132,8 @@ class OrderRepository implements OrderRepositoryInterface
                     $orderDetailsData[$key]['order_id'] = $orderId;
                 } else {
                     return response()->json([
-                      'success' => false,
-                      'message' => $result['message'],
+                        'success' => false,
+                        'message' => $result['message'],
                     ], 500);
                 }
             }

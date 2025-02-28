@@ -20,6 +20,10 @@ class Order extends Model
 
     public const METHOD_FIFO = 'fifo';
     public const METHOD_UNIT_PRICE = 'from_unit_prices';
+
+    // Define constants for order types
+    public const TYPE_NORMAL = 'normal';
+    public const TYPE_MANUFACTURING = 'manufacturing';
     protected $fillable = [
         'customer_id',
         'status',
@@ -38,6 +42,7 @@ class Order extends Model
         'store_id',
         'cancelled',
         'cancel_reason',
+        'type',
     ];
 
     protected $appends = [
@@ -197,21 +202,44 @@ class Order extends Model
                 if (!$order->store_id && isStoreManager() && !is_null(getDefaultStoreForCurrentStoreKeeper())) {
                     $order->update(['store_id' => getDefaultStoreForCurrentStoreKeeper()]);
                 }
-                foreach ($order->orderDetails as $orderDetail) {
-                    \App\Models\InventoryTransaction::create([
-                        'product_id'           => $orderDetail->product_id,
-                        'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                        'quantity'             => $orderDetail->available_quantity,
-                        'unit_id'              => $orderDetail->unit_id,
-                        'purchase_invoice_id'  => $orderDetail->purchase_invoice_id,
-                        'movement_date'        => $order->order_date ?? now(),
-                        'package_size'         => $orderDetail->package_size,
-                        'store_id'             => $order->store_id,
-                        'transaction_date'     => $order->order_date ?? now(),
-                        'notes'                => 'Inventory created for order ' . $order->id,
-                        'transactionable_id'   => $order->id,
-                        'transactionable_type' => Order::class,
-                    ]);
+                if ($order->type == self::TYPE_NORMAL) {
+                    foreach ($order->orderDetails as $orderDetail) {
+                        \App\Models\InventoryTransaction::create([
+                            'product_id'           => $orderDetail->product_id,
+                            'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                            'quantity'             => $orderDetail->available_quantity,
+                            'unit_id'              => $orderDetail->unit_id,
+                            'purchase_invoice_id'  => $orderDetail->purchase_invoice_id,
+                            'movement_date'        => $order->order_date ?? now(),
+                            'package_size'         => $orderDetail->package_size,
+                            'store_id'             => $order->store_id,
+                            'transaction_date'     => $order->order_date ?? now(),
+                            'notes'                => 'Inventory created for order ' . $order->id,
+                            'transactionable_id'   => $order->id,
+                            'transactionable_type' => Order::class,
+                        ]);
+                    }
+                } elseif ($order->type == self::TYPE_MANUFACTURING) {
+                    foreach ($order->orderDetails as $orderDetail) {
+                        $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
+                        $productItems = $manufacturingService->getProductItems($orderDetail->product_id);
+                        foreach ($productItems as  $productItem) {
+                            \App\Models\InventoryTransaction::create([
+                                'product_id'           => $productItem->product_id,
+                                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                                'quantity'             => $productItem->available_quantity,
+                                'unit_id'              => $productItem->unit_id,
+                                'purchase_invoice_id'  => $productItem->purchase_invoice_id,
+                                'movement_date'        => $order->order_date ?? now(),
+                                'package_size'         => $productItem->package_size,
+                                'store_id'             => $order->store_id,
+                                'transaction_date'     => $order->order_date ?? now(),
+                                'notes'                => 'Inventory created for order ' . $order->id,
+                                'transactionable_id'   => $order->id,
+                                'transactionable_type' => Order::class,
+                            ]);
+                        }
+                    }
                 }
             }
 
@@ -283,5 +311,21 @@ class Order extends Model
     {
         $nextStatuses = $this->getNextStatuses();
         return $nextStatuses ? reset($nextStatuses) : null;
+    }
+
+    /**
+     * Scope a query to only include normal orders.
+     */
+    public function scopeNormal($query)
+    {
+        return $query->where('type', self::TYPE_NORMAL);
+    }
+
+    /**
+     * Scope a query to only include manufacturing orders.
+     */
+    public function scopeManufacturing($query)
+    {
+        return $query->where('type', self::TYPE_MANUFACTURING);
     }
 }

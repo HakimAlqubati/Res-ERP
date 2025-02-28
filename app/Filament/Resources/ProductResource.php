@@ -7,6 +7,7 @@ use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductItem;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use App\Services\MigrationScripts\ProductMigrationService;
@@ -134,25 +135,22 @@ class ProductResource extends Resource
                                             $unitPrice = UnitPrice::where(
                                                 'product_id',
                                                 $get('product_id')
-                                            )->where('unit_id', $state)->first()->price;
-                                            $set('price', $unitPrice);
-                                            $total = ((float) $unitPrice) * ((float) $get('quantity'));
+                                            )->where('unit_id', $state)->first() ?? null;
+                                            $set('price', ($unitPrice->price ?? 0));
+                                            $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
                                             if ($get('qty_waste_percentage') == 0) {
                                                 $set('total_price_after_waste', $total);
                                             }
                                             $set('total_price', $total);
+                                            $set('package_size', $unitPrice->package_size ?? 0);
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $get('qty_waste_percentage')));
                                         }),
+                                    TextInput::make('package_size')->type('number')->default(1)->required()
+                                        ->label(__('lang.package_size'))->readOnly(),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
                                         ->type('text')
                                         ->default(1)
-                                        // ->disabledOn('edit')
-                                        // ->mask(
-                                        //     fn (TextInput\Mask $mask) => $mask
-                                        //         ->numeric()
-                                        //         ->decimalPlaces(2)
-                                        //         ->thousandsSeparator(',')
-                                        // )
                                         ->reactive()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('price'));
@@ -160,10 +158,12 @@ class ProductResource extends Resource
                                                 $set('total_price_after_waste', $res);
                                             }
                                             $set('total_price', $res);
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state, $get('qty_waste_percentage')));
                                         }),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
-                                        ->type('number')
+                                        // ->type('number')
+                                        ->numeric()
                                         ->default(1)
                                         // ->integer()
                                         // ->disabledOn('edit')
@@ -195,12 +195,16 @@ class ProductResource extends Resource
                                             $res = (1 - ($state / 100)) * $totalPrice;
                                             $res = round($res, 2);
                                             $set('total_price_after_waste', $res);
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $state));
                                         }),
                                     TextInput::make('total_price_after_waste')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
+                                    TextInput::make('quantity_after_waste')->default(0)
+                                        ->type('text')
+                                        ->extraInputAttributes(['readonly' => true]),
                                 ])
-                                ->columns(7) // Adjusts how fields are laid out in each row
+                                ->columns(5) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
 
@@ -261,9 +265,9 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')
                                         ->type('number')->default(1)->required()
                                         ->reactive()
-                                        ->afterStateUpdated(function ($record, $livewire, $set,$state) {
+                                        ->afterStateUpdated(function ($record, $livewire, $set, $state) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
-                                            $set('price',$state * $finalPrice);
+                                            $set('price', $state * $finalPrice);
                                         })
                                         ->label(__('lang.package_size')),
                                     TextInput::make('price')->type('number')
