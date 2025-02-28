@@ -206,7 +206,7 @@ class ProductResource extends Resource
                                 ->columns(3)
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->helperText('Note: Please add units in order from smallest to largest.')
-                                ->columnSpanFull()
+                                ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
                                 ->orderable('product_id')
