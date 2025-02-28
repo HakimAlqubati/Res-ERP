@@ -128,7 +128,7 @@ class Product extends Model
      */
     public function getFinalPriceAttribute()
     {
-        return $this->productItems->sum('total_price');
+        return $this->productItems->sum('total_price_after_waste');
     }
 
     /**
