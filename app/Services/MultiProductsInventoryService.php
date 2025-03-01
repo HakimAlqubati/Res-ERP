@@ -108,13 +108,17 @@ class MultiProductsInventoryService
         // Find the highest order value to determine the last unit
         $maxOrder = $productUnitPrices->max('order');
 
-        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder) {
+        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder, $query) {
+            $minimumQty = 0;
+            if ($unitPrice->order == $maxOrder) {
+                $minimumQty = $query->first()->product->minimum_stock_qty ?? 0;
+            }
             return [
                 'unit_id' => $unitPrice->unit_id,
                 'order' => $unitPrice->order,
                 'package_size' => $unitPrice->package_size,
                 'unit_name' => $unitPrice->unit->name,
-                'minimum_quantity' => $unitPrice->minimum_quantity ?? 0,
+                'minimum_quantity' => $minimumQty,
                 'is_last_unit' => $unitPrice->order == $maxOrder, // True if this is the last unit
             ];
         });
@@ -125,16 +129,16 @@ class MultiProductsInventoryService
     {
         $inventory = $this->getInventoryReport();
         $lowStockProducts = [];
-        
+
         foreach ($inventory['reportData'] as $productData) {
-            
+
             foreach ($productData as $product) {
                 if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
                     $lowStockProducts[] = $product;
                 }
             }
         }
-        
+
         // dd($inventory,$lowStockProducts);
         return $lowStockProducts;
     }
