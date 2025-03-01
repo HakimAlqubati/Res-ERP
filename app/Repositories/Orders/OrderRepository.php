@@ -31,8 +31,13 @@ class OrderRepository implements OrderRepositoryInterface
         $currnetRole = getCurrentRole();
 
         $query = Order::query();
+        
         if ($request->has('customer_id')) {
             $query->where('customer_id', $request->customer_id);
+        }
+
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
         }
 
         if ($currnetRole == 7) {
