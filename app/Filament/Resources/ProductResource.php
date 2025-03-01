@@ -167,7 +167,7 @@ class ProductResource extends Resource
                                         // ->numeric()
                                         ->numeric()
                                         ->minLength(1)
-                                        ->maxLength(6)
+                                        // ->maxLength(6)
                                         ->default(1)
                                         // ->integer()
                                         // ->disabledOn('edit')
@@ -193,7 +193,7 @@ class ProductResource extends Resource
                                     TextInput::make('qty_waste_percentage')
                                         ->label('Waste %')
                                         ->default(0)
-                                        ->maxLength(2)
+                                        // ->maxLength(2)
                                         ->minLength(1)
                                         ->maxValue(100)
                                         ->minValue(0)
@@ -246,12 +246,12 @@ class ProductResource extends Resource
                                         })->searchable(),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
-                                        ->maxLength(6)
+                                        // ->maxLength(6)
                                     // ->mask(RawJs::make('$money($input)'))
                                     // ->stripCharacters(',')
                                     ,
                                     TextInput::make('package_size')->numeric()->default(1)->required()
-                                        ->maxLength(4)
+                                        // ->maxLength(4)
                                         ->label(__('lang.package_size')),
 
                                 ])->orderColumn('order')->reorderable()
