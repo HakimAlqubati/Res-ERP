@@ -166,7 +166,8 @@ class ProductResource extends Resource
                                         ->label(__('lang.price'))
                                         // ->numeric()
                                         ->numeric()
-                                        ->maxLength(4)
+                                        ->minLength(1)
+                                        ->maxLength(6)
                                         ->default(1)
                                         // ->integer()
                                         // ->disabledOn('edit')
@@ -245,7 +246,7 @@ class ProductResource extends Resource
                                         })->searchable(),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
-                                        ->maxLength(4)
+                                        ->maxLength(6)
                                     // ->mask(RawJs::make('$money($input)'))
                                     // ->stripCharacters(',')
                                     ,

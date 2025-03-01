@@ -133,6 +133,7 @@ class MultiProductsInventoryService
         foreach ($inventory['reportData'] as $productData) {
 
             foreach ($productData as $product) {
+
                 if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
                     $lowStockProducts[] = $product;
                 }
