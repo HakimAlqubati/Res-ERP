@@ -120,6 +120,8 @@ class ProductResource extends Resource
                                         ->searchable()->columnSpan(3),
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
+                                        ->placeholder('Select')
+
                                         // ->disabledOn('edit')
                                         ->options(
                                             function (callable $get) {
@@ -287,8 +289,13 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
                                         ->live(debounce: 500)
-                                        ->afterStateUpdated(function ($record, $livewire, $set, $state) {
+                                        ->afterStateUpdated(function ($record, $livewire, $set, $state, $get) {
+                                            $productItems  = $get('../../productItems') ?? [];
+                                            $totalNetPrice = collect($productItems)->sum('total_price_after_waste') ?? 0;
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
+                                            if ($finalPrice == 0) {
+                                                $finalPrice = $totalNetPrice;
+                                            }
                                             $set('price', $state * $finalPrice);
                                         })
                                         ->label(__('lang.package_size')),
