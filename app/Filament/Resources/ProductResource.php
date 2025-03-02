@@ -211,7 +211,9 @@ class ProductResource extends Resource
                                             $res = round($res, 2);
                                             $set('total_price_after_waste', $res);
                                             $qty = $get('quantity') ?? 0;
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($qty, $state ?? 0));
+                                            if (is_numeric($qty) && $qty > 0) {
+                                                $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($qty, $state ?? 0));
+                                            }
                                         }),
 
                                     TextInput::make('total_price_after_waste')->default(0)
