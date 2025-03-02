@@ -6,6 +6,7 @@ use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Models\Supplier;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -39,13 +40,19 @@ class SupplierResource extends Resource
         return $form
             ->schema([
 
-                TextInput::make('name')->label(__('lang.name'))->required(),
-                TextInput::make('email')->label(__('lang.email'))->email()->required(),
-                TextInput::make('whatsapp_number')->label(__('lang.whatsapp_number')),
-                TextInput::make('phone_number')->label(__('lang.phone_number')),
-                Textarea::make('supplier_address')->label(__('lang.address'))->columnSpanFull()
-
-
+                Fieldset::make()->schema([
+                    TextInput::make('name')->label(__('lang.name'))->required(),
+                    TextInput::make('email')->label(__('lang.email'))
+                        ->unique(ignoreRecord: true)
+                        ->email()->required(),
+                    TextInput::make('whatsapp_number')
+                        ->unique(ignoreRecord: true)
+                        ->label(__('lang.whatsapp_number')),
+                    TextInput::make('phone_number')
+                        ->unique(ignoreRecord: true)
+                        ->label(__('lang.phone_number')),
+                    Textarea::make('supplier_address')->label(__('lang.address'))->columnSpanFull()
+                ])
             ]);
     }
 
@@ -59,7 +66,7 @@ class SupplierResource extends Resource
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
-                TextColumn::make('email')
+                TextColumn::make('email')->copyable()
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('phone_number')
@@ -71,7 +78,7 @@ class SupplierResource extends Resource
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('active')),
+                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
