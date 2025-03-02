@@ -54,22 +54,22 @@ class ProductItem extends Model
     public function getQuantityAfterWasteAttribute()
     {
         $wasteAmount = ($this->qty_waste_percentage / 100) * $this->quantity;
-        return round($this->quantity - $wasteAmount, 2);
+        return round($this->quantity + $wasteAmount, 2);
     }
 
 
     /**
      * Automatically update total_price_after_waste before saving.
      */
-    protected static function boot()
-    {
-        parent::boot();
+    // protected static function boot()
+    // {
+    //     parent::boot();
 
-        static::saving(function ($productItem) {
-            $productItem->total_price_after_waste = $productItem->total_price_after_waste;
-            $productItem->quantity_after_waste = $productItem->getQuantityAfterWasteAttribute();
-        });
-    }
+    //     static::saving(function ($productItem) {
+    //         // $productItem->total_price_after_waste = $productItem->total_price_after_waste;
+    //         // $productItem->quantity_after_waste = $productItem->getQuantityAfterWasteAttribute();
+    //     });
+    // }
 
     /**
      * Calculate total price after waste percentage.
