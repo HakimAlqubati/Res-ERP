@@ -187,6 +187,7 @@ class ProductResource extends Resource
                                             if ($get('qty_waste_percentage') == 0) {
                                                 $set('total_price_after_waste', $res);
                                             }
+                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
                                             $set('total_price', $res);
                                         }),
                                     TextInput::make('total_price')->default(0)
