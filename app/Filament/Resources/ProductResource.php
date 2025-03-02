@@ -145,7 +145,7 @@ class ProductResource extends Resource
                                             }
                                             $set('total_price', $total);
                                             // $set('package_size', $unitPrice->package_size ?? 0);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $get('qty_waste_percentage') ?? 0));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
                                         })->columnSpan(1),
                                     // TextInput::make('package_size')->numeric()->default(1)->required()
                                     // ->label(__('lang.package_size'))->readOnly(),
@@ -161,7 +161,7 @@ class ProductResource extends Resource
                                             }
                                             $set('total_price', $res);
 
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
+                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res ?? 0, $get('qty_waste_percentage') ?? 0));
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state ?? 0, $get('qty_waste_percentage') ?? 0));
                                         }),
                                     TextInput::make('price')
@@ -207,10 +207,10 @@ class ProductResource extends Resource
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
 
-                                            $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice, $state ?? 0);
+                                            $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice ?? 0, $state ?? 0);
                                             $res = round($res, 2);
                                             $set('total_price_after_waste', $res);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity'), $state ?? 0));
+                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $state ?? 0));
                                         }),
 
                                     TextInput::make('total_price_after_waste')->default(0)
