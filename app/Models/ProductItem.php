@@ -49,18 +49,6 @@ class ProductItem extends Model
     }
 
 
-    /**
-     * Automatically update total_price_after_waste before saving.
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saving(function ($productItem) {
-            $productItem->total_price_after_waste = 5;
-            // $productItem->quantity_after_waste = $productItem->getQuantityAfterWasteAttribute();
-        });
-    }
 
     /**
      * Calculate total price after waste percentage.
