@@ -35,16 +35,7 @@ class ProductItem extends Model
         return $this->belongsTo(Unit::class);
     }
 
-    /**
-     * Get the total price after applying waste percentage.
-     * 
-     * @return float
-     */
-    public function getTotalPriceAfterWasteAttribute()
-    {
-        $wasteAmount = ($this->qty_waste_percentage / 100) * $this->total_price;
-        return round($this->total_price - $wasteAmount, 2);
-    }
+     
 
     /**
      * Get the quantity after applying waste percentage.
@@ -61,15 +52,15 @@ class ProductItem extends Model
     /**
      * Automatically update total_price_after_waste before saving.
      */
-    // protected static function boot()
-    // {
-    //     parent::boot();
+    protected static function boot()
+    {
+        parent::boot();
 
-    //     static::saving(function ($productItem) {
-    //         // $productItem->total_price_after_waste = $productItem->total_price_after_waste;
-    //         // $productItem->quantity_after_waste = $productItem->getQuantityAfterWasteAttribute();
-    //     });
-    // }
+        static::saving(function ($productItem) {
+            $productItem->total_price_after_waste = 5;
+            // $productItem->quantity_after_waste = $productItem->getQuantityAfterWasteAttribute();
+        });
+    }
 
     /**
      * Calculate total price after waste percentage.
