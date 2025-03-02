@@ -153,7 +153,7 @@ class ProductResource extends Resource
                                         ->label(__('lang.quantity'))
                                         ->type('text')
                                         ->default(1)
-                                        ->reactive()
+                                        ->live(debounce: 500)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('price'));
                                             if ($get('qty_waste_percentage') == 0) {
@@ -179,7 +179,7 @@ class ProductResource extends Resource
                                         //         ->decimalPlaces(2)
                                         //         ->thousandsSeparator(',')
                                         // )
-                                        ->reactive()
+                                        ->live(debounce: 500)
 
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('quantity'));
@@ -203,7 +203,7 @@ class ProductResource extends Resource
                                         ->numeric()
                                         // ->suffixIconColor(Color::Green)
                                         // ->suffixIcon('heroicon-o-percent-badge')
-                                        ->live()
+                                        ->live(debounce: 500)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
 
@@ -286,7 +286,7 @@ class ProductResource extends Resource
                                         })->searchable(),
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
-                                        ->reactive()
+                                        ->live(debounce: 500)
                                         ->afterStateUpdated(function ($record, $livewire, $set, $state) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             $set('price', $state * $finalPrice);
@@ -308,40 +308,6 @@ class ProductResource extends Resource
                         ]),
                 ])
         ]);
-        return $form
-
-            ->schema([
-                TextInput::make('name')->required()->label(__('lang.name')),
-                Select::make('category_id')->required()->label(__('lang.category'))
-                    ->searchable()
-                    ->options(function () {
-                        return Category::pluck('name', 'id');
-                    }),
-                TextInput::make('code')->required()->label(__('lang.code')),
-
-                Textarea::make('description')->label(__('lang.description'))
-                    ->rows(2),
-                Checkbox::make('active')->label(__('lang.active')),
-
-                Repeater::make('units')->label(__('lang.units_prices'))
-                    ->columns(2)
-                    ->hiddenOn(Pages\EditProduct::class)
-                    ->columnSpanFull()
-                    ->collapsible()->defaultItems(0)
-                    ->relationship('unitPrices')
-                    ->orderable('product_id')
-                    ->schema([
-                        Select::make('unit_id')
-                            ->label(__('lang.unit'))
-                            ->searchable()
-                            ->options(function () {
-                                return Unit::pluck('name', 'id');
-                            })->searchable(),
-                        TextInput::make('price')->numeric()->default(1)
-                            ->label(__('lang.price'))
-                    ])
-
-            ]);
     }
 
     public static function table(Table $table): Table
