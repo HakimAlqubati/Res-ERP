@@ -160,6 +160,8 @@ class ProductResource extends Resource
                                                 $set('total_price_after_waste', $res);
                                             }
                                             $set('total_price', $res);
+
+                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state, $get('qty_waste_percentage') ?? 0));
                                         }),
                                     TextInput::make('price')
