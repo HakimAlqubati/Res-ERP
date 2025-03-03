@@ -27,7 +27,7 @@ class Product extends Model
         'basic_price',
         'minimum_stock_qty',
     ];
-    protected $appends = ['unit_prices_count','product_items_count','is_manufacturing'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing'];
 
     /**
      * Scope to filter products with at least 2 unit prices.
@@ -158,6 +158,6 @@ class Product extends Model
      */
     public function getIsManufacturingAttribute()
     {
-        return (bool) optional($this->category)->is_manafacturing;
+        return (bool) optional($this->category)->is_manufacturing;
     }
 }
