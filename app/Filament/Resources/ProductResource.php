@@ -375,9 +375,11 @@ class ProductResource extends Resource
                     ->label(__('lang.code'))
                     ->searchable(isIndividual: true, isGlobal: false),
 
-                Tables\Columns\TextColumn::make('unit_prices_count')
-                    ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: true)
-                    ->alignCenter(true),
+                Tables\Columns\TextColumn::make('formatted_unit_prices')
+                    ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
+                    ->limit(50)->tooltip(fn($state) => $state)
+                // ->alignCenter(true)
+                ,
                 Tables\Columns\TextColumn::make('description')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.description')),

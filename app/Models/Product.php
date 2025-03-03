@@ -27,7 +27,7 @@ class Product extends Model
         'basic_price',
         'minimum_stock_qty',
     ];
-    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices'];
 
     /**
      * Scope to filter products with at least 2 unit prices.
@@ -159,5 +159,17 @@ class Product extends Model
     public function getIsManufacturingAttribute()
     {
         return (bool) optional($this->category)->is_manufacturing;
+    }
+
+    /**
+     * Get unit prices as a comma-separated string.
+     *
+     * @return string
+     */
+    public function getFormattedUnitPricesAttribute()
+    {
+        return $this->unitPrices->map(function ($unitPrice) {
+            return "unit: {$unitPrice->unit->name} : {$unitPrice->price}";
+        })->implode(', ');
     }
 }
