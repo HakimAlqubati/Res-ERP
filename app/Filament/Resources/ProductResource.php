@@ -108,15 +108,22 @@ class ProductResource extends Resource
                                         // ->disabledOn('edit')
                                         ->options(function () {
                                             return Product::where('active', 1)
-                                                ->unmanufacturingCategory()
+                                                // ->unmanufacturingCategory()
                                                 ->pluck('name', 'id');
                                         })
                                         ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                            ->unmanufacturingCategory()
+                                            // ->unmanufacturingCategory()
                                             ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
                                         ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
                                         ->reactive()
-                                        ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                        ->afterStateUpdated(function ($set, $state) {
+                                            $product = Product::find($state);
+
+                                            if ($product) {
+                                                // dd($product?->is_manufacturing, $product->product_items_count);
+                                            }
+                                            $set('unit_id', null);
+                                        })
                                         ->searchable()->columnSpan(3),
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
@@ -142,10 +149,13 @@ class ProductResource extends Resource
                                             )->where('unit_id', $state)->first() ?? null;
                                             $set('price', ($unitPrice->price ?? 0));
                                             $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
-                                            if ($get('qty_waste_percentage') == 0) {
-                                                $set('total_price_after_waste', $total);
-                                            }
                                             $set('total_price', $total);
+                                            // if ($get('qty_waste_percentage') <= 0) {
+                                            //     $set('total_price_after_waste', $total);
+                                            // } else {
+                                            // }
+                                            // $set('total_price_after_waste', $total);
+                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
                                             // $set('package_size', $unitPrice->package_size ?? 0);
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
                                         })->columnSpan(1),
@@ -285,7 +295,17 @@ class ProductResource extends Resource
                                         ->searchable()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
-                                        })->searchable(),
+                                        })->searchable()->live()
+                                        ->afterStateUpdated(function ($livewire, $set, $state, $get) {
+                                            $packageSize = $get('package_size') ?? 0;
+                                            $productItems  = $get('../../productItems') ?? [];
+                                            $totalNetPrice = collect($productItems)->sum('total_price_after_waste') ?? 0;
+                                            $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
+                                            if ($finalPrice == 0) {
+                                                $finalPrice = $totalNetPrice;
+                                            }
+                                            $set('price', $packageSize * $finalPrice);
+                                        }),
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
                                         ->live(debounce: 500)
@@ -364,7 +384,8 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
                     ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),
-                TextColumn::make('final_price')->label('Final Price')->toggleable(isToggledHiddenByDefault: true)
+                TextColumn::make('product_items_count')->label('Items No')
+                    ->toggleable(isToggledHiddenByDefault: false)->default('-')->alignCenter(true)
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')->label(__('lang.active'))

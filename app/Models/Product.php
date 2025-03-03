@@ -27,7 +27,7 @@ class Product extends Model
         'basic_price',
         'minimum_stock_qty',
     ];
-    protected $appends = ['unit_prices_count'];
+    protected $appends = ['unit_prices_count','product_items_count','is_manufacturing'];
 
     /**
      * Scope to filter products with at least 2 unit prices.
@@ -139,5 +139,25 @@ class Product extends Model
     public function getUnitPricesCountAttribute()
     {
         return $this->unitPrices()->count();
+    }
+
+    /**
+     * Get the count of product items for the product.
+     *
+     * @return int
+     */
+    public function getProductItemsCountAttribute()
+    {
+        return $this->productItems()->count();
+    }
+
+    /**
+     * Check if the product belongs to a manufacturing category.
+     *
+     * @return bool
+     */
+    public function getIsManufacturingAttribute()
+    {
+        return (bool) optional($this->category)->is_manafacturing;
     }
 }
