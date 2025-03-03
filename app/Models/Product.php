@@ -169,7 +169,7 @@ class Product extends Model
     public function getFormattedUnitPricesAttribute()
     {
         return $this->unitPrices->map(function ($unitPrice) {
-            return "unit: {$unitPrice->unit->name} : {$unitPrice->price}";
+            return "{$unitPrice->unit->name} : {$unitPrice->price}";
         })->implode(', ');
     }
 }
