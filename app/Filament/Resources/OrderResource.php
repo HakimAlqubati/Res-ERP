@@ -474,6 +474,9 @@ class OrderResource extends Resource implements HasShieldPermissions
 
     public static function canDelete(Model $record): bool
     {
+        if(isSuperAdmin()){
+            return true;
+        }
         return false;
     }
 
