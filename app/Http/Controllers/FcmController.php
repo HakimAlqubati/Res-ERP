@@ -10,13 +10,31 @@ class FcmController extends Controller
     public function updateDeviceToken(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'fcm_token' => 'required|string',
+            'fcm_token' => 'required|string'
         ]);
 
-        $request->user()->update(['fcm_token' => $request->fcm_token]);
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
 
-        return response()->json(['message' => 'Device token updated successfully']);
+        $fcmRepository = new \App\Repositories\Fcm\FcmRepository();
+        $success = $fcmRepository->updateDeviceToken($user->id, $request->fcm_token);
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Device token updated successfully'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update device token'
+        ], 500);
     }
 
     public function sendFcmNotification(Request $request)

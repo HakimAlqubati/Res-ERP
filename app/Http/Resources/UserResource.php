@@ -19,7 +19,8 @@ class UserResource extends JsonResource
             'name'=>$this->name,
             'email'=>$this->email,
             'owner_id'=>$this->owner_id,
-            'role_id'=>$this->roles[0]->id
+            'role_id'=>$this->roles[0]->id,
+            'fcm_token'=>$this->fcm_token
       ];
     }
 }

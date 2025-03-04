@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\FcmController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailsController;
 use App\Http\Controllers\ProductController;
@@ -62,6 +63,10 @@ Route::middleware('auth:api')->group(function () {
 
 Route::get('/test', function () {
     return User::role([1, 3])->pluck('id');
+});
+
+Route::middleware('auth:api')->group(function () {
+    Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 });
 
 Route::get('/new-link', function () {
