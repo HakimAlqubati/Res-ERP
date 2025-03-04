@@ -26,6 +26,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StockIssueOrderResource extends Resource
@@ -188,6 +189,10 @@ class StockIssueOrderResource extends Resource
         if (isSuperAdmin()) {
             return true;
         }
+        return false;
+    }
+    public static function canEdit(Model $record): bool
+    {
         return false;
     }
 }

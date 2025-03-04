@@ -50,9 +50,12 @@ class UnitResource extends Resource
                 Fieldset::make()->columns(3)->schema([
                     Forms\Components\TextInput::make('name')->required()
                         ->live(onBlur: true)
+                        ->unique(ignoreRecord: true)
                         ->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state)))
                         ->columnSpan(1),
-                    Forms\Components\TextInput::make('code')->required(),
+                    Forms\Components\TextInput::make('code')
+                        ->unique(ignoreRecord: true)
+                        ->required(),
                     Toggle::make('active')->inline(false)->default(true),
                     Forms\Components\Textarea::make('description')->label('Description')->columnSpanFull(),
 

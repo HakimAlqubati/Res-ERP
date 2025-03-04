@@ -41,21 +41,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 
-class OrderResource extends Resource implements HasShieldPermissions
+class OrderResource extends Resource
 {
     protected static ?string $cluster = MainOrdersCluster::class;
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view',
-            'view_any',
-            'create',
-            'update',
-            'delete',
-            'delete_any',
-            'publish',
-        ];
-    }
+    // public static function getPermissionPrefixes(): array
+    // {
+    //     return [
+    //         'view',
+    //         'view_any',
+    //         'create',
+    //         'update',
+    //         'delete',
+    //         'delete_any',
+    //         'publish',
+    //     ];
+    // }
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
@@ -388,6 +388,9 @@ class OrderResource extends Resource implements HasShieldPermissions
                 // Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\ForceDeleteBulkAction::make(),
+
                 // ExportBulkAction::make()
             ]);
     }
@@ -474,6 +477,7 @@ class OrderResource extends Resource implements HasShieldPermissions
 
     public static function canDelete(Model $record): bool
     {
+        return true;
         if(isSuperAdmin()){
             return true;
         }
@@ -482,7 +486,6 @@ class OrderResource extends Resource implements HasShieldPermissions
 
     public static function canDeleteAny(): bool
     {
-        return false;
         if (isSuperAdmin()) {
             return true;
         }

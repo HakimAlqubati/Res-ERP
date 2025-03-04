@@ -77,13 +77,16 @@ class ProductResource extends Resource
                         ->schema([
                             TextInput::make('name')->required()->label(__('lang.name'))
                                 ->live(onBlur: true)
+                                ->unique(ignoreRecord: true)
                                 ->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state))),
                             Select::make('category_id')->required()->label(__('lang.category'))
                                 ->searchable()->live()
                                 ->options(function () {
                                     return Category::pluck('name', 'id');
                                 }),
-                            TextInput::make('code')->required()->label(__('lang.code')),
+                            TextInput::make('code')->required()
+                            ->unique(ignoreRecord: true)
+                            ->label(__('lang.code')),
                             TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
                                 ->label(__('stock.minimum_quantity'))
                                 ->helperText(__('stock.minimum_quantity_desc')),

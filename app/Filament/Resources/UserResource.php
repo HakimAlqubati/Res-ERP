@@ -430,6 +430,7 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
+                Tables\Actions\ForceDeleteBulkAction::make(),
                 // ExportBulkAction::make(),
                 Tables\Actions\RestoreBulkAction::make(),
             ]);

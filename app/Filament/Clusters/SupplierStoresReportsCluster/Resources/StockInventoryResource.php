@@ -143,7 +143,9 @@ class StockInventoryResource extends Resource
                                 ->label('System Qty')
                                 ->required(),
                             TextInput::make('difference')->readOnly()
-                                ->numeric(),
+                                ->numeric()
+                                
+                                ,
                         ])->addActionLabel('Add Item')
                         ->columns(8),
                 ])

@@ -38,8 +38,12 @@ class CategoryResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->schema([
-                    Forms\Components\TextInput::make('name')->required()->label(__('lang.name')),
-                    Forms\Components\TextInput::make('code')->required()->label(__("lang.code")),
+                    Forms\Components\TextInput::make('name')
+                        ->unique(ignoreRecord: true)
+                        ->required()->label(__('lang.name')),
+                    Forms\Components\TextInput::make('code')
+                        ->unique(ignoreRecord: true)
+                        ->required()->label(__("lang.code")),
                     Toggle::make('active')
                         ->inline(false)->default(true)
                         ->label(__("lang.active")),
