@@ -380,6 +380,10 @@ class UserResource extends Resource
                 IconColumn::make('has_employee')->boolean()
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('fcm_token')
+                    ->label('FCM Token')
+                    ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
