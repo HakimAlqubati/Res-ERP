@@ -385,7 +385,7 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fcm_token')
                     ->label('FCM Token')->color(Color::Green)
-                    ->copyable()
+                    ->copyable()->wrap()
                     ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
