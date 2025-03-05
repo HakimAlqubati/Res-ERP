@@ -65,7 +65,7 @@ class StockInventoryResource extends Resource
                         DatePicker::make('inventory_date')
                             ->required()->default(now())
                             ->label('Inventory Date'),
-                            Select::make('store_id')
+                        Select::make('store_id')
                             ->default(getDefaultStore())
                             ->options(
                                 Store::active()
@@ -115,7 +115,7 @@ class StockInventoryResource extends Resource
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
-                                    )->where('unit_id', $state)->first(); 
+                                    )->where('unit_id', $state)->first();
 
                                     $inventoryService = new InventoryService($get('product_id'), $state, $get('store_id'));
                                     $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
@@ -143,9 +143,9 @@ class StockInventoryResource extends Resource
                                 ->label('System Qty')
                                 ->required(),
                             TextInput::make('difference')->readOnly()
-                                ->numeric()
-                                
-                                ,
+                                ->rule('not_in:0', 'Now Allowed')
+
+                                ->numeric(),
                         ])->addActionLabel('Add Item')
                         ->columns(8),
                 ])

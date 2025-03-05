@@ -25,9 +25,11 @@ class ListInventoryTransactionReport extends ListRecords
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
 
         // Get paginated report data
-        $report = $inventoryService->getInventoryReport();
+        $report = $inventoryService->getInventoryReportWithPagination(10);
         $reportData = $report['reportData'] ?? $report;
-        $pagination = $report['pagination'] ?? $report; // Get pagination object
+        $pagination = $report['pagination'] ?? $report;
+
+        // dd($pagination);
 
         return ['reportData' => $reportData, 'pagination' => $pagination];
     }
@@ -47,7 +49,6 @@ class ListInventoryTransactionReport extends ListRecords
             // Get report for a specific product and unit
             $reportData = $inventoryService->getInventoryReport();
         }
-
         return ['reportData' => $reportData, 'product' => $product];
     }
 }

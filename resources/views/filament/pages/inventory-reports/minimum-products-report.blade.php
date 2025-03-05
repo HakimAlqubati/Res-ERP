@@ -8,7 +8,8 @@
                     <th colspan="3" class="no_border_right">
                         <h3>{{ __('Inventory Minimum Stock Report') }}</h3>
                     </th>
-                    <th colspan="1" class="no_border_left" style="text-align: center; vertical-align: middle; border: none;">
+                    <th colspan="1" class="no_border_left"
+                        style="text-align: center; vertical-align: middle; border: none;">
                         <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                     </th>
                 </x-filament-tables::row>
@@ -29,7 +30,8 @@
                             {{ $data['unit_name'] }}
                         </x-filament-tables::cell>
                         <x-filament-tables::cell>
-                            <span class="{{ $data['remaining_qty'] < $data['minimum_quantity'] ? 'text-red-500 font-bold' : '' }}">
+                            <span
+                                class="{{ $data['remaining_qty'] < $data['minimum_quantity'] ? 'text-red-500 font-bold' : '' }}">
                                 {{ $data['remaining_qty'] }}
                             </span>
                         </x-filament-tables::cell>
@@ -40,9 +42,16 @@
                 @endforeach
             </tbody>
         </x-filament-tables::table>
+        <div class="mb-4 text-sm text-gray-700">
+            {!! $reportData->links() !!}
+
+
+            {{-- Showing {{ $reportData->firstItem() }} to {{ $reportData->lastItem() }} of {{ $reportData->total() }} results --}}
+        </div>
     @else
         <div class="please_select_message_div text-center">
-            <h1 class="please_select_message_text">{{ __('No products are currently below minimum stock levels.') }}</h1>
+            <h1 class="please_select_message_text">{{ __('No products are currently below minimum stock levels.') }}
+            </h1>
         </div>
     @endif
 </x-filament::page>

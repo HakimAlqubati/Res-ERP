@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class MultiProductsInventoryService
 {
@@ -35,7 +37,7 @@ class MultiProductsInventoryService
         }
 
         // Use pagination (5 products per page)
-        // $products = $query->paginate(15);
+        $products = $query->paginate(15);
         $products = $query->get();
 
         $report = [];
@@ -48,6 +50,33 @@ class MultiProductsInventoryService
         ];
     }
 
+
+    public function getInventoryReportWithPagination($perPage = 15)
+    {
+        if ($this->productId) {
+            return [$this->getInventoryForProduct($this->productId)];
+        }
+
+        // Fetch all products or filter by category if provided
+        $query = Product::query();
+
+        if ($this->categoryId) {
+            $query->where('category_id', $this->categoryId);
+        }
+
+        // Apply pagination correctly
+        $products = $query->paginate($perPage); // Corrected pagination
+
+        $report = [];
+        foreach ($products as $product) {
+            $report[] = $this->getInventoryForProduct($product->id);
+        }
+
+        return [
+            'reportData' => $report,
+            'pagination' => $products, // Pass pagination data correctly
+        ];
+    }
 
     private function getInventoryForProduct($productId)
     {
@@ -142,5 +171,31 @@ class MultiProductsInventoryService
 
         // dd($inventory,$lowStockProducts);
         return $lowStockProducts;
+    }
+
+
+
+    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 10)
+    {
+        $inventory = $this->getInventoryReport();
+        $lowStockProducts = [];
+
+        foreach ($inventory['reportData'] as $productData) {
+            foreach ($productData as $product) {
+                if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
+                    $lowStockProducts[] = $product;
+                }
+            }
+        }
+
+        // Paginate results
+        $currentPage = request()->get('page', 1);
+        $collection = new Collection($lowStockProducts);
+        $pagedData = $collection->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+        return new LengthAwarePaginator($pagedData, count($collection), $perPage, $currentPage, [
+            'path' => request()->url(),
+            'query' => request()->query(),
+        ]);
     }
 }

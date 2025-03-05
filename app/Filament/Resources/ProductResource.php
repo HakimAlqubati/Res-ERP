@@ -85,8 +85,8 @@ class ProductResource extends Resource
                                     return Category::pluck('name', 'id');
                                 }),
                             TextInput::make('code')->required()
-                            ->unique(ignoreRecord: true)
-                            ->label(__('lang.code')),
+                                ->unique(ignoreRecord: true)
+                                ->label(__('lang.code')),
                             TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
                                 ->label(__('stock.minimum_quantity'))
                                 ->helperText(__('stock.minimum_quantity_desc')),
@@ -104,7 +104,9 @@ class ProductResource extends Resource
                         ->label('Items')
                         ->schema([
                             Repeater::make('productItems')->relationship('productItems')
-                                ->label('Product Items')->schema([
+
+                                ->label('Product Items')
+                                ->schema([
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
                                         ->searchable()
@@ -161,6 +163,7 @@ class ProductResource extends Resource
                                             $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
                                             // $set('package_size', $unitPrice->package_size ?? 0);
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
+                                            static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         })->columnSpan(1),
                                     // TextInput::make('package_size')->numeric()->default(1)->required()
                                     // ->label(__('lang.package_size'))->readOnly(),
@@ -178,6 +181,8 @@ class ProductResource extends Resource
 
                                             $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res ?? 0, $get('qty_waste_percentage') ?? 0));
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state ?? 0, $get('qty_waste_percentage') ?? 0));
+
+                                            static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         }),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
@@ -204,6 +209,7 @@ class ProductResource extends Resource
                                             }
                                             $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
                                             $set('total_price', $res);
+                                            static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                         }),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
@@ -228,6 +234,7 @@ class ProductResource extends Resource
                                             $qty = $get('quantity') ?? 0;
                                             if (is_numeric($qty) && $qty > 0) {
                                                 $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($qty, $state ?? 0));
+                                                static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
                                             }
                                         }),
 
@@ -524,5 +531,23 @@ class ProductResource extends Resource
                 'price' => round($price, 2),
             ];
         }, $units);
+    }
+
+    public static function updateFinalPriceEachUnit($set, $get, $state)
+    {
+        // 🔄 Calculate the new total net price of product items
+        $totalNetPrice = collect($state)->sum('total_price_after_waste') ?? 0;
+
+        // 🔄 Retrieve existing units
+        $units = $get('../../units') ?? [];
+        // dd($units,$totalNetPrice);
+        // 🔄 Create a new array with updated prices to avoid modifying in place
+        $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
+            // dd($unit);
+            return array_merge($unit, ['price' => ($unit['package_size'] ?? 1) * $totalNetPrice]); // Set new price
+        }, $units);
+
+        // 🔄 Replace the `units` array completely
+        $set('../../units', $updatedUnits);
     }
 }
