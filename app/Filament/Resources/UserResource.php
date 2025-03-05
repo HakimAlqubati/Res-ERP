@@ -22,6 +22,7 @@ use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
@@ -383,7 +384,7 @@ class UserResource extends Resource
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('fcm_token')
-                    ->label('FCM Token')
+                    ->label('FCM Token')->color(Color::Green)
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true)
             ])
