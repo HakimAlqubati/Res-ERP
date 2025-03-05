@@ -67,11 +67,11 @@
         </div>
 
         {{-- Pagination Controls --}}
-        {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
+        @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator)
             <div class="mt-4">
                 {{ $pagination->links() }}
             </div>
-        {{-- @endif --}}
+        @endif
     @else
         <div class="please_select_message_div text-center">
             <h1 class="please_select_message_text">No inventory data available.</h1>
