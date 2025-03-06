@@ -136,6 +136,7 @@ class StockSupplyOrderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -157,6 +158,7 @@ class StockSupplyOrderResource extends Resource
             'index' => Pages\ListStockSupplyOrders::route('/'),
             'create' => Pages\CreateStockSupplyOrder::route('/create'),
             'edit' => Pages\EditStockSupplyOrder::route('/{record}/edit'),
+            'view' => Pages\ViewStockSupplyOrder::route('/{record}/view'),
         ];
     }
 

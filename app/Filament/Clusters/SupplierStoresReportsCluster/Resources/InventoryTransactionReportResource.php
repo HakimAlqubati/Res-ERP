@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Builder;
 class InventoryTransactionReportResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
-
+    protected static ?string $slug = 'inventory-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
     {

@@ -43,7 +43,7 @@
             </tbody>
         </x-filament-tables::table>
         <div class="mb-4 text-sm text-gray-700">
-            {!! $reportData->links() !!}
+            {{-- {{ $reportData->links() }} --}}
 
 
             {{-- Showing {{ $reportData->firstItem() }} to {{ $reportData->lastItem() }} of {{ $reportData->total() }} results --}}

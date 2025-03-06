@@ -37,7 +37,7 @@ class MultiProductsInventoryService
         }
 
         // Use pagination (5 products per page)
-        $products = $query->paginate(15);
+        // $products = $query->paginate(15);
         $products = $query->get();
 
         $report = [];
@@ -175,7 +175,7 @@ class MultiProductsInventoryService
 
 
 
-    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 10)
+    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 1000)
     {
         $inventory = $this->getInventoryReport();
         $lowStockProducts = [];
