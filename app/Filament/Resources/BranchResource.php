@@ -73,7 +73,7 @@ class BranchResource extends Resource
                                         ->live(),
                                     Select::make('store_id')
                                         ->label(__('stock.store_id'))
-                                        ->options(\App\Models\Store::pluck('name', 'id'))
+                                        ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
                                         ->searchable()->requiredIf('is_central_kitchen',true)
                                         ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
                                 ]),
