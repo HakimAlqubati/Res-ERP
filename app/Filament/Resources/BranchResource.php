@@ -12,16 +12,19 @@ use App\Models\User;
 use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -55,8 +58,26 @@ class BranchResource extends Resource
                                     ->label(__('lang.branch_manager'))
                                     ->options(User::all()->pluck('name', 'id'))
                                     ->searchable(),
-                                Checkbox::make('active')->label(__('lang.active')),
-                                Checkbox::make('is_hq')->label(__('lang.is_hq')),
+                                Grid::make()->columns(4)->schema([
+                                    Toggle::make('active')
+                                        ->inline(false)
+                                        ->label(__('lang.active')),
+                                    Toggle::make('is_hq')
+                                        ->inline(false)
+                                        ->label(__('lang.is_hq')),
+                                    // Toggle for is_central_kitchen
+                                    Toggle::make('is_central_kitchen')
+                                        ->label(__('stock.is_central_kitchen'))
+                                        ->inline(false)
+                                        ->default(false)
+                                        ->live(),
+                                    Select::make('store_id')
+                                        ->label(__('stock.store_id'))
+                                        ->options(\App\Models\Store::pluck('name', 'id'))
+                                        ->searchable()->requiredIf('is_central_kitchen',true)
+                                        ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
+                                ]),
+
                                 Textarea::make('address')
                                     ->columnSpanFull()
                                     ->label(__('lang.address')),
@@ -166,13 +187,16 @@ class BranchResource extends Resource
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id')),
                 SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
-                ->circular()->alignCenter(true)->getStateUsing(function () {
-                    return null;
-                })->limit(3),
+                    ->circular()->alignCenter(true)->getStateUsing(function () {
+                        return null;
+                    })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('address')->label(__('lang.address'))
                     // ->limit(100)
                     ->words(5),
+                IconColumn::make('is_central_kitchen')
+                    ->label(__('stock.is_central_kitchen'))
+                    ->boolean()->alignCenter(true)->toggleable(),
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {

@@ -14,7 +14,7 @@ use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 class Branch extends Model implements HasMedia
 {
 
-    use HasFactory, SoftDeletes, DynamicConnection,InteractsWithMedia;
+    use HasFactory, SoftDeletes, DynamicConnection, InteractsWithMedia;
 
 
 
@@ -25,6 +25,8 @@ class Branch extends Model implements HasMedia
         'manager_id',
         'active',
         'is_hq',
+        'is_central_kitchen',
+        'store_id',
     ];
 
     public function user()
@@ -99,5 +101,10 @@ class Branch extends Model implements HasMedia
     public function location()
     {
         return $this->morphOne(Location::class, 'locationable');
+    }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id');
     }
 }

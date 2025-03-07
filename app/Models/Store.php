@@ -86,4 +86,9 @@ class Store extends Model
         //     }
         // });
     }
+
+    public function branches()
+    {
+        return $this->hasMany(Branch::class, 'store_id');
+    }
 }

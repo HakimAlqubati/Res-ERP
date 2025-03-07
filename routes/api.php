@@ -67,6 +67,12 @@ Route::get('/test', function () {
 
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
+
+    // Inventory Routes
+    Route::prefix('inventory')->group(function () {
+        Route::apiResource('transactions', App\Http\Controllers\Api\InventoryTransactionController::class);
+        Route::apiResource('stockSupplyOrder', App\Http\Controllers\Api\StockSupplyOrderController::class);
+    });
 });
 
 Route::get('/new-link', function () {

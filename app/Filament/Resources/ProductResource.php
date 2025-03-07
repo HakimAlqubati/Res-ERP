@@ -406,6 +406,11 @@ class ProductResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.category'))->relationship('category', 'name'),
+                // New Filter for Manufacturing Products
+                Tables\Filters\Filter::make('is_manufacturing')
+                    ->label(__('lang.is_manufacturing'))
+                    ->query(fn(Builder $query): Builder => $query->whereHas('category', fn($q) => $q->where('is_manafacturing', true))),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

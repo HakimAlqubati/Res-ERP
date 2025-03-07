@@ -148,4 +148,5 @@ return [
     'is_hq' => 'الفرع الرئيسي؟',
     'package_size' => 'العبوة',
     'purchase_invoice_id' => 'رقم فاتورة المورد',
+    'is_manufacturing' => 'منتج مركب؟',
 ];

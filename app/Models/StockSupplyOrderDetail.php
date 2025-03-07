@@ -66,4 +66,14 @@ class StockSupplyOrderDetail extends Model
             ]);
         });
     }
+
+    public function toArray()
+    {
+        return [
+            'product_id' => $this->product_id,
+            'unit_id' => $this->unit_id,
+            'quantity' => $this->quantity,
+            'package_size' => $this->unitPrice->package_size ?? null,
+        ];
+    }
 }
