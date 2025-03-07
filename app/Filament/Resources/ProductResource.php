@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as ActionTable;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
 
@@ -393,6 +394,9 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('description')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.description')),
+                IconColumn::make('is_manufacturing')->searchable()->boolean()->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label(__('lang.is_manufacturing')),
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
                     ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),

@@ -101,7 +101,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'description' => $request->input('description'),
             ];
             if ($request->input('order_type') && $request->input('order_type') == Order::TYPE_MANUFACTURING) {
-                $orderData['type'] = Order::TYPE_MANUFACTURING;
+                // $orderData['type'] = Order::TYPE_MANUFACTURING;
             }
 
             // Create new order

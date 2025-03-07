@@ -202,51 +202,55 @@ class Order extends Model
                 if (!$order->store_id && isStoreManager() && !is_null(getDefaultStoreForCurrentStoreKeeper())) {
                     $order->update(['store_id' => getDefaultStoreForCurrentStoreKeeper()]);
                 }
-                if ($order->type == self::TYPE_NORMAL) {
-                    foreach ($order->orderDetails as $orderDetail) {
-                        \App\Models\InventoryTransaction::create([
-                            'product_id'           => $orderDetail->product_id,
-                            'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                            'quantity'             => $orderDetail->available_quantity,
-                            'unit_id'              => $orderDetail->unit_id,
-                            'purchase_invoice_id'  => $orderDetail->purchase_invoice_id,
-                            'movement_date'        => $order->order_date ?? now(),
-                            'package_size'         => $orderDetail->package_size,
-                            'store_id'             => $order->store_id,
-                            'transaction_date'     => $order->order_date ?? now(),
-                            'notes'                => 'Inventory created for order ' . $order->id,
-                            'transactionable_id'   => $order->id,
-                            'transactionable_type' => Order::class,
-                        ]);
+                // if ($order->type == self::TYPE_NORMAL) {
+                foreach ($order->orderDetails as $orderDetail) {
+                    $storeId = $order->store_id;
+                    if ($orderDetail->product->is_manufacturing) {
+                        $storeId = Store::centralKitchen()->id;
                     }
-                } elseif ($order->type == self::TYPE_MANUFACTURING) {
-                    foreach ($order->orderDetails as $orderDetail) {
-                        $detailAvailableQty =  $orderDetail->available_quantity;
-                        $detailPackageSize = $orderDetail->package_size;
-
-                        $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
-                        $manafcturingProduct = $manufacturingService->getProductItems($orderDetail->product_id);
-                        $productItems = $manafcturingProduct['product_items'];
-                        $unitPrices = $manafcturingProduct['unit_prices'];
-
-                        foreach ($productItems as  $productItem) {
-                            \App\Models\InventoryTransaction::create([
-                                'product_id'           => $productItem->product_id,
-                                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                                'quantity'             => $detailAvailableQty * $productItem->quantity  * $detailPackageSize,
-                                'unit_id'              => $productItem->unit_id,
-                                'purchase_invoice_id'  => null,
-                                'movement_date'        => $order->order_date ?? now(),
-                                'package_size'         => $productItem->package_size,
-                                'store_id'             => $order->store_id,
-                                'transaction_date'     => $order->order_date ?? now(),
-                                'notes'                => 'Inventory created for manafacturing order ' . $order->id,
-                                'transactionable_id'   => $order->id,
-                                'transactionable_type' => Order::class,
-                            ]);
-                        }
-                    }
+                    \App\Models\InventoryTransaction::create([
+                        'product_id'           => $orderDetail->product_id,
+                        'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                        'quantity'             => $orderDetail->available_quantity,
+                        'unit_id'              => $orderDetail->unit_id,
+                        'purchase_invoice_id'  => $orderDetail->purchase_invoice_id,
+                        'movement_date'        => $order->order_date ?? now(),
+                        'package_size'         => $orderDetail->package_size,
+                        'store_id'             => $storeId,
+                        'transaction_date'     => $order->order_date ?? now(),
+                        'notes'                => 'Inventory created for order ' . $order->id,
+                        'transactionable_id'   => $order->id,
+                        'transactionable_type' => Order::class,
+                    ]);
                 }
+                // } elseif ($order->type == self::TYPE_MANUFACTURING) {
+                //     foreach ($order->orderDetails as $orderDetail) {
+                //         $detailAvailableQty =  $orderDetail->available_quantity;
+                //         $detailPackageSize = $orderDetail->package_size;
+
+                //         $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
+                //         $manafcturingProduct = $manufacturingService->getProductItems($orderDetail->product_id);
+                //         $productItems = $manafcturingProduct['product_items'];
+                //         $unitPrices = $manafcturingProduct['unit_prices'];
+
+                //         foreach ($productItems as  $productItem) {
+                //             \App\Models\InventoryTransaction::create([
+                //                 'product_id'           => $productItem->product_id,
+                //                 'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                //                 'quantity'             => $detailAvailableQty * $productItem->quantity  * $detailPackageSize,
+                //                 'unit_id'              => $productItem->unit_id,
+                //                 'purchase_invoice_id'  => null,
+                //                 'movement_date'        => $order->order_date ?? now(),
+                //                 'package_size'         => $productItem->package_size,
+                //                 'store_id'             => $order->store_id,
+                //                 'transaction_date'     => $order->order_date ?? now(),
+                //                 'notes'                => 'Inventory created for manafacturing order ' . $order->id,
+                //                 'transactionable_id'   => $order->id,
+                //                 'transactionable_type' => Order::class,
+                //             ]);
+                //         }
+                //     }
+                //   }
             }
 
             if ($order->isDirty('status')) {

@@ -158,7 +158,7 @@ class Product extends Model
      */
     public function getIsManufacturingAttribute()
     {
-        return (bool) optional($this->category)->is_manufacturing;
+        return (bool) optional($this->category)->is_manafacturing;
     }
 
     /**

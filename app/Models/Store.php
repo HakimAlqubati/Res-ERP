@@ -15,6 +15,7 @@ class Store extends Model
         'active',
         'default_store',
         'storekeeper_id',
+        'is_central_kitchen',
     ];
 
     protected $appends = ['storekeeper_name'];
@@ -38,6 +39,10 @@ class Store extends Model
     public function scopeDefaultStore($query)
     {
         return $query->where('default_store', true)->first();
+    }
+    public function scopeCentralKitchen($query)
+    {
+        return $query->where('is_central_kitchen', true)->first();
     }
 
     public function storekeeper()
@@ -70,6 +75,12 @@ class Store extends Model
                 Store::where('default_store', true)
                     ->where('id', '!=', $store->id) // Exclude the current store
                     ->update(['default_store' => false]);
+            }
+            if ($store->is_central_kitchen) {
+                // Unset the previous default store
+                Store::where('is_central_kitchen', true)
+                    ->where('id', '!=', $store->id) // Exclude the current store
+                    ->update(['is_central_kitchen' => false]);
             }
         });
 
