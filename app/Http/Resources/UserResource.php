@@ -15,12 +15,13 @@ class UserResource extends JsonResource
     public function toArray($request)
     {
         return [
-            'id'=>$this->id,
-            'name'=>$this->name,
-            'email'=>$this->email,
-            'owner_id'=>$this->owner_id,
-            'role_id'=>$this->roles[0]->id,
-            'fcm_token'=>$this->fcm_token
-      ];
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'owner_id' => $this->owner_id,
+            'role_id' => $this->roles[0]->id,
+            'fcm_token' => $this->fcm_token,
+            'branch' => $this->branch->is_central_kitchen ?? 0,
+        ];
     }
 }
