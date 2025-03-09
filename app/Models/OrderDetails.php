@@ -105,6 +105,20 @@ class OrderDetails extends Model
             $order = $orderDetail->order;
             $dirty = $orderDetail->getDirty();
             $messageParts = [];
+            
+            // Check if unit_id was updated
+            if (isset($dirty['unit_id'])) {
+                // Get the corresponding UnitPrice record
+                $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
+                    ->where('unit_id', $orderDetail->unit_id)
+                    ->first();
+                
+                if ($unitPrice) {
+                    $orderDetail->package_size = $unitPrice->package_size;
+                    $orderDetail->save();
+                }
+            }
+            
             foreach ($dirty as $field => $newValue) {
                 $oldValue = $orderDetail->getOriginal($field);
                 $messageParts[] = "$field: $oldValue -> $newValue";

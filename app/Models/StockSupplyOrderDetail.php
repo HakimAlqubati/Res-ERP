@@ -37,6 +37,9 @@ class StockSupplyOrderDetail extends Model
     {
         parent::boot();
 
+        static::creating(function ($stockSupplyDetail) {
+            $stockSupplyDetail->price = $stockSupplyDetail->product->unitPrices()->where('unit_id', $stockSupplyDetail->unit_id)->first()->price ?? 1;
+        });
         static::created(function ($stockSupplyDetail) {
             $order = $stockSupplyDetail->order;
             $notes = 'Stock supply with ID ' . $stockSupplyDetail->stock_supply_order_id;
@@ -59,6 +62,7 @@ class StockSupplyOrderDetail extends Model
                 'movement_date' => $stockSupplyDetail->order->date ?? now(),
                 'package_size' => $stockSupplyDetail->package_size,
                 'store_id' => $stockSupplyDetail->order?->store_id,
+                'price' => $stockSupplyDetail->price,
                 'transaction_date' => $stockSupplyDetail->order->date ?? now(),
                 'notes' => $notes,
                 'transactionable_id' => $stockSupplyDetail->stock_supply_order_id,

@@ -98,7 +98,7 @@ class PurchaseInvoiceResource extends Resource
 
                         Select::make('store_id')->label(__('lang.store'))
                             ->searchable()
-                            ->disabledOn('edit')
+                            ->disabledOn('edit')->required()
                             ->default(getDefaultStore())
                             ->options(
                                 Store::where('active', 1)

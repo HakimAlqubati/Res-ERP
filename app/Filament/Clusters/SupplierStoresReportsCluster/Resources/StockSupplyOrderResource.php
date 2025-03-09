@@ -47,12 +47,12 @@ class StockSupplyOrderResource extends Resource
                         ->label('Order Date'),
 
                     Select::make('store_id')
-                    ->default(getDefaultStore())
+                        ->default(getDefaultStore())
                         ->options(
                             Store::active()
                                 ->withManagedStores()
                                 ->get(['name', 'id'])->pluck('name', 'id')
-                        ),
+                        )->required(),
 
                     Textarea::make('notes')
                         ->label('Notes')

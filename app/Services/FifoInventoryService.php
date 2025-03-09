@@ -81,7 +81,9 @@ class FifoInventoryService
             // Step 3: Determine the quantity to allocate
             $allocatedQty = min($availableQtyInUnit, $remainingQuantity);
 
-
+            if ($adjustedPrice <= 0) {
+                $adjustedPrice = $unitPrices->where('unit_id', $this->unitId)->first()['price'];
+            }
 
             // Step 4: Record allocation details
             $allocations[] = [
