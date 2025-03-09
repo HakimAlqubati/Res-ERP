@@ -204,7 +204,7 @@ class Order extends Model
                 // }
                 // if ($order->type == self::TYPE_NORMAL) {
                 foreach ($order->orderDetails as $orderDetail) {
-                    $storeId = $order->store_id;
+                    $storeId = getDefaultStoreForCurrentStoreKeeper();
                     if ($orderDetail->product->is_manufacturing) {
                         $storeId = Store::centralKitchen()->id;
                     }
