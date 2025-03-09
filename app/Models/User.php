@@ -221,6 +221,9 @@ class User extends Authenticatable implements FilamentUser
 
     public function getManagedStoresIdsAttribute()
     {
+        if(!auth()->check()){
+            return [];
+        }
         $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
         return $ids;
     }

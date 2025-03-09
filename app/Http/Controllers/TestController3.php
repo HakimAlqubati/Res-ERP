@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Equipment;
 use App\Models\Product;
+use App\Models\User;
+use App\Notifications\FcmNotification;
 use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TestController3 extends Controller
 {
@@ -72,8 +75,18 @@ class TestController3 extends Controller
 
     public function sendFCM($token)
     {
-        $fcm = new FcmClient();
         $notification = 'hi';
+        $user = User::find($token);
+        $notificationData = [
+            'title' => 'New Message',
+            'body' => 'You have a new notification!',
+            'data' => ['custom_key' => 'custom_value'], // Optional data
+        ];
+        $response = $user->notify(new FcmNotification($notificationData));
+        // Log or return response
+        Log::info('Notification Response:', ['response' => $response]);
+        return response()->json($response);
+        // $fcm = new FcmClient();
         return   $fcm->sendMessage($token, $notification);
         return FcmClient::sendFCM($id);
     }
