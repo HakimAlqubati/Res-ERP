@@ -352,9 +352,9 @@ class UserResource extends Resource
                 TextColumn::make('id')
                     ->sortable()->searchable()
 
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(isToggledHiddenByDefault: true)  ,
                 ImageColumn::make('avatar_image')->label('')
-                    ->circular(),
+                    ->circular()->alignCenter(true),
                 TextColumn::make('name')
                     ->limit(20)
                     ->sortable()->searchable()

@@ -103,7 +103,7 @@ class User extends Authenticatable implements FilamentUser
     {
         $default = 'users/default/avatar.png';
         if (is_null($this->avatar)  ) {
-            return storage_path($default);
+            return url('/storage') . '/' . $default;
         }
         return url('/storage') . '/' . $this->avatar;
         return storage_path($this->avatar);
