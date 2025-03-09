@@ -70,7 +70,11 @@ class TestController3 extends Controller
         return $response;
     }
 
-    public function sendFCM($id){
+    public function sendFCM($token)
+    {
+        $fcm = new FcmClient();
+        $notification = 'hi';
+        return   $fcm->sendMessage($token, $notification);
         return FcmClient::sendFCM($id);
     }
 }
