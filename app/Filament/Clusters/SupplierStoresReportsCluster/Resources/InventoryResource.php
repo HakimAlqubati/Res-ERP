@@ -61,6 +61,8 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('movement_date')
                     ->label('Movement Date')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('store.name')
+                    ->label('Store'),
 
                 Tables\Columns\TextColumn::make('remaining_qty')->hidden()
                     ->label('Remaining Qty')->alignCenter(true)

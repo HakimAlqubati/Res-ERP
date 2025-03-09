@@ -174,4 +174,9 @@ class InventoryTransaction extends Model
         // Convert "StockSupplyOrder" to "Stock Supply Order"
         return preg_replace('/(?<!\ )[A-Z]/', ' $0', class_basename($this->transactionable_type));
     }
+
+    public function store()
+    {
+        return $this->belongsTo(Store::class, 'store_id');
+    }
 }
