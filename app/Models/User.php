@@ -101,10 +101,10 @@ class User extends Authenticatable implements FilamentUser
 
     public function getAvatarImageAttribute()
     {
-        // $default = 'users/default/avatar.png';
-        // if (is_null($this->avatar) || $this->avatar == $default) {
-        //     return storage_path($default);
-        // }
+        $default = 'users/default/avatar.png';
+        if (is_null($this->avatar)  ) {
+            return storage_path($default);
+        }
         return url('/storage') . '/' . $this->avatar;
         return storage_path($this->avatar);
     }
