@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Equipment;
 use App\Models\Product;
 use App\Services\FifoInventoryService;
+use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use Illuminate\Http\Request;
 
@@ -67,5 +68,9 @@ class TestController3 extends Controller
         $response = $manufacturingService->getProductItems($id);
         // dd($response['product_items'],$response['unit_prices']);
         return $response;
+    }
+
+    public function sendFCM($id){
+        return FcmClient::sendFCM($id);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\FcmController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailsController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\TestController3;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\User;
@@ -223,5 +224,5 @@ Route::get('/branches', function () {
 //         return 1;
 //     }
 // }
-
+Route::get('/sendFCM/{userId}',[TestController3::class,'sendFCM']);
 require base_path('routes/custom_route.php');

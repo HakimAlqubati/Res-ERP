@@ -102,7 +102,7 @@ class User extends Authenticatable implements FilamentUser
     public function getAvatarImageAttribute()
     {
         $default = 'users/default/avatar.png';
-        if (is_null($this->avatar)  ) {
+        if (is_null($this->avatar)) {
             return url('/storage') . '/' . $default;
         }
         return url('/storage') . '/' . $this->avatar;
@@ -223,5 +223,10 @@ class User extends Authenticatable implements FilamentUser
     {
         $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
         return $ids;
+    }
+
+    public function routeNotificationForFcm($notification)
+    {
+        return $this->fcm_token; // Replace with the actual field that stores the user's FCM token
     }
 }
