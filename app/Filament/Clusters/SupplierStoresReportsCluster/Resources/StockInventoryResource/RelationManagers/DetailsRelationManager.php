@@ -92,7 +92,7 @@ class DetailsRelationManager extends RelationManager
                                         Store::active()
                                             ->withManagedStores()
                                             ->get(['name', 'id'])->pluck('name', 'id')
-                                    ),
+                                    )->required(),
 
                             ]),
                             Repeater::make('stock_adjustment_details')

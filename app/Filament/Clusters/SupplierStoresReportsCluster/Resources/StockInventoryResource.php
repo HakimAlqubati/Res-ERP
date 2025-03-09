@@ -71,7 +71,7 @@ class StockInventoryResource extends Resource
                                 Store::active()
                                     ->withManagedStores()
                                     ->get(['name', 'id'])->pluck('name', 'id')
-                            ),
+                            )->required(),
 
                         Select::make('responsible_user_id')->searchable()->default(auth()->id())
                             ->relationship('responsibleUser', 'name')
