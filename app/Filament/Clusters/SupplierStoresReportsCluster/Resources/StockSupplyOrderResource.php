@@ -177,7 +177,6 @@ class StockSupplyOrderResource extends Resource
 
     public static function canDeleteAny(): bool
     {
-        return false;
         if (isSuperAdmin()) {
             return true;
         }

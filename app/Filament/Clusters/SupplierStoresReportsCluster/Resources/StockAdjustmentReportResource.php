@@ -61,6 +61,12 @@ class StockAdjustmentReportResource extends Resource
                 //
             ])
             ->actions([])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                ]),
+            ])
         ;
     }
 
@@ -74,7 +80,7 @@ class StockAdjustmentReportResource extends Resource
                 'quantity',
                 'adjustment_type',
                 'notes',
-            )->orderBy('id','desc');
+            )->orderBy('id', 'desc');
         return $query;
     }
 
@@ -90,5 +96,12 @@ class StockAdjustmentReportResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }

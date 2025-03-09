@@ -174,6 +174,7 @@ class StockInventoryResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -221,5 +222,13 @@ class StockInventoryResource extends Resource
         $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
         $difference = round($physicalQty - $remaningQty, 2);
         return $difference;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }
