@@ -32,11 +32,11 @@ class ProductRepository implements ProductRepositoryInterface
             // ->when($isManufacturing, function ($query) {
             //     return $query->manufacturingCategory()->hasProductItems();
             // })
-            // ->when($isManufacturing, function ($query) {
-            //     return $query->manufacturingCategory()->hasProductItems();
-            // }, function ($query) {
-            //     return $query->unmanufacturingCategory();
-            // })
+            ->when($isManufacturing, function ($query) {
+                return $query->manufacturingCategory()->hasProductItems();
+            }, function ($query) {
+                return $query->unmanufacturingCategory();
+            })
             ->HasUnitPrices()->when($id, function ($query) use ($id) {
                 return $query->where('id', $id);
             })->when($categoryId, function ($query) use ($categoryId) {
