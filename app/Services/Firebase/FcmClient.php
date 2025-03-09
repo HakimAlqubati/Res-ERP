@@ -17,7 +17,9 @@ class FcmClient
     public function __construct()
     {
         $this->googleClient = new GoogleClient();
-        $this->googleClient->setAuthConfig(storage_path('app/firebase/google-services.json'));
+        // $this->googleClient->setAuthConfig(('storage/firebase/google-services.json'));
+        $this->googleClient->setAuthConfig(storage_path('app/public/firebase/google-services.json'));
+
         $this->googleClient->addScope('https://fcm.googleapis.com/auth/firebase.messaging');
         $this->httpClient = new HttpClient();
     }
