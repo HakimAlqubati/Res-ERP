@@ -199,9 +199,9 @@ class Order extends Model
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
 
-                if (!$order->store_id && isStoreManager() && !is_null(getDefaultStoreForCurrentStoreKeeper())) {
-                    $order->update(['store_id' => getDefaultStoreForCurrentStoreKeeper()]);
-                }
+                // if (!$order->store_id && isStoreManager() && !is_null(getDefaultStoreForCurrentStoreKeeper())) {
+                //     $order->update(['store_id' => getDefaultStoreForCurrentStoreKeeper()]);
+                // }
                 // if ($order->type == self::TYPE_NORMAL) {
                 foreach ($order->orderDetails as $orderDetail) {
                     $storeId = $order->store_id;
