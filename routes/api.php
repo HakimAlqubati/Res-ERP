@@ -224,5 +224,5 @@ Route::get('/branches', function () {
 //         return 1;
 //     }
 // }
-Route::get('/sendFCM/{token}',[TestController3::class,'sendFCM']);
+Route::get('/sendFCM',[TestController3::class,'sendFCM']);
 require base_path('routes/custom_route.php');

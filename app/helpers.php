@@ -598,3 +598,46 @@ function toToken($deviceToken, $data)
         Log::debug($e->getMessage());
     }
 }
+
+function sendNotification($deviceToken, $title, $body, $data = [], $priority = 'high')
+{
+    try {
+        $factory = (new Factory())
+            ->withServiceAccount(storage_path('app/public/firebase/google-services.json'));
+        $messaging = $factory->createMessaging();
+
+        $notificationData = [
+            'title' => $title,
+            'body' => $body,
+        ];
+
+        $message = CloudMessage::new()
+            ->toToken($deviceToken)
+            ->withNotification($notificationData)
+            ->withData($data) // Additional custom data
+            ->withHighestPossiblePriority(); // Ensures high priority
+
+        $messaging->send($message);
+        $response = json_encode([
+            'status' => 'success',
+            'message' => 'Notification sent successfully',
+            'data' => [
+                'deviceToken' => $deviceToken,
+                'title' => $title,
+                'body' => $body,
+                'payload' => $data
+            ]
+        ]);
+        Log::info($response);
+        return $response;
+    } catch (Exception $e) {
+        $response = json_encode([
+            'status' => 'error',
+            'message' => 'Failed to send notification',
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        Log::error($response);
+        return $response;
+    }
+}

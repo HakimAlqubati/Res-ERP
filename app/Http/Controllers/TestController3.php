@@ -70,13 +70,12 @@ class TestController3 extends Controller
         return $response;
     }
 
-    public function sendFCM($token)
+    public function sendFCM(Request $request)
     {
-        $data = [
-            'title' => 'hi',
-            'body' => 'welcome',
-        ];
-        // dd($data);
-        return toToken($token, $data);
+        return sendNotification(
+            $request->token,
+            $request->title,
+            $request->body
+        );
     }
 }
