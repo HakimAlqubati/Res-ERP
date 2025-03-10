@@ -20,6 +20,12 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\Multitenancy\Contracts\IsTenant;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use Kreait\Firebase\Factory;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Messaging\CloudMessage;
 
 function getName()
 {
@@ -555,4 +561,40 @@ function getDefaultStoreForCurrentStoreKeeper()
     }
 
     return null;
+}
+
+
+
+function toTopic($topic, $data)
+{
+    try {
+        $factory = (new Factory())
+            ->withServiceAccount(storage_path('app/public/firebase/google-services.json'));
+        $messaging = $factory->createMessaging();
+        $message = CloudMessage::new()
+            ->toTopic($topic)
+            ->withNotification($data);
+        $messaging->send($message);
+    } catch (Exception $e) {
+        Log::debug('when send to Topic');
+        Log::debug($e->getMessage());
+    }
+}
+
+function toToken($deviceToken, $data)
+{
+    Log::debug($deviceToken);
+    Log::debug($data);
+    try {
+        $factory = (new Factory())
+            ->withServiceAccount(storage_path('app/public/firebase/google-services.json'));
+        $messaging = $factory->createMessaging();
+        $message = CloudMessage::new()->toToken($deviceToken)
+            ->withNotification($data);
+
+        $messaging->send($message);
+    } catch (Exception $e) {
+        Log::debug('when send to token');
+        Log::debug($e->getMessage());
+    }
 }
