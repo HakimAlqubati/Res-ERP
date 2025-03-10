@@ -184,6 +184,21 @@ class Order extends Model
         parent::boot();
 
         static::created(function ($order) {
+            if ($order->status == self::ORDERED) {
+                // Get store users with role ID 5
+                $storeUsers = User::whereHas("roles", function ($q) {
+                    $q->where("id", 5);
+                })->pluck('fcm_token')->filter()->toArray(); // Get device tokens
+
+                // Send notification to store users
+                foreach ($storeUsers as $deviceToken) {
+                    sendNotification(
+                        $deviceToken,
+                        'New Order Received',
+                        'A new order #' . $order->id . ' has been placed and needs processing.'
+                    );
+                }
+            }
             OrderLog::create([
                 'order_id'   => $order->id,
                 'created_by' => auth()->id() ?? null,
@@ -194,6 +209,41 @@ class Order extends Model
         });
 
         static::updated(function ($order) {
+
+            // Check if status was updated
+            if ($order->isDirty('status')) {
+                // Handle specific status changes
+                switch ($order->status) {
+                    case self::PROCESSING:
+                    case self::READY_FOR_DELEVIRY:
+                        // Notify the customer (order's customer_id)
+                        if ($order->customer && $order->customer->fcm_token) {
+                            sendNotification(
+                                $order->customer->fcm_token,
+                                'Order Update',
+                                'Your order #' . $order->id . ' is now ' . ucfirst(str_replace('_', ' ', $order->status)) . '.'
+                            );
+                        }
+                        break;
+
+                    case self::DELEVIRED:
+                        // Notify store users with role ID 5
+                        $storeUsers = User::whereHas("roles", function ($q) {
+                            $q->where("id", 5);
+                        })->pluck('fcm_token')->filter()->toArray();
+
+                        foreach ($storeUsers as $deviceToken) {
+                            sendNotification(
+                                $deviceToken,
+                                'Order Delivered',
+                                'Order #' . $order->id . ' has been successfully delivered.'
+                            );
+                        }
+                        break;
+                }
+            }
+
+
             if (
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
