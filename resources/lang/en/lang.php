@@ -149,5 +149,6 @@ return [
     'package_size' => 'Qty per Pack',
     'purchase_invoice_id' => 'Purchase ID',
     'is_manufacturing' => 'Is manufacturing?',
+    'unit_name' => 'Unit',
     
 ];
