@@ -43,10 +43,11 @@
             </tbody>
         </x-filament-tables::table>
         <div class="mb-4 text-sm text-gray-700">
-            {{-- {{ $reportData->links() }} --}}
 
+            {{ $reportData->links('vendor.pagination.tailwind') }}
 
-            {{-- Showing {{ $reportData->firstItem() }} to {{ $reportData->lastItem() }} of {{ $reportData->total() }} results --}}
+            {{-- links  --}}
+
         </div>
     @else
         <div class="please_select_message_div text-center">

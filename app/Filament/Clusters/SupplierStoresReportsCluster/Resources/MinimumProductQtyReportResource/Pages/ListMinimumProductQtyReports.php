@@ -17,8 +17,10 @@ class ListMinimumProductQtyReports extends ListRecords
     {
         $inventoryService = new \App\Services\MultiProductsInventoryService();
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
-
-
+        // dd(
+        //     $lowStockProducts
+        //     , $lowStockProducts->links()
+        // );
         return ['reportData' => $lowStockProducts];
     }
 }

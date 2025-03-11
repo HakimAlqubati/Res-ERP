@@ -104,6 +104,8 @@ class MultiProductsInventoryService
 
         $result = [];
         foreach ($unitPrices as $unitPrice) {
+            $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
+            $remainingQty = round($remQty / $packageSize, 2);
             $result[] = [
                 'product_id' => $productId,
                 'product_name' => $product->name,
@@ -111,7 +113,8 @@ class MultiProductsInventoryService
                 'order' => $unitPrice['order'],
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
-                'remaining_qty' => round($remQty / $unitPrice['package_size'], 2),
+                'remaining_qty' => $remainingQty,
+
                 'minimum_quantity' => $unitPrice['minimum_quantity'],
                 'is_last_unit' => $unitPrice['is_last_unit']
             ];
@@ -175,7 +178,7 @@ class MultiProductsInventoryService
 
 
 
-    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 1000)
+    public function getProductsBelowMinimumQuantityًWithPagination($perPage = 15)
     {
         $inventory = $this->getInventoryReport();
         $lowStockProducts = [];
@@ -188,6 +191,8 @@ class MultiProductsInventoryService
             }
         }
 
+
+    
         // Paginate results
         $currentPage = request()->get('page', 1);
         $collection = new Collection($lowStockProducts);
