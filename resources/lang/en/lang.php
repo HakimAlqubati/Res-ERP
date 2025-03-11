@@ -84,7 +84,7 @@ return [
     'quantity_after_modification' => 'Qty after modification',
     'order_details' => 'Order details',
     'branch_store_report' => 'Branch store report',
-    'qty_in_stock' => 'Qty in stock',
+    'qty_in_stock' => 'Qty in Stock',
     'purchased_qty' => 'Purchased qty',
     'qty_sent_to_branches' => 'Qty sent to branches',
     'total_quantity' => 'Total quantity',
