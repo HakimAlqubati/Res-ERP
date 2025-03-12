@@ -23,6 +23,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -246,7 +247,10 @@ class ProductResource extends Resource
                                     // TextInput::make('quantity_after_waste')->default(0)
                                     //     ->type('text')
                                     //     ->extraInputAttributes(['readonly' => true]),
-                                ])
+                                ]) 
+                                ->afterStateUpdated(function (Set $set, $get) {
+                                    static::updateFinalPriceEachUnit($set, $get, $get('productItems'),true);
+                                })
                                 ->columns(9) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
                                 ->minItems(1)
@@ -542,13 +546,17 @@ class ProductResource extends Resource
         }, $units);
     }
 
-    public static function updateFinalPriceEachUnit($set, $get, $state)
-    {
+    public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
+    { 
         // 🔄 Calculate the new total net price of product items
         $totalNetPrice = collect($state)->sum('total_price_after_waste') ?? 0;
 
         // 🔄 Retrieve existing units
-        $units = $get('../../units') ?? [];
+        if ($withOut) {
+            $units = $get('units') ?? [];
+        } else {
+            $units = $get('../../units') ?? [];
+        }
         // dd($units,$totalNetPrice);
         // 🔄 Create a new array with updated prices to avoid modifying in place
         $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
@@ -557,6 +565,10 @@ class ProductResource extends Resource
         }, $units);
 
         // 🔄 Replace the `units` array completely
-        $set('../../units', $updatedUnits);
+        if ($withOut) {
+            $set('units', $updatedUnits);
+        } else {
+            $set('../../units', $updatedUnits);
+        }
     }
 }
