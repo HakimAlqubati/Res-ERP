@@ -78,4 +78,16 @@ class TestController3 extends Controller
             $request->body
         );
     }
+    public function printStock()
+    {
+
+        $categoryId = request()->query()['category_id'] ?? null;
+        $products = Product::active()
+            ->when($categoryId, function($query) use ($categoryId) {
+                return $query->where('category_id', $categoryId);
+            })
+            ->with(['unitPrices.unit']) // Load unit name
+            ->get(['name', 'category_id','id', 'code']);
+        return view('filament.clusters.inventory-management-cluster.resources.stock-inventory-resource.pages.stock-print', compact('products'));
+    }
 }

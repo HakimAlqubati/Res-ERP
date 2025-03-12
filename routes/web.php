@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\TestController3;
 use App\Models\Approval;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -416,7 +417,7 @@ Route::get('/migration_suppliers_users', function () {
                 'address' => $user->supplier_address,
             ]);
         }
- 
+
         DB::commit();
     } catch (\Exception $e) {
         DB::rollBack();
@@ -657,3 +658,5 @@ Route::get('getAttendancesLateArrival', function () {
 
     dd($result);
 });
+
+Route::get('/printStock', [TestController3::class, 'printStock']);

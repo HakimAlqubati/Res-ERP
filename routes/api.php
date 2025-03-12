@@ -50,9 +50,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
     Route::apiResource('products', ProductController::class);
     Route::apiResource('orders', OrderController::class);
-    Route::post('orders2', [OrderController::class,'index']);
-    Route::post('orders2/{id}', [OrderController::class,'index']);
-    Route::post('orders2/update/{id}', [OrderController::class,'update']);
+    Route::post('orders2', [OrderController::class, 'index']);
+    Route::post('orders2/{id}', [OrderController::class, 'index']);
+    Route::post('orders2/update/{id}', [OrderController::class, 'update']);
     Route::resource('orderDetails', OrderDetailsController::class);
     Route::patch('patch', [OrderDetailsController::class, 'update']);
     Route::post('patch2', [OrderDetailsController::class, 'update']);
@@ -66,6 +66,7 @@ Route::get('/test', function () {
     return User::role([1, 3])->pluck('id');
 });
 
+
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 
@@ -73,11 +74,13 @@ Route::middleware('auth:api')->group(function () {
     Route::prefix('inventory')->group(function () {
         Route::apiResource('transactions', App\Http\Controllers\Api\InventoryTransactionController::class);
         Route::apiResource('stockSupplyOrder', App\Http\Controllers\Api\StockSupplyOrderController::class);
+        Route::get('/minimumStockReport', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReport']);
+        Route::get('/inventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
+        Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
 });
 
-Route::get('/new-link', function () {
-});
+Route::get('/new-link', function () {});
 
 Route::get('/branches', function () {
     return Branch::get(['id', 'name']);
@@ -224,5 +227,5 @@ Route::get('/branches', function () {
 //         return 1;
 //     }
 // }
-Route::get('/sendFCM',[TestController3::class,'sendFCM']);
+Route::get('/sendFCM', [TestController3::class, 'sendFCM']);
 require base_path('routes/custom_route.php');

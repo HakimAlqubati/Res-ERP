@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\InventoryTransaction;
+use App\Models\Product;
+use App\Services\MultiProductsInventoryService;
+use Illuminate\Http\Request;
+
+class InventoryReportController extends Controller
+{
+    public function minimumStockReport()
+    {
+        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
+
+        return response()->json([
+            'data' => $lowStockProducts
+        ]);
+    }
+
+    public function inventoryReport(Request $request)
+    {
+        $productId = $request->product_id ?? null;
+        $storeId = $request->store_id ?? null;
+        $categoryId = $request->category_id ?? null;
+
+        $unitId = 'all';
+        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
+
+        // Get paginated report data
+        $report = $inventoryService->getInventoryReportWithPagination(15);
+        return response()->json($report);
+    }
+
+    public function productTracking(Request $request){
+        $productId = $request->product_id ?? null;
+
+        $product = Product::find($productId);
+
+        $reportData = collect();
+
+        if (!empty($productId)) {
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
+            $reportData = $rawData->through(function ($item) {
+                $item->formatted_transactionable_type = class_basename($item->transactionable_type);
+                return $item;
+            });
+        }
+        return ['reportData' => $reportData, 'product' => $product];
+    }
+}
