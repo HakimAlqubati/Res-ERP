@@ -192,8 +192,10 @@ class PurchaseInvoiceResource extends Resource
                                 ->label(__('lang.package_size')),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
-                                ->type('text')
-                                ->minValue(1)
+                                
+                                ->numeric()
+                                
+                                ->minValue(0.1)
                                 ->default(1)
                                 ->disabledOn('edit')
                                 // ->mask(

@@ -105,8 +105,9 @@ class StockSupplyOrderResource extends Resource
                                 ->label(__('lang.package_size')),
 
                             TextInput::make('quantity')
-                                ->numeric()->minValue(1)
+                                ->numeric()
                                 ->required()
+                                ->minValue(0.1)
                                 ->label('Quantity'),
 
                         ])
