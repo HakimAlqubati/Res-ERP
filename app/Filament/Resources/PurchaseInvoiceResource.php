@@ -68,7 +68,7 @@ class PurchaseInvoiceResource extends Resource
         return __('lang.purchase_invoice');
     }
     public static function form(Form $form): Form
-    { 
+    {
         return $form
             ->schema([
                 Fieldset::make()->schema([
@@ -102,8 +102,8 @@ class PurchaseInvoiceResource extends Resource
                             ->default(getDefaultStore())
                             ->options(
                                 Store::where('active', 1)
-                                ->withManagedStores()
-                                ->get(['id', 'name'])->pluck('name', 'id')
+                                    ->withManagedStores()
+                                    ->get(['id', 'name'])->pluck('name', 'id')
                             )
                             ->disabledOn('edit')
                             ->searchable(),
@@ -131,7 +131,7 @@ class PurchaseInvoiceResource extends Resource
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
                         })->hiddenOn('view'),
-                    Repeater::make('units')->hiddenOn(['view','edit'])
+                    Repeater::make('units')->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(8)
                         ->defaultItems(1)
@@ -183,9 +183,9 @@ class PurchaseInvoiceResource extends Resource
                                         'product_id',
                                         $get('product_id')
                                     )->where('unit_id', $state)->first();
-                                    $set('price', $unitPrice->price);
+                                    $set('price', $unitPrice->price ?? 0);
 
-                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+                                    $set('total_price', ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')));
                                     $set('package_size',  $unitPrice->package_size ?? 0);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)

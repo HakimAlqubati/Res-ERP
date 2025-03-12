@@ -112,6 +112,7 @@ class ProductResource extends Resource
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
                                         ->searchable()
+                                        ->required()
                                         // ->disabledOn('edit')
                                         ->options(function () {
                                             return Product::where('active', 1)
@@ -135,7 +136,7 @@ class ProductResource extends Resource
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
                                         ->placeholder('Select')
-
+                                        ->required()
                                         // ->disabledOn('edit')
                                         ->options(
                                             function (callable $get) {
@@ -224,6 +225,7 @@ class ProductResource extends Resource
                                         ->maxValue(100)
                                         ->minValue(0)
                                         ->numeric()
+                                        ->required()
                                         // ->suffixIconColor(Color::Green)
                                         // ->suffixIcon('heroicon-o-percent-badge')
                                         ->live(debounce: 500)
