@@ -22,6 +22,7 @@ class ListStockInventories extends ListRecords
                 ->form([
                     Select::make('category_id')->label('Category')->columnSpanFull()
                         ->options(Category::active()->pluck('name', 'id'))
+                        ->placeholder('All Categories')->searchable()
                 ])
                 ->action(function ($data) {
 
