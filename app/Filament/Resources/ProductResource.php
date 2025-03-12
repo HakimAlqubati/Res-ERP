@@ -185,7 +185,7 @@ class ProductResource extends Resource
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state ?? 0, $get('qty_waste_percentage') ?? 0));
 
                                             static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        }),
+                                        })->required(),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
                                         // ->numeric()
@@ -212,7 +212,7 @@ class ProductResource extends Resource
                                             $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
                                             $set('total_price', $res);
                                             static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        }),
+                                        })->required(),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
