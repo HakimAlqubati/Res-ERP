@@ -251,7 +251,9 @@ class OrderResource extends Resource
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
-                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true),
+                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
+                ->numeric()
+                ,
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true)

@@ -109,8 +109,10 @@ class Order extends Model
     // attribute to get total amount
     public function getTotalAmountAttribute()
     {
-
-        return $this->orderDetails?->sum('price');
+        return $this->orderDetails?->sum(function ($detail) {
+            return $detail->price * $detail->available_quantity;
+        });
+        // return $this->orderDetails?->sum('price');
     }
     public function store()
     {
