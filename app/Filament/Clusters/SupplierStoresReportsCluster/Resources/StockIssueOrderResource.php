@@ -114,6 +114,7 @@ class StockIssueOrderResource extends Resource
                             TextInput::make('quantity')
                                 ->numeric()
                                 ->required()
+                                ->minValue(1)
                                 ->label('Quantity'),
 
 
