@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use Illuminate\Validation\Rules\Password;
 use App\Models\Branch;
 use App\Models\BranchArea;
 use App\Models\Employee;
@@ -279,16 +280,36 @@ class UserResource extends Resource
                     ]),
                     Fieldset::make()->label('')->schema([
                         Grid::make()->columns(2)->schema([
-                            TextInput::make('password')
+                            setting('password_contains_for') == 'easy_password' ?
+                                TextInput::make('password')
+                                ->label('Password')
+                                ->columnSpan(["lg" => 2, "default" => 4])
                                 ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->reactive()
-                                ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                            TextInput::make('password_confirmation')
+
+                                : TextInput::make('password')
+                                ->label('Password')
+                                ->columnSpan(["lg" => 2, "default" => 4])
                                 ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->same('password')
-                                ->label('Confirm Password'),
+                                ->rules([
+                                    'required',
+                                    'string',
+                                    Password::min(setting('password_min_length'))
+                                        ->mixedCase()
+                                        ->numbers()
+                                        ->symbols()
+                                        ->uncompromised(),
+                                ])
+                                ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
+                            // TextInput::make('password')
+                            //     ->password()
+                            //     ->required(fn(string $context) => $context === 'create')
+                            //     ->reactive()
+                            //     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+                            // TextInput::make('password_confirmation')
+                            //     ->password()
+                            //     ->required(fn(string $context) => $context === 'create')
+                            //     ->same('password')
+                            //     ->label('Confirm Password'),
                         ]),
                     ]),
                 ]),
@@ -346,13 +367,13 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        ->striped()
+            ->striped()
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')
                     ->sortable()->searchable()
 
-                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(isToggledHiddenByDefault: true)  ,
+                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
                     ->circular()->alignCenter(true),
                 TextColumn::make('name')

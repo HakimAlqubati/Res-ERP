@@ -21,8 +21,14 @@ class PeriodHistoriesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                DatePicker::make('start_date'),
-                DatePicker::make('end_date'),
+                DatePicker::make('start_date')
+                ->minDate(function($record){
+                    return $record->employee->join_date?? now()->toDateString();
+                })->required()
+                ,
+                DatePicker::make('end_date')
+                
+                ,
                 // TimePicker::make('start_time'),
                 // TimePicker::make('end_time'),
             ]);
@@ -39,6 +45,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),
                 TextColumn::make('end_date')->label('End date')->default('Current date'),
+                TextColumn::make('creator.name')->label('Created by'),
                 // TextColumn::make('start_time')->label('Start time'),
                 // TextColumn::make('end_time')->label('End time'),
 

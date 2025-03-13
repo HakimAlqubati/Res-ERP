@@ -373,7 +373,62 @@ class SettingResource extends Resource
                                     ])
                                 ]),
                             ]),
+                        Tabs\Tab::make('Users Settings')
+                            ->label(__('lang.users_settings'))
+                            ->schema([
+                                Grid::make()->schema([
+                                    Grid::make()->columns(3)->schema([
+                                        TextInput::make("password_min_length")
+                                            ->label(__('lang.password_min_length'))
+                                            ->columnSpan(1)->required()->default(6),
+                                        Select::make('password_contains_for')
+                                            ->label(__('lang.password_strong_type'))
+                                            ->options([
+                                                'easy_password' => __('lang.easy_password'),
+                                                'strong_password' => __('lang.strong_password'),
+                                            ])
+                                            ->required() // You can adjust validation as needed
+                                            ->default('only_letters') // Set default value if required
+                                        ,
+                                        Select::make('disallow_multi_session')
+                                            ->label(__('lang.disallow_multi_session'))
+                                            ->options([
+                                                1 => __('lang.yes'),
+                                                0 => __('lang.no'),
+                                            ])
+                                            ->required() // You can adjust validation as needed
+                                            ->default(0) // Set default value if required
+                                        ,
+                                    ]),
+                                    Fieldset::make()->label(__('lang.setting_to_block_users_with_failed_attempts'))
+                                        ->columns(3)
+                                        ->schema([
+                                            TextInput::make('threshold')
+                                                ->label(__('lang.threshold'))
+                                                ->columnSpan(1)
+                                                ->required()
+                                                ->default(3),
+                                            Select::make('type_reactive_blocked_users')
+                                                ->label(__('lang.type_reactive_blocked_users'))
+                                                ->options([
+                                                    'manual' => __('lang.manual'),
+                                                    'based_on_specific_time' => __('lang.based_on_specific_time'),
+                                                ])
+                                                ->required()
+                                                ->default('based_on_specific_time')
+                                                ->reactive()
+                                                ->columnSpan(1),
 
+                                            TextInput::make('hours_to_allow_login_again')
+                                                ->label(__('lang.hours_to_allow_login_again'))
+                                                ->columnSpan(1)
+                                                ->visible(fn($get) => $get('type_reactive_blocked_users') == 'based_on_specific_time')
+                                                ->required()
+                                                ->default(1)
+                                                ->numeric(),
+                                        ]),
+                                ]),
+                            ]),
                     ]),
 
             ]);

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeePeriodHistory extends Model
 {
@@ -19,6 +20,8 @@ class EmployeePeriodHistory extends Model
         'start_time',
         'end_time',
         'active',
+        'created_by',
+        'updated_by',
     ];
 
     // Define the relationship with Employee
@@ -31,5 +34,33 @@ class EmployeePeriodHistory extends Model
     public function workPeriod()
     {
         return $this->belongsTo(WorkPeriod::class, 'period_id');
+    }
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->created_by = auth()->id() ?? null;
+            $model->updated_by = auth()->id() ?? null;
+        });
+
+        static::updating(function ($model) {
+            $model->updated_by = auth()->id() ?? null;
+        });
+    }
+    /**
+     * Get the user who created the record.
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who last updated the record.
+     */
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

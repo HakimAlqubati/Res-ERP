@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return;
         Schema::table('units', function (Blueprint $table) {
             // Add 'parent_unit_id' as a foreign key
             $table->unsignedBigInteger('parent_unit_id')->nullable()->after('id');

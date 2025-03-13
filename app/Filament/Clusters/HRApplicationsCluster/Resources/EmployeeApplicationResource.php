@@ -33,6 +33,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1290,5 +1291,16 @@ class EmployeeApplicationResource extends Resource
                     $form
                 ),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = static::getModel()::query();
+ 
+        if(isStuff()){
+            $query->where('employee_id',auth()->user()->employee->id);
+        }
+
+        return $query;
     }
 }

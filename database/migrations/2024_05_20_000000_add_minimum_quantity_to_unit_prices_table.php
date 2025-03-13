@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        return;
         Schema::table('unit_prices', function (Blueprint $table) {
             $table->decimal('minimum_quantity', 10, 2)->nullable()->after('package_size');
         });
