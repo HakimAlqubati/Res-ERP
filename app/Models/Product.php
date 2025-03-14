@@ -5,17 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\Translatable\HasTranslations;
 
-class Product extends Model
+class Product extends Model implements Auditable
 {
     use HasFactory,
-        SoftDeletes
+        SoftDeletes, \OwenIt\Auditing\Auditable
         // , HasTranslations
     ;
     // public $translatable = ['name', 'description'];
 
     protected $fillable = [
+        'name',
+        'code',
+        'description',
+        'active',
+        'category_id',
+        'product_code',
+        'category_code',
+        'main_unit_id',
+        'basic_price',
+        'minimum_stock_qty',
+    ];
+    protected $auditInclude = [
         'name',
         'code',
         'description',

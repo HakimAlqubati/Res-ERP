@@ -4,12 +4,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class StockInventory extends Model
+class StockInventory extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'inventory_date',
+        'store_id',
+        'responsible_user_id',
+        'finalized',
+        'created_by',
+    ];
+    protected $auditInclude = [
         'inventory_date',
         'store_id',
         'responsible_user_id',

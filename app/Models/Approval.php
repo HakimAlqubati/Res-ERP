@@ -3,10 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Approval extends Model
+class Approval extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
     protected $fillable = [
+        'route_name',
+        'date',
+        'time',
+        'is_approved',
+        'approved_by',
+        'created_by',
+    ];
+    protected $auditInclude = [
         'route_name',
         'date',
         'time',

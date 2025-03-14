@@ -4,12 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class TaskStep extends Model
+class TaskStep extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_task_steps';
     protected $fillable = [
+        'task_id',
+        'title',
+        'order',
+        'done',
+        'model',
+        'model_id',
+    ];
+    protected $auditInclude = [
         'task_id',
         'title',
         'order',

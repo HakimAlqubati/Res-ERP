@@ -16,12 +16,15 @@ use Laravel\Passport\HasApiTokens;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 use Spatie\Permission\Traits\HasRoles;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser,Auditable
 // implements FilamentUser
 
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, HasPanelShield, DynamicConnection;
+    use HasApiTokens, HasFactory, Notifiable, 
+    HasRoles, SoftDeletes, HasPanelShield, DynamicConnection,
+    \OwenIt\Auditing\Auditable;
 
 
     /**
@@ -31,6 +34,24 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'id',
+        'name',
+        'email',
+        'password',
+        'owner_id',
+        'role_id',
+        'branch_id',
+        'phone_number',
+        'avatar',
+        'is_employee',
+        'user_type',
+        'active',
+        'gender',
+        'nationality',
+        'branch_area_id',
+        'is_attendance_user',
+        'fcm_token',
+    ];
+    protected $auditInclude = [
         'name',
         'email',
         'password',

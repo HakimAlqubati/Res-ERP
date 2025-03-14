@@ -7,12 +7,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class MonthSalary extends Model
+class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, SoftDeletes,DynamicConnection;
+    use HasFactory, SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_month_salaries';
 
     protected $fillable = [
+        'name', 
+        'start_month',
+        'end_month',
+        'notes',
+        'payment_date',
+        'approved',
+        'created_by',
+        'branch_id',
+        'month',
+    ];
+    protected $auditInclude = [
         'name', 
         'start_month',
         'end_month',

@@ -6,10 +6,11 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class LeaveBalance extends Model
+class LeaveBalance extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     // Define the table name if it's different from the convention
     protected $table = 'hr_leave_balances';
@@ -18,6 +19,15 @@ class LeaveBalance extends Model
 
     // Define fillable attributes for mass assignment
     protected $fillable = [
+        'employee_id',
+        'leave_type_id',
+        'year',
+        'month',
+        'balance',
+        'branch_id',
+        'created_by',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'leave_type_id',
         'year',

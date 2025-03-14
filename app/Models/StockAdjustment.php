@@ -5,12 +5,21 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class StockAdjustment extends Model
+class StockAdjustment extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'store_id',
+        'reason_id',
+        'adjustment_type', // Increase or Decrease
+        'notes',
+        'created_by',
+        'adjustment_date',
+    ];
+    protected $auditInclude = [
         'store_id',
         'reason_id',
         'adjustment_type', // Increase or Decrease

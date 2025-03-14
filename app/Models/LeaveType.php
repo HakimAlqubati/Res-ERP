@@ -6,13 +6,25 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class LeaveType extends Model
+class LeaveType extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_leave_types';
 
     protected $fillable = [
+        'name',
+        'count_days',
+        'description',
+        'active',
+        'created_by',
+        'updated_by',
+        'type',
+        'balance_period',
+        'is_paid',
+    ];
+    protected $auditInclude = [
         'name',
         'count_days',
         'description',

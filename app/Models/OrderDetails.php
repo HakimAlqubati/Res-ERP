@@ -4,12 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class OrderDetails extends Model
+class OrderDetails extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'orders_details';
     protected $fillable = [
+        'order_id',
+        'product_id',
+        'unit_id',
+        'quantity',
+        'available_quantity',
+        'price',
+        'available_in_store',
+        'created_by',
+        'updated_at',
+        'created_at',
+        'updated_by',
+        'purchase_invoice_id',
+        'negative_inventory_quantity',
+        'orderd_product_id',
+        'ordered_unit_id',
+        'package_size',
+    ];
+    protected $auditInclude = [
         'order_id',
         'product_id',
         'unit_id',

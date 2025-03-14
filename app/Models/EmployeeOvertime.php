@@ -6,14 +6,32 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeeOvertime extends Model
+class EmployeeOvertime extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_employee_overtime';
 
     // Fillable fields for mass assignment
     protected $fillable = [
+        'employee_id',
+        'date',
+        'start_time',
+        'end_time',
+        'hours',
+        'rate',
+        'reason',
+        'approved',
+        'approved_by',
+        'notes',
+        'created_by',
+        'updated_by',
+        'branch_id',
+        'approved_at',
+        'type',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'date',
         'start_time',

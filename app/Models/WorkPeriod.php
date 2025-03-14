@@ -7,14 +7,30 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class WorkPeriod extends Model
+class WorkPeriod extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_work_periods';
 
     // Define fillable fields
     protected $fillable = [
+        'id',
+        'name',
+        'description',
+        'active',
+        'start_at',
+        'end_at',
+        'allowed_count_minutes_late',
+        'days',
+        'created_by',
+        'updated_by',
+        'branch_id',
+        'all_branches',
+        'day_and_night',
+    ];
+    protected $auditInclude = [
         'id',
         'name',
         'description',

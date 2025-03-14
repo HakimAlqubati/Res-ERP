@@ -6,12 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class StockSupplyOrder extends Model
+class StockSupplyOrder extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'order_date',
+        'store_id',
+        'notes',
+        'cancelled',
+        'cancel_reason',
+        'created_using_model_id', // Ensure it's fillable
+        'created_using_model_type', // Ensure it's fillable
+    ];
+    protected $auditInclude = [
         'order_date',
         'store_id',
         'notes',

@@ -5,15 +5,26 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
+
 // use Illuminate\Support\Traits\Localizable;
 // use Spatie\Translatable\HasTranslations;
 
-class Unit extends Model
+class Unit extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable
         // , HasTranslations, Localizable
     ;
     protected $fillable = [
+        'name',
+        'code',
+        'description',
+        'active',
+        'parent_unit_id',
+        'conversion_factor',
+        'operation',
+    ];
+    protected $auditInclude = [
         'name',
         'code',
         'description',

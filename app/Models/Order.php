@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Order extends Model
+class Order extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     public const ORDERED = 'ordered';
     public const PROCESSING = 'processing';
@@ -25,6 +26,26 @@ class Order extends Model
     public const TYPE_NORMAL = 'normal';
     public const TYPE_MANUFACTURING = 'manufacturing';
     protected $fillable = [
+        'customer_id',
+        'status',
+        'branch_id',
+        'recorded',
+        'notes',
+        'description',
+        'full_quantity',
+        'total',
+        'active',
+        'updated_by',
+        'storeuser_id_update',
+        'transfer_date',
+        'is_purchased',
+        'order_date',
+        'store_id',
+        'cancelled',
+        'cancel_reason',
+        'type',
+    ];
+    protected $auditInclude = [
         'customer_id',
         'status',
         'branch_id',

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class LeaveApplication extends Model
+class LeaveApplication extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_leave_applications';
 
     const STATUS_PENDING = 'pending';
@@ -28,6 +29,23 @@ class LeaveApplication extends Model
     const STATUS_COLOR_REJECTED = '#d9534f';
 
     protected $fillable = [
+        'employee_id',
+        'created_by',
+        'updated_by',
+        'status',
+        'leave_reason',
+        'approved_by',
+        'rejected_by',
+        'reject_reason',
+        'approved_at',
+        'rejected_at',
+        'from_date',
+        'days_count',
+        'to_date',
+        'leave_type_id',
+        'branch_id',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'created_by',
         'updated_by',

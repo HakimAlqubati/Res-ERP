@@ -5,13 +5,24 @@ namespace App\Models;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Holiday extends Model
+class Holiday extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory,  \OwenIt\Auditing\Auditable;
     protected $table = 'hr_holidays';
 
     protected $fillable = [
+        'id',
+        'name',
+        'from_date',
+        'to_date',
+        'count_days',
+        'active',
+        'created_by',
+        'updated_by',
+    ];
+    protected $auditInclude = [
         'id',
         'name',
         'from_date',

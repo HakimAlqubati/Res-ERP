@@ -6,13 +6,25 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeePeriodHistory extends Model
+class EmployeePeriodHistory extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_employee_period_histories';
     protected $fillable = [
+        'employee_id',
+        'period_id',
+        'start_date',
+        'end_date',
+        'start_time',
+        'end_time',
+        'active',
+        'created_by',
+        'updated_by',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'period_id',
         'start_date',

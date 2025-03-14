@@ -7,10 +7,11 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeeApplicationV2 extends Model
+class EmployeeApplicationV2 extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $appends = [
         'detailed_leave_request',
@@ -22,6 +23,22 @@ class EmployeeApplicationV2 extends Model
 
     protected $table = 'hr_employee_applications';
     protected $fillable = [
+        'employee_id',
+        'branch_id',
+        'application_date',
+        'status',
+        'notes',
+        'application_type_id',
+        'application_type_name',
+        'created_by',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'details', // json
+        'rejected_reason',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'branch_id',
         'application_date',

@@ -5,11 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Store extends Model
+class Store extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $fillable = [
+        'name',
+        'location',
+        'active',
+        'default_store',
+        'storekeeper_id',
+        'is_central_kitchen',
+    ];
+    protected $auditInclude = [
         'name',
         'location',
         'active',

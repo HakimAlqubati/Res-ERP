@@ -6,16 +6,35 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class PenaltyDeduction extends Model
+class PenaltyDeduction extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     // The table associated with the model.
     protected $table = 'hr_penalty_deductions';
 
     // Fillable fields for mass assignment
     protected $fillable = [
+        'employee_id',
+        'deduction_id',
+        'penalty_amount',
+        'description',
+        'month',
+        'year',
+        'deduction_type',
+        'status',
+        'created_by',
+        'approved_by',
+        'rejected_by',
+        'rejected_reason',
+        'percentage',
+        'date',
+        'approved_at',
+        'rejected_at',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'deduction_id',
         'penalty_amount',

@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Equipment extends Model
+class Equipment extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_equipment';
     /**
@@ -18,6 +19,22 @@ class Equipment extends Model
      * @var array
      */
     protected $fillable = [
+        'asset_tag',
+        'qr_code',
+        'make',
+        'model',
+        'serial_number',
+        'branch_id',
+        'purchase_price',
+        'warranty_file',
+        'profile_picture',
+        'size',
+        'periodic_service',
+        'last_serviced',
+        'creatd_by',
+        'name',
+    ];
+    protected $auditInclude = [
         'asset_tag',
         'qr_code',
         'make',

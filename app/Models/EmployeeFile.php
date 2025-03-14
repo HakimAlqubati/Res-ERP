@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeeFile extends Model
+class EmployeeFile extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     // Specify the table associated with the model (optional)
     protected $table = 'hr_employee_files';
 
@@ -17,6 +18,14 @@ class EmployeeFile extends Model
     
     // Define the fillable fields
     protected $fillable = [
+        'employee_id',
+        'file_type_id',
+        'attachment',
+        'active',
+        'description',
+        'dynamic_field_values',
+    ];
+    protected $auditInclude = [
         'employee_id',
         'file_type_id',
         'attachment',

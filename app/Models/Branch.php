@@ -6,19 +6,30 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
-class Branch extends Model implements HasMedia
+class Branch extends Model implements HasMedia, Auditable
 {
 
-    use HasFactory, SoftDeletes, DynamicConnection, InteractsWithMedia;
+    use HasFactory, SoftDeletes, DynamicConnection, InteractsWithMedia, \OwenIt\Auditing\Auditable;
 
 
 
     protected $fillable = [
+        'id',
+        'name',
+        'address',
+        'manager_id',
+        'active',
+        'is_hq',
+        'is_central_kitchen',
+        'store_id',
+    ];
+    protected $auditInclude = [
         'id',
         'name',
         'address',

@@ -4,9 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProductItem extends Model
+class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
+    use \OwenIt\Auditing\Auditable;
     protected $fillable = [
+        'product_id',
+        'unit_id',
+        'quantity',
+        'price',
+        'total_price',
+        'parent_product_id',
+        'qty_waste_percentage',
+        'total_price_after_waste',
+        'package_size',
+        'quantity_after_waste',
+    ];
+    protected $auditInclude = [
         'product_id',
         'unit_id',
         'quantity',

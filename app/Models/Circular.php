@@ -5,14 +5,25 @@ namespace App\Models;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Circular extends Model
+class Circular extends Model implements Auditable
 {
-    use SoftDeletes,DynamicConnection;
+    use SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_circulars';
 
     protected $fillable = [
+        'title',
+        'description',
+        'group_id',
+        'branch_ids',
+        'released_date',
+        'active',
+        'created_by',
+        'updated_by',
+    ];
+    protected $auditInclude = [
         'title',
         'description',
         'group_id',

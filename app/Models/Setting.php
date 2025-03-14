@@ -4,15 +4,17 @@ namespace App\Models;
 
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Setting extends Model
+class Setting extends Model  implements Auditable
 {
-    
+    use \OwenIt\Auditing\Auditable;
     // The table associated with the model.
     protected $table = 'settings';
 
     // The attributes that are mass assignable.
     protected $fillable = ['key', 'value'];
+    protected $auditInclude = ['key', 'value'];
 
     // Disables the auto-incrementing ID if you choose to use string keys for settings
     public $incrementing = false;

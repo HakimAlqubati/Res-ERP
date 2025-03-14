@@ -5,14 +5,29 @@ namespace App\Models;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class ServiceRequest extends Model
+class ServiceRequest extends Model implements Auditable
 {
-    use HasFactory, DynamicConnection;
+    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_service_requests';
 
     // Fillable fields
     protected $fillable = [
+        'name',
+        'description',
+        'branch_id',
+        'branch_area_id',
+        'assigned_to',
+        'urgency',
+        'impact',
+        'status',
+        'created_by',
+        'updated_by',
+        'accepted',
+        'equipment_id',
+    ];
+    protected $auditInclude = [
         'name',
         'description',
         'branch_id',

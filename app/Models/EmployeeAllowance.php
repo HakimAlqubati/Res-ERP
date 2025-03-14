@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeeAllowance extends Model
+class EmployeeAllowance extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_employee_allowances';
     protected $fillable = ['employee_id', 'allowance_id', 'amount', 'is_percentage', 'percentage'];
+    protected $auditInclude = ['employee_id', 'allowance_id', 'amount', 'is_percentage', 'percentage'];
 
     public function employee()
     {

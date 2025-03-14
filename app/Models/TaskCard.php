@@ -3,12 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class TaskCard extends Model
+class TaskCard extends Model implements Auditable
 {
+    use \OwenIt\Auditing\Auditable;
     protected $table = 'hr_task_cards';
 
     protected $fillable = [
+        'task_id',
+        'type',
+        'employee_id',
+        'active',
+    ];
+    protected $auditInclude = [
         'task_id',
         'type',
         'employee_id',

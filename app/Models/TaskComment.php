@@ -4,14 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class TaskComment extends Model
+class TaskComment extends Model implements Auditable
 {
-    use SoftDeletes;
+    use SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_task_comments';
 
     protected $fillable = [
+        'task_id',
+        'user_id',
+        'comment',
+    ];
+    protected $auditInclude = [
         'task_id',
         'user_id',
         'comment',

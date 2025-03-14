@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Task extends Model
+class Task extends Model implements Auditable
 {
-    use SoftDeletes, DynamicConnection;
+    use SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_tasks';
 
@@ -35,6 +36,23 @@ class Task extends Model
     const ICON_IN_PROGRESS = 'heroicon-o-arrow-right-circle';
     const ICON_CLOSED = 'heroicon-o-check-circle';
     protected $fillable = [
+        'title',
+        'description',
+        'assigned_to',
+        'assigned_by',
+        'task_status',
+        'created_by',
+        'updated_by',
+        'due_date',
+        'menu_tasks',
+        'is_daily',
+        'start_date',
+        'end_date',
+        'schedule_type',
+        'branch_id',
+        'views',
+    ];
+    protected $auditInclude = [
         'title',
         'description',
         'assigned_to',

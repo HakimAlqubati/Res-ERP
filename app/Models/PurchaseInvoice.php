@@ -7,12 +7,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class PurchaseInvoice extends Model
+class PurchaseInvoice extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'date',
+        'supplier_id',
+        'description',
+        'invoice_no',
+        'store_id',
+        'attachment',
+        'cancelled',
+        'cancel_reason',
+    ];
+    protected $auditInclude = [
         'date',
         'supplier_id',
         'description',

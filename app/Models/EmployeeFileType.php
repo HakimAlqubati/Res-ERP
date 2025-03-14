@@ -6,15 +6,22 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeeFileType extends Model
+class EmployeeFileType extends Model implements Auditable
 {
-    use HasFactory,SoftDeletes,DynamicConnection;
+    use HasFactory,SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
       // Specify the table associated with the model (optional if naming conventions are followed)
       protected $table = 'hr_employee_file_types';
 
       // Define the fillable fields
       protected $fillable = [
+          'name',
+          'description',
+          'active',
+          'is_required',
+      ];
+      protected $auditInclude = [
           'name',
           'description',
           'active',

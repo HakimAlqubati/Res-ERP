@@ -5,13 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class UnitPrice extends Model
+class UnitPrice extends Model implements Auditable
+
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'unit_prices';
     public $primaryKey = 'id';
     protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
+    protected $auditInclude = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
     public function product()
     {
         return $this->belongsTo(Product::class);

@@ -7,11 +7,22 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Model;
 
-class Location extends Model implements HasMedia
+class Location extends Model implements HasMedia, \OwenIt\Auditing\Contracts\Auditable
 {
-    use InteractsWithMedia;
+    use InteractsWithMedia, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'address',
+        'city_id',
+        'district_id',
+        'country_id',
+        'postal_code',
+        'latitude',
+        'longitude',
+        'locationable_id', // Polymorphic foreign key
+        'locationable_type', // Polymorphic type
+    ];
+    protected $auditInclude = [
         'address',
         'city_id',
         'district_id',

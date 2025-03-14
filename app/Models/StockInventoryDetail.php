@@ -3,12 +3,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class StockInventoryDetail extends Model
+class StockInventoryDetail extends Model implements Auditable
+
 {
-    use HasFactory;
+    use HasFactory, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'stock_inventory_id',
+        'product_id',
+        'unit_id',
+        'system_quantity',
+        'physical_quantity',
+        'difference',
+        'package_size',
+        'is_adjustmented',
+    ];
+    protected $auditInclude = [
         'stock_inventory_id',
         'product_id',
         'unit_id',

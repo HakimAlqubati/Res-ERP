@@ -6,15 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class InventoryTransaction extends Model
+class InventoryTransaction extends Model implements Auditable
 {
-    use SoftDeletes;
+    use SoftDeletes, \OwenIt\Auditing\Auditable;
     // Table name
     protected $table = 'inventory_transactions';
 
     // Fillable fields
     protected $fillable = [
+        'product_id',
+        'movement_type',
+        'quantity',
+        'unit_id',
+        'movement_date',
+        'notes',
+        'package_size',
+        'store_id',
+        'price',
+        'transaction_date',
+        'purchase_invoice_id',
+        'transactionable_id',
+        'transactionable_type',
+    ];
+    protected $auditInclude = [
         'product_id',
         'movement_type',
         'quantity',

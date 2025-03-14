@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class EmployeePeriod extends Model
+class EmployeePeriod extends Model implements Auditable
 {
-    use HasFactory,DynamicConnection;
+    use HasFactory,DynamicConnection,\OwenIt\Auditing\Auditable;
 
     // Define the table name if it's not the plural of the model name
     protected $table = 'hr_employee_periods';
@@ -21,6 +22,11 @@ class EmployeePeriod extends Model
 
     // Define fillable or guarded fields
     protected $fillable = [
+        'employee_id',
+        'period_id',
+        // Add other columns if necessary
+    ];
+    protected $auditInclude = [
         'employee_id',
         'period_id',
         // Add other columns if necessary
