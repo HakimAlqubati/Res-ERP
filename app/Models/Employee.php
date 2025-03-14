@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Employee extends Model
+
+class Employee extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -52,6 +54,41 @@ class Employee extends Model
         'manager_id',
     ];
 
+    /**
+     * Attributes to include in the Audit.
+     *
+     * @var array
+     */
+    protected $auditInclude = [
+        'name',
+        'position_id',
+        'email',
+        'phone_number',
+        'job_title',
+        'user_id',
+        'branch_id',
+        'department_id',
+        'employee_no',
+        'active',
+        'avatar',
+        'join_date',
+        'address',
+        'salary',
+        'discount_exception_if_attendance_late',
+        'discount_exception_if_absent',
+        'rfid',
+        'employee_type',
+        'bank_account_number',
+        'bank_information',
+        'gender',
+        'nationality',
+        'passport_no',
+        'mykad_number',
+        'tax_identification_number',
+        'has_employee_pass',
+        'working_hours',
+        'manager_id',
+    ];
     public $appends = ['avatar_image'];
     protected $casts = [
         'bank_information' => 'array',

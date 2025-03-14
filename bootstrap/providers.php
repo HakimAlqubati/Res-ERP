@@ -8,4 +8,5 @@ return [
     Maatwebsite\Excel\ExcelServiceProvider::class,
     Barryvdh\DomPDF\ServiceProvider::class,
     Mccarlosen\LaravelMpdf\LaravelMpdfServiceProvider::class,
+    OwenIt\Auditing\AuditingServiceProvider::class,
 ];
