@@ -7,7 +7,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class TaskAttachment extends Model implements Auditable
 {
-    use SoftDeletes;
+    use SoftDeletes, \OwenIt\Auditing\Auditable;
 
     protected $table = 'hr_task_attachments';
 

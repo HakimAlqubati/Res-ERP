@@ -21,6 +21,7 @@ class EmployeePeriodHistory extends Model implements Auditable
         'start_time',
         'end_time',
         'active',
+        'days',
         'created_by',
         'updated_by',
     ];
@@ -32,10 +33,14 @@ class EmployeePeriodHistory extends Model implements Auditable
         'start_time',
         'end_time',
         'active',
+        'days',
         'created_by',
         'updated_by',
     ];
 
+    protected $casts = [
+        'days' => 'array'
+    ];
     // Define the relationship with Employee
     public function employee()
     {

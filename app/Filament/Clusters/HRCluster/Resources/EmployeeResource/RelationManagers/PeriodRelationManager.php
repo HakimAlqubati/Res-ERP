@@ -6,6 +6,9 @@ use App\Models\Attendance;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
 use App\Models\WorkPeriod;
+use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
@@ -16,6 +19,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PeriodRelationManager extends RelationManager
 {
@@ -58,7 +62,13 @@ class PeriodRelationManager extends RelationManager
                 // TextColumn::make('description')->label('description'),
                 TextColumn::make('start_at')->label('Start time'),
                 TextColumn::make('end_at')->label('End time'),
-                TextColumn::make('creater.name')->label('Created by'),
+                // TextColumn::make('days')
+                //     ->label('Days')
+                // ->formatStateUsing(function($state){
+                //     dd($state);
+                // })
+                // ,
+                TextColumn::make('creator.name')->label('Created by'),
 
             ])
             ->filters([
@@ -68,7 +78,21 @@ class PeriodRelationManager extends RelationManager
                 Tables\Actions\Action::make('createOne')->label('Add shifts')
                     ->icon('heroicon-o-plus')
                     ->form(
+
                         [Grid::make()->columnSpanFull()->columns(1)->schema([
+                            Fieldset::make()->columnSpanFull()
+                                ->label('Choose the start period date')
+                                ->schema([
+                                    DatePicker::make('start_period')->label('Start period date')
+                                        ->default(now())
+                                        ->columnSpanFull()
+                                        // ->minDate(function($record){
+                                        //     dd($record);
+                                        //     return $record->employee->join_date?? now()->toDateString();
+                                        // })
+                                        // ->maxDate(now())
+                                        ->required(),
+                                ]),
                             ToggleButtons::make('periods')
                                 ->label('Work Periods')
                                 // ->relationship('periods', 'name')
@@ -84,11 +108,33 @@ class PeriodRelationManager extends RelationManager
                                 //     return [1,2,3,4];
                                 // })
                                 ->helperText('Select the employee\'s work periods.'),
+                            Fieldset::make()->schema([
+                                CheckboxList::make('days')
+                                    ->label('Days of Work')
+                                    ->columns(3)
+                                    ->options(getDays())
+                                    ->required()->columnSpanFull()
+                                    ->bulkToggleable()
+                                    ->helperText('Select the days this period applies to.'),
+                            ]),
                         ])]
                     )
                     ->button()
                     ->databaseTransaction()
                     ->action(function ($data) {
+                        DB::beginTransaction();
+                        $employee = $this->ownerRecord;
+                        $employeeHistories = $employee->periodHistories->select('period_id', 'start_date', 'end_date') ?? null;
+                        foreach ($employeeHistories as  $history) {
+                            if (isset($history['end_date']) && $history['end_date'] == $data['start_period']) {
+                                Notification::make()
+                                    ->title('Validation Error')
+                                    ->body('Cannot start period on ended period date')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+                        }
                         try {
                             // Retrieve the existing periods associated with the owner record
                             $existPeriods = $this->ownerRecord?->periods?->pluck('id')->toArray();
@@ -141,23 +187,28 @@ class PeriodRelationManager extends RelationManager
                                 EmployeePeriod::insert([
                                     'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
                                     'period_id' => $value,
+                                    'days' => json_encode($data['days']),
                                 ]);
 
                                 // Also insert into hr_employee_period_histories
                                 EmployeePeriodHistory::insert([
                                     'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
                                     'period_id' => $value,
-                                    'start_date' => now(),
+                                    'start_date' => $data['start_period'],
                                     'end_date' => null,
                                     'start_time' => $periodStartAt,
                                     'end_time' => $periodEndAt,
+                                    'days' => json_encode($data['days']),
                                 ]);
                             }
 
                             // Send notification after the operation is complete
                             Notification::make()->title('Done')->success()->send();
+                            DB::commit();
                         } catch (\Exception $e) {
                             // Handle the exception
+                            DB::rollBack();
+                            Log::alert('Error adding new periods: ' . $e->getMessage());
                             Notification::make()->title('Error')->body($e->getMessage())->warning()->send();
                             // You can also log the error or take other actions as needed
                         }
@@ -169,9 +220,22 @@ class PeriodRelationManager extends RelationManager
                 Action::make('Delete')->requiresConfirmation()
                     ->color('warning')
                     ->button()
+                    ->form([
+                        Fieldset::make()
+                            ->label('Choose the end period date')
+                            ->columnSpanFull()
+                            ->schema([
+                                DatePicker::make('end_period')
+                                    ->columnSpanFull()
+                                    ->default(now())
+                                    ->minDate(now()->subDay())
+                                    ->maxDate(now())
+                                    ->label('End period date')->required(),
+                            ])
+                    ])
                     ->databaseTransaction()
                     ->icon('heroicon-o-x-mark')
-                    ->action(function ($record) {
+                    ->action(function ($record, $data) {
 
                         try {
                             // Update the end_date in hr_employee_period_histories
@@ -188,7 +252,7 @@ class PeriodRelationManager extends RelationManager
 
                             EmployeePeriodHistory::where('employee_id', $record->employee_id) // Filter by the employee ID
                                 ->where('period_id', $record->period_id) // Filter by the associated period ID
-                                ->update(['end_date' => now()]); // Set end_date to the current timestamp
+                                ->update(['end_date' => $data['end_period']]); // Set end_date to the current timestamp
 
                             // Now, delete the employee period
                             EmployeePeriod::where('employee_id', $record->employee_id) // Ensure to delete the correct employee period

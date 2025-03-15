@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
@@ -26,9 +27,14 @@ class PeriodHistoriesRelationManager extends RelationManager
                     return $record->employee->join_date?? now()->toDateString();
                 })->required()
                 ,
-                DatePicker::make('end_date')
-                
-                ,
+                DatePicker::make('end_date'),
+                CheckboxList::make('days')
+                ->label('Days of Work')
+                ->columns(3)
+                ->options(getDays())
+                ->required()->columnSpanFull()
+                ->bulkToggleable()
+                ->helperText('Select the days this period applies to.'),
                 // TimePicker::make('start_time'),
                 // TimePicker::make('end_time'),
             ]);
@@ -45,7 +51,9 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),
                 TextColumn::make('end_date')->label('End date')->default('Current date'),
-                TextColumn::make('creator.name')->label('Created by'),
+                TextColumn::make('days')->label('Days')->formatStateUsing(fn ($state) => implode(', ', json_decode($state, true) ?? [])),
+
+                // TextColumn::make('creator.name')->label('Created by'),
                 // TextColumn::make('start_time')->label('Start time'),
                 // TextColumn::make('end_time')->label('End time'),
 

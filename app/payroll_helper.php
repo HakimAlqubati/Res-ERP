@@ -127,7 +127,6 @@ function calculateMonthlySalaryV2($employeeId, $date)
     $specificAlloanceCalculated = calculateAllowances($specificAllowances, $basicSalary);
     $specificDeducationCalculated = calculateDeductions($specificDeductions, $basicSalary);
     $deducationInstallmentAdvancedMonthly = getInstallmentAdvancedMonthly($employee, date('Y', strtotime($date)), date('m', strtotime($date)));
-
     $totalMonthlyIncentives = $employee->monthlyIncentives->sum(function ($incentive) {
         return $incentive->amount;
     });
@@ -843,17 +842,11 @@ function getInstallmentAdvancedMonthly($employee, $year, $month)
 {
 
     // Check if the employee has an advance transaction for the specified month and year
-    $advancedInstalmment = $employee?->transactions()
-        ->where('transaction_type_id', 3)
-        // ->whereYear('from_date', $year)
-        // ->whereMonth('from_date', $month)
-        ->with(['installments' => function ($query) use ($year, $month) {
-            $query->whereYear('due_date', $year)
-                ->whereMonth('due_date', $month)
-                ->where('is_paid', false)
-                ->limit(1); // Limit to only the first installment for efficiency
-        }])
-        ->first()?->installments->first();
+    $advancedInstalmment = $employee?->advancedInstallments()
+        ->whereYear('due_date', $year)
+        ->whereMonth('due_date', $month)
+        ->where('is_paid', false)
+        ->first();
     // dd($employee,$year,$month,$advancedInstalmment);
 
     return $advancedInstalmment;
