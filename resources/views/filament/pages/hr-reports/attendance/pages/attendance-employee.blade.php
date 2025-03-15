@@ -62,6 +62,10 @@
         <button onclick="printReport()" class="btn btn-print">
             {{ __('Print Report') }}
         </button>
+
+        <button onclick="exportToExcel()" class="btn btn-primary">
+            {{ __('Export to Excel') }}
+        </button>
     </div>
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
@@ -376,3 +380,52 @@
         if (modal) modal.style.display = 'flex';
     }
 </script>
+<script>
+    function exportToExcel() {
+        let table = document.getElementById("report-table");
+        let rows = [];
+
+        // Loop through each row of the table
+        for (let i = 0; i < table.rows.length; i++) {
+            let row = [];
+            let cells = table.rows[i].cells;
+
+            for (let j = 0; j < cells.length; j++) {
+                let cell = cells[j];
+
+                // **Fix: Check if the cell contains a nested table**
+                let nestedTable = cell.querySelector("table");
+                if (nestedTable) {
+                    let nestedRows = nestedTable.rows;
+                    for (let k = 0; k < nestedRows.length; k++) {
+                        let nestedCells = nestedRows[k].cells;
+                        for (let m = 0; m < nestedCells.length; m++) {
+                            row.push(nestedCells[m].innerText.trim()); // Extract nested table cell separately
+                        }
+                    }
+                } else {
+                    row.push(cell.innerText.trim()); // Extract normal table cell
+                }
+            }
+
+            rows.push(row); // Add row data to the array
+        }
+
+        // Convert rows into a worksheet
+        let worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+        // Adjust column widths for better readability
+        worksheet['!cols'] = Array(rows[0].length).fill({
+            wch: 20
+        });
+
+        // Create a workbook and add the worksheet
+        let workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Report");
+
+        // Export the workbook
+        XLSX.writeFile(workbook, "attendance_report.xlsx");
+    }
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>

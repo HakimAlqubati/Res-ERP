@@ -473,7 +473,7 @@ class EmployeeResource extends Resource
         // dd($sessionLifetime);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
-            ->defaultSort('id', 'asc')
+            ->defaultSort('id', 'desc')
             ->columns([
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),

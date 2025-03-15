@@ -62,12 +62,14 @@ class PeriodRelationManager extends RelationManager
                 // TextColumn::make('description')->label('description'),
                 TextColumn::make('start_at')->label('Start time'),
                 TextColumn::make('end_at')->label('End time'),
-                // TextColumn::make('days')
-                //     ->label('Days')
-                // ->formatStateUsing(function($state){
-                //     dd($state);
-                // })
-                // ,
+                TextColumn::make('period_days')
+                    ->label('Days')
+                    ->formatStateUsing(function ($state) {
+                        $state = json_decode($state, true);
+                        return is_array($state) ? implode(',', $state) : '';
+                    })
+                // ->getStateUsing(fn($state): string =>    implode(',', $state))
+                ,
                 TextColumn::make('creator.name')->label('Created by'),
 
             ])
@@ -109,7 +111,7 @@ class PeriodRelationManager extends RelationManager
                                 // })
                                 ->helperText('Select the employee\'s work periods.'),
                             Fieldset::make()->schema([
-                                CheckboxList::make('days')
+                                CheckboxList::make('period_days')
                                     ->label('Days of Work')
                                     ->columns(3)
                                     ->options(getDays())
@@ -187,7 +189,7 @@ class PeriodRelationManager extends RelationManager
                                 EmployeePeriod::insert([
                                     'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
                                     'period_id' => $value,
-                                    'days' => json_encode($data['days']),
+                                    'period_days' => json_encode($data['period_days']),
                                 ]);
 
                                 // Also insert into hr_employee_period_histories
@@ -198,7 +200,7 @@ class PeriodRelationManager extends RelationManager
                                     'end_date' => null,
                                     'start_time' => $periodStartAt,
                                     'end_time' => $periodEndAt,
-                                    'days' => json_encode($data['days']),
+                                    'period_days' => json_encode($data['period_days']),
                                 ]);
                             }
 

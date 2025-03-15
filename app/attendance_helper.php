@@ -465,14 +465,18 @@ function employeeAttendances($employeeId, $startDate, $endDate)
             $period = (object) $period;
 
             // Get attendances for the current period and date
-            $attendances = DB::table('hr_attendances as a')
+            $query = DB::table('hr_attendances as a')
                 ->where('accepted', 1)
                 ->where('a.employee_id', '=', $employeeId)
                 ->whereDate('a.check_date', '=', $date)
                 ->where('a.period_id', '=', $period->period_id)
                 ->select('a.*') // Adjust selection as needed
-                ->whereNull('a.deleted_at')
-                ->get();
+                ->whereNull('a.deleted_at');
+
+            if (request()->query('filterStatus') && !is_null(request()->query('filterStatus'))) {
+                // $query->where('a.status', request()->query('filterStatus'));
+            }
+            $attendances = $query->get();
 
             // Structure for the current period
             $periodData = [
@@ -696,7 +700,7 @@ function employeeAttendancesByDate(array $employeeIds, $date)
             // Initialize the result for the current employee and date
             $result[$employeeId][$date->toDateString()] = [
                 'employee_id' => $employeeId,
-                'employee_name' => $employee->name,
+                'employee_name' => $employee->name . '(' . $employeeId . ')',
                 'date' => $date->toDateString(),
                 'day' => $date->format('l'),
                 'periods' => [],

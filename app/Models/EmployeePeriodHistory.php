@@ -21,7 +21,7 @@ class EmployeePeriodHistory extends Model implements Auditable
         'start_time',
         'end_time',
         'active',
-        'days',
+        'period_days',
         'created_by',
         'updated_by',
     ];
@@ -33,13 +33,13 @@ class EmployeePeriodHistory extends Model implements Auditable
         'start_time',
         'end_time',
         'active',
-        'days',
+        'period_days',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'days' => 'array'
+        'period_days' => 'array'
     ];
     // Define the relationship with Employee
     public function employee()
@@ -79,5 +79,10 @@ class EmployeePeriodHistory extends Model implements Auditable
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function getPeriodDaysValAttribute()
+    {
+        return is_array($this->period_days) ? implode(',', $this->period_days) : '';
     }
 }

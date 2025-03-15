@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class EmployeePeriod extends Model implements Auditable
 {
-    use HasFactory,DynamicConnection,\OwenIt\Auditing\Auditable;
+    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable;
 
     // Define the table name if it's not the plural of the model name
     protected $table = 'hr_employee_periods';
@@ -25,7 +25,7 @@ class EmployeePeriod extends Model implements Auditable
     protected $fillable = [
         'employee_id',
         'period_id',
-        'days',
+        'period_days',
         'created_by',
         'updated_by',
         // Add other columns if necessary
@@ -33,15 +33,15 @@ class EmployeePeriod extends Model implements Auditable
     protected $auditInclude = [
         'employee_id',
         'period_id',
-        'days',
+        'period_days',
         'created_by',
         'updated_by',
         // Add other columns if necessary
     ];
 
     protected $casts = [
-        'days' => 'array',
-    ];  
+        'period_days' => 'array',
+    ];
     /**
      * Relationship with HrWorkPeriod (many-to-one).
      */
@@ -85,16 +85,16 @@ class EmployeePeriod extends Model implements Auditable
 
         static::updating(function ($model) {
             $model->updated_by = auth()->id() ?? null;
-
-            
         });
     }
 
     public function scopeForDay($query, $day)
     {
-        return $query->whereJsonContains('days', $day);
+        return $query->whereJsonContains('period_days', $day);
     }
-    public function getValDaysAttribute(){
-        return $this->days;
-    }
+
+    // public function getPeriodDaysValAttribute()
+    // {
+    //     return is_array($this->period_days) ? implode(',', $this->period_days) : '';
+    // }
 }

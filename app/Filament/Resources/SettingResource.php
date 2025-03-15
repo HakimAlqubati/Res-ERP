@@ -375,11 +375,12 @@ class SettingResource extends Resource
                             ]),
                         Tabs\Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
+                            ->icon('heroicon-o-users')
                             ->schema([
                                 Grid::make()->schema([
                                     Grid::make()->columns(3)->schema([
                                         TextInput::make("password_min_length")
-                                            ->label(__('lang.password_min_length'))
+                                            ->label(__('lang.password_min_length'))->numeric()
                                             ->columnSpan(1)->required()->default(6),
                                         Select::make('password_contains_for')
                                             ->label(__('lang.password_strong_type'))
@@ -406,7 +407,8 @@ class SettingResource extends Resource
                                             TextInput::make('threshold')
                                                 ->label(__('lang.threshold'))
                                                 ->columnSpan(1)
-                                                ->required()
+                                                ->numeric()
+                                                ->required()->disabled()
                                                 ->default(3),
                                             Select::make('type_reactive_blocked_users')
                                                 ->label(__('lang.type_reactive_blocked_users'))
@@ -416,10 +418,10 @@ class SettingResource extends Resource
                                                 ])
                                                 ->required()
                                                 ->default('based_on_specific_time')
-                                                ->reactive()
+                                                ->reactive()->disabled()
                                                 ->columnSpan(1),
 
-                                            TextInput::make('hours_to_allow_login_again')
+                                            TextInput::make('hours_to_allow_login_again')->disabled()
                                                 ->label(__('lang.hours_to_allow_login_again'))
                                                 ->columnSpan(1)
                                                 ->visible(fn($get) => $get('type_reactive_blocked_users') == 'based_on_specific_time')

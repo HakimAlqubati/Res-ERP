@@ -23,12 +23,13 @@ class PeriodHistoriesRelationManager extends RelationManager
         return $form
             ->schema([
                 DatePicker::make('start_date')
-                ->minDate(function($record){
-                    return $record->employee->join_date?? now()->toDateString();
-                })->required()
+                // ->minDate(function($record){
+                //     return $record->employee->join_date?? now()->toDateString();
+                // })
+                ->required()
                 ,
                 DatePicker::make('end_date'),
-                CheckboxList::make('days')
+                CheckboxList::make('period_days')
                 ->label('Days of Work')
                 ->columns(3)
                 ->options(getDays())
@@ -51,7 +52,9 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),
                 TextColumn::make('end_date')->label('End date')->default('Current date'),
-                TextColumn::make('days')->label('Days')->formatStateUsing(fn ($state) => implode(', ', json_decode($state, true) ?? [])),
+                TextColumn::make('period_days_val')->label('Days')
+                
+                ,
 
                 // TextColumn::make('creator.name')->label('Created by'),
                 // TextColumn::make('start_time')->label('Start time'),
