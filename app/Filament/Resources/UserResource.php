@@ -280,36 +280,36 @@ class UserResource extends Resource
                     ]),
                     Fieldset::make()->label('')->schema([
                         Grid::make()->columns(2)->schema([
-                            setting('password_contains_for') == 'easy_password' ?
-                                TextInput::make('password')
-                                ->label('Password')
-                                ->columnSpan(["lg" => 2, "default" => 4])
-                                ->password()
+                            // setting('password_contains_for') == 'easy_password' ?
+                            //     TextInput::make('password')
+                            //     ->label('Password')
+                            //     ->columnSpan(["lg" => 2, "default" => 4])
+                            //     ->password()
 
-                                : TextInput::make('password')
-                                ->label('Password')
-                                ->columnSpan(["lg" => 2, "default" => 4])
+                            //     : TextInput::make('password')
+                            //     ->label('Password')
+                            //     ->columnSpan(["lg" => 2, "default" => 4])
+                            //     ->password()
+                            //     ->rules([
+                            //         'required',
+                            //         'string',
+                            //         Password::min(setting('password_min_length'))
+                            //             ->mixedCase()
+                            //             ->numbers()
+                            //             ->symbols()
+                            //             ->uncompromised(),
+                            //     ])
+                            //     ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
+                            TextInput::make('password')
                                 ->password()
-                                ->rules([
-                                    'required',
-                                    'string',
-                                    Password::min(setting('password_min_length'))
-                                        ->mixedCase()
-                                        ->numbers()
-                                        ->symbols()
-                                        ->uncompromised(),
-                                ])
-                                ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
-                            // TextInput::make('password')
-                            //     ->password()
-                            //     ->required(fn(string $context) => $context === 'create')
-                            //     ->reactive()
-                            //     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                            // TextInput::make('password_confirmation')
-                            //     ->password()
-                            //     ->required(fn(string $context) => $context === 'create')
-                            //     ->same('password')
-                            //     ->label('Confirm Password'),
+                                ->required(fn(string $context) => $context === 'create')
+                                ->reactive()
+                                ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+                            TextInput::make('password_confirmation')
+                                ->password()
+                                ->required(fn(string $context) => $context === 'create')
+                                ->same('password')
+                                ->label('Confirm Password'),
                         ]),
                     ]),
                 ]),
