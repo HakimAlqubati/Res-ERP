@@ -71,6 +71,7 @@ return [
     'transfer-no-' => 'المناقلة رقم ',
     'export_excel' => 'تصدير أكسل',
     'product_id' => 'رقم المنتج',
+    'unit_id' => 'رقم الوحدة',
     'from' => 'من',
     'to' => 'إلى',
     'branch_id' => 'رقم الفرع',
