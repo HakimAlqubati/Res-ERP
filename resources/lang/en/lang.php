@@ -71,6 +71,7 @@ return [
     'transfer-no-' => 'Transfer no ',
     'export_excel' => 'Export Excel',
     'product_id' => 'Product id',
+    'unit_id' => 'Unit id',
     'from' => 'From',
     'to' => 'To',
     'total_quantity_ordered' => 'Ordered qty',
