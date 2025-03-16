@@ -123,7 +123,6 @@ class FifoInventoryService
             ];
             // throw new Exception("Insufficient inventory. {$remainingQuantity} units could not be allocated.");
         }
-dd($allocations,$this->orderQuantity);
         return $allocations;
     }
 
