@@ -40,7 +40,7 @@ class ProductRepository implements ProductRepositoryInterface
                 // return $query->unmanufacturingCategory();
             })
             ->HasUnitPrices()->when($id, function ($query) use ($id) {
-                return $query->where('id', $id);
+                return $query->where('id', $id)->where('order',1);
             })->when($categoryId, function ($query) use ($categoryId) {
                 return $query->where('category_id', $categoryId);
             })->get();
