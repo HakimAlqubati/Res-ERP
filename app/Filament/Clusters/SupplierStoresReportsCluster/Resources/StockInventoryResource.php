@@ -88,13 +88,13 @@ class StockInventoryResource extends Resource
                                 ->label('Product')->searchable()
                                 ->options(function () {
                                     return Product::where('active', 1)
-                                        ->unmanufacturingCategory()
+                                        // ->unmanufacturingCategory()
                                         ->pluck('name', 'id');
                                 })
                                 ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                    ->unmanufacturingCategory()
+                                    // ->unmanufacturingCategory()
                                     ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->name)
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
 

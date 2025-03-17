@@ -10,6 +10,7 @@ use App\Filament\Clusters\HRCircularCluster;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HrClusteReport;
 use App\Filament\Clusters\HRSalaryCluster;
+use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\InventoryCluster;
@@ -149,6 +150,7 @@ class AdminPanelProvider extends PanelProvider
               NavigationGroup::make('System settings')
                   ->items(array_merge(
                    (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems(): [] ,
+                   (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalarySettingCluster::getNavigationItems(): [], 
                   ))
                   ,
               NavigationGroup::make('Tenants')

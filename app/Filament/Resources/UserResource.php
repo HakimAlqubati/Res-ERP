@@ -7,6 +7,7 @@ use Illuminate\Validation\Rules\Password;
 use App\Models\Branch;
 use App\Models\BranchArea;
 use App\Models\Employee;
+use App\Models\LoginAttempt;
 use App\Models\User;
 use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
@@ -34,6 +35,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Spatie\Permission\Models\Role;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
@@ -201,7 +203,7 @@ class UserResource extends Resource
                                     'SA',
                                 ])
                                 ->required()
-                                ->unique(ignoreRecord:true)
+                                ->unique(ignoreRecord: true)
                                 ->displayNumberFormat(PhoneInputNumberType::E164)
                                 ->autoPlaceholder('aggressive')
                                 ->validateFor(
@@ -411,7 +413,11 @@ class UserResource extends Resource
                 TextColumn::make('fcm_token')
                     ->label('FCM Token')->color(Color::Green)
                     ->copyable()->wrap()
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\IconColumn::make('is_blocked')
+                    ->boolean()->alignCenter(true)
+                    ->label(__("lang.is_blocked")),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
@@ -457,6 +463,22 @@ class UserResource extends Resource
                         })
                         ->icon('heroicon-s-lock-closed') // Optional: Add an icon
                         ->label('Update Password'), // Optional: Add a label
+                    Tables\Actions\Action::make("allowLogin")
+                        ->label(__('lang.allow_login'))
+                        ->color('success')
+                        // ->icon('heroicon-o-ban')
+                        ->action(function ($record) {
+                            try {
+                                LoginAttempt::where('email', $record->email)
+                                    ->where('successful', false)->delete();
+                                showSuccessNotifiMessage('Done');
+                            } catch (\Exception $e) {
+                                // Log the exception for debugging
+                                Log::error('Error clearing login attempts', ['exception' => $e]);
+
+                                showWarningNotifiMessage('Faild', $e->getMessage());
+                            }
+                        })->requiresConfirmation(),
                 ])
             ])
             ->bulkActions([

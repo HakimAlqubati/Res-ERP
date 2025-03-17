@@ -253,4 +253,18 @@ class User extends Authenticatable implements FilamentUser,Auditable
     {
         return $this->fcm_token; // Replace with the actual field that stores the user's FCM token
     }
+
+    public function getIsBlockedAttribute()
+    {
+        $isBlocked = false;
+        if (setting('type_reactive_blocked_users') == 'manual') {
+            $failedAttempts = LoginAttempt::where('email', $this->email)
+                ->where('successful', false)
+                ->count();
+            if ($failedAttempts >= setting('threshold')) {
+                $isBlocked = true;
+            }
+        }
+        return $isBlocked;
+    }
 }

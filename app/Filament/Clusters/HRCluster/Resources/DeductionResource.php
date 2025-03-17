@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRCluster\Resources;
 
 use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster;
+use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\Deduction;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
@@ -29,7 +30,7 @@ class DeductionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRSalaryCluster::class;
+    protected static ?string $cluster = HRSalarySettingCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
     public static function form(Form $form): Form

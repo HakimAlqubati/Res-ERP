@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\LoginAttempt;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Filament\Actions\Action;
@@ -19,6 +20,7 @@ use Filament\Pages\Concerns\InteractsWithFormActions;
 use Filament\Pages\Page;
 use Filament\Pages\SimplePage;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
@@ -52,7 +54,72 @@ class CustomLogin extends SimplePage
         $this->form->fill();
     }
 
-    public function authenticate(): ?LoginResponse
+    public function authenticate()
+    {
+        return redirect('/login');
+        $ipAddress = request()?->ip();
+        $email = $this->form->getState()['email'];
+
+        session()->flash('error', __('filament::login.messages.email_not_found'));
+        return redirect()->back();
+        // Check if the user is blocked
+        if ($this->isBlocked($email, $ipAddress)) {
+            throw ValidationException::withMessages([
+                'email' => __('loans.too_many_attempts'),
+            ]);
+        }
+
+        try {
+            $this->rateLimit(5);
+        } catch (TooManyRequestsException $exception) {
+            throw ValidationException::withMessages([
+                'email' => __('filament::login.messages.throttled', [
+                    'seconds' => $exception->secondsUntilAvailable,
+                    'minutes' => ceil($exception->secondsUntilAvailable / 60),
+                ]),
+            ]);
+        }
+
+        $data = $this->form->getState();
+
+        // Check if email exists in the database
+        if (!\App\Models\User::where('email', $data['email'])->exists()) {
+            throw ValidationException::withMessages([
+                'email' => __('filament::login.messages.email_not_found'), // Custom message
+            ]);
+        }
+
+        // Check if the password is correct
+        if (!Filament::auth()->attempt([
+            'email' => $data['email'],
+            'password' => $data['password'],
+        ], $data['remember'])) {
+            throw ValidationException::withMessages([
+                'password' => __('filament::login.messages.invalid_password'), // Custom message
+            ]);
+        }
+
+        // Log successful login attempt
+        LoginAttempt::create([
+            'email' => $email,
+            'ip_address' => $ipAddress,
+            'attempted_at' => now(),
+            'successful' => true,
+        ]);
+
+        session()->regenerate();
+
+        if (setting('disallow_multi_session') === 1) {
+            Auth::logoutOtherDevices($data['password']);
+        }
+        
+
+        return app(LoginResponse::class);
+    }
+
+
+
+    public function authenticate_old(): ?LoginResponse
     {
         try {
             $this->rateLimit(5);
@@ -78,7 +145,7 @@ class CustomLogin extends SimplePage
 
             $this->throwFailureValidationException();
         }
-
+        Auth::logoutOtherDevices($data['password']);
         session()->regenerate();
 
         return app(LoginResponse::class);
@@ -207,5 +274,32 @@ class CustomLogin extends SimplePage
             'email' => $data['email'],
             'password' => $data['password'],
         ];
+    }
+
+    protected function isBlocked($email, $ipAddress)
+    {
+        $threshold = setting('threshold'); // Maximum allowed attempts
+        $hoursToAllow = 1;
+        if (setting('hours_to_allow_login_again') !== null) {
+            $hoursToAllow = setting('hours_to_allow_login_again');
+        }
+        $blockTime = now()->subHours($hoursToAllow); // Block duration
+
+        // Check if blocking is based on a specific time
+        if (setting('type_reactive_blocked_users') === 'based_on_specific_time') {
+            // Count recent failed attempts based only on attempted_at
+            $failedAttempts = LoginAttempt::where('attempted_at', '>=', $blockTime)
+                ->where('ip_address', $ipAddress)
+                ->where('successful', false)
+                ->count();
+        } else {
+            // Default condition with additional filters
+            $failedAttempts = LoginAttempt::where('email', $email)
+                ->where('ip_address', $ipAddress)
+                ->where('successful', false)
+                ->count();
+        }
+
+        return $failedAttempts >= $threshold;
     }
 }

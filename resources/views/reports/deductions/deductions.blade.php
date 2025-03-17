@@ -98,7 +98,8 @@
         </div>
         <div id="report-table">
             <div class="employee-name">
-                {{ $branch ? $branch->name : $employee?->name }}
+                {{ $report_title ?? '' }}
+                {{-- {{ $branch ? $branch->name : $employee?->name }} --}}
             </div>
 
 

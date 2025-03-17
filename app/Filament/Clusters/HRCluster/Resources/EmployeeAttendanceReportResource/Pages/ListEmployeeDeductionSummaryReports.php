@@ -23,10 +23,13 @@ class ListEmployeeDeductionSummaryReports extends ListRecords
         $employee = Employee::find($employeeId);
         $branch = Branch::find($branchId);
         $deductions = [];
-        if (!is_null($branchId)) {
-            $deductions = $deductionService->getDeductionsForBranchByYear($branchId, $year);
-        } else if (!is_null($employeeId)) {
 
+        $reportTitle = '';
+        if (!is_null($branchId) && is_null($employeeId)) {
+            $deductions = $deductionService->getDeductionsForBranchByYear($branchId, $year);
+            $reportTitle = Branch::find($branchId)->name;
+        } else if (!is_null($employeeId)) {
+            $reportTitle = Employee::find($employeeId)->name;
             $deductions = $deductionService->getDeductionsForEmployeeByYear($employeeId, $year);
         }
         // dd($deductions);
@@ -34,6 +37,7 @@ class ListEmployeeDeductionSummaryReports extends ListRecords
             'last_month_name' => $deductions['last_month_name'] ?? null,
             'employeeId' => $employeeId,
             'branchId' => $branchId,
+            'report_title' => $reportTitle,
             'year' => $year,
             'employee' => $employee,
             'branch' => $branch,

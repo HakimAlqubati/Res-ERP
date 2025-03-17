@@ -182,4 +182,6 @@ return [
     'setting_to_block_users_with_failed_attempts' => 'Setting to block users with failed attempts',    
     'yes' => 'yes',
     'no' => 'no',
+    'allow_login' => 'Allow Login',
+    'is_blocked' => 'Blocked Login',
 ];
