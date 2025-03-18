@@ -887,9 +887,14 @@ function calculateTotalAbsentDays($attendanceData)
     $totalAbsentDays = 0;
     $totalAttendanceDays = 0;
     $totalLeaveDays = 0;
+    $totalNoPeriodDays = 0;
     $result = [];
     foreach ($attendanceData as $date => $data) {
 
+        if (isset($data['no_periods']) && $data['no_periods']) {
+            $totalNoPeriodDays++;
+            // break;
+        }
         if (isset($data['leave']) && is_array(($data['leave'])) && count($data['leave']) > 0) {
             $totalLeaveDays++;
             // break;
@@ -952,6 +957,7 @@ function calculateTotalAbsentDays($attendanceData)
     }
     $finalResult = [
         'total_leave_days' => $totalLeaveDays,
+        'total_no_period_days' => $totalNoPeriodDays,
         'total_absent_days' => $totalAbsentDays,
         'total_attendance_days' => $totalAttendanceDays,
         'difference' => $totalAttendanceDays - $totalAbsentDays,

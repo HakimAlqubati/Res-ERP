@@ -660,3 +660,6 @@ Route::get('getAttendancesLateArrival', function () {
 });
 
 Route::get('/printStock', [TestController3::class, 'printStock']);
+
+Route::get('oddAttendances', [TestController3::class, 'getEmployeesWithOddAttendances']);
+

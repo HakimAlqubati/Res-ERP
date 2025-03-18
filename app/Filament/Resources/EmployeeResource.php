@@ -178,7 +178,7 @@ class EmployeeResource extends Resource
                                     ]),
                                     Fieldset::make()->label('Upload avatar image')
                                         ->columnSpanFull()
-                                        ->schema([ 
+                                        ->schema([
                                             Grid::make()->columns(2)->schema([
                                                 FileUpload::make('avatar')
                                                     ->image()
@@ -218,6 +218,7 @@ class EmployeeResource extends Resource
                                             ->options(Position::where('active', 1)->select('id', 'title')->get()->pluck('title', 'id')),
                                         Select::make('employee_type')->columnSpan(1)->label('Role type')
                                             ->searchable()
+                                            ->live()
                                             ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
 
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
@@ -226,19 +227,42 @@ class EmployeeResource extends Resource
                                             // ->disabledOn('edit')
                                             ->live()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
-                                        Select::make('department_id')->columnSpan(1)->label('Department')
+                                        Toggle::make('is_ceo')->label('is_ceo')
+                                            ->live()
+                                            ->visible(fn($get): bool => $get('employee_type') == 1)
+                                            ->default(0)->inline(false),
+                                        Select::make('manager_id')
+                                            ->columnSpan(1)
+                                            ->label('Manager')
+                                            ->searchable()
+                                            ->requiredIf('is_ceo', false)
+                                            ->options(function ($get) {
+                                                $branchId = $get('branch_id');
+                                                // if ($branchId) {
+                                                return Employee::active()
+                                                    // ->forBranch($branchId)
+                                                    ->pluck('name', 'id');
+                                                // }
+                                                return [];
+                                            }),
+
+                                        Select::make('department_id')
+                                            ->columnSpan(1)
+                                            ->label('Department')
                                             ->searchable()
                                             ->options(function ($get) {
                                                 $branchId = $get('branch_id');
-                                                if ($branchId) {
-                                                    return Department::where('active', 1)
-                                                        ->forBranch($branchId)
-                                                        ->select('id', 'name')->get()->pluck('name', 'id');
-                                                }
+                                                // if ($branchId) {
+                                                return Department::where('active', 1)
+                                                    // ->forBranch($branchId)
+                                                    ->select('id', 'name')->get()->pluck('name', 'id');
+                                                // }
                                                 return  Department::where('active', 1)
                                                     ->select('id', 'name')->get()->pluck('name', 'id');
                                             }),
-                                        DatePicker::make('join_date')->columnSpan(1)->label('Start date')->required()
+                                        DatePicker::make('join_date')
+                                            ->default(now())
+                                            ->columnSpan(1)->label('Start date')->required()
                                             ->maxDate(now()->toDateString()),
 
                                     ]),

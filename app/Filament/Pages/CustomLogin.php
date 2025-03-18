@@ -30,7 +30,8 @@ class CustomLogin extends SimplePage
     use InteractsWithFormActions;
     use WithRateLimiting;
 
-    protected static string $view = 'filament.login';
+    // protected static string $view = 'filament.login';
+    protected static string $view = 'filament-panels::pages.auth.login';
 
     /**
      * @return string
@@ -56,12 +57,9 @@ class CustomLogin extends SimplePage
 
     public function authenticate()
     {
-        return redirect('/login');
         $ipAddress = request()?->ip();
         $email = $this->form->getState()['email'];
 
-        session()->flash('error', __('filament::login.messages.email_not_found'));
-        return redirect()->back();
         // Check if the user is blocked
         if ($this->isBlocked($email, $ipAddress)) {
             throw ValidationException::withMessages([
@@ -82,24 +80,22 @@ class CustomLogin extends SimplePage
 
         $data = $this->form->getState();
 
-        // Check if email exists in the database
-        if (!\App\Models\User::where('email', $data['email'])->exists()) {
-            throw ValidationException::withMessages([
-                'email' => __('filament::login.messages.email_not_found'), // Custom message
-            ]);
-        }
-
-        // Check if the password is correct
         if (!Filament::auth()->attempt([
             'email' => $data['email'],
             'password' => $data['password'],
         ], $data['remember'])) {
+            // Log failed attempt
+            LoginAttempt::create([
+                'email' => $email,
+                'ip_address' => $ipAddress,
+                'attempted_at' => now(),
+                'successful' => false,
+            ]);
             throw ValidationException::withMessages([
-                'password' => __('filament::login.messages.invalid_password'), // Custom message
+                'email' => __('filament::login.messages.failed'),
             ]);
         }
 
-        // Log successful login attempt
         LoginAttempt::create([
             'email' => $email,
             'ip_address' => $ipAddress,
@@ -112,11 +108,9 @@ class CustomLogin extends SimplePage
         if (setting('disallow_multi_session') === 1) {
             Auth::logoutOtherDevices($data['password']);
         }
-        
 
         return app(LoginResponse::class);
     }
-
 
 
     public function authenticate_old(): ?LoginResponse

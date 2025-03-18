@@ -24,6 +24,7 @@ use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Pages\CustomLogin;
+use App\Filament\Pages\Auth\CustomLogin as CustomLogin2;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Resources\ApprovalResource;
@@ -181,6 +182,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->path('admin')
             ->login()
+            // ->login(CustomLogin::class)
             // ->login(CustomLogin::class)
             ->defaultThemeMode(ThemeMode::Dark)
             ->colors([

@@ -150,18 +150,21 @@ function calculateMonthlySalaryV2($employeeId, $date)
         return 'no_periods';
     }
     $totalAbsentDays = 0;
+    $totalNoPeriodDays = 0;
     $totalAttendanceDays = 0;
     $diffirenceBetweenAttendanceAbsentDays = 0;
     $absentDates = [];
     if (!$employee->discount_exception_if_absent) {
         // dd(calculateTotalAbsentDays($attendances));
         $totalAbsentDays = calculateTotalAbsentDays($attendances)['total_absent_days'];
+        $totalNoPeriodDays = calculateTotalAbsentDays($attendances)['total_no_period_days'];
         $totalAttendanceDays = calculateTotalAbsentDays($attendances)['total_attendance_days'];
         $diffirenceBetweenAttendanceAbsentDays = calculateTotalAbsentDays($attendances)['difference'];
 
         $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
     }
     $differneceBetweenDaysMonthAndAttendanceDays = $daysInMonth - $totalAttendanceDays;
+    $totalAbsentDays += $totalNoPeriodDays;
     $totalLateHours = 0;
     $totalEarlyDepatureHours = 0;
     if (!$employee->discount_exception_if_attendance_late) {

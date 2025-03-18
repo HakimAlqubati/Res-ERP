@@ -52,6 +52,7 @@ class Employee extends Model implements Auditable
         'has_employee_pass',
         'working_hours',
         'manager_id',
+        'is_ceo',
     ];
 
     /**
@@ -529,6 +530,14 @@ class Employee extends Model implements Auditable
                 // $builder->where('id', auth()->user()->employee->id); // Add your default query here
             });
         }
+        static::updating(function ($employee) {
+            if ($employee->is_ceo) {
+                // Unset the previous default store
+                Employee::where('is_ceo', true)
+                    ->where('id', '!=', $employee->id)
+                    ->update(['is_ceo' => false]);
+            }
+        });
     }
 
 

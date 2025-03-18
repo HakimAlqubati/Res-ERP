@@ -56,16 +56,54 @@
             }
 
         }
+
+        .btn-print,
+        .btn-primary {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-print {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .btn-print i,
+        .btn-primary i {
+            margin-right: 8px;
+        }
     </style>
     {{-- Add the Print Button --}}
     <div class="text-right mb-4">
         <button onclick="printReport()" class="btn btn-print">
-            {{ __('Print Report') }}
+            &#128438; {{ __('Print Report') }}
         </button>
 
         <button onclick="exportToExcel()" class="btn btn-primary">
-            {{ __('Export to Excel') }}
+            &#128200; {{ __('Export to Excel') }}
         </button>
+
     </div>
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
