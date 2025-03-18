@@ -121,7 +121,9 @@ class TestController3 extends Controller
                         ->havingRaw('attendance_count % 2 != 0'); // Odd number of attendances
                 })
                 ->where('branch_id', $branchId) // Optional: Add branch filter
-                ->select('id', 'name') // Only select id and name
+                ->select('id', 'name')
+                ->groupBy(['id','name'])
+                // Only select id and name
                 ->get();
     
             // For each employee, predict the next expected check-in or check-out
