@@ -111,17 +111,19 @@ class TestController3 extends Controller
         while ($currentDate <= $endDate) {
             // Fetch employees with odd number of attendances for the current date
             $employees = Employee::with(['attendances' => function ($query) use ($currentDate) {
+                // Select only the necessary fields for the attendance data
                 $query->where('check_date', $currentDate)->where('accepted', 1)
-                    ->select('id', 'check_date', 'check_time', 'check_type', 'employee_id', 'accepted', 'period_id'); // Only selected fields from attendances
+                    ->select('id', 'check_date', 'check_time', 'check_type', 'employee_id', 'accepted', 'period_id');
             }])
                 ->whereHas('attendances', function ($query) use ($currentDate) {
+                    // Select employee_id and aggregate the count of attendances
                     $query->where('check_date', $currentDate)->where('accepted', 1)
-                        ->selectRaw('employee_id, COUNT(*) as attendance_count')
-                        ->groupBy('employee_id')
-                        ->havingRaw('COUNT(*) % 2 != 0'); // Odd number of attendances
+                        ->selectRaw('employee_id, COUNT(*) as attendance_count')  // Aggregate count by employee_id
+                        ->groupBy('employee_id')  // Group by employee_id to count the attendance per employee
+                        ->havingRaw('COUNT(*) % 2 != 0'); // Only employees with an odd number of attendances
                 })
                 ->where('branch_id', $branchId) // Optional: Add branch filter
-                ->select('id', 'name') // Only select id and name
+                ->select('id', 'name') // Select only necessary fields from the Employee model
                 ->get();
 
             // For each employee, predict the next expected check-in or check-out
