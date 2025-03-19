@@ -117,7 +117,7 @@ class TestController3 extends Controller
                 ->whereHas('attendances', function ($query) use ($currentDate) {
                     $query->where('check_date', $currentDate)->where('accepted', 1)
                         ->selectRaw('count(id) as attendance_count')
-                        ->groupBy(['employee_id','id'])
+                        ->groupBy(['employee_id','check_date'])
                         ->havingRaw('attendance_count % 2 != 0'); // Odd number of attendances
                 })
                 ->where('branch_id', $branchId) // Optional: Add branch filter
