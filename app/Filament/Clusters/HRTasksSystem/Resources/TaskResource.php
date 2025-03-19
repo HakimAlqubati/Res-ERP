@@ -16,6 +16,7 @@ use App\Models\TaskAttachment;
 use App\Models\TaskCard;
 use App\Models\TaskLog;
 use App\Models\User;
+use App\Models\UserType;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -124,7 +125,37 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 // ->whereIn('user_type',[1,2,3])
                                 ->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
+                        // Select Role to assign task
+                        Forms\Components\Select::make('role')
+                            ->label('Select Role')
+                            ->required()
+                            ->options(function () {
+                                return UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id');
+                                // Fetch all available roles (assuming you have a Role model)
+                                return \Spatie\Permission\Models\Role::pluck('name', 'id')->toArray();
+                            })->live()
+                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
+
+                                $employees = Employee::where('employee_type', $state)->pluck('id')->toArray();
+
+                                $set('assigned_to_multi', $employees); // Populate the 'assigned_to' field with these users
+                                // // After role is selected, fetch users assigned to that role
+                                // $users = \App\Models\User::whereHas('roles', function ($q) use ($state) {
+                                //     $q->where('id', $state); // Filter users by the selected role
+                                // })->get(['name', 'id'])->pluck('id')->toArray();
+                                // // dd($users, $state);
+                                // $set('assigned_to_multi', $users); // Populate the 'assigned_to' field with these users
+                            }),
+
+                        // The assigned_to field that will populate with users based on the selected role
+                        Forms\Components\Select::make('assigned_to_multi')
+                            ->label('Assign to')
+                            ->required()
+                            ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                            ->multiple()  // Allow multiple users to be selected
+                            ->searchable(),
                         Forms\Components\Select::make('assigned_to')
+                            ->hidden(fn($get): bool =>  !is_null($get('role')))
                             ->label('Assign to')
                             ->disabledOn('edit')
                             ->required()

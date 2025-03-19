@@ -484,8 +484,8 @@ Route::get('/attendance', AttendanecEmployee2::class)
     ->name('attendance')->middleware('check');
 Route::get('/attendanceSecret__', AttendanecEmployee2::class)
     ->name('attendanceSecret__');
-Route::get('/attendanceTest', AttendanecEmployeeTest::class)
-    ->name('attendanceTest')->middleware('check');
+// Route::get('/attendanceTest', AttendanecEmployeeTest::class)
+//     ->name('attendanceTest')->middleware('check');
 
 
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
@@ -662,4 +662,3 @@ Route::get('getAttendancesLateArrival', function () {
 Route::get('/printStock', [TestController3::class, 'printStock']);
 
 Route::get('oddAttendances', [TestController3::class, 'getEmployeesWithOddAttendances']);
-

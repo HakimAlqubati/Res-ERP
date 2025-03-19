@@ -94,8 +94,8 @@
                     @endforeach
                     <tr>
                         <th>Total</th>
-                        <th style="text-align: center;">{{ number_format($totalAllowanceAmount, 2) }}</th>
-                        <th style="text-align: center;">{{ number_format($totalDeductionAmount, 2) }}</th>
+                        <th style="text-align: left;">{{ number_format($totalAllowanceAmount, 2) }}</th>
+                        <th style="text-align: left;">{{ number_format($totalDeductionAmount, 2) }}</th>
                     </tr>
                 </tbody>
             </table>
@@ -147,7 +147,7 @@
     .salary-slip {
         width: 700px;
         background: #fff;
-        padding: 20px;
+        /* padding: 20px; */
         border: 1px solid #ccc;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
@@ -155,7 +155,7 @@
     header {
         text-align: center;
         border-bottom: 2px solid #ccc;
-        padding-bottom: 10px;
+        /* padding-bottom: 10px; */
         position: relative;
     }
 
@@ -216,7 +216,7 @@
     .earnings-deductions th,
     .earnings-deductions td {
         border: 1px solid #ccc;
-        padding: 10px;
+        /* padding: 10px; */
         text-align: left;
     }
 
@@ -255,7 +255,7 @@
 
     .employee-info-table td {
         border: 1px solid #ccc;
-        padding: 10px;
+        padding: 3px;
         text-align: left;
         /* Align text to the left */
         font-size: 14px;

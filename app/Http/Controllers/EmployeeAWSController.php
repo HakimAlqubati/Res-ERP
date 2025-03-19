@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Models\Attendance;
 use App\Models\Employee;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Exception\AwsException;
@@ -258,7 +259,7 @@ class EmployeeAWSController extends Controller
                 // $date = $_GET['date'];
                 $time = now()->toTimeString();
                 $date = now()->toDateString();
-                (new AttendanecEmployee2())->handleCreationAttendance($employeeId, $date, $time);
+                (new AttendanecEmployee2(Attendance::ATTENDANCE_TYPE_WEBCAM))->handleCreationAttendance($employeeId, $date, $time);
 
                 Log::info('employee_data_captured', [$employee]);
             } else {

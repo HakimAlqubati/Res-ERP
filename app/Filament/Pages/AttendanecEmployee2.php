@@ -33,6 +33,11 @@ class AttendanecEmployee2 extends BasePage
     private $time = '';
     // private $time ;
 
+    public $attendanceType = Attendance::ATTENDANCE_TYPE_RFID;
+    public function __construct($attendanceType = Attendance::ATTENDANCE_TYPE_RFID)
+    {
+        $this->attendanceType = $attendanceType;
+    }
     public bool $typeHidden = true;
     public string $type = '';
     public ?array $data = [];
@@ -461,6 +466,7 @@ class AttendanecEmployee2 extends BasePage
             $notificationMessage = __('notifications.the_departure_has_been_recorded');
         }
 
+        $attendanceData['attendance_type'] = $this->attendanceType;
         // Try to create the attendance record
         try {
             Attendance::create($attendanceData);

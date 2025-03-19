@@ -60,7 +60,7 @@ class EmployeeAttednaceReportResource extends Resource
                     }
                 )
 
-                    ->hidden(fn() => isStuff())
+                    ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
                 Filter::make('date_range')
                     ->form([

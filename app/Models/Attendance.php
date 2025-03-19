@@ -76,9 +76,14 @@ class Attendance extends Model
         'attendance_method',
         'accepted',
         'message',
+        'attendance_type',
 
     ];
 
+    const ATTENDANCE_TYPE_WEBCAM = 'webcam';
+    const ATTENDANCE_TYPE_RFID = 'rfid';
+    const ATTENDANCE_TYPE_REQUEST = 'request';
+    
     const ATTENDANCE_METHOD_FINGERPRINT = 'fingerprint';
     const ATTENDANCE_METHOD_FACEPRINT = 'faceprint';
     const ATTENDANCE_METHOD_RFID = 'rfid';

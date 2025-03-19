@@ -113,8 +113,8 @@ class TestController2 extends Controller
                 'deduction_name' => $deduction['deduction_name'] ?? 'Unknown Deduction', // Fallback if deduction type is missing
                 'deduction_amount' => $deduction['deduction_amount'],
             ];
-        })->toArray();
-        // dd($allDeductionTypes, $deducationDetails,$employeeDeductions);
+        })->sortBy('deduction_id')->values()->toArray();
+        // dd($employeeDeductions);
         // dd($deducationTypes);
         // Calculate the total deduction amount
         $totalDeductionAmount = collect($employeeDeductions)->sum('deduction_amount');

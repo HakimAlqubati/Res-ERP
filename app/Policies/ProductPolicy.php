@@ -20,16 +20,19 @@ class ProductPolicy
     }
     public function view(User $user)
     {
+        return true;
         return $user->can('view_product');
     }
 
     public function viewAny(User $user)
     {
+        return true;
         return $user->can('view_any_product');
     }
 
     public function view_any(User $user)
     {
+        return true;
         return $user->can('view_any');
     }
 }

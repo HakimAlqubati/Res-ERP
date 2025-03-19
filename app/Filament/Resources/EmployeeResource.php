@@ -6,6 +6,7 @@ use App\Exports\EmployeesExport;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\BranchLogRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
@@ -507,14 +508,14 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')
                     ->sortable()->searchable()
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: false, isGlobal: false),
 
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label('Full name')
                     ->color('primary')
                     ->weight(FontWeight::Bold)
-                    ->searchable(isIndividual: true, isGlobal: true)
+                    ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')
                     ->label('Branch')
@@ -525,13 +526,13 @@ class EmployeeResource extends Resource
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->sortable()->searchable()->limit(20)->default('@')
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->searchable(isIndividual: true, isGlobal: true)
+                    ->searchable(isIndividual: false, isGlobal: true)
                     ->copyable()
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
-                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: true)->default('_')
+                TextColumn::make('phone_number')->label('Phone')->searchable()->icon('heroicon-m-phone')->searchable(isIndividual: false)->default('_')
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->copyable()
                     ->copyMessage('Phone number copied')
@@ -541,17 +542,17 @@ class EmployeeResource extends Resource
                 TextColumn::make('join_date')->sortable()->label('Start date')
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: false, isGlobal: false),
                 TextColumn::make('salary')->sortable()->label('Salary')
                     ->sortable()->searchable()
                     ->numeric(decimalPlaces: 0)
                     ->money('MYR')
                     ->default(0)
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true),
+                    ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
 
                 TextColumn::make('working_hours')->label('Working hours')->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(isIndividual: true, isGlobal: false)->alignCenter(true)
+                    ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true)
                     ->action(function ($record) {
 
                         $hoursCount =  abs($record->hours_count);
@@ -567,7 +568,7 @@ class EmployeeResource extends Resource
                     ->label('Job title')
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(isIndividual: true, isGlobal: false),
+                    ->searchable(isIndividual: false, isGlobal: false),
 
                 TextColumn::make('department.name')
                     ->label('Department')
@@ -599,6 +600,7 @@ class EmployeeResource extends Resource
                     ->label('RFID')
                     ->searchable()
                     ->sortable()
+                    ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('nationality')->sortable()->searchable()
                     ->label('Nationality')
@@ -774,6 +776,7 @@ class EmployeeResource extends Resource
         return [
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
+            BranchLogRelationManager::class,
         ];
     }
 

@@ -92,47 +92,42 @@ class TestController3 extends Controller
             ->get(['name', 'category_id', 'id', 'code']);
         return view('filament.clusters.inventory-management-cluster.resources.stock-inventory-resource.pages.stock-print', compact('products'));
     }
-    public function getEmployeesWithOddAttendances($startDate = null, $endDate = null, $branchId = null)
+    public function getEmployeesWithOddAttendances($startDate = null, $endDate = null,$branchId= null)
     {
         if (!$startDate && !$endDate) {
             $startDate = $_GET['start_date'];
             $endDate = $_GET['end_date'];
             $branchId = 5;
         }
-
+    
         $startDate = Carbon::parse($startDate);
         $endDate = Carbon::parse($endDate);
-
+    
         // Initialize an array to hold the result data
         $result = [];
-
+    
         // Loop through the date range and get attendance data for each day
         $currentDate = $startDate;
         while ($currentDate <= $endDate) {
             // Fetch employees with odd number of attendances for the current date
             $employees = Employee::with(['attendances' => function ($query) use ($currentDate) {
-                // Select only necessary fields for the attendance data
-                $query->where('check_date', $currentDate)
-                    ->where('accepted', 1)
-                    ->select('id', 'check_date', 'check_time', 'check_type', 'employee_id', 'accepted', 'period_id'); // Select only necessary columns
+                $query->where('check_date', $currentDate)->where('accepted', 1)
+                    ->select('id', 'check_date', 'check_time', 'check_type', 'employee_id','accepted','period_id'); // Only selected fields from attendances
             }])
                 ->whereHas('attendances', function ($query) use ($currentDate) {
-                    // Select employee_id, attendance id and aggregate the attendance count
-                    $query->where('check_date', $currentDate)
-                        ->where('accepted', 1)
-                        ->selectRaw('employee_id, COUNT(*) as attendance_count, GROUP_CONCAT(id) as attendance_ids') // Select employee_id, count and attendance ids
-                        ->groupBy('employee_id') // Group by employee_id to count the number of attendances for each employee
-                        ->havingRaw('COUNT(*) % 2 != 0'); // Only employees with an odd number of attendances
+                    $query->where('check_date', $currentDate)->where('accepted', 1)
+                        ->selectRaw('count(*) as attendance_count')
+                        ->groupBy('employee_id')
+                        ->havingRaw('COUNT(*) % 2 != 0'); // Odd number of attendances
                 })
                 ->where('branch_id', $branchId) // Optional: Add branch filter
-                ->select('id', 'name') // Select only the necessary fields from the hr_employees table
+                ->select('id', 'name') // Only select id and name
                 ->get();
-
-
+    
             // For each employee, predict the next expected check-in or check-out
             foreach ($employees as $employee) {
                 $lastAttendance = $employee->attendances->last();
-
+    
                 // Predict next attendance (check-in or check-out)
                 $prediction = null;
                 if ($lastAttendance) {
@@ -142,22 +137,23 @@ class TestController3 extends Controller
                         $prediction = 'checkin';  // If last attendance was check-out, predict checkin next
                     }
                 }
-
+    
                 // Add the prediction to the employee data
                 $employee->prediction = $prediction;
             }
-
+    
             // Add the data for the current date (group by date)
             $result[$currentDate->toDateString()] = [
                 'employees' => $employees
             ];
-
+    
             // Move to the next date
             $currentDate->addDay();
         }
-
+    
         return $result;
         // Return the grouped result
         return response()->json($result);
     }
+    
 }

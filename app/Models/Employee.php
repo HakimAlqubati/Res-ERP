@@ -55,6 +55,7 @@ class Employee extends Model implements Auditable
         'is_ceo',
     ];
 
+
     /**
      * Attributes to include in the Audit.
      *
@@ -93,6 +94,7 @@ class Employee extends Model implements Auditable
     public $appends = ['avatar_image'];
     protected $casts = [
         'bank_information' => 'array',
+        'changes' => 'array', // This allows storing changes as a JSON
     ];
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED = 'added';
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED = 'removed';
@@ -536,6 +538,25 @@ class Employee extends Model implements Auditable
                 Employee::where('is_ceo', true)
                     ->where('id', '!=', $employee->id)
                     ->update(['is_ceo' => false]);
+            }
+
+            // Check if the 'branch_id' attribute is being updated
+            if ($employee->isDirty('branch_id')) {
+                // Log the branch change in the EmployeeBranchLog table
+                EmployeeBranchLog::create([
+                    'employee_id' => $employee->id,
+                    'branch_id' => $employee->branch_id,
+                    'start_at' => now(), // Set the start time of the new branch
+                    'end_at' => null,    // End time is null because this is the current branch
+                    'created_by' => auth()->id(), // Who made the change
+                ]);
+
+                // Optionally, you could handle the previous branch log (if you want to mark the previous branch as ended)
+                $previousBranchLog = $employee->branchLogs()->whereNull('end_at')->latest()->first();
+                if ($previousBranchLog) {
+                    // Update the previous branch log with the 'end_at' timestamp
+                    $previousBranchLog->update(['end_at' => now()]);
+                }
             }
         });
     }

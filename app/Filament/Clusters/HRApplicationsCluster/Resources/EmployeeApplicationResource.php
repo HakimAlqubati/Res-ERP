@@ -530,9 +530,9 @@ class EmployeeApplicationResource extends Resource
                             return in_array($day, $period->days);
                         });
 
-                        $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+                        $closestPeriod = (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->findClosestPeriod($data['request_check_time'], $periodsForDay);
 
-                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT, null, true);
+                        (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT, null, true);
                         $record->update([
                             'status' => EmployeeApplication::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
@@ -805,9 +805,9 @@ class EmployeeApplicationResource extends Resource
                             return in_array($day, $period->days);
                         });
 
-                        $closestPeriod = (new AttendanecEmployee())->findClosestPeriod($data['request_check_time'], $periodsForDay);
+                        $closestPeriod = (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->findClosestPeriod($data['request_check_time'], $periodsForDay);
 
-                        (new AttendanecEmployee())->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN, null, true);
+                        (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN, null, true);
                         $record->update([
                             'status' => EmployeeApplication::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
