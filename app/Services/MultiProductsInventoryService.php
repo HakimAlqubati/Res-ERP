@@ -75,6 +75,7 @@ class MultiProductsInventoryService
         return [
             'reportData' => $report,
             'pagination' => $products, // Pass pagination data correctly
+            'totalPages' => $products->lastPage(),
         ];
     }
 
@@ -192,15 +193,18 @@ class MultiProductsInventoryService
         }
 
 
-    
         // Paginate results
         $currentPage = request()->get('page', 1);
         $collection = new Collection($lowStockProducts);
         $pagedData = $collection->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
+
+        $total = count($collection);
+        $totalPages = ceil($total / $perPage);
         return new LengthAwarePaginator($pagedData, count($collection), $perPage, $currentPage, [
             'path' => request()->url(),
             'query' => request()->query(),
+            'totalPages' => $totalPages,
         ]);
     }
 }

@@ -16,7 +16,8 @@ class InventoryReportController extends Controller
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
 
         return response()->json([
-            'data' => $lowStockProducts
+            'data' => $lowStockProducts,
+            'totalPages' => $lowStockProducts->lastPage(),
         ]);
     }
 
@@ -34,7 +35,8 @@ class InventoryReportController extends Controller
         return response()->json($report);
     }
 
-    public function productTracking(Request $request){
+    public function productTracking(Request $request)
+    {
         $productId = $request->product_id ?? null;
 
         $product = Product::find($productId);
@@ -48,6 +50,7 @@ class InventoryReportController extends Controller
                 return $item;
             });
         }
-        return ['reportData' => $reportData, 'product' => $product];
+        
+        return ['reportData' => $reportData, 'product' => $product,'totalPages' => $rawData->lastPage()];
     }
 }
