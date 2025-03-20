@@ -83,7 +83,7 @@ class Attendance extends Model
     const ATTENDANCE_TYPE_WEBCAM = 'webcam';
     const ATTENDANCE_TYPE_RFID = 'rfid';
     const ATTENDANCE_TYPE_REQUEST = 'request';
-    
+
     const ATTENDANCE_METHOD_FINGERPRINT = 'fingerprint';
     const ATTENDANCE_METHOD_FACEPRINT = 'faceprint';
     const ATTENDANCE_METHOD_RFID = 'rfid';
@@ -167,7 +167,7 @@ class Attendance extends Model
      * @param array $attributes
      * @return Attendance
      */
-    public static function storeNotAccepted($employee, $date, $time, $day, $message, $periodId,$attendanceType)
+    public static function storeNotAccepted($employee, $date, $time, $day, $message, $periodId, $attendanceType)
     {
         // Ensure that 'accepted' is set to false
         $attributes['accepted'] = false;

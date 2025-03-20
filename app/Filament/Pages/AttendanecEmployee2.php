@@ -376,7 +376,7 @@ class AttendanecEmployee2 extends BasePage
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
             $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
-            Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id);
+            Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $this->attendanceType);
             return $this->sendWarningNotification($message);
         }
 
@@ -408,7 +408,7 @@ class AttendanecEmployee2 extends BasePage
                 !$this->checkIfPeriodAllowenceMinutesBeforePeriod($nearestPeriod, $date, $checkTimeStr) && ($nearestPeriod?->start_at != '00:00:00')
             ) {
                 $message = 'You cannot check in right now.<br> Please contact your manager to adjust your shift.';
-                Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id);
+                Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $this->attendanceType);
 
                 return $this->sendWarningNotification($message);
             }
@@ -420,7 +420,7 @@ class AttendanecEmployee2 extends BasePage
                 $diff > Setting::getSetting('hours_count_after_period_after') && $this->type == ''
             ) {
                 $message = __('notifications.you_cannot_attendance_before') . ' ' . $diff . ' ' . __('notifications.hours');
-                Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id);
+                Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $this->attendanceType);
                 return $this->sendWarningNotification($message);
             }
 
@@ -459,7 +459,7 @@ class AttendanecEmployee2 extends BasePage
                 //  dd($diff);
                 if ($diff >= Setting::getSetting('hours_count_after_period_after')) {
                     $message = 'Times Up';
-                    Attendance::storeNotAccepted($employee, $date, $checkTime->toTimeString(), $day, $message, $nearestPeriod->id);
+                    Attendance::storeNotAccepted($employee, $date, $checkTime->toTimeString(), $day, $message, $nearestPeriod->id, $this->attendanceType);
                     return $this->sendWarningNotification($message);
                 }
             }
@@ -474,7 +474,7 @@ class AttendanecEmployee2 extends BasePage
             // Send success notification
             return $this->sendAttendanceNotification($employee->name, $notificationMessage);
         } catch (\Exception $e) {
-            Attendance::storeNotAccepted($employee, $date, $checkTime->toTimeString(), $day, $e->getMessage(), $nearestPeriod->id);
+            Attendance::storeNotAccepted($employee, $date, $checkTime->toTimeString(), $day, $e->getMessage(), $nearestPeriod->id, $this->attendanceType);
             // Send warning notification in case of failure
             return $this->sendWarningNotification($e->getMessage());
         }
