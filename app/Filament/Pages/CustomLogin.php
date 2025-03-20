@@ -114,15 +114,15 @@ class CustomLogin extends SimplePage
         ]);
 
         session()->regenerate();
-
-        if (setting('disallow_multi_session') === 1) {
+        // dd(setting('disallow_multi_session'));
+        if (setting('disallow_multi_session') == 1) {
             Auth::logoutOtherDevices($data['password']);
-        } 
+        }
         return app(LoginResponse::class);
     }
 
 
-   
+
 
     protected function getRateLimitedNotification(TooManyRequestsException $exception): ?Notification
     {
