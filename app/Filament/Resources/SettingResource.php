@@ -408,7 +408,7 @@ class SettingResource extends Resource
                                                 ->label(__('lang.threshold'))
                                                 ->columnSpan(1)
                                                 ->numeric()
-                                                ->required()->disabled()
+                                                ->required()
                                                 ->default(3),
                                             Select::make('type_reactive_blocked_users')
                                                 ->label(__('lang.type_reactive_blocked_users'))
