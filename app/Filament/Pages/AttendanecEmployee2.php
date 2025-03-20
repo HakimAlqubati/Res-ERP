@@ -265,7 +265,7 @@ class AttendanecEmployee2 extends BasePage
         if (!$closestPeriod) {
             $message = __('notifications.no_valid_period_found_for_the_specified_time') . $time;
             // No period found, so we return with an error or handle accordingly
-            Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id);
+            Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, $this->attendanceType);
             return $this->sendWarningNotification($message);
         }
 
@@ -273,7 +273,7 @@ class AttendanecEmployee2 extends BasePage
         if ($this->checkTimeIfOutOfAllowedAttedance($closestPeriod, $time)) {
             $message = 'You cannot check in right now.<br> Please contact your manager to adjust your shift.';
 
-            Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id);
+            Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, $this->attendanceType);
             return $this->sendWarningNotification($message);
         }
 
@@ -303,7 +303,8 @@ class AttendanecEmployee2 extends BasePage
                     return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKIN, $existAttendance);
                 } else {
                     $message = __('notifications.attendance_time_is_greater_than_current_period_end_time') . ':(' . $closestPeriod?->name . ')';
-                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id);
+
+                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, $this->attendanceType);
                     return $this->sendWarningNotification($message);
                 }
             }
@@ -330,14 +331,14 @@ class AttendanecEmployee2 extends BasePage
                 if ($this->typeHidden) {
                     $this->typeHidden = false;
                     $message = 'please specify type ';
-                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id);
+                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, $this->attendanceType);
                     return $this->sendWarningNotification($message);
                 } else if (!$this->typeHidden && $this->type != '') {
                     $this->typeHidden = true;
                     return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, $this->type);
                 } else {
                     $message = 'please specify type also';
-                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id);
+                    Attendance::storeNotAccepted($employee, $date, $time, $day, $message, $closestPeriod->id, $this->attendanceType);
                     return $this->sendWarningNotification($message);
                 }
             }

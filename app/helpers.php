@@ -258,6 +258,7 @@ function getDefaultCurrency()
  */
 function getCalculatingPriceOfOrdersMethod()
 {
+    return 'fifo';
     return setting('calculating_orders_price_method') ?? Order::METHOD_UNIT_PRICE;
 }
 

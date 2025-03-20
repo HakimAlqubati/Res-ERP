@@ -167,7 +167,7 @@ class Attendance extends Model
      * @param array $attributes
      * @return Attendance
      */
-    public static function storeNotAccepted($employee, $date, $time, $day, $message, $periodId)
+    public static function storeNotAccepted($employee, $date, $time, $day, $message, $periodId,$attendanceType)
     {
         // Ensure that 'accepted' is set to false
         $attributes['accepted'] = false;
@@ -180,6 +180,7 @@ class Attendance extends Model
         $attributes['message'] = $message;
         $attributes['period_id'] = $periodId;
         $attributes['branch_id'] = $employee?->branch_id;
+        $attributes['attendance_type'] = $attendanceType;
 
         // Create and return the new attendance record
         return self::create($attributes);

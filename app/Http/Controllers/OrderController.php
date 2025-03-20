@@ -42,6 +42,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $pricing_method = getCalculatingPriceOfOrdersMethod();
+        return $this->orderRepository->storeWithFifo($request);
         if ($pricing_method == 'fifo') {
             return $this->orderRepository->storeWithFifo($request);
         } else if ($pricing_method == 'from_unit_prices') {

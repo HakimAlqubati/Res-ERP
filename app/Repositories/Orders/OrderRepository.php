@@ -31,7 +31,7 @@ class OrderRepository implements OrderRepositoryInterface
         $currnetRole = getCurrentRole();
 
         $query = Order::query();
-        
+
         if ($request->has('customer_id')) {
             $query->where('customer_id', $request->customer_id);
         }
@@ -299,10 +299,20 @@ class OrderRepository implements OrderRepositoryInterface
     public function update($request, $id)
     {
 
+
+
         try {
             // Start a database transaction
             DB::beginTransaction();
 
+            if (auth()->user()->managedStores->count() == 0) {
+                return response()->json([
+                    'success' => false,
+                    'orderId' => null,
+                    'message' => "You Are you Store Keeper",
+                ], 500);
+            }
+            $branchId = auth()->user()->managedStores->first()->id;
             try {
                 // Find the order by the given ID or throw a ModelNotFoundException
                 $order = Order::findOrFail($id);
