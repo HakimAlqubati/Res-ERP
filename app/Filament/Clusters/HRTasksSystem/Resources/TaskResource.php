@@ -128,7 +128,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         // Select Role to assign task
                         Forms\Components\Select::make('role')
                             ->label('Select Role')
-                            ->required()
+                            ->hiddenOn('edit')
                             ->options(function () {
                                 return UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id');
                                 // Fetch all available roles (assuming you have a Role model)
@@ -147,24 +147,26 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 // $set('assigned_to_multi', $users); // Populate the 'assigned_to' field with these users
                             }),
 
+
+                        // Forms\Components\Select::make('assigned_to')
+                        //     ->hidden(fn($get): bool =>  !is_null($get('role')))
+                        //     ->label('Assign to')
+                        //     ->disabledOn('edit')
+                        //     ->required()
+                        //     ->columnSpan(2)
+                        //     ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
+                        //     ->selectablePlaceholder(false),
+                        Toggle::make('is_daily')->live()->default(0)->label('Scheduled task?')
+                            ->disabledOn('edit')->inline(false)
+                            ->hidden(fn(): bool => isStuff()),
                         // The assigned_to field that will populate with users based on the selected role
                         Forms\Components\Select::make('assigned_to_multi')
                             ->label('Assign to')
+                            ->columnSpanFull()
                             ->required()
                             ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
                             ->multiple()  // Allow multiple users to be selected
                             ->searchable(),
-                        Forms\Components\Select::make('assigned_to')
-                            ->hidden(fn($get): bool =>  !is_null($get('role')))
-                            ->label('Assign to')
-                            ->disabledOn('edit')
-                            ->required()
-                            ->columnSpan(2)
-                            ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
-                            ->selectablePlaceholder(false),
-                        Toggle::make('is_daily')->live()->default(0)->label('Scheduled task?')
-                            ->disabledOn('edit')
-                            ->hidden(fn(): bool => isStuff()),
 
                     ]),
                     Fieldset::make()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
