@@ -434,14 +434,14 @@ class SettingResource extends Resource
                                                 ])
                                                 ->required()
                                                 ->default('based_on_specific_time')
-                                                ->reactive()->disabled()
+                                                ->reactive()
                                                 ->columnSpan(1),
 
-                                            TextInput::make('hours_to_allow_login_again')->disabled()
+                                            TextInput::make('hours_to_allow_login_again')
                                                 ->label(__('lang.hours_to_allow_login_again'))
                                                 ->columnSpan(1)
                                                 ->visible(fn($get) => $get('type_reactive_blocked_users') == 'based_on_specific_time')
-                                                ->required()
+                                                
                                                 ->default(1)
                                                 ->numeric(),
                                         ]),
