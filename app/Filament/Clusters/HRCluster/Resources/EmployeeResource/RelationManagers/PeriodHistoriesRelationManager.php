@@ -13,9 +13,14 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Arr;
+use Filament\Actions\Concerns\CanCustomizeProcess;
 
 class PeriodHistoriesRelationManager extends RelationManager
 {
+    use CanCustomizeProcess;
     protected static string $relationship = 'periodHistories';
     protected static ?string $title = 'Shift History';
     public function form(Form $form): Form
@@ -23,19 +28,18 @@ class PeriodHistoriesRelationManager extends RelationManager
         return $form
             ->schema([
                 DatePicker::make('start_date')
-                // ->minDate(function($record){
-                //     return $record->employee->join_date?? now()->toDateString();
-                // })
-                ->required()
-                ,
+                    // ->minDate(function($record){
+                    //     return $record->employee->join_date?? now()->toDateString();
+                    // })
+                    ->required(),
                 DatePicker::make('end_date'),
                 CheckboxList::make('period_days')
-                ->label('Days of Work')
-                ->columns(3)
-                ->options(getDays())
-                ->required()->columnSpanFull()
-                ->bulkToggleable()
-                ->helperText('Select the days this period applies to.'),
+                    ->label('Days of Work')
+                    ->columns(3)
+                    ->options(getDays())
+                    ->required()->columnSpanFull()
+                    ->bulkToggleable()
+                    ->helperText('Select the days this period applies to.'),
                 // TimePicker::make('start_time'),
                 // TimePicker::make('end_time'),
             ]);
@@ -52,9 +56,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),
                 TextColumn::make('end_date')->label('End date')->default('Current date'),
-                TextColumn::make('period_days_val')->label('Days')
-                
-                ,
+                TextColumn::make('period_days_val')->label('Days'),
 
                 // TextColumn::make('creator.name')->label('Created by'),
                 // TextColumn::make('start_time')->label('Start time'),
@@ -68,12 +70,28 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->visible(fn(): bool => (isSuperAdmin() || isBranchManager())),
+                Tables\Actions\EditAction::make()
+                    ->action(function ($record, $data): void {
+                        $recordMonth = date('m', strtotime($record->start_date));
+                        $recordYear = date('Y', strtotime($record->start_date));
+
+                        $endOfMonth = getEndOfMonthDate($recordYear, $recordMonth);
+                        $isSalaryCreatedForEmployee = isSalaryCreatedForEmployee($record->employee_id, $endOfMonth['start_month'], $endOfMonth['end_month']);
+                        // dd($isSalaryCreatedForEmployee,$endOfMonth);
+                        if ($isSalaryCreatedForEmployee) {
+                            Notification::make()->title('Cannot edit because salary is already created')->warning()->send();
+                            return;
+                        }
+                        $record->update($data);
+                    })
+                    ->visible(fn(): bool => (isSuperAdmin() || isBranchManager())),
                 Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
                     ->requiresConfirmation()->databaseTransaction()
-                   ->button()
+                    ->button()
                     ->color(Color::Red)
                     ->action(function ($record) {
+
+
                         $record->update(['active' => 0]);
                         Notification::make()->title('Done')->send();
                     }),

@@ -9,6 +9,7 @@ use App\Models\LeaveType;
 use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
+use App\Models\MonthSalaryDetail;
 use App\Models\WorkPeriod;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 use Carbon\Carbon;
@@ -952,4 +953,40 @@ function calculateTotalMissingHours(array $data)
         'total_minutes' => $totalMissingMinutes,
         'total_hours' => round($totalMissingMinutes / 60, 2), // Optional: Total in fractional hours
     ];
+}
+function getEndOfMonthDate($year = null, $month = null)
+{
+    if (!$year) {
+        $year = date('Y');
+    }
+    if (!$month) {
+        $month = date('m');
+    }
+
+    // Fetch dynamic end-of-month day from settings (default: 30)
+    $day = setting('end_of_month_day', 30);
+
+    // Get the actual last day of the month
+    $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
+
+    // Ensure the selected day does not exceed the last day of the month
+    $endDate = Carbon::createFromDate($year, $month, min($day, $lastDay));
+
+    // Calculate the start date (30 days before the end date)
+    $startDate = $endDate->copy()->subDays(30);
+
+    return [
+        'year' => $year,
+        'start_month' => $startDate->toDateString(),
+        'end_month' => $endDate->toDateString(),
+    ];
+}
+function isSalaryCreatedForEmployee($employeeId, $startDate, $endDate)
+{
+    return MonthSalaryDetail::where('employee_id', $employeeId)
+        ->whereHas('monthSalary', function ($query) use ($startDate, $endDate) {
+            $query->whereDate('start_month', '>=', $startDate)
+                ->whereDate('end_month', '<=', $endDate)
+            ;
+        })->exists();
 }
