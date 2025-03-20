@@ -181,10 +181,10 @@ class AdminPanelProvider extends PanelProvider
         ->id('admin')
             ->default()
             ->path('admin')
-            ->login()
-            // ->login(CustomLogin::class)
-            // ->login(CustomLogin::class)
-            ->defaultThemeMode(ThemeMode::Dark)
+            // ->login()
+            ->login(CustomLogin::class)
+            // ->login(CustomLogin2::class)
+            ->defaultThemeMode(ThemeMode::Light)
             ->colors([
                 'primary' => Color::Green,
                 'danger' => Color::Rose,

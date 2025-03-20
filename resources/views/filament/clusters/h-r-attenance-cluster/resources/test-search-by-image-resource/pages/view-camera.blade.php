@@ -237,6 +237,16 @@
         #icon {
             display: none;
         }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            #videoWrapper, .info-panel {
+                width: 90%;
+            }
+        }
     </style>
 </head>
 

@@ -30,8 +30,13 @@ class CustomLogin extends SimplePage
     use InteractsWithFormActions;
     use WithRateLimiting;
 
-    // protected static string $view = 'filament.login';
-    protected static string $view = 'filament-panels::pages.auth.login';
+    protected static string $view = 'filament.login';
+    // protected static string $view = 'filament-panels::pages.auth.login';
+    protected static ?string $title = null;
+
+    protected ?string $heading = null;
+
+    protected ?string $subheading = null;
 
     /**
      * @return string
@@ -39,6 +44,11 @@ class CustomLogin extends SimplePage
     public function getLayout(): string
     {
         return 'filament-panels::components.layout.base';
+    }
+
+    public function hasLogo(): bool
+    {
+        return false;
     }
     /**
      * @var array<string, mixed> | null
@@ -63,7 +73,7 @@ class CustomLogin extends SimplePage
         // Check if the user is blocked
         if ($this->isBlocked($email, $ipAddress)) {
             throw ValidationException::withMessages([
-                'email' => __('loans.too_many_attempts'),
+                'data.email' => 'User Is Blocked, Multiple Attempts Login',
             ]);
         }
 
@@ -92,7 +102,7 @@ class CustomLogin extends SimplePage
                 'successful' => false,
             ]);
             throw ValidationException::withMessages([
-                'email' => __('filament::login.messages.failed'),
+                'data.email' => __('filament-panels::pages/auth/login.messages.failed'),
             ]);
         }
 
@@ -107,43 +117,12 @@ class CustomLogin extends SimplePage
 
         if (setting('disallow_multi_session') === 1) {
             Auth::logoutOtherDevices($data['password']);
-        }
-
+        } 
         return app(LoginResponse::class);
     }
 
 
-    public function authenticate_old(): ?LoginResponse
-    {
-        try {
-            $this->rateLimit(5);
-        } catch (TooManyRequestsException $exception) {
-            $this->getRateLimitedNotification($exception)?->send();
-
-            return null;
-        }
-
-        $data = $this->form->getState();
-
-        if (! Filament::auth()->attempt($this->getCredentialsFromFormData($data), $data['remember'] ?? false)) {
-            $this->throwFailureValidationException();
-        }
-
-        $user = Filament::auth()->user();
-
-        if (
-            ($user instanceof FilamentUser) &&
-            (! $user->canAccessPanel(Filament::getCurrentPanel()))
-        ) {
-            Filament::auth()->logout();
-
-            $this->throwFailureValidationException();
-        }
-        Auth::logoutOtherDevices($data['password']);
-        session()->regenerate();
-
-        return app(LoginResponse::class);
-    }
+   
 
     protected function getRateLimitedNotification(TooManyRequestsException $exception): ?Notification
     {
@@ -226,15 +205,15 @@ class CustomLogin extends SimplePage
             ->url(filament()->getRegistrationUrl());
     }
 
-    public function getTitle(): string | Htmlable
-    {
-        return __('filament-panels::pages/auth/login.title');
-    }
+    // public function getTitle(): string | Htmlable
+    // {
+    //     return __('filament-panels::pages/auth/login.title');
+    // }
 
-    public function getHeading(): string | Htmlable
-    {
-        return __('filament-panels::pages/auth/login.heading');
-    }
+    // public function getHeading(): string | Htmlable
+    // {
+    //     return __('filament-panels::pages/auth/login.heading');
+    // }
 
     /**
      * @return array<Action | ActionGroup>
