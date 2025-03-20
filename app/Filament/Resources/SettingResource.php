@@ -114,8 +114,7 @@ class SettingResource extends Resource
                                 ]),
                                 Fieldset::make()->label('Salary')->columns(4)->schema([
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
-                                    TextInput::make('end_of_month_day')->label('End of Month Day')
-                                        ->helperText('End of month day to calculate monthly salary')->required(),
+
                                     TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),
                                     TextInput::make('overtime_hour_multiplier')
                                         ->label('Overtime Hour Multiplier')
@@ -134,6 +133,21 @@ class SettingResource extends Resource
                                         ->label('Flix Hours')
                                         ->helperText('No deductions will be applied if the total hours worked equal or exceed the required daily hours')
                                         ->default(false),
+                                    Fieldset::make()->label('End of Month Day')->columnSpanFull()->schema([
+                                        Toggle::make('use_standard_end_of_month')
+                                            ->label('Use Standard End of Month')
+                                            ->inline(false)
+                                            ->live()
+                                            ->helperText('Enable this to use the normal end of month (1st - 30th)')
+                                            ->default(true),
+
+                                        Select::make('end_of_month_day')
+                                            ->label('Custom End of Month Day')
+                                            ->helperText('Select a custom day for the end of the month')
+                                            ->options(array_combine(range(1, 28), range(1, 28))) // Creates options from 1 to 28
+                                            ->visible(fn(Get $get) => !$get('use_standard_end_of_month')) // Only visible if 'use_standard_end_of_month' is false
+                                            ->required(),
+                                    ])
 
                                 ]),
                                 Fieldset::make()->label('Face rekognation settings')

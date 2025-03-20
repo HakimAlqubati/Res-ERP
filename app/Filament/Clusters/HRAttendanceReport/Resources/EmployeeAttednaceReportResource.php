@@ -46,6 +46,8 @@ class EmployeeAttednaceReportResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
+
         return $table
             ->emptyStateHeading('No data')
             ->columns([])
@@ -62,18 +64,32 @@ class EmployeeAttednaceReportResource extends Resource
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
+                // Filter::make('date_range')
+                //     ->form([
+                //         DatePicker::make('start_date')->live()
+                //             ->afterStateUpdated(function (Set $set, $state) {
+                //                 $endNextMonth = Carbon::parse($state)->endOfMonth()->format('Y-m-d');
+                //                 $set('end_date', $endNextMonth);
+                //             })
+                //             ->label('Start Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
+                //         DatePicker::make('end_date')
+                //             ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
+                //             ->label('End Date'),
+                //     ]),
+
                 Filter::make('date_range')
                     ->form([
                         DatePicker::make('start_date')->live()
                             ->afterStateUpdated(function (Set $set, $state) {
-                                $endNextMonth = Carbon::parse($state)->endOfMonth()->format('Y-m-d');
-                                $set('end_date', $endNextMonth);
+                                $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
+                                $set('end_date', $endNextMonthData['end_month']);
                             })
-                            ->label('Start Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
-                        DatePicker::make('end_date')
-                            ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
-                            ->label('End Date'),
+                            ->label('Start Date')
+                            ->default($currentMonthData['start_month']), // Use function for dynamic default value
 
+                        DatePicker::make('end_date')
+                            ->label('End Date')
+                            ->default($currentMonthData['end_month']), // Use function for dynamic default value
                     ]),
                 Filter::make('show_extra_fields')
                     ->label('Show Extra')

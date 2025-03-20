@@ -954,6 +954,35 @@ function calculateTotalMissingHours(array $data)
         'total_hours' => round($totalMissingMinutes / 60, 2), // Optional: Total in fractional hours
     ];
 }
+// function getEndOfMonthDate($year = null, $month = null)
+// {
+//     if (!$year) {
+//         $year = date('Y');
+//     }
+//     if (!$month) {
+//         $month = date('m');
+//     }
+
+//     // Fetch dynamic end-of-month day from settings (default: 30)
+//     $day = setting('end_of_month_day', 30);
+
+//     // Get the actual last day of the month
+//     $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
+
+//     // Ensure the selected day does not exceed the last day of the month
+//     $endDate = Carbon::createFromDate($year, $month, min($day, $lastDay));
+
+//     // Calculate the start date (30 days before the end date)
+//     $startDate = $endDate->copy()->subDays(30);
+
+//     return [
+//         'year' => $year,
+//         'start_month' => $startDate->toDateString(),
+//         'end_month' => $endDate->toDateString(),
+//     ];
+// }
+
+
 function getEndOfMonthDate($year = null, $month = null)
 {
     if (!$year) {
@@ -963,23 +992,74 @@ function getEndOfMonthDate($year = null, $month = null)
         $month = date('m');
     }
 
-    // Fetch dynamic end-of-month day from settings (default: 30)
-    $day = setting('end_of_month_day', 30);
+    // Fetch settings
+    $useStandard = setting('use_standard_end_of_month'); // Default: true (standard month end)
+    $customDay = setting('end_of_month_day', 30); // Default custom end day: 30
+    
+    if ($useStandard) {
 
-    // Get the actual last day of the month
-    $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
+        // Standard mode: Use the actual end of the month (e.g., 28, 30, or 31)
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        // Calculate the start date (30 days before the end date)
+        $startDate = $endDate->copy()->startOfMonth();
+    } else {
+        // Custom mode: Use the user-defined day, ensuring it does not exceed the real last day
+        $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
+        $endDate = Carbon::createFromDate($year, $month, min($customDay, $lastDay));
+        $startDate = $endDate->copy()->subDays(30);
+    }
 
-    // Ensure the selected day does not exceed the last day of the month
-    $endDate = Carbon::createFromDate($year, $month, min($day, $lastDay));
-
-    // Calculate the start date (30 days before the end date)
-    $startDate = $endDate->copy()->subDays(30);
 
     return [
         'year' => $year,
         'start_month' => $startDate->toDateString(),
         'end_month' => $endDate->toDateString(),
     ];
+}
+
+function getMonthOptionsBasedOnSettings()
+{
+    $options = [];
+    $currentDate = Carbon::now();
+    $useStandard = setting('use_standard_end_of_month', true); // Default: true
+
+    for ($i = 0; $i < 12; $i++) {
+        $monthDate = $currentDate->copy()->subMonths($i); // Get past months
+
+        if ($useStandard) {
+            // Standard month format (Full name with year)
+            $monthName = $monthDate->format('F Y');
+            $monthYear = $monthDate->format('F Y');
+            $monthNameOnly = $monthDate->format('F');
+            $options[$monthYear] = $monthName;
+        } else {
+            // Custom Start and End Date Based on end_of_month_day
+            $monthYear = $monthDate->format('F Y');
+
+            $endOfMonthData = getEndOfMonthDate($monthDate->year, $monthDate->month);
+            $formattedPeriod = "{$monthYear} ({$endOfMonthData['start_month']} - {$endOfMonthData['end_month']})";
+
+            $options[$monthYear] = $formattedPeriod;
+        }
+    }
+
+    return $options;
+}
+
+function getMonthOptionsBasedOnWithStatis()
+{
+    $options = [];
+    $currentDate = new \DateTime();
+    for ($i = 0; $i < 12; $i++) {
+        $monthDate = (clone $currentDate)->sub(new \DateInterval("P{$i}M")); // Subtract months
+        $monthName = $monthDate->format('F Y'); // Full month name with year
+        $monthNameOnly = $monthDate->format('F'); // Full month name
+        // $monthValue = $monthDate->format('Y-m'); // Value in Y-m format
+
+        $options[$monthNameOnly] = $monthName;
+    }
+
+    return $options;
 }
 function isSalaryCreatedForEmployee($employeeId, $startDate, $endDate)
 {

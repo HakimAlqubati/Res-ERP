@@ -56,6 +56,7 @@ class MonthSalaryResource extends Resource
 
     public static function form(Form $form): Form
     {
+        // dd(getMonthOptionsBasedOnSettings(), getMonthOptionsBasedOnWithStatis(), getEndOfMonthDate(2025,3));
         // dd(getMonthsArray2());
         return $form
             ->schema([
@@ -76,20 +77,22 @@ class MonthSalaryResource extends Resource
                         ->helperText('Please, choose a branch'),
                     Select::make('name')->label('Month')->hiddenOn('view')
                         ->required()
-                        ->options(function () {
-                            $options = [];
-                            $currentDate = new \DateTime();
-                            for ($i = 0; $i < 12; $i++) {
-                                $monthDate = (clone $currentDate)->sub(new \DateInterval("P{$i}M")); // Subtract months
-                                $monthName = $monthDate->format('F Y'); // Full month name with year
-                                $monthNameOnly = $monthDate->format('F'); // Full month name
-                                // $monthValue = $monthDate->format('Y-m'); // Value in Y-m format
+                        // ->options(function () {
+                        //     $options = [];
+                        //     $currentDate = new \DateTime();
+                        //     for ($i = 0; $i < 12; $i++) {
+                        //         $monthDate = (clone $currentDate)->sub(new \DateInterval("P{$i}M")); // Subtract months
+                        //         $monthName = $monthDate->format('F Y'); // Full month name with year
+                        //         $monthNameOnly = $monthDate->format('F'); // Full month name
+                        //         // $monthValue = $monthDate->format('Y-m'); // Value in Y-m format
 
-                                $options[$monthNameOnly] = $monthName;
-                            }
+                        //         $options[$monthNameOnly] = $monthName;
+                        //     }
 
-                            return $options;
-                        })
+                        //     return $options;
+                        // })
+                        ->options(fn() => getMonthOptionsBasedOnSettings()) // Use the helper function
+
                         // ->searchable()
                         ->default(now()->format('F')),
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),

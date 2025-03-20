@@ -23,16 +23,21 @@ class CreateMonthSalary extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $monthsArray = explode(' ', $data['name']);
+        $year = $monthsArray[1];
+        $monthName = $monthsArray[0];
 
-        $monthsArray = getMonthsArray2();
+        // Get start and end dates based on settings
+        $monthData = getEndOfMonthDate($year, Carbon::parse($monthName)->month);
+        // Set start and end month dynamically
+        $data['start_month'] = $monthData['start_month'];
+        $data['end_month'] = $monthData['end_month'];
 
-        if (array_key_exists($data['name'], $monthsArray)) {
-            $data['start_month'] = $monthsArray[$data['name']]['start_month'];
-            $monthYear = Carbon::parse($data['start_month'])->format('Y-m');
-            $data['end_month'] = $monthsArray[$data['name']]['end_month'];
-            $data['name'] = 'Salary of month (' . $monthsArray[$data['name']]['name'] . ')';
-            $data['month'] = $monthYear;
-        }
+
+        $monthYear = Carbon::parse($data['end_month'])->format('Y-m');
+        $data['month'] = $monthYear;
+
+        $data['name'] = 'Salary of ' . $monthName . $year;
 
         $isExist = MonthSalary::withTrashed()
             ->where('month', $data['month'])->where('branch_id', $data['branch_id'])->first();
@@ -60,7 +65,7 @@ class CreateMonthSalary extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $branchEmployees = Employee::where('active', 1)
+        $branchEmployees = Employee::where('active', 1)->where('id', 88)
             ->where('branch_id', $this->record->branch_id)
             ->select('id')
             ->get();
