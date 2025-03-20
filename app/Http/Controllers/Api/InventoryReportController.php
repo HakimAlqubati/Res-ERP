@@ -46,7 +46,9 @@ class InventoryReportController extends Controller
         if (!empty($productId)) {
             $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
             $reportData = $rawData->through(function ($item) {
+                
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
+                $item->unit->name;
                 return $item;
             });
         }
