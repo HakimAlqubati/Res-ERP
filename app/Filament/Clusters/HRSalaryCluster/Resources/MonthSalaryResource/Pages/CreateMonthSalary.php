@@ -65,7 +65,7 @@ class CreateMonthSalary extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $branchEmployees = Employee::where('active', 1)->where('id', 88)
+        $branchEmployees = Employee::where('active', 1)
             ->where('branch_id', $this->record->branch_id)
             ->select('id')
             ->get();

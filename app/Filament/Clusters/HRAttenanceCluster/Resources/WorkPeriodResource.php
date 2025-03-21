@@ -106,10 +106,10 @@ class WorkPeriodResource extends Resource
                         ->columnSpan(1)
                         ->required(),
 
-                    Forms\Components\TextInput::make('allowed_count_minutes_late')
-                        ->label('Allowed Delay (Minutes)')->required()->default(0)
-                        ->columnSpan(1)
-                        ->numeric(),
+                    // Forms\Components\TextInput::make('allowed_count_minutes_late')
+                    //     ->label('Allowed Delay (Minutes)')->required()->default(0)
+                    //     ->columnSpan(1)
+                    //     ->numeric(),
                 ]),
 
             ]),
@@ -193,9 +193,9 @@ class WorkPeriodResource extends Resource
                                     ->options(Branch::where('active', 1)->pluck('name', 'id'))
                                     ->label('Branch')
                                     ->default($record->branch_id),
-                                Forms\Components\TextInput::make('allowed_count_minutes_late')
-                                    ->label('Allowed Delay (Minutes)')
-                                    ->default($record->allowed_count_minutes_late),
+                                // Forms\Components\TextInput::make('allowed_count_minutes_late')
+                                //     ->label('Allowed Delay (Minutes)')
+                                //     ->default($record->allowed_count_minutes_late),
                             ]),
                         ];
                     })
@@ -209,7 +209,7 @@ class WorkPeriodResource extends Resource
                         $newRecord->start_at = $data['start_at'];
                         $newRecord->end_at = $data['end_at'];
                         $newRecord->branch_id = $data['branch_id'];
-                        $newRecord->allowed_count_minutes_late = $data['allowed_count_minutes_late'];
+                        // $newRecord->allowed_count_minutes_late = $data['allowed_count_minutes_late'];
 
                         $newRecord->save();
                     })

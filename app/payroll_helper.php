@@ -994,8 +994,8 @@ function getEndOfMonthDate($year = null, $month = null)
 
     // Fetch settings
     $useStandard = setting('use_standard_end_of_month'); // Default: true (standard month end)
-    $customDay = setting('end_of_month_day', 30); // Default custom end day: 30
-    
+    $customDay = setting('end_of_month_day'); // Default custom end day: 30
+
     if ($useStandard) {
 
         // Standard mode: Use the actual end of the month (e.g., 28, 30, or 31)
@@ -1006,7 +1006,11 @@ function getEndOfMonthDate($year = null, $month = null)
         // Custom mode: Use the user-defined day, ensuring it does not exceed the real last day
         $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
         $endDate = Carbon::createFromDate($year, $month, min($customDay, $lastDay));
-        $startDate = $endDate->copy()->subDays(30);
+        $endTemp = $endDate->copy(); // Creates a separate instance
+        $previousMonth = $endTemp->subMonth(); // This no longer affects $endDate
+        $daysInMonth = $previousMonth->daysInMonth; // Get the days in the previous month
+        $daysInMonth -= 1;
+        $startDate = $endDate->copy()->subDays($daysInMonth);
     }
 
 

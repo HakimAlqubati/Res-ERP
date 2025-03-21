@@ -56,7 +56,7 @@ class MonthSalaryResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // dd(getMonthOptionsBasedOnSettings(), getMonthOptionsBasedOnWithStatis(), getEndOfMonthDate(2025,3));
+        // dd(getMonthOptionsBasedOnSettings());
         // dd(getMonthsArray2());
         return $form
             ->schema([

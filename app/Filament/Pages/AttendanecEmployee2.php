@@ -546,7 +546,8 @@ class AttendanecEmployee2 extends BasePage
 
 
         // dd($allowedTimeBeforePeriod,$checkTime?->toTimeString());
-        $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
+        // $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
+        $allowedLateMinutes = setting('early_attendance_minutes');
         // $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
         $startTime = \Carbon\Carbon::parse($date . ' ' . $nearestPeriod->start_at);
 
