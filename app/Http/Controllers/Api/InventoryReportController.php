@@ -49,6 +49,8 @@ class InventoryReportController extends Controller
                 
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 $item->unit->name;
+                $item->movement_date = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
+                $item->transaction_date = \Carbon\Carbon::parse($item->transaction_date)->format('Y-m-d'); // force it here
                 return $item;
             });
         }
