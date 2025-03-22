@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Mail\MailableEmployee;
 use App\Traits\DynamicConnection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -557,6 +559,24 @@ class Employee extends Model implements Auditable
                     // Update the previous branch log with the 'end_at' timestamp
                     $previousBranchLog->update(['end_at' => now()]);
                 }
+            }
+        });
+        // 👇 New logic: after creating employee, create user
+        static::created(function ($employee) {
+            // Only create user if not already linked
+            if (!$employee->user_id) {
+                $user = \App\Models\User::create([
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'password' => bcrypt('123456'),
+                ]);
+
+                // Assign the user to employee
+                $employee->user_id = $user->id;
+                $employee->save();
+                $user->assignRole(8);
+                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email, ));
+
             }
         });
     }

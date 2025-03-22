@@ -260,7 +260,7 @@ class EmployeeResource extends Resource
                                                 // }
                                                 return  Department::where('active', 1)
                                                     ->select('id', 'name')->get()->pluck('name', 'id');
-                                            }),
+                                            })->hidden(),
                                         DatePicker::make('join_date')
                                             ->default(now())
                                             ->columnSpan(1)->label('Start date')->required()

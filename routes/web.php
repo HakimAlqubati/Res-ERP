@@ -13,6 +13,8 @@ use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestController3;
+use App\Mail\MailableEmployee;
+use App\Mail\TestEmail;
 use App\Models\Approval;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -27,6 +29,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Multitenancy\Contracts\IsTenant;
@@ -662,3 +665,7 @@ Route::get('getAttendancesLateArrival', function () {
 Route::get('/printStock', [TestController3::class, 'printStock']);
 
 Route::get('oddAttendances', [TestController3::class, 'getEmployeesWithOddAttendances']);
+Route::get('/testMail/{name}/{email}', function ($name, $email) {
+    // The email sending is done using the to method on the Mail facade
+    Mail::to($email)->send(new TestEmail($name, $email));
+});
