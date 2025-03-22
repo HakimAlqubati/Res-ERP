@@ -17,11 +17,14 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('inspire')->hourly();
-        $schedule->command('app:schedule-task')->dailyAt('06:00');
-        $schedule->command('report:send-absent-employees')->dailyAt('10:00');
-        $schedule->call('test:cron')->everyMinute();
-        
+        // $schedule->command('inspire')->hourly();
+        // $schedule->command('app:schedule-task')->dailyAt('06:00');
+        // $schedule->command('app:schedule-task')->everyMinute();
+        // $schedule->command('report:send-absent-employees')->dailyAt('10:00');
+        // $schedule->call('test:cron')->everyMinute();
+        $schedule->call(function () {
+             Log::info('Scheduled task ran at ' . now());
+        })->everyMinute();
         // $schedule->job(new TestCronJob)->everyTwentySeconds();
         // $schedule->call(function () {
         //     Log::info('Scheduler is working');

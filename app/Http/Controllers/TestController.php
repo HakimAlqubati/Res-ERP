@@ -21,6 +21,7 @@ class TestController extends Controller
         $weeklyTasks = $this->getScheduleTasksWeekly($date);
 
         $dailyTasks = $this->getScheduleTasksDaily($date);
+        
         $monthlyTasks = $this->getScheduleTasksMonthly($date);
         // return $monthlyTasks;
         $handledSchedulesWeekly = $this->handleScheuleTasks($weeklyTasks, $date);

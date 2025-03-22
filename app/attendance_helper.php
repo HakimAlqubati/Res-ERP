@@ -11,133 +11,140 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-function formatDuration($duration)
-{
-    // Check if the duration is null or an empty string
-    if (is_null($duration) || $duration === '') {
-        return '0 h 0 m'; // Default value for null duration
+if (!function_exists('formatDuration')) {
+
+    function formatDuration($duration)
+    {
+        // Check if the duration is null or an empty string
+        if (is_null($duration) || $duration === '') {
+            return '0 h 0 m'; // Default value for null duration
+        }
+
+        // Split the duration string by colon
+        list($hours, $minutes, $seconds) = explode(':', $duration);
+
+        // Return the formatted string
+        return "{$hours} h " . (int) $minutes . " m"; // Cast minutes to int to avoid any zero-padding
     }
-
-    // Split the duration string by colon
-    list($hours, $minutes, $seconds) = explode(':', $duration);
-
-    // Return the formatted string
-    return "{$hours} h " . (int) $minutes . " m"; // Cast minutes to int to avoid any zero-padding
 }
 
 
 /**
  * to get employee periods based on history
  */
-function getEmployeePeriods($employeeId, $startDate, $endDate): Collection
-{
-    // Fetch periods from hr_employee_period_histories based on employee_id and date range
-    $periods = EmployeePeriodHistory::select(
-        DB::raw("TIME(start_date) as start_at"), // Extract time from start_date
-        DB::raw("TIME(end_date) as end_at"), // Extract time from end_date
-        'period_id'
-    )
-        ->where('employee_id', $employeeId)
-        ->whereBetween('start_date', [$startDate, $endDate])
-        ->get();
-
-    // Format the results to match the specified structure
-    return $periods->map(function ($period) {
-        return (object) [
-            'start_at' => $period->start_at,
-            'end_at' => $period->end_at,
-            'period_id' => $period->period_id,
-        ];
-    });
-}
-
-function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate): Collection
-{
-    // Initialize a collection to hold the results, grouped by date
-    $groupedPeriods = collect();
-
-    // Loop through each date in the date range
-    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
-        // Fetch periods that include the current date
-        $periods = EmployeePeriodHistory::select('period_id', 'start_date', 'end_date', 'start_time', 'end_time')
+if (!function_exists('getEmployeePeriods')) {
+    function getEmployeePeriods($employeeId, $startDate, $endDate): Collection
+    {
+        // Fetch periods from hr_employee_period_histories based on employee_id and date range
+        $periods = EmployeePeriodHistory::select(
+            DB::raw("TIME(start_date) as start_at"), // Extract time from start_date
+            DB::raw("TIME(end_date) as end_at"), // Extract time from end_date
+            'period_id'
+        )
             ->where('employee_id', $employeeId)
-            ->where('active', 1)
-            ->where(function ($query) use ($date) {
-                $query->where('start_date', '<=', $date) // Period starts before or on the date
-                    ->where(function ($subQuery) use ($date) {
-                        $subQuery->where('end_date', '>=', $date) // Period ends after or on the date
-                            ->orWhereNull('end_date'); // Active periods without an end date
-                    });
-            })
+            ->whereBetween('start_date', [$startDate, $endDate])
             ->get();
 
-        // If there are periods for the current date, group them under that date
-        if ($periods->isNotEmpty()) {
-            $groupedPeriods->put($date->toDateString(), $periods->map(function ($period) {
-                return [
-                    'period_id' => $period->period_id,
-                    'start_date' => $period->start_date,
-                    'end_date' => $period->end_date,
-                    'start_at' => $period->start_time,
-                    'end_at' => $period->end_time,
-                ];
-            }));
-        }
+        // Format the results to match the specified structure
+        return $periods->map(function ($period) {
+            return (object) [
+                'start_at' => $period->start_at,
+                'end_at' => $period->end_at,
+                'period_id' => $period->period_id,
+            ];
+        });
     }
-    return $groupedPeriods;
 }
+if (!function_exists('getPeriodsForDateRange')) {
+    function getPeriodsForDateRange($employeeId, Carbon $startDate, Carbon $endDate): Collection
+    {
+        // Initialize a collection to hold the results, grouped by date
+        $groupedPeriods = collect();
 
+        // Loop through each date in the date range
+        for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
+            // Fetch periods that include the current date
+            $periods = EmployeePeriodHistory::select('period_id', 'start_date', 'end_date', 'start_time', 'end_time')
+                ->where('employee_id', $employeeId)
+                ->where('active', 1)
+                ->where(function ($query) use ($date) {
+                    $query->where('start_date', '<=', $date) // Period starts before or on the date
+                        ->where(function ($subQuery) use ($date) {
+                            $subQuery->where('end_date', '>=', $date) // Period ends after or on the date
+                                ->orWhereNull('end_date'); // Active periods without an end date
+                        });
+                })
+                ->get();
+
+            // If there are periods for the current date, group them under that date
+            if ($periods->isNotEmpty()) {
+                $groupedPeriods->put($date->toDateString(), $periods->map(function ($period) {
+                    return [
+                        'period_id' => $period->period_id,
+                        'start_date' => $period->start_date,
+                        'end_date' => $period->end_date,
+                        'start_at' => $period->start_time,
+                        'end_at' => $period->end_time,
+                    ];
+                }));
+            }
+        }
+        return $groupedPeriods;
+    }
+}
 /**
  * to return the employees that absent in specific day, or maybe forget checkin
  */
-function reportAbsentEmployees($date, $branchId, $currentTime)
-{
-    $employees = Employee::where('branch_id', $branchId)
-        ->with(['periods' => function ($query) {
-            $query->select('hr_work_periods.id', 'hr_work_periods.name', 'hr_work_periods.start_at', 'hr_work_periods.end_at')
-                ->whereNull('hr_work_periods.deleted_at');
-        }])
-        ->select('id', 'name', 'employee_no', 'branch_id')
-        ->get();
+if (!function_exists('reportAbsentEmployees')) {
+    function reportAbsentEmployees($date, $branchId, $currentTime)
+    {
+        $employees = Employee::where('branch_id', $branchId)
+            ->with(['periods' => function ($query) {
+                $query->select('hr_work_periods.id', 'hr_work_periods.name', 'hr_work_periods.start_at', 'hr_work_periods.end_at')
+                    ->whereNull('hr_work_periods.deleted_at');
+            }])
+            ->select('id', 'name', 'employee_no', 'branch_id')
+            ->get();
 
-    $absentEmployees = [];
+        $absentEmployees = [];
 
-    // Loop through employees and check if they have attendance for the date
-    foreach ($employees as $employee) {
-        $attendance = $employee->attendancesByDate($date)->exists();
-        $isPeriodEnded = false;
+        // Loop through employees and check if they have attendance for the date
+        foreach ($employees as $employee) {
+            $attendance = $employee->attendancesByDate($date)->exists();
+            $isPeriodEnded = false;
 
-        // Check if any of the periods' end time is less than the current time
-        foreach ($employee->periods as $period) {
-            if ($date == now()->toDateString()) {
-                if ($currentTime > $period->start_at) {
+            // Check if any of the periods' end time is less than the current time
+            foreach ($employee->periods as $period) {
+                if ($date == now()->toDateString()) {
+                    if ($currentTime > $period->start_at) {
+                        $isPeriodEnded = true;
+                        break;
+                    }
+                } else if (now()->toDateString() > $date) {
                     $isPeriodEnded = true;
                     break;
                 }
-            } else if (now()->toDateString() > $date) {
-                $isPeriodEnded = true;
-                break;
+            }
+
+            // If the employee is absent and period has ended, add to absentEmployees
+            if (!$attendance && $isPeriodEnded) {
+                $absentEmployees[] = [
+                    'name' => $employee->name,
+                    'employee_no' => $employee->employee_no,
+                    'periods' => $employee->periods->map(function ($period) {
+                        return [
+                            'id' => $period->id,
+                            'name' => $period->name,
+                            'start_at' => $period->start_at,
+                            'end_at' => $period->end_at,
+                        ];
+                    })
+                ];
             }
         }
 
-        // If the employee is absent and period has ended, add to absentEmployees
-        if (!$attendance && $isPeriodEnded) {
-            $absentEmployees[] = [
-                'name' => $employee->name,
-                'employee_no' => $employee->employee_no,
-                'periods' => $employee->periods->map(function ($period) {
-                    return [
-                        'id' => $period->id,
-                        'name' => $period->name,
-                        'start_at' => $period->start_at,
-                        'end_at' => $period->end_at,
-                    ];
-                })
-            ];
-        }
+        return $absentEmployees;
     }
-
-    return $absentEmployees;
 }
 
 if (!function_exists('ordinal')) {
@@ -151,662 +158,340 @@ if (!function_exists('ordinal')) {
 /**
  * to get employee periods
  */
-function searchEmployeePeriod($employee, $time, $day, $checkType)
-{
-    // Decode the days array for each period
-    $workTimePeriods = $employee->periods->map(function ($period) {
-        $period->days = json_decode($period->days); // Ensure days are decoded
-        return $period;
-    });
+if (!function_exists('searchEmployeePeriod')) {
+    function searchEmployeePeriod($employee, $time, $day, $checkType)
+    {
+        // Decode the days array for each period
+        $workTimePeriods = $employee->periods->map(function ($period) {
+            $period->days = json_decode($period->days); // Ensure days are decoded
+            return $period;
+        });
 
-    // Filter periods by the day
-    $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-        return in_array($day, $period->days);
-    });
+        // Filter periods by the day
+        $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+            return in_array($day, $period->days);
+        });
 
-    // Check if no periods are found for the given day
-    if ($periodsForDay->isEmpty()) {
-        return "There is no period for today.";
-    }
-
-    // Convert the input time to a Carbon instance
-    $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
-
-    // Sort periods based on proximity to check-in or check-out
-    $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
-        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
-        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
-
-        if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
-            // For check-in, find the nearest start time
-            return abs($checkTime->diffInMinutes($startTime, false));
-        } elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
-            // For check-out, find the nearest end time
-            return abs($checkTime->diffInMinutes($endTime, false));
+        // Check if no periods are found for the given day
+        if ($periodsForDay->isEmpty()) {
+            return "There is no period for today.";
         }
 
-        return PHP_INT_MAX;
-    })->first();
+        // Convert the input time to a Carbon instance
+        $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
 
-    // If no period is found based on proximity
-    if (!$nearestPeriod) {
-        return "There is no period that matches your check-in/check-out time.";
+        // Sort periods based on proximity to check-in or check-out
+        $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
+            $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
+            $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
+
+            if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
+                // For check-in, find the nearest start time
+                return abs($checkTime->diffInMinutes($startTime, false));
+            } elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
+                // For check-out, find the nearest end time
+                return abs($checkTime->diffInMinutes($endTime, false));
+            }
+
+            return PHP_INT_MAX;
+        })->first();
+
+        // If no period is found based on proximity
+        if (!$nearestPeriod) {
+            return "There is no period that matches your check-in/check-out time.";
+        }
+
+        // Determine whether the check is early or late, and calculate the number of minutes
+        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $nearestPeriod->start_at);
+        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at);
+
+        $minutesDifference = 0;
+        $checkStatus = '';
+
+        if ($checkType == 'checkin') {
+            // Check if it's an early or late check-in
+            $minutesDifference = $checkTime->diffInMinutes($startTime, false);
+            $checkStatus = $minutesDifference < 0 ? 'early' : 'late';
+            $minutesDifference = abs($minutesDifference); // Get the absolute number of minutes
+        } elseif ($checkType == 'checkout') {
+            // Check if it's an early or late check-out
+            $minutesDifference = $checkTime->diffInMinutes($endTime, false);
+            $checkStatus = $minutesDifference > 0 ? 'late' : 'early';
+            $minutesDifference = abs($minutesDifference); // Get the absolute number of minutes
+        }
+
+        // Return the data in the requested format
+        return [
+            'id' => $nearestPeriod->id,
+            'name' => $nearestPeriod->name,
+            'start_at' => $nearestPeriod->start_at,
+            'end_at' => $nearestPeriod->end_at,
+            'allowed_count_minutes_late' => $nearestPeriod->allowed_count_minutes_late,
+            'check_type' => $checkType,
+            'status' => $checkStatus, // Whether the check-in/out was early or late
+            'minutes_difference' => $minutesDifference, // How many minutes early or late
+        ];
     }
-
-    // Determine whether the check is early or late, and calculate the number of minutes
-    $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $nearestPeriod->start_at);
-    $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at);
-
-    $minutesDifference = 0;
-    $checkStatus = '';
-
-    if ($checkType == 'checkin') {
-        // Check if it's an early or late check-in
-        $minutesDifference = $checkTime->diffInMinutes($startTime, false);
-        $checkStatus = $minutesDifference < 0 ? 'early' : 'late';
-        $minutesDifference = abs($minutesDifference); // Get the absolute number of minutes
-    } elseif ($checkType == 'checkout') {
-        // Check if it's an early or late check-out
-        $minutesDifference = $checkTime->diffInMinutes($endTime, false);
-        $checkStatus = $minutesDifference > 0 ? 'late' : 'early';
-        $minutesDifference = abs($minutesDifference); // Get the absolute number of minutes
-    }
-
-    // Return the data in the requested format
-    return [
-        'id' => $nearestPeriod->id,
-        'name' => $nearestPeriod->name,
-        'start_at' => $nearestPeriod->start_at,
-        'end_at' => $nearestPeriod->end_at,
-        'allowed_count_minutes_late' => $nearestPeriod->allowed_count_minutes_late,
-        'check_type' => $checkType,
-        'status' => $checkStatus, // Whether the check-in/out was early or late
-        'minutes_difference' => $minutesDifference, // How many minutes early or late
-    ];
 }
-
 /**
  * to attendance employee
  */
 // function attendanceEmployee($employee, $time, $day, $checkType,$checkDate)
-function attendanceEmployee($employee, $time, $day, $checkType, $checkDate)
-{
-    // Decode the days array for each period
-    $workTimePeriods = $employee->periods->map(function ($period) {
-        $period->days = json_decode($period->days); // Ensure days are decoded
-        return $period;
-    });
+if (!function_exists('attendanceEmployee')) {
+    function attendanceEmployee($employee, $time, $day, $checkType, $checkDate)
+    {
+        // Decode the days array for each period
+        $workTimePeriods = $employee->periods->map(function ($period) {
+            $period->days = json_decode($period->days); // Ensure days are decoded
+            return $period;
+        });
 
-    // Filter periods by the day
-    $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-        return in_array($day, $period->days);
-    });
+        // Filter periods by the day
+        $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
+            return in_array($day, $period->days);
+        });
 
-    // Check if no periods are found for the given day
-    if ($periodsForDay->isEmpty()) {
-        return "There is no period for today.";
-    }
-
-    // Convert the input time to a Carbon instance
-    $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
-
-    // Sort periods based on proximity to check-in or check-out
-    $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
-        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
-        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
-
-        if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
-            // For check-in, find the nearest start time
-            return abs($checkTime->diffInMinutes($startTime, false));
-        } elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
-            // For check-out, find the nearest end time
-            return abs($checkTime->diffInMinutes($endTime, false));
+        // Check if no periods are found for the given day
+        if ($periodsForDay->isEmpty()) {
+            return "There is no period for today.";
         }
 
-        return PHP_INT_MAX;
-    })->first();
+        // Convert the input time to a Carbon instance
+        $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
 
-    // If no period is found based on proximity
-    if (!$nearestPeriod) {
-        return "There is no period that matches your check-in/check-out time.";
-    }
+        // Sort periods based on proximity to check-in or check-out
+        $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
+            $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
+            $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
 
-    // Prepare data array
-    $data = [];
-    $data['period_id'] = $nearestPeriod->id;
-    $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
-    $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-    $endTime = \Carbon\Carbon::parse($nearestPeriod->end_at);
-
-    // Handle check-in scenario
-    if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
-        if ($checkTime->gt($startTime)) {
-            // Employee is late
-            $data['delay_minutes'] = $startTime->diffInMinutes($checkTime);
-            $data['early_arrival_minutes'] = 0;
-            if ($allowedLateMinutes > 0) {
-                $data['status'] = ($data['delay_minutes'] <= $allowedLateMinutes) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_LATE_ARRIVAL;
-            } else {
-                $data['status'] = Attendance::STATUS_LATE_ARRIVAL;
+            if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
+                // For check-in, find the nearest start time
+                return abs($checkTime->diffInMinutes($startTime, false));
+            } elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
+                // For check-out, find the nearest end time
+                return abs($checkTime->diffInMinutes($endTime, false));
             }
-        } else {
-            // Employee is early
+
+            return PHP_INT_MAX;
+        })->first();
+
+        // If no period is found based on proximity
+        if (!$nearestPeriod) {
+            return "There is no period that matches your check-in/check-out time.";
+        }
+
+        // Prepare data array
+        $data = [];
+        $data['period_id'] = $nearestPeriod->id;
+        $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
+        $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
+        $endTime = \Carbon\Carbon::parse($nearestPeriod->end_at);
+
+        // Handle check-in scenario
+        if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
+            if ($checkTime->gt($startTime)) {
+                // Employee is late
+                $data['delay_minutes'] = $startTime->diffInMinutes($checkTime);
+                $data['early_arrival_minutes'] = 0;
+                if ($allowedLateMinutes > 0) {
+                    $data['status'] = ($data['delay_minutes'] <= $allowedLateMinutes) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_LATE_ARRIVAL;
+                } else {
+                    $data['status'] = Attendance::STATUS_LATE_ARRIVAL;
+                }
+            } else {
+                // Employee is early
+                $data['delay_minutes'] = 0;
+                $data['early_arrival_minutes'] = $checkTime->diffInMinutes($startTime);
+                $data['status'] = ($data['early_arrival_minutes'] == 0) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_EARLY_ARRIVAL;
+            }
+            $data['late_departure_minutes'] = 0; // Initialize for check-in
+        }
+
+        // Handle check-out scenario
+        elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
+            // Find the corresponding check-in record
+            $checkinRecord = Attendance::where('employee_id', $employee->id)
+                ->where('period_id', $data['period_id'])
+                ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                ->whereDate('check_date', $checkDate) // Use the provided check date
+                ->first();
+
+            if ($checkinRecord) {
+                $checkinTime = \Carbon\Carbon::parse($checkinRecord->check_time);
+
+                // Calculate the actual duration (from check-in to check-out)
+                $actualDuration = $checkinTime->diff($checkTime);
+                $hoursActual = $actualDuration->h;
+                $minutesActual = $actualDuration->i;
+
+                // Calculate the supposed duration (from period start to end)
+                $supposedDuration = $startTime->diff($endTime);
+                $hoursSupposed = $supposedDuration->h;
+                $minutesSupposed = $supposedDuration->i;
+
+                // Store both durations in a format like "hours:minutes"
+                $data['actual_duration_hourly'] = sprintf('%02d:%02d', $hoursActual, $minutesActual);
+                $data['supposed_duration_hourly'] = sprintf('%02d:%02d', $hoursSupposed, $minutesSupposed);
+            }
+
+            // Calculate late departure or early departure
+            if ($checkTime->gt($endTime)) {
+                // Late departure
+                $data['late_departure_minutes'] = $endTime->diffInMinutes($checkTime);
+                $data['early_departure_minutes'] = 0;
+                $data['status'] = Attendance::STATUS_LATE_DEPARTURE;
+            } else {
+                // Early departure
+                $data['late_departure_minutes'] = 0;
+                $data['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
+                $data['status'] = Attendance::STATUS_EARLY_DEPARTURE;
+            }
+            $data['delay_minutes'] = 0; // Initialize for check-out
+        }
+
+        // Handle case where no matching period is found
+        else {
+            $data['period_id'] = 0;
             $data['delay_minutes'] = 0;
-            $data['early_arrival_minutes'] = $checkTime->diffInMinutes($startTime);
-            $data['status'] = ($data['early_arrival_minutes'] == 0) ? Attendance::STATUS_ON_TIME : Attendance::STATUS_EARLY_ARRIVAL;
-        }
-        $data['late_departure_minutes'] = 0; // Initialize for check-in
-    }
-
-    // Handle check-out scenario
-    elseif ($checkType == Attendance::CHECKTYPE_CHECKOUT) {
-        // Find the corresponding check-in record
-        $checkinRecord = Attendance::where('employee_id', $employee->id)
-            ->where('period_id', $data['period_id'])
-            ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-            ->whereDate('check_date', $checkDate) // Use the provided check date
-            ->first();
-
-        if ($checkinRecord) {
-            $checkinTime = \Carbon\Carbon::parse($checkinRecord->check_time);
-
-            // Calculate the actual duration (from check-in to check-out)
-            $actualDuration = $checkinTime->diff($checkTime);
-            $hoursActual = $actualDuration->h;
-            $minutesActual = $actualDuration->i;
-
-            // Calculate the supposed duration (from period start to end)
-            $supposedDuration = $startTime->diff($endTime);
-            $hoursSupposed = $supposedDuration->h;
-            $minutesSupposed = $supposedDuration->i;
-
-            // Store both durations in a format like "hours:minutes"
-            $data['actual_duration_hourly'] = sprintf('%02d:%02d', $hoursActual, $minutesActual);
-            $data['supposed_duration_hourly'] = sprintf('%02d:%02d', $hoursSupposed, $minutesSupposed);
-        }
-
-        // Calculate late departure or early departure
-        if ($checkTime->gt($endTime)) {
-            // Late departure
-            $data['late_departure_minutes'] = $endTime->diffInMinutes($checkTime);
-            $data['early_departure_minutes'] = 0;
-            $data['status'] = Attendance::STATUS_LATE_DEPARTURE;
-        } else {
-            // Early departure
+            $data['early_arrival_minutes'] = 0;
             $data['late_departure_minutes'] = 0;
-            $data['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
-            $data['status'] = Attendance::STATUS_EARLY_DEPARTURE;
+            $data['early_departure_minutes'] = 0;
         }
-        $data['delay_minutes'] = 0; // Initialize for check-out
-    }
 
-    // Handle case where no matching period is found
-    else {
-        $data['period_id'] = 0;
-        $data['delay_minutes'] = 0;
-        $data['early_arrival_minutes'] = 0;
-        $data['late_departure_minutes'] = 0;
-        $data['early_departure_minutes'] = 0;
+        // Return the processed data
+        return $data;
     }
-
-    // Return the processed data
-    return $data;
 }
-
 /**
  * to get employee attendances
  */
+if (!function_exists('employeeAttendances')) {
+    function employeeAttendances($employeeId, $startDate, $endDate)
+    {
+        // Convert the dates to Carbon instances for easier manipulation
+        $startDate = Carbon::parse($startDate);
+        $endDate = Carbon::parse($endDate);
 
-function employeeAttendances($employeeId, $startDate, $endDate)
-{
-    // Convert the dates to Carbon instances for easier manipulation
-    $startDate = Carbon::parse($startDate);
-    $endDate = Carbon::parse($endDate);
+        // Get weekend days from the WeeklyHoliday model
+        $weekend_days = json_decode(WeeklyHoliday::select('days')?->first()?->days);
 
-    // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')?->first()?->days);
+        // Fetch holidays within the date range
+        $holidays = Holiday::where('active', 1)
+            ->whereBetween('from_date', [$startDate, $endDate])
+            ->orWhereBetween('to_date', [$startDate, $endDate])
+            ->select('from_date', 'to_date', 'count_days', 'name')
+            ->get()
+            ->keyBy('from_date');
 
-    // Fetch holidays within the date range
-    $holidays = Holiday::where('active', 1)
-        ->whereBetween('from_date', [$startDate, $endDate])
-        ->orWhereBetween('to_date', [$startDate, $endDate])
-        ->select('from_date', 'to_date', 'count_days', 'name')
-        ->get()
-        ->keyBy('from_date');
-
-    // Fetch leave applications within the date range
-    $employee = Employee::find($employeeId);
-
-
-    // dd($leaveApplications);
-    $leaveApplications =  $employee?->approvedLeaveApplications()
-        ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
-        ->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('hr_leave_requests.start_date', [$startDate, $endDate])
-                ->orWhereBetween('hr_leave_requests.end_date', [$startDate, $endDate]);
-        })
-        ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
-        ->select(
-            'hr_leave_requests.start_date as from_date',
-            'hr_leave_requests.end_date as to_date',
-            'hr_leave_requests.leave_type',
-            'hr_leave_types.name as transaction_description',
-        )->get();
-    // dd($leaveApplications);
-    // Initialize an array to hold the results
-    $result = [];
-    $employeeHistoryPeriods = getPeriodsForDateRange($employeeId, $startDate, $endDate);
-    // foreach ($variable as $key => $value) {
-    //     # code...
-    // }
-
-    // Loop through each date in the date range
-    for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
-        // Check if the current date is a weekend
-
-        if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
-            continue; // Skip weekends
-        }
-
-        // Initialize the result for the current date
-        $result[$date->toDateString()] = [
-            'date' => $date->toDateString(),
-            'day' => $date->format('l'),
-            'periods' => [],
-        ];
-
-        // Check if the current date is a holiday
-        if ($holidays->has($date->toDateString())) {
-            $holiday = $holidays->get($date->toDateString());
-            $result[$date->toDateString()]['holiday'] = [
-                'name' => $holiday->name,
-            ];
-            continue; // Skip to the next date if it's a holiday
-        }
-
-        // Check if the current date falls within any leave applications
-        if ($leaveApplications) {
-            // dd($leaveApplications);
-            foreach ($leaveApplications as $leave) {
-                // dd($leave);
-                if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
-                    $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leave->leave_type,
-                        'transaction_description' => $leave->transaction_description ?? 'Unknown', // Include leave type name
-                    ];
-                    continue 2; // Skip to the next date if it's a leave day
-                }
-            }
-        }
+        // Fetch leave applications within the date range
+        $employee = Employee::find($employeeId);
 
 
-        if ($leaveApplications) {
-            foreach ($leaveApplications as $leaveApplication) {
-                // dd($leaveApplication->transaction_description,$leaveApplication);
-                if ($date->isBetween($leaveApplication->from_date, $leaveApplication->to_date, true)) {
-                    $result[$date->toDateString()]['leave'] = [
-                        'leave_type_id' => $leaveApplication->leave_type_id,
-                        'transaction_description' => $leaveApplication->transaction_description, // Include leave type name
-                    ];
-                    continue 2; // Skip to the next date if it's a leave day
-                }
-            }
-        }
+        // dd($leaveApplications);
+        $leaveApplications =  $employee?->approvedLeaveApplications()
+            ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('hr_leave_requests.start_date', [$startDate, $endDate])
+                    ->orWhereBetween('hr_leave_requests.end_date', [$startDate, $endDate]);
+            })
+            ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
+            ->select(
+                'hr_leave_requests.start_date as from_date',
+                'hr_leave_requests.end_date as to_date',
+                'hr_leave_requests.leave_type',
+                'hr_leave_types.name as transaction_description',
+            )->get();
+        // dd($leaveApplications);
+        // Initialize an array to hold the results
+        $result = [];
+        $employeeHistoryPeriods = getPeriodsForDateRange($employeeId, $startDate, $endDate);
+        // foreach ($variable as $key => $value) {
+        //     # code...
+        // }
 
+        // Loop through each date in the date range
+        for ($date = $startDate->copy(); $date->lessThanOrEqualTo($endDate); $date->addDay()) {
+            // Check if the current date is a weekend
 
-        $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
-
-        // dd($employeePeriods,$employeePeriods2);
-
-        if (count($employeePeriods) == 0) {
-            $result[$date->toDateString()]['no_periods'] = true;
-        }
-        foreach ($employeePeriods as $period) {
-            $period = (object) $period;
-
-            // Get attendances for the current period and date
-            $query = DB::table('hr_attendances as a')
-                ->where('accepted', 1)
-                ->where('a.employee_id', '=', $employeeId)
-                ->whereDate('a.check_date', '=', $date)
-                ->where('a.period_id', '=', $period->period_id)
-                ->select('a.*') // Adjust selection as needed
-                ->whereNull('a.deleted_at');
-
-            if (request()->query('filterStatus') && !is_null(request()->query('filterStatus'))) {
-                // $query->where('a.status', request()->query('filterStatus'));
-            }
-            $attendances = $query->get();
-
-            // Structure for the current period
-            $periodData = [
-                'date' => $date->toDateString(),
-                'start_date' => $period->start_date,
-                'end_date' => $period->end_date,
-                'start_at' => $period->start_at,
-                'end_at' => $period->end_at,
-                'period_id' => $period->period_id,
-                'total_hours' => $employee->calculateTotalWorkHours($period->period_id, $date),
-                'attendances' => [],
-            ];
-
-            // Group attendances by check_type
-            if ($attendances->isNotEmpty()) {
-
-                $firstCheckin = null; // Variable to store the first check-in
-                $lastCheckout = null; // Variable to store the last check-out
-                $totalActualDuration = 0;
-                $totalActualDurationMinutes = 0;
-                foreach ($attendances as $attendance) {
-                    if ($attendance->check_type === 'checkin') {
-                        if ($firstCheckin === null) {
-                            $firstCheckin = [
-                                'check_time' => $attendance->check_time ?? null, // Include check_time
-                                'check_date' => $attendance->check_date,
-                                'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                                'delay_minutes' => $attendance->delay_minutes ?? 0,
-                                'status' => $attendance->status ?? 'unknown',
-                            ];
-                        }
-                        $periodData['attendances']['checkin']['firstcheckout'] = $lastCheckout;
-                        $periodData['attendances']['checkin'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
-                            'delay_minutes' => $attendance->delay_minutes ?? 0,
-                            'status' => $attendance->status ?? 'unknown',
-                        ];
-                    } elseif ($attendance->check_type === 'checkout') {
-
-                        $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
-
-
-
-
-                        $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
-                        $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
-
-
-                        $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
-                        if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() > 0) {
-                            // if ($isActualLargerThanSupposed &&  $employee->overtimes->count() > 0) {
-                            $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
-                        }
-                        if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
-                            $approvedOvertime = $formattedSupposedActualDuration;
-                        }
-                        if (!$isActualLargerThanSupposed) {
-                            $approvedOvertime = $periodData['total_hours'];
-                        }
-
-                        // dd($approvedOvertime);
-                        // dd($approvedOvertime);
-                        $lastCheckout = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-                            'period_end_at' => $period->end_at,
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $formattedSupposedActualDuration,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject . ':00',
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                            'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
-                            'approved_overtime' =>  $approvedOvertime,
-                            'missing_hours' =>   calculate_missing_hours(
-                                $attendance->status,
-                                $attendance->supposed_duration_hourly ?? $periodObject . ':00',
-                                $approvedOvertime,
-                                $date->toDateString(),
-                                $employeeId
-
-                            ),
-                        ];
-
-                        $periodData['attendances']['checkout'][] = [
-                            'check_time' => $attendance->check_time ?? null, // Include check_time
-
-                            'status' => $attendance->status ?? 'unknown',
-                            'actual_duration_hourly' => $formattedSupposedActualDuration,
-                            'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject . ':00',
-                            'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
-                            'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                            'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
-
-                        ];
-
-                        $periodData['attendances']['checkout']['lastcheckout'] = $lastCheckout;
-                    }
-                }
-            } else {
-                // If there are no attendances, mark as 'absent'
-                $periodData['attendances'] = 'absent';
+            if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
+                continue; // Skip weekends
             }
 
-            // Add the period data to the result for the current date
-            $result[$date->toDateString()]['periods'][] = $periodData;
-
-            if (count($employeePeriods) == 0) {
-                return 'no_periods';
-            }
-        }
-    }
-    // dd($result   );
-    return $result;
-}
-
-function formatHoursMinuts($totalHours)
-{
-    // Separate hours and minutes
-    $hours = floor($totalHours); // Get the integer part (hours)
-    $minutes = ($totalHours - $hours) * 60; // Convert fractional part to minutes
-
-    // Format the output
-    $formattedTime = "{$hours} h " . round($minutes) . " m";
-    return $formattedTime;
-}
-
-/**
- * to get employee attendace details of period []
- */
-function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
-{
-    $attenance = Attendance::where('employee_id', $employeeId)
-        ->where('accepted', 1)
-        ->where('period_id', $periodId)
-        ->where('check_date', $date)
-        ->select('check_time', 'check_type', 'period_id')
-        ->orderBy('id', 'asc')
-        // ->groupBy('period_id')
-        ->get();
-    return $attenance;
-}
-
-/**
- * Compare formatted duration strings to check if the actual duration is larger than the supposed duration.
- *
- * @param string $supposedDuration The supposed duration in "HH:MM" format.
- * @param string $actualDuration The actual duration in "H h M m" format.
- * @return bool Returns true if the actual duration is larger than the supposed duration, false otherwise.
- */
-function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
-{
-
-    // Convert $supposedDuration ("HH:MM") to total minutes
-    list($supposedHours, $supposedMinutes) = explode(':', $supposedDuration);
-    $supposedTotalMinutes = ($supposedHours * 60) + $supposedMinutes;
-    // Convert $actualDuration ("H h M m") to total minutes
-    preg_match('/(\d+) h (\d+) m/', $actualDuration, $matches);
-    $actualHours = isset($matches[1]) ? (int) $matches[1] : 0;
-    $actualMinutes = isset($matches[2]) ? (int) $matches[2] : 0;
-    $actualTotalMinutes = ($actualHours * 60) + $actualMinutes;
-
-    // Compare the total minutes
-    return $actualTotalMinutes > $supposedTotalMinutes;
-}
-
-/**
- * Adds hours to a given time duration string in the format "X h Y m".
- *
- * @param string $duration The initial time duration (e.g., "12 h 0 m").
- * @param int $additionalHours The number of hours to add.
- * @return string The updated time duration string.
- */
-function addHoursToDuration($duration, $additionalHours)
-{
-    // Extract hours and minutes from the duration string
-    preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches);
-
-    if ($matches) {
-        $hours = (int) $matches[1];
-        $minutes = (int) $matches[2];
-
-        // Add the additional hours
-        $totalHours = $hours + $additionalHours;
-        return formatHoursMinuts($totalHours);
-    }
-    // Return the original duration if the format is incorrect
-    return $duration;
-}
-
-/**
- * get employees attendances
- */
-function employeeAttendancesByDate(array $employeeIds, $date)
-{
-    // Convert the date to a Carbon instance for easier manipulation
-    $date = Carbon::parse($date);
-
-    // Get weekend days from the WeeklyHoliday model
-    $weekend_days = json_decode(WeeklyHoliday::select('days')?->first()?->days);
-
-    // Fetch holidays on the specific date
-    $holiday = Holiday::where('active', 1)
-        ->whereDate('from_date', '<=', $date)
-        ->whereDate('to_date', '>=', $date)
-        ->select('from_date', 'to_date', 'count_days', 'name')
-        ->first();
-
-    // Initialize an array to hold the results for multiple employees
-    $result = [];
-
-    // Loop through each employee ID
-    foreach ($employeeIds as $employeeId) {
-        // Fetch the employee by ID
-
-        $employee = Employee::where('id', $employeeId)->first();
-        // dd($employee);
-        if ($employee) {
-
-
-
-            // Initialize the result for the current employee and date
-            $result[$employeeId][$date->toDateString()] = [
-                'employee_id' => $employeeId,
-                'employee_name' => $employee->name . '(' . $employeeId . ')',
+            // Initialize the result for the current date
+            $result[$date->toDateString()] = [
                 'date' => $date->toDateString(),
                 'day' => $date->format('l'),
                 'periods' => [],
             ];
 
-            // Skip if the date is a weekend
-            if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
-                $result[$employeeId][$date->toDateString()]['status'] = 'weekend';
-                continue; // Skip weekends
-            }
-
             // Check if the current date is a holiday
-            if ($holiday) {
-                $result[$employeeId][$date->toDateString()]['holiday'] = [
+            if ($holidays->has($date->toDateString())) {
+                $holiday = $holidays->get($date->toDateString());
+                $result[$date->toDateString()]['holiday'] = [
                     'name' => $holiday->name,
                 ];
-                continue; // Skip to the next employee if it's a holiday
+                continue; // Skip to the next date if it's a holiday
             }
 
-            $leaveApplications =  $employee?->approvedLeaveApplications()
-                ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
-                ->where(function ($query) use ($date) {
-                    $query->whereBetween('hr_leave_requests.start_date', [$date, $date])
-                        ->orWhereBetween('hr_leave_requests.end_date', [$date, $date]);
-                })
-                ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
-                ->select(
-                    'hr_leave_requests.start_date as from_date',
-                    'hr_leave_requests.end_date as to_date',
-                    'hr_leave_requests.leave_type',
-                    'hr_leave_types.name as transaction_description',
-                )->first();
+            // Check if the current date falls within any leave applications
+            if ($leaveApplications) {
+                // dd($leaveApplications);
+                foreach ($leaveApplications as $leave) {
+                    // dd($leave);
+                    if ($date->isBetween($leave->from_date, $leave->to_date, true)) {
+                        $result[$date->toDateString()]['leave'] = [
+                            'leave_type_id' => $leave->leave_type,
+                            'transaction_description' => $leave->transaction_description ?? 'Unknown', // Include leave type name
+                        ];
+                        continue 2; // Skip to the next date if it's a leave day
+                    }
+                }
+            }
 
-
-            // // Fetch leave applications for the specific date
-            // $leave = $employee->approvedLeaveApplications()
-            //     ->whereDate('from_date', '<=', $date)
-            //     ->whereDate('to_date', '>=', $date)
-            //     ->select('from_date', 'to_date', 'leave_type_id')
-            //     ->with('leaveType:id,name') // Assuming you have a relationship defined
-            //     ->first();
-
-            // $leaveTransactions = $employee->transactions()
-            //     ->where('transaction_type_id', 1) // 1 represents "Leave request"
-            //     ->where('is_canceled', false) // Ensure the transaction is not canceled
-            //     ->whereDate('from_date', '<=', $date)
-            //     ->whereDate('to_date', '>=', $date)
-            //     ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_type_id', 'transaction_description'])->first();
-
-            // // Check if the current date falls within any leave applications
-            // if ($leave) {
-            //     $result[$employeeId][$date->toDateString()]['leave'] = [
-            //         'leave_type_id' => $leave->leave_type_id,
-            //         'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
-            //     ];
-            //     continue; // Skip to the next employee if it's a leave day
-            // }
 
             if ($leaveApplications) {
-
-                $result[$employeeId][$date->toDateString()]['leave'] = [
-                    'leave_type_id' => $leaveApplications?->leave_type,
-                    'transaction_description' => $leaveApplications?->transaction_description,
-                ];
-                // continue; // Skip to the next employee if it's a leave day
+                foreach ($leaveApplications as $leaveApplication) {
+                    // dd($leaveApplication->transaction_description,$leaveApplication);
+                    if ($date->isBetween($leaveApplication->from_date, $leaveApplication->to_date, true)) {
+                        $result[$date->toDateString()]['leave'] = [
+                            'leave_type_id' => $leaveApplication->leave_type_id,
+                            'transaction_description' => $leaveApplication->transaction_description, // Include leave type name
+                        ];
+                        continue 2; // Skip to the next date if it's a leave day
+                    }
+                }
             }
 
-            // if ($leaveApplications) {
-            //     foreach ($leaveApplications as $leaveApplication) {
-            //         // dd($leaveApplication->transaction_description,$leaveApplication);
-            //         if ($date->isBetween($leaveApplication->from_date, $leaveApplication->to_date, true)) {
-            //             $result[$date->toDateString()]['leave'] = [
-            //                 'leave_type_id' => $leaveApplication->leave_type_id,
-            //                 'transaction_description' => $leaveApplication->transaction_description, // Include leave type name
-            //             ];
-            //             continue 2; // Skip to the next date if it's a leave day
-            //         }
-            //     }
-            // }
-            $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()] ?? [];
-            // dd($employeePeriods, $employeePeriods2);
 
-            // if ( $employeePeriods->isEmpty()) {
-            if (is_array($employeePeriods) && count($employeePeriods) == 0) {
-                // If no periods are assigned to the employee, mark with a message
-                $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
-                $result[$employeeId][$date->toDateString()]['no_periods'] = true;
-                continue; // Skip further processing for this employee
+            $employeePeriods = $employeeHistoryPeriods[$date->toDateString()] ?? [];
+
+            // dd($employeePeriods,$employeePeriods2);
+
+            if (count($employeePeriods) == 0) {
+                $result[$date->toDateString()]['no_periods'] = true;
             }
-
-            // Loop through each period for the employee
             foreach ($employeePeriods as $period) {
                 $period = (object) $period;
 
                 // Get attendances for the current period and date
-                $attendances = DB::table('hr_attendances as a')
+                $query = DB::table('hr_attendances as a')
                     ->where('accepted', 1)
                     ->where('a.employee_id', '=', $employeeId)
                     ->whereDate('a.check_date', '=', $date)
                     ->where('a.period_id', '=', $period->period_id)
                     ->select('a.*') // Adjust selection as needed
-                    ->whereNull('a.deleted_at')
-                    ->get();
+                    ->whereNull('a.deleted_at');
+
+                if (request()->query('filterStatus') && !is_null(request()->query('filterStatus'))) {
+                    // $query->where('a.status', request()->query('filterStatus'));
+                }
+                $attendances = $query->get();
 
                 // Structure for the current period
                 $periodData = [
+                    'date' => $date->toDateString(),
+                    'start_date' => $period->start_date,
+                    'end_date' => $period->end_date,
                     'start_at' => $period->start_at,
                     'end_at' => $period->end_at,
                     'period_id' => $period->period_id,
@@ -816,8 +501,23 @@ function employeeAttendancesByDate(array $employeeIds, $date)
 
                 // Group attendances by check_type
                 if ($attendances->isNotEmpty()) {
+
+                    $firstCheckin = null; // Variable to store the first check-in
+                    $lastCheckout = null; // Variable to store the last check-out
+                    $totalActualDuration = 0;
+                    $totalActualDurationMinutes = 0;
                     foreach ($attendances as $attendance) {
                         if ($attendance->check_type === 'checkin') {
+                            if ($firstCheckin === null) {
+                                $firstCheckin = [
+                                    'check_time' => $attendance->check_time ?? null, // Include check_time
+                                    'check_date' => $attendance->check_date,
+                                    'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
+                                    'delay_minutes' => $attendance->delay_minutes ?? 0,
+                                    'status' => $attendance->status ?? 'unknown',
+                                ];
+                            }
+                            $periodData['attendances']['checkin']['firstcheckout'] = $lastCheckout;
                             $periodData['attendances']['checkin'][] = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
                                 'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
@@ -827,270 +527,590 @@ function employeeAttendancesByDate(array $employeeIds, $date)
                         } elseif ($attendance->check_type === 'checkout') {
 
                             $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
-                            $formattedSupposedActualDuration = formatDuration($attendance?->supposed_duration_hourly);
 
+
+
+
+                            $formattedSupposedActualDuration = formatDuration($attendance->supposed_duration_hourly);
                             $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
 
-                            $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
 
-                            if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
+                            $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
+                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() > 0) {
+                                // if ($isActualLargerThanSupposed &&  $employee->overtimes->count() > 0) {
                                 $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
                             }
-                            if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
+                            if ($isActualLargerThanSupposed && $employee->overtimesByDate($date)->count() == 0) {
                                 $approvedOvertime = $formattedSupposedActualDuration;
                             }
                             if (!$isActualLargerThanSupposed) {
                                 $approvedOvertime = $periodData['total_hours'];
                             }
 
+                            // dd($approvedOvertime);
+                            // dd($approvedOvertime);
                             $lastCheckout = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
+                                'period_end_at' => $period->end_at,
                                 'status' => $attendance->status ?? 'unknown',
-                                'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                                'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
-                                'supposed_duration_hourly' => $formattedSupposedActualDuration != '0 h 0 m' ? $formattedSupposedActualDuration : $periodObject . ':00',
+                                'actual_duration_hourly' => $formattedSupposedActualDuration,
+                                'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject . ':00',
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
-                                'approved_overtime' => $approvedOvertime,
-                                'is' => $isActualLargerThanSupposed,
-                                'period_end_at' => $period->end_at,
+                                'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
+                                'approved_overtime' =>  $approvedOvertime,
+                                'missing_hours' =>   calculate_missing_hours(
+                                    $attendance->status,
+                                    $attendance->supposed_duration_hourly ?? $periodObject . ':00',
+                                    $approvedOvertime,
+                                    $date->toDateString(),
+                                    $employeeId
 
+                                ),
                             ];
+
                             $periodData['attendances']['checkout'][] = [
                                 'check_time' => $attendance->check_time ?? null, // Include check_time
+
                                 'status' => $attendance->status ?? 'unknown',
-                                'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
-                                'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
-                                'supposed_duration_hourly' => $formattedSupposedActualDuration != '0 h 0 m' ? $formattedSupposedActualDuration : $periodObject . ':00',
+                                'actual_duration_hourly' => $formattedSupposedActualDuration,
+                                'supposed_duration_hourly' => $attendance->supposed_duration_hourly ?? $periodObject . ':00',
                                 'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
                                 'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                                'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly,
+
                             ];
+
                             $periodData['attendances']['checkout']['lastcheckout'] = $lastCheckout;
                         }
                     }
                 } else {
-                    // If there are no attendances, mark the period as "absent"
+                    // If there are no attendances, mark as 'absent'
                     $periodData['attendances'] = 'absent';
                 }
 
-                // Add the period data to the result for the current employee and date
-                $result[$employeeId][$date->toDateString()]['periods'][] = $periodData;
+                // Add the period data to the result for the current date
+                $result[$date->toDateString()]['periods'][] = $periodData;
+
+                if (count($employeePeriods) == 0) {
+                    return 'no_periods';
+                }
             }
         }
+        // dd($result   );
+        return $result;
     }
+}
+if (!function_exists('formatHoursMinuts')) {
+    function formatHoursMinuts($totalHours)
+    {
+        // Separate hours and minutes
+        $hours = floor($totalHours); // Get the integer part (hours)
+        $minutes = ($totalHours - $hours) * 60; // Convert fractional part to minutes
 
-    return $result;
+        // Format the output
+        $formattedTime = "{$hours} h " . round($minutes) . " m";
+        return $formattedTime;
+    }
 }
 
-function calculateTotalAbsentDays($attendanceData)
-{
-    $totalAbsentDays = 0;
-    $totalAttendanceDays = 0;
-    $totalLeaveDays = 0;
-    $totalNoPeriodDays = 0;
-    $result = [];
-    foreach ($attendanceData as $date => $data) {
+/**
+ * to get employee attendace details of period []
+ */
+if (!function_exists('getEmployeePeriodAttendnaceDetails')) {
+    function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
+    {
+        $attenance = Attendance::where('employee_id', $employeeId)
+            ->where('accepted', 1)
+            ->where('period_id', $periodId)
+            ->where('check_date', $date)
+            ->select('check_time', 'check_type', 'period_id')
+            ->orderBy('id', 'asc')
+            // ->groupBy('period_id')
+            ->get();
+        return $attenance;
+    }
+}
+/**
+ * Compare formatted duration strings to check if the actual duration is larger than the supposed duration.
+ *
+ * @param string $supposedDuration The supposed duration in "HH:MM" format.
+ * @param string $actualDuration The actual duration in "H h M m" format.
+ * @return bool Returns true if the actual duration is larger than the supposed duration, false otherwise.
+ */
+if (!function_exists('isActualDurationLargerThanSupposed')) {
+    function isActualDurationLargerThanSupposed($supposedDuration, $actualDuration)
+    {
 
-        if (isset($data['no_periods']) && $data['no_periods']) {
-            $totalNoPeriodDays++;
-            // break;
+        // Convert $supposedDuration ("HH:MM") to total minutes
+        list($supposedHours, $supposedMinutes) = explode(':', $supposedDuration);
+        $supposedTotalMinutes = ($supposedHours * 60) + $supposedMinutes;
+        // Convert $actualDuration ("H h M m") to total minutes
+        preg_match('/(\d+) h (\d+) m/', $actualDuration, $matches);
+        $actualHours = isset($matches[1]) ? (int) $matches[1] : 0;
+        $actualMinutes = isset($matches[2]) ? (int) $matches[2] : 0;
+        $actualTotalMinutes = ($actualHours * 60) + $actualMinutes;
+
+        // Compare the total minutes
+        return $actualTotalMinutes > $supposedTotalMinutes;
+    }
+}
+/**
+ * Adds hours to a given time duration string in the format "X h Y m".
+ *
+ * @param string $duration The initial time duration (e.g., "12 h 0 m").
+ * @param int $additionalHours The number of hours to add.
+ * @return string The updated time duration string.
+ */
+if (!function_exists('addHoursToDuration')) {
+    function addHoursToDuration($duration, $additionalHours)
+    {
+        // Extract hours and minutes from the duration string
+        preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches);
+
+        if ($matches) {
+            $hours = (int) $matches[1];
+            $minutes = (int) $matches[2];
+
+            // Add the additional hours
+            $totalHours = $hours + $additionalHours;
+            return formatHoursMinuts($totalHours);
         }
-        if (isset($data['leave']) && is_array(($data['leave'])) && count($data['leave']) > 0) {
-            $totalLeaveDays++;
-            // break;
-        }
-        if (isset($data['periods']) && !empty($data['periods'])) {
-            if (count($data['periods']) == 1) {
-                $allAbsent = true; // Assume all are absent initially
-            } else {
-                $allAbsent = false;
+        // Return the original duration if the format is incorrect
+        return $duration;
+    }
+}
+
+/**
+ * get employees attendances
+ */
+if (!function_exists('employeeAttendancesByDate')) {
+    function employeeAttendancesByDate(array $employeeIds, $date)
+    {
+        // Convert the date to a Carbon instance for easier manipulation
+        $date = Carbon::parse($date);
+
+        // Get weekend days from the WeeklyHoliday model
+        $weekend_days = json_decode(WeeklyHoliday::select('days')?->first()?->days);
+
+        // Fetch holidays on the specific date
+        $holiday = Holiday::where('active', 1)
+            ->whereDate('from_date', '<=', $date)
+            ->whereDate('to_date', '>=', $date)
+            ->select('from_date', 'to_date', 'count_days', 'name')
+            ->first();
+
+        // Initialize an array to hold the results for multiple employees
+        $result = [];
+
+        // Loop through each employee ID
+        foreach ($employeeIds as $employeeId) {
+            // Fetch the employee by ID
+
+            $employee = Employee::where('id', $employeeId)->first();
+            // dd($employee);
+            if ($employee) {
+
+
+
+                // Initialize the result for the current employee and date
+                $result[$employeeId][$date->toDateString()] = [
+                    'employee_id' => $employeeId,
+                    'employee_name' => $employee->name . '(' . $employeeId . ')',
+                    'date' => $date->toDateString(),
+                    'day' => $date->format('l'),
+                    'periods' => [],
+                ];
+
+                // Skip if the date is a weekend
+                if ($weekend_days != null && in_array($date->format('l'), $weekend_days)) {
+                    $result[$employeeId][$date->toDateString()]['status'] = 'weekend';
+                    continue; // Skip weekends
+                }
+
+                // Check if the current date is a holiday
+                if ($holiday) {
+                    $result[$employeeId][$date->toDateString()]['holiday'] = [
+                        'name' => $holiday->name,
+                    ];
+                    continue; // Skip to the next employee if it's a holiday
+                }
+
+                $leaveApplications =  $employee?->approvedLeaveApplications()
+                    ->join('hr_leave_requests', 'hr_employee_applications.id', '=', 'hr_leave_requests.application_id')
+                    ->where(function ($query) use ($date) {
+                        $query->whereBetween('hr_leave_requests.start_date', [$date, $date])
+                            ->orWhereBetween('hr_leave_requests.end_date', [$date, $date]);
+                    })
+                    ->join('hr_leave_types', 'hr_leave_requests.leave_type', '=', 'hr_leave_types.id')
+                    ->select(
+                        'hr_leave_requests.start_date as from_date',
+                        'hr_leave_requests.end_date as to_date',
+                        'hr_leave_requests.leave_type',
+                        'hr_leave_types.name as transaction_description',
+                    )->first();
+
+
+                // // Fetch leave applications for the specific date
+                // $leave = $employee->approvedLeaveApplications()
+                //     ->whereDate('from_date', '<=', $date)
+                //     ->whereDate('to_date', '>=', $date)
+                //     ->select('from_date', 'to_date', 'leave_type_id')
+                //     ->with('leaveType:id,name') // Assuming you have a relationship defined
+                //     ->first();
+
+                // $leaveTransactions = $employee->transactions()
+                //     ->where('transaction_type_id', 1) // 1 represents "Leave request"
+                //     ->where('is_canceled', false) // Ensure the transaction is not canceled
+                //     ->whereDate('from_date', '<=', $date)
+                //     ->whereDate('to_date', '>=', $date)
+                //     ->get(['from_date', 'to_date', 'amount', 'value', 'transaction_type_id', 'transaction_description'])->first();
+
+                // // Check if the current date falls within any leave applications
+                // if ($leave) {
+                //     $result[$employeeId][$date->toDateString()]['leave'] = [
+                //         'leave_type_id' => $leave->leave_type_id,
+                //         'leave_type_name' => $leave->leaveType->name ?? 'Unknown', // Include leave type name
+                //     ];
+                //     continue; // Skip to the next employee if it's a leave day
+                // }
+
+                if ($leaveApplications) {
+
+                    $result[$employeeId][$date->toDateString()]['leave'] = [
+                        'leave_type_id' => $leaveApplications?->leave_type,
+                        'transaction_description' => $leaveApplications?->transaction_description,
+                    ];
+                    // continue; // Skip to the next employee if it's a leave day
+                }
+
+                // if ($leaveApplications) {
+                //     foreach ($leaveApplications as $leaveApplication) {
+                //         // dd($leaveApplication->transaction_description,$leaveApplication);
+                //         if ($date->isBetween($leaveApplication->from_date, $leaveApplication->to_date, true)) {
+                //             $result[$date->toDateString()]['leave'] = [
+                //                 'leave_type_id' => $leaveApplication->leave_type_id,
+                //                 'transaction_description' => $leaveApplication->transaction_description, // Include leave type name
+                //             ];
+                //             continue 2; // Skip to the next date if it's a leave day
+                //         }
+                //     }
+                // }
+                $employeePeriods = getPeriodsForDateRange($employeeId, $date, $date)[$date->toDateString()] ?? [];
+                // dd($employeePeriods, $employeePeriods2);
+
+                // if ( $employeePeriods->isEmpty()) {
+                if (is_array($employeePeriods) && count($employeePeriods) == 0) {
+                    // If no periods are assigned to the employee, mark with a message
+                    $result[$employeeId][$date->toDateString()]['status'] = 'no periods assigned for this employee';
+                    $result[$employeeId][$date->toDateString()]['no_periods'] = true;
+                    continue; // Skip further processing for this employee
+                }
+
+                // Loop through each period for the employee
+                foreach ($employeePeriods as $period) {
+                    $period = (object) $period;
+
+                    // Get attendances for the current period and date
+                    $attendances = DB::table('hr_attendances as a')
+                        ->where('accepted', 1)
+                        ->where('a.employee_id', '=', $employeeId)
+                        ->whereDate('a.check_date', '=', $date)
+                        ->where('a.period_id', '=', $period->period_id)
+                        ->select('a.*') // Adjust selection as needed
+                        ->whereNull('a.deleted_at')
+                        ->get();
+
+                    // Structure for the current period
+                    $periodData = [
+                        'start_at' => $period->start_at,
+                        'end_at' => $period->end_at,
+                        'period_id' => $period->period_id,
+                        'total_hours' => $employee->calculateTotalWorkHours($period->period_id, $date),
+                        'attendances' => [],
+                    ];
+
+                    // Group attendances by check_type
+                    if ($attendances->isNotEmpty()) {
+                        foreach ($attendances as $attendance) {
+                            if ($attendance->check_type === 'checkin') {
+                                $periodData['attendances']['checkin'][] = [
+                                    'check_time' => $attendance->check_time ?? null, // Include check_time
+                                    'early_arrival_minutes' => $attendance->early_arrival_minutes ?? 0,
+                                    'delay_minutes' => $attendance->delay_minutes ?? 0,
+                                    'status' => $attendance->status ?? 'unknown',
+                                ];
+                            } elseif ($attendance->check_type === 'checkout') {
+
+                                $periodObject = WorkPeriod::find($period->period_id)->supposed_duration;
+                                $formattedSupposedActualDuration = formatDuration($attendance?->supposed_duration_hourly);
+
+                                $isActualLargerThanSupposed = isActualDurationLargerThanSupposed($periodObject, $periodData['total_hours']);
+
+                                $approvedOvertime = getEmployeeOvertimesOfSpecificDate($date, $employee);
+
+                                if ($isActualLargerThanSupposed && $employee->overtimes->count() > 0) {
+                                    $approvedOvertime = addHoursToDuration($formattedSupposedActualDuration, $approvedOvertime);
+                                }
+                                if ($isActualLargerThanSupposed && $employee->overtimes->count() == 0) {
+                                    $approvedOvertime = $formattedSupposedActualDuration;
+                                }
+                                if (!$isActualLargerThanSupposed) {
+                                    $approvedOvertime = $periodData['total_hours'];
+                                }
+
+                                $lastCheckout = [
+                                    'check_time' => $attendance->check_time ?? null, // Include check_time
+                                    'status' => $attendance->status ?? 'unknown',
+                                    'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                                    'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
+                                    'supposed_duration_hourly' => $formattedSupposedActualDuration != '0 h 0 m' ? $formattedSupposedActualDuration : $periodObject . ':00',
+                                    'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
+                                    'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                                    'approved_overtime' => $approvedOvertime,
+                                    'is' => $isActualLargerThanSupposed,
+                                    'period_end_at' => $period->end_at,
+
+                                ];
+                                $periodData['attendances']['checkout'][] = [
+                                    'check_time' => $attendance->check_time ?? null, // Include check_time
+                                    'status' => $attendance->status ?? 'unknown',
+                                    'actual_duration_hourly' => $attendance->actual_duration_hourly ?? 0,
+                                    'total_actual_duration_hourly' => $attendance->total_actual_duration_hourly ?? 0,
+                                    'supposed_duration_hourly' => $formattedSupposedActualDuration != '0 h 0 m' ? $formattedSupposedActualDuration : $periodObject . ':00',
+                                    'early_departure_minutes' => $attendance->early_departure_minutes ?? 0,
+                                    'late_departure_minutes' => $attendance->late_departure_minutes ?? 0,
+                                ];
+                                $periodData['attendances']['checkout']['lastcheckout'] = $lastCheckout;
+                            }
+                        }
+                    } else {
+                        // If there are no attendances, mark the period as "absent"
+                        $periodData['attendances'] = 'absent';
+                    }
+
+                    // Add the period data to the result for the current employee and date
+                    $result[$employeeId][$date->toDateString()]['periods'][] = $periodData;
+                }
             }
-            // Loop through each period to check attendance
-            foreach ($data['periods'] as $period) {
+        }
 
-                // dd(array_intersect_key(array_flip(['checkin', 'checkout']), $period['attendances']),$period['attendances']);
-                if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
+        return $result;
+    }
+}
+if (!function_exists('calculateTotalAbsentDays')) {
+    function calculateTotalAbsentDays($attendanceData)
+    {
+        $totalAbsentDays = 0;
+        $totalAttendanceDays = 0;
+        $totalLeaveDays = 0;
+        $totalNoPeriodDays = 0;
+        $result = [];
+        foreach ($attendanceData as $date => $data) {
 
-                    if (count($data['periods']) == 1) {
-                        // dd($data);
-                        // $allAbsent = true; // Found a period that is not absent
-                        $result[] = $period['date'];
+            if (isset($data['no_periods']) && $data['no_periods']) {
+                $totalNoPeriodDays++;
+                // break;
+            }
+            if (isset($data['leave']) && is_array(($data['leave'])) && count($data['leave']) > 0) {
+                $totalLeaveDays++;
+                // break;
+            }
+            if (isset($data['periods']) && !empty($data['periods'])) {
+                if (count($data['periods']) == 1) {
+                    $allAbsent = true; // Assume all are absent initially
+                } else {
+                    $allAbsent = false;
+                }
+                // Loop through each period to check attendance
+                foreach ($data['periods'] as $period) {
+
+                    // dd(array_intersect_key(array_flip(['checkin', 'checkout']), $period['attendances']),$period['attendances']);
+                    if ((is_array($period['attendances']) && count($period['attendances']) == 1)) {
+
+                        if (count($data['periods']) == 1) {
+                            // dd($data);
+                            // $allAbsent = true; // Found a period that is not absent
+                            $result[] = $period['date'];
+                            break; // No need to check further
+                        }
+
+                        if (count($data['periods']) > 1) {
+                            foreach ($data['periods'] as $value) {
+                                if ($value['total_hours'] == '0 h 0 m') {
+                                    $period = WorkPeriod::find($value['period_id']);
+                                    $periodSupposedDupration = $period->supposed_duration;
+                                    // dd($periodSupposedDupration);
+                                }
+                            }
+                            // $allAbsent = true; // Found a period that is not absent
+                            // break; // No need to check further
+                        }
+                    }
+                    if (isset($period['attendances']) && ($period['attendances'] !== 'absent')) {
+                        $allAbsent = false; // Found a period that is not absent
                         break; // No need to check further
                     }
+                    // Collect absent periods
+                    if (
+                        isset($period['attendances']) && $period['attendances'] === 'absent'
+                        // || (!array_key_exists('checkout', $period['attendances']))
+                    ) {
 
+                        $result[] = $period['date'];  // Save the absent period for later use
+                    }
                     if (count($data['periods']) > 1) {
-                        foreach ($data['periods'] as $value) {
-                            if ($value['total_hours'] == '0 h 0 m') {
-                                $period = WorkPeriod::find($value['period_id']);
-                                $periodSupposedDupration = $period->supposed_duration;
-                                // dd($periodSupposedDupration);
-                            }
-                        }
-                        // $allAbsent = true; // Found a period that is not absent
-                        // break; // No need to check further
+                        break;
                     }
                 }
-                if (isset($period['attendances']) && ($period['attendances'] !== 'absent')) {
-                    $allAbsent = false; // Found a period that is not absent
-                    break; // No need to check further
-                }
-                // Collect absent periods
-                if (
-                    isset($period['attendances']) && $period['attendances'] === 'absent'
-                    // || (!array_key_exists('checkout', $period['attendances']))
-                ) {
 
-                    $result[] = $period['date'];  // Save the absent period for later use
+                // If all periods were absent, increment the count
+                if ($allAbsent) {
+                    $totalAbsentDays++;
+                } else {
+                    $totalAttendanceDays++;
                 }
-                if (count($data['periods']) > 1) {
-                    break;
-                }
-            }
-
-            // If all periods were absent, increment the count
-            if ($allAbsent) {
-                $totalAbsentDays++;
-            } else {
-                $totalAttendanceDays++;
             }
         }
-    }
-    $finalResult = [
-        'total_leave_days' => $totalLeaveDays,
-        'total_no_period_days' => $totalNoPeriodDays,
-        'total_absent_days' => $totalAbsentDays,
-        'total_attendance_days' => $totalAttendanceDays,
-        'difference' => $totalAttendanceDays - $totalAbsentDays,
-        'absent_dates' => $result,
-    ];
-    return $finalResult;
-    dd($totalAbsentDays, $result);
-    return $totalAbsentDays;
-}
-
-
-function getAbsentDaysByWeeks($attendanceData)
-{
-    // $attendanceData = json_decode($attendanceData, true); 
-    $absentDaysByWeek = [];
-
-    // Convert attendance data to a collection for easier manipulation
-    $attendanceCollection = collect($attendanceData);
-
-    // Group data by weeks
-    $weeks = $attendanceCollection->chunk(7);
-
-    foreach ($weeks as $weekIndex => $weekData) {
-        $absentDays = [];
-
-        foreach ($weekData as $date => $details) {
-            // Check if the day is marked as absent
-            if (isset($details['periods'][0]['attendances']) && $details['periods'][0]['attendances'] === 'absent') {
-                $absentDays[] = [
-                    'date' => $details['date'],
-                    'day' => $details['day'],
-                ];
-            }
-        }
-
-        // Add the absent days for this week to the result
-        $absentDaysByWeek[] = [
-            'week' => $weekIndex + 1,
-            'absent_days' => $absentDays,
+        $finalResult = [
+            'total_leave_days' => $totalLeaveDays,
+            'total_no_period_days' => $totalNoPeriodDays,
+            'total_absent_days' => $totalAbsentDays,
+            'total_attendance_days' => $totalAttendanceDays,
+            'difference' => $totalAttendanceDays - $totalAbsentDays,
+            'absent_dates' => $result,
         ];
+        return $finalResult;
+        dd($totalAbsentDays, $result);
+        return $totalAbsentDays;
     }
+}
+if (!function_exists('getAbsentDaysByWeeks')) {
+    function getAbsentDaysByWeeks($attendanceData)
+    {
+        // $attendanceData = json_decode($attendanceData, true); 
+        $absentDaysByWeek = [];
 
-    return $absentDaysByWeek;
+        // Convert attendance data to a collection for easier manipulation
+        $attendanceCollection = collect($attendanceData);
+
+        // Group data by weeks
+        $weeks = $attendanceCollection->chunk(7);
+
+        foreach ($weeks as $weekIndex => $weekData) {
+            $absentDays = [];
+
+            foreach ($weekData as $date => $details) {
+                // Check if the day is marked as absent
+                if (isset($details['periods'][0]['attendances']) && $details['periods'][0]['attendances'] === 'absent') {
+                    $absentDays[] = [
+                        'date' => $details['date'],
+                        'day' => $details['day'],
+                    ];
+                }
+            }
+
+            // Add the absent days for this week to the result
+            $absentDaysByWeek[] = [
+                'week' => $weekIndex + 1,
+                'absent_days' => $absentDays,
+            ];
+        }
+
+        return $absentDaysByWeek;
+    }
 }
 
+if (!function_exists('calculateTotalLateArrival')) {
+    function calculateTotalLateArrival($attendanceData)
+    {
+        $totalDelayMinutes = 0;
 
-function calculateTotalLateArrival($attendanceData)
-{
-    $totalDelayMinutes = 0;
-
-    // Loop through each date in the attendance data
-    foreach ($attendanceData as $date => $data) {
-        if (isset($data['periods'])) {
-            // Loop through each period for the date
-            foreach ($data['periods'] as $period) {
-                if (isset($period['attendances']['checkin'])) {
-                    // Loop through each checkin record 
-                    // Check if the status is 'late_arrival'
-                    if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
-                        // Add the delay minutes to the total
-                        if ($period['attendances']['checkin'][0]['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
-                            if (setting('flix_hours')) {
-                                if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHoursForLateArrival($period['total_hours']) < timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+        // Loop through each date in the attendance data
+        foreach ($attendanceData as $date => $data) {
+            if (isset($data['periods'])) {
+                // Loop through each period for the date
+                foreach ($data['periods'] as $period) {
+                    if (isset($period['attendances']['checkin'])) {
+                        // Loop through each checkin record 
+                        // Check if the status is 'late_arrival'
+                        if (isset($period['attendances']['checkin'][0]['status']) && $period['attendances']['checkin'][0]['status'] === Attendance::STATUS_LATE_ARRIVAL) {
+                            // Add the delay minutes to the total
+                            if ($period['attendances']['checkin'][0]['delay_minutes'] > Setting::getSetting('early_attendance_minutes')) {
+                                if (setting('flix_hours')) {
+                                    if (isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) && timeToHoursForLateArrival($period['total_hours']) < timeToHoursForLateArrival($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])) {
+                                        $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                                    }
+                                } else {
                                     $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                                 }
-                            } else {
-                                $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                             }
                         }
                     }
                 }
             }
         }
+        // dd($totalDelayMinutes);
+        // Calculate total hours as a float
+        $totalHoursFloat = $totalDelayMinutes / 60;
+
+        return [
+            'totalMinutes' => $totalDelayMinutes,
+            'totalHoursFloat' => round($totalHoursFloat, 1),
+        ];
     }
-    // dd($totalDelayMinutes);
-    // Calculate total hours as a float
-    $totalHoursFloat = $totalDelayMinutes / 60;
-
-    return [
-        'totalMinutes' => $totalDelayMinutes,
-        'totalHoursFloat' => round($totalHoursFloat, 1),
-    ];
 }
+if (!function_exists('calculateTotalEarlyLeave')) {
+    function calculateTotalEarlyLeave($attendanceData)
+    {
+        // dd($attendanceData);
+        $totalEarlyLeaveMinutes = 0;
+        // return 23;
+        // Loop through each date in the attendance data
+        foreach ($attendanceData as $date => $data) {
 
-function calculateTotalEarlyLeave($attendanceData)
-{
-    // dd($attendanceData);
-    $totalEarlyLeaveMinutes = 0;
-    // return 23;
-    // Loop through each date in the attendance data
-    foreach ($attendanceData as $date => $data) {
+            if (isset($data['periods'])) {
+                // Loop through each period for the date
+                foreach ($data['periods'] as $period) {
+                    // dd( $period['attendances']['checkout']['lastcheckout']['early_departure_minutes']);
+                    if (
+                        isset($period['attendances']['checkout']['lastcheckout']['status'])
+                        && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_DEPARTURE
+                        && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] > setting('early_depature_deduction_minutes')
+                    ) {
 
-        if (isset($data['periods'])) {
-            // Loop through each period for the date
-            foreach ($data['periods'] as $period) {
-                // dd( $period['attendances']['checkout']['lastcheckout']['early_departure_minutes']);
-                if (
-                    isset($period['attendances']['checkout']['lastcheckout']['status'])
-                    && $period['attendances']['checkout']['lastcheckout']['status'] === Attendance::STATUS_EARLY_DEPARTURE
-                    && $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'] > setting('early_depature_deduction_minutes')
-                ) {
+                        // dd($period['attendances']['checkout']['lastcheckout']);
+                        // Check if the status is 'early_arrival' (early leave)
 
-                    // dd($period['attendances']['checkout']['lastcheckout']);
-                    // Check if the status is 'early_arrival' (early leave)
-
-                    // Add the early leave minutes to the total
-                    // dd($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'], $period['total_hours']);
-                    if (setting('flix_hours')) {
-                        if (
-                            isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
-                            timeToHoursForEarlyDeparture($period['total_hours']) < timeToHoursForEarlyDeparture($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])
-                        ) {
+                        // Add the early leave minutes to the total
+                        // dd($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'], $period['total_hours']);
+                        if (setting('flix_hours')) {
+                            if (
+                                isset($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly']) &&
+                                timeToHoursForEarlyDeparture($period['total_hours']) < timeToHoursForEarlyDeparture($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'])
+                            ) {
+                                // $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
+                                $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                            }
+                        } else {
                             // $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
                             $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
                         }
-                    } else {
-                        // $totalDelayMinutes += $period['attendances']['checkin'][0]['delay_minutes'];
-                        $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
+                        // $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
                     }
-                    // $totalEarlyLeaveMinutes +=  $period['attendances']['checkout']['lastcheckout']['early_departure_minutes'];
                 }
             }
         }
+
+        return round(($totalEarlyLeaveMinutes / 60), 1);
+        // Calculate total hours as a float
+        $totalHoursFloat = $totalEarlyLeaveMinutes / 60;
+
+        return [
+            'totalMinutes' => $totalEarlyLeaveMinutes,
+            'totalHoursFloat' => round($totalHoursFloat, 1),
+        ];
     }
-
-    return round(($totalEarlyLeaveMinutes / 60), 1);
-    // Calculate total hours as a float
-    $totalHoursFloat = $totalEarlyLeaveMinutes / 60;
-
-    return [
-        'totalMinutes' => $totalEarlyLeaveMinutes,
-        'totalHoursFloat' => round($totalHoursFloat, 1),
-    ];
 }
 
 if (!function_exists('calculate_missing_hours')) {
@@ -1173,57 +1193,59 @@ if (!function_exists('calculate_missing_hours')) {
     }
 }
 
-function convertToFormattedTime($timeString)
-{
-    // Extract hours and minutes
-    $timeParts = explode(' h ', $timeString);
-    $hours = intval($timeParts[0] ?? 0); // Get hours
-    $minutes = intval(str_replace(' m', '', $timeParts[1] ?? 0)); // Get minutes
+if (!function_exists('convertToFormattedTime')) {
+    function convertToFormattedTime($timeString)
+    {
+        // Extract hours and minutes
+        $timeParts = explode(' h ', $timeString);
+        $hours = intval($timeParts[0] ?? 0); // Get hours
+        $minutes = intval(str_replace(' m', '', $timeParts[1] ?? 0)); // Get minutes
 
-    // Format as HH:mm
-    $sprint = Carbon::parse(sprintf('%02d:%02d', $hours, $minutes));
-    return $sprint;
+        // Format as HH:mm
+        $sprint = Carbon::parse(sprintf('%02d:%02d', $hours, $minutes));
+        return $sprint;
+    }
 }
+if (!function_exists('getWeeksAndDaysInMonth')) {
+    function getWeeksAndDaysInMonth($yearMonth)
+    {
+        // Extract the year and month
+        [$year, $month] = explode('-', $yearMonth);
 
-function getWeeksAndDaysInMonth($yearMonth)
-{
-    // Extract the year and month
-    [$year, $month] = explode('-', $yearMonth);
+        // Get the total number of days in the month
+        $totalDays = cal_days_in_month(CAL_GREGORIAN, $month, $year);
 
-    // Get the total number of days in the month
-    $totalDays = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        // Get the first day of the month
+        $firstDayOfMonth = new DateTime("$year-$month-01");
 
-    // Get the first day of the month
-    $firstDayOfMonth = new DateTime("$year-$month-01");
+        // Calculate the number of weeks
+        $weeks = [];
+        $weekIndex = 1;
+        for ($day = 1; $day <= $totalDays; $day++) {
+            $date = new DateTime("$year-$month-$day");
+            $weekNumber = (int)$date->format('W'); // ISO-8601 week number
 
-    // Calculate the number of weeks
-    $weeks = [];
-    $weekIndex = 1;
-    for ($day = 1; $day <= $totalDays; $day++) {
-        $date = new DateTime("$year-$month-$day");
-        $weekNumber = (int)$date->format('W'); // ISO-8601 week number
+            if (!isset($weeks[$weekNumber])) {
+                $weeks[$weekNumber] = [
+                    'week' => $weekIndex,
+                    'days' => [],
+                ];
+                $weekIndex++;
+            }
 
-        if (!isset($weeks[$weekNumber])) {
-            $weeks[$weekNumber] = [
-                'week' => $weekIndex,
-                'days' => [],
+            $weeks[$weekNumber]['days'][] = [
+                'date' => $date->format('Y-m-d'),
+                'day' => $date->format('l'), // Full name of the day
             ];
-            $weekIndex++;
         }
 
-        $weeks[$weekNumber]['days'][] = [
-            'date' => $date->format('Y-m-d'),
-            'day' => $date->format('l'), // Full name of the day
+        // Return the total weeks and their corresponding days
+        return [
+            'total_weeks' => count($weeks),
+            'weeks' => array_values($weeks),
         ];
     }
-
-    // Return the total weeks and their corresponding days
-    return [
-        'total_weeks' => count($weeks),
-        'weeks' => array_values($weeks),
-    ];
 }
-
 
 if (!function_exists('timeToHoursForEarlyDeparture')) {
     function timeToHoursForEarlyDeparture(string $time): float
