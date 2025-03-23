@@ -6,6 +6,6 @@
 </head>
 <body>
     <h2>{{ $title }}</h2>
-    <p>{!! nl2br(e($message)) !!}</p>
+    <p>{!! nl2br(e($body)) !!}</p>
 </body>
 </html>

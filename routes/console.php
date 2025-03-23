@@ -77,8 +77,11 @@ Schedule::call(function () {
         'hakimahmed123321@gmail.com',
     ];
     foreach ($recipients as $email) {
+        
+        
         $title = ['Alert', 'Notification', 'Reminder'][array_rand(['Alert', 'Notification', 'Reminder'])];
-        $message = ['This is a random message.', 'Please check your tasks.', 'You have a new notification.'][array_rand(['This is a random message.', 'Please check your tasks.', 'You have a new notification.'])];
-        Mail::to($email)->send(new GeneralNotificationMail($title, $message));
+        $body = ['This is a random message.', 'Please check your tasks.', 'You have a new notification.'][array_rand(['This is a random message.', 'Please check your tasks.', 'You have a new notification.'])];
+
+        Mail::to($email)->send(new GeneralNotificationMail($title, $body));
     }
 })->everyMinute();
