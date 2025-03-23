@@ -58,12 +58,16 @@ class SettingResource extends Resource
 
                                         ->required(),
 
-                                    Select::make('default_nationality')->label('Locale')->searchable()->options(getNationalitiesAsCountries()),
+                                    Select::make('default_nationality')
+                                        ->label('Locale')
+                                        ->searchable()
+                                        ->options(getNationalitiesAsCountries()),
                                     FileUpload::make('company_logo')
-                                        ->label('Logo')->required()
+                                        ->label('Logo')
+                                        ->required(false)
                                         ->directory('company_logo')
-                                        ->image()->disk('local')
-                                        // ->visibility('public')
+                                        ->image()->disk('public')
+                                        ->visibility('public')
                                         ->columnSpan(3)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return  Str::random(15) . "." . $file->getClientOriginalExtension();
@@ -446,7 +450,7 @@ class SettingResource extends Resource
                                                 ->label(__('lang.hours_to_allow_login_again'))
                                                 ->columnSpan(1)
                                                 ->visible(fn($get) => $get('type_reactive_blocked_users') == 'based_on_specific_time')
-                                                
+
                                                 ->default(1)
                                                 ->numeric(),
                                         ]),
