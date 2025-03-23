@@ -17,23 +17,11 @@
         }
 
 
-        #videoWrapper {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 96px;
-            overflow: hidden;
-            border: 0.5px solid rgba(0, 60, 30, 0.7);
-            /* إطار مناسب مع اللون الأخضر */
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
 
         body {
             margin: 0;
             /* padding: 30px; */
-            
+
             display: flex;
             justify-content: center;
             align-items: center;
@@ -132,6 +120,20 @@
 
 
 
+        #videoWrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 96px;
+            overflow: hidden;
+            border: 0.5px solid rgba(0, 60, 30, 0.7);
+            /* إطار مناسب مع اللون الأخضر */
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
+            width: 80% !important;
+            height: 80% !important;
+        }
+
         #capturedImage,
         #video {
             border-bottom-left-radius: 66px;
@@ -146,6 +148,8 @@
             /* Flip the video horizontally */
             -webkit-transform: scaleX(-1);
             /* For older browsers */
+            width: 100%;
+            height: 100%;
         }
 
 
@@ -265,7 +269,7 @@
 </head>
 
 <body>
- 
+
     <div id="leftPanel">
         <img id="logo" src="{{ asset('storage/logo/default-wb.png') }}" alt="Logo">
         <div id="description">Stand in front of the camera to register your attendance for work.</div>
@@ -276,11 +280,12 @@
         <img id="icon" src="" alt="Icon">
     </div>
     <div id="videoWrapper">
-        <video id="video" width="580" height="380" autoplay muted></video>
-        
+        {{-- <video id="video" width="580" height="380" autoplay muted></video> --}}
+        <video id="video" autoplay muted></video>
+
         <canvas id="overlayCanvas"></canvas>
     </div>
-    <img id="capturedImage" />
+    <img id="capturedImage" style="display: none;" />
     <div id="loader">
         <div class="spinner"></div> <!-- Spinner rotates -->
         <p>Wait for the employee's photo to be matched.</p> <!-- Static message -->
