@@ -21,6 +21,8 @@ use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
+use App\Filament\Clusters\SettingsCluster;
+use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Pages\CustomLogin;
@@ -152,6 +154,9 @@ class AdminPanelProvider extends PanelProvider
                   ->items(array_merge(
                    (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems(): [] ,
                    (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalarySettingCluster::getNavigationItems(): [], 
+                   (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? NotificationSettingResource::getNavigationItems(): [] ,
+                   
+                //    (isSuperAdmin() || isSystemManager()) ? SettingsCluster::getNavigationItems(): [] ,
                   ))
                   ,
               NavigationGroup::make('Tenants')

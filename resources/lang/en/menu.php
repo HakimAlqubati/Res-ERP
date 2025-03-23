@@ -7,6 +7,7 @@ return [
     'supply_and_inventory' => 'Supply & Inventory',
     'stores_cluster' => 'Stores',
     'area_management'=> 'Area Management',
-    'inventory_management' => 'Inventory Management'
+    'inventory_management' => 'Inventory Management',
+    'settings' => 'Settings',
     
 ];

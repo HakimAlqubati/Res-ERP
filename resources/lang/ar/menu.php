@@ -1,4 +1,4 @@
-<?php 
+<?php
 return [
     'order_ms' => 'نظام إدارة الطلبيات',
     'inventory_ms' => 'نظام إدارة المخزون',
@@ -8,4 +8,5 @@ return [
     'stores_cluster' => 'المخازن',
     'area_management' => 'إدارة المناطق',
     'inventory_management' => 'إدارة المخزون',
+    'settings' => 'الإعدادات',
 ];
