@@ -261,7 +261,7 @@
 
         /* @media (max-width: 100px) { */
         #greeting {
-            display: none !important;
+            /* display: none !important; */
         }
 
         /* } */
