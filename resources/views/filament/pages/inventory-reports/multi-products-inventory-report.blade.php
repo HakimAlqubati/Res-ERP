@@ -20,7 +20,7 @@
 
                                 <img style="display: inline-block;"
                                     src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
-                                    class="logo-left">
+                                    class="logo-left circle-image">
                             </div>
                         </th>
                         <th colspan="2" class="no_border_right_left text-center">

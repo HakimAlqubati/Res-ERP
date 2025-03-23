@@ -9,12 +9,14 @@ use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRCircularCluster;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HrClusteReport;
+use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
@@ -119,6 +121,7 @@ class AdminPanelProvider extends PanelProvider
              (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierCluster::getNavigationItems(): [], 
              (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems(): [], 
              (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryManagementCluster::getNavigationItems(): [], 
+             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportCluster::getNavigationItems(): [], 
           
             )) ;
         }
@@ -154,6 +157,7 @@ class AdminPanelProvider extends PanelProvider
                   ->items(array_merge(
                    (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems(): [] ,
                    (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalarySettingCluster::getNavigationItems(): [], 
+                   (isSuperAdmin() || isSystemManager() || isBranchManager() ) ? HRLeaveManagementCluster::getNavigationItems(): [], 
                    (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? NotificationSettingResource::getNavigationItems(): [] ,
                    
                 //    (isSuperAdmin() || isSystemManager()) ? SettingsCluster::getNavigationItems(): [] ,

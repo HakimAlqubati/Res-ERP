@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\InventoryReportCluster;
 use App\Models\Product; 
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource; 
@@ -15,7 +16,7 @@ class MinimumProductQtyReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = InventoryManagementCluster::class;
+    protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 10;
 

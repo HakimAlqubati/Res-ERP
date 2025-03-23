@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttendanceReport;
+use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
@@ -34,7 +35,7 @@ class LeaveBalanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRAttenanceCluster::class;
+    protected static ?string $cluster = HRLeaveManagementCluster::class;
     protected static ?string $modelLabel = 'Leave balance';
     protected static ?string $pluralLabel = 'Leave balance';
 

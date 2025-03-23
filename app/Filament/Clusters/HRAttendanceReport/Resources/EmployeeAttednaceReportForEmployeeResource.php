@@ -64,7 +64,7 @@ class EmployeeAttednaceReportForEmployeeResource extends Resource
                 )
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
-                    ->searchable(), 
+                    ->searchable(),
                 Filter::make('date_range')
                     ->form([
                         DatePicker::make('start_date')->live()
@@ -103,6 +103,13 @@ class EmployeeAttednaceReportForEmployeeResource extends Resource
         return false;
     }
 
+    public static function canViewAny(): bool
+    {
+        if (isStuff()) {
+            return true;
+        }
+        return false;
+    }
     public static function getPages(): array
     {
         return [

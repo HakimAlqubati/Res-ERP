@@ -9,5 +9,6 @@ return [
     'area_management'=> 'Area Management',
     'inventory_management' => 'Inventory Management',
     'settings' => 'Settings',
-    
+    'leave_management' => 'Leave Management',
+    'inventory_reports' => 'Inventory Reports',
 ];

@@ -9,4 +9,6 @@ return [
     'area_management' => 'إدارة المناطق',
     'inventory_management' => 'إدارة المخزون',
     'settings' => 'الإعدادات',
+    'leave_management' => 'إدارة الإجازات',
+    'inventory_reports' => 'تقارير المخزون',
 ];

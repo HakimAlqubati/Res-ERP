@@ -13,7 +13,7 @@
                     </th>
                     <th colspan="1" style="text-align: center; vertical-align: middle;border:none;"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                        <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
+                        <img class="circle-image logo-left" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>

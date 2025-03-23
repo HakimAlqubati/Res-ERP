@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\RelationManagers;
+use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\WeeklyHoliday;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
@@ -22,7 +23,7 @@ class WeeklyHolidayResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRAttenanceCluster::class;
+    protected static ?string $cluster = HRLeaveManagementCluster::class;
     protected static ?string $label = 'Weekend';
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;

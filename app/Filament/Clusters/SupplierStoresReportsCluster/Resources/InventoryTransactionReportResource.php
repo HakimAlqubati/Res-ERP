@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 use App\Models\Category;
@@ -33,7 +34,7 @@ class InventoryTransactionReportResource extends Resource
     {
         return 'Inventory Report';
     }
-    protected static ?string $cluster = SupplierStoresReportsCluster::class;
+    protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 

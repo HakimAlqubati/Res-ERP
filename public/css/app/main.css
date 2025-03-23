@@ -376,3 +376,7 @@ for scrollbar
     font-weight: normal;
     font-style: normal;
 }
+.logo-img-report{
+    width: 80px !important;
+    height: auto !important;
+}
