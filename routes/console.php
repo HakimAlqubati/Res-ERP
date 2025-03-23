@@ -81,7 +81,15 @@ Schedule::call(function () {
         
         $title = ['Alert', 'Notification', 'Reminder'][array_rand(['Alert', 'Notification', 'Reminder'])];
         $body = ['This is a random message.', 'Please check your tasks.', 'You have a new notification.'][array_rand(['This is a random message.', 'Please check your tasks.', 'You have a new notification.'])];
+        try {
+            Mail::to($email)->send(new \App\Mail\GeneralNotificationMail($title, $body));
 
-        Mail::to($email)->send(new GeneralNotificationMail($title, $body));
+            // ✅ Log success
+            Log::info("Notification sent successfully to {$email} with subject '{$title}'");
+        } catch (\Exception $e) {
+            // ❌ Log failure
+            Log::error("Failed to send notification to {$email}: " . $e->getMessage());
+        }
+        // Mail::to($email)->send(new GeneralNotificationMail($title, $body));
     }
 })->everyMinute();
