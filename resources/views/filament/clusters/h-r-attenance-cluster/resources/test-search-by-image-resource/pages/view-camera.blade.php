@@ -43,7 +43,7 @@
 
             color: #ffffff;
             margin: 0;
-            padding: 20px;
+            padding: 0px;
             overflow: hidden;
             /* يمنع التمرير */
             height: 100vh;
@@ -276,7 +276,8 @@
         <img id="icon" src="" alt="Icon">
     </div>
     <div id="videoWrapper">
-        <video id="video" width="500" height="300" autoplay muted></video>
+        <video id="video" width="580" height="380" autoplay muted></video>
+        
         <canvas id="overlayCanvas"></canvas>
     </div>
     <img id="capturedImage" />
