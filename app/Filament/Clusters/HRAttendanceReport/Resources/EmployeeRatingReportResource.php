@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeRatingReportResource\Pages\ViewDetails;
 use App\Filament\Clusters\HRAttendanceReport\Resources\ListEmployeeRatingReports2;
+use App\Filament\Clusters\HRTaskReport;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
@@ -29,7 +30,7 @@ class EmployeeRatingReportResource extends Resource
     protected static ?string $slug = 'rating-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRAttendanceReport::class;
+    protected static ?string $cluster = HRTaskReport::class;
     protected static ?string $label = 'Task performance rating';
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;

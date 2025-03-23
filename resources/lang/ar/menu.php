@@ -11,4 +11,5 @@ return [
     'settings' => 'الإعدادات',
     'leave_management' => 'إدارة الإجازات',
     'inventory_reports' => 'تقارير المخزون',
+    'task_reports' => 'تقارير المهام',
 ];

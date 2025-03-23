@@ -11,4 +11,5 @@ return [
     'settings' => 'Settings',
     'leave_management' => 'Leave Management',
     'inventory_reports' => 'Inventory Reports',
+    'task_reports' => 'Task Reports',
 ];

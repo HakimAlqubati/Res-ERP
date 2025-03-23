@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\RelationManagers;
@@ -25,7 +26,7 @@ class StockAdjustmentReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = InventoryManagementCluster::class;
+    protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 9;
 

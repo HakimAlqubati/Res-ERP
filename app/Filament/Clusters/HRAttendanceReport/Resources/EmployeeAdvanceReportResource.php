@@ -3,7 +3,7 @@
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport;
-
+use App\Filament\Clusters\HRTaskReport;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
@@ -33,7 +33,7 @@ class EmployeeAdvanceReportResource extends Resource
     protected static ?string $slug = 'employee-advance-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRAttendanceReport::class;
+    protected static ?string $cluster = HRTaskReport::class;
     protected static ?string $label = 'Employee advance';
     
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
