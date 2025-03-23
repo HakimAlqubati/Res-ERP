@@ -32,8 +32,8 @@
 
         body {
             margin: 0;
-            padding: 30px;
-            height: 80vh;
+            /* padding: 30px; */
+            
             display: flex;
             justify-content: center;
             align-items: center;
@@ -42,6 +42,11 @@
             background: linear-gradient(135deg, rgb(7 54 29), rgb(4 54 27 / 80%) 50%, rgba(0, 50, 30, 1));
 
             color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+            /* يمنع التمرير */
+            height: 100vh;
 
         }
 
@@ -243,17 +248,24 @@
                 flex-direction: column;
                 align-items: center;
             }
-            #videoWrapper, .info-panel {
-                width: 90%;
+
+            #videoWrapper,
+            .info-panel {
+                /* width: 90%; */
             }
         }
+
+        /* @media (max-width: 100px) { */
+        #greeting {
+            display: none !important;
+        }
+
+        /* } */
     </style>
 </head>
 
 <body>
-
-    {{-- <video id="video" width="720" height="560" autoplay muted></video> --}}
-
+ 
     <div id="leftPanel">
         <img id="logo" src="{{ asset('storage/logo/default-wb.png') }}" alt="Logo">
         <div id="description">Stand in front of the camera to register your attendance for work.</div>
@@ -264,7 +276,7 @@
         <img id="icon" src="" alt="Icon">
     </div>
     <div id="videoWrapper">
-        <video id="video" width="720" height="560" autoplay muted></video>
+        <video id="video" width="500" height="300" autoplay muted></video>
         <canvas id="overlayCanvas"></canvas>
     </div>
     <img id="capturedImage" />
