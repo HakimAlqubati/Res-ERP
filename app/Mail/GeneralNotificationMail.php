@@ -44,7 +44,7 @@ class GeneralNotificationMail extends Mailable
             view: 'emails.general_notification',
             with: [
                 'title' => $this->title,
-                'message' => $this->message,
+                'body' => $this->message,
             ]
         );
     }
