@@ -303,7 +303,7 @@ class OrderRepository implements OrderRepositoryInterface
 
         try {
             // Start a database transaction
-            DB::beginTransaction();
+            // DB::beginTransaction();
 
             if (auth()->user()->managedStores->count() == 0 && isStoreManager()) {
                 return response()->json([
@@ -354,7 +354,7 @@ class OrderRepository implements OrderRepositoryInterface
             $order->fill($validatedData)->save();
 
             // Commit the transaction
-            DB::commit();
+            // DB::commit();
 
             // Return a success response with the updated order information
             return [
@@ -364,7 +364,7 @@ class OrderRepository implements OrderRepositoryInterface
             ];
         } catch (\Exception $e) {
             // Roll back the transaction in case of an error
-            DB::rollBack();
+            // DB::rollBack();
 
             // Handle the exception and return an error response
             return response()->json([
