@@ -312,7 +312,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'message' => "You Are not a Store Keeper",
             ], 500);
         }
-        $branchId = auth()->user()->managedStores->first()->id;
+        // $branchId = auth()->user()->managedStores->first()->id;
         try {
             // Find the order by the given ID or throw a ModelNotFoundException
             $order = Order::findOrFail($id);
