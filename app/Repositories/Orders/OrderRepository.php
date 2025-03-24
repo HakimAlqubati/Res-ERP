@@ -299,7 +299,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function update($request, $id)
     {
 
-dd($id);
+        dd(Order::find($id));
 
         try {
             // Start a database transaction
