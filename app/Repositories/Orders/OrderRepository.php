@@ -368,7 +368,7 @@ class OrderRepository implements OrderRepositoryInterface
             // Handle the exception and return an error response
             return response()->json([
                 'success' => false,
-                'orderId' => $order->id,
+                'orderId' => 0,
                 'message' => $e->getMessage(),
             ], 500);
         }
