@@ -305,11 +305,11 @@ class OrderRepository implements OrderRepositoryInterface
             // Start a database transaction
             DB::beginTransaction();
 
-            if (auth()->user()->managedStores->count() == 0) {
+            if (auth()->user()->managedStores->count() == 0 && isStoreManager()) {
                 return response()->json([
                     'success' => false,
                     'orderId' => null,
-                    'message' => "You Are you Store Keeper",
+                    'message' => "You Are not a Store Keeper",
                 ], 500);
             }
             $branchId = auth()->user()->managedStores->first()->id;
