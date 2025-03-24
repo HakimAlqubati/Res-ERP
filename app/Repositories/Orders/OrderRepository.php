@@ -299,7 +299,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function update($request, $id)
     {
 
-        dd(Order::find($id));
+        
 
         try {
             // Start a database transaction
@@ -327,6 +327,7 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 404);
             }
 
+            dd($order);
             // Validate the request data
             $validatedData = $request->validate([
                 'status' => [
