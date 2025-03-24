@@ -299,80 +299,80 @@ class OrderRepository implements OrderRepositoryInterface
     public function update($request, $id)
     {
 
-        
 
-        try {
-            // Start a database transaction
-            // DB::beginTransaction();
 
-            if (auth()->user()->managedStores->count() == 0 && isStoreManager()) {
-                return response()->json([
-                    'success' => false,
-                    'orderId' => null,
-                    'message' => "You Are not a Store Keeper",
-                ], 500);
-            }
-            $branchId = auth()->user()->managedStores->first()->id;
-            try {
-                // Find the order by the given ID or throw a ModelNotFoundException
-                $order = Order::findOrFail($id);
-            } catch (ModelNotFoundException $e) {
-                // Roll back the transaction and return an error response if the order is not found
-                DB::rollBack();
+        // try {
+        // Start a database transaction
+        // DB::beginTransaction();
 
-                return response()->json([
-                    'success' => false,
-                    'orderId' => null,
-                    'message' => "Order not found with $id id",
-                ], 404);
-            }
-
-            dd($order);
-            // Validate the request data
-            $validatedData = $request->validate([
-                'status' => [
-                    'string',
-                    Rule::in([
-                        Order::PROCESSING,
-                        Order::READY_FOR_DELEVIRY,
-                        Order::DELEVIRED,
-                        Order::ORDERED,
-                    ]),
-                ],
-                'notes' => 'string',
-                'full_quantity' => 'boolean',
-                'active' => 'boolean',
-            ]);
-            $order->updated_by = auth()->user()->id;
-            // Fill the order with the validated data and save it to the database
-
-            if (in_array($request->status, [Order::READY_FOR_DELEVIRY])) {
-                $order->update([
-                    'transfer_date' => now(),
-                ]);
-            }
-            $order->fill($validatedData)->save();
-
-            // Commit the transaction
-            // DB::commit();
-
-            // Return a success response with the updated order information
-            return [
-                'success' => true,
-                'orderId' => $order->id,
-                'message' => 'done successfully',
-            ];
-        } catch (\Exception $e) {
-            // Roll back the transaction in case of an error
-            // DB::rollBack();
-
-            // Handle the exception and return an error response
+        if (auth()->user()->managedStores->count() == 0 && isStoreManager()) {
             return response()->json([
                 'success' => false,
-                'orderId' => 0,
-                'message' => $e->getMessage(),
+                'orderId' => null,
+                'message' => "You Are not a Store Keeper",
             ], 500);
         }
+        $branchId = auth()->user()->managedStores->first()->id;
+        try {
+            // Find the order by the given ID or throw a ModelNotFoundException
+            $order = Order::findOrFail($id);
+        } catch (ModelNotFoundException $e) {
+            // Roll back the transaction and return an error response if the order is not found
+            // DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'orderId' => null,
+                'message' => "Order not found with $id id",
+            ], 404);
+        }
+
+        dd($order);
+        // Validate the request data
+        $validatedData = $request->validate([
+            'status' => [
+                'string',
+                Rule::in([
+                    Order::PROCESSING,
+                    Order::READY_FOR_DELEVIRY,
+                    Order::DELEVIRED,
+                    Order::ORDERED,
+                ]),
+            ],
+            'notes' => 'string',
+            'full_quantity' => 'boolean',
+            'active' => 'boolean',
+        ]);
+        $order->updated_by = auth()->user()->id;
+        // Fill the order with the validated data and save it to the database
+
+        if (in_array($request->status, [Order::READY_FOR_DELEVIRY])) {
+            $order->update([
+                'transfer_date' => now(),
+            ]);
+        }
+        $order->fill($validatedData)->save();
+
+        // Commit the transaction
+        // DB::commit();
+
+        // Return a success response with the updated order information
+        return [
+            'success' => true,
+            'orderId' => $order->id,
+            'message' => 'done successfully',
+        ];
+        // } catch (\Exception $e) {
+        //     // Roll back the transaction in case of an error
+        //     // DB::rollBack();
+
+        //     // Handle the exception and return an error response
+        //     return response()->json([
+        //         'success' => false,
+        //         'orderId' => 0,
+        //         'message' => $e->getMessage(),
+        //     ], 500);
+        // }
     }
 
     public function export($id)
