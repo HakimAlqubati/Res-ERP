@@ -96,7 +96,7 @@ class Branch extends Model implements HasMedia, Auditable
         if (auth()->check()) {
             if (isBranchManager()) {
                 static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    $builder->where('id', auth()->user()->branch_id); // Add your default query here
+                    // $builder->where('id', auth()->user()->branch_id); // Add your default query here
                 });
             } else if (isStuff()) {
                 static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
