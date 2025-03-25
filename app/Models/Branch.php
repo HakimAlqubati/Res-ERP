@@ -28,6 +28,7 @@ class Branch extends Model implements HasMedia, Auditable
         'is_hq',
         'is_central_kitchen',
         'store_id',
+        'manager_abel_show_orders',
     ];
     protected $auditInclude = [
         'id',
@@ -38,6 +39,7 @@ class Branch extends Model implements HasMedia, Auditable
         'is_hq',
         'is_central_kitchen',
         'store_id',
+        'manager_abel_show_orders',
     ];
 
     public function user()
@@ -117,5 +119,10 @@ class Branch extends Model implements HasMedia, Auditable
     public function store()
     {
         return $this->belongsTo(Store::class, 'store_id');
+    }
+    public function toArray()
+    {
+        $data = parent::toArray();
+        return $data;
     }
 }
