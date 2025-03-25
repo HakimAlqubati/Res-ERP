@@ -124,20 +124,20 @@ class OrderDetails extends Model implements Auditable
             $order = $orderDetail->order;
             $dirty = $orderDetail->getDirty();
             $messageParts = [];
-            
+
             // Check if unit_id was updated
             if (isset($dirty['unit_id'])) {
                 // Get the corresponding UnitPrice record
                 $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
                     ->where('unit_id', $orderDetail->unit_id)
                     ->first();
-                
+
                 if ($unitPrice) {
                     $orderDetail->package_size = $unitPrice->package_size;
                     $orderDetail->save();
                 }
             }
-            
+
             foreach ($dirty as $field => $newValue) {
                 $oldValue = $orderDetail->getOriginal($field);
                 $messageParts[] = "$field: $oldValue -> $newValue";
@@ -176,6 +176,12 @@ class OrderDetails extends Model implements Auditable
         // });
     }
 
+    public function scopeManufacturingOnly($query)
+    {
+        return $query->whereHas('product.category', function ($q) {
+            $q->where('is_manafacturing', true);
+        });
+    }
     public function getTotalPriceAttribute()
     {
         return $this->available_quantity * $this->price;

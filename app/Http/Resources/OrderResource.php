@@ -15,6 +15,18 @@ class OrderResource extends JsonResource
     public function toArray($request)
     {
         //new code
+
+
+        $orderDetails =  OrderDetailsResource::collection($this->orderDetails);
+        if (
+            getCurrentRole() == 7 &&
+            auth()->user()->branch->is_central_kitchen && 
+            auth()->user()->branch->manager_abel_show_orders
+        ) {
+            $orderDetails = OrderDetailsResource::collection(
+                $this->orderDetails()->manufacturingOnly()->get()
+            );
+        }
         return [
             'id' => $this->id,
             'type' => $this->type,
@@ -30,7 +42,7 @@ class OrderResource extends JsonResource
             'total_price' => $this->total,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'order_details' => OrderDetailsResource::collection($this->orderDetails)
+            'order_details' => $orderDetails,
         ];
     }
 }

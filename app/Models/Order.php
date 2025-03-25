@@ -411,4 +411,13 @@ class Order extends Model implements Auditable
     {
         return $query->where('type', self::TYPE_MANUFACTURING);
     }
+
+    public function scopeHasManufacturingProducts($query)
+    {
+        return $query->whereHas('orderDetails', function ($q) {
+            $q->whereHas('product.category', function ($q2) {
+                $q2->where('is_manafacturing', true);
+            });
+        });
+    }
 }
