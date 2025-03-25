@@ -70,11 +70,17 @@ class BranchResource extends Resource
                                         ->label(__('stock.is_central_kitchen'))
                                         ->inline(false)
                                         ->default(false)
+
                                         ->live(),
+                                    Toggle::make('manager_abel_show_orders')
+                                        ->label(__('stock.manager_abel_show_orders'))
+                                        ->inline(false)
+                                        ->default(false)
+                                        ->visible(fn(callable $get) => $get('is_central_kitchen')),
                                     Select::make('store_id')
                                         ->label(__('stock.store_id'))
                                         ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
-                                        ->searchable()->requiredIf('is_central_kitchen',true)
+                                        ->searchable()->requiredIf('is_central_kitchen', true)
                                         ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
                                 ]),
 
