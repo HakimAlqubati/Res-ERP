@@ -219,6 +219,7 @@ class WorkPeriodResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ])
             ->headerActions([
@@ -294,18 +295,12 @@ class WorkPeriodResource extends Resource
         return $startAt > $endAt;
     }
 
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     $query = parent::getEloquentQuery()
-    //         ->withoutGlobalScopes([
-    //             SoftDeletingScope::class,
-    //         ]);
-
-    //     // Check if the user is a branch manager
-    //     if (isBranchManager()) {
-    //         $query->where('branch_id', auth()->user()->branch_id);
-    //     }
-
-    //     return $query;
-    // }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+        return $query;
+    }
 }
