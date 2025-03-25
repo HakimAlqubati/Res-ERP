@@ -41,7 +41,11 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         if ($currnetRole == 7) {
-            $query->where('customer_id', $request->user()->id);
+            if (auth()->user()->branch->is_central_kitchen && auth()->user()->branch->manager_abel_show_orders) {
+                $query->whereIn('branch_id', DB::table('branches')->where('active',1)->pluck('id')->toArray());
+            }else{
+                $query->where('branch_id', $request->user()->branch_id);
+            }
         } else if ($currnetRole == 8) {
             $query->where('customer_id', auth()->user()->owner->id);
         }
