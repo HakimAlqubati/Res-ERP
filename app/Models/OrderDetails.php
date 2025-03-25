@@ -176,11 +176,14 @@ class OrderDetails extends Model implements Auditable
         // });
     }
 
-    public function scopeManufacturingOnly($query)
+    public function scopeManufacturingOnlyForStore($query)
     {
-        return $query->whereHas('product.category', function ($q) {
-            $q->where('is_manafacturing', true);
-        });
+        
+        if ($query->first()->order->branch_id != auth()->user()->branch->id) {
+            return $query->whereHas('product.category', function ($q) {
+                $q->where('is_manafacturing', true);
+            });
+        }
     }
     public function getTotalPriceAttribute()
     {

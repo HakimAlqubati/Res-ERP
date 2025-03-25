@@ -20,11 +20,12 @@ class OrderResource extends JsonResource
         $orderDetails =  OrderDetailsResource::collection($this->orderDetails);
         if (
             getCurrentRole() == 7 &&
-            auth()->user()->branch->is_central_kitchen && 
+            auth()->user()->branch->is_central_kitchen &&
             auth()->user()->branch->manager_abel_show_orders
         ) {
+            
             $orderDetails = OrderDetailsResource::collection(
-                $this->orderDetails()->manufacturingOnly()->get()
+                $this->orderDetails()->manufacturingOnlyForStore()->get()
             );
         }
         return [

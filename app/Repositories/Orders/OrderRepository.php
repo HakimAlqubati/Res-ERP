@@ -32,7 +32,7 @@ class OrderRepository implements OrderRepositoryInterface
 
         $query = Order::query();
 
-        
+
         if ($request->has('customer_id')) {
             $query->where('customer_id', $request->customer_id);
         }
@@ -43,10 +43,9 @@ class OrderRepository implements OrderRepositoryInterface
 
         if ($currnetRole == 7) {
             if (auth()->user()->branch->is_central_kitchen && auth()->user()->branch->manager_abel_show_orders) {
-                $query->whereIn('branch_id', DB::table('branches')->where('active',1)->pluck('id')->toArray());
-                
-
-            }else{
+                $query->whereIn('branch_id', DB::table('branches')
+                    ->where('active', 1)->pluck('id')->toArray());
+            } else {
                 $query->where('branch_id', $request->user()->branch_id);
             }
         } else if ($currnetRole == 8) {
