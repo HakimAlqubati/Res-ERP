@@ -44,6 +44,7 @@ Route::get('/to_try_order', function (Request $request) {
 });
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::middleware('auth:api')->group(function () {
     Route::get('/report_products', [ProductController::class, 'reportProducts']);

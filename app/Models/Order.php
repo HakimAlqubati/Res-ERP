@@ -208,6 +208,36 @@ class Order extends Model implements Auditable
 
         static::created(function ($order) {
             if ($order->status == self::ORDERED) {
+                $branch = $order->branch;
+
+                if (
+                    $branch &&
+                    $branch->is_central_kitchen &&
+                    is_array($branch->customized_manufacturing_categories)
+                ) {
+                    // جلب جميع الفئات داخل الطلب
+                    $categoriesInOrder = $order->orderDetails()
+                        ->with('product.category')
+                        ->get()
+                        ->pluck('product.category.id')
+                        ->unique();
+
+                    $intersect = array_intersect(
+                        $categoriesInOrder->toArray(),
+                        $branch->customized_manufacturing_categories
+                    );
+
+                    if (count($intersect)) {
+                        $storekeeper = optional(optional($branch->store)->storekeeper);
+                        if ($storekeeper && $storekeeper->fcm_token) {
+                            sendNotification(
+                                $storekeeper->fcm_token,
+                                'Manufacturing Order Created',
+                                "Order #{$order->id} contains manufacturing products and needs your attention."
+                            );
+                        }
+                    }
+                }
                 // Get store users with role ID 5
                 $storeUsers = User::whereHas("roles", function ($q) {
                     $q->where("id", 5);

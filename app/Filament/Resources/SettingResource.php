@@ -454,6 +454,20 @@ class SettingResource extends Resource
                                                 ->default(1)
                                                 ->numeric(),
                                         ]),
+                                    Fieldset::make()->label('Setup Mobile Application Login Methos')
+                                        ->columns(2)
+                                        ->schema([
+                                            Select::make('login_method')->options(['phone_number' => 'Phone', 'email' => 'email'])->label('Login Methos'),
+                                            Select::make('login_auth_type')
+                                                ->label('Login Authentication Method')
+                                                ->options([
+                                                    'password' => 'Email/Phone with Password',
+                                                    'otp' => 'OTP via Email',
+                                                ])
+                                                ->default('password')
+                                                ->required()
+                                                ->helperText('Choose how users should authenticate when logging in.'),
+                                        ])
                                 ]),
                             ]),
                     ]),

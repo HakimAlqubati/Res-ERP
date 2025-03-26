@@ -171,7 +171,7 @@ return [
     'threshold' => 'Threshold for Failed Attempts', // Add this line
     'hours_to_reset' => 'Hours to Reset Failed Attempts', // Add this line
     'hours_to_allow_login_again' => 'Hours to Allow Login Again', // Add this line
-    'type_reactive_blocked_users' => 'Type Reactive Blocked Users',
+    'type_reactive_blocked_users' => 'Reactivating Blocked Users',
     'manual' => 'Manual',
     'based_on_specific_time' => 'Based on Specific Time',
     'must_include_number' => 'Must include at least one number',
