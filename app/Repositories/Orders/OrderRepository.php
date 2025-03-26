@@ -62,8 +62,128 @@ class OrderRepository implements OrderRepositoryInterface
         return OrderResource::collection($orders);
     }
 
-
     public function storeWithFifo($request)
+    {
+        try {
+            DB::beginTransaction();
+    
+            $currnetRole = getCurrentRole();
+            if ($currnetRole == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'you dont have any role'
+                ], 500);
+            }
+    
+            if ($currnetRole == 7) {
+                $branchId = auth()->user()?->branch?->id;
+                $customerId = auth()->user()->id;
+            } else if ($currnetRole == 8) {
+                $branchId = auth()->user()->owner->branch->id;
+                $customerId = auth()->user()->owner->id;
+            }
+    
+            $orderStatus = $currnetRole == 7 ? Order::ORDERED : Order::PENDING_APPROVAL;
+    
+            $allOrderDetails = $request->input('order_details');
+            $notes = $request->input('notes');
+            $description = $request->input('description');
+    
+            $allManufacturingBranches = Branch::active()
+                ->where('is_central_kitchen', true)
+                ->get(['id', 'customized_manufacturing_categories']);
+    
+            $manufacturedProductIds = [];
+    
+            foreach ($allManufacturingBranches as $branch) {
+                $categories = $branch->customized_manufacturing_categories;
+    
+                if (is_array($categories) && count($categories)) {
+                    $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories) {
+                        $product = \App\Models\Product::find($item['product_id']);
+                        return $product && in_array($product->category_id, $categories);
+                    })->values()->all();
+    
+                    if (count($productsForThisBranch)) {
+                        $manufacturingOrder = Order::create([
+                            'status' => Order::ORDERED,
+                            'customer_id' => $customerId,
+                            'branch_id' => auth()->user()->branch->id,
+                            'type' => Order::TYPE_MANUFACTURING,
+                            'notes' => $notes,
+                            'description' => $description,
+                        ]);
+    
+                        foreach ($productsForThisBranch as $productDetail) {
+                            $fifoService = new FifoInventoryService(
+                                $productDetail['product_id'],
+                                $productDetail['unit_id'],
+                                $productDetail['quantity']
+                            );
+    
+                            $result = $fifoService->allocateOrder();
+                            if ($result['success']) {
+                                $data = $result['result'][0];
+                                unset($data['movement_date'], $data['allocated_qty'], $data['unit_price']);
+                                $data['order_id'] = $manufacturingOrder->id;
+                                OrderDetails::create($data);
+                                $manufacturedProductIds[] = $productDetail['product_id'];
+                            } else {
+                                throw new \Exception($result['message']);
+                            }
+                        }
+                    }
+                }
+            }
+    
+            $normalOrderDetails = collect($allOrderDetails)->reject(function ($item) use ($manufacturedProductIds) {
+                return in_array($item['product_id'], $manufacturedProductIds);
+            })->values()->all();
+    
+            $order = Order::create([
+                'status' => $orderStatus,
+                'customer_id' => $customerId,
+                'branch_id' => auth()->user()?->branch?->id,
+                'type' => Order::TYPE_NORMAL,
+                'notes' => $notes,
+                'description' => $description,
+            ]);
+    
+            $orderId = $order->id;
+    
+            foreach ($normalOrderDetails as $key => $detail) {
+                $fifoService = new FifoInventoryService($detail['product_id'], $detail['unit_id'], $detail['quantity']);
+                $result = $fifoService->allocateOrder();
+    
+                if ($result['success']) {
+                    $data = $result['result'][0];
+                    unset($data['movement_date'], $data['allocated_qty'], $data['unit_price']);
+                    $data['order_id'] = $orderId;
+                    OrderDetails::create($data);
+                } else {
+                    throw new \Exception($result['message']);
+                }
+            }
+    
+            DB::commit();
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Orders created successfully',
+                'order' => $order,
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+    
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+
+    public function storeWithFifo_old($request)
     {
         try {
             DB::beginTransaction();
