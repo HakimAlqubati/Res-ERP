@@ -38,12 +38,13 @@ class AuthController extends Controller
             return $this->sendOtp($request);
         }
         $request->validate([
-            'username' => 'required|string',
+            'username' => 'string',
+            'email' => 'string',
             'password' => 'required|string',
         ]);
 
         $credentials = [
-            $loginMethod => $request->input('username'),
+            $loginMethod => $request->input('username') ?? $request->input('email'),
             'password' => $request->input('password'),
         ];
 
