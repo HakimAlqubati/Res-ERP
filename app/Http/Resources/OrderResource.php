@@ -28,9 +28,9 @@ class OrderResource extends JsonResource
                 $this->orderDetails()->manufacturingOnlyForStore()->get()
             );
         }    // 👇 تحقق من الفارغ هنا
-        if ($orderDetails->isEmpty()) {
-            return null;
-        }
+        // if ($orderDetails->isEmpty()) {
+        //     return null;
+        // }
         return [
             'id' => $this->id,
             'type' => $this->type,
