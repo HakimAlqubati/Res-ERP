@@ -23,6 +23,7 @@ class UserResource extends JsonResource
             'fcm_token' => $this->fcm_token,
             'branch_is_central_kitchen' => $this->branch->is_central_kitchen ?? 0,
             'branch' => $this->branch,
+            'roles' => $this->roles->pluck('name','id'),
         ];
     }
 }

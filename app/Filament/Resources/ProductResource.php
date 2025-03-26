@@ -84,7 +84,12 @@ class ProductResource extends Resource
                             Select::make('category_id')->required()->label(__('lang.category'))
                                 ->searchable()->live()
                                 ->options(function () {
-                                    return Category::pluck('name', 'id');
+                                    $type = request()->query('type');
+                                    // dd(request()->query(), $type);
+                                    return Category::when($type == 'manufacturing', function ($query) use ($type) {
+                                        // dd($type);
+                                        $query->where('is_manafacturing', true);
+                                    })->pluck('name', 'id');
                                 }),
                             TextInput::make('code')->required()
                                 ->unique(ignoreRecord: true)
@@ -249,9 +254,9 @@ class ProductResource extends Resource
                                     // TextInput::make('quantity_after_waste')->default(0)
                                     //     ->type('text')
                                     //     ->extraInputAttributes(['readonly' => true]),
-                                ]) 
+                                ])
                                 ->afterStateUpdated(function (Set $set, $get) {
-                                    static::updateFinalPriceEachUnit($set, $get, $get('productItems'),true);
+                                    static::updateFinalPriceEachUnit($set, $get, $get('productItems'), true);
                                 })
                                 ->columns(9) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
@@ -549,7 +554,7 @@ class ProductResource extends Resource
     }
 
     public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
-    { 
+    {
         // 🔄 Calculate the new total net price of product items
         $totalNetPrice = collect($state)->sum('total_price_after_waste') ?? 0;
 

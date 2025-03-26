@@ -29,6 +29,7 @@ class Branch extends Model implements HasMedia, Auditable
         'is_central_kitchen',
         'store_id',
         'manager_abel_show_orders',
+        'customized_manufacturing_categories',
     ];
     protected $auditInclude = [
         'id',
@@ -40,8 +41,13 @@ class Branch extends Model implements HasMedia, Auditable
         'is_central_kitchen',
         'store_id',
         'manager_abel_show_orders',
+        'customized_manufacturing_categories',
     ];
 
+    protected $casts = [
+        'customized_manufacturing_categories' => 'array',
+    ];
+    
     public function user()
     {
         return $this->belongsTo(User::class, 'manager_id');

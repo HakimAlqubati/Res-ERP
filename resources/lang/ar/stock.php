@@ -7,4 +7,5 @@ return [
     'is_central_kitchen' => 'هل هو مطبخ مركزي؟',
     'store_id' => 'المخزن',
     'manager_abel_show_orders' => 'المدير قادر على عرض الطلبات',
+    'customized_manufacturing_categories' => 'فئات التصنيع المخصصة',
 ];

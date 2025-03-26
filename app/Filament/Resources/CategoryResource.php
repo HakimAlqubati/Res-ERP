@@ -62,6 +62,7 @@ class CategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'desc')->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->sortable()->label(__('lang.id'))

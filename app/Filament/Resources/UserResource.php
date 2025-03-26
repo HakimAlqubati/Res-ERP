@@ -251,9 +251,9 @@ class UserResource extends Resource
                                 //  dd($roles,$state);
                             }),
                         CheckboxList::make('roles')->required()
-                            ->label('Role')
+                            ->label('Roles')
                             ->relationship('roles')
-                            ->maxItems(1)
+                            // ->maxItems(1)
                             ->options(function (Get $get) {
                                 // dd($get('user_type'),'hi');
                                 if ($get('user_type')) {

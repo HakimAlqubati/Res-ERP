@@ -56,7 +56,10 @@ class BranchResource extends Resource
                                 TextInput::make('name')->required()->label(__('lang.name')),
                                 Select::make('manager_id')
                                     ->label(__('lang.branch_manager'))
-                                    ->options(User::all()->pluck('name', 'id'))
+                                    ->options(User::whereHas('roles', function ($q) {
+                                            $q->where('id', 7);
+                                        })
+                                        ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Grid::make()->columns(4)->schema([
                                     Toggle::make('active')
@@ -81,6 +84,11 @@ class BranchResource extends Resource
                                         ->label(__('stock.store_id'))
                                         ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
                                         ->searchable()->requiredIf('is_central_kitchen', true)
+                                        ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
+                                    Select::make('customized_manufacturing_categories')
+                                        ->label(__('stock.customized_manufacturing_categories'))
+                                        ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                        ->searchable()->multiple()
                                         ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
                                 ]),
 
