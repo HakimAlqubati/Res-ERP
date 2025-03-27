@@ -6,6 +6,7 @@ use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseInvoiceResource\RelationManagers\DetailsRelationManager;
 use App\Filament\Resources\PurchaseInvoiceResource\Pages;
+use App\Filament\Resources\PurchaseInvoiceResource\Pages\OcrAnalyzer;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers\PurchaseInvoiceDetailsRelationManager;
 use App\Http\Resources\ProductResource;
@@ -328,6 +329,7 @@ class PurchaseInvoiceResource extends Resource
             'create' => Pages\CreatePurchaseInvoice::route('/create'),
             'edit' => Pages\EditPurchaseInvoice::route('/{record}/edit'),
             'view' => Pages\ViewPurchaseInvoice::route('/{record}'),
+            'ocr' => OcrAnalyzer::route('ocr'),
         ];
     }
 

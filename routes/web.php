@@ -8,6 +8,7 @@ use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
+use App\Http\Controllers\OCRController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
@@ -669,3 +670,10 @@ Route::get('/testMail/{name}/{email}', function ($name, $email) {
     // The email sending is done using the to method on the Mail facade
     Mail::to($email)->send(new TestEmail($name, $email));
 });
+
+Route::get('/analyze', function () {
+    // $response = SpaceOCR::analyze(storage_path('app/public/sample-image.jpg'));
+
+    // return $response;
+});
+Route::get('/testOcr', [OCRController::class, 'test']);
