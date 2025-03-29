@@ -186,6 +186,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
         }
         return false;
     }
+    public function isBranchUser()
+    {
+        return in_array(8, $this->roles->pluck('id')->toArray());
+    }
     public function isMaintenanceManager()
     {
         if (getCurrentRole() == 14) {

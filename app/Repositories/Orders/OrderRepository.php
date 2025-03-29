@@ -75,10 +75,10 @@ class OrderRepository implements OrderRepositoryInterface
                 ], 500);
             }
     
-            if ($currnetRole == 7) {
+            if (isBranchManager()) {
                 $branchId = auth()->user()?->branch?->id;
                 $customerId = auth()->user()->id;
-            } else if ($currnetRole == 8) {
+            } else if (isBranchUser()) {
                 $branchId = auth()->user()->owner->branch->id;
                 $customerId = auth()->user()->owner->id;
             }
@@ -201,7 +201,7 @@ class OrderRepository implements OrderRepositoryInterface
             $pendingOrderId = 0;
             $message = '';
             // check if user has pending for approval order to determine branchId & orderId & orderStatus
-            if ($currnetRole == 7) { // Role 7 is Branch
+            if (isBranchManager()) { // Role 7 is Branch
                 $branchId = auth()->user()?->branch?->id;
                 $customerId = auth()->user()->id;
                 if (!isset($branchId)) {
@@ -211,7 +211,7 @@ class OrderRepository implements OrderRepositoryInterface
                     ], 500);
                 }
                 $orderStatus = Order::ORDERED;
-            } else if ($currnetRole == 8) { // Role 8 is User
+            } else if (isBranchUser()) { // Role 8 is User
                 $orderStatus = Order::PENDING_APPROVAL;
                 $branchId = auth()->user()->owner->branch->id;
                 $customerId = auth()->user()->owner->id;

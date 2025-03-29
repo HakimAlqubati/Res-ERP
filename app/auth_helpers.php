@@ -25,6 +25,15 @@ if (!function_exists('isBranchManager')) {
         return false;
     }
 }
+if (!function_exists('isBranchUser')) {
+    function isBranchUser()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isBranchUser();
+        }
+        return false;
+    }
+}
 if (!function_exists('isFinanceManager')) {
     function isFinanceManager()
     {
