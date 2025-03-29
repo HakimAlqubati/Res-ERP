@@ -372,7 +372,7 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
-        
+
         return $table
             ->striped()
             ->defaultSort('id', 'desc')
@@ -406,6 +406,8 @@ class UserResource extends Resource
                 TextColumn::make('owner.name')->searchable()->label('Manager')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('first_role.name')->label('Role')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('roles_title')->label('Roles')
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_employee')->boolean()
                     ->trueIcon('heroicon-o-check-badge')

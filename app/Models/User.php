@@ -18,13 +18,18 @@ use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
 
-class User extends Authenticatable implements FilamentUser,Auditable
+class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 
 {
-    use HasApiTokens, HasFactory, Notifiable, 
-    HasRoles, SoftDeletes, HasPanelShield, DynamicConnection,
-    \OwenIt\Auditing\Auditable;
+    use HasApiTokens,
+        HasFactory,
+        Notifiable,
+        HasRoles,
+        SoftDeletes,
+        HasPanelShield,
+        DynamicConnection,
+        \OwenIt\Auditing\Auditable;
 
 
     /**
@@ -242,7 +247,7 @@ class User extends Authenticatable implements FilamentUser,Auditable
 
     public function getManagedStoresIdsAttribute()
     {
-        if(!auth()->check()){
+        if (!auth()->check()) {
             return [];
         }
         $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
@@ -266,5 +271,10 @@ class User extends Authenticatable implements FilamentUser,Auditable
             }
         }
         return $isBlocked;
+    }
+
+    public function getRolesTitleAttribute()
+    {
+        return $this->roles->pluck('name')->implode(', ');
     }
 }
