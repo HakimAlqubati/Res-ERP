@@ -66,7 +66,7 @@ class OrderRepository implements OrderRepositoryInterface
     {
         try {
             DB::beginTransaction();
-    
+
             $currnetRole = getCurrentRole();
             if ($currnetRole == 0) {
                 return response()->json([
@@ -74,7 +74,7 @@ class OrderRepository implements OrderRepositoryInterface
                     'message' => 'you dont have any role'
                 ], 500);
             }
-    
+
             if (isBranchManager()) {
                 $branchId = auth()->user()?->branch?->id;
                 $customerId = auth()->user()->id;
@@ -82,28 +82,28 @@ class OrderRepository implements OrderRepositoryInterface
                 $branchId = auth()->user()->owner->branch->id;
                 $customerId = auth()->user()->owner->id;
             }
-    
-            $orderStatus = $currnetRole == 7 ? Order::ORDERED : Order::PENDING_APPROVAL;
-    
+
+            $orderStatus = isBranchManager()  ? Order::ORDERED : Order::PENDING_APPROVAL;
+
             $allOrderDetails = $request->input('order_details');
             $notes = $request->input('notes');
             $description = $request->input('description');
-    
+
             $allManufacturingBranches = Branch::active()
                 ->where('is_central_kitchen', true)
                 ->get(['id', 'customized_manufacturing_categories']);
-    
+
             $manufacturedProductIds = [];
-    
+
             foreach ($allManufacturingBranches as $branch) {
                 $categories = $branch->customized_manufacturing_categories;
-    
+
                 if (is_array($categories) && count($categories)) {
                     $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories) {
                         $product = \App\Models\Product::find($item['product_id']);
                         return $product && in_array($product->category_id, $categories);
                     })->values()->all();
-    
+
                     if (count($productsForThisBranch)) {
                         $manufacturingOrder = Order::create([
                             'status' => Order::ORDERED,
@@ -113,14 +113,14 @@ class OrderRepository implements OrderRepositoryInterface
                             'notes' => $notes,
                             'description' => $description,
                         ]);
-    
+
                         foreach ($productsForThisBranch as $productDetail) {
                             $fifoService = new FifoInventoryService(
                                 $productDetail['product_id'],
                                 $productDetail['unit_id'],
                                 $productDetail['quantity']
                             );
-    
+
                             $result = $fifoService->allocateOrder();
                             if ($result['success']) {
                                 $data = $result['result'][0];
@@ -135,11 +135,11 @@ class OrderRepository implements OrderRepositoryInterface
                     }
                 }
             }
-    
+
             $normalOrderDetails = collect($allOrderDetails)->reject(function ($item) use ($manufacturedProductIds) {
                 return in_array($item['product_id'], $manufacturedProductIds);
             })->values()->all();
-    
+
             $order = Order::create([
                 'status' => $orderStatus,
                 'customer_id' => $customerId,
@@ -148,13 +148,13 @@ class OrderRepository implements OrderRepositoryInterface
                 'notes' => $notes,
                 'description' => $description,
             ]);
-    
+
             $orderId = $order->id;
-    
+
             foreach ($normalOrderDetails as $key => $detail) {
                 $fifoService = new FifoInventoryService($detail['product_id'], $detail['unit_id'], $detail['quantity']);
                 $result = $fifoService->allocateOrder();
-    
+
                 if ($result['success']) {
                     $data = $result['result'][0];
                     unset($data['movement_date'], $data['allocated_qty'], $data['unit_price']);
@@ -164,9 +164,9 @@ class OrderRepository implements OrderRepositoryInterface
                     throw new \Exception($result['message']);
                 }
             }
-    
+
             DB::commit();
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Orders created successfully',
@@ -174,14 +174,14 @@ class OrderRepository implements OrderRepositoryInterface
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-    
+
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
             ], 500);
         }
     }
-    
+
 
     public function storeWithFifo_old($request)
     {
