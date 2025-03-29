@@ -41,21 +41,21 @@ class OrderRepository implements OrderRepositoryInterface
             $query->where('type', $request->type);
         }
 
-        if ($currnetRole == 7) {
+        if (isBranchManager()) {
             if (auth()->user()->branch->is_central_kitchen && auth()->user()->branch->manager_abel_show_orders) {
                 $query->whereIn('branch_id', DB::table('branches')
                     ->where('active', 1)->pluck('id')->toArray());
             } else {
                 $query->where('branch_id', $request->user()->branch_id);
             }
-        } else if ($currnetRole == 8) {
+        } else if (isBranchUser()) {
             $query->where('customer_id', auth()->user()->owner->id);
         }
         if ($request->has('id')) {
             $query->where('id', $request->id);
         }
 
-        if ($currnetRole == 5) {
+        if (isStoreManager()) {
             $query->where('status', '!=', Order::PENDING_APPROVAL);
         }
         $orders = $query->orderBy('created_at', 'DESC')->limit(80)->get();
