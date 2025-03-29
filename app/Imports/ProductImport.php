@@ -1,10 +1,12 @@
 <?php
+
 namespace App\Imports;
 
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Models\UnitPrice;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -21,8 +23,9 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
 
     public function model(array $row)
     {
+        DB::beginTransaction();
         try {
-            $productId = (int) ($row['id'] ?? 0);
+            $productId = (int) $row['id'];
             $productName = trim($row['product_name'] ?? '');
             $categoryName = trim($row['category'] ?? '');
             $unitName = trim($row['unit'] ?? '');
@@ -51,16 +54,27 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'category_id' => $category->id,
                     'minimum_stock_qty' => 0,
                 ]);
+                UnitPrice::create([
+                    'product_id' => $product->id,
+                    'unit_id' => $unit->id,
+                    'price' => $price,
+
+                ]);
+            } else {
+                UnitPrice::create([
+                    'product_id' => $product->id,
+                    'unit_id' => $unit->id,
+                    'price' => $price,
+
+                ]);
             }
 
-            // تحديث أو إنشاء UnitPrice
-            UnitPrice::updateOrCreate(
-                ['product_id' => $product->id, 'unit_id' => $unit->id],
-                ['price' => $price, 'package_size' => 1]
-            );
+
 
             $this->successCount++;
+            DB::commit();
         } catch (\Throwable $e) {
+            DB::rollBack();
             Log::error("Failed to import row: " . json_encode($row) . ' - ' . $e->getMessage());
         }
 

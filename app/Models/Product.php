@@ -17,6 +17,7 @@ class Product extends Model implements Auditable
     // public $translatable = ['name', 'description'];
 
     protected $fillable = [
+        'id',
         'name',
         'code',
         'description',
