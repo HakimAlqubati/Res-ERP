@@ -142,6 +142,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function isBranchManager()
     {
+        return in_array(7, $this->roles->pluck('id')->toArray());
+
         if (getCurrentRole() == 7) {
             return true;
         }
@@ -177,6 +179,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isStoreManager()
     {
+        return in_array(5, $this->roles->pluck('id')->toArray());
+
         if (getCurrentRole() == 5) {
             return true;
         }
