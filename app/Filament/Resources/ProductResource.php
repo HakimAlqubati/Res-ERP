@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
+use App\Imports\ProductImport;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductItem;
@@ -13,6 +14,7 @@ use App\Models\UnitPrice;
 use App\Services\MigrationScripts\ProductMigrationService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -364,7 +366,36 @@ class ProductResource extends Resource
         return $table->striped()
             ->defaultSort('id', 'desc')
             ->headerActions([
-                ActionTable::make('export_employees')
+                ActionTable::make('import_products')
+                    ->label('Import Products')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Upload Excel file')
+                            ->required()
+                            // ->acceptedFileTypes(['.xlsx', '.xls'])
+                            ->disk('public')
+                            ->directory('product_imports'),
+                    ])
+                    ->color('success')
+                    ->action(function (array $data) {
+                        $filePath = 'public/' . $data['file'];
+                        $import = new ProductImport();
+
+                        try {
+                            \Maatwebsite\Excel\Facades\Excel::import($import, $filePath);
+
+                            if ($import->getSuccessfulImportsCount() > 0) {
+                                showSuccessNotifiMessage("✅ Imported {$import->getSuccessfulImportsCount()} products successfully.");
+                            } else {
+                                showWarningNotifiMessage("⚠️ No products were added. Please check your file.");
+                            }
+                        } catch (\Throwable $e) {
+                            showWarningNotifiMessage('❌ Failed to import products: ' . $e->getMessage());
+                        }
+                    }),
+
+                ActionTable::make('export')
                     ->label('Export to Excel')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
