@@ -240,6 +240,7 @@ class OrderResource extends Resource
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
+                TextColumn::make('store.name')->label(__('lang.store')),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([
