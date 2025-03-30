@@ -33,6 +33,7 @@ class OrderResource extends JsonResource
         // }
         return [
             'id' => $this->id,
+            'store_id' => $this->store_id,
             'type' => $this->type,
             'desc' => $this->description,
             'created_by' => $this->customer_id,
