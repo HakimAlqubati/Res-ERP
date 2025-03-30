@@ -8,6 +8,7 @@ use App\Interfaces\Orders\OrderRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderDetails;
+use App\Models\Store;
 use App\Models\UnitPrice;
 use App\Models\User;
 use App\Services\FifoInventoryService;
@@ -28,8 +29,6 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function index($request)
     {
-        $currnetRole = getCurrentRole();
-
         $query = Order::query();
 
 
@@ -57,6 +56,30 @@ class OrderRepository implements OrderRepositoryInterface
 
         if (isStoreManager()) {
             $query->where('status', '!=', Order::PENDING_APPROVAL);
+
+            $centralKitchens = Store::whereIn('id', auth()->user()->managed_stores_ids)
+                ->with('branches')
+                ->where('is_central_kitchen', 1)->get();
+            // $categories = $centralKitchens
+            //     ->flatMap(function ($store) {
+            //         return $store->branches->pluck('customized_manufacturing_categories');
+            //     })
+            //     ->filter() // ignore null or empty
+            //     ->flatMap(function ($json) {
+            //         return $json;
+            //     })
+            //     ->unique()
+            //     ->values()
+            //     ->map(fn($value) => (int) $value) // ensure integers
+            //     ->toArray();
+
+
+            if (is_array($centralKitchens->pluck('id')->toArray()) && count($centralKitchens->pluck('id')->toArray()) > 0) {
+
+                $query->where('store_id', $centralKitchens->pluck('id')->toArray());
+            } else {
+                $query->where('store_id', null);
+            }
         }
         $orders = $query->orderBy('created_at', 'DESC')->limit(80)->get();
         return OrderResource::collection($orders);
@@ -67,19 +90,11 @@ class OrderRepository implements OrderRepositoryInterface
         try {
             DB::beginTransaction();
 
-            $currnetRole = getCurrentRole();
-            if ($currnetRole == 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'you dont have any role'
-                ], 500);
-            }
+
 
             if (isBranchManager()) {
-                $branchId = auth()->user()?->branch?->id;
                 $customerId = auth()->user()->id;
             } else if (isBranchUser()) {
-                $branchId = auth()->user()->owner->branch->id;
                 $customerId = auth()->user()->owner->id;
             }
 
@@ -109,6 +124,7 @@ class OrderRepository implements OrderRepositoryInterface
                             'status' => Order::ORDERED,
                             'customer_id' => $customerId,
                             'branch_id' => auth()->user()->branch->id,
+                            'store_id' => $branch->store->id ?? 0,
                             'type' => Order::TYPE_MANUFACTURING,
                             'notes' => $notes,
                             'description' => $description,
