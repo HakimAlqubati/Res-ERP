@@ -47,7 +47,7 @@ class Branch extends Model implements HasMedia, Auditable
     protected $casts = [
         'customized_manufacturing_categories' => 'array',
     ];
-    
+
     public function user()
     {
         return $this->belongsTo(User::class, 'manager_id');
@@ -130,5 +130,18 @@ class Branch extends Model implements HasMedia, Auditable
     {
         $data = parent::toArray();
         return $data;
+    }
+    public function getValidStoreIdAttribute(): ?int
+    {
+        if (
+            $this->is_central_kitchen &&
+            is_array($this->customized_manufacturing_categories) &&
+            count($this->customized_manufacturing_categories) > 0 &&
+            $this->store // store relation is loaded or exists
+        ) {
+            return $this->store_id;
+        }
+
+        return null;
     }
 }

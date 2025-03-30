@@ -164,6 +164,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'type' => Order::TYPE_NORMAL,
                 'notes' => $notes,
                 'description' => $description,
+                'store_id' =>  $branch->valid_store_id,
             ]);
 
             $orderId = $order->id;
@@ -371,6 +372,7 @@ class OrderRepository implements OrderRepositoryInterface
             } else {
                 $order = Order::create($orderData);
                 $orderId = $order->id;
+                $order->store_id = $branch->valid_store_id;
                 $message = 'done successfully';
             }
 
