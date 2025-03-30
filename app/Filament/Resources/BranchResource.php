@@ -57,8 +57,8 @@ class BranchResource extends Resource
                                 Select::make('manager_id')
                                     ->label(__('lang.branch_manager'))
                                     ->options(User::whereHas('roles', function ($q) {
-                                            $q->where('id', 7);
-                                        })
+                                        $q->where('id', 7);
+                                    })
                                         ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Grid::make()->columns(4)->schema([
@@ -212,6 +212,7 @@ class BranchResource extends Resource
                     ->label(__('stock.is_central_kitchen'))
                     ->boolean()->alignCenter(true)->toggleable(),
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
+                TextColumn::make('user.email')->label('Email')->copyable(),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
