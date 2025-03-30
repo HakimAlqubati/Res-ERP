@@ -124,7 +124,7 @@ class OrderRepository implements OrderRepositoryInterface
                             'status' => Order::ORDERED,
                             'customer_id' => $customerId,
                             'branch_id' => auth()->user()->branch->id,
-                            'store_id' => $branch->store->id ?? 0,
+                            'store_id' => $branch->store_id,
                             'type' => Order::TYPE_MANUFACTURING,
                             'notes' => $notes,
                             'description' => $description,
