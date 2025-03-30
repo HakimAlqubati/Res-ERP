@@ -106,19 +106,18 @@ class OrderRepository implements OrderRepositoryInterface
 
             $allManufacturingBranches = Branch::active()
                 ->where('is_central_kitchen', true)
-                ->get(['id', 'customized_manufacturing_categories']);
+                ->get(['id', 'customized_manufacturing_categories','store_id']);
 
             $manufacturedProductIds = [];
-
             foreach ($allManufacturingBranches as $branch) {
                 $categories = $branch->customized_manufacturing_categories;
-
+                
                 if (is_array($categories) && count($categories)) {
                     $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories) {
                         $product = \App\Models\Product::find($item['product_id']);
                         return $product && in_array($product->category_id, $categories);
                     })->values()->all();
-
+                    
                     if (count($productsForThisBranch)) {
                         $manufacturingOrder = Order::create([
                             'status' => Order::ORDERED,
