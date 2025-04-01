@@ -167,9 +167,9 @@ class AttendnaceResource extends Resource
                 Tables\Columns\TextColumn::make('message')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true)->limit(50)->tooltip(fn($state): string => $state ?? 'null'),
                 Tables\Columns\TextColumn::make('early_departure_minutes')
-                ->label('Early departure minutes')->alignCenter(true)
-                ->toggleable(isToggledHiddenByDefault: true)
-                ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
+                    ->label('Early departure minutes')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
                 Tables\Columns\TextColumn::make('attendance_type')->alignCenter(true),
 
             ])
@@ -400,15 +400,21 @@ class AttendnaceResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         // return static::getModel()::where('employee_id',auth()->user()?->employee?->id)->count();
-        return static::getModel()::count();
+        return static::getModel()::whereHas('employee', function ($q) {
+            $q->whereNull('deleted_at'); // ignore soft-deleted employees
+        })->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
+        $query->whereHas('employee', function ($q) {
+            $q->whereNull('deleted_at'); // ignore soft-deleted employees
+        });
+        return $query;
     }
 
     public static function canDelete(Model $record): bool
