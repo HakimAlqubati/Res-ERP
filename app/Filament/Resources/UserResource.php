@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Filament\Resources;
-
+use Illuminate\Support\Str;
 use App\Filament\Resources\UserResource\Pages;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Branch;
@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -36,6 +37,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Spatie\Permission\Models\Role;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
@@ -99,6 +102,12 @@ class UserResource extends Resource
                                 $set('email', $employee->email);
                                 $set('phone_number', $employee->phone_number);
                                 $set('branch_id', $employee->branch_id);
+                                $set('nationality', $employee->nationality);
+                                // $set('avatar', $employee->avatar);
+                                // $set('avatar', [
+                                //     'url' => Storage::disk('s3')->url($employee->avatar),
+                                //     'name' => basename($employee->avatar),
+                                // ]);
                                 $positionId = $employee?->position_id;
                                 if ($positionId == 2) {
                                     if (isset($employee?->branch_id)) {
@@ -169,6 +178,11 @@ class UserResource extends Resource
                                 ->options(function () {
                                     return Branch::query()->get()->pluck('name', 'id');
                                 }),
+                            Select::make('nationality')
+                                ->label('Nationality')
+                                ->options(getNationalities()) // Loads nationalities from JSON file
+                                ->searchable()
+                                ->nullable(),
                         ]),
                         Grid::make()->columns(2)->schema([
                             TextInput::make('password')

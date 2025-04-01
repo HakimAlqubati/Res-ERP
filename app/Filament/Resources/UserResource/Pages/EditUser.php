@@ -43,7 +43,7 @@ class EditUser extends EditRecord
             $employee->phone_number = $user->phone_number;
             // }
             // if ($user->isDirty('name')) {
-            $employee->name = $user->name;
+            $employee->name = $user->name; 
             // }
 
             // if ($user->isDirty('branch_id')) {

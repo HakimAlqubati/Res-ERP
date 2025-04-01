@@ -31,6 +31,9 @@ class CreateUser extends CreateRecord
             $data['owner_id'] = $this->data['owner_id'];
             $data['phone_number'] = $this->data['phone_number'];
             $data['branch_id'] = $this->data['branch_id'];
+            if (Employee::find($this->data['search_employee'])->avatar) {
+                $data['avatar'] = Employee::find($this->data['search_employee'])->avatar;
+            }
         }
         // dd($data);
         return $data;

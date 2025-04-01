@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
@@ -126,6 +127,23 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getAvatarImageAttribute()
+    {
+        // Check if avatar is set and exists on S3
+        if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
+            return Storage::disk('s3')->url($this->avatar);
+        }
+
+        // Ensure the default image exists on the local storage
+        $defaultAvatarPath = 'employees/default/avatar.png';
+
+        if (Storage::disk('public')->exists($defaultAvatarPath)) {
+            return Storage::disk('public')->url($defaultAvatarPath);
+        }
+
+        // If file is not found, return a fallback URL
+        return asset('images/default-avatar.png');
+    }
+    public function getAvatarImageAttribute_old()
     {
         $default = 'users/default/avatar.png';
         if (is_null($this->avatar)) {

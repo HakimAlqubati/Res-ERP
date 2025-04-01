@@ -345,12 +345,16 @@ class Employee extends Model implements Auditable
 
     public function attendances()
     {
-        return $this->hasMany(Attendance::class);
+        return $this->hasMany(Attendance::class)
+            ->where('deleted_at', null)
+        ;
     }
 
     public function attendancesByDate($date)
     {
-        return $this->hasMany(Attendance::class)->where('check_date', $date);
+        return $this->hasMany(Attendance::class)
+            ->where('deleted_at', null)
+            ->where('check_date', $date);
     }
 
     /**
@@ -575,8 +579,7 @@ class Employee extends Model implements Auditable
                 $employee->user_id = $user->id;
                 $employee->save();
                 $user->assignRole(8);
-                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email, ));
-
+                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
             }
         });
     }
