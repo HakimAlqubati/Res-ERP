@@ -5,6 +5,8 @@ namespace App\Filament\Pages;
 use App\Filament\Widgets\CircularWidget;
 use App\Filament\Widgets\EmployeeSearchWidget;
 use App\Filament\Widgets\TaskWidget;
+use App\Models\CustomTenantModel;
+use Spatie\Multitenancy\Contracts\IsTenant;
 
 class Dashboard extends \Filament\Pages\Dashboard
 
@@ -15,11 +17,27 @@ class Dashboard extends \Filament\Pages\Dashboard
     }
     public function getWidgets(): array
     {
-        
+        $currentTenant = app(IsTenant::class)::current();
+        ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
+            ||
+            is_null($currentTenant);
+
+        $widgets = [];
+
+      
+        if (
+            is_null($currentTenant) ||
+            (is_array($currentTenant->modules) &&
+                in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
+        ) {
+            $widgets[] = CircularWidget::class;
+            $widgets[] = TaskWidget::class;
+        }
+        return $widgets;
+
         return [
             CircularWidget::class,
             TaskWidget::class,
-            EmployeeSearchWidget::class,
         ];
     }
 }
