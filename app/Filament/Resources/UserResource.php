@@ -136,10 +136,11 @@ class UserResource extends Resource
                                 ])
                                 ->displayNumberFormat(PhoneInputNumberType::E164)
                                 ->autoPlaceholder('aggressive')
-                                ->validateFor(
-                                    country: 'MY',
-                                    lenient: true, // default: false
-                                ),
+                                // ->validateFor(
+                                //     country: 'MY',
+                                //     lenient: true, // default: false
+                                // )
+                                ,
 
                         ]),
                         Fieldset::make()->columns(3)->label('Set user type, role and manager')->schema([
@@ -220,10 +221,11 @@ class UserResource extends Resource
                                 ->unique(ignoreRecord: true)
                                 ->displayNumberFormat(PhoneInputNumberType::E164)
                                 ->autoPlaceholder('aggressive')
-                                ->validateFor(
-                                    country: 'MY',
-                                    lenient: true, // default: false
-                                ),
+                                // ->validateFor(
+                                //     country: 'MY',
+                                //     lenient: true, // default: false
+                                // )
+                                ,
                             Select::make('gender')
                                 ->label('Gender')
                                 ->options([
