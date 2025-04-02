@@ -137,6 +137,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
+            return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
             return Storage::disk('public')->url($defaultAvatarPath);
         }
 
