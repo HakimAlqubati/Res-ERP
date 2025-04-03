@@ -24,11 +24,11 @@ class Dashboard extends \Filament\Pages\Dashboard
 
         $widgets = [];
 
-      
+        $modules = json_decode($currentTenant?->modules, true);
         if (
             is_null($currentTenant) ||
-            (is_array($currentTenant->modules) &&
-                in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
+            (is_array($modules) &&
+                in_array(CustomTenantModel::MODULE_HR, $modules))
         ) {
             $widgets[] = CircularWidget::class;
             $widgets[] = TaskWidget::class;
