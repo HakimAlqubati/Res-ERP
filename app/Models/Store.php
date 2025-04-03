@@ -85,12 +85,12 @@ class Store extends Model implements Auditable
                     ->where('id', '!=', $store->id) // Exclude the current store
                     ->update(['default_store' => false]);
             }
-            if ($store->is_central_kitchen) {
-                // Unset the previous default store
-                Store::where('is_central_kitchen', true)
-                    ->where('id', '!=', $store->id) // Exclude the current store
-                    ->update(['is_central_kitchen' => false]);
-            }
+            // if ($store->is_central_kitchen) {
+            //     // Unset the previous default store
+            //     Store::where('is_central_kitchen', true)
+            //         ->where('id', '!=', $store->id) // Exclude the current store
+            //         ->update(['is_central_kitchen' => false]);
+            // }
         });
 
         // static::saving(function ($store) {

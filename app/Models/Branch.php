@@ -25,11 +25,12 @@ class Branch extends Model implements HasMedia, Auditable
         'address',
         'manager_id',
         'active',
-        'is_hq',
-        'is_central_kitchen',
+
+
         'store_id',
         'manager_abel_show_orders',
-        'customized_manufacturing_categories',
+
+        'type',
     ];
     protected $auditInclude = [
         'id',
@@ -37,16 +38,27 @@ class Branch extends Model implements HasMedia, Auditable
         'address',
         'manager_id',
         'active',
-        'is_hq',
-        'is_central_kitchen',
+
+
         'store_id',
         'manager_abel_show_orders',
-        'customized_manufacturing_categories',
-    ];
 
-    protected $casts = [
-        'customized_manufacturing_categories' => 'array',
+        'type',
     ];
+    // ✅ Constants
+    public const TYPE_BRANCH = 'branch';
+    public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
+    public const TYPE_HQ = 'hq';
+
+    // ✅ Optional: Array of allowed types
+    public const TYPES = [
+        self::TYPE_BRANCH,
+        self::TYPE_CENTRAL_KITCHEN,
+        self::TYPE_HQ,
+    ];
+    // protected $casts = [
+
+    // ];
 
     public function user()
     {
@@ -131,17 +143,56 @@ class Branch extends Model implements HasMedia, Auditable
         $data = parent::toArray();
         return $data;
     }
+
     public function getValidStoreIdAttribute(): ?int
     {
         if (
-            $this->is_central_kitchen &&
-            is_array($this->customized_manufacturing_categories) &&
-            count($this->customized_manufacturing_categories) > 0 &&
-            $this->store // store relation is loaded or exists
+            $this->isKitchen &&
+            $this->categories()->exists() &&
+            $this->store
         ) {
             return $this->store_id;
         }
-
+        if (
+            auth()->check() &&
+            $this->manager_id === auth()->id() &&
+            $this->isKitchen &&
+            $this->store
+        ) {
+            return $this->store_id;
+        }
         return null;
+    }
+
+
+    public function scopeCentralKitchens($query)
+    {
+        return $query->where('type', self::TYPE_CENTRAL_KITCHEN);
+    }
+    public function scopeBranches($query)
+    {
+        return $query->where('type', self::TYPE_BRANCH);
+    }
+    public function scopeHQBranches($query)
+    {
+        return $query->where('type', self::TYPE_HQ);
+    }
+    public function getIsKitchenAttribute(): bool
+    {
+        return $this->type === self::TYPE_CENTRAL_KITCHEN;
+    }
+
+    public function getIsBranchAttribute(): bool
+    {
+        return $this->type === self::TYPE_BRANCH;
+    }
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'branch_category', 'branch_id', 'category_id');
+    }
+
+    public function getCategoryNamesAttribute()
+    {
+        return $this->categories->pluck('name')->toArray();
     }
 }

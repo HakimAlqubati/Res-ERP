@@ -65,31 +65,41 @@ class BranchResource extends Resource
                                     Toggle::make('active')
                                         ->inline(false)
                                         ->label(__('lang.active')),
-                                    Toggle::make('is_hq')
-                                        ->inline(false)
-                                        ->label(__('lang.is_hq')),
-                                    // Toggle for is_central_kitchen
-                                    Toggle::make('is_central_kitchen')
-                                        ->label(__('stock.is_central_kitchen'))
-                                        ->inline(false)
-                                        ->default(false)
-
-                                        ->live(),
+                                    Select::make('type')
+                                        ->label(__('lang.branch_type'))
+                                        ->required()
+                                        ->default(function () {
+                                            // 🧠 التقاط قيمة type من URL تلقائياً (activeTab)
+                                            $tab = request()->get('activeTab');
+                                            return in_array($tab, Branch::TYPES) ? $tab : Branch::TYPE_BRANCH;
+                                        })
+                                        ->options([
+                                            Branch::TYPE_BRANCH => __('lang.branch'),
+                                            Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
+                                            Branch::TYPE_HQ => __('lang.hq'),
+                                        ])
+                                        ->default(Branch::TYPE_BRANCH)
+                                        ->reactive(),
                                     Toggle::make('manager_abel_show_orders')
                                         ->label(__('stock.manager_abel_show_orders'))
                                         ->inline(false)
                                         ->default(false)
-                                        ->visible(fn(callable $get) => $get('is_central_kitchen')),
+                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+
                                     Select::make('store_id')
                                         ->label(__('stock.store_id'))
                                         ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
-                                        ->searchable()->requiredIf('is_central_kitchen', true)
-                                        ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
-                                    Select::make('customized_manufacturing_categories')
+                                        ->searchable()
+                                        ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
+                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                    Select::make('categories')
                                         ->label(__('stock.customized_manufacturing_categories'))
-                                        ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                        // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                        ->relationship('categories', 'name')
+
                                         ->searchable()->multiple()
-                                        ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
+                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+
                                 ]),
 
                                 Textarea::make('address')
@@ -199,28 +209,33 @@ class BranchResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('id')->label(__('lang.branch_id')),
-                SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
+                TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true),
+                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
                         return null;
                     })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('address')->label(__('lang.address'))
                     // ->limit(100)
-                    ->words(5),
-                IconColumn::make('is_central_kitchen')
-                    ->label(__('stock.is_central_kitchen'))
-                    ->boolean()->alignCenter(true)->toggleable(),
+                    ->words(5)->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
+                TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.email')->label('Email')->copyable(),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
-                    }),
+                    })->hidden(),
 
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+                // Tables\Filters\SelectFilter::make('category')
+                //     ->label(__('stock.customized_manufacturing_categories'))
+                //     ->options(\App\Models\Category::pluck('name', 'id'))
+                // ->query(function (Builder $query, $value) {
+                //     $query->whereHas('categories', fn($q) => $q->where('id', $value));
+                // }),
             ])
             ->actions([
                 Action::make('add_area')

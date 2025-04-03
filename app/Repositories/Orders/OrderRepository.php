@@ -32,6 +32,7 @@ class OrderRepository implements OrderRepositoryInterface
         $query = Order::query();
 
 
+        $query->whereHas('orderDetails');
         if ($request->has('customer_id')) {
             $query->where('customer_id', $request->customer_id);
         }
@@ -41,7 +42,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         if (isBranchManager()) {
-            if (auth()->user()->branch->is_central_kitchen && auth()->user()->branch->manager_abel_show_orders) {
+            if (auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
                 $query->whereIn('branch_id', DB::table('branches')
                     ->where('active', 1)->pluck('id')->toArray());
             } else {
@@ -60,18 +61,6 @@ class OrderRepository implements OrderRepositoryInterface
             $centralKitchens = Store::whereIn('id', auth()->user()->managed_stores_ids)
                 ->with('branches')
                 ->where('is_central_kitchen', 1)->get();
-            // $categories = $centralKitchens
-            //     ->flatMap(function ($store) {
-            //         return $store->branches->pluck('customized_manufacturing_categories');
-            //     })
-            //     ->filter() // ignore null or empty
-            //     ->flatMap(function ($json) {
-            //         return $json;
-            //     })
-            //     ->unique()
-            //     ->values()
-            //     ->map(fn($value) => (int) $value) // ensure integers
-            //     ->toArray();
 
 
             if (is_array($centralKitchens->pluck('id')->toArray()) && count($centralKitchens->pluck('id')->toArray()) > 0) {
@@ -83,8 +72,9 @@ class OrderRepository implements OrderRepositoryInterface
                 $query->where('store_id', null);
             }
         }
-        $orders = $query->orderBy('created_at', 'DESC')->limit(80)->get();
-        return OrderResource::collection($orders);
+        $orders = $query->orderBy('created_at', 'DESC')->limit(80)
+            ->get();
+        return OrderResource::collection($orders)->filter();
     }
 
     public function storeWithFifo($request)
@@ -106,21 +96,45 @@ class OrderRepository implements OrderRepositoryInterface
             $notes = $request->input('notes');
             $description = $request->input('description');
 
+            // 👇 تحديد الفئات الخاصة بالتصنيع
+            $manufacturingCategoryIds = \App\Models\Category::Manufacturing()->pluck('id')->toArray();
+
+            // 👇 إذا الفرع الحالي هو مطبخ مركزي
+            if (auth()->user()?->branch?->is_kitchen) {
+                foreach ($allOrderDetails as $item) {
+                    $product = \App\Models\Product::find($item['product_id']);
+                    if ($product && in_array($product->category_id, $manufacturingCategoryIds)) {
+                        throw new \Exception("Central kitchens are not allowed to create orders that contain manufacturing products such as ({$product->name}-{$product->id}).");
+                    }
+                }
+            }
+
             $allManufacturingBranches = Branch::active()
-                ->where('is_central_kitchen', true)
-                ->get(['id', 'customized_manufacturing_categories', 'store_id']);
+                ->centralKitchens()
+                ->with('categories:id')
+                ->get(['id', 'store_id']);
 
             $manufacturedProductIds = [];
             foreach ($allManufacturingBranches as $branch) {
-                $categories = $branch->customized_manufacturing_categories;
+                $categories = $branch->categories->pluck('id')->toArray();
 
                 if (is_array($categories) && count($categories)) {
-                    $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories) {
+                    $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
                         $product = \App\Models\Product::find($item['product_id']);
+
+                        // ✅ إذا المنتج من فئة تخص نفس الفرع، نمنعه
+                        $isForbidden = auth()->check() &&
+                            auth()->user()->branch_id === $branch->id &&
+                            in_array($product->category_id, $categories);
+                        if ($isForbidden) {
+                            throw new \Exception("You cannot request the product ({$product->name}-{$product->id}) because it belongs to a manufacturing category assigned to your own branch.");
+                        }
                         return $product && in_array($product->category_id, $categories);
                     })->values()->all();
 
+
                     if (count($productsForThisBranch)) {
+
                         $manufacturingOrder = Order::create([
                             'status' => Order::ORDERED,
                             'customer_id' => $customerId,

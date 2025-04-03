@@ -212,7 +212,7 @@ class Order extends Model implements Auditable
 
                 if (
                     $branch &&
-                    $branch->is_central_kitchen &&
+                    $branch->is_kitchen &&
                     is_array($branch->customized_manufacturing_categories)
                 ) {
                     // جلب جميع الفئات داخل الطلب
