@@ -4,6 +4,7 @@ namespace App\Services\Orders;
 
 use App\Models\InventoryTransaction;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
@@ -43,7 +44,8 @@ class OrderInventoryAllocatorWithConfig
             }
 
             // Step 2: Check setting if negative stock is allowed
-            $allowNegativeStock = Config::get('inventory.allow_negative_stock', false);
+            // $allowNegativeStock = Config::get('inventory.allow_negative_stock', false);
+            $allowNegativeStock = Setting::getSetting('completed_order_if_not_qty', false);
 
             if (!$allowNegativeStock && $totalAvailable < $requiredQty) {
                 throw new \Exception("❌ Insufficient total stock across stores for product {$orderDetail->product?->name}");
