@@ -10,6 +10,12 @@ class EditOrder extends EditRecord
 {
     protected static string $resource = OrderResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $data['stores'] = $data['store_ids'];
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -111,4 +111,9 @@ class Store extends Model implements Auditable
     {
         return $this->hasMany(Branch::class, 'store_id');
     }
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'order_store');
+    }
 }

@@ -85,13 +85,19 @@ class OrderResource extends Resource
                                 Order::PROCESSING => 'processing',
                                 Order::DELEVIRED => 'delevired',
                             ])->default(Order::ORDERED),
-                        Select::make('store_id')->required()
-                            ->label(__('lang.store'))->disabledOn('edit')
+                        Select::make('stores')->multiple()->required()
+                            ->label(__('lang.store'))
+                            // ->disabledOn('edit')
                             ->options([
                                 Store::active()
-                                    ->withManagedStores()
+                                    // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
-                            ])->default(Store::defaultStore()?->id),
+                            ])
+                            // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
+                            // ->default(function ($record) {
+                            //     dd($record);
+                            // })
+                            ,
                     ]),
                     // Repeater for Order Details
                     Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
@@ -240,7 +246,8 @@ class OrderResource extends Resource
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
-                TextColumn::make('store.name')->label(__('lang.store')),
+                // TextColumn::make('store.name')->label(__('lang.store')),
+                TextColumn::make('store_names')->label(__('lang.store')),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([
@@ -253,8 +260,7 @@ class OrderResource extends Resource
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
                 TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
-                ->numeric()
-                ,
+                    ->numeric(),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -366,7 +372,7 @@ class OrderResource extends Resource
                             $currentStatus = $record->STATUS;
                             $nextStatus = implode(', ', array_keys($record->getNextStatuses()));
                             $record->update(['status' => $nextStatus]);
-                            showSuccessNotifiMessage('done', 'Done Moved to {$nextStatus}');
+                            showSuccessNotifiMessage('done', "Done Moved to {$nextStatus}");
                             DB::commit();
                         } catch (\Throwable $th) {
                             //throw $th;
@@ -381,7 +387,7 @@ class OrderResource extends Resource
                             return true;
                         }
                         return false;
-                    })->hidden(),
+                    })->visible(fn(): bool => isSuperAdmin()),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
@@ -481,7 +487,7 @@ class OrderResource extends Resource
     public static function canDelete(Model $record): bool
     {
         return true;
-        if(isSuperAdmin()){
+        if (isSuperAdmin()) {
             return true;
         }
         return false;
@@ -498,8 +504,7 @@ class OrderResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
-        return false;
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
+        if (isSuperAdmin()) {
             return true;
         }
         return false;

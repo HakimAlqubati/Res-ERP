@@ -53,7 +53,14 @@ class InventoryTransactionReportResource extends Resource
                     ->label(__('lang.product'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    })->options(Product::active()->get()->pluck('name', 'id')),
+                    })->options(
+                        Product::active()->get()->map(function ($product) {
+                            return [
+                                'id' => $product->id,
+                                'label' => "{$product->name} - {$product->id}",
+                            ];
+                        })->pluck('label', 'id')
+                    ),
                 SelectFilter::make("store_id")
                     ->label(__('lang.store'))->searchable()
                     ->query(function (Builder $q, $data) {
@@ -71,6 +78,4 @@ class InventoryTransactionReportResource extends Resource
             'index' => Pages\ListInventoryTransactionReport::route('/'),
         ];
     }
-
-
 }

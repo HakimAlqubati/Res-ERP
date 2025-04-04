@@ -45,6 +45,7 @@ class Branch extends Model implements HasMedia, Auditable
 
         'type',
     ];
+ 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
     public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
@@ -141,6 +142,7 @@ class Branch extends Model implements HasMedia, Auditable
     public function toArray()
     {
         $data = parent::toArray();
+        $data['is_central_kitchen'] = $this->isKitchen;
         return $data;
     }
 
@@ -194,5 +196,5 @@ class Branch extends Model implements HasMedia, Auditable
     public function getCategoryNamesAttribute()
     {
         return $this->categories->pluck('name')->toArray();
-    }
+    } 
 }

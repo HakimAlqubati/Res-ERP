@@ -25,6 +25,7 @@ class ViewOrder extends ViewRecord
         ];
     }
 
+    
     public function exportToExcel()
     {
         return redirect('orders/export/' . $this->record->id);
@@ -49,6 +50,7 @@ class ViewOrder extends ViewRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $data['stores'] = $data['store_ids'];
         // $data['customer_id'] = $this?->record?->customer?->name;
         // $data['branch_id'] = $this?->record?->branch?->name;
         return $data;

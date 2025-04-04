@@ -26,10 +26,12 @@ class InventoryReportController extends Controller
         $productId = $request->product_id ?? null;
         $storeId = $request->store_id ?? null;
         $categoryId = $request->category_id ?? null;
-
         $unitId = 'all';
+        if (!empty($request->unit_id)) {
+            $unitId = $request->unit_id;
+        }
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
-
+        
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination(15);
         return response()->json($report);
@@ -46,7 +48,7 @@ class InventoryReportController extends Controller
         if (!empty($productId)) {
             $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
             $reportData = $rawData->through(function ($item) {
-                
+
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 $item->unit->name;
                 $item->movement_date = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
@@ -54,7 +56,7 @@ class InventoryReportController extends Controller
                 return $item;
             });
         }
-        
-        return ['reportData' => $reportData, 'product' => $product,'totalPages' => $rawData->lastPage()];
+
+        return ['reportData' => $reportData, 'product' => $product, 'totalPages' => $rawData->lastPage()];
     }
 }

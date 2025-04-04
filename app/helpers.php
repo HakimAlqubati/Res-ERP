@@ -292,6 +292,18 @@ if (!function_exists('getUnitPrice')) {
     }
 }
 /**
+ * get price from unit price by product_id & unit_id
+ */
+if (!function_exists('getUnitPricePackageSize')) {
+    function getUnitPricePackageSize($product_id, $unit_id)
+    {
+        return UnitPrice::where(
+            'product_id',
+            $product_id
+        )->where('unit_id', $unit_id)?->first()->package_size;
+    }
+}
+/**
  * function to check if user has pending approval order when submit order
  */
 if (!function_exists('checkIfUserHasPendingForApprovalOrder')) {

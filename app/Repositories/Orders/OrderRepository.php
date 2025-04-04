@@ -82,15 +82,11 @@ class OrderRepository implements OrderRepositoryInterface
         try {
             DB::beginTransaction();
 
+            $customerId = isBranchManager()
+                ? auth()->user()->id
+                : (isBranchUser() ? auth()->user()->owner->id : null);
 
-
-            if (isBranchManager()) {
-                $customerId = auth()->user()->id;
-            } else if (isBranchUser()) {
-                $customerId = auth()->user()->owner->id;
-            }
-
-            $orderStatus = isBranchManager()  ? Order::ORDERED : Order::PENDING_APPROVAL;
+            $orderStatus = isBranchManager() ? Order::ORDERED : Order::PENDING_APPROVAL;
 
             $allOrderDetails = $request->input('order_details');
             $notes = $request->input('notes');
@@ -118,6 +114,127 @@ class OrderRepository implements OrderRepositoryInterface
             foreach ($allManufacturingBranches as $branch) {
                 $categories = $branch->categories->pluck('id')->toArray();
 
+                $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
+                    $product = \App\Models\Product::find($item['product_id']);
+                    $isForbidden = auth()->check() &&
+                        auth()->user()->branch_id === $branch->id &&
+                        in_array($product->category_id, $categories);
+                    if ($isForbidden) {
+                        throw new \Exception("You cannot request the product ({$product->name}-{$product->id}) because it belongs to a manufacturing category assigned to your own branch.");
+                    }
+                    return $product && in_array($product->category_id, $categories);
+                })->values()->all();
+
+                if (count($productsForThisBranch)) {
+                    $manufacturingOrder = Order::create([
+                        'status' => Order::ORDERED,
+                        'customer_id' => $customerId,
+                        'branch_id' => auth()->user()->branch->id,
+                        'store_id' => $branch->store_id,
+                        'type' => Order::TYPE_MANUFACTURING,
+                        'notes' => $notes,
+                        'description' => $description,
+                    ]);
+
+                    foreach ($productsForThisBranch as $productDetail) {
+                        $productDetail['order_id'] = $manufacturingOrder->id;
+                        OrderDetails::create($productDetail);
+                        $manufacturedProductIds[] = $productDetail['product_id'];
+                    }
+                }
+            }
+
+            $normalOrderDetails = collect($allOrderDetails)->reject(function ($item) use ($manufacturedProductIds) {
+                return in_array($item['product_id'], $manufacturedProductIds);
+            })->values()->all();
+
+            $order = Order::create([
+                'status' => $orderStatus,
+                'customer_id' => $customerId,
+                'branch_id' => auth()->user()?->branch?->id,
+                'type' => Order::TYPE_NORMAL,
+                'notes' => $notes,
+                'description' => $description,
+                'store_id' =>  auth()->user()?->branch?->valid_store_id,
+            ]);
+
+            $orderId = $order->id;
+
+            foreach ($normalOrderDetails as $detail) {
+                $detail['order_id'] = $orderId;
+                $detail['price'] =  getUnitPrice($detail['product_id'], $detail['unit_id']);
+                $detail['package_size'] =  getUnitPricePackageSize($detail['product_id'], $detail['unit_id']);
+                OrderDetails::create($detail);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Orders created successfully',
+                'order' => $order,
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeWithFifo_old($request)
+    {
+        try {
+            DB::beginTransaction();
+
+
+
+            if (isBranchManager()) {
+                $customerId = auth()->user()->id;
+            } else if (isBranchUser()) {
+                $customerId = auth()->user()->owner->id;
+            }
+
+            $orderStatus = isBranchManager()  ? Order::ORDERED : Order::PENDING_APPROVAL;
+
+            $allOrderDetails = $request->input('order_details');
+
+            $notes = $request->input('notes');
+            $description = $request->input('description');
+
+            // 👇 تحديد الفئات الخاصة بالتصنيع
+            $manufacturingCategoryIds = \App\Models\Category::Manufacturing()->pluck('id')->toArray();
+
+            // 👇 إذا الفرع الحالي هو مطبخ مركزي
+            if (auth()->user()?->branch?->is_kitchen) {
+                foreach ($allOrderDetails as $item) {
+                    $product = \App\Models\Product::find($item['product_id']);
+                    if ($product && in_array($product->category_id, $manufacturingCategoryIds)) {
+                        throw new \Exception("Central kitchens are not allowed to create orders that contain manufacturing products such as ({$product->name}-{$product->id}).");
+                    }
+                }
+            }
+
+            $allManufacturingBranches = Branch::active()
+                ->centralKitchens()
+                ->with('categories:id')
+                ->get(['id', 'store_id']);
+
+            $manufacturedProductIds = [];
+            foreach ($allManufacturingBranches as $branch) {
+                $categories = $branch->categories->pluck('id')->toArray();
+
+                foreach ($allOrderDetails as $productDetail) {
+                    $fifoService = new FifoInventoryService(
+                        $productDetail['product_id'],
+                        $productDetail['unit_id'],
+                        $productDetail['quantity']
+                    );
+
+                    $result = $fifoService->allocateOrder();
+                }
                 if (is_array($categories) && count($categories)) {
                     $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
                         $product = \App\Models\Product::find($item['product_id']);
@@ -131,7 +248,6 @@ class OrderRepository implements OrderRepositoryInterface
                         }
                         return $product && in_array($product->category_id, $categories);
                     })->values()->all();
-
 
                     if (count($productsForThisBranch)) {
 
@@ -215,125 +331,6 @@ class OrderRepository implements OrderRepositoryInterface
     }
 
 
-    public function storeWithFifo_old($request)
-    {
-        try {
-            DB::beginTransaction();
-            // to get current user role
-            $currnetRole = getCurrentRole();
-
-            if ($currnetRole == 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'you dont have any role'
-                ], 500);
-            }
-
-
-            $pendingOrderId = 0;
-            $message = '';
-            // check if user has pending for approval order to determine branchId & orderId & orderStatus
-            if (isBranchManager()) { // Role 7 is Branch
-                $branchId = auth()->user()?->branch?->id;
-                $customerId = auth()->user()->id;
-                if (!isset($branchId)) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'You are not manager of any branch'
-                    ], 500);
-                }
-                $orderStatus = Order::ORDERED;
-            } else if (isBranchUser()) { // Role 8 is User
-                $orderStatus = Order::PENDING_APPROVAL;
-                $branchId = auth()->user()->owner->branch->id;
-                $customerId = auth()->user()->owner->id;
-            }
-            $pendingOrderId  =    checkIfUserHasPendingForApprovalOrder($branchId);
-
-            // Map order data from request body 
-            $orderData = [
-                'status' => $orderStatus,
-                'customer_id' => $customerId,
-                'branch_id' => $branchId,
-                'notes' => $request->input('notes'),
-                'description' => $request->input('description'),
-            ];
-            if ($request->input('order_type') && $request->input('order_type') == Order::TYPE_MANUFACTURING) {
-                // $orderData['type'] = Order::TYPE_MANUFACTURING;
-            }
-
-            // Create new order
-            if (!($pendingOrderId > 0)) {
-                $order = Order::create($orderData);
-                $orderId = $order->id;
-                $message = 'done successfully';
-            } else if ($pendingOrderId > 0) {
-                $orderDetailsData = calculateFifoMethod($request->input('order_details'), $pendingOrderId);
-                handlePendingOrderDetails($orderDetailsData);
-                $orderId = $pendingOrderId;
-                if ($currnetRole == 8) {
-                    Order::find($orderId)->update([
-                        'updated_by' => auth()->user()->id,
-                    ]);
-                    $message = 'Your order has been submited on pending approval order no ' . $orderId;
-                } else if ($currnetRole == 7) {
-                    Order::find($orderId)->update([
-                        'updated_by' => auth()->user()->id,
-                        'status' => Order::ORDERED,
-                    ]);
-                    $message = 'done successfully';
-                }
-            }
-            $orderDetailsData = [];
-            foreach ($request->input('order_details') as $key =>  $detail) {
-
-                $fifoService = new FifoInventoryService($detail['product_id'], $detail['unit_id'], $detail['quantity']);
-                $result =  $fifoService->allocateOrder();
-
-                if ($result['success'] == true) {
-                    $orderDetailsData[] = $result['result'][0];
-                    $orderDetailsData[$key]['order_id'] = $orderId;
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $result['message'],
-                    ], 500);
-                }
-            }
-
-            // $orderDetailsData_old = calculateFifoMethod($request->input('order_details'), $orderId);
-            // dd($orderDetailsData);
-            $orderDetailsData = array_map(function ($item) {
-                unset(
-                    $item['movement_date'],
-                    $item['allocated_qty'],
-                    $item['unit_price'],
-                );
-                return $item;
-            }, $orderDetailsData);
-
-            // dd($orderDetailsData);
-            // if (count($orderDetailsData) > 0 && !($pendingOrderId > 0)) {
-            if (count($orderDetailsData) > 0) {
-                // to store (order details) new order 
-                OrderDetails::insert($orderDetailsData);
-            }
-
-            //to calculate the total of order when store it
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'order' => Order::find($orderId),
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
 
     public function storeWithUnitPricing($request)
     {

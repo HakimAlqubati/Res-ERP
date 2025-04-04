@@ -80,7 +80,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
 });
-
+Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
 Route::get('/new-link', function () {});
 
 Route::get('/branches', function () {
