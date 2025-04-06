@@ -146,6 +146,10 @@ class Branch extends Model implements HasMedia, Auditable
         return $data;
     }
 
+    public function getisCentralKitchenAttribute(): bool
+    {
+        return $this->type === self::TYPE_CENTRAL_KITCHEN;
+    }
     public function getValidStoreIdAttribute(): ?int
     {
         if (
