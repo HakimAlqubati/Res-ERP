@@ -22,6 +22,8 @@ class Category extends Model implements Auditable
         'description',
         'active',
         'is_manafacturing',
+        'code_starts_with',
+        'waste_stock_percentage',
     ];
     protected $auditInclude = [
         'name',
@@ -29,6 +31,8 @@ class Category extends Model implements Auditable
         'description',
         'active',
         'is_manafacturing',
+        'code_starts_with',
+        'waste_stock_percentage',
     ];
 
     public function products()

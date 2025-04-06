@@ -77,12 +77,11 @@ class ProductResource extends Resource
                 ->columnSpanFull()
                 ->schema([
                     Step::make('')
-                        ->columns(5)
+                        ->columns(3)
                         ->schema([
                             TextInput::make('name')->required()->label(__('lang.name'))
                                 ->live(onBlur: true)
-                                ->unique(ignoreRecord: true)
-                                ->afterStateUpdated(fn($set, $state): string => $set('code', str_replace(' ', '-', $state))),
+                                ->unique(ignoreRecord: true),
                             Select::make('category_id')->required()->label(__('lang.category'))
                                 ->searchable()->live()
                                 ->options(function () {
@@ -92,16 +91,42 @@ class ProductResource extends Resource
                                         // dd($type);
                                         $query->where('is_manafacturing', true);
                                     })->pluck('name', 'id');
+                                })
+                                ->afterStateUpdated(function ($set, $state) {
+                                    $set('code', \App\Models\Product::generateProductCode($state));
+                                    $category = Category::find($state);
+                                    $set('waste_stock_percentage', $category?->waste_stock_percentage ?? 0); // ✅ NEW
+
                                 }),
                             TextInput::make('code')->required()
                                 ->unique(ignoreRecord: true)
-                                ->label(__('lang.code')),
-                            TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
-                                ->label(__('stock.minimum_quantity'))
-                                ->helperText(__('stock.minimum_quantity_desc')),
-                            Toggle::make('active')
-                                ->inline(false)->default(true)
-                                ->label(__('lang.active')),
+                                ->label(__('lang.code'))
+                                ->readOnly()
+                                ->helperText(__('lang.product_code_helper'))
+                                ->placeholder('Code generates automatically')
+                                ->disabled()
+                                ->dehydrated()
+                                ->default(fn($get) => \App\Models\Product::generateProductCode($get('category_id'))),
+                            Grid::make()->columns(4)->schema([
+                                TextInput::make('sku')
+                                    ->label('SKU')
+                                    ->placeholder('SKU code')
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(50),
+                                TextInput::make('minimum_stock_qty')->numeric()->default(0)->required()
+                                    ->label(__('stock.minimum_quantity'))
+                                    ->helperText(__('stock.minimum_quantity_desc')),
+                                TextInput::make('waste_stock_percentage')
+                                    ->label('Waste %')
+                                    ->numeric()
+                                    // ->default(fn($get) => \App\Models\Category::find($get('category_id'))?->waste_stock_percentage ?? 0)
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->helperText('Default waste percentage based on selected category'),
+                                Toggle::make('active')
+                                    ->inline(false)->default(true)
+                                    ->label(__('lang.active')),
+                            ]),
                             Textarea::make('description')->label(__('lang.description'))->columnSpanFull()
                                 ->rows(2),
 
@@ -288,10 +313,32 @@ class ProductResource extends Resource
                                         })->searchable(),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
-                                    // ->maxLength(6)
-                                    // ->mask(RawJs::make('$money($input)'))
-                                    // ->stripCharacters(',')
-                                    ,
+                                        // ->maxLength(6)
+                                        // ->mask(RawJs::make('$money($input)'))
+                                        // ->stripCharacters(',')   
+                                        ->live(debounce: 300)
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
+                                            $units = $get('../../units') ?? [];
+
+                                            $prices = collect($units)->pluck('price')->filter(fn($val) => $val !== null)->map(fn($v) => floatval($v))->values();
+
+                                            $isValid = true;
+                                            for ($i = 1; $i < count($prices); $i++) {
+                                                if ($prices[$i] < $prices[$i - 1]) {
+                                                    $isValid = false;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (! $isValid) {
+                                                showWarningNotifiMessage(
+                                                    'Invalid Unit Prices',
+                                                    'Each unit price must be greater than or equal to the previous unit.'
+                                                );
+
+                                                $set('price', null); // reset if invalid
+                                            }
+                                        }),
                                     TextInput::make('package_size')->numeric()->default(1)->required()
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size')),
@@ -427,7 +474,10 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('code')->searchable()
                     ->label(__('lang.code'))
                     ->searchable(isIndividual: true, isGlobal: false),
-
+                Tables\Columns\TextColumn::make('waste_stock_percentage')
+                    ->label('Waste %')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(true),
                 Tables\Columns\TextColumn::make('formatted_unit_prices')
                     ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
                     ->limit(50)->tooltip(fn($state) => $state)
