@@ -137,7 +137,7 @@ class ListReportProductQuantities extends ListRecords
         // Wrap in an outer query to enforce ordering
         $data = DB::table(DB::raw("({$subquery->toSql()}) as grouped_data"))
             ->mergeBindings($subquery) // Ensure bindings are passed correctly
-            ->orderBy('order_id', 'asc') // Now order by order_id (MIN(orders_details.id))
+            // ->orderBy('order_id', 'asc') // Now order by order_id (MIN(orders_details.id))
             ->limit(10)
             ->offset(0)
             ->get();
