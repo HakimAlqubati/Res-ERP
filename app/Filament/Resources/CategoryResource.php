@@ -54,7 +54,15 @@ class CategoryResource extends Resource
                             ->maxLength(2)
                             ->minLength(2)
                             ->rule('regex:/^[0-9]{2}$/')
-
+                            ->placeholder(function () {
+                                $lastCode = \App\Models\Category::query()
+                                    ->whereRaw('code_starts_with REGEXP "^[0-9]{2}$"') // فقط الأرقام
+                                    ->orderByDesc('code_starts_with')
+                                    ->value('code_starts_with');
+                        
+                                $nextCode = str_pad((intval($lastCode) + 1), 2, '0', STR_PAD_LEFT);
+                                return $nextCode;
+                            })
                             ->helperText('Code must be exactly 2 digits (e.g., 01, 25, 99)'),
                         Forms\Components\TextInput::make('waste_stock_percentage')
                             ->label('Waste %')
