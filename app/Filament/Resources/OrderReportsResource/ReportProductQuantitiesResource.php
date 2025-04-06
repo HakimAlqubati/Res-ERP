@@ -128,7 +128,9 @@ class ReportProductQuantitiesResource extends Resource
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->whereNull('orders.deleted_at')
             // ->where('products.id', $product_id)
-            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price');
+            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
+            ->orderByRaw('NULL')
+            ;
         return $query;
     }
 }
