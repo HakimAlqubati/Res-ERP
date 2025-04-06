@@ -49,8 +49,13 @@ class CategoryResource extends Resource
                         Forms\Components\TextInput::make('code_starts_with')
                             ->label('Code Starts With')
                             ->maxLength(5)
+                            ->unique(ignoreRecord: true)
                             // ->required()
-                            ->helperText('Used to generate product code, e.g., FOO'),
+                            ->maxLength(2)
+                            ->minLength(2)
+                            ->rule('regex:/^[0-9]{2}$/')
+
+                            ->helperText('Code must be exactly 2 digits (e.g., 01, 25, 99)'),
                         Forms\Components\TextInput::make('waste_stock_percentage')
                             ->label('Waste %')
                             ->numeric()
