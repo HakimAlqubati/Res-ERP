@@ -21,9 +21,11 @@ class UserResource extends JsonResource
             'owner_id' => $this->owner_id,
             'role_id' => $this->roles[0]->id,
             'fcm_token' => $this->fcm_token,
-            'branch_is_central_kitchen' => $this->branch->is_kitchen ?? 0,
+            'branch_is_central_kitchen' => (int) ($this->branch->is_kitchen ?? 0),
             'branch' => $this->branch,
-            'roles' => $this->roles->pluck('name','id'),
+            'roles' => $this->roles->pluck('name', 'id'),
+            'login_auth_type' => setting('login_auth_type'),
+            'login_method' => setting('login_method'),
         ];
     }
 }
