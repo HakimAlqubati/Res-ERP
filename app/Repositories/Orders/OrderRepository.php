@@ -56,6 +56,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         if (isStoreManager()) {
+
             $query->where('status', '!=', Order::PENDING_APPROVAL);
 
             $centralKitchens = Store::whereIn('id', auth()->user()->managed_stores_ids)
@@ -74,6 +75,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
         $orders = $query->orderBy('created_at', 'DESC')->limit(80)
             ->get();
+
         return OrderResource::collection($orders)->filter();
     }
 
@@ -82,11 +84,15 @@ class OrderRepository implements OrderRepositoryInterface
         try {
             DB::beginTransaction();
 
+            $branchId = auth()->user()->branch?->id;
             $customerId = isBranchManager()
                 ? auth()->user()->id
                 : (isBranchUser() ? auth()->user()->owner->id : null);
+            $pendingOrderId = checkIfUserHasPendingForApprovalOrder($branchId);
 
             $orderStatus = isBranchManager() ? Order::ORDERED : Order::PENDING_APPROVAL;
+
+
 
             $allOrderDetails = $request->input('order_details');
             $notes = $request->input('notes');
@@ -147,31 +153,56 @@ class OrderRepository implements OrderRepositoryInterface
             $normalOrderDetails = collect($allOrderDetails)->reject(function ($item) use ($manufacturedProductIds) {
                 return in_array($item['product_id'], $manufacturedProductIds);
             })->values()->all();
+            if ($pendingOrderId > 0) {
+                $order = Order::find($pendingOrderId);
+                $order->update(['updated_by' => auth()->id()]);
+                $orderId = $pendingOrderId;
+                $orderStatus = $order->status; // قد يكون PENDING_APPROVAL أو ORDERED
+            } else {
+                $order = Order::create([
+                    'status' => $orderStatus,
+                    'customer_id' => $customerId,
+                    'branch_id' => auth()->user()?->branch?->id,
+                    'type' => Order::TYPE_NORMAL,
+                    'notes' => $notes,
+                    'description' => $description,
+                    'store_id' =>  auth()->user()?->branch?->valid_store_id,
+                ]);
 
-            $order = Order::create([
-                'status' => $orderStatus,
-                'customer_id' => $customerId,
-                'branch_id' => auth()->user()?->branch?->id,
-                'type' => Order::TYPE_NORMAL,
-                'notes' => $notes,
-                'description' => $description,
-                'store_id' =>  auth()->user()?->branch?->valid_store_id,
-            ]);
-
-            $orderId = $order->id;
-
-            foreach ($normalOrderDetails as $detail) {
-                $detail['order_id'] = $orderId;
-                $detail['price'] =  getUnitPrice($detail['product_id'], $detail['unit_id']);
-                $detail['package_size'] =  getUnitPricePackageSize($detail['product_id'], $detail['unit_id']);
-                OrderDetails::create($detail);
+                $orderId = $order->id;
             }
+            foreach ($normalOrderDetails as $detail) {
+                $existingDetail = OrderDetails::where([
+                    ['order_id', '=', $orderId],
+                    ['product_id', '=', $detail['product_id']],
+                    ['unit_id', '=', $detail['unit_id']],
+                ])->first();
+            
+                if ($existingDetail) {
+                    // تحديث الكمية + السعر
+                    $newQuantity = $existingDetail->quantity + $detail['quantity'];
+                    $existingDetail->update([
+                        'quantity' => $newQuantity,
+                        'available_quantity' => $newQuantity,
+                        'price' => getUnitPrice($detail['product_id'], $detail['unit_id']),
+                    ]);
+                } else {
+                    // إدراج تفصيل جديد
+                    $detail['order_id'] = $orderId;
+                    $detail['price'] = getUnitPrice($detail['product_id'], $detail['unit_id']);
+                    $detail['package_size'] = getUnitPricePackageSize($detail['product_id'], $detail['unit_id']);
+                    OrderDetails::create($detail);
+                }
+            }
+            $message = $pendingOrderId > 0
+            ? 'Products added to pending approval order #' . $pendingOrderId
+            : 'New order created successfully';
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Orders created successfully',
+                'message' => $message,
                 'order' => $order,
             ], 200);
         } catch (\Exception $e) {

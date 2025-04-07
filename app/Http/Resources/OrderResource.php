@@ -42,6 +42,7 @@ class OrderResource extends JsonResource
             )
             : OrderDetailsResource::collection($this->orderDetails);
 
+        
         // إذا ماكو تفاصيل يرجع null
         if ($orderDetails->isEmpty()) {
             return null;

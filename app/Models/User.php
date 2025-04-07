@@ -108,11 +108,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->group === 'Filament Users';
     }
 
+    // public function branch()
+    // {
+    //     return $this->hasOne(Branch::class, 'manager_id');
+    // }
     public function branch()
-    {
-        return $this->hasOne(Branch::class, 'manager_id');
-    }
-    public function branch2()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
@@ -303,5 +303,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function getRolesTitleAttribute()
     {
         return $this->roles->pluck('name')->implode(', ');
+    }
+
+    public function ownedUsers()
+    {
+        return $this->hasMany(User::class, 'owner_id');
     }
 }

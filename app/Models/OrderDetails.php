@@ -179,17 +179,20 @@ class OrderDetails extends Model implements Auditable
     public function scopeManufacturingOnlyForStore($query)
     {
         $order = $query->first()?->order;
-    
+
         // فقط لو الطلب مو من إنشاء نفس المستخدم
-        if ($order && $order->created_by !== auth()->id()) {
+        if (
+            $order && $order->created_by !== auth()->id()
+            || $order->customer_id !== auth()->id()
+        ) {
             $user = auth()->user();
-            $branch = $user->branch2;
-    
+            $branch = $user->branch;
+
             // فقط لو كان مطبخ مركزي
             if ($branch && $branch->is_kitchen) {
                 // التخصصات المخصصة لهذا الفرع
                 $customizedCategoriesIds = $branch->categories()->pluck('categories.id')->toArray();
-    
+
                 // التخصصات المخصصة لفروع المطابخ المركزية الأخرى
                 $otherBranchesCategories = \App\Models\Branch::centralKitchens()
                     ->where('id', '!=', $branch->id) // نستثني فرع المستخدم
@@ -200,29 +203,36 @@ class OrderDetails extends Model implements Auditable
                     ->pluck('id')
                     ->unique()
                     ->toArray();
-    
+
                 return $query->whereHas('product.category', function ($q) use ($customizedCategoriesIds, $otherBranchesCategories) {
+                    
                     $q->where('is_manafacturing', true)
-                        ->when(count($customizedCategoriesIds), function ($query) use ($customizedCategoriesIds) {
-                            // ✅ إذا عنده تخصصات → يرجع فقط تخصصاته
-                            $query->whereIn('id', $customizedCategoriesIds);
-                        }, function ($query) use ($otherBranchesCategories) {
-                            // ❌ إذا ما عنده → يستثني تخصصات الفروع الأخرى
-                            $query->whereNotIn('id', $otherBranchesCategories);
-                        });
+                        ->when(
+                            count($customizedCategoriesIds),
+                            function ($query) use ($customizedCategoriesIds) {
+
+                                // ✅ إذا عنده تخصصات → يرجع فقط تخصصاته
+                                $query->whereIn('id', $customizedCategoriesIds);
+                            },
+                            function ($query) use ($otherBranchesCategories) {
+                                // ❌ إذا ما عنده → يستثني تخصصات الفروع الأخرى
+                                $query->whereNotIn('id', $otherBranchesCategories);
+                            }
+                        )
+                    ;
                 });
             }
-    
+
             // باقي المستخدمين يشوفون فقط المنتجات التصنيعية
             return $query->whereHas('product.category', function ($q) {
                 $q->where('is_manafacturing', true);
             });
         }
-    
+
         return $query;
     }
-    
-    
+
+
     public function getTotalPriceAttribute()
     {
         return $this->available_quantity * $this->price;
