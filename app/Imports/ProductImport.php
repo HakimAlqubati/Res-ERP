@@ -23,7 +23,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
 
     public function model(array $row)
     {
-        DB::beginTransaction();
+        // DB::beginTransaction();
         try {
             $packageSize = $row['qty_per_pack'];
             $productId = (int) $row['id'];
@@ -74,10 +74,15 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
 
 
             $this->successCount++;
-            DB::commit();
+            // DB::commit();
         } catch (\Throwable $e) {
-            DB::rollBack();
-            Log::error("Failed to import row: " . json_encode($row) . ' - ' . $e->getMessage());
+            Log::channel('single')->error('❌ Import Error', [
+                'row' => $row,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            // DB::rollBack();
+            // Log::error("Failed to import row: " . json_encode($row) . ' - ' . $e->getMessage());
         }
 
         return null; // we're handling manually

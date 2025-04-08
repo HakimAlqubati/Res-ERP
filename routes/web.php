@@ -669,3 +669,8 @@ Route::get('/testMail/{name}/{email}', function ($name, $email) {
     // The email sending is done using the to method on the Mail facade
     Mail::to($email)->send(new TestEmail($name, $email));
 });
+
+Route::get('/testLog', function () {
+    \Illuminate\Support\Facades\Log::error('Testing log error');
+    dd('Logged');
+});
