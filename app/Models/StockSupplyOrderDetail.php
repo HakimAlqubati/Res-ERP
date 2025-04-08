@@ -77,6 +77,32 @@ class StockSupplyOrderDetail extends Model implements Auditable
                 'transactionable_id' => $stockSupplyDetail->stock_supply_order_id,
                 'transactionable_type' => StockSupplyOrder::class,
             ]);
+
+            // 👇 إضافة الهدر المتوقع مباشرة بعد الإدخال
+            $product = $stockSupplyDetail->product;
+            $wastePercentage = $product->waste_stock_percentage ?? 0;
+
+            if ($wastePercentage > 0) {
+                $wasteQuantity = round(($stockSupplyDetail->quantity * $wastePercentage) / 100, 2);
+
+                if ($wasteQuantity > 0) {
+                    \App\Models\InventoryTransaction::create([
+                        'product_id' => $stockSupplyDetail->product_id,
+                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                        'quantity' => $wasteQuantity,
+                        'unit_id' => $stockSupplyDetail->unit_id,
+                        'movement_date' => $stockSupplyDetail->order->date ?? now(),
+                        'package_size' => $stockSupplyDetail->package_size,
+                        'store_id' => $stockSupplyDetail->order?->store_id,
+                        'price' => $stockSupplyDetail->price,
+                        'transaction_date' => $stockSupplyDetail->order->date ?? now(),
+                        'notes' => 'Auto waste recorded during supply (based on waste percentage: ' . $wastePercentage . '%)',
+                        'transactionable_id' => 0,
+                        'transactionable_type' => 'Waste', // رمزي فقط إذا ما عندك جدول
+                        'is_waste' => true, // إذا كنت أضفت هذا الحقل في المايجريشن
+                    ]);
+                }
+            }
         });
     }
 
