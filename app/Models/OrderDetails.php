@@ -183,7 +183,7 @@ class OrderDetails extends Model implements Auditable
         // فقط لو الطلب مو من إنشاء نفس المستخدم
         if (
             $order && $order->created_by !== auth()->id()
-            || $order->customer_id !== auth()->id()
+            || (!is_null($order->customer_id) && $order->customer_id !== auth()->id())
         ) {
             $user = auth()->user();
             $branch = $user->branch;
@@ -205,7 +205,7 @@ class OrderDetails extends Model implements Auditable
                     ->toArray();
 
                 return $query->whereHas('product.category', function ($q) use ($customizedCategoriesIds, $otherBranchesCategories) {
-                    
+
                     $q->where('is_manafacturing', true)
                         ->when(
                             count($customizedCategoriesIds),
