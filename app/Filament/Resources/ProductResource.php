@@ -317,6 +317,21 @@ class ProductResource extends Resource
                                         // ->mask(RawJs::make('$money($input)'))
                                         // ->stripCharacters(',')   
                                         ->live(debounce: 300)
+                                        ->default(function (callable $get) {
+                                            $units = $get('../../units') ?? [];
+
+                                            // نحصل على أول وحدة فيها بيانات كاملة (مستبعدين الصف الجديد)
+                                            $firstValid = collect($units)
+                                                ->filter(fn($unit) => isset($unit['price']) && isset($unit['package_size']))
+                                                ->first();
+
+                                            $packageSize = $get('package_size') ?? 1;
+                                            $basePrice = $firstValid['price'] ?? 1;
+
+                                            return floatval($packageSize) * floatval($basePrice);
+                                        })
+                                    
+
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $units = $get('../../units') ?? [];
 
@@ -341,7 +356,22 @@ class ProductResource extends Resource
                                         }),
                                     TextInput::make('package_size')->numeric()->default(1)->required()
                                         // ->maxLength(4)
-                                        ->label(__('lang.package_size')),
+                                        ->label(__('lang.package_size'))
+                                        ->live(debounce: 500)
+                                        ->afterStateUpdated(function (Set $set, $state, $get, $context) {
+                                            $allUnits = $get('../../units') ?? [];
+
+                                            $firstValid = collect($allUnits)
+                                                ->filter(fn($unit) => isset($unit['price']) && isset($unit['package_size']))
+                                                ->first();
+
+                                            if ($firstValid && isset($firstValid['price'])) {
+                                                $firstPrice = (float) $firstValid['price'];
+                                                $packageSize = (float) $state;
+
+                                                $set('price', $packageSize * $firstPrice);
+                                            }
+                                        }),
 
                                 ])->orderColumn('order')->reorderable()
 
