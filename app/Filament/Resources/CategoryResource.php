@@ -63,6 +63,7 @@ class CategoryResource extends Resource
                                 $nextCode = str_pad((intval($lastCode) + 1), 2, '0', STR_PAD_LEFT);
                                 return $nextCode;
                             })
+                          
                             ->helperText('Code must be exactly 2 digits (e.g., 01, 25, 99)'),
                         Forms\Components\TextInput::make('waste_stock_percentage')
                             ->label('Waste %')
@@ -105,7 +106,7 @@ class CategoryResource extends Resource
                 // Tables\Columns\TextColumn::make('code')->label(__('lang.code'))
                 //     ->searchable(isIndividual: true, isGlobal: false),
                 Tables\Columns\TextColumn::make('code_starts_with')
-                    ->label('Prefix Code')
+                    ->label('Prefix Code')->sortable()
                     ->searchable()
                     ->tooltip('Used to auto-generate product codes')
                     ->alignCenter(true)->toggleable(),

@@ -441,6 +441,7 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
+        ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 ActionTable::make('import_products')

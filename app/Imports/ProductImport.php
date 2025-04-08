@@ -25,6 +25,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
     {
         DB::beginTransaction();
         try {
+            $packageSize = $row['qty_per_pack'];
             $productId = (int) $row['id'];
             $productName = trim($row['product_name'] ?? '');
             $categoryName = trim($row['category'] ?? '');
@@ -48,7 +49,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                 $product = Product::create([
                     'id' => $productId,
                     'name' => $productName,
-                    'code' => Str::slug($productName),
+                    'code' =>  Product::generateProductCode($category->id),
                     'description' => '',
                     'active' => true,
                     'category_id' => $category->id,
@@ -58,6 +59,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'product_id' => $product->id,
                     'unit_id' => $unit->id,
                     'price' => $price,
+                    'package_size' => $packageSize,
 
                 ]);
             } else {
@@ -65,7 +67,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'product_id' => $product->id,
                     'unit_id' => $unit->id,
                     'price' => $price,
-
+                    'package_size' => $packageSize,
                 ]);
             }
 

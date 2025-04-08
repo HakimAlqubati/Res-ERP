@@ -77,8 +77,11 @@ class UnitResource extends Resource
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
+                SelectFilter::make('active')
+                    ->options([
+                        1 => __('lang.status_active'),
+                        0 => __('lang.status_unactive'),
+                    ]),
                 Tables\Filters\TrashedFilter::make(),
 
             ])
