@@ -178,6 +178,7 @@ class OrderDetails extends Model implements Auditable
 
     public function scopeManufacturingOnlyForStore($query)
     {
+        return $query;
         $order = $query->first()?->order;
 
         // فقط لو الطلب مو من إنشاء نفس المستخدم
@@ -203,8 +204,8 @@ class OrderDetails extends Model implements Auditable
                     ->pluck('id')
                     ->unique()
                     ->toArray();
-
                 return $query->whereHas('product.category', function ($q) use ($customizedCategoriesIds, $otherBranchesCategories) {
+
 
                     $q->where('is_manafacturing', true)
                         ->when(
