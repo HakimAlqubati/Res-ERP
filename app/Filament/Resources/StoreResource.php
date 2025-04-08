@@ -90,11 +90,7 @@ class StoreResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Action::make('report')
-                    ->label(__('lang.open_report'))
-                    ->action(function ($record) {
-                        redirect('admin/stores-report?tableFilters[store_id][value]=' . $record->id);
-                    }),
+                
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
