@@ -183,7 +183,7 @@ class OrderDetails extends Model implements Auditable
         // فقط لو الطلب مو من إنشاء نفس المستخدم
         if (
             $order && $order->created_by !== auth()->id()
-            || (!is_null($order->customer_id) && $order->customer_id !== auth()->id())
+            || (isset($order->customer_id) && $order->customer_id !== auth()->id())
         ) {
             $user = auth()->user();
             $branch = $user->branch;
