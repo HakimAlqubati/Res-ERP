@@ -141,8 +141,8 @@ class OrderRepository implements OrderRepositoryInterface
                         'notes' => $notes,
                         'description' => $description,
                     ]);
-
                     foreach ($productsForThisBranch as $productDetail) {
+                        $productDetail['price'] = getUnitPrice($productDetail['product_id'], $productDetail['unit_id']);
                         $productDetail['order_id'] = $manufacturingOrder->id;
                         OrderDetails::create($productDetail);
                         $manufacturedProductIds[] = $productDetail['product_id'];
@@ -177,7 +177,7 @@ class OrderRepository implements OrderRepositoryInterface
                     ['product_id', '=', $detail['product_id']],
                     ['unit_id', '=', $detail['unit_id']],
                 ])->first();
-            
+
                 if ($existingDetail) {
                     // تحديث الكمية + السعر
                     $newQuantity = $existingDetail->quantity + $detail['quantity'];
@@ -195,8 +195,8 @@ class OrderRepository implements OrderRepositoryInterface
                 }
             }
             $message = $pendingOrderId > 0
-            ? 'Products added to pending approval order #' . $pendingOrderId
-            : 'New order created successfully';
+                ? 'Products added to pending approval order #' . $pendingOrderId
+                : 'New order created successfully';
 
             DB::commit();
 
