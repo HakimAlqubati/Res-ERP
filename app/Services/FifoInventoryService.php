@@ -121,8 +121,7 @@ class FifoInventoryService
                 'movement_date' => $purchase->movement_date,
             ];
             // throw new Exception("Insufficient inventory. {$remainingQuantity} units could not be allocated.");
-        }
-        dd($allocations);
+        } 
         return $allocations;
     }
 
@@ -194,7 +193,6 @@ class FifoInventoryService
     {
         try {
             $this->inventoryService = new InventoryService($this->productId, $this->unitId);
-            dd($this->allocateFIFOOrder());
             return [
                 'success' => true,
                 'result' => $this->allocateFIFOOrder(),

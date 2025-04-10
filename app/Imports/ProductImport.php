@@ -60,15 +60,33 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'unit_id' => $unit->id,
                     'price' => $price,
                     'package_size' => $packageSize,
+                    'order' => $packageSize,
 
                 ]);
-            } else {
-                UnitPrice::create([
-                    'product_id' => $product->id,
-                    'unit_id' => $unit->id,
-                    'price' => $price,
-                    'package_size' => $packageSize,
-                ]);
+            }
+            if ($product) {
+                $existingUnitPrice = UnitPrice::where('product_id', $product->id)->first();
+
+                $calculatedPrice = $price;
+                
+                if ($existingUnitPrice) {
+                    $basePrice = $existingUnitPrice->price;
+                    $calculatedPrice = $packageSize * $basePrice;
+                }
+                
+                $unitPriceExists = UnitPrice::where('product_id', $product->id)
+                    ->where('unit_id', $unit->id)
+                    ->first();
+                
+                if (!$unitPriceExists) {
+                    UnitPrice::create([
+                        'product_id' => $product->id,
+                        'unit_id' => $unit->id,
+                        'price' => $calculatedPrice,
+                        'package_size' => $packageSize,
+                        'order' => $packageSize,
+                    ]);
+                }
             }
 
 

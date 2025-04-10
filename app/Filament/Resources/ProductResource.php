@@ -94,9 +94,6 @@ class ProductResource extends Resource
                                 })
                                 ->afterStateUpdated(function ($set, $state) {
                                     $set('code', \App\Models\Product::generateProductCode($state));
-                                    $category = Category::find($state);
-                                    $set('waste_stock_percentage', $category?->waste_stock_percentage ?? 0); // ✅ NEW
-
                                 }),
                             TextInput::make('code')->required()
                                 ->unique(ignoreRecord: true)
@@ -119,10 +116,8 @@ class ProductResource extends Resource
                                 TextInput::make('waste_stock_percentage')
                                     ->label('Waste %')
                                     ->numeric()
-                                    // ->default(fn($get) => \App\Models\Category::find($get('category_id'))?->waste_stock_percentage ?? 0)
                                     ->minValue(0)
-                                    ->maxValue(100)
-                                    ->helperText('Default waste percentage based on selected category'),
+                                    ->maxValue(100),
                                 Toggle::make('active')
                                     ->inline(false)->default(true)
                                     ->label(__('lang.active')),
@@ -317,20 +312,32 @@ class ProductResource extends Resource
                                         // ->mask(RawJs::make('$money($input)'))
                                         // ->stripCharacters(',')   
                                         ->live(debounce: 300)
-                                        ->default(function (callable $get) {
+
+                                        ->afterStateHydrated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get) {
                                             $units = $get('../../units') ?? [];
 
-                                            // نحصل على أول وحدة فيها بيانات كاملة (مستبعدين الصف الجديد)
-                                            $firstValid = collect($units)
-                                                ->filter(fn($unit) => isset($unit['price']) && isset($unit['package_size']))
-                                                ->first();
+                                            // نحاول نجيب بيانات هذا الصف الحالي
+                                            $currentPackageSize = $get('package_size') ?? null;
+                                            $currentUnitId = $get('unit_id') ?? null;
 
-                                            $packageSize = $get('package_size') ?? 1;
-                                            $basePrice = $firstValid['price'] ?? 1;
+                                            // نبحث عن ترتيب هذا الصف
+                                            $index = null;
+                                            foreach ($units as $i => $unit) {
+                                                if (($unit['unit_id'] ?? null) === $currentUnitId) {
+                                                    $index = $i;
+                                                    break;
+                                                }
+                                            }
 
-                                            return floatval($packageSize) * floatval($basePrice);
+                                            // لو أول صف أو فشل الترتيب نتركه
+                                            if ($index === 0 || is_null($index)) return;
+
+                                            $firstPrice = $units[0]['price'] ?? null;
+
+                                            if ($firstPrice && $currentPackageSize && $currentPackageSize != 0) {
+                                                $set('price', round($firstPrice / $currentPackageSize, 2));
+                                            }
                                         })
-                                    
 
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $units = $get('../../units') ?? [];
@@ -345,31 +352,39 @@ class ProductResource extends Resource
                                                 }
                                             }
 
-                                            if (! $isValid) {
-                                                showWarningNotifiMessage(
-                                                    'Invalid Unit Prices',
-                                                    'Each unit price must be greater than or equal to the previous unit.'
-                                                );
+                                            // if (! $isValid) {
+                                            //     showWarningNotifiMessage(
+                                            //         'Invalid Unit Prices',
+                                            //         'Each unit price must be greater than or equal to the previous unit.'
+                                            //     );
 
-                                                $set('price', null); // reset if invalid
-                                            }
+                                            //     $set('price', null); // reset if invalid
+                                            // }
                                         }),
                                     TextInput::make('package_size')->numeric()->default(1)->required()
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(debounce: 500)
-                                        ->afterStateUpdated(function (Set $set, $state, $get, $context) {
+
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $allUnits = $get('../../units') ?? [];
+                                            $thisUnitId = $get('unit_id');
 
-                                            $firstValid = collect($allUnits)
-                                                ->filter(fn($unit) => isset($unit['price']) && isset($unit['package_size']))
-                                                ->first();
+                                            // نحصل على أول وحدة في القائمة (أول سعر)
+                                            $firstKey = array_key_first($allUnits);
+                                            $firstUnit = $allUnits[$firstKey] ?? null;
 
-                                            if ($firstValid && isset($firstValid['price'])) {
-                                                $firstPrice = (float) $firstValid['price'];
-                                                $packageSize = (float) $state;
+                                            // نتأكد أن الصف الحالي مش هو أول صف
+                                            $isCurrentFirst = ($firstUnit['unit_id'] ?? null) == $thisUnitId;
 
-                                                $set('price', $packageSize * $firstPrice);
+                                            if ($isCurrentFirst || empty($firstUnit)) {
+                                                return; // لا نعدل السعر للصف الأول
+                                            }
+
+                                            $firstPrice = $firstUnit['price'] ?? null;
+
+                                            if ($firstPrice && $state != 0) {
+                                                $set('price', round($firstPrice / $state, 2));
                                             }
                                         }),
 
@@ -441,7 +456,7 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-        ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 ActionTable::make('import_products')
@@ -489,22 +504,24 @@ class ProductResource extends Resource
                     ->copyMessage(__('lang.product_id_copied'))
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\TextColumn::make('name')
-                    ->label(__('lang.name'))
-                    ->toggleable()
-                    ->searchable()
-                    ->searchable(isIndividual: true)
-                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
-                Tables\Columns\TextColumn::make('name')
-                    ->label(__('lang.name'))
-                    ->toggleable()
-                    ->searchable()
-                    ->searchable(isIndividual: true)
-                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
                 Tables\Columns\TextColumn::make('code')->searchable()
                     ->label(__('lang.code'))
                     ->searchable(isIndividual: true, isGlobal: false),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('lang.name'))
+                    ->toggleable()
+                    ->searchable()
+                    ->searchable(isIndividual: true)
+                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('lang.name'))
+                    ->toggleable()
+                    ->searchable()
+                    ->searchable(isIndividual: true)
+                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
+
                 Tables\Columns\TextColumn::make('waste_stock_percentage')
                     ->label('Waste %')
                     ->toggleable(isToggledHiddenByDefault: true)

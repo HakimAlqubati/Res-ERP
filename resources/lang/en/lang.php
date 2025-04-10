@@ -191,4 +191,6 @@ return [
     'product_code_helper' => 'This code is automatically generated based on the selected category. It ensures each product has a unique identifier like FOO001, FOO002, etc.',
     'status_active' => 'Active',
     'status_unactive' => 'Unactive',
+    'waste_stock_percentage' => 'Waste %',
+
 ];

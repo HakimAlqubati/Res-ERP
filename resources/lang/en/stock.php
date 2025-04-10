@@ -8,4 +8,5 @@ return [
     'store_id' => 'Store',
     'manager_abel_show_orders' => 'Manager Able to Show Orders',
     'customized_manufacturing_categories' => 'Customized manufacturing categories',
+    
 ];

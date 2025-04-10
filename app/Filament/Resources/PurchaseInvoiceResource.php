@@ -133,7 +133,7 @@ class PurchaseInvoiceResource extends Resource
                         })->hiddenOn('view'),
                     Repeater::make('units')->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
-                        ->columns(8)
+                        ->columns(9)
                         ->defaultItems(1)
                         ->deletable(function ($record) {
                             if (is_null($record)) {
@@ -152,13 +152,25 @@ class PurchaseInvoiceResource extends Resource
                                 ->disabledOn('edit')
                                 ->options(function () {
                                     return Product::where('active', 1)
-                                        ->unmanufacturingCategory()
-                                        ->pluck('name', 'id');
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ]);
                                 })
-                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                    ->unmanufacturingCategory()
-                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->getSearchResultsUsing(function (string $search): array {
+                                    return Product::where('active', 1)
+                                        ->where(function ($query) use ($search) {
+                                            $query->where('name', 'like', "%{$search}%")
+                                                ->orWhere('code', 'like', "%{$search}%");
+                                        })
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ])
+                                        ->toArray();
+                                })
+                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
                                 ->searchable()->columnSpan(2)
@@ -192,9 +204,9 @@ class PurchaseInvoiceResource extends Resource
                                 ->label(__('lang.package_size')),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
-                                
+
                                 ->numeric()
-                                
+
                                 ->minValue(0.1)
                                 ->default(1)
                                 ->disabledOn('edit')
@@ -229,6 +241,20 @@ class PurchaseInvoiceResource extends Resource
                             TextInput::make('total_price')->minValue(1)->label('Total Price')
                                 ->type('text')
                                 ->extraInputAttributes(['readonly' => true])->columnSpan(1),
+                            TextInput::make('waste_stock_percentage')
+                                ->label(__('lang.waste_stock_percentage'))
+                                ->suffix('%')
+                                ->type('number')
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->default(function (callable $get) {
+                                    $product = \App\Models\Product::find($get('product_id'));
+                                    return $product?->waste_stock_percentage ?? 0;
+                                })
+                                ->reactive()
+                                ->columnSpan(1)
+                                ->required(),
+
 
                         ])
                 ])

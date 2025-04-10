@@ -40,6 +40,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderResource extends Resource
 {
@@ -377,7 +378,8 @@ class OrderResource extends Resource
                         } catch (\Throwable $th) {
                             //throw $th;
 
-                            showWarningNotifiMessage('Error', 'There was an error moving the task. Please try again.');
+                            Log::error('error_modify_status',[$th->getMessage()]);
+                            showWarningNotifiMessage('Error', $th->getMessage());
                             DB::rollBack();
                         }
                         // Add a log entry for the "moved" action

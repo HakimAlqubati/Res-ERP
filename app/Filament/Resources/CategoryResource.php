@@ -65,13 +65,13 @@ class CategoryResource extends Resource
                             })
                           
                             ->helperText('Code must be exactly 2 digits (e.g., 01, 25, 99)'),
-                        Forms\Components\TextInput::make('waste_stock_percentage')
-                            ->label('Waste %')
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->helperText('Expected stock waste percentage for this category.'),
+                        // Forms\Components\TextInput::make('waste_stock_percentage')
+                        //     ->label('Waste %')
+                        //     ->numeric()
+                        //     ->default(0)
+                        //     ->minValue(0)
+                        //     ->maxValue(100)
+                        //     ->helperText('Expected stock waste percentage for this category.'),
                     ]),
                     Grid::make()->columns(3)->schema([
                         Toggle::make('active')
@@ -110,10 +110,10 @@ class CategoryResource extends Resource
                     ->searchable()
                     ->tooltip('Used to auto-generate product codes')
                     ->alignCenter(true)->toggleable(),
-                Tables\Columns\TextColumn::make('waste_stock_percentage')
-                    ->label('Waste %')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->alignCenter(true),
+                // Tables\Columns\TextColumn::make('waste_stock_percentage')
+                //     ->label('Waste %')
+                //     ->toggleable(isToggledHiddenByDefault: true)
+                //     ->alignCenter(true),
 
                 Tables\Columns\TextColumn::make('description')->label(__('lang.description'))->toggleable()->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('products')->label('Number of products'),

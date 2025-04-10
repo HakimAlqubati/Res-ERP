@@ -174,4 +174,6 @@ return [
     'product_code_helper' => 'يتم توليد هذا الرمز تلقائيًا بناءً على الفئة المختارة، لضمان أن يكون لكل منتج مُعرّف فريد مثل FOO001، FOO002، وهكذا.',
     'status_active' => 'نشط',
     'status_unactive' => 'غير نشط',
+    'waste_stock_percentage' => 'نسبة هدر المخزون %',
+
 ];

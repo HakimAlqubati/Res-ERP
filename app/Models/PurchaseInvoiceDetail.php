@@ -17,6 +17,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         'quantity',
         'price',
         'package_size',
+        'waste_stock_percentage',
     ];
     protected $auditInclude = [
         'purchase_invoice_id',
@@ -25,6 +26,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         'quantity',
         'price',
         'package_size',
+        'waste_stock_percentage',
     ];
     protected $appends = ['total_price'];
 
