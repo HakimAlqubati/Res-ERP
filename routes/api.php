@@ -10,6 +10,8 @@ use App\Http\Controllers\TestController3;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\FifoInventoryService;
+use App\Services\MultiProductsInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -36,9 +38,35 @@ Route::get('/compare', function (Request $request) {
     return $fdata;
 });
 Route::get('/to_try_order', function (Request $request) {
-    $req_array = $request->all();
+    $allOrderDetails = $request->all()['order_details'];
     $fdata = [];
-    $fdata  = calculateFifoMethod($req_array['order_details'], 15);
+
+    $fifoService = new MultiProductsInventoryService();
+
+    foreach ($allOrderDetails as $orderDetail) {
+        $requiredQty = $orderDetail['quantity'];
+        $productId = $orderDetail['product_id'];
+        $unitId = $orderDetail['unit_id'];
+
+        // تنفيذ الصرف باستخدام FIFO
+        $fdata = $fifoService->allocateFIFO(
+            $productId,
+            $unitId,
+            $requiredQty,
+        );
+
+    }
+    return $fdata;
+    foreach ($allOrderDetails as $productDetail) {
+        $fifoService = new FifoInventoryService(
+            $productDetail['product_id'],
+            $productDetail['unit_id'],
+            $productDetail['quantity']
+        );
+
+        $result = $fifoService->allocateOrder();
+    }
+    $fdata['result'] = $result;
 
     return $fdata;
 });
