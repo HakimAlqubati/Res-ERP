@@ -50,7 +50,7 @@ class CategoryResource extends Resource
                             ->label('Code Starts With')
                             ->maxLength(5)
                             ->unique(ignoreRecord: true)
-                            // ->required()
+                            ->required()
                             ->maxLength(2)
                             ->minLength(2)
                             ->rule('regex:/^[0-9]{2}$/')
