@@ -370,11 +370,9 @@ class ProductResource extends Resource
                                             $allUnits = $get('../../units') ?? [];
                                             $thisUnitId = $get('unit_id');
 
-                                            // نحصل على أول وحدة في القائمة (أول سعر)
                                             $firstKey = array_key_first($allUnits);
                                             $firstUnit = $allUnits[$firstKey] ?? null;
 
-                                            // نتأكد أن الصف الحالي مش هو أول صف
                                             $isCurrentFirst = ($firstUnit['unit_id'] ?? null) == $thisUnitId;
 
                                             if ($isCurrentFirst || empty($firstUnit)) {
@@ -382,9 +380,10 @@ class ProductResource extends Resource
                                             }
 
                                             $firstPrice = $firstUnit['price'] ?? null;
+                                            $firstPackageSize = $firstUnit['package_size'] ?? null;
 
                                             if ($firstPrice && $state != 0) {
-                                                $set('price', round($firstPrice / $state, 2));
+                                                $set('price', round(($firstPrice / $firstPackageSize) * $state, 2));
                                             }
                                         }),
 
