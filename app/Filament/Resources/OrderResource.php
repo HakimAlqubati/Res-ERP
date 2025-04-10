@@ -389,7 +389,10 @@ class OrderResource extends Resource
                             return true;
                         }
                         return false;
-                    })->visible(fn(): bool => isSuperAdmin()),
+                    })
+                    // ->visible(fn(): bool => isSuperAdmin())
+                    ->hidden()
+                    ,
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
