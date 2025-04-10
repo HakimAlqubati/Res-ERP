@@ -362,7 +362,7 @@ class ProductResource extends Resource
                                             //     $set('price', null); // reset if invalid
                                             // }
                                         }),
-                                    TextInput::make('package_size')->numeric()->default(1)->required()
+                                    TextInput::make('package_size')->numeric()->default(0)->required()
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(debounce: 500)
