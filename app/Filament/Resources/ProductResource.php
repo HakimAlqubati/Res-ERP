@@ -117,6 +117,7 @@ class ProductResource extends Resource
                                     ->label('Waste %')
                                     ->numeric()
                                     ->minValue(0)
+                                    ->default(0)
                                     ->maxValue(100),
                                 Toggle::make('active')
                                     ->inline(false)->default(true)
