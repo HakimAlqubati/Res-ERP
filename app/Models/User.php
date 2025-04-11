@@ -130,6 +130,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         // Check if avatar is set and exists on S3
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
+            dd('s');
             return Storage::disk('s3')->url($this->avatar);
         }
 
@@ -137,10 +138,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-            return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
+            
+            return   Storage::disk('public')->url($defaultAvatarPath);
             return Storage::disk('public')->url($defaultAvatarPath);
         }
-
+dd('d');
         // If file is not found, return a fallback URL
         return asset('images/default-avatar.png');
     }
@@ -208,6 +210,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function isBranchUser()
     {
         return in_array(8, $this->roles->pluck('id')->toArray());
+    }
+    public function isDriver()
+    {
+        return in_array(6, $this->roles->pluck('id')->toArray());
     }
     public function isMaintenanceManager()
     {

@@ -14,13 +14,15 @@ class MultiProductsInventoryService
     public $unitId;
     public $storeId;
     public $categoryId;
+    public $filterOnlyAvailable;
 
-    public function __construct($categoryId = null, $productId = null, $unitId = 'all', $storeId = null)
+    public function __construct($categoryId = null, $productId = null, $unitId = 'all', $storeId = null, $filterOnlyAvailable = false)
     {
         $this->categoryId = $categoryId;
         $this->productId = $productId;
         $this->unitId = $unitId;
         $this->storeId = $storeId;
+        $this->filterOnlyAvailable = $filterOnlyAvailable;
     }
 
     public function getInventoryReport()
@@ -42,7 +44,7 @@ class MultiProductsInventoryService
 
         $report = [];
         foreach ($products as $product) {
-            $report[] = $this->getInventoryForProduct($product->id);
+            $report = $this->getInventoryForProduct($product->id);
         }
         return [
             'reportData' => $report,
@@ -53,31 +55,68 @@ class MultiProductsInventoryService
 
     public function getInventoryReportWithPagination($perPage = 15)
     {
-        if ($this->productId) {
-            return [$this->getInventoryForProduct($this->productId)];
-        }
-
-        // Fetch all products or filter by category if provided
         $query = Product::query();
 
         if ($this->categoryId) {
             $query->where('category_id', $this->categoryId);
         }
 
-        // Apply pagination correctly
-        $products = $query->paginate($perPage); // Corrected pagination
+        // الحالة الأولى: عندك منتج محدد
+        if ($this->productId) {
+            return [
+                'reportData' => [$this->getInventoryForProduct($this->productId)],
+                'pagination' => null,
+                'totalPages' => 1,
+            ];
+        }
 
+        // الحالة الثانية: فلترة على المنتجات المتوفرة فقط → نلغي pagination من البداية
+        if ($this->filterOnlyAvailable) {
+            $allProducts = $query->get(); // جلب كل المنتجات
+
+            $filteredReport = [];
+
+            foreach ($allProducts as $product) {
+                $productInventory = $this->getInventoryForProduct($product->id);
+                $totalRemaining = collect($productInventory)->sum('remaining_qty');
+
+                if ($totalRemaining > 0) {
+                    $filteredReport[] = $productInventory;
+                }
+            }
+
+            // تحويلهم إلى Collection وتطبيق pagination يدويًا
+            $currentPage = request()->get('page', 1);
+            $collection = collect($filteredReport);
+            $pagedData = $collection->slice(($currentPage - 1) * $perPage, $perPage)->values();
+
+            $pagination = new LengthAwarePaginator($pagedData, $collection->count(), $perPage, $currentPage, [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]);
+
+            return [
+                'reportData' => $pagedData,
+                'pagination' => $pagination,
+                'totalPages' => $pagination->lastPage(),
+            ];
+        }
+
+        // الحالة الثالثة: بدون فلترة → استخدم pagination العادي
+        $products = $query->paginate($perPage);
         $report = [];
+
         foreach ($products as $product) {
             $report[] = $this->getInventoryForProduct($product->id);
         }
 
         return [
             'reportData' => $report,
-            'pagination' => $products, // Pass pagination data correctly
+            'pagination' => $products,
             'totalPages' => $products->lastPage(),
         ];
     }
+
 
     private function getInventoryForProduct($productId)
     {
@@ -127,6 +166,7 @@ class MultiProductsInventoryService
         $unitPrices = $this->getProductUnitPrices($productId);
         $product = Product::find($productId);
         $result = [];
+
         foreach ($unitPrices as $unitPrice) {
             $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
             $remainingQty = round($remQty / $packageSize, 2);
@@ -170,6 +210,7 @@ class MultiProductsInventoryService
 
             ];
         }
+
         return $result;
     }
 
@@ -257,24 +298,22 @@ class MultiProductsInventoryService
         ]);
     }
 
-    public function allocateFIFO($productId, $unitId, $requestedQty): array
+    public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null): array
     {
         $remainingQty = $requestedQty;
         $allocations = [];
 
-        // جلب كل الحركات القديمة لهذا المنتج والوحدة
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('unit_id', $unitId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->whereNull('deleted_at')
-            ->orderBy('id','asc')
+            ->orderBy('id', 'asc')
             ->get();
+
         foreach ($entries as $entry) {
             if ($remainingQty <= 0) break;
 
-            $availableQty = $entry->quantity; // يجب أن تكون موجبة في MOVEMENT_IN
-
-            // احسب كمية الخصم الممكنة من هذه الدفعة
+            $availableQty = $entry->quantity;
             $deductQty = min($availableQty, $remainingQty);
 
             if ($deductQty <= 0) continue;
@@ -288,25 +327,15 @@ class MultiProductsInventoryService
                 'available_qty' => $availableQty,
                 'deducted_qty' => $deductQty,
                 'movement_date' => $entry->movement_date,
+                'transactionable_id' => $entry->transactionable_id,
+                'transactionable_type' => $entry->transactionable_type,
             ];
 
             $remainingQty -= $deductQty;
         }
 
-        // لو لم يتم تغطية الكمية بالكامل نضيف الفرق على شكل سالب
-        if ($remainingQty > 0) {
-            $allocations[] = [
-                'transaction_id' => null,
-                'store_id' => null,
-                'unit_id' => $unitId,
-                'price' => null,
-                'package_size' => null,
-                'available_qty' => 0,
-                'deducted_qty' => -$remainingQty, // خصم سلبي
-                'movement_date' => now(),
-            ];
-        }
-
         return $allocations;
     }
+
+  
 }

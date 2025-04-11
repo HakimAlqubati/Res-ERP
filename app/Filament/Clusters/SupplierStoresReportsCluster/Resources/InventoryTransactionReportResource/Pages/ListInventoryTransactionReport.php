@@ -20,9 +20,9 @@ class ListInventoryTransactionReport extends ListRecords
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
-
+        $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
         $unitId = 'all';
-        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
+        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId,$showAvailableInStock);
 
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination(15);

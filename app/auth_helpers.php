@@ -34,6 +34,15 @@ if (!function_exists('isBranchUser')) {
         return false;
     }
 }
+if (!function_exists('isDriver')) {
+    function isDriver()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isDriver();
+        }
+        return false;
+    }
+}
 if (!function_exists('isFinanceManager')) {
     function isFinanceManager()
     {

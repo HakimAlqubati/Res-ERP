@@ -10,9 +10,12 @@ use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Store;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Toggle;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -68,6 +71,13 @@ class InventoryTransactionReportResource extends Resource
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
+                Filter::make('show_extra_fields')
+                    ->label('Show Extra')
+                    ->form([
+                        Toggle::make('only_available')
+                            ->inline(false)
+                            ->label('Show Available in Stock')
+                    ]),
             ], FiltersLayout::AboveContent);
     }
 

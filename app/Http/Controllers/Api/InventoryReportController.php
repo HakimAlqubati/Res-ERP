@@ -34,6 +34,7 @@ class InventoryReportController extends Controller
         
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination(15);
+        
         return response()->json($report);
     }
 

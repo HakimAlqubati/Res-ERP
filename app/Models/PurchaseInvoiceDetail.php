@@ -85,6 +85,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
                 'transactionable_id' => $purchaseInvoiceDetail->purchase_invoice_id,
                 'transactionable_type' => PurchaseInvoice::class,
+                'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
             ]);
         });
     }

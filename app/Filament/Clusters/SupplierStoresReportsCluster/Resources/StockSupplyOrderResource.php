@@ -89,7 +89,11 @@ class StockSupplyOrderResource extends Resource
                                 })
                                 ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
-                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
+                                ->afterStateUpdated(function ($set, $state) {
+                                    $set('unit_id', null);
+                                    $product = Product::find($state);
+                                    $set('waste_stock_percentage', $product?->waste_stock_percentage);
+                                }),
 
                             Select::make('unit_id')->label('Unit')
                                 ->options(

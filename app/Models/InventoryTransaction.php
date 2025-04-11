@@ -29,6 +29,7 @@ class InventoryTransaction extends Model implements Auditable
         'purchase_invoice_id',
         'transactionable_id',
         'transactionable_type',
+        'waste_stock_percentage',
     ];
 
     protected $auditInclude = [
@@ -45,6 +46,7 @@ class InventoryTransaction extends Model implements Auditable
         'purchase_invoice_id',
         'transactionable_id',
         'transactionable_type',
+        'waste_stock_percentage',
     ];
     protected $appends = ['remaining_qty', 'movement_type_title', 'formatted_transactionable_type'];
 
@@ -68,7 +70,8 @@ class InventoryTransaction extends Model implements Auditable
         return self::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
             ->where('product_id', $productId)
-            ->orderBy('movement_date', 'asc')
+            // ->orderBy('movement_date', 'asc')
+            ->orderBy('id', 'asc')
             ->paginate($perPage);
     }
 
@@ -178,8 +181,7 @@ class InventoryTransaction extends Model implements Auditable
         static::created(function ($transaction) {
 
             // 👇 إضافة الهدر المتوقع مباشرة بعد الإدخال
-            $product = $transaction->product;
-            $wastePercentage = $product->waste_stock_percentage ?? 0;
+            $wastePercentage = $transaction->waste_stock_percentage ?? 0;
 
             if ($wastePercentage > 0 && $transaction->movement_type === self::MOVEMENT_IN) {
                 $wasteQuantity = round(($transaction->quantity * $wastePercentage) / 100, 2);

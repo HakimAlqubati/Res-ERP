@@ -37,7 +37,7 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-        ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
 
@@ -70,6 +70,8 @@ class InventoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes'),
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Price')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('product')
