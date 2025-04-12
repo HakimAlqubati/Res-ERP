@@ -129,7 +129,8 @@ class StockInventoryResource extends Resource
 
 
                             TextInput::make('physical_quantity')->default(0)
-                                ->numeric()->live()
+                                ->numeric()
+                                ->live(onBlur: true)
                                 ->afterStateUpdated(function ($set, $state, $get) {
                                     $inventoryService = new InventoryService($get('product_id'), $get('unit_id'), $get('store_id'));
                                     $difference =  static::getDifference($inventoryService, $state);

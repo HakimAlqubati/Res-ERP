@@ -30,11 +30,15 @@ class InventoryReportController extends Controller
         if (!empty($request->unit_id)) {
             $unitId = $request->unit_id;
         }
-        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId);
-        
+        $showAvailableInStock = 0;
+        if (isset($request->showAvailableInSock) && $request->showAvailableInSock) {
+            $showAvailableInStock = 1;
+        }
+        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
+
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination(15);
-        
+
         return response()->json($report);
     }
 
@@ -59,5 +63,15 @@ class InventoryReportController extends Controller
         }
 
         return ['reportData' => $reportData, 'product' => $product, 'totalPages' => $rawData->lastPage()];
+    }
+    public function filters()
+    {
+        $filters = [
+
+            'categories' => \App\Models\Category::active()->pluck('name', 'id')->toArray(),
+            'stores' => \App\Models\Store::active()->pluck('name', 'id')->toArray(),
+        ];
+
+        return response()->json($filters);
     }
 }

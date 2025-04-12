@@ -22,35 +22,23 @@ class ManageBranches extends ManageRecords
     public function getTabs(): array
     {
         return [
-            // 'all' => Tab::make(__('All Branches'))
-            //     ->modifyQueryUsing(fn(Builder $query) => $query)
-            //     ->icon('heroicon-o-building-office-2')
-            //     ->badge(Branch::query()->count())
-            //     ->badgeColor('gray'),
-
-            Branch::TYPE_BRANCH => Tab::make(__('Branches'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->branches())
+            Branch::TYPE_BRANCH => Tab::make(__('Normal Branches'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->normal())
                 ->icon('heroicon-o-building-storefront')
-                ->badge(Branch::branches()->count())
-                ->badgeColor('success')
-            // ->url(fn() => url()->current() . '?activeTab=' . Branch::TYPE_BRANCH)
-            ,
+                ->badge(Branch::normal()->count())
+                ->badgeColor('success'),
 
-            Branch::TYPE_CENTRAL_KITCHEN => Tab::make(__('Central Kitchens'))
+            Branch::TYPE_CENTRAL_KITCHEN => Tab::make(__('Manufacturing Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->centralKitchens())
                 ->icon('heroicon-o-fire')
                 ->badge(Branch::centralKitchens()->count())
-                ->badgeColor('warning')
-            // ->url(fn() => url()->current() . '?activeTab=' . Branch::TYPE_CENTRAL_KITCHEN)
-            ,
+                ->badgeColor('warning'),
+            Branch::TYPE_POPUP => Tab::make(__('Popup Branches'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->popups())
+                ->icon('heroicon-o-sparkles')
+                ->badge(Branch::popups()->count())
+                ->badgeColor('info'),
 
-            Branch::TYPE_HQ => Tab::make(__('Head Office'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->HQBranches())
-                ->icon('heroicon-o-building-library')
-                ->badge(Branch::HQBranches()->count())
-                ->badgeColor('blue')
-            // ->url(fn() => url()->current() . '?activeTab=' . Branch::TYPE_HQ)
-            ,
         ];
     }
 }

@@ -11,6 +11,7 @@ use App\Models\District;
 use App\Models\User;
 use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -27,6 +28,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -63,7 +65,7 @@ class BranchResource extends Resource
                                     ->searchable(),
                                 Grid::make()->columns(4)->schema([
                                     Toggle::make('active')
-                                        ->inline(false)
+                                        ->inline(false)->default(true)
                                         ->label(__('lang.active')),
                                     Select::make('type')
                                         ->label(__('lang.branch_type'))
@@ -74,9 +76,10 @@ class BranchResource extends Resource
                                             return in_array($tab, Branch::TYPES) ? $tab : Branch::TYPE_BRANCH;
                                         })
                                         ->options([
-                                            Branch::TYPE_BRANCH => __('lang.branch'),
+                                            Branch::TYPE_BRANCH => __('lang.normal_branch'),
                                             Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
                                             Branch::TYPE_HQ => __('lang.hq'),
+                                            Branch::TYPE_POPUP => __('lang.popup_branch'),
                                         ])
                                         ->default(Branch::TYPE_BRANCH)
                                         ->reactive(),
@@ -101,7 +104,37 @@ class BranchResource extends Resource
                                         ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
 
                                 ]),
+                                Fieldset::make()->columns(2)
+                                    ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                    ->label('Set Start and End Date for Popup Branch')
+                                    ->schema([
+                                        DateTimePicker::make('start_date')
+                                            ->default(now()->addDay())
 
+                                            ->label(__('lang.start_date'))
+                                            ->required(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if ($state) {
+                                                    $newEndDate = \Illuminate\Support\Carbon::parse($state)->addDay();
+                                                    $set('end_date', $newEndDate);
+                                                }
+                                            }),
+
+                                        DateTimePicker::make('end_date')
+                                            ->label(__('lang.end_date'))
+                                            ->default(now()->addDays(2))
+
+                                            ->required(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->after('start_date')
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
+                                        Textarea::make('more_description')
+                                            ->label(__('lang.more_description'))
+                                            ->rows(3)->columnSpanFull()
+                                            ->nullable()
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
+                                    ]),
                                 Textarea::make('address')
                                     ->columnSpanFull()
                                     ->label(__('lang.address')),
@@ -226,10 +259,21 @@ class BranchResource extends Resource
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
                     })->hidden(),
+                TextColumn::make('start_date')
+                    ->label(__('lang.start_date'))
+                    ->dateTime('Y-m-d H:i')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('end_date')
+                    ->label(__('lang.end_date'))
+                    ->dateTime('Y-m-d H:i')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
 
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+
                 // Tables\Filters\SelectFilter::make('category')
                 //     ->label(__('stock.customized_manufacturing_categories'))
                 //     ->options(\App\Models\Category::pluck('name', 'id'))

@@ -273,8 +273,7 @@ class MultiProductsInventoryService
     {
         $inventory = $this->getInventoryReport();
         $lowStockProducts = [];
-
-        foreach ($inventory['reportData'] as $productData) {
+        foreach ($inventory as $productData) {
             foreach ($productData as $product) {
                 if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
                     $lowStockProducts[] = $product;
@@ -336,6 +335,4 @@ class MultiProductsInventoryService
 
         return $allocations;
     }
-
-  
 }

@@ -107,6 +107,7 @@ Route::middleware('auth:api')->group(function () {
         Route::apiResource('stockSupplyOrder', App\Http\Controllers\Api\StockSupplyOrderController::class);
         Route::get('/minimumStockReport', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReport']);
         Route::get('/inventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
+        Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
 });

@@ -202,7 +202,7 @@ class ProductResource extends Resource
                                         ->label(__('lang.quantity'))
                                         ->type('text')
                                         ->default(1)
-                                        ->live(debounce: 500)
+                                        ->live(onBlur: true)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('price'));
                                             if ($get('qty_waste_percentage') == 0) {
@@ -230,7 +230,7 @@ class ProductResource extends Resource
                                         //         ->decimalPlaces(2)
                                         //         ->thousandsSeparator(',')
                                         // )
-                                        ->live(debounce: 500)
+                                        ->live(onBlur: true)
 
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('quantity'));
@@ -256,7 +256,7 @@ class ProductResource extends Resource
                                         ->required()
                                         // ->suffixIconColor(Color::Green)
                                         // ->suffixIcon('heroicon-o-percent-badge')
-                                        ->live(debounce: 500)
+                                        ->live(onBlur: true)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
 
@@ -312,7 +312,7 @@ class ProductResource extends Resource
                                         // ->maxLength(6)
                                         // ->mask(RawJs::make('$money($input)'))
                                         // ->stripCharacters(',')   
-                                        ->live(debounce: 300)
+                                        ->live(onBlur: true)
 
                                         ->afterStateHydrated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get) {
                                             $units = $get('../../units') ?? [];
@@ -365,7 +365,7 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')->numeric()->default(0)->required()
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size'))
-                                        ->live(debounce: 500)
+                                        ->live(onBlur: true)
 
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $allUnits = $get('../../units') ?? [];
@@ -411,7 +411,8 @@ class ProductResource extends Resource
                                         ->searchable()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
-                                        })->searchable()->live()
+                                        })->searchable()
+                                        ->live()
                                         ->afterStateUpdated(function ($livewire, $set, $state, $get) {
                                             $packageSize = $get('package_size') ?? 0;
                                             $productItems  = $get('../../productItems') ?? [];
@@ -424,7 +425,7 @@ class ProductResource extends Resource
                                         }),
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
-                                        ->live(debounce: 500)
+                                        ->live(onBlur: true)
                                         ->afterStateUpdated(function ($record, $livewire, $set, $state, $get) {
                                             $productItems  = $get('../../productItems') ?? [];
                                             $totalNetPrice = collect($productItems)->sum('total_price_after_waste') ?? 0;

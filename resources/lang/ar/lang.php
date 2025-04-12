@@ -175,5 +175,7 @@ return [
     'status_active' => 'نشط',
     'status_unactive' => 'غير نشط',
     'waste_stock_percentage' => 'نسبة هدر المخزون %',
-
+    'popup_branch' => 'فرع Popup',
+    'more_description' => 'مزيد من التفاصيل',
+    'normal_branch' => 'فرع عادي',
 ];

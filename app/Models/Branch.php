@@ -31,6 +31,9 @@ class Branch extends Model implements HasMedia, Auditable
         'manager_abel_show_orders',
 
         'type',
+        'start_date',
+        'end_date',
+        'more_description',
     ];
     protected $auditInclude = [
         'id',
@@ -44,18 +47,22 @@ class Branch extends Model implements HasMedia, Auditable
         'manager_abel_show_orders',
 
         'type',
+        'start_date',
+        'end_date',
+        'more_description',
     ];
 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
     public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
     public const TYPE_HQ = 'hq';
-
+    public const TYPE_POPUP = 'popup';
     // ✅ Optional: Array of allowed types
     public const TYPES = [
         self::TYPE_BRANCH,
         self::TYPE_CENTRAL_KITCHEN,
         self::TYPE_HQ,
+        self::TYPE_POPUP,
     ];
     // protected $casts = [
 
@@ -200,5 +207,28 @@ class Branch extends Model implements HasMedia, Auditable
     public function getCategoryNamesAttribute()
     {
         return $this->categories->pluck('name')->toArray();
+    }
+
+    public function scopeNormal($query)
+    {
+        return $query->whereIn('type', [
+            self::TYPE_BRANCH,
+            self::TYPE_HQ,
+        ]);
+    }
+
+    public function scopeWithAllTypes($query)
+    {
+        return $query->whereIn('type', self::TYPES);
+    }
+
+    public function scopePopups($query)
+    {
+        return $query->where('type', self::TYPE_POPUP);
+    }
+
+    public function getIsPopupAttribute(): bool
+    {
+        return $this->type === self::TYPE_POPUP;
     }
 }

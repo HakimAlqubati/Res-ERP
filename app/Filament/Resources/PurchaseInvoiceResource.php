@@ -111,7 +111,8 @@ class PurchaseInvoiceResource extends Resource
                             ->label('Has Attachment')
                             ->inline(false)->live(),
                         Toggle::make('has_description')
-                            ->label('Has Description')->inline(false)->live(),
+                            ->label('Has Description')->inline(false)
+                            ->live(),
 
                     ]),
                     Textarea::make('cancel_reason')->label('Cancel Reason')
@@ -220,7 +221,7 @@ class PurchaseInvoiceResource extends Resource
                                 //         ->decimalPlaces(2)
                                 //         ->thousandsSeparator(',')
                                 // )
-                                ->reactive()
+                                ->live(onBlur: true)
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
@@ -237,7 +238,7 @@ class PurchaseInvoiceResource extends Resource
                                 //         ->decimalPlaces(2)
                                 //         ->thousandsSeparator(',')
                                 // )
-                                ->reactive()
+                                ->live(onBlur: true)
 
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $set('total_price', ((float) $state) * ((float)$get('quantity')));
@@ -255,7 +256,7 @@ class PurchaseInvoiceResource extends Resource
                                     $product = \App\Models\Product::find($get('product_id'));
                                     return $product?->waste_stock_percentage ?? 0;
                                 })
-                                ->reactive()
+                                ->live(onBlur: true)
                                 ->columnSpan(1)
                                 ->required(),
 
