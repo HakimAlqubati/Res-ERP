@@ -178,4 +178,7 @@ return [
     'popup_branch' => 'فرع Popup',
     'more_description' => 'مزيد من التفاصيل',
     'normal_branch' => 'فرع عادي',
+    'branch_type' => 'النوع',
+    'only_one_hq_allowed' => 'يسمح بفرع رئيسي واحد فقط. يرجى تفعيل الفرع الموجود أو حذفه أولاً.',
+
 ];

@@ -2,29 +2,29 @@
 
 namespace App\Filament\Resources\BranchResource\Pages;
 
+
 use App\Filament\Resources\BranchResource;
 use App\Models\Branch;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\CreateRecord;
+use Filament\Notifications\Notification;
 use Filament\Support\Exceptions\Halt;
 
-class EditBranch extends EditRecord
+class CreateBranch extends CreateRecord
 {
     protected static string $resource = BranchResource::class;
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
-    protected function mutateFormDataBeforeSave(array $data): array
+
+    protected function mutateFormDataBeforeCreate(array $data): array
     {
         if ($data['type'] === Branch::TYPE_HQ) {
             $existingHq = Branch::where('type', Branch::TYPE_HQ)->first();
 
-            if ($existingHq && $this->record->id != $existingHq->id && $existingHq->active) {
+            if ($existingHq) {
 
                 showWarningNotifiMessage(__('lang.only_one_hq_allowed'));
                 throw new Halt();
             }
         }
+
         return $data;
     }
 }

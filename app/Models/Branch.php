@@ -231,4 +231,14 @@ class Branch extends Model implements HasMedia, Auditable
     {
         return $this->type === self::TYPE_POPUP;
     }
+    public function getTypeTitleAttribute(): string
+    {
+        return match ($this->type) {
+            self::TYPE_BRANCH => __('lang.branch'),
+            self::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
+            self::TYPE_HQ => __('lang.hq'),
+            self::TYPE_POPUP => __('lang.popup_branch'),
+            default => __('lang.unknown'),
+        };
+    }
 }

@@ -82,6 +82,7 @@ class BranchResource extends Resource
                                             Branch::TYPE_POPUP => __('lang.popup_branch'),
                                         ])
                                         ->default(Branch::TYPE_BRANCH)
+                                 
                                         ->reactive(),
                                     Toggle::make('manager_abel_show_orders')
                                         ->label(__('stock.manager_abel_show_orders'))
@@ -240,7 +241,7 @@ class BranchResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true),
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
@@ -248,6 +249,8 @@ class BranchResource extends Resource
                         return null;
                     })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
+                TextColumn::make('type_title')->label(__('lang.branch_type')),
+                IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
                     // ->limit(100)
                     ->words(5)->toggleable(isToggledHiddenByDefault: true),
@@ -329,6 +332,8 @@ class BranchResource extends Resource
         return [
             'index' => Pages\ManageBranches::route('/'),
             'edit' => Pages\EditBranch::route('/{record}/edit'),
+            'create' => Pages\CreateBranch::route('/create'),
+
 
         ];
     }
