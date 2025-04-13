@@ -41,13 +41,13 @@ class BranchOrderSupplyReportService
 
             if (!isset($groupedReport[$key])) {
                 $groupedReport[$key] = [
-                    'order_id' => $order->id,
+                    // 'order_id' => $order->id,
                     'branch_name' => $order->branch->name,
                     'product_name' => $transaction->product?->name,
                     'product_id' => $transaction->product?->id,
                     'unit_name' => $transaction->unit?->name,
-                    'store_name' => $transaction->store?->name,
-                    'supply_date' => $transaction->movement_date,
+                    // 'store_name' => $transaction->store?->name,
+                    // 'supply_date' => $transaction->movement_date,
                     'quantity' => 0,
                     'total_supplied_quantity' => 0,
                 ];
