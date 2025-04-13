@@ -79,9 +79,9 @@ class InventoryReportController extends Controller
     {
         $service = new BranchOrderSupplyReportService();
         $branchId = request('branch_id');
-        $result = $service->branchQuantities($branchId);
+        $productId = request('product_id');
+        $result = $service->branchQuantities($branchId, $productId);
         $res = ['reportData' => $result];
         return response()->json($res);
-
     }
 }

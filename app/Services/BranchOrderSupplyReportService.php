@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class BranchOrderSupplyReportService
 {
-    public function branchQuantities($branchId = null)
+    public function branchQuantities($branchId = null, $productId = null)
     {
         $query = InventoryTransaction::query()
             ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
@@ -16,6 +16,10 @@ class BranchOrderSupplyReportService
             ->whereNull('deleted_at')
             ->with(['product', 'unit', 'store']);
 
+
+        if ($productId = request('product_id')) {
+            $query->where('product_id', $productId);
+        }
         if ($branchId) {
             $query->whereIn('transactionable_id', function ($q) use ($branchId) {
                 $q->select('id')->from('orders')->where('branch_id', $branchId);
@@ -40,6 +44,7 @@ class BranchOrderSupplyReportService
                     'order_id' => $order->id,
                     'branch_name' => $order->branch->name,
                     'product_name' => $transaction->product?->name,
+                    'product_id' => $transaction->product?->id,
                     'unit_name' => $transaction->unit?->name,
                     'store_name' => $transaction->store?->name,
                     'supply_date' => $transaction->movement_date,
