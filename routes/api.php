@@ -109,8 +109,10 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/inventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
+        
     });
 });
+Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
 Route::get('/new-link', function () {});
 

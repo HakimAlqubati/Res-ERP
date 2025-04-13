@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Services\BranchOrderSupplyReportService;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Http\Request;
 
@@ -73,5 +74,14 @@ class InventoryReportController extends Controller
         ];
 
         return response()->json($filters);
+    }
+    public function branchQuantities()
+    {
+        $service = new BranchOrderSupplyReportService();
+        $branchId = request('branch_id');
+        $result = $service->branchQuantities($branchId);
+        $res = ['reportData' => $result];
+        return response()->json($res);
+
     }
 }
