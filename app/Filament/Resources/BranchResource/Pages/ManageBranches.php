@@ -22,7 +22,7 @@ class ManageBranches extends ManageRecords
     public function getTabs(): array
     {
         return [
-            Branch::TYPE_BRANCH => Tab::make(__('Normal Branches'))
+            Branch::TYPE_BRANCH => Tab::make(__('Standard Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->normal())
                 ->icon('heroicon-o-building-storefront')
                 ->badge(Branch::normal()->count())

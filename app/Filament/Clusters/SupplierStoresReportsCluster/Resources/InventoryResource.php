@@ -7,12 +7,14 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResour
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
+use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -41,6 +43,8 @@ class InventoryResource extends Resource
             ->defaultSort('id', 'desc')
             ->columns([
 
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID'),
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product'),
 
@@ -57,9 +61,10 @@ class InventoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('package_size')->alignCenter(true)
                     ->label('Package Size'),
-
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Price')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('movement_date')
-                    ->label('Movement Date')
+                    ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('store.name')
                     ->label('Store'),
@@ -70,16 +75,18 @@ class InventoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes'),
-                Tables\Columns\TextColumn::make('price')
-                    ->label('Price')->toggleable(isToggledHiddenByDefault: true),
+
             ])
             ->filters([
-                Filter::make('product')
-                    ->label('Product')
-                    ->query(fn(Builder $query, array $data) => $query->whereHas('product', fn($q) => $q->where('name', 'like', "%{$data['value']}%")))
-                    ->form([
-                        Forms\Components\TextInput::make('value')->label('Product Name'),
-                    ]),
+                // Filter::make('product')
+                //     ->label('Product')
+                //     ->query(fn(Builder $query, array $data) => $query->whereHas('product', fn($q) => $q->where('name', 'like', "%{$data['value']}%")))
+                //     ->form([
+                //         Forms\Components\TextInput::make('value')->label('Product Name'),
+                //     ]),
+
+                SelectFilter::make('product_id')
+                    ->label('Product')->options(Product::active()->pluck('name', 'id')->toArray())->searchable()->multiple()
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),

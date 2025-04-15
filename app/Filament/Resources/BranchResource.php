@@ -264,12 +264,12 @@ class BranchResource extends Resource
                     })->hidden(),
                 TextColumn::make('start_date')
                     ->label(__('lang.start_date'))
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('Y-m-d')
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('end_date')
                     ->label(__('lang.end_date'))
-                    ->dateTime('Y-m-d H:i')
+                    ->dateTime('Y-m-d')
                     ->toggleable(isToggledHiddenByDefault: true),
 
 

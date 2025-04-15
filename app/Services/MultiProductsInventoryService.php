@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\InventoryTransaction;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class MultiProductsInventoryService
 {
@@ -334,5 +336,103 @@ class MultiProductsInventoryService
         }
 
         return $allocations;
+    }
+    
+    public function allocateFIFO_new($productId, $unitId, $requestedQty, $sourceModel = null)
+    {
+        $inventoryReportProduct = $this->getInventoryForProduct($productId);
+        $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+        $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
+            ->where('unit_id', $unitId)->with('unit')
+            ->first();
+        if (!$targetUnit) {
+            Log::info("❌ Unit ID: $unitId not found for product ID: $productId.");
+            throw new \Exception("❌ Unit ID: $unitId not found for product ID: $productId.");
+        }
+        if ($requestedQty > $inventoryRemainingQty) {
+            Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
+            throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
+        }
+        $allocations = [];
+        $outTransactionIds = InventoryTransaction::where('product_id', $productId)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+            ->where('transactionable_type', Order::class)
+            ->pluck('source_transaction_id')->toArray();
+
+        $entries = InventoryTransaction::where('product_id', $productId)
+            // ->where('unit_id', $unitId)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->whereNull('deleted_at')
+            ->orderBy('id', 'asc')
+            ->whereNotIn('id', $outTransactionIds)
+            ->get();
+
+
+        $remainingQty = $inventoryRemainingQty;
+        $unitPrices = [];
+        foreach ($entries as $entry) {
+            // if ($remainingQty <= 0) break;
+            $qtyBasedOnUnit = 0;
+            $entryQty = $entry->quantity;
+
+            foreach ($this->getProductUnitPrices($productId) as $key => $value) {
+                $unitPrices[$key]['unit_id'] = $value['unit_id'];
+                $unitPrices[$key]['unit_name'] = $value['unit_name'];
+                $unitPrices[$key]['package_size'] = $value['package_size'];
+                $unitPrices[$key]['qty_based_on_unit'] = ($entryQty * $entry->package_size) / $value['package_size'];
+            }
+            // dd($unitPrices, $entryQty);
+            // $deductQty = min($entryQty, $remainingQty);
+            $deductQty = 0;
+            // if ($deductQty <= 0) continue;
+
+            // return $this->getProductUnitPrices($productId);
+            // if ($unitId == $entry->unit_id) {
+            //     $price = $entry->price;
+            // } else {
+            //     if ($targetUnit->package_size > $entry->package_size) {
+            //         $price = $entry->price * $targetUnit->package_size;
+            //     } else {
+            //         $price = $entry->price / $targetUnit->package_size;
+            //     }
+            // }
+            $price = ($entry->price / $entry->package_size) * $targetUnit->package_size;
+            $allocations[] = [
+                'transaction_id' => $entry->id,
+                'store_id' => $entry->store_id,
+                'unit_id' => $entry->unit_id,
+                'price' => $entry->price,
+                'price_3' => $price,
+                'package_size' => $entry->package_size,
+                'all_stock_qty' => $inventoryRemainingQty,
+                // 'available_qty' => $availableQty,
+                'deducted_qty' => $deductQty,
+                'movement_date' => $entry->movement_date,
+                'transactionable_id' => $entry->transactionable_id,
+                'transactionable_type' => $entry->transactionable_type,
+                // 'target_unit' => $targetUnit,
+                'unit_prices' => $unitPrices,
+                // 'inventory_report_product' => $inventoryReportProduct,
+            ];
+
+            // $remainingQty -= $deductQty;
+        }
+
+        return $allocations;
+    }
+
+    public function getLastUnitByPackageSize($productId)
+    {
+        return \App\Models\UnitPrice::where('product_id', $productId)
+            ->with('unit')
+            ->orderByDesc('package_size')
+            ->first();
+    }
+    public function getSmallestUnitByPackageSize($productId)
+    {
+        return \App\Models\UnitPrice::where('product_id', $productId)
+            ->with('unit')
+            ->orderBy('package_size', 'asc')
+            ->first();
     }
 }

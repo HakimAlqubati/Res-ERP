@@ -12,6 +12,7 @@ use App\Models\ProductItem;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use App\Services\MigrationScripts\ProductMigrationService;
+use App\Services\ProductCostingService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
@@ -144,13 +145,25 @@ class ProductResource extends Resource
                                         // ->disabledOn('edit')
                                         ->options(function () {
                                             return Product::where('active', 1)
-                                                // ->unmanufacturingCategory()
-                                                ->pluck('name', 'id');
+                                                ->get()
+                                                ->mapWithKeys(fn($product) => [
+                                                    $product->id => "{$product->code} - {$product->name}"
+                                                ]);
                                         })
-                                        ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                            // ->unmanufacturingCategory()
-                                            ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                        ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                        ->getSearchResultsUsing(function (string $search): array {
+                                            return Product::where('active', 1)
+                                                ->where(function ($query) use ($search) {
+                                                    $query->where('name', 'like', "%{$search}%")
+                                                        ->orWhere('code', 'like', "%{$search}%");
+                                                })
+                                                ->limit(50)
+                                                ->get()
+                                                ->mapWithKeys(fn($product) => [
+                                                    $product->id => "{$product->code} - {$product->name}"
+                                                ])
+                                                ->toArray();
+                                        })
+                                        ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                         ->reactive()
                                         ->afterStateUpdated(function ($set, $state) {
                                             $product = Product::find($state);
@@ -568,6 +581,18 @@ class ProductResource extends Resource
                             showWarningNotifiMessage('Faild');
                         }
                     })->hidden(),
+                Tables\Actions\Action::make('updateComponentPrices')
+                    ->label('Update Price')
+                    ->icon('heroicon-o-currency-dollar')->button()
+                    ->color('info')->visible(fn($record): bool => $record->is_manufacturing)
+                    ->action(function ($record) {
+                        $count = ProductCostingService::updateComponentPricesForProduct($record->id);
+                        if ($count > 0) {
+                            showSuccessNotifiMessage("✅ تم تحديث أسعار {$count} من المكونات.");
+                        } else {
+                            showWarningNotifiMessage("⚠️ لم يتم تحديث أي مكوّن. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.");
+                        }
+                    }),
 
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
