@@ -144,10 +144,11 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Branch updated successfully',
-                'data' => [
-                    'branch_id' => $user->fresh()->branch_id,
-                    'branch_name' => $user->branch->name,
-                ]
+                'user' => UserResource::make($user),
+                // 'data' => [
+                //     'branch_id' => $user->fresh()->branch_id,
+                //     'branch_name' => $user->branch->name,
+                // ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
