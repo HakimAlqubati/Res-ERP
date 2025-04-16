@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Services\MultiProductsInventoryService;
+use App\Services\ProductCostingService;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Order extends Model implements Auditable
@@ -264,21 +266,15 @@ class Order extends Model implements Auditable
                         $detail->available_quantity // الكمية المطلوبة للصرف
                     );
 
-                    $totalDeducted = 0;
 
                     foreach ($allocations as $alloc) {
-                        // تجاهل السالب لأن معناها نقص
-                        if ($alloc['deducted_qty'] <= 0) continue;
-
-                        $totalDeducted += $alloc['deducted_qty'];
-
                         \App\Models\InventoryTransaction::create([
                             'product_id'           => $detail->product_id,
                             'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
                             'quantity'             => $alloc['deducted_qty'],
-                            'unit_id'              => $alloc['unit_id'],
-                            'package_size'         => $alloc['package_size'],
-                            'price'                => $alloc['price'],
+                            'unit_id'              => $alloc['target_unit_id'],
+                            'package_size'         => $alloc['target_unit_package_size'],
+                            'price'                => $alloc['price_based_on_unit'],
                             'movement_date'        => $order->order_date ?? now(),
                             'transaction_date'     => $order->order_date ?? now(),
                             'store_id'             => $alloc['store_id'],
@@ -289,25 +285,35 @@ class Order extends Model implements Auditable
                                     default               => 'Unknown Source',
                                 } .
                                 " #" . ($alloc['transactionable_id'] ?? 'N/A') .
-                                " with price " . number_format($alloc['price'], 2),
+                                " with price " . number_format($alloc['price_based_on_unit'], 2),
                             ($alloc['transaction_id'] ?? 'N/A') .
-                                " with price " . number_format($alloc['price'], 2),
+                                " with price " . number_format($alloc['price_based_on_unit'], 2),
                             'transactionable_id'   => $order->id,
                             'transactionable_type' => \App\Models\Order::class,
+                            'source_transaction_id' => $alloc['transaction_id'],
+
                         ]);
                     }
+                }
 
-                    // تأكد أن الكمية كافية
-                    if ($totalDeducted < $detail->available_quantity) {
-                        throw new \Exception("❌ لا يوجد مخزون كافي للمنتج: {$detail->product?->name}");
-                    }
+                // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
 
-                    // اختياري: أربط المخزن بالطلب
-                    if ($alloc['store_id']) {
-                        $order->stores()->syncWithoutDetaching([$alloc['store_id']]);
+                foreach ($order->orderDetails as $detail) { 
+                    $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
+                        ->pluck('parent_product_id')
+                        ->unique();
+
+                    foreach ($parentProducts as $parentProductId) {
+                        try {
+                            $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
+                            Log::info("🔄 تم تحديث أسعار {$count} مكونات لـ منتج مركب ID {$parentProductId}");
+                        } catch (\Throwable $e) {
+                            Log::error("❌ خطأ أثناء تحديث سعر المنتج المركب {$parentProductId}: {$e->getMessage()}");
+                        }
                     }
                 }
             }
+
 
 
             if ($order->isDirty('status')) {

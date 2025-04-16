@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Category;
+use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Models\UnitPrice;
@@ -21,6 +22,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
 
     private int $successCount = 0;
 
+
     public function model(array $row)
     {
         // DB::beginTransaction();
@@ -31,6 +33,8 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             $categoryName = trim($row['category'] ?? '');
             $unitName = trim($row['unit'] ?? '');
             $price = (float) ($row['price'] ?? 0);
+            $minimumStockQty = (int) ($row['minimum_stock_qty'] ?? 0);
+            $stockQty = (float) ($row['stock_qty'] ?? 0);
 
             if (!$productId || !$productName || !$categoryName || !$unitName || $price <= 0) {
                 return null;
@@ -53,7 +57,8 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                     'description' => '',
                     'active' => true,
                     'category_id' => $category->id,
-                    'minimum_stock_qty' => 0,
+                    'minimum_stock_qty' => $minimumStockQty,
+
                 ]);
                 UnitPrice::create([
                     'product_id' => $product->id,
@@ -68,16 +73,16 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                 $existingUnitPrice = UnitPrice::where('product_id', $product->id)->first();
 
                 $calculatedPrice = $price;
-                
+
                 if ($existingUnitPrice) {
                     $basePrice = $existingUnitPrice->price;
                     $calculatedPrice = $packageSize * $basePrice;
                 }
-                
+
                 $unitPriceExists = UnitPrice::where('product_id', $product->id)
                     ->where('unit_id', $unit->id)
                     ->first();
-                
+
                 if (!$unitPriceExists) {
                     UnitPrice::create([
                         'product_id' => $product->id,
@@ -87,20 +92,38 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                         'order' => $packageSize,
                     ]);
                 }
+                // Queue product for stock addition if needed
+                if ($stockQty > 0) {
+                    InventoryTransaction::create([
+                        'product_id' => $product->id,
+                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                        'quantity' => $stockQty,
+                        'unit_id' => $unit->id,
+                        'movement_date' => now(),
+                        'package_size' => $packageSize,
+                        'price' => $price,
+                        'transaction_date' => now(),
+                        'notes' => 'Opening stock from import',
+                        'transactionable_id' => $product->id,
+                        'store_id' => 1,
+                        'transactionable_type' => 'ProductImport',
+                        'waste_stock_percentage' => 0,
+                    ]);
+                }
             }
 
 
 
             $this->successCount++;
             // DB::commit();
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             Log::channel('single')->error('❌ Import Error', [
                 'row' => $row,
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             // DB::rollBack();
-            // Log::error("Failed to import row: " . json_encode($row) . ' - ' . $e->getMessage());
+            Log::error("Failed to import row: " . json_encode($row) . ' - ' . $e->getMessage());
         }
 
         return null; // we're handling manually
@@ -114,12 +137,24 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
             'category' => 'required|string',
             'unit' => 'required|string',
             'price' => 'required|numeric|min:0.01',
+            'stock_qty' => 'nullable|numeric|min:0',
+            'qty_per_pack' => 'nullable|numeric|min:1',
         ];
     }
+
 
     public function headingRow(): int
     {
         return 1;
+    }
+    public function batchSize(): int
+    {
+        return 500;
+    }
+
+    public function chunkSize(): int
+    {
+        return 500;
     }
 
     public function getSuccessfulImportsCount(): int

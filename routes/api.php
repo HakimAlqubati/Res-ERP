@@ -56,19 +56,7 @@ Route::get('/to_try_order', function (Request $request) {
         );
 
     }
-    return $fdata;
-    foreach ($allOrderDetails as $productDetail) {
-        $fifoService = new FifoInventoryService(
-            $productDetail['product_id'],
-            $productDetail['unit_id'],
-            $productDetail['quantity']
-        );
-
-        $result = $fifoService->allocateOrder();
-    }
-    $fdata['result'] = $result;
-
-    return $fdata;
+    return $fdata; 
 });
 
 Route::post('/login', [AuthController::class, 'login']);

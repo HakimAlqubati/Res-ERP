@@ -153,27 +153,7 @@ class OrderDetails extends Model implements Auditable
                 ]);
             }
         });
-        // static::created(function ($orderDetail) {
-        //     $notes = 'Order with id ' . $orderDetail->order_id;
-        //     if (isset($orderDetail->order->store_id)) {
-        //         $notes .= ' in (' . $orderDetail->order->store->name . ')';
-        //     }
-        //     // Subtract from inventory transactions
-        //     \App\Models\InventoryTransaction::create([
-        //         'product_id' => $orderDetail->product_id,
-        //         'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-        //         'quantity' =>  $orderDetail->quantity,
-        //         'unit_id' => $orderDetail->unit_id,
-        //         'purchase_invoice_id' => $orderDetail?->purchase_invoice_id,
-        //         'movement_date' => $orderDetail->order->date ?? now(),
-        //         'package_size' => $orderDetail->package_size,
-        //         'store_id' => $orderDetail->order?->store_id,
-        //         'transaction_date' => $orderDetail->order->date ?? now(),
-        //         'notes' => $notes,
-        //         'transactionable_id' => $orderDetail->order_id,
-        //         'transactionable_type' => Order::class,
-        //     ]);
-        // });
+        
     }
 
     public function scopeManufacturingOnlyForStore($query)

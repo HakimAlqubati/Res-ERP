@@ -4,12 +4,16 @@ namespace App\Providers;
 
 use App\Models\CustomTenantModel;
 use App\Models\Employee;
+use App\Models\InventoryTransaction;
+use App\Models\PurchaseInvoiceDetail;
 use App\Models\Task;
 use App\Models\User;
 use App\Notifications\Notification as NotificationsNotification;
 use App\Notifications\NotificationAttendance;
 use App\Notifications\NotificationAttendanceCheck;
 use App\Observers\EmployeeObserver;
+use App\Observers\InventoryTransactionObserver;
+use App\Observers\PurchaseInvoiceDetailObserver;
 use App\Observers\TaskObserver;
 use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
@@ -45,6 +49,9 @@ class AppServiceProvider extends ServiceProvider
     {
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
         CustomTenantModel::observe(TenantObserver::class);
+        InventoryTransaction::observe(InventoryTransactionObserver::class);
+        // PurchaseInvoiceDetail::observe(PurchaseInvoiceDetailObserver::class);
+
         // Task::observe(TaskObserver::class);
         // Employee::observe(EmployeeObserver::class);
         // User::observe(UserObserver::class);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\InventoryTransaction;
 use App\Models\UnitPrice;
+use Illuminate\Support\Facades\Log;
 
 class ProductCostingService
 {
@@ -28,7 +29,7 @@ class ProductCostingService
             ->whereNull('deleted_at')
             ->orderBy('id', 'asc')
             ->get();
-
+        Log::info('mrim', [$entriesIn, $productId]);
         $totalIn = $entriesIn->sum(fn($e) => $e->quantity * $e->package_size);
 
         $entriesOut = InventoryTransaction::where('product_id', $productId)
@@ -39,7 +40,7 @@ class ProductCostingService
         $totalOut = $entriesOut->sum(fn($e) => $e->quantity * $e->package_size);
 
         $remainingQty = $totalIn - $totalOut;
-
+        Log::info('sdf', [$totalIn, $totalOut]);
         if ($remainingQty > 0) {
             foreach ($entriesIn as $entry) {
                 $entryQtyInBase = $entry->quantity * $entry->package_size;
@@ -85,6 +86,9 @@ class ProductCostingService
                 $item->unit_id
             );
 
+            if (is_null($price)) {
+                continue;
+            }
             $transaction = self::getInventoryTransactionForCost($item->product_id, $item->unit_id, $price);
 
             \App\Models\ProductPriceHistory::create([

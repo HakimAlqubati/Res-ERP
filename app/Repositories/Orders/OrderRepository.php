@@ -104,15 +104,15 @@ class OrderRepository implements OrderRepositoryInterface
             // 👇 تحديد الفئات الخاصة بالتصنيع
             $manufacturingCategoryIds = \App\Models\Category::Manufacturing()->pluck('id')->toArray();
 
-            // 👇 إذا الفرع الحالي هو مطبخ مركزي
-            if (auth()->user()?->branch?->is_kitchen) {
-                foreach ($allOrderDetails as $item) {
-                    $product = \App\Models\Product::find($item['product_id']);
-                    if ($product && in_array($product->category_id, $manufacturingCategoryIds)) {
-                        throw new \Exception("Central kitchens are not allowed to create orders that contain manufacturing products such as ({$product->name}-{$product->id}).");
-                    }
-                }
-            }
+            // // 👇 إذا الفرع الحالي هو مطبخ مركزي
+            // if (auth()->user()?->branch?->is_kitchen) {
+            //     foreach ($allOrderDetails as $item) {
+            //         $product = \App\Models\Product::find($item['product_id']);
+            //         if ($product && in_array($product->category_id, $manufacturingCategoryIds)) {
+            //             // throw new \Exception("Central kitchens are not allowed to create orders that contain manufacturing products such as ({$product->name}-{$product->id}).");
+            //         }
+            //     }
+            // }
 
             $allManufacturingBranches = Branch::active()
                 ->centralKitchens()

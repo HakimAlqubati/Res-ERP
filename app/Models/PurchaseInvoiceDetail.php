@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Services\ProductCostingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class PurchaseInvoiceDetail extends Model implements Auditable
 {
-    use HasFactory,\OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $fillable = [
         'purchase_invoice_id',
         'product_id',
@@ -67,6 +69,8 @@ class PurchaseInvoiceDetail extends Model implements Auditable
     {
         parent::boot();
         static::created(function ($purchaseInvoiceDetail) {
+
+
             $notes = 'Purchase invoice with id ' . $purchaseInvoiceDetail->purchase_invoice_id;
             if (isset($purchaseInvoiceDetail->purchaseInvoice->store_id)) {
                 $notes .= ' in (' . $purchaseInvoiceDetail->purchaseInvoice->store->name . ')';
@@ -87,6 +91,8 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'transactionable_type' => PurchaseInvoice::class,
                 'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
             ]);
+
+        
         });
     }
 }

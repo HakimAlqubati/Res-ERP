@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class InventoryTransaction extends Model implements Auditable
@@ -30,6 +31,7 @@ class InventoryTransaction extends Model implements Auditable
         'transactionable_id',
         'transactionable_type',
         'waste_stock_percentage',
+        'source_transaction_id',
     ];
 
     protected $auditInclude = [
@@ -47,6 +49,7 @@ class InventoryTransaction extends Model implements Auditable
         'transactionable_id',
         'transactionable_type',
         'waste_stock_percentage',
+        'source_transaction_id',
     ];
     protected $appends = ['remaining_qty', 'movement_type_title', 'formatted_transactionable_type'];
 
@@ -176,6 +179,11 @@ class InventoryTransaction extends Model implements Auditable
         static::retrieved(function ($transaction) {
             if ($transaction->transactionable_type) {
                 $transaction->transactionable_type = class_basename($transaction->transactionable_type);
+            }
+        });
+        static::creating(function ($transaction) {
+            if (is_null($transaction->waste_stock_percentage)) {
+                $transaction->waste_stock_percentage = 0;
             }
         });
         static::created(function ($transaction) {
