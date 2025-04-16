@@ -26,6 +26,7 @@ class UserResource extends JsonResource
             'roles' => $this->roles->pluck('name', 'id'),
             'login_auth_type' => setting('login_auth_type'),
             'login_method' => setting('login_method'),
+            'branches' => $this->manageBranches()->select('id','name','type')->get(),
         ];
     }
 }

@@ -108,10 +108,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->group === 'Filament Users';
     }
 
-    // public function branch()
-    // {
-    //     return $this->hasOne(Branch::class, 'manager_id');
-    // }
+    public function manageBranches()
+    {
+        return $this->hasMany(Branch::class, 'manager_id');
+    }
     public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');

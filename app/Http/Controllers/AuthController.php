@@ -8,6 +8,7 @@ use App\Models\EmailOtp;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
@@ -121,5 +122,38 @@ class AuthController extends Controller
             'token' => $token,
             'user' => new UserResource($user),
         ]);
+    }
+
+    public function updateBranch(Request $request)
+    {
+        $request->validate([
+            'branch_id' => 'required|integer|exists:branches,id'
+        ]);
+
+        try {
+            $user = auth()->user();
+
+            
+            DB::transaction(function () use ($user, $request) {
+                $user->update([
+                    'branch_id' => $request->branch_id,
+                    'updated_at' => now()
+                ]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Branch updated successfully',
+                'data' => [
+                    'branch_id' => $user->fresh()->branch_id
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update branch',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

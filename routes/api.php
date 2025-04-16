@@ -54,9 +54,8 @@ Route::get('/to_try_order', function (Request $request) {
             $unitId,
             $requiredQty,
         );
-
     }
-    return $fdata; 
+    return $fdata;
 });
 
 Route::post('/login', [AuthController::class, 'login']);
@@ -81,6 +80,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/getProductOrderQuantities', [ProductController::class, 'getProductOrderQuantities']);
 });
 
+Route::post('/user/updateBranch', [AuthController::class, 'updateBranch'])
+    ->middleware('auth:api');
+
 Route::get('/test', function () {
     return User::role([1, 3])->pluck('id');
 });
@@ -97,7 +99,6 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/inventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
-        
     });
 });
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
