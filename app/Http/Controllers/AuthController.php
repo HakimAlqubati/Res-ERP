@@ -145,7 +145,8 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Branch updated successfully',
                 'data' => [
-                    'branch_id' => $user->fresh()->branch_id
+                    'branch_id' => $user->fresh()->branch_id,
+                    'branch_name' => $user->branch->name,
                 ]
             ]);
         } catch (\Exception $e) {
