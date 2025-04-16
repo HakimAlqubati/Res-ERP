@@ -42,6 +42,7 @@ class Order extends Model implements Auditable
         'storeuser_id_update',
         'transfer_date',
         'is_purchased',
+        'supplier_id',
         'order_date',
         'store_id',
         'cancelled',
@@ -298,7 +299,7 @@ class Order extends Model implements Auditable
 
                 // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
 
-                foreach ($order->orderDetails as $detail) { 
+                foreach ($order->orderDetails as $detail) {
                     $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
                         ->pluck('parent_product_id')
                         ->unique();
@@ -422,5 +423,9 @@ class Order extends Model implements Auditable
     public function getStoreIdsAttribute()
     {
         return $this->stores->pluck('id')->toArray();
+    }
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 }

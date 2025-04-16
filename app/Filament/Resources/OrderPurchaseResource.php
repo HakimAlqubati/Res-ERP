@@ -11,6 +11,7 @@ use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationMa
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Models\UnitPrice;
 use App\Tables\Columns\count_items_order;
 use App\Tables\Columns\TotalOrder;
@@ -19,6 +20,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -27,6 +30,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,7 +46,7 @@ class OrderPurchaseResource extends Resource
     protected static ?string $cluster = MainOrdersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
-    protected static bool $shouldRegisterNavigation = false;
+    // protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
     {
         return __('lang.purchased_orders');
@@ -59,145 +64,128 @@ class OrderPurchaseResource extends Resource
     {
         return $form
             ->schema([
-                DatePicker::make('order_date')
-                    ->required()
-                    ->placeholder('Select date')
-                    ->default(date('Y-m-d'))
-                    ->format('Y-m-d')
-                    // ->disabledOn('edit')
-                    ->columnSpanFull(),
-                Select::make('branch_id')->label(__('lang.branch'))
-                    ->searchable()
-                    ->required()
-                    ->options(
-                        Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')
-                    )
-                    ->disabledOn('edit')
-                    ->searchable()
-                    ->hidden(function () {
-                        return !in_array(getCurrentRole(), [1, 3]);
-                    })
-                    ->columnSpanFull(),
-                Textarea::make('notes')->label(__('lang.notes'))
-                    ->placeholder('Enter notes')
-                    ->columnSpanFull(),
-
-                Repeater::make('orderDetails')
-                    ->createItemButtonLabel(__('lang.add_item'))
-                    ->columns(5)
-                    ->defaultItems(1)
-                    ->hiddenOn([
-                        // Pages\EditPurchaseInvoice::class,
-                        ViewOrderPurchase::class,
-                    ])
-                    ->columnSpanFull()
-                    ->collapsible()
-                    ->relationship('orderDetails')
-                    ->label(__('lang.order_details'))
-                    ->schema([
-                        Select::make('product_id')
-                            ->label(__('lang.product'))
+                Fieldset::make()->schema([
+                    Grid::make()->columns(4)->schema([
+                        Select::make('branch_id')->required()
+                            ->label(__('lang.branch'))->columnSpan(2)
+                            ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
+                        Select::make('supplier_id')->label(__('lang.supplier'))->columnSpan(2)->required()
+                            ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
+                            ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
                             ->searchable()
-                            // ->disabledOn('edit')
-                            ->options(function () {
-                                return Product::pluck('name', 'id');
-                            })
-                            ->reactive()
-                            ->required()
-                            ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
-                            ->searchable(),
-                        Select::make('unit_id')
-                            ->label(__('lang.unit'))
-                            ->required()
-                            // ->disabledOn('edit')
-                            ->options(
-                                function (callable $get) {
+                            ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id')),
+                    ]),
+                    // Repeater for Order Details
+                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
+                        ->label(__('lang.order_details'))->columns(9)
+                        ->relationship() // Relationship with the OrderDetails model
+                        ->schema([
+                            Select::make('product_id')
+                                ->label(__('lang.product'))
+                                ->searchable()
+                                // ->disabledOn('edit')
+                                ->options(function () {
+                                    return Product::where('active', 1)
+                                        ->unmanufacturingCategory()
+                                        ->pluck('name', 'id');
+                                })
+                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
+                                    ->unmanufacturingCategory()
+                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
+                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->reactive()
+                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                ->searchable()->columnSpan(function ($record) {
 
-                                    $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
-
-                                    if ($unitPrices) {
-                                        return array_column($unitPrices, 'unit_name', 'unit_id');
+                                    if ($record) {
+                                        return 2;
+                                    } else {
+                                        return 3;
                                     }
+                                })->required(),
+                            Select::make('unit_id')
+                                ->label(__('lang.unit'))
+                                // ->disabledOn('edit')
+                                ->options(
+                                    function (callable $get) {
 
-                                    return [];
-                                }
-                            )
-                            ->searchable()
-                            ->reactive()
-                            ->afterStateUpdated(function ($set, $state, $get) {
-                                $unitPrice = UnitPrice::where(
-                                    'product_id',
-                                    $get('product_id')
-                                )->where('unit_id', $state)->first()->price;
-                                $set('price', $unitPrice);
+                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
 
-                                $set('total_price', ((float) $unitPrice) * ((float) $get('quantity')));
-                            }),
-                        Hidden::make('available_quantity')->default(1),
-                        TextInput::make('quantity')
-                            ->label(__('lang.quantity'))
-                            ->type('text')
-                            ->default(1)
-                            // ->disabledOn('edit')
-                            // ->mask(
-                            //     fn (TextInput\Mask $mask) => $mask
-                            //         ->numeric()
-                            //         ->decimalPlaces(2)
-                            //         ->thousandsSeparator(',')
-                            // )
-                            ->reactive()
-                            ->required()
-                            ->afterStateUpdated(function ($set, $state, $get) {
-                                $set('total_price', ((float) $state) * ((float) $get('price')));
-                                $set('available_quantity', $state);
-                            }),
-                        TextInput::make('price')
-                            ->label(__('lang.price'))
-                            ->type('text')
-                            ->default(1)
-                            ->required()
-                            // ->disabledOn('edit')
-                            // ->mask(
-                            //     fn (TextInput\Mask $mask) => $mask
-                            //         ->numeric()
-                            //         ->decimalPlaces(2)
-                            //         ->thousandsSeparator(',')
-                            // )
-                            ->reactive()
+                                        if ($unitPrices)
+                                            return array_column($unitPrices, 'unit_name', 'unit_id');
+                                        return [];
+                                    }
+                                )
+                                ->searchable()
+                                ->reactive()
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $unitPrice = UnitPrice::where(
+                                        'product_id',
+                                        $get('product_id')
+                                    )->where('unit_id', $state)->first();
+                                    $set('price', $unitPrice->price);
+                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                })->columnSpan(2)->required(),
+                            TextInput::make('purchase_invoice_id')->label(__('lang.purchase_invoice_id'))->readOnly()->visibleOn('view'),
+                            TextInput::make('package_size')->label(__('lang.package_size'))->readOnly()->columnSpan(1),
+                            Hidden::make('available_quantity')
+                                ->default(1),
+                            TextInput::make('quantity')
+                                ->label(__('lang.quantity'))
+                                ->numeric()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $set('available_quantity', $state);
 
-                            ->afterStateUpdated(function (Closure $set, $state, $get) {
-                                $set('total_price', ((float) $state) * ((float) $get('quantity')));
-                            }),
-                        TextInput::make('total_price')->default(1)
-                            ->type('text')
-                            ->extraInputAttributes(['readonly' => true]),
+                                    $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
+                                })
 
-                    ])
+                                ->required()->default(1),
+
+                            TextInput::make('price')
+                                ->label(__('lang.price'))->readOnly()
+                                ->numeric()
+                                ->required()->columnSpan(1),
+                            TextInput::make('total_price')
+                                ->label(__('lang.total_price'))
+                                ->numeric()
+                                ->readOnly()->columnSpan(1),
+                        ])
+
+                        ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
+                        ->required(),
+
+                ])
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
-                    ->copyable()
+                    ->copyable()->alignCenter(true)
+                    ->color('primary')
+                    ->weight(FontWeight::Bold)
                     ->copyMessage(__('lang.order_id_copied'))
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
                 TextColumn::make('customer.name')->label(__('lang.branch_manager'))->toggleable()
-                    ->searchable(isIndividual: true)
+                    ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
-                TextColumn::make('order_date')->label(__('lang.order_date')),
-
-                TextColumn::make('item_counts')->label(__('lang.item_counts')),
-                TextColumn::make('total_amount')->label(__('lang.total_amount')),
+                TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
+                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
+                    ->numeric(),
+                TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-'),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
+
             ])
             ->defaultSort('id', 'desc')
             ->actions([
@@ -232,26 +220,14 @@ class OrderPurchaseResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $currentRole = getCurrentRole();
-
-        $query = parent::getEloquentQuery();
-        if ($currentRole == 7) {
-            $query->where('branch_id', auth()->user()->branch->id);
-        }
-        $query = $query->where('is_purchased', 1)
+        return parent::getEloquentQuery()
+            ->where('is_purchased', 1)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-        return $query;
     }
     public static function getNavigationBadge(): ?string
     {
-        $query = static::getModel()::query();
-        $currentRole = getCurrentRole();
-
-        if ($currentRole == 7) {
-            $query->where('branch_id', auth()->user()->branch->id);
-        }
-        return $query->where('is_purchased', 1)->count();
+        return static::getModel()::where('is_purchased', 1)->count();
     }
 }
