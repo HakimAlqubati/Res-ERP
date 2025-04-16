@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Equipment;
 use App\Models\Product;
@@ -160,5 +161,11 @@ class TestController3 extends Controller
         return $result;
         // Return the grouped result
         return response()->json($result);
+    }
+    public function testGetBranches(){
+        $branches = Branch::active()
+        ->activePopups()
+        ->get(['id', 'name','type','start_date','end_date']);
+        return response()->json($branches);
     }
 }

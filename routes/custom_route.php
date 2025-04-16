@@ -19,3 +19,4 @@ Route::get('/getProductItems/{id}', [TestController3::class, 'getProductItems'])
 
 Route::put('update-device-token', [FcmController::class, 'updateDeviceToken']);
 Route::post('send-fcm-notification', [FcmController::class, 'sendFcmNotification']);
+Route::get('/testGetBranches', [TestController3::class, 'testGetBranches']);

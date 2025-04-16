@@ -241,4 +241,15 @@ class Branch extends Model implements HasMedia, Auditable
             default => __('lang.unknown'),
         };
     }
+
+    public function scopeActivePopups($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('type', '!=', self::TYPE_POPUP)
+                ->orWhere(function ($q2) {
+                    $q2->where('type', self::TYPE_POPUP)
+                        ->where('end_date', '>=', now()->format('Y-m-d'));
+                });
+        });
+    }
 }
