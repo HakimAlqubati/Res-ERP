@@ -29,6 +29,7 @@ class StockSupplyOrderController extends Controller
             $query->whereDate('order_date', '<=', $request->to_date);
         }
 
+        $query->where('created_by', auth()->user()->id);
         $orders = $query->paginate($request->per_page ?? 10);
 
         return response()->json([
