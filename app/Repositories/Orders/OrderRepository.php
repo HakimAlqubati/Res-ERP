@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\FifoInventoryService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -84,6 +85,18 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function storeWithFifo($request)
     {
+        $validator = Validator::make($request->all(), [
+            
+            'order_details' => 'required|array|min:1',
+            'order_details.*.quantity' => 'required|numeric|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
         try {
             DB::beginTransaction();
 
