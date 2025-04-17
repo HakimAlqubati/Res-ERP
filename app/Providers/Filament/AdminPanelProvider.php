@@ -117,10 +117,10 @@ class AdminPanelProvider extends PanelProvider
 
                     $group[] =  NavigationGroup::make(__('menu.supply_and_inventory'))
                         ->items(array_merge(
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  MainOrdersCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  MainOrdersCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportCluster::getNavigationItems() : [],

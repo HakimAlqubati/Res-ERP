@@ -158,6 +158,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->hasOne(Employee::class, 'user_id', 'id');
     }
 
+    public function isSuperVisor()
+    {
+        return in_array(15, $this->roles->pluck('id')->toArray());
+    }
     public function isBranchManager()
     {
         return in_array(7, $this->roles->pluck('id')->toArray());

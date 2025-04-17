@@ -395,4 +395,6 @@ class PurchaseInvoiceResource extends Resource
     {
         return static::getModel()::count();
     }
+
+   
 }
