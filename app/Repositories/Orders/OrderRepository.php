@@ -87,7 +87,7 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $validator = Validator::make($request->all(), [
             'order_details' => 'required|array|min:1',
-            'order_details.*.quantity' => 'required|numeric|min:0',
+            'order_details.*.quantity' => 'required|numeric|min:0.1',
         ]);
 
         if ($validator->fails()) {
