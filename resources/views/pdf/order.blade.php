@@ -130,9 +130,9 @@
                 <tr>
                     <th>Product</th>
                     <th>Unit</th>
-                    <th>Quantity</th>
+                    <th colspan="2">Quantity</th>
                     {{-- <th>Price</th> --}}
-                    <th>Subtotal</th>
+                    {{-- <th>Subtotal</th> --}}
                 </tr>
             </thead>
             <tbody>
@@ -140,7 +140,7 @@
                     <tr>
                         <td>{{ $item->product?->name ?? '-' }}</td>
                         <td>{{ $item->unit?->name ?? '-' }}</td>
-                        <td>{{ $item->available_quantity }}</td>
+                        <td colspan="2">{{ $item->available_quantity }}</td>
                         {{-- <td>{{ number_format($item->price, 2) }}</td> --}}
                         {{-- <td>{{ number_format($item->available_quantity * $item->price, 2) }}</td> --}}
                     </tr>
