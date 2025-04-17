@@ -29,6 +29,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StockInventoryResource extends Resource
@@ -226,6 +227,22 @@ class StockInventoryResource extends Resource
     }
 
     public static function canDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
     {
         if (isSuperAdmin()) {
             return true;

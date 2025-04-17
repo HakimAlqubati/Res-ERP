@@ -165,6 +165,7 @@ class StockIssueOrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -208,6 +209,22 @@ class StockIssueOrderResource extends Resource
     }
     public static function canEdit(Model $record): bool
     {
+        return false;
+    }
+
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
         return false;
     }
 }
