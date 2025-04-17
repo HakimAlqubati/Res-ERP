@@ -59,16 +59,16 @@ class OrderRepository implements OrderRepositoryInterface
 
             $query->where('status', '!=', Order::PENDING_APPROVAL);
 
-            // $centralKitchens = Store::whereIn('id', auth()->user()->managed_stores_ids)
-            //     ->with('branches')
-            //     ->where('is_central_kitchen', 1)->get();
+            $centralKitchens = Store::whereIn('id', auth()->user()->managed_stores_ids)
+                ->with('branches')
+                ->where('is_central_kitchen', 1)->get();
 
 
             // if (is_array($centralKitchens->pluck('id')->toArray()) && count($centralKitchens->pluck('id')->toArray()) > 0) {
 
-            //     $query->where('store_id', $centralKitchens->pluck('id')->toArray())
-            //         ->orWhere('customer_id', auth()->user()->id)
-            //     ;
+            // $query->where('store_id', $centralKitchens->pluck('id')->toArray())
+            //     ->orWhere('customer_id', auth()->user()->id)
+            // ;
             // } else {
             //     $query->where('store_id', null);
             // }
