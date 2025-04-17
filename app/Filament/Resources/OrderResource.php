@@ -94,11 +94,11 @@ class OrderResource extends Resource
                                     // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
                             ])
-                            // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
-                            // ->default(function ($record) {
-                            //     dd($record);
-                            // })
-                            ,
+                        // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
+                        // ->default(function ($record) {
+                        //     dd($record);
+                        // })
+                        ,
                     ]),
                     // Repeater for Order Details
                     Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
@@ -248,7 +248,7 @@ class OrderResource extends Resource
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 // TextColumn::make('store.name')->label(__('lang.store')),
-                TextColumn::make('store_names')->label(__('lang.store')),
+                TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([
@@ -378,7 +378,7 @@ class OrderResource extends Resource
                         } catch (\Throwable $th) {
                             //throw $th;
 
-                            Log::error('error_modify_status',[$th->getMessage()]);
+                            Log::error('error_modify_status', [$th->getMessage()]);
                             showWarningNotifiMessage('Error', $th->getMessage());
                             DB::rollBack();
                         }
@@ -391,8 +391,7 @@ class OrderResource extends Resource
                         return false;
                     })
                     // ->visible(fn(): bool => isSuperAdmin())
-                    ->hidden()
-                    ,
+                    ->hidden(),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
