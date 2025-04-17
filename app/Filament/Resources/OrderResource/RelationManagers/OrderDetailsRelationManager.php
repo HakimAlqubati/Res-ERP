@@ -66,7 +66,7 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Actions\Action::make('edit')->button()->form([
                     Fieldset::make()->schema([
                         TextInput::make('available_quantity')->label(__('lang.quantity'))
-                            ->numeric()
+                            ->numeric()->minValue(0)
                             ->default(fn($record) => $record->available_quantity),
                     ])
                 ])->action(function ($record, $data) {
