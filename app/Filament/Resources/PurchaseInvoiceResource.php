@@ -119,7 +119,7 @@ class PurchaseInvoiceResource extends Resource
                     Textarea::make('cancel_reason')->label('Cancel Reason')
                         ->placeholder('Cancel Reason')->hiddenOn('create')
                         ->visible(fn($record): bool => $record->cancelled)->readOnly()
-                        ->columnSpanFull()->hidden(fn(): bool => isSuperVisor()),
+                        ->columnSpanFull(),
                     Textarea::make('description')->label(__('lang.description'))
                         ->placeholder('Enter description')->visible(fn($get): bool => $get('has_description'))
                         ->columnSpanFull(),
@@ -319,7 +319,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(fn(): bool => isSuperVisor()),
                 Tables\Actions\ActionGroup::make([
 
                     Tables\Actions\EditAction::make()
