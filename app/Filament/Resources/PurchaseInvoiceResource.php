@@ -41,6 +41,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -118,7 +119,7 @@ class PurchaseInvoiceResource extends Resource
                     Textarea::make('cancel_reason')->label('Cancel Reason')
                         ->placeholder('Cancel Reason')->hiddenOn('create')
                         ->visible(fn($record): bool => $record->cancelled)->readOnly()
-                        ->columnSpanFull(),
+                        ->columnSpanFull()->hidden(fn(): bool => isSuperVisor()),
                     Textarea::make('description')->label(__('lang.description'))
                         ->placeholder('Enter description')->visible(fn($get): bool => $get('has_description'))
                         ->columnSpanFull(),
@@ -395,6 +396,20 @@ class PurchaseInvoiceResource extends Resource
     {
         return static::getModel()::count();
     }
+    public static function canCreate(): bool
+    {
+        if (isSuperVisor()) {
+            return false;
+        }
+        return static::can('create');
+    }
 
-   
+    
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperVisor()) {
+            return false;
+        }
+        return static::can('update', $record);
+    }
 }

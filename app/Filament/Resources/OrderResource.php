@@ -336,7 +336,7 @@ class OrderResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(fn(): bool => isSuperVisor()),
                 Tables\Actions\Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
@@ -488,9 +488,9 @@ class OrderResource extends Resource
         return $record->id;
     }
 
+    
     public static function canDelete(Model $record): bool
     {
-        return true;
         if (isSuperAdmin()) {
             return true;
         }
