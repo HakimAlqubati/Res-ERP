@@ -112,7 +112,7 @@
             <p>Phone: {{ setting('company_phone') }}</p>
         </div>
 
-        <h2 class="title">Order Slip</h2>
+        <h2 class="title">Order</h2>
 
         <table class="info-table">
             <tr>
