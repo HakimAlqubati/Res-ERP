@@ -131,7 +131,7 @@
                     <th>Product</th>
                     <th>Unit</th>
                     <th>Quantity</th>
-                    <th>Price</th>
+                    {{-- <th>Price</th> --}}
                     <th>Subtotal</th>
                 </tr>
             </thead>
@@ -141,14 +141,14 @@
                         <td>{{ $item->product?->name ?? '-' }}</td>
                         <td>{{ $item->unit?->name ?? '-' }}</td>
                         <td>{{ $item->available_quantity }}</td>
-                        <td>{{ number_format($item->price, 2) }}</td>
-                        <td>{{ number_format($item->available_quantity * $item->price, 2) }}</td>
+                        {{-- <td>{{ number_format($item->price, 2) }}</td> --}}
+                        {{-- <td>{{ number_format($item->available_quantity * $item->price, 2) }}</td> --}}
                     </tr>
                 @endforeach
-                <tr>
+                {{-- <tr>
                     <td colspan="4" class="total">Total Amount</td>
                     <td class="total">{{ number_format($order->total_amount, 2) }}</td>
-                </tr>
+                </tr> --}}
             </tbody>
         </table>
  
