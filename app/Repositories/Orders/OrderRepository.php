@@ -86,7 +86,6 @@ class OrderRepository implements OrderRepositoryInterface
     public function storeWithFifo($request)
     {
         $validator = Validator::make($request->all(), [
-            
             'order_details' => 'required|array|min:1',
             'order_details.*.quantity' => 'required|numeric|min:1',
         ]);
@@ -94,6 +93,7 @@ class OrderRepository implements OrderRepositoryInterface
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
+                'message' => $validator->errors(),
                 'errors' => $validator->errors(),
             ], 422);
         }
