@@ -91,7 +91,6 @@ class OrderRepository implements OrderRepositoryInterface
         if (isDriver()) {
             $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
         }
-        $query->where('branch_id', '!=', auth()->user()->branch_id);
         $orders = $query->orderBy('created_at', 'DESC')->limit(80)
             ->get();
 
