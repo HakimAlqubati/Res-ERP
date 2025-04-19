@@ -76,7 +76,7 @@ class OrderDetails extends Model implements Auditable
             'product' => [
                 'id' => $this->product_id,
                 'name' => $this->product->name,
-            ],
+            ], 
             'unit' => [
                 'unit' => $this->unit_id,
                 'unit_name' => $this->unit->name

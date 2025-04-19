@@ -26,6 +26,9 @@ class InventoryReportController extends Controller
     {
         $productId = $request->product_id ?? null;
         $storeId = $request->store_id ?? null;
+        if (auth()->user()->branch->is_kitchen) {
+            $storeId = auth()->user()->branch->store_id;
+        };
         $categoryId = $request->category_id ?? null;
         $unitId = 'all';
         if (!empty($request->unit_id)) {
@@ -70,7 +73,9 @@ class InventoryReportController extends Controller
         $filters = [
 
             'categories' => \App\Models\Category::active()->pluck('name', 'id')->toArray(),
-            'stores' => \App\Models\Store::active()->pluck('name', 'id')->toArray(),
+            'stores' => \App\Models\Store::active()
+                ->centralKitchenStores()
+                ->pluck('name', 'id')->toArray(),
         ];
 
         return response()->json($filters);

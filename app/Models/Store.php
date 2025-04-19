@@ -59,6 +59,13 @@ class Store extends Model implements Auditable
         return $this->belongsTo(User::class, 'storekeeper_id');
     }
 
+    public function scopeCentralKitchenStores($query)
+    {
+        if (auth()->user()->branch->is_kitchen) {
+            return $query->where('id', auth()->user()->branch->store_id);
+        };
+    }
+
     public function getStorekeeperNameAttribute()
     {
         return $this->storekeeper->name ?? '';

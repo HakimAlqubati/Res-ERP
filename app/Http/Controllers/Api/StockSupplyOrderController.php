@@ -14,6 +14,18 @@ class StockSupplyOrderController extends Controller
 {
     public function index(Request $request)
     {
+
+        $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+            ->where('id', '!=', auth()->user()->branch->id) // نستثني فرع المستخدم
+            ->with('categories:id')
+            ->get()
+            ->pluck('categories')
+            ->flatten()
+            ->pluck('id')
+            ->unique()
+            ->toArray();
+
+
         $query = StockSupplyOrder::with(['store', 'details.product', 'details.unit'])
             ->orderBy('created_at', 'desc');
 
@@ -30,6 +42,24 @@ class StockSupplyOrderController extends Controller
         }
 
         $query->where('created_by', auth()->user()->id);
+        if (isBranchManager()) {
+
+            if (!isStoreManager() && auth()->user()->branch->is_kitchen) {
+                $query->whereHas('details.product.category', function ($q) use ($otherBranchesCategories) {
+
+                    $q->where('is_manafacturing', 1)
+                        ->whereNotIn('categories.id', $otherBranchesCategories);
+                });
+            }
+        }
+        if (!isStoreManager() && auth()->user()->branch->is_kitchen) {
+            $query->with(['details' => function ($q) use ($otherBranchesCategories) {
+                $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
+                    $q2->where('is_manafacturing', true)
+                        ->whereNotIn('categories.id', $otherBranchesCategories);
+                });
+            }]);
+        }
         $orders = $query->paginate($request->per_page ?? 10);
 
         return response()->json([

@@ -51,6 +51,7 @@ class Branch extends Model implements HasMedia, Auditable
         'end_date',
         'more_description',
     ];
+    protected $appends = ['customized_categories'];
 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
@@ -150,6 +151,12 @@ class Branch extends Model implements HasMedia, Auditable
     {
         $data = parent::toArray();
         $data['is_central_kitchen'] = (int) $this->isKitchen;
+        $data['customized_categories'] = $this->categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+            ];
+        });
         return $data;
     }
 
@@ -250,6 +257,16 @@ class Branch extends Model implements HasMedia, Auditable
                     $q2->where('type', self::TYPE_POPUP)
                         ->where('end_date', '>=', now()->format('Y-m-d'));
                 });
+        });
+    }
+
+    public function getCustomizedCategoriesAttribute()
+    {
+        return $this->categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+            ];
         });
     }
 }

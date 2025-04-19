@@ -45,6 +45,7 @@ class Category extends Model implements Auditable
         return [
             'category_id' => $this->id,
             'category_name' => $this->name,
+            'is_manafacturing' => $this->is_manafacturing,
             'products' => $this->products,
         ];
     }

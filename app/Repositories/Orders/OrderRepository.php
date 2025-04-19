@@ -42,14 +42,35 @@ class OrderRepository implements OrderRepositoryInterface
             $query->where('type', $request->type);
         }
 
+        $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+            ->where('id', '!=', auth()->user()->branch->id) // نستثني فرع المستخدم
+            ->with('categories:id')
+            ->get()
+            ->pluck('categories')
+            ->flatten()
+            ->pluck('id')
+            ->unique()
+            ->toArray();
         if (isBranchManager()) {
-            if (auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
+
+            if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
                 $query->whereIn('branch_id', DB::table('branches')
-                    ->where('active', 1)->pluck('id')->toArray());
+                    ->where('active', 1)->pluck('id')->toArray())->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
+                    $q->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
+                });
             } else {
                 $query->where('branch_id', $request->user()->branch_id);
             }
-        } else if (isBranchUser()) {
+        }
+        if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
+            $query->with(['orderDetails' => function ($q) use ($otherBranchesCategories) {
+                // تحميل فقط التفاصيل التي تحتوي منتجات تصنيعية
+                $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
+                    $q2->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
+                });
+            }]);
+        }
+        if (isBranchUser()) {
             $query->where('customer_id', auth()->user()->owner->id);
         }
         if ($request->has('id')) {
@@ -60,23 +81,17 @@ class OrderRepository implements OrderRepositoryInterface
 
             $query->where('status', '!=', Order::PENDING_APPROVAL);
 
-            $centralKitchens = Store::whereIn('id', auth()->user()->managed_stores_ids)
-                ->with('branches')
-                ->where('is_central_kitchen', 1)->get();
-
-
-            // if (is_array($centralKitchens->pluck('id')->toArray()) && count($centralKitchens->pluck('id')->toArray()) > 0) {
-
-            // $query->where('store_id', $centralKitchens->pluck('id')->toArray())
-            //     ->orWhere('customer_id', auth()->user()->id)
-            // ;
-            // } else {
-            //     $query->where('store_id', null);
-            // }
+            $customCategories = auth()->user()->branch->categories()->pluck('category_id')->toArray() ?? [];
+            if (auth()->user()->branch->is_central_kitchen && count($customCategories) > 0) {
+                $query->whereHas('orderDetails.product.category', function ($q) use ($customCategories) {
+                    $q->whereIn('categories.id', $customCategories);
+                })->orWhere('customer_id', auth()->user()->id);
+            }
         }
         if (isDriver()) {
             $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
         }
+        $query->where('branch_id', '!=', auth()->user()->branch_id);
         $orders = $query->orderBy('created_at', 'DESC')->limit(80)
             ->get();
 
