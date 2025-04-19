@@ -120,7 +120,7 @@ class MultiProductsInventoryService
     }
 
 
-    private function getInventoryForProduct($productId)
+    public function getInventoryForProduct($productId)
     {
         $queryIn = DB::table('inventory_transactions')
             ->whereNull('deleted_at')
@@ -299,44 +299,7 @@ class MultiProductsInventoryService
         ]);
     }
 
-    public function allocateFIFO_old($productId, $unitId, $requestedQty, $sourceModel = null): array
-    {
-        $remainingQty = $requestedQty;
-        $allocations = [];
-
-        $entries = InventoryTransaction::where('product_id', $productId)
-            ->where('unit_id', $unitId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-            ->whereNull('deleted_at')
-            ->orderBy('id', 'asc')
-            ->get();
-
-        foreach ($entries as $entry) {
-            if ($remainingQty <= 0) break;
-
-            $availableQty = $entry->quantity;
-            $deductQty = min($availableQty, $remainingQty);
-
-            if ($deductQty <= 0) continue;
-
-            $allocations[] = [
-                'transaction_id' => $entry->id,
-                'store_id' => $entry->store_id,
-                'unit_id' => $entry->unit_id,
-                'price' => $entry->price,
-                'package_size' => $entry->package_size,
-                'available_qty' => $availableQty,
-                'deducted_qty' => $deductQty,
-                'movement_date' => $entry->movement_date,
-                'transactionable_id' => $entry->transactionable_id,
-                'transactionable_type' => $entry->transactionable_type,
-            ];
-
-            $remainingQty -= $deductQty;
-        }
-
-        return $allocations;
-    }
+    
 
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {

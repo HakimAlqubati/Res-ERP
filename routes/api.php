@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TestController3;
 use App\Models\Branch;
 use App\Models\Order;
+use App\Models\OrderDetails;
 use App\Models\User;
 use App\Services\FifoInventoryService;
 use App\Services\MultiProductsInventoryService;
@@ -103,6 +104,15 @@ Route::middleware('auth:api')->group(function () {
 });
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
+Route::get('/testInventoryReport2', function (Request $request) {
+    $productIds = OrderDetails::where('order_id', $request->order_id)->pluck('product_id')->toArray();
+    $report = [];
+    foreach ($productIds as $value) {
+         $service = new MultiProductsInventoryService();
+        $report[] = $service->getInventoryForProduct($value);
+    }
+    return response()->json($report);
+});
 Route::get('/new-link', function () {});
 
 Route::get('/branches', function () {
