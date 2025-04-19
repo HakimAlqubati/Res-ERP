@@ -59,7 +59,7 @@ class OrderRepository implements OrderRepositoryInterface
                     $q->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
                 });
             } else {
-                $query->where('branch_id', $request->user()->branch_id);
+                // $query->where('branch_id', $request->user()->branch_id);
             }
         }
         if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
@@ -85,12 +85,15 @@ class OrderRepository implements OrderRepositoryInterface
             if (auth()->user()->branch->is_central_kitchen && count($customCategories) > 0) {
                 $query->whereHas('orderDetails.product.category', function ($q) use ($customCategories) {
                     $q->whereIn('categories.id', $customCategories);
-                })->orWhere('customer_id', auth()->user()->id);
+                })
+                    // ->orWhere('customer_id', auth()->user()->id)
+                ;
             }
         }
         if (isDriver()) {
             $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
         }
+        // $query->where('branch_id', '!=', auth()->user()->branch_id);
         $orders = $query->orderBy('created_at', 'DESC')->limit(80)
             ->get();
 
