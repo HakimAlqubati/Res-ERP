@@ -108,8 +108,18 @@ Route::get('/testInventoryReport2', function (Request $request) {
     $productIds = OrderDetails::where('order_id', $request->order_id)->pluck('product_id')->toArray();
     $report = [];
     foreach ($productIds as $value) {
-         $service = new MultiProductsInventoryService();
-        $report[] = $service->getInventoryForProduct($value);
+        $service = new MultiProductsInventoryService();
+        $productInventory = $service->getInventoryForProduct($value);
+
+        
+        // ✅ فلترة العناصر التي تحتوي على remaining_qty > 0 فقط
+        $filteredInventory = collect($productInventory)->filter(function ($item) {
+            return $item['remaining_qty'] > 0;
+        })->values()->all();
+
+        if (!empty($filteredInventory)) {
+            $report[] = $filteredInventory;
+        }
     }
     return response()->json($report);
 });
