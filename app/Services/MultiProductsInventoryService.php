@@ -350,10 +350,15 @@ class MultiProductsInventoryService
             throw new \Exception("❌ Unit ID: $unitId not found for product ID: $productId.");
         }
         if ($requestedQty > $inventoryRemainingQty) {
-            Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
-            throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
+            $productName = $targetUnit->product->name ?? 'Unknown Product';
+            $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
+            Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
+            throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+
+            // Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
+            // throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
         }
-        $allocations = []; 
+        $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->whereNull('deleted_at')
@@ -362,10 +367,10 @@ class MultiProductsInventoryService
         $qtyBasedOnUnit = 0;
         foreach ($entries as $entry) {
             $previousOrderedQtyBasedOnTargetUnit = InventoryTransaction::where('source_transaction_id', $entry->id)
-            ->where('product_id', $productId)
-            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
-            ->whereNull('deleted_at')
-            ->sum(DB::raw('quantity')) / $targetUnit->package_size;
+                ->where('product_id', $productId)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+                ->whereNull('deleted_at')
+                ->sum(DB::raw('quantity')) / $targetUnit->package_size;
 
             $entryQty = $entry->quantity;
 
@@ -376,7 +381,7 @@ class MultiProductsInventoryService
             }
             $deductQty = min($requestedQty, $qtyBasedOnUnit);
 
-            if($qtyBasedOnUnit <= 0){
+            if ($qtyBasedOnUnit <= 0) {
                 continue;
             }
             if ($requestedQty <= 0) {
