@@ -111,10 +111,10 @@ Route::get('/testInventoryReport2', function (Request $request) {
         $service = new MultiProductsInventoryService();
         $productInventory = $service->getInventoryForProduct($value);
 
-        
+
         // ✅ فلترة العناصر التي تحتوي على remaining_qty > 0 فقط
         $filteredInventory = collect($productInventory)->filter(function ($item) {
-            return $item['remaining_qty'] > 0;
+            return $item['remaining_qty'] <= 0;
         })->values()->all();
 
         if (!empty($filteredInventory)) {
