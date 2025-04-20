@@ -312,7 +312,7 @@ if (!function_exists('getUnitPricePackageSize')) {
         return UnitPrice::where(
             'product_id',
             $product_id
-        )->where('unit_id', $unit_id)?->first()->package_size;
+        )->where('unit_id', $unit_id)?->first()?->package_size;
     }
 }
 /**
