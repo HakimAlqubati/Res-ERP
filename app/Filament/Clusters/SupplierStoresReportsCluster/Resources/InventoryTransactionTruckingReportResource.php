@@ -4,7 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInventoryTransactionTruckingReport;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 
 use App\Models\InventoryTransaction;
 use App\Models\Product;
@@ -72,7 +72,8 @@ class InventoryTransactionTruckingReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListInventoryTransactionTruckingReport::route('/'),
+            'index' => Pages\ListInventoryTransactionTruckingReport::route('/'),
+            'tracking_cat' => Pages\CategoryInventoryTrackingReport::route('/tracking_cat'),
         ];
     }
 }
