@@ -58,6 +58,7 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
                         'quantity' => $row['quantity'],
                         'price' => $row['price'],
                         'available_quantity' => $row['available_quantity'] ?? $row['quantity'],
+                        'package_size' => getUnitPricePackageSize($row['product_id'], $row['unit_id']),
                     ]);
                     // $this->createInventoryTransaction($detail);
                 }
