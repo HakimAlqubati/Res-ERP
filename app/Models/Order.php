@@ -29,6 +29,7 @@ class Order extends Model implements Auditable
     public const TYPE_NORMAL = 'normal';
     public const TYPE_MANUFACTURING = 'manufacturing';
     protected $fillable = [
+        'id',
         'customer_id',
         'status',
         'branch_id',
