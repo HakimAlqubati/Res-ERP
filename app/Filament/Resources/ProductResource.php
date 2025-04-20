@@ -523,16 +523,11 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('code')->searchable()
                     ->label(__('lang.code'))
                     ->searchable(isIndividual: true, isGlobal: false),
+               
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('lang.name'))
                     ->toggleable()
-                    ->searchable()
-                    ->searchable(isIndividual: true)
-                    ->tooltip(fn(Model $record): string => "By {$record->name}"),
-                Tables\Columns\TextColumn::make('name')
-                    ->label(__('lang.name'))
-                    ->toggleable()
-                    ->searchable()
+               
                     ->searchable(isIndividual: true)
                     ->tooltip(fn(Model $record): string => "By {$record->name}"),
 

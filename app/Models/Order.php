@@ -221,15 +221,17 @@ class Order extends Model implements Auditable
         static::created(function ($order) {
 
             // Send notification to users with role ID = 5
-            $storeUsers = \App\Models\User::stores()->whereNotNull('fcm_token')->get();
-            foreach ($storeUsers as $user) {
-                sendNotification(
-                    $user->fcm_token,
-                    '📦 طلب جديد تم إنشاؤه',
-                    "طلب رقم #{$order->id} تم إنشاؤه بنجاح."
-                );
-            }
+            DB::afterCommit(function () use ($order) {
 
+                $storeUsers = \App\Models\User::stores()->whereNotNull('fcm_token')->get();
+                foreach ($storeUsers as $user) {
+                    sendNotification(
+                        $user->fcm_token,
+                        '📦 طلب جديد تم إنشاؤه',
+                        "طلب رقم #{$order->id} تم إنشاؤه بنجاح."
+                    );
+                }
+            });
             OrderLog::create([
                 'order_id'   => $order->id,
                 'created_by' => auth()->id() ?? null,
@@ -266,6 +268,8 @@ class Order extends Model implements Auditable
                         $detail->product_id,
                         $detail->unit_id,
                         $detail->available_quantity // الكمية المطلوبة للصرف
+                        ,
+                        $order
                     );
 
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -303,6 +304,7 @@ class MultiProductsInventoryService
 
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {
+
         $inventoryReportProduct = $this->getInventoryForProduct($productId);
         $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
@@ -313,13 +315,44 @@ class MultiProductsInventoryService
             throw new \Exception("❌ Unit ID: $unitId not found for product ID: $productId.");
         }
         if ($requestedQty > $inventoryRemainingQty) {
+            // if (setting('create_auto_order_when_stock_empty')) {
+            //     // 🚀 إنشاء الطلب الجديد
+            //     $newOrder = \App\Models\Order::create([
+            //         'customer_id' => $sourceModel->customer_id,
+            //         'branch_id' => $sourceModel->branch_id,
+            //         'status' => \App\Models\Order::PENDING_APPROVAL,
+            //         'order_date' => now(),
+            //         'type' => \App\Models\Order::TYPE_NORMAL,
+            //         'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
+            //     ]);
+
+            //     // نسخة من التفاصيل بنفس الكمية
+            //     $newOrder->orderDetails()->create([
+            //         'product_id' => $productId,
+            //         'unit_id' => $unitId,
+            //         'quantity' => $requestedQty,
+            //         'price' => getUnitPrice($productId, $unitId),
+            //         'package_size' => $targetUnit->package_size,
+            //         'created_by' => auth()->id(),
+            //     ]);
+
+            //     // تصفير الكمية في الطلب الأصلي
+            //     if ($sourceModel) {
+            //         $sourceModel->orderDetails()
+            //             ->where('product_id', $productId)
+            //             ->where('unit_id', $unitId)
+            //             ->update(['available_quantity' => 0]);
+            //     }
+
+            //     Log::info("✅ Created pending approval order #{$newOrder->id} due to stock unavailability.");
+
+            //     return []; // لا تخصص شيء للطلب الأصلي
+            // } else {
             $productName = $targetUnit->product->name ?? 'Unknown Product';
             $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
             Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
             throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
-
-            // Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
-            // throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for unit:" . $targetUnit->unit->name);
+            // }
         }
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
@@ -407,7 +440,7 @@ class MultiProductsInventoryService
         foreach ($unitPrices as $unitPrice) {
             $packageSize = max($unitPrice['package_size'] ?? 1, 1);
             $totalIn = round($totalIn / $packageSize, 2);
- 
+
             $result[] = [
                 'product_id' => $productId,
                 'product_name' => $product->name,
@@ -438,7 +471,7 @@ class MultiProductsInventoryService
         foreach ($unitPrices as $unitPrice) {
             $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
             $totalOut = round($totalOut / $packageSize, 2);
- 
+
             $result[] = [
                 'product_id' => $productId,
                 'product_name' => $product->name,

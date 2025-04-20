@@ -395,6 +395,11 @@ class SettingResource extends Resource
                                             ->onColor('success')
                                             ->offColor('danger')
                                             ->helperText(__('system_settings.enable_user_orders_to_store')),
+                                        Toggle::make('create_auto_order_when_stock_empty')
+                                            ->inline(false)
+                                            ->label('Auto-create order if stock is unavailable')
+                                            ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
+                                            ->default(false),
                                     ])
                                 ]),
                             ]),
