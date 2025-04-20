@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
+use App\Imports\OrdersImport;
 use App\Models\Order;
+use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ListOrders extends ListRecords
 {
@@ -21,6 +24,19 @@ class ListOrders extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('importOrders')
+            ->label('Import Orders')
+            ->icon('heroicon-o-arrow-up-tray')
+            ->form([
+                FileUpload::make('excel_file')
+                    ->label('Upload Excel File')
+                    ->required()
+                    ->acceptedFileTypes(['.xls', '.xlsx'])
+            ])
+            ->action(function (array $data) {
+                Excel::import(new OrdersImport, $data['excel_file']);
+                showSuccessNotifiMessage('done', 'Orders imported successfully');
+            })
         ];
     }
 
