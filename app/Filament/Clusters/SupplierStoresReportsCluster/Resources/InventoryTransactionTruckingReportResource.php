@@ -74,6 +74,7 @@ class InventoryTransactionTruckingReportResource extends Resource
         return [
             'index' => Pages\ListInventoryTransactionTruckingReport::route('/'),
             'tracking_cat' => Pages\CategoryInventoryTrackingReport::route('/tracking_cat'),
+            'summary_report' => Pages\InventorySummaryReport::route('/summary_report'),
         ];
     }
 }
