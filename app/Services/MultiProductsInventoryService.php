@@ -299,7 +299,7 @@ class MultiProductsInventoryService
         ]);
     }
 
-    
+
 
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {
@@ -389,5 +389,68 @@ class MultiProductsInventoryService
             ->with('unit')
             ->orderBy('package_size', 'asc')
             ->first();
+    }
+    public function getInventoryIn($productId)
+    {
+        $queryIn = \App\Models\InventoryTransaction::query()
+            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->whereNull('deleted_at')
+            // ->with(['product', 'unit', 'store'])
+            // ->orderBy('movement_date', 'desc')
+        ;
+        $queryIn->where('product_id', $productId);
+        $totalIn = $queryIn->sum(DB::raw('quantity * package_size'));
+        $unitPrices = $this->getProductUnitPrices($productId);
+        $product = Product::find($productId);
+        $result = [];
+
+        foreach ($unitPrices as $unitPrice) {
+            $packageSize = max($unitPrice['package_size'] ?? 1, 1);
+            $totalIn = round($totalIn / $packageSize, 2);
+ 
+            $result[] = [
+                'product_id' => $productId,
+                'product_name' => $product->name,
+                'unit_id' => $unitPrice['unit_id'],
+                'order' => $unitPrice['order'],
+                'package_size' => $unitPrice['package_size'],
+                'unit_name' => $unitPrice['unit_name'],
+                'quantity' => $totalIn,
+                'is_last_unit' => $unitPrice['is_last_unit'],
+            ];
+        }
+
+        return $result;
+    }
+    public function getInventoryOut($productId)
+    {
+
+        $queryOut = DB::table('inventory_transactions')
+            ->whereNull('deleted_at')
+            ->where('product_id', $productId)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT);
+
+        $totalOut = $queryOut->sum(DB::raw('quantity * package_size'));
+        $unitPrices = $this->getProductUnitPrices($productId);
+        $product = Product::find($productId);
+        $result = [];
+
+        foreach ($unitPrices as $unitPrice) {
+            $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
+            $totalOut = round($totalOut / $packageSize, 2);
+ 
+            $result[] = [
+                'product_id' => $productId,
+                'product_name' => $product->name,
+                'unit_id' => $unitPrice['unit_id'],
+                'order' => $unitPrice['order'],
+                'package_size' => $unitPrice['package_size'],
+                'unit_name' => $unitPrice['unit_name'],
+                'quantity' => $totalOut,
+                'is_last_unit' => $unitPrice['is_last_unit'],
+            ];
+        }
+
+        return $result;
     }
 }
