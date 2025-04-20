@@ -58,8 +58,8 @@ class OrderRepository implements OrderRepositoryInterface
                     ->where('active', 1)->pluck('id')->toArray())->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
                     $q->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
                 });
-            } else {
-                // $query->where('branch_id', $request->user()->branch_id);
+            } elseif(!auth()->user()->branch->is_kitchen) {
+                $query->where('branch_id', $request->user()->branch_id);
             }
         }
         if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
