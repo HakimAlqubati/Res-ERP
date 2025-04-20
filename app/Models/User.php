@@ -316,4 +316,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->hasMany(User::class, 'owner_id');
     }
+    public function loginHistories()
+    {
+        return $this->hasMany(UserLoginHistory::class);
+    }
 }

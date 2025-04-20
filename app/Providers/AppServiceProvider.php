@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Models\CustomTenantModel;
 use App\Models\Employee;
-use Illuminate\Auth\Events\Login;
 
 use App\Models\InventoryTransaction;
 use App\Models\PurchaseInvoiceDetail;
