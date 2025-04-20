@@ -60,7 +60,7 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
                         'available_quantity' => $row['available_quantity'] ?? $row['quantity'],
                         'package_size' => getUnitPricePackageSize($row['product_id'], $row['unit_id']) ?? 1,
                     ]);
-                    // $this->createInventoryTransaction($detail);
+                    $this->createInventoryTransaction($detail);
                 }
             }
 
@@ -87,19 +87,27 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     {
         $order = $detail->order;
 
-        InventoryTransaction::create([
-            'product_id'           => $detail->product_id,
-            'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
-            'quantity'             => $detail->available_quantity,
-            'unit_id'              => $detail->unit_id,
-            'package_size'         => 1, // إذا عندك من ملف الإكسل أو بيانات إضافية عدّلها
-            'price'                => $detail->price,
-            'movement_date'        => $order->order_date ?? now(),
-            'transaction_date'     => $order->order_date ?? now(),
-            'store_id'             => 1, // لو عندك store_id عدّله بناءً على الإكسل أو الطلب
-            'notes'                => "Stock deducted for Order #{$order->id} (imported)",
-            'transactionable_id'   => $order->id,
-            'transactionable_type' => Order::class,
-        ]);
+        $product = $detail->product;
+
+        if ($product) {
+            $storeId = 1;
+            if ($product->is_manufacturing) {
+                $storeId = 8;
+            }
+            InventoryTransaction::create([
+                'product_id'           => $detail->product_id,
+                'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
+                'quantity'             => $detail->available_quantity,
+                'unit_id'              => $detail->unit_id,
+                'package_size'         => $detail->package_size, // إذا عندك من ملف الإكسل أو بيانات إضافية عدّلها
+                'price'                => $detail->price,
+                'movement_date'        => $order->order_date ?? now(),
+                'transaction_date'     => $order->order_date ?? now(),
+                'store_id'             => $storeId, // لو عندك store_id عدّله بناءً على الإكسل أو الطلب
+                'notes'                => "Stock deducted for Order #{$order->id} (imported)",
+                'transactionable_id'   => $order->id,
+                'transactionable_type' => Order::class,
+            ]);
+        }
     }
 }
