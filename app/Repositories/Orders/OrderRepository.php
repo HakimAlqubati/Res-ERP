@@ -82,7 +82,7 @@ class OrderRepository implements OrderRepositoryInterface
             $query->where('status', '!=', Order::PENDING_APPROVAL);
 
             $customCategories = auth()->user()?->branch?->categories()->pluck('category_id')->toArray() ?? [];
-            if (auth()->user()->branch->is_central_kitchen && count($customCategories) > 0) {
+            if (auth()->user()->branch?->is_central_kitchen && count($customCategories) > 0) {
                 $query->whereHas('orderDetails.product.category', function ($q) use ($customCategories) {
                     $q->whereIn('categories.id', $customCategories);
                 })
