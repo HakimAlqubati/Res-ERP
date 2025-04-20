@@ -43,7 +43,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         $otherBranchesCategories = \App\Models\Branch::centralKitchens()
-            ->where('id', '!=', auth()->user()->branch->id) // نستثني فرع المستخدم
+            ->where('id', '!=', auth()->user()?->branch?->id) // نستثني فرع المستخدم
             ->with('categories:id')
             ->get()
             ->pluck('categories')
