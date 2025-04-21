@@ -48,7 +48,11 @@
     </h3>
 
     <div class="overflow-x-auto">
-
+        <div class="mt-4 text-center">
+            <button onclick="exportTableToExcel()" style="border: 1px solid;" class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">
+                📤 Export to Excel
+            </button>
+        </div>
         <table class="table-auto w-full text-sm border border-gray-200 pretty  reports" id="report-table">
 
             <thead class="bg-gray-100 text-center">
@@ -73,14 +77,14 @@
                         <td class="px-4 py-2">{{ $row['category'] }}</td>
 
                         <td class="px-4 py-2">{{ $row['unit_name'] }}</td>
-                        
+
                         <td class="px-4 py-2 text-blue-600 hover:underline cursor-pointer">
                             <a href="{{ url('/admin/inventory-report/inventory-transaction-trucking-reports') . '?tableFilters[product_id][value]=' . $row['product_id'] . '&tableFilters[movement_type][value]=in' }}"
                                 target="_blank">
                                 {{ $row['opening_stock'] }}
                             </a>
                         </td>
-                        
+
                         <td class="px-4 py-2 text-blue-600 hover:underline cursor-pointer">
                             <a href="{{ url('/admin/inventory-report/inventory-transaction-trucking-reports') . '?tableFilters[product_id][value]=' . $row['product_id'] . '&tableFilters[movement_type][value]=out' }}"
                                 target="_blank">
@@ -94,6 +98,7 @@
                 {{-- @endforeach --}}
             </tbody>
         </table>
+
         @if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator)
             <div class="mt-4">
                 {{ $products->appends(request()->query())->links() }}
@@ -124,6 +129,8 @@
         </div>
     @endif --}}
 </x-filament::page>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
 <script>
     const input = document.getElementById('product-autocomplete');
     const hiddenInput = document.getElementById('product-id');
@@ -227,5 +234,14 @@
         document.getElementById('product-id').value = '';
 
         window.location.href = url.toString();
+    }
+</script>
+<script>
+    function exportTableToExcel() {
+        const table = document.getElementById('report-table');
+        const workbook = XLSX.utils.table_to_book(table, {
+            sheet: "Inventory Summary"
+        });
+        XLSX.writeFile(workbook, 'inventory_summary.xlsx');
     }
 </script>
