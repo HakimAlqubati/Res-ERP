@@ -18,13 +18,14 @@ class ListInventoryTransactionTruckingReport extends ListRecords
     protected function getViewData(): array
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
+        $movementType = $this->getTable()->getFilters()['movement_type']->getState()['value'] ?? null;
 
         $product = Product::find($productId);
 
         $reportData = collect();
 
         if (!empty($productId)) {
-            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15, $movementType);
             $reportData = $rawData->through(function ($item) {
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 return $item;

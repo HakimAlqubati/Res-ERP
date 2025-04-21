@@ -6,7 +6,7 @@
             <thead>
                 <x-filament-tables::row class="header_report">
                     <th colspan="2">{{ $product->name }}</th>
-                    <th colspan="3" class="no_border_right_left" style="text-align: center;">
+                    <th colspan="4" class="no_border_right_left" style="text-align: center;">
                         <h3>({{ 'Inventory Trucking' }})</h3>
                     </th>
                     <th colspan="2" style="text-align: center;">
@@ -18,6 +18,7 @@
                     <th>{{ 'Transaction Type' }}</th>
                     <th>{{ 'Transaction ID' }}</th>
                     <th>{{ 'Unit' }}</th>
+                    <th>{{'Qty per Pack'}}</th>
                     <th>{{ 'Qty' }}</th>
                     <th colspan="2">{{ 'Notes' }}</th>
                 </x-filament-tables::row>
@@ -33,6 +34,8 @@
                         <x-filament-tables::cell>
                             {{ $data->unit_id ? \App\Models\Unit::find($data->unit_id)->name : '' }}
                         </x-filament-tables::cell>
+
+                        <x-filament-tables::cell> {{ $data->package_size }} </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data->quantity }} </x-filament-tables::cell>
                         <x-filament-tables::cell colspan="2"> {{ $data->notes }} </x-filament-tables::cell>
                     </x-filament-tables::row>

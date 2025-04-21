@@ -433,4 +433,9 @@ class Order extends Model implements Auditable
     {
         return $this->belongsTo(Supplier::class);
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
+    }
 }

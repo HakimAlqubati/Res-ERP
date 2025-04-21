@@ -97,7 +97,7 @@
         <div style="width: 34%;float: center">
             <p class="mt-5"> {{ __('lang.branch') . ' ' . $order->branch->name }} </p>
             {{-- <p class="mt-5"> {{ __('lang.branch_manager') . ' ' . $order->customer->name }} </p> --}}
-            <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}# </p>
+            <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}#  -{{$order->created_at}}</p>
         </div>
 
         <div style="width: 33%;float: right">

@@ -89,6 +89,7 @@ class Product extends Model implements Auditable
         return [
             'product_id' => $this->id,
             'product_name' => $this->name,
+            'product_code' => $this->code,
             'description' => $this->description,
             'unit_prices' => $this->unitPrices,
             'product_items' => $this->productItems,

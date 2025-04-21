@@ -27,6 +27,8 @@ class OrderDetails extends Model implements Auditable
         'orderd_product_id',
         'ordered_unit_id',
         'package_size',
+        'is_created_due_to_qty_preivous_order',
+        'previous_order_id'
     ];
     protected $auditInclude = [
         'order_id',
@@ -45,6 +47,8 @@ class OrderDetails extends Model implements Auditable
         'orderd_product_id',
         'ordered_unit_id',
         'package_size',
+        'is_created_due_to_qty_preivous_order',
+        'previous_order_id'
     ];
 
     protected $appends = ['total_price'];
@@ -76,7 +80,7 @@ class OrderDetails extends Model implements Auditable
             'product' => [
                 'id' => $this->product_id,
                 'name' => $this->product->name,
-            ], 
+            ],
             'unit' => [
                 'unit' => $this->unit_id,
                 'unit_name' => $this->unit->name
@@ -153,7 +157,6 @@ class OrderDetails extends Model implements Auditable
                 ]);
             }
         });
-        
     }
 
     public function scopeManufacturingOnlyForStore($query)
