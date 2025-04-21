@@ -30,6 +30,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -403,7 +404,14 @@ class OrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
                 Tables\Actions\ForceDeleteBulkAction::make(),
-
+                BulkAction::make('exportOrdersWithDetails')
+                    ->label('Export Orders + Details')
+                    ->action(function ($records) {
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\OrdersExport2($records),
+                            'orders_with_details.xlsx'
+                        );
+                    })
                 // ExportBulkAction::make()
             ]);
     }
@@ -488,7 +496,7 @@ class OrderResource extends Resource
         return $record->id;
     }
 
-    
+
     public static function canDelete(Model $record): bool
     {
         if (isSuperAdmin()) {
