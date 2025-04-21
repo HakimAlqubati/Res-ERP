@@ -73,8 +73,20 @@
                         <td class="px-4 py-2">{{ $row['category'] }}</td>
 
                         <td class="px-4 py-2">{{ $row['unit_name'] }}</td>
-                        <td class="px-4 py-2">{{ $row['opening_stock'] }}</td> {{-- Opening Stock (placeholder) --}}
-                        <td class="px-4 py-2">{{ $row['total_orders'] }}</td> {{-- Total Orders (placeholder) --}}
+                        
+                        <td class="px-4 py-2 text-blue-600 hover:underline cursor-pointer">
+                            <a href="{{ url('/admin/inventory-report/inventory-transaction-trucking-reports') . '?tableFilters[product_id][value]=' . $row['product_id'] . '&tableFilters[movement_type][value]=in' }}"
+                                target="_blank">
+                                {{ $row['opening_stock'] }}
+                            </a>
+                        </td>
+                        
+                        <td class="px-4 py-2 text-blue-600 hover:underline cursor-pointer">
+                            <a href="{{ url('/admin/inventory-report/inventory-transaction-trucking-reports') . '?tableFilters[product_id][value]=' . $row['product_id'] . '&tableFilters[movement_type][value]=out' }}"
+                                target="_blank">
+                                {{ $row['total_orders'] }}
+                            </a>
+                        </td>
                         <td class="px-4 py-2">{{ $row['remaining_qty'] }}</td>
                         <td class="px-4 py-2">{{ $row['calculated_stock'] }}</td>
                     </tr>
