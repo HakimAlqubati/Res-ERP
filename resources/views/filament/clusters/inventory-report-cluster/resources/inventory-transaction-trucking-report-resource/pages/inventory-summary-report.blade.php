@@ -41,9 +41,9 @@
                     <th class="px-4 py-2">Product Name</th>
                     <th class="px-4 py-2">Unit</th>
                     <th class="px-4 py-2">Opening Stock</th>
-                    <th class="px-4 py-2">Total Orders</th>
-                    <th class="px-4 py-2">Remaining</th>
-                    <th class="px-4 py-2">Calculated Difference
+                    <th class="px-4 py-2">Total Orders to Date</th>
+                    <th class="px-4 py-2">Stock Today</th>
+                    <th class="px-4 py-2">Discrepancy
                     </th>
                 </tr>
             </thead>
