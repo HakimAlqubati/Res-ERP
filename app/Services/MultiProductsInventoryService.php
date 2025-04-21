@@ -315,44 +315,46 @@ class MultiProductsInventoryService
             throw new \Exception("❌ Unit ID: $unitId not found for product ID: $productId.");
         }
         if ($requestedQty > $inventoryRemainingQty) {
-            // if (setting('create_auto_order_when_stock_empty')) {
-            //     // 🚀 إنشاء الطلب الجديد
-            //     $newOrder = \App\Models\Order::create([
-            //         'customer_id' => $sourceModel->customer_id,
-            //         'branch_id' => $sourceModel->branch_id,
-            //         'status' => \App\Models\Order::PENDING_APPROVAL,
-            //         'order_date' => now(),
-            //         'type' => \App\Models\Order::TYPE_NORMAL,
-            //         'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
-            //     ]);
+            if (setting('create_auto_order_when_stock_empty')) {
+                // 🚀 إنشاء الطلب الجديد
+                $newOrder = \App\Models\Order::create([
+                    'customer_id' => $sourceModel->customer_id,
+                    'branch_id' => $sourceModel->branch_id,
+                    'status' => \App\Models\Order::PENDING_APPROVAL,
+                    'order_date' => now(),
+                    'type' => \App\Models\Order::TYPE_NORMAL,
+                    'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
+                ]);
 
-            //     // نسخة من التفاصيل بنفس الكمية
-            //     $newOrder->orderDetails()->create([
-            //         'product_id' => $productId,
-            //         'unit_id' => $unitId,
-            //         'quantity' => $requestedQty,
-            //         'price' => getUnitPrice($productId, $unitId),
-            //         'package_size' => $targetUnit->package_size,
-            //         'created_by' => auth()->id(),
-            //     ]);
+                // نسخة من التفاصيل بنفس الكمية
+                $newOrder->orderDetails()->create([
+                    'product_id' => $productId,
+                    'unit_id' => $unitId,
+                    'quantity' => $requestedQty,
+                    'price' => getUnitPrice($productId, $unitId),
+                    'package_size' => $targetUnit->package_size,
+                    'created_by' => auth()->id(),
+                    'is_created_due_to_qty_preivous_order' => true,
+                    'previous_order_id' => $sourceModel->id,
+                ]);
 
-            //     // تصفير الكمية في الطلب الأصلي
-            //     if ($sourceModel) {
-            //         $sourceModel->orderDetails()
-            //             ->where('product_id', $productId)
-            //             ->where('unit_id', $unitId)
-            //             ->update(['available_quantity' => 0]);
-            //     }
+                // تصفير الكمية في الطلب الأصلي
+                if ($sourceModel) {
+                    $sourceModel->orderDetails()
+                        ->where('product_id', $productId)
+                        ->where('unit_id', $unitId)
+                        ->update(['available_quantity' => 0]);
+                }
 
-            //     Log::info("✅ Created pending approval order #{$newOrder->id} due to stock unavailability.");
+                Log::info("✅ Created pending approval order #{$newOrder->id} due to stock unavailability.");
 
-            //     return []; // لا تخصص شيء للطلب الأصلي
-            // } else {
-            $productName = $targetUnit->product->name ?? 'Unknown Product';
-            $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
-            Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-            throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
-            // }
+                return []; // لا تخصص شيء للطلب الأصلي
+            } else {
+                $productName = $targetUnit->product->name ?? 'Unknown Product';
+                $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
+                Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
+                throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+            }
         }
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
