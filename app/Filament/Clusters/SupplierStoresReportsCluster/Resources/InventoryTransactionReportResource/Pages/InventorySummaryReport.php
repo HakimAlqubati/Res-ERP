@@ -67,6 +67,10 @@ class InventorySummaryReport extends Page
                 $orderedQtyRes = $filteredOrderQuantities['quantity'] ?? 0;
                 $calculatedStock = $openingBalanceResult - ($orderedQtyRes + $row['remaining_qty']);
                 $calculatedStock = round($calculatedStock, 2);
+                if ($calculatedStock >= 0.01 && $calculatedStock <= 0.03) {
+                    $calculatedStock = 0;
+                }
+
                 if ($calculatedStock == 0 && $this->showWithoutZero == 1) {
                     continue;
                 }
