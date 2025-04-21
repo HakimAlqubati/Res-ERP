@@ -132,6 +132,7 @@
 
     const suggestionBox = document.createElement('div');
     suggestionBox.style.position = 'absolute';
+    suggestionBox.style.marginTop = '70px';
     suggestionBox.style.zIndex = '1000';
     suggestionBox.style.background = '#fff';
     suggestionBox.style.border = '1px solid #ccc';
