@@ -16,14 +16,16 @@ class InventorySummaryReport extends Page
 
     public ?int $selectedCategory = null;
     public  $showWithoutZero = 0;
-    public int $perPage = 15;
+    public int|string $perPage = 15;
+
 
     public function mount(): void
     {
         $this->selectedCategory = request('category_id');
         $this->showWithoutZero = request('show_without_zero') ?? false;
-        $this->perPage = request('per_page') ?? 15;
+        $perPageRequest = request('per_page');
 
+        $this->perPage = $perPageRequest === 'all' ? 'all' : (int) ($perPageRequest ?? 15);
     }
 
     protected function getViewData(): array
@@ -36,7 +38,11 @@ class InventorySummaryReport extends Page
             $query->where('category_id', $this->selectedCategory);
         }
         $products = empty($this->selectedCategory)
-            ? $query->paginate($this->perPage)
+            ? (
+                $this->perPage === 'all'
+                ? $query->get()
+                : $query->paginate($this->perPage)
+            )
             : $query->get();
         $service = new MultiProductsInventoryService();
         foreach ($products as $product) {

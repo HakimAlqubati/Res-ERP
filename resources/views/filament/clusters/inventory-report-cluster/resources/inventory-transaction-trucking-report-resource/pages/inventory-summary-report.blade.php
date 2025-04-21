@@ -34,7 +34,7 @@
 
     <div class="overflow-x-auto">
 
-        <table class="table-auto w-full text-sm border border-gray-200">
+        <table class="table-auto w-full text-sm border border-gray-200 pretty  reports" id="report-table">
 
             <thead class="bg-gray-100 text-center">
                 <tr>
@@ -68,7 +68,7 @@
             <div class="mt-4">
                 {{ $products->appends(request()->query())->links() }}
                 {{-- 🔽 Select Dropdown for perPage --}}
-                <form method="GET" class="mt-2">
+                <form method="GET" class="mt-2" style="text-align: center;">
                     {{-- إعادة تمرير باقي الفلاتر --}}
                     <input type="hidden" name="category_id" value="{{ request('category_id') }}">
                     <input type="hidden" name="show_without_zero" value="{{ request('show_without_zero') }}">
@@ -81,6 +81,8 @@
                                 {{ $option }}
                             </option>
                         @endforeach
+                        <option value="all" @selected(request('per_page') == 'all')>All</option>
+
                     </select>
                 </form>
             </div>
