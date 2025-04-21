@@ -180,5 +180,5 @@ return [
     'normal_branch' => 'فرع عادي',
     'branch_type' => 'النوع',
     'only_one_hq_allowed' => 'يسمح بفرع رئيسي واحد فقط. يرجى تفعيل الفرع الموجود أو حذفه أولاً.',
-
+    'accounting_system' => 'النظام المحاسبي',
 ];

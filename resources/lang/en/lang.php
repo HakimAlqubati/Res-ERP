@@ -197,6 +197,6 @@ return [
     'normal_branch' => 'Normal Branch',
     'branch_type' => 'Branch Type',
     'only_one_hq_allowed' => 'Only one HQ branch is allowed. Please activate the existing one or delete it first.',
-
+    'accounting_system' => 'Accounting System',
 
 ];

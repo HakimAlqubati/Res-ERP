@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Clusters\AccountingCluster;
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRAttenanceCluster;
@@ -145,6 +146,10 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('menu.area_management'))
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems() : [],
+                            )),
+                        NavigationGroup::make(__('lang.accounting_system'))
+                            ->items(array_merge(
+                                (isSuperAdmin()) ? AccountingCluster::getNavigationItems() : [],
                             )),
                     ]
                 );
