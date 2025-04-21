@@ -472,7 +472,7 @@ class MultiProductsInventoryService
 
         foreach ($unitPrices as $unitPrice) {
             $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
-            $totalOut = round($totalOut / $packageSize, 2);
+            $totalOutRes = round($totalOut / $packageSize, 2);
 
             $result[] = [
                 'product_id' => $productId,
@@ -481,7 +481,7 @@ class MultiProductsInventoryService
                 'order' => $unitPrice['order'],
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
-                'quantity' => $totalOut,
+                'quantity' => $totalOutRes,
                 'is_last_unit' => $unitPrice['is_last_unit'],
             ];
         }
