@@ -6,7 +6,8 @@
             <label class="block mb-1 font-bold text-lg">Select Category:</label>
 
             <select name="category_id" onchange="this.form.submit()" class="border p-2 rounded w-1/3">
-                <option value="">-- Select Category --</option>
+                <option value="">-- All Categories --</option>
+
                 @foreach ($categories as $category)
                     <option value="{{ $category->id }}" @selected($selectedCategory == $category->id)>
                         {{ $category->name }}
@@ -63,6 +64,27 @@
                 {{-- @endforeach --}}
             </tbody>
         </table>
+        @if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator)
+            <div class="mt-4">
+                {{ $products->appends(request()->query())->links() }}
+                {{-- 🔽 Select Dropdown for perPage --}}
+                <form method="GET" class="mt-2">
+                    {{-- إعادة تمرير باقي الفلاتر --}}
+                    <input type="hidden" name="category_id" value="{{ request('category_id') }}">
+                    <input type="hidden" name="show_without_zero" value="{{ request('show_without_zero') }}">
+
+                    <label for="per_page" class="mr-2 text-sm font-medium">Items per page:</label>
+                    <select name="per_page" id="per_page" onchange="this.form.submit()"
+                        class="border p-1 rounded text-sm">
+                        @foreach ([5, 10, 15, 20, 50, 100] as $option)
+                            <option value="{{ $option }}" @selected(request('per_page', 15) == $option)>
+                                {{ $option }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
+        @endif
     </div>
     {{-- @else
         <div class="text-center text-gray-600 mt-8">
