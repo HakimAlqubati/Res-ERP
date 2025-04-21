@@ -316,18 +316,31 @@ class MultiProductsInventoryService
         }
         if ($requestedQty > $inventoryRemainingQty) {
             if (setting('create_auto_order_when_stock_empty')) {
-                // 🚀 إنشاء الطلب الجديد
-                $newOrder = \App\Models\Order::create([
-                    'customer_id' => $sourceModel->customer_id,
-                    'branch_id' => $sourceModel->branch_id,
-                    'status' => \App\Models\Order::PENDING_APPROVAL,
-                    'order_date' => now(),
-                    'type' => \App\Models\Order::TYPE_NORMAL,
-                    'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
-                ]);
+                // ✅ البحث عن طلب معلق موجود لنفس الفرع والعميل
+                $existingOrder = \App\Models\Order::where('customer_id', $sourceModel->customer_id)
+                    ->where('branch_id', $sourceModel->branch_id)
+                    ->where('status', \App\Models\Order::PENDING_APPROVAL)
+                    ->latest()->active()
+                    ->first();
 
-                // نسخة من التفاصيل بنفس الكمية
-                $newOrder->orderDetails()->create([
+                // ✏️ إذا لم يوجد، ننشئ طلب جديد
+                if (!$existingOrder) {
+                    $existingOrder = \App\Models\Order::create([
+                        'customer_id' => $sourceModel->customer_id,
+                        'branch_id' => $sourceModel->branch_id,
+                        'status' => \App\Models\Order::PENDING_APPROVAL,
+                        'order_date' => now(),
+                        'type' => \App\Models\Order::TYPE_NORMAL,
+                        'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
+                    ]);
+
+                    Log::info("✅ Created new pending approval order #{$existingOrder->id} due to stock unavailability.");
+                } else {
+                    Log::info("📌 Used existing pending approval order #{$existingOrder->id}.");
+                }
+
+                // ➕ إضافة التفاصيل للطلب المعلّق
+                $existingOrder->orderDetails()->create([
                     'product_id' => $productId,
                     'unit_id' => $unitId,
                     'quantity' => $requestedQty,
@@ -338,6 +351,7 @@ class MultiProductsInventoryService
                     'previous_order_id' => $sourceModel->id,
                 ]);
 
+  
                 // تصفير الكمية في الطلب الأصلي
                 if ($sourceModel) {
                     $sourceModel->orderDetails()
@@ -346,8 +360,7 @@ class MultiProductsInventoryService
                         ->update(['available_quantity' => 0]);
                 }
 
-                Log::info("✅ Created pending approval order #{$newOrder->id} due to stock unavailability.");
-
+ 
                 return []; // لا تخصص شيء للطلب الأصلي
             } else {
                 $productName = $targetUnit->product->name ?? 'Unknown Product';

@@ -53,23 +53,44 @@ class OrderRepository implements OrderRepositoryInterface
             ->toArray();
         if (isBranchManager()) {
 
-            if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
-                $query->whereIn('branch_id', DB::table('branches')
-                    ->where('active', 1)->pluck('id')->toArray())->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
-                    $q->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
-                });
-            } elseif(!auth()->user()->branch->is_kitchen) {
+            if (!isStoreManager() && auth()->user()->branch->is_kitchen) {
+                if (auth()->user()->branch->manager_abel_show_orders) {
+                    $query
+                        ->whereIn('branch_id', DB::table('branches')
+                            ->where('active', 1)
+                            ->whereNot('id', auth()->user()->branch->id)
+                            ->pluck('id')->toArray())
+                        ->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
+                            $q->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
+                        })
+                        ->orWhere('branch_id', auth()->user()->branch->id)
+                    ;
+                } else {
+                    $query
+                        ->where('branch_id', auth()->user()->branch->id);
+                }
+            } elseif (!auth()->user()->branch->is_kitchen) {
                 $query->where('branch_id', $request->user()->branch_id);
             }
         }
         if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
-            $query->with(['orderDetails' => function ($q) use ($otherBranchesCategories) {
-                // تحميل فقط التفاصيل التي تحتوي منتجات تصنيعية
-                $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
-                    $q2->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
-                });
-            }]);
+            $query
+                ->whereIn('branch_id', DB::table('branches')
+                    ->where('active', 1)
+                    ->whereNot('id', auth()->user()->branch->id)
+                    ->pluck('id')->toArray())
+                ->with(['orderDetails' => function ($q) use ($otherBranchesCategories) {
+                    // تحميل فقط التفاصيل التي تحتوي منتجات تصنيعية
+                    $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
+                        $q2
+                            ->where('is_manafacturing', true)
+                            ->whereNotIn('categories.id', $otherBranchesCategories);
+                    });
+                }])
+                ->orWhere('branch_id', auth()->user()->branch->id)
+            ;
         }
+
         if (isBranchUser()) {
             $query->where('customer_id', auth()->user()->owner->id);
         }
@@ -247,7 +268,7 @@ class OrderRepository implements OrderRepositoryInterface
             ], 500);
         }
     }
- 
+
 
 
     public function storeWithUnitPricing($request)
@@ -371,7 +392,7 @@ class OrderRepository implements OrderRepositoryInterface
         }
     }
     public function update($request, $id)
-    { 
+    {
         try {
             // Start a database transaction
             DB::beginTransaction();
