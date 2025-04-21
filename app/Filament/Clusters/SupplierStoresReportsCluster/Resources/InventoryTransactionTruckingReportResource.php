@@ -8,6 +8,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransa
 
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use Filament\Forms\Components\Select;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
@@ -65,6 +66,10 @@ class InventoryTransactionTruckingReportResource extends Resource
                                 $product->id => "{$product->code} - {$product->name}"
                             ]);
                     }),
+                SelectFilter::make('movement_type')->label('Type')->options([
+                    InventoryTransaction::MOVEMENT_IN => 'In',
+                    InventoryTransaction::MOVEMENT_OUT => 'Out',
+                ])
             ], FiltersLayout::AboveContent);
     }
 

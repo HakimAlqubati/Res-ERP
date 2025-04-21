@@ -25,6 +25,15 @@
                 <span>Show only items with abnormal inventory movements</span>
             </label>
         </div>
+        <div class="flex flex-col">
+
+            <div class="flex flex-col w-1/3">
+                <label class="block mb-1 font-bold text-lg">Search Product:</label>
+                <input type="text" id="product-autocomplete" class="border p-2 rounded"
+                    placeholder="Type to search..." value="{{ $products->find($selectedProduct)?->name ?? '' }}">
+                <input type="hidden" name="product_id" id="product-id">
+            </div>
+        </div>
     </form>
     {{-- ✅ Inventory Summary --}}
     {{-- @if (!is_null($selectedCategory) && count($products)) --}}
@@ -40,6 +49,7 @@
                 <tr>
                     <th class="px-4 py-2">Item Code</th>
                     <th class="px-4 py-2">Product Name</th>
+                    <th class="px-4 py-2">Category</th>
                     <th class="px-4 py-2">Unit</th>
                     <th class="px-4 py-2">Opening Stock</th>
                     <th class="px-4 py-2">Total Orders to Date</th>
@@ -54,6 +64,8 @@
 
                         <td class="px-4 py-2">{{ $row['product_code'] }}</td>
                         <td class="px-4 py-2">{{ $row['product_name'] }}</td>
+                        <td class="px-4 py-2">{{ $row['category'] }}</td>
+
                         <td class="px-4 py-2">{{ $row['unit_name'] }}</td>
                         <td class="px-4 py-2">{{ $row['opening_stock'] }}</td> {{-- Opening Stock (placeholder) --}}
                         <td class="px-4 py-2">{{ $row['total_orders'] }}</td> {{-- Total Orders (placeholder) --}}
@@ -94,3 +106,96 @@
         </div>
     @endif --}}
 </x-filament::page>
+<script>
+    const input = document.getElementById('product-autocomplete');
+    const hiddenInput = document.getElementById('product-id');
+    let timeout = null;
+    let selectedIndex = -1;
+
+    const suggestionBox = document.createElement('div');
+    suggestionBox.style.position = 'absolute';
+    suggestionBox.style.zIndex = '1000';
+    suggestionBox.style.background = '#fff';
+    suggestionBox.style.border = '1px solid #ccc';
+    suggestionBox.style.width = input.offsetWidth + 'px';
+    suggestionBox.style.maxHeight = '200px';
+    suggestionBox.style.overflowY = 'auto';
+    suggestionBox.style.display = 'none';
+
+    input.parentNode.appendChild(suggestionBox);
+
+    input.addEventListener('input', function() {
+        clearTimeout(timeout);
+        const query = this.value;
+        selectedIndex = -1;
+
+        if (query.length < 2) {
+            suggestionBox.style.display = 'none';
+            return;
+        }
+
+        timeout = setTimeout(() => {
+            fetch(`/api/productsSearch?query=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    suggestionBox.innerHTML = '';
+                    data.forEach((product, index) => {
+                        const item = document.createElement('div');
+                        item.textContent = `${product.product_code} - ${product.product_name}`;
+                        item.style.padding = '6px';
+                        item.style.cursor = 'pointer';
+                        item.dataset.id = product.product_id;
+                        item.dataset.name = product.product_name;
+
+                        item.addEventListener('click', () => {
+                            selectItem(item);
+                        });
+
+                        suggestionBox.appendChild(item);
+                    });
+                    suggestionBox.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        const items = suggestionBox.querySelectorAll('div');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (selectedIndex < items.length - 1) {
+                selectedIndex++;
+                highlightItem(items, selectedIndex);
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (selectedIndex > 0) {
+                selectedIndex--;
+                highlightItem(items, selectedIndex);
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) {
+                selectItem(items[selectedIndex]);
+            }
+        }
+    });
+
+    function highlightItem(items, index) {
+        items.forEach(item => item.style.backgroundColor = '');
+        items[index].style.backgroundColor = '#eef';
+    }
+
+    function selectItem(item) {
+        input.value = item.dataset.name;
+        hiddenInput.value = item.dataset.id;
+        suggestionBox.style.display = 'none';
+        input.form.submit(); // ✅ إعادة الإرسال هنا
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!suggestionBox.contains(e.target) && e.target !== input) {
+            suggestionBox.style.display = 'none';
+        }
+    });
+</script>

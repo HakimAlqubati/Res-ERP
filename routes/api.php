@@ -271,4 +271,12 @@ Route::get('/branches', function () {
 //     }
 // }
 Route::get('/sendFCM', [TestController3::class, 'sendFCM']);
+Route::get('productsSearch', function (\Illuminate\Http\Request $request) {
+    $query = $request->query('query', '');
+
+    return \App\Models\Product::where('name', 'like', "%{$query}%")
+        ->orWhere('code', 'like', "%{$query}%")
+        ->limit(20)
+        ->get(['id', 'name', 'code']);
+});
 require base_path('routes/custom_route.php');

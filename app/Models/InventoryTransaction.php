@@ -68,13 +68,15 @@ class InventoryTransaction extends Model implements Auditable
         return $this->belongsTo(Unit::class, 'unit_id');
     }
 
-    public static function getInventoryTrackingDataPagination($productId, $perPage = 15)
+    public static function getInventoryTrackingDataPagination($productId, $perPage = 15, ?string $movementType = null)
     {
-        return self::query() // Using Eloquent query instead of DB::table()
+        $query = self::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
-            ->where('product_id', $productId)
-            // ->orderBy('movement_date', 'asc')
-            ->orderBy('id', 'asc')
+            ->where('product_id', $productId);
+        if (!empty($movementType)) {
+            $query->where('movement_type', $movementType);
+        }
+        return  $query->orderBy('id', 'asc')
             ->paginate($perPage);
     }
 

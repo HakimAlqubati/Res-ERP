@@ -17,6 +17,7 @@ class InventorySummaryReport extends Page
     public ?int $selectedCategory = null;
     public  $showWithoutZero = 0;
     public int|string $perPage = 15;
+    public ?int $selectedProduct = null;
 
 
     public function mount(): void
@@ -24,6 +25,9 @@ class InventorySummaryReport extends Page
         $this->selectedCategory = request('category_id');
         $this->showWithoutZero = request('show_without_zero') ?? false;
         $perPageRequest = request('per_page');
+        $this->selectedProduct = is_numeric(request('product_id')) ? (int) request('product_id') : null;
+
+
 
         $this->perPage = $perPageRequest === 'all' ? 'all' : (int) ($perPageRequest ?? 15);
     }
@@ -36,6 +40,9 @@ class InventorySummaryReport extends Page
         $query = Product::active();
         if (!empty($this->selectedCategory)) {
             $query->where('category_id', $this->selectedCategory);
+        }
+        if (!empty($this->selectedProduct)) {
+            $query->where('id', $this->selectedProduct);
         }
         $products = empty($this->selectedCategory)
             ? (
