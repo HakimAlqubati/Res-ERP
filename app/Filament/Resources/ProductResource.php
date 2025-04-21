@@ -543,7 +543,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('description')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.description')),
-                IconColumn::make('is_manufacturing')->searchable()->boolean()->alignCenter(true)
+                IconColumn::make('is_manufacturing')->boolean()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.is_manufacturing')),
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
