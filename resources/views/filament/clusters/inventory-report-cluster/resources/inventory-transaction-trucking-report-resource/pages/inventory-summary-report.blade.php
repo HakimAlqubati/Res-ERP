@@ -32,6 +32,12 @@
                 <input type="text" id="product-autocomplete" class="border p-2 rounded"
                     placeholder="Type to search..." value="{{ $products->find($selectedProduct)?->name ?? '' }}">
                 <input type="hidden" name="product_id" id="product-id">
+                @if (request('product_id'))
+                    <button type="button" onclick="resetProductFilter()"
+                        class="mt-2 text-sm text-red-600 underline hover:text-red-800">
+                        ✖️ Remove selected product filter
+                    </button>
+                @endif
             </div>
         </div>
     </form>
@@ -141,7 +147,8 @@
                     suggestionBox.innerHTML = '';
                     data.forEach((product, index) => {
                         const item = document.createElement('div');
-                        item.textContent = `${product.product_code} - ${product.product_name}`;
+                        item.textContent =
+                            `${product.product_code} - ${product.product_name}`;
                         item.style.padding = '6px';
                         item.style.cursor = 'pointer';
                         item.dataset.id = product.product_id;
@@ -198,4 +205,14 @@
             suggestionBox.style.display = 'none';
         }
     });
+
+    function resetProductFilter() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('product_id');
+
+        // حذف القيمة من hidden input حتى لا تُرسل مجددًا
+        document.getElementById('product-id').value = '';
+
+        window.location.href = url.toString();
+    }
 </script>
