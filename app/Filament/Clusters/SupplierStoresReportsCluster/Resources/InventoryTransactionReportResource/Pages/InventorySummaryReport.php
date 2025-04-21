@@ -55,7 +55,6 @@ class InventorySummaryReport extends Page
         foreach ($products as $product) {
             $inventory = $service->getInventoryForProduct($product->id);
             $inventoryOpeningBalance = $service->getInventoryIn($product->id);
-
             $orderQuantities = $service->getInventoryOut($product->id);
             foreach ($inventory as $row) {
                 $filteredOpeningBalance = array_values(array_filter($inventoryOpeningBalance, function ($item) use ($product, $row) {
@@ -84,7 +83,6 @@ class InventorySummaryReport extends Page
                 ];
             }
         }
-
         return [
             'categories' => Category::all(),
             'selectedCategory' => $this->selectedCategory,
