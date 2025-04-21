@@ -61,7 +61,8 @@ class OrderRepository implements OrderRepositoryInterface
                             ->whereNot('id', auth()->user()->branch->id)
                             ->pluck('id')->toArray())
                         ->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
-                            $q->where('is_manafacturing', true)->whereNotIn('categories.id', $otherBranchesCategories);
+                            $q->where('is_manafacturing', true)
+                                ->whereNotIn('categories.id', $otherBranchesCategories);
                         })
                         ->orWhere('branch_id', auth()->user()->branch->id)
                     ;
@@ -80,12 +81,18 @@ class OrderRepository implements OrderRepositoryInterface
                     ->whereNot('id', auth()->user()->branch->id)
                     ->pluck('id')->toArray())
                 ->with(['orderDetails' => function ($q) use ($otherBranchesCategories) {
-                    // تحميل فقط التفاصيل التي تحتوي منتجات تصنيعية
-                    $q->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
-                        $q2
-                            ->where('is_manafacturing', true)
-                            ->whereNotIn('categories.id', $otherBranchesCategories);
-                    });
+                    $q->where(function ($qDetail) use ($otherBranchesCategories) {
+                        $qDetail->whereHas('order', function ($qOrder) {
+                            $qOrder->where('branch_id', '!=', auth()->user()->branch->id);
+                        })->whereHas('product.category', function ($q2) use ($otherBranchesCategories) {
+                            $q2->where('is_manafacturing', true)
+                                ->whereNotIn('categories.id', $otherBranchesCategories);
+                        });
+                    })
+                        ->orWhereHas('order', function ($qOrder) {
+                            // 🟢 هذا هو الطلب من نفس فرع المستخدم → لا فلترة
+                            $qOrder->where('branch_id', auth()->user()->branch->id);
+                        });
                 }])
                 ->orWhere('branch_id', auth()->user()->branch->id)
             ;
