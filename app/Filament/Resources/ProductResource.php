@@ -519,16 +519,16 @@ class ProductResource extends Resource
                     ->copyMessageDuration(1500)
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\TextColumn::make('code')->searchable()
+                    ->searchable(isIndividual: false, isGlobal: true),
+                Tables\Columns\TextColumn::make('code')
                     ->label(__('lang.code'))
-                    ->searchable(isIndividual: true, isGlobal: false),
-               
+                    ->searchable(isIndividual: false, isGlobal: true),
+
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('lang.name'))
                     ->toggleable()
-               
-                    ->searchable(isIndividual: true)
+
+                    ->searchable(isIndividual: false, isGlobal: true)
                     ->tooltip(fn(Model $record): string => "By {$record->name}"),
 
                 Tables\Columns\TextColumn::make('waste_stock_percentage')
@@ -541,13 +541,14 @@ class ProductResource extends Resource
                 // ->alignCenter(true)
                 ,
                 Tables\Columns\TextColumn::make('description')->searchable()
+                    ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.description')),
                 IconColumn::make('is_manufacturing')->boolean()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.is_manufacturing')),
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
-                    ->searchable(isIndividual: true, isGlobal: false)->toggleable(),
+                    ->searchable(isIndividual: false, isGlobal: true)->toggleable(),
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),
                 TextColumn::make('product_items_count')->label('Items No')
                     ->toggleable(isToggledHiddenByDefault: false)->default('-')->alignCenter(true)
@@ -653,7 +654,7 @@ class ProductResource extends Resource
         return [
             // RelationManagers\UnitPricesRelationManager::class,
             RelationManagers\ProductPriceHistoriesRelationManager::class,
-            
+
         ];
     }
 
