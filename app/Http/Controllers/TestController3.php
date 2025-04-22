@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Equipment;
+use App\Models\Order;
 use App\Models\Product;
 use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
@@ -162,10 +163,91 @@ class TestController3 extends Controller
         // Return the grouped result
         return response()->json($result);
     }
-    public function testGetBranches(){
+    public function testGetBranches()
+    {
         $branches = Branch::active()
-        ->activePopups()
-        ->get(['id', 'name','type','start_date','end_date']);
+            ->activePopups()
+            ->get(['id', 'name', 'type', 'start_date', 'end_date']);
         return response()->json($branches);
+    }
+    public function testGetOrders()
+    {
+        return self::getOrders();
+    }
+
+    public static function getOrders()
+    {
+        // جلب الطلبات الأساسية + العملاء + الفروع + مسؤولي المخازن
+        $orders = DB::select("
+        SELECT
+            o.id, 
+            o.type,
+            o.active,
+            o.description,
+            o.customer_id,
+             c.name AS customer_name,
+            o.status,
+            o.branch_id,
+             b.name AS branch_name,
+            o.notes, 
+            o.total,
+            o.created_at,
+            o.updated_at
+        FROM orders o
+         LEFT JOIN users c ON c.id = o.customer_id
+         LEFT JOIN branches b ON b.id = o.branch_id 
+        ORDER BY o.created_at DESC
+        LIMIT 80
+    ");
+
+
+        // تحويلها إلى Collection
+        $orders = collect($orders)->map(function ($order) {
+            // جلب تفاصيل الطلب بشكل منفصل لكل Order
+            $details = DB::select("
+            SELECT
+                od.id,
+                od.order_id,
+                od.product_id,
+                p.name AS product_name,
+                
+                cat.id AS product_category,
+                od.unit_id,
+                u.name AS unit_name,
+                od.available_quantity AS quantity,
+                od.available_quantity,
+                od.price,
+                od.available_in_store,
+                cu.id AS created_by,
+                cu.name AS created_by_user_name,
+                od.is_created_due_to_qty_preivous_order,
+                od.previous_order_id
+            FROM orders_details od
+            LEFT JOIN products p ON p.id = od.product_id
+            LEFT JOIN categories cat ON cat.id = p.category_id
+            LEFT JOIN units u ON u.id = od.unit_id
+            LEFT JOIN users cu ON cu.id = od.created_by
+            WHERE od.order_id = ?
+        ", [$order->id]);
+
+            return [
+                'id' => $order->id,
+                'type' => $order->type,
+                'active' => $order->active,
+                'desc' => $order->description,
+                'created_by' => $order->customer_id,
+                'created_by_user_name' => $order->customer_name,
+                'request_state_name' => $order->status,
+                'branch_id' => $order->branch_id,
+                'branch_name' => $order->branch_name,
+                'notes' => $order->notes,
+                'total_price' => $order->total,
+                'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i:s'),
+                'updated_at' => Carbon::parse($order->updated_at)->format('Y-m-d H:i:s'),
+                'order_details' => $details,
+            ];
+        });
+
+        return response()->json($orders);
     }
 }
