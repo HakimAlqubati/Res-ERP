@@ -26,7 +26,7 @@ class InventoryReportController extends Controller
     {
         $productId = $request->product_id ?? null;
         $storeId = $request->store_id ?? null;
-        if (auth()->user()->branch->is_kitchen) {
+        if (isset(auth()->user()->branch) && auth()->user()->branch->is_kitchen) {
             $storeId = auth()->user()->branch->store_id;
         };
         $categoryId = $request->category_id ?? null;
