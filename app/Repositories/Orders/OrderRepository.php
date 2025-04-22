@@ -114,7 +114,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $query->whereHas('orderDetails.product.category', function ($q) use ($customCategories) {
                     $q->whereIn('categories.id', $customCategories);
                 })
-                    // ->orWhere('customer_id', auth()->user()->id)
+                    ->orWhere('customer_id', auth()->user()->id)
                 ;
             }
         }
