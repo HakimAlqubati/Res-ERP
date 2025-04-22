@@ -7,6 +7,7 @@ use App\Filament\Clusters\AccountingCluster\Resources\AccountResource\Pages;
 use App\Filament\Clusters\AccountingCluster\Resources\AccountResource\RelationManagers;
 use App\Models\Account;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -15,6 +16,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -32,31 +35,43 @@ class AccountResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
-                    ->label('اسم الحساب')
-                    ->required()
-                    ->maxLength(255),
+                Fieldset::make()->columns(2)->schema([
+                    Select::make('parent_id')
+                        ->label('Parent Account')
+                        ->helperText('Select the parent account for this one, or leave empty for a top-level account.')
+                        ->live()
+                        ->searchable()->required()
+                        ->afterStateUpdated(function ($get, $set, $state) {
+                            $code = Account::generateNextCode($state);
+                            $set('code', $code);
+                        })
+                        ->options(Account::all()->mapWithKeys(fn($acc) => [
+                            $acc->id => "{$acc->code} - {$acc->name}"
+                        ])),
+                    TextInput::make('name')
+                        ->label('Account Name')
+                        ->helperText('The full name of the account, e.g., Inventory - Main Store')
 
-                TextInput::make('code')
-                    ->label('رمز الحساب')
-                    ->required()
-                    ->maxLength(20),
+                        ->required()
+                        ->maxLength(255),
 
-                Select::make('type')
-                    ->label('نوع الحساب')
-                    ->required()
-                    ->options([
-                        'asset' => 'أصل',
-                        'liability' => 'التزام',
-                        'equity' => 'حقوق ملكية',
-                        'revenue' => 'إيراد',
-                        'expense' => 'مصاريف',
-                    ]),
+                    TextInput::make('code')
+                        ->label('Code')
+                        ->helperText('The unique code used to identify this account.')
+                        ->required()
+                        ->maxLength(20)
+                        ->reactive()
+                        ->unique(ignoreRecord: true),
 
-                Select::make('parent_id')
-                    ->label('الحساب الرئيسي')
-                    ->searchable()
-                    ->options(Account::all()->pluck('name', 'id')),
+                    Select::make('type')
+                        ->label('Account Type')
+                        ->helperText('Choose the category this account belongs to in the chart of accounts.')
+
+                        ->required()
+                        ->options(Account::getTypeOptions()),
+
+
+                ])
             ]);
     }
 
@@ -64,10 +79,11 @@ class AccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->striped()
             ->columns([
-                TextColumn::make('name')->label('اسم الحساب')->searchable(),
-                TextColumn::make('code')->label('رمز الحساب')->sortable(),
-                BadgeColumn::make('type')->label('النوع')->colors([
+                TextColumn::make('name')->label('Account Name')->searchable(),
+                TextColumn::make('code')->label('Account Code')->sortable(),
+                BadgeColumn::make('type')->label('Type')->colors([
                     'primary' => 'asset',
                     'danger' => 'liability',
                     'warning' => 'equity',
@@ -80,11 +96,17 @@ class AccountResource extends Resource
                     'revenue' => 'إيراد',
                     'expense' => 'مصروف',
                 }),
-                TextColumn::make('parent.name')->label('الحساب الرئيسي')->sortable()->searchable(),
+                TextColumn::make('parent.name')->label('Parent Account')->sortable()->searchable(),
             ])
             ->defaultSort('code')
             ->filters([
-                // يمكن لاحقًا إضافة فلاتر حسب النوع أو الحسابات الرئيسية
+                Filter::make('main_only')
+                    ->label('الحسابات الرئيسية فقط')
+                    ->query(fn(Builder $query): Builder => $query->whereNull('parent_id')),
+
+                SelectFilter::make('parent_id')
+                    ->label('حسب الحساب الرئيسي')
+                    ->options(Account::whereNull('parent_id')->pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

@@ -78,6 +78,8 @@ class StoreResource extends Resource
                 TextColumn::make('location')->searchable()->label(__('lang.location'))->toggleable(),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
                 TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable()->default('-'),
+                TextColumn::make('inventoryAccount.name')->label(__('accounting.account'))->toggleable()
+                    ->default('-'),
                 CheckboxColumn::make('default_store')
                     ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
                 CheckboxColumn::make('is_central_kitchen')
@@ -90,7 +92,7 @@ class StoreResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),

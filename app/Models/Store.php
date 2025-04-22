@@ -17,6 +17,7 @@ class Store extends Model implements Auditable
         'default_store',
         'storekeeper_id',
         'is_central_kitchen',
+        'inventory_account_id',
     ];
     protected $auditInclude = [
         'name',
@@ -25,6 +26,7 @@ class Store extends Model implements Auditable
         'default_store',
         'storekeeper_id',
         'is_central_kitchen',
+        'inventory_account_id',
     ];
 
     protected $appends = ['storekeeper_name'];
@@ -123,4 +125,10 @@ class Store extends Model implements Auditable
     {
         return $this->belongsToMany(Order::class, 'order_store');
     }
+    public function inventoryAccount()
+    {
+        return $this->belongsTo(Account::class, 'inventory_account_id');
+    }
+
+    
 }

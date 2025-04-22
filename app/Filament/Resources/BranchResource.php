@@ -258,6 +258,8 @@ class BranchResource extends Resource
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
                 TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user.email')->label('Email')->copyable(),
+                TextColumn::make('operationalCostAccount.name')->label(__('accounting.account'))->toggleable()
+                    ->default('-'),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);

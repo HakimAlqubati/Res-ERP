@@ -10,11 +10,14 @@ class JournalEntry extends Model
     use SoftDeletes;
     protected $fillable = ['date', 'description', 'related_model_type', 'related_model_id'];
 
-    public function lines() {
+    public function lines()
+    {
         return $this->hasMany(JournalEntryLine::class);
     }
 
-    public function related_model() {
+    public function related_model()
+    {
         return $this->morphTo();
     }
+    
 }

@@ -76,6 +76,8 @@ class SupplierResource extends Resource
                 TextColumn::make('whatsapp_number')
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false),
+                    TextColumn::make('account.name')->label(__('accounting.account'))->toggleable()
+                    ->default('-'),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')

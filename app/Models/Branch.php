@@ -34,6 +34,7 @@ class Branch extends Model implements HasMedia, Auditable
         'start_date',
         'end_date',
         'more_description',
+        'operational_cost_account_id',
     ];
     protected $auditInclude = [
         'id',
@@ -50,6 +51,7 @@ class Branch extends Model implements HasMedia, Auditable
         'start_date',
         'end_date',
         'more_description',
+        'operational_cost_account_id',
     ];
     protected $appends = ['customized_categories'];
 
@@ -268,5 +270,9 @@ class Branch extends Model implements HasMedia, Auditable
                 'name' => $category->name,
             ];
         });
+    }
+    public function operationalCostAccount()
+    {
+        return $this->belongsTo(Account::class, 'operational_cost_account_id');
     }
 }
