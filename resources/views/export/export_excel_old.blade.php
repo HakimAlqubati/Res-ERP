@@ -4,13 +4,13 @@
             <th> Order ID </th>
             <th>#<?php echo $finalResult[0]->orderId; ?></th>
             <th> Created by </th>
-            <th colspan="2"> {{ $finalResult[0]->createdByUserName }}</th>
+            <th colspan="1"> {{ $finalResult[0]->createdByUserName }}</th>
             <th> Date </th>
             <th>{{ $finalResult[0]->createdAt }}</th>
         </tr>
         <tr>
             <th>#</th>
-            <th>Product id </th>
+            
             <th>Product name </th>
             <th>Product code </th>
             <th>Product Description </th>
@@ -30,7 +30,7 @@
             ?>
         <tr>
             <td>{{ $key }}</td>
-            <td>{{ $value->product_id ?? '--' }}</td>
+            
             <td>{{ $value->product_name ?? '--' }}</td>
             <td>{{ $value->product_code ?? '--' }}</td>
             <td>{{ $value->product_desc ?? '--' }}</td>

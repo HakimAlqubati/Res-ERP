@@ -108,7 +108,7 @@
         <thead>
 
             <tr>
-                <th> {{ __('lang.product_id') }} </th>
+                <th> {{ __('lang.product_code') }} </th>
                 <th> {{ __('lang.product') }} </th>
                 <th> {{ __('lang.unit') }} </th>
                 <th> {{ __('lang.quantity') }} </th>
@@ -130,7 +130,7 @@
                     $totalPrices += $valDetail->price * $valDetail->available_quantity;
                 @endphp
                 <tr>
-                    <td> {{ $valDetail->product_id }} </td>
+                    <td> {{ $valDetail->product?->code }} </td>
                     <td> {{ $valDetail->product->name }} </td>
                     <td> {{ $valDetail->unit->name }} </td>
                     <td> {{ $valDetail->available_quantity }} </td>

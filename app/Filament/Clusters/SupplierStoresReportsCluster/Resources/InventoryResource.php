@@ -87,7 +87,9 @@ class InventoryResource extends Resource
                 //     ]),
 
                 SelectFilter::make('product_id')
-                    ->label('Product')->options(Product::active()->pluck('name', 'id')->toArray())->searchable()->multiple()
+                    ->label('Product')
+                    ->options(Product::active()->get()->pluck('display_name', 'id')->toArray())
+                    ->searchable()->multiple()
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),

@@ -44,7 +44,7 @@ class Product extends Model implements Auditable
         'minimum_stock_qty',
         'waste_stock_percentage',
     ];
-    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name'];
 
     /**
      * Scope to filter products with at least 2 unit prices.
@@ -217,5 +217,9 @@ class Product extends Model implements Auditable
     public function productPriceHistories()
     {
         return $this->hasMany(ProductPriceHistory::class, 'product_id');
+    }
+    public function getDisplayNameAttribute()
+    {
+        return "{$this->name} ({$this->code})";
     }
 }
