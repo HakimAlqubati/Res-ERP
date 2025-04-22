@@ -35,7 +35,7 @@ class ProductRepository implements ProductRepositoryInterface
             // })
             ->when($isManufacturing, function ($query) {
                 return $query->manufacturingCategory()
-                    ->hasProductItems()
+                    // ->hasProductItems()
                 ;
             }, function ($query) {
                 // return $query->unmanufacturingCategory();
