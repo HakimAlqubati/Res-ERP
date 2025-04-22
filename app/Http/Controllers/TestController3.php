@@ -200,36 +200,37 @@ class TestController3 extends Controller
         LIMIT 80
     ");
 
+    
     return $orders;
 
         // تحويلها إلى Collection
         $orders = collect($orders)->map(function ($order) {
             // جلب تفاصيل الطلب بشكل منفصل لكل Order
-            $details = DB::select("
-            SELECT
-                od.id,
-                od.order_id,
-                od.product_id,
-                p.name AS product_name,
+        //     $details = DB::select("
+        //     SELECT
+        //         od.id,
+        //         od.order_id,
+        //         od.product_id,
+        //         p.name AS product_name,
                 
-                cat.id AS product_category,
-                od.unit_id,
-                u.name AS unit_name,
-                od.available_quantity AS quantity,
-                od.available_quantity,
-                od.price,
-                od.available_in_store,
-                cu.id AS created_by,
-                cu.name AS created_by_user_name,
-                od.is_created_due_to_qty_preivous_order,
-                od.previous_order_id
-            FROM orders_details od
-            LEFT JOIN products p ON p.id = od.product_id
-            LEFT JOIN categories cat ON cat.id = p.category_id
-            LEFT JOIN units u ON u.id = od.unit_id
-            LEFT JOIN users cu ON cu.id = od.created_by
-            WHERE od.order_id = ?
-        ", [$order->id]);
+        //         cat.id AS product_category,
+        //         od.unit_id,
+        //         u.name AS unit_name,
+        //         od.available_quantity AS quantity,
+        //         od.available_quantity,
+        //         od.price,
+        //         od.available_in_store,
+        //         cu.id AS created_by,
+        //         cu.name AS created_by_user_name,
+        //         od.is_created_due_to_qty_preivous_order,
+        //         od.previous_order_id
+        //     FROM orders_details od
+        //     LEFT JOIN products p ON p.id = od.product_id
+        //     LEFT JOIN categories cat ON cat.id = p.category_id
+        //     LEFT JOIN units u ON u.id = od.unit_id
+        //     LEFT JOIN users cu ON cu.id = od.created_by
+        //     WHERE od.order_id = ?
+        // ", [$order->id]);
 
             return [
                 'id' => $order->id,
@@ -245,7 +246,7 @@ class TestController3 extends Controller
                 'total_price' => $order->total,
                 'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::parse($order->updated_at)->format('Y-m-d H:i:s'),
-                'order_details' => $details,
+                'order_details' => [],
             ];
         });
 
