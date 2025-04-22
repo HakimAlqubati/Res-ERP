@@ -185,17 +185,17 @@ class TestController3 extends Controller
             o.active,
             o.description,
             o.customer_id,
-             c.name AS customer_name,
+            -- c.name AS customer_name,
             o.status,
             o.branch_id,
-             b.name AS branch_name,
+           --  b.name AS branch_name,
             o.notes, 
             o.total,
             o.created_at,
             o.updated_at
         FROM orders o
-         LEFT JOIN users c ON c.id = o.customer_id
-         LEFT JOIN branches b ON b.id = o.branch_id 
+        -- LEFT JOIN users c ON c.id = o.customer_id
+        -- LEFT JOIN branches b ON b.id = o.branch_id 
         ORDER BY o.created_at DESC
         LIMIT 80
     ");
@@ -237,10 +237,10 @@ class TestController3 extends Controller
                 'active' => $order->active,
                 'desc' => $order->description,
                 'created_by' => $order->customer_id,
-                'created_by_user_name' => $order->customer_name,
+                'created_by_user_name' => 'شريف',
                 'request_state_name' => $order->status,
                 'branch_id' => $order->branch_id,
-                'branch_name' => $order->branch_name,
+                'branch_name' => 'Test Branch',
                 'notes' => $order->notes,
                 'total_price' => $order->total,
                 'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i:s'),
