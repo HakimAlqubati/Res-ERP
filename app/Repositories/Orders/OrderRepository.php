@@ -3,6 +3,7 @@
 namespace App\Repositories\Orders;
 
 use App\Exports\OrdersExport;
+use App\Http\Controllers\TestController3;
 use App\Http\Resources\OrderResource;
 use App\Interfaces\Orders\OrderRepositoryInterface;
 use App\Models\Branch;
@@ -30,6 +31,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function index($request)
     {
+        return TestController3::getOrders();
         $query = Order::query();
 
 
