@@ -57,7 +57,7 @@ class OrderRepository implements OrderRepositoryInterface
                 if (auth()->user()->branch->manager_abel_show_orders) {
                     $query
                         ->whereIn('branch_id', DB::table('branches')
-                            ->where('active', 1)
+                            ->where('active', 1)->select('id')
                             ->whereNot('id', auth()->user()->branch->id)
                             ->pluck('id')->toArray())
                         ->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
@@ -77,7 +77,7 @@ class OrderRepository implements OrderRepositoryInterface
         if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
             $query
                 ->whereIn('branch_id', DB::table('branches')
-                    ->where('active', 1)
+                    ->where('active', 1)->select('id')
                     ->whereNot('id', auth()->user()->branch->id)
                     ->pluck('id')->toArray())
                 ->with(['orderDetails' => function ($q) use ($otherBranchesCategories) {
