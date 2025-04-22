@@ -588,7 +588,7 @@ class ProductResource extends Resource
                         } else {
                             showWarningNotifiMessage("⚠️ لم يتم تحديث أي مكوّن. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.");
                         }
-                    }),
+                    })->hidden(),
 
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
@@ -653,7 +653,7 @@ class ProductResource extends Resource
     {
         return [
             // RelationManagers\UnitPricesRelationManager::class,
-            RelationManagers\ProductPriceHistoriesRelationManager::class,
+            // RelationManagers\ProductPriceHistoriesRelationManager::class,
 
         ];
     }
