@@ -134,7 +134,8 @@ class ProductResource extends Resource
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
                         ->label('Items')
                         ->schema([
-                            Repeater::make('productItems')->relationship('productItems')
+                            Repeater::make('productItems')
+                                ->relationship('productItems')
 
                                 ->label('Product Items')
                                 ->schema([
@@ -296,7 +297,7 @@ class ProductResource extends Resource
                                 })
                                 ->columns(9) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
-                                ->minItems(1)
+                                // ->minItems(1)
 
                         ]),
 
