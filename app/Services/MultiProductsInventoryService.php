@@ -339,19 +339,35 @@ class MultiProductsInventoryService
                     Log::info("📌 Used existing pending approval order #{$existingOrder->id}.");
                 }
 
-                // ➕ إضافة التفاصيل للطلب المعلّق
-                $existingOrder->orderDetails()->create([
-                    'product_id' => $productId,
-                    'unit_id' => $unitId,
-                    'quantity' => $requestedQty,
-                    'price' => getUnitPrice($productId, $unitId),
-                    'package_size' => $targetUnit->package_size,
-                    'created_by' => auth()->id(),
-                    'is_created_due_to_qty_preivous_order' => true,
-                    'previous_order_id' => $sourceModel->id,
-                ]);
+                // ➕ إضافة أو تحديث التفاصيل للطلب المعلّق
+                $existingDetail = $existingOrder->orderDetails()
+                    ->where('product_id', $productId)
+                    ->where('unit_id', $unitId)
+                    ->first();
 
-  
+                if ($existingDetail) {
+                    // 🔄 تحديث السطر الحالي إذا نفس الوحدة
+                    $existingDetail->update([
+                        'quantity' => $existingDetail->quantity + $requestedQty,
+                        'available_quantity' => $existingDetail->quantity + $requestedQty,
+                        'updated_by' => auth()->id(),
+                    ]);
+                    Log::info("🔄 Updated existing order detail in pending order #{$existingOrder->id} (product_id: $productId, unit_id: $unitId).");
+                } else {
+                    // ➕ إنشاء صف جديد إذا الوحدة مختلفة
+                    $existingOrder->orderDetails()->create([
+                        'product_id' => $productId,
+                        'unit_id' => $unitId,
+                        'quantity' => $requestedQty,
+                        'price' => getUnitPrice($productId, $unitId),
+                        'package_size' => $targetUnit->package_size,
+                        'created_by' => auth()->id(),
+                        'is_created_due_to_qty_preivous_order' => true,
+                        'previous_order_id' => $sourceModel->id,
+                    ]);
+                    Log::info("🆕 Created new order detail in pending order #{$existingOrder->id} for product_id: $productId, unit_id: $unitId.");
+                }
+
                 // تصفير الكمية في الطلب الأصلي
                 if ($sourceModel) {
                     $sourceModel->orderDetails()
@@ -360,7 +376,7 @@ class MultiProductsInventoryService
                         ->update(['available_quantity' => 0]);
                 }
 
- 
+
                 return []; // لا تخصص شيء للطلب الأصلي
             } else {
                 $productName = $targetUnit->product->name ?? 'Unknown Product';

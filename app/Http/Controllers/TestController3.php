@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Equipment;
+use App\Models\Order;
 use App\Models\Product;
 use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
@@ -162,10 +163,11 @@ class TestController3 extends Controller
         // Return the grouped result
         return response()->json($result);
     }
-    public function testGetBranches(){
+    public function testGetBranches()
+    {
         $branches = Branch::active()
-        ->activePopups()
-        ->get(['id', 'name','type','start_date','end_date']);
+            ->activePopups()
+            ->get(['id', 'name', 'type', 'start_date', 'end_date']);
         return response()->json($branches);
     }
 }

@@ -1,12 +1,19 @@
 <x-filament::page>
     {{-- ✅ Category Filter --}}
+
     <form method="GET" class="mb-6 flex items-center gap-6">
         <div class="flex flex-col">
 
             <label class="block mb-1 font-bold text-lg">Select Category:</label>
 
-            <select name="category_id" onchange="this.form.submit()" class="border p-2 rounded w-1/3">
-                <option value="">-- All Categories --</option>
+            <select name="category_id" onchange="this.form.submit()" class="flex flex-col w-1/3">
+                <option class="flex flex-col w-1/3" value="">
+
+                    <span class="flex flex-col w-1/3">
+                        -- All Categories --
+
+                    </span>
+                </option>
 
                 @foreach ($categories as $category)
                     <option value="{{ $category->id }}" @selected($selectedCategory == $category->id)>
@@ -17,18 +24,17 @@
         </div>
 
         {{-- ✅ Show Without Zero Checkbox --}}
-        <div class="flex items-center mt-6">
-            <label class="inline-flex items-center space-x-3 text-lg font-medium">
+        <div {{-- class="flex items-center mt-6" --}}>
+            <label {{-- class="inline-flex items-center space-x-3 text-lg font-medium" --}}>
                 <input type="checkbox" name="show_without_zero" value="1" onchange="this.form.submit()"
-                    @if (request('show_without_zero')) checked @endif
-                    class="form-checkbox h-6 w-6 text-indigo-600 border-gray-300 rounded">
+                    @if (request('show_without_zero')) checked @endif {{-- class="form-checkbox h-6 w-6 text-indigo-600 border-gray-300 rounded" --}}>
                 <span>Show only items with abnormal inventory movements</span>
             </label>
         </div>
         <div class="flex flex-col">
 
             <div class="flex flex-col w-1/3">
-                <label class="block mb-1 font-bold text-lg">Search Product:</label>
+                <label class="">Search Product:</label>
                 <input type="text" id="product-autocomplete" class="border p-2 rounded"
                     placeholder="Type to search..." value="{{ $products->find($selectedProduct)?->name ?? '' }}">
                 <input type="hidden" name="product_id" id="product-id">
@@ -49,14 +55,15 @@
 
     <div class="overflow-x-auto">
         <div class="mt-4 text-center">
-            <button onclick="exportTableToExcel()" style="border: 1px solid;" class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">
+            <button onclick="exportTableToExcel()" style="border: 1px solid;"
+                class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">
                 📤 Export to Excel
             </button>
         </div>
         <table class="table-auto w-full text-sm border border-gray-200 pretty  reports" id="report-table">
 
-            <thead class="bg-gray-100 text-center">
-                <tr>
+            <thead class="divide-y divide-gray-200">
+                <tr class="text-center  even:bg-gray-50 hover:bg-indigo-50 transition duration-150">
                     <th class="px-4 py-2">Item Code</th>
                     <th class="px-4 py-2">Product Name</th>
                     <th class="px-4 py-2">Category</th>

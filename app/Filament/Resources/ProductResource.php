@@ -43,6 +43,8 @@ use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -134,7 +136,8 @@ class ProductResource extends Resource
                         ->visible(fn($get): bool => ($get('category_id') !== null && Category::find($get('category_id'))->is_manafacturing))
                         ->label('Items')
                         ->schema([
-                            Repeater::make('productItems')->relationship('productItems')
+                            Repeater::make('productItems')
+                                ->relationship('productItems')
 
                                 ->label('Product Items')
                                 ->schema([
@@ -296,7 +299,7 @@ class ProductResource extends Resource
                                 })
                                 ->columns(9) // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item') // Custom button label
-                                ->minItems(1)
+                            // ->minItems(1)
 
                         ]),
 
@@ -577,20 +580,62 @@ class ProductResource extends Resource
                             showWarningNotifiMessage('Faild');
                         }
                     })->hidden(),
-                Tables\Actions\Action::make('updateComponentPrices')
-                    ->label('Update Price')
-                    ->icon('heroicon-o-currency-dollar')->button()
-                    ->color('info')->visible(fn($record): bool => $record->is_manufacturing)
-                    ->action(function ($record) {
-                        $count = ProductCostingService::updateComponentPricesForProduct($record->id);
-                        if ($count > 0) {
-                            showSuccessNotifiMessage("✅ تم تحديث أسعار {$count} من المكونات.");
-                        } else {
-                            showWarningNotifiMessage("⚠️ لم يتم تحديث أي مكوّن. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.");
-                        }
-                    }),
+
 
                 ActionGroup::make([
+                    Tables\Actions\Action::make('updateComponentPrices')
+                        ->label('Update Price')
+                        ->icon('heroicon-o-currency-dollar')->button()
+                        ->color('info')->visible(fn($record): bool => $record->is_manufacturing)
+                        ->action(function ($record) {
+                            $count = ProductCostingService::updateComponentPricesForProduct($record->id);
+                            if ($count > 0) {
+                                showSuccessNotifiMessage("✅ تم تحديث أسعار {$count} من المكونات.");
+                            } else {
+                                showWarningNotifiMessage("⚠️ لم يتم تحديث أي مكوّن. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.");
+                            }
+                        }),
+
+                    Tables\Actions\Action::make('import_items')
+                        ->label('Import Items')
+                        ->icon('heroicon-o-arrow-up-tray')->button()
+                        ->visible(fn($record) => $record->is_manufacturing)
+                        ->form([
+                            \Filament\Forms\Components\FileUpload::make('file')
+                                ->label('Upload Excel file')
+                                ->required()
+                                ->disk('public')
+                                ->directory('product_items_imports'),
+                        ])
+                        ->color('success')
+                        ->action(function (array $data, $record) {
+                            $filePath = 'public/' . $data['file'];
+                            $import = new \App\Imports\ProductItemsImport($record->id);
+
+
+                            try {
+                                Excel::import($import, $filePath);
+
+                                $imported = $import->getImportedCount();
+                                $failed = count($import->getFailedRows());
+
+                                if ($imported > 0) {
+                                    showSuccessNotifiMessage("✅ تم استيراد {$imported} عناصر بنجاح.");
+                                }
+
+                                if ($failed > 0) {
+                                    Log::warning("⚠️ بعض الصفوف فشلت في الاستيراد.", $import->getFailedRows());
+                                    showWarningNotifiMessage("⚠️ تم استيراد بعض العناصر. راجع السجل للأخطاء.");
+                                }
+
+                                if ($imported === 0 && $failed === 0) {
+                                    showWarningNotifiMessage("⚠️ لم يتم استيراد أي عنصر. تأكد من الملف.");
+                                }
+                            } catch (\Throwable $e) {
+                                showWarningNotifiMessage("❌ فشل الاستيراد: " . $e->getMessage());
+                            }
+                        }),
+
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
@@ -653,7 +698,7 @@ class ProductResource extends Resource
     {
         return [
             // RelationManagers\UnitPricesRelationManager::class,
-            RelationManagers\ProductPriceHistoriesRelationManager::class,
+            // RelationManagers\ProductPriceHistoriesRelationManager::class,
 
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Repositories\Orders;
 
 use App\Exports\OrdersExport;
+use App\Http\Controllers\TestController3;
 use App\Http\Resources\OrderResource;
 use App\Interfaces\Orders\OrderRepositoryInterface;
 use App\Models\Branch;
@@ -30,6 +31,7 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function index($request)
     {
+
         $query = Order::query();
 
 
@@ -57,7 +59,7 @@ class OrderRepository implements OrderRepositoryInterface
                 if (auth()->user()->branch->manager_abel_show_orders) {
                     $query
                         ->whereIn('branch_id', DB::table('branches')
-                            ->where('active', 1)
+                            ->where('active', 1)->select('id')
                             ->whereNot('id', auth()->user()->branch->id)
                             ->pluck('id')->toArray())
                         ->whereHas('orderDetails.product.category', function ($q) use ($otherBranchesCategories) {
@@ -77,7 +79,7 @@ class OrderRepository implements OrderRepositoryInterface
         if (!isStoreManager() && auth()->user()->branch->is_kitchen && auth()->user()->branch->manager_abel_show_orders) {
             $query
                 ->whereIn('branch_id', DB::table('branches')
-                    ->where('active', 1)
+                    ->where('active', 1)->select('id')
                     ->whereNot('id', auth()->user()->branch->id)
                     ->pluck('id')->toArray())
                 ->with(['orderDetails' => function ($q) use ($otherBranchesCategories) {
@@ -114,7 +116,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $query->whereHas('orderDetails.product.category', function ($q) use ($customCategories) {
                     $q->whereIn('categories.id', $customCategories);
                 })
-                    // ->orWhere('customer_id', auth()->user()->id)
+                    ->orWhere('customer_id', auth()->user()->id)
                 ;
             }
         }
@@ -122,7 +124,7 @@ class OrderRepository implements OrderRepositoryInterface
             $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
         }
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
-        $orders = $query->orderBy('created_at', 'DESC')->limit(80)
+        $orders = $query->orderBy('created_at', 'DESC')->limit(20)
             ->get();
 
         return OrderResource::collection($orders)->filter();

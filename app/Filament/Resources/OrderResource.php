@@ -259,7 +259,7 @@ class OrderResource extends Resource
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
                         'danger' => static fn($state): bool => $state === Order::PROCESSING,
                     ])
-                    ->iconPosition('after')->toggleable(isToggledHiddenByDefault: true),
+                    ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
                 TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
                     ->numeric(),
