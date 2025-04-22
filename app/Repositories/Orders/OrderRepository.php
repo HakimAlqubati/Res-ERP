@@ -31,8 +31,8 @@ class OrderRepository implements OrderRepositoryInterface
 
     public function index($request)
     {
-        return TestController3::getOrders();
-        // $query = Order::query();
+        // return TestController3::getOrders();
+        $query = Order::query();
 
 
         $query->whereHas('orderDetails');
