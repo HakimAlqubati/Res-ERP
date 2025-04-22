@@ -200,6 +200,7 @@ class TestController3 extends Controller
         LIMIT 80
     ");
 
+    return $orders;
 
         // تحويلها إلى Collection
         $orders = collect($orders)->map(function ($order) {
