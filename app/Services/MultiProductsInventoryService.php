@@ -349,6 +349,7 @@ class MultiProductsInventoryService
                     // 🔄 تحديث السطر الحالي إذا نفس الوحدة
                     $existingDetail->update([
                         'quantity' => $existingDetail->quantity + $requestedQty,
+                        'available_quantity' => $existingDetail->quantity + $requestedQty,
                         'updated_by' => auth()->id(),
                     ]);
                     Log::info("🔄 Updated existing order detail in pending order #{$existingOrder->id} (product_id: $productId, unit_id: $unitId).");
