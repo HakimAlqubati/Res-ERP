@@ -540,7 +540,7 @@ class ProductResource extends Resource
                     ->alignCenter(true),
                 Tables\Columns\TextColumn::make('minimum_stock_qty')
                     ->label('Min. Qty')->sortable()
-                    ->alignCenter(true),
+                    ->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('formatted_unit_prices')
                     ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
                     ->limit(50)->tooltip(fn($state) => $state)
