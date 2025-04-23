@@ -100,8 +100,11 @@ class OrderRepository implements OrderRepositoryInterface
             ;
         }
 
-        if (isBranchUser() && isset(auth()->user()->branch)  && auth()->user()->owner->branch_id == auth()->user()->branch_id) {
-            // $query->where('customer_id', auth()->user()->owner->id);
+        if (
+            isBranchUser() && isset(auth()->user()->branch)
+            && auth()->user()->owner->branch_id == auth()->user()->branch_id
+        ) {
+            $query->where('customer_id', auth()->user()->owner->id);
         }
         if ($request->has('id')) {
             $query->where('id', $request->id);
