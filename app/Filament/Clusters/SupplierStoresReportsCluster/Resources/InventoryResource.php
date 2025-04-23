@@ -77,7 +77,7 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes'),
                 Tables\Columns\TextColumn::make('transactionable_id')
-                    ->label('Transaction ID')
+                    ->label('Transaction ID')->searchable(isIndividual: true)
                     ->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
 
