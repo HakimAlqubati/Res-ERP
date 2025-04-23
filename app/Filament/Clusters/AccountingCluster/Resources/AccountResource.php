@@ -15,6 +15,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -41,10 +42,7 @@ class AccountResource extends Resource
                         ->helperText('Select the parent account for this one, or leave empty for a top-level account.')
                         ->live()
                         ->searchable()->required()
-                        ->afterStateUpdated(function ($get, $set, $state) {
-                            $code = Account::generateNextCode($state);
-                            $set('code', $code);
-                        })
+                        ->afterStateUpdated(function ($get, $set, $state) {})
                         ->options(Account::all()->mapWithKeys(fn($acc) => [
                             $acc->id => "{$acc->code} - {$acc->name}"
                         ])),
@@ -82,7 +80,8 @@ class AccountResource extends Resource
             ->striped()
             ->columns([
                 TextColumn::make('name')->label('Account Name')->searchable(),
-                TextColumn::make('code')->label('Account Code')->sortable(),
+                TextColumn::make('formatted_code')->label('Account Code')->sortable(),
+                IconColumn::make('is_parent')->boolean(true)->alignCenter(true)->label('Is Parent'),
                 BadgeColumn::make('type')->label('Type')->colors([
                     'primary' => 'asset',
                     'danger' => 'liability',
@@ -129,6 +128,8 @@ class AccountResource extends Resource
             'index' => Pages\ListAccounts::route('/'),
             'create' => Pages\CreateAccount::route('/create'),
             'edit' => Pages\EditAccount::route('/{record}/edit'),
+            'tree' => Pages\AccountingDirectoryTree::route('/tree'),
+            
         ];
     }
 }
