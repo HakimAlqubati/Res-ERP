@@ -45,11 +45,14 @@ class MultiProductsInventoryService
         // $products = $query->paginate(15);
         $products = $query->get();
 
+        $reportArr = [];
         $report = [];
         foreach ($products as $product) {
             $report = $this->getInventoryForProduct($product->id);
+            $reportArr[] = $this->getInventoryForProduct($product->id);
         }
         return [
+            'report' => $reportArr,
             'reportData' => $report,
             'pagination' => $products, // Pass pagination data
         ];
@@ -208,6 +211,7 @@ class MultiProductsInventoryService
                 'remaining_qty' => $remainingQty,
                 'minimum_quantity' => $unitPrice['minimum_quantity'],
                 'is_last_unit' => $unitPrice['is_last_unit'],
+                'is_largest_unit' => $unitPrice['is_largest_unit'],
                 'price' => $priceFromInventory,
                 'price_source' => $priceSource,
                 'price_store_id' => $priceStoreId,
@@ -235,8 +239,9 @@ class MultiProductsInventoryService
         $productUnitPrices = $query->get(['unit_id', 'order', 'price', 'package_size', 'minimum_quantity']);
         // Find the highest order value to determine the last unit
         $maxOrder = $productUnitPrices->max('order');
+        $maxPackageSize = $productUnitPrices->max('package_size');
 
-        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder, $query) {
+        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder, $query,$maxPackageSize) {
             $minimumQty = 0;
             if ($unitPrice->order == $maxOrder) {
                 $minimumQty = $query->first()->product->minimum_stock_qty ?? 0;
@@ -248,6 +253,7 @@ class MultiProductsInventoryService
                 'unit_name' => $unitPrice->unit->name,
                 'minimum_quantity' => $minimumQty,
                 'is_last_unit' => $unitPrice->order == $maxOrder, // True if this is the last unit
+                'is_largest_unit' => $unitPrice->package_size == $maxPackageSize,
                 'price' => $unitPrice->price,
             ];
         });
@@ -275,11 +281,12 @@ class MultiProductsInventoryService
 
     public function getProductsBelowMinimumQuantityًWithPagination($perPage = 15)
     {
-        $inventory = $this->getInventoryReport();
+        $inventory = $this->getInventoryReport()['report'];
+        
         $lowStockProducts = [];
         foreach ($inventory as $productData) {
             foreach ($productData as $product) {
-                if ($product['is_last_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
+                if ($product['is_largest_unit'] == true && $product['remaining_qty'] <= $product['minimum_quantity']) {
                     $lowStockProducts[] = $product;
                 }
             }

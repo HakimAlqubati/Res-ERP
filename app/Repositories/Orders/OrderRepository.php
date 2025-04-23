@@ -100,7 +100,7 @@ class OrderRepository implements OrderRepositoryInterface
             ;
         }
 
-        if (isBranchUser()) {
+        if (isBranchUser() && isset(auth()->user()->branch)  && auth()->user()->owner->branch_id == auth()->user()->branch_id) {
             $query->where('customer_id', auth()->user()->owner->id);
         }
         if ($request->has('id')) {
@@ -123,6 +123,7 @@ class OrderRepository implements OrderRepositoryInterface
         if (isDriver()) {
             $query->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
         }
+
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
         $orders = $query->orderBy('created_at', 'DESC')->limit(20)
             ->get();

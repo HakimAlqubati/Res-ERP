@@ -538,6 +538,9 @@ class ProductResource extends Resource
                     ->label('Waste %')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(true),
+                Tables\Columns\TextColumn::make('minimum_stock_qty')
+                    ->label('Min. Qty')->sortable()
+                    ->alignCenter(true),
                 Tables\Columns\TextColumn::make('formatted_unit_prices')
                     ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
                     ->limit(50)->tooltip(fn($state) => $state)
