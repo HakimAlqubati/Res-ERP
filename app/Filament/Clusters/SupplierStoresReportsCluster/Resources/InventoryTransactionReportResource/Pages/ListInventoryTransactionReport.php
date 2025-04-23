@@ -22,33 +22,20 @@ class ListInventoryTransactionReport extends ListRecords
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
         $unitId = 'all';
-        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId,$showAvailableInStock);
+        $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
+
+        // ⬅️ احصل على القيمة من الاستعلام أو استخدم 15 كقيمة افتراضية
+        $perPage = request()->get('perPage', 15);
+        if ($perPage === 'all') {
+            $perPage = 9999; // سيتم إرجاع كل النتائج
+        }
 
         // Get paginated report data
-        $report = $inventoryService->getInventoryReportWithPagination(15);
+        $report = $inventoryService->getInventoryReportWithPagination($perPage);
         $reportData = $report['reportData'] ?? $report;
         $pagination = $report['pagination'] ?? $report;
 
-        // dd($pagination);
 
         return ['reportData' => $reportData, 'pagination' => $pagination];
-    }
-
-
-    protected function getViewData_One_product(): array
-    {
-        $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
-        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
-
-        $product = Product::find($productId);
-
-        $unitId = 'all';
-        $reportData = [];
-        if (isset($productId) && $productId != '') {
-            $inventoryService = new InventoryService($productId, $unitId, $storeId);
-            // Get report for a specific product and unit
-            $reportData = $inventoryService->getInventoryReport();
-        }
-        return ['reportData' => $reportData, 'product' => $product];
     }
 }

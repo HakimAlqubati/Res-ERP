@@ -11,6 +11,7 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
+
             <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
                     <x-filament-tables::row class="header_report">
@@ -68,6 +69,8 @@
                     @endforeach
                 </tbody>
             </x-filament-tables::table>
+
+
         </div>
 
         {{-- Pagination Controls --}}
@@ -76,6 +79,20 @@
             @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
                 {{ $pagination->links() }}
             @endif
+            <div class="flex justify-end mb-2">
+                <form method="GET">
+                    <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
+                    <select name="perPage" id="perPage" onchange="this.form.submit()"
+                        class="border border-gray-300 px-3 py-1 rounded-md text-sm">
+                        @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
+                            <option value="{{ $option }}"
+                                {{ request('perPage', 15) == $option ? 'selected' : '' }}>
+                                {{ is_numeric($option) ? $option : 'All' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
         </div>
         {{-- @endif --}}
     @else
