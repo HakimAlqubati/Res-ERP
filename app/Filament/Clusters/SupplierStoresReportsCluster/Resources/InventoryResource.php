@@ -72,12 +72,19 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('store.name')
                     ->label('Store'),
 
-                Tables\Columns\TextColumn::make('remaining_qty')->hidden()
-                    ->label('Remaining Qty')->alignCenter(true)
-                    ->getStateUsing(fn($record) => $record->getRemainingQtyAttribute()),
+
 
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes'),
+                Tables\Columns\TextColumn::make('transactionable_id')
+                    ->label('Transaction ID')
+                    ->sortable()->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('formatted_transactionable_type')
+                    ->label('Transaction Type')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
