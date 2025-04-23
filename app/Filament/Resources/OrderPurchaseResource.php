@@ -87,12 +87,25 @@ class OrderPurchaseResource extends Resource
                                 ->options(function () {
                                     return Product::where('active', 1)
                                         ->unmanufacturingCategory()
-                                        ->pluck('name', 'id');
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ]);
                                 })
-                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                    ->unmanufacturingCategory()
-                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->getSearchResultsUsing(function (string $search): array {
+                                    return Product::where('active', 1)
+                                        ->where(function ($query) use ($search) {
+                                            $query->where('name', 'like', "%{$search}%")
+                                                ->orWhere('code', 'like', "%{$search}%");
+                                        })->unmanufacturingCategory()
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ])
+                                        ->toArray();
+                                })
+                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
                                 ->searchable()->columnSpan(function ($record) {

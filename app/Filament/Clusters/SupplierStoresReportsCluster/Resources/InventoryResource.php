@@ -45,7 +45,9 @@ class InventoryResource extends Resource
             ->columns([
 
                 Tables\Columns\TextColumn::make('id')
-                    ->label('ID'),
+                    ->label('ID')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('product.code')
+                    ->label('Product Code'),
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product'),
 
@@ -86,10 +88,34 @@ class InventoryResource extends Resource
                 //         Forms\Components\TextInput::make('value')->label('Product Name'),
                 //     ]),
 
-                SelectFilter::make('product_id')
-                    ->label('Product')
-                    ->options(Product::active()->get()->pluck('display_name', 'id')->toArray())
-                    ->searchable()->multiple()
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))
+                    ->multiple()
+                    ->searchable()
+                    ->options(fn() => Product::where('active', 1)
+                        ->get()
+                        ->mapWithKeys(fn($product) => [
+                            $product->id => "{$product->code} - {$product->name}"
+                        ])
+                        ->toArray())
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(
+                        fn($value): ?string =>
+                        optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                    )
+
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),

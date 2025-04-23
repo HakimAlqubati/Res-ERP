@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers;
 
+use App\Models\Product;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockAdjustmentReason;
@@ -87,7 +88,7 @@ class DetailsRelationManager extends RelationManager
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
                                     ->required(),
                                 Forms\Components\Select::make('store_id')
-                                ->default(getDefaultStore())
+                                    ->default(getDefaultStore())
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()
@@ -98,11 +99,33 @@ class DetailsRelationManager extends RelationManager
                             Repeater::make('stock_adjustment_details')
                                 // ->relationship('details')
                                 ->schema([
-                                    Grid::make()->columns(4)->schema([
+                                    Grid::make()->columns(5)->schema([
                                         Forms\Components\Select::make('product_id')
                                             ->label('Product')
-                                            ->required()
-                                            ->options($records->pluck('product.name', 'product_id')->toArray()),
+                                            ->required()->searchable()
+                                            ->options(function () {
+                                                return Product::where('active', 1)
+                                                    ->get(['name', 'id', 'code'])
+                                                    ->mapWithKeys(fn($product) => [
+                                                        $product->id => "{$product->code} - {$product->name}"
+                                                    ]);
+                                            })
+                                            ->getSearchResultsUsing(function (string $search): array {
+                                                return Product::where('active', 1)
+                                                    ->where(function ($query) use ($search) {
+                                                        $query->where('name', 'like', "%{$search}%")
+                                                            ->orWhere('code', 'like', "%{$search}%");
+                                                    })
+                                                    ->limit(50)
+                                                    ->get()
+                                                    ->mapWithKeys(fn($product) => [
+                                                        $product->id => "{$product->code} - {$product->name}"
+                                                    ])
+                                                    ->toArray();
+                                            })
+                                            ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                                            ->columnSpan(2)
+                                            ,
                                         Forms\Components\Select::make('unit_id')
                                             ->label('Unit')
                                             ->required()

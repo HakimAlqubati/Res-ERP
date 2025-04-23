@@ -8,12 +8,13 @@
                     <th colspan="3" class="no_border_right">
                         <h3>{{ __('Inventory Minimum Stock Report') }}</h3>
                     </th>
-                    <th colspan="1" class="no_border_left"
+                    <th colspan="2" class="no_border_left"
                         style="text-align: center; vertical-align: middle; border: none;">
                         <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
+                    <th>{{ __('lang.product_code') }}</th>
                     <th>{{ __('lang.product') }}</th>
                     <th>{{ __('lang.unit_name') }}</th>
                     <th>{{ __('lang.qty_in_stock') }}</th>
@@ -23,6 +24,9 @@
             <tbody>
                 @foreach ($reportData as $data)
                     <x-filament-tables::row>
+                        <x-filament-tables::cell>
+                            <strong>{{ $data['product_code'] }}</strong>
+                        </x-filament-tables::cell>
                         <x-filament-tables::cell>
                             <strong>{{ $data['product_name'] }}</strong>
                         </x-filament-tables::cell>

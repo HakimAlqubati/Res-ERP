@@ -199,6 +199,7 @@ class MultiProductsInventoryService
             }
             $result[] = [
                 'product_id' => $productId,
+                'product_code' => $product->code,
                 'product_name' => $product->name,
                 'unit_id' => $unitPrice['unit_id'],
                 'order' => $unitPrice['order'],
