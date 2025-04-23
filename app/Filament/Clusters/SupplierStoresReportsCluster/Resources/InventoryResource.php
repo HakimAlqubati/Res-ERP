@@ -121,7 +121,13 @@ class InventoryResource extends Resource
                     ->getOptionLabelUsing(
                         fn($value): ?string =>
                         optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
-                    )
+                    ),
+                SelectFilter::make('store_id')->options(fn() => \App\Models\Store::all()
+                    ->mapWithKeys(fn($store) => [
+                        $store->id => $store->name
+                    ])
+                    ->toArray())
+                    ->label(__('lang.store'))
 
             ])
             ->actions([
