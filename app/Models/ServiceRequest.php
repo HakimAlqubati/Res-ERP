@@ -146,7 +146,7 @@ class ServiceRequest extends Model implements Auditable
                     ->orWhere('created_by', auth()->user()->id)
                 ; // Add your default query here
             });
-        } elseif (isFinanceManager()) {
+        } elseif (isFinanceManager() && auth()->user()->has_employee) {
             static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                 $builder->where('assigned_to', auth()->user()->employee->id)
                     ->orWhere('created_by', auth()->user()->id)
