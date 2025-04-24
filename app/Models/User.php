@@ -201,7 +201,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isStoreManager()
     {
-        return in_array(5, $this->roles->pluck('id')->toArray());
+        return in_array(5, $this->roles->pluck('id')->toArray()) || isFinanceManager();
 
         if (getCurrentRole() == 5) {
             return true;
