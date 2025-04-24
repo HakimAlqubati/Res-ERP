@@ -28,7 +28,7 @@ class InventoryReportController extends Controller
     {
         $inventoryService = new \App\Services\MultiProductsInventoryService();
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination(1000);
-        // return $lowStockProducts;
+        return $lowStockProducts;
         foreach ($lowStockProducts as $product) {
             InventoryTransaction::create([
                 'product_id' => $product['product_id'],
