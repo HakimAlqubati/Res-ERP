@@ -35,7 +35,7 @@ class MultiProductsInventoryService
         }
 
         // Fetch all products or filter by category if provided
-        $query = Product::query();
+        $query = Product::query()->unmanufacturingCategory();
 
         if ($this->categoryId) {
             $query->where('category_id', $this->categoryId);

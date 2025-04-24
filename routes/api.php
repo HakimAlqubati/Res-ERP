@@ -102,6 +102,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
 });
+
+Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
 Route::get('/testInventoryReport2', function (Request $request) {

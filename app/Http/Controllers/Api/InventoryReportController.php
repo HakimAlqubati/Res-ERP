@@ -7,6 +7,7 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Services\BranchOrderSupplyReportService;
 use App\Services\MultiProductsInventoryService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class InventoryReportController extends Controller
@@ -16,6 +17,35 @@ class InventoryReportController extends Controller
         $inventoryService = new \App\Services\MultiProductsInventoryService();
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
 
+        return response()->json([
+            'data' => $lowStockProducts,
+            'totalPages' => $lowStockProducts->lastPage(),
+        ]);
+    }
+
+
+    public function minimumStockReportToSupply()
+    {
+        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination(1000);
+        // return $lowStockProducts;
+        foreach ($lowStockProducts as $product) {
+            InventoryTransaction::create([
+                'product_id' => $product['product_id'],
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                'quantity' => 1000,
+                'unit_id' => $product['unit_id'],
+                'movement_date' => Carbon::now(),
+                'package_size' => $product['package_size'],
+                'price' => $product['price'],
+                'transaction_date' => Carbon::now(),
+                'notes' => 'Stock supply for minimum stock products',
+                'transactionable_id' => $product['product_id'],
+                'transactionable_type' => 'ProductImport',
+                'store_id' => 1,
+                'waste_stock_percentage' => 0,
+            ]);
+        }
         return response()->json([
             'data' => $lowStockProducts,
             'totalPages' => $lowStockProducts->lastPage(),
