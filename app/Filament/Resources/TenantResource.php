@@ -195,7 +195,7 @@ class TenantResource extends Resource
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
-                    }),
+                    })->hidden(),
 
             ])
             ->bulkActions([
