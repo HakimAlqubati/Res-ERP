@@ -13,7 +13,7 @@
     body {
         font-family: 'examplefont', sans-serif !important;
         background-color: #ffffff;
-        direction: rtl !important;
+        direction: ltr !important;
         width: 22cm;
         /* width: 100%; */
         text-align: justify;
@@ -100,7 +100,7 @@
             <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}#  -{{$order->created_at}}</p>
         </div>
 
-        <div style="width: 33%;float: right">
+        <div style="width: 33%;float: left">
         </div>
     </div>
     <hr>
