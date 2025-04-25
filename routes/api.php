@@ -61,10 +61,10 @@ Route::get('/to_try_order', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
-Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'lastSeen'])->group(function () {
     Route::get('/report_products', [ProductController::class, 'reportProducts']);
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
     Route::apiResource('products', ProductController::class);

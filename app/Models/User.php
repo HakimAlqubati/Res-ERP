@@ -56,6 +56,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'last_seen_at',
     ];
     protected $auditInclude = [
         'name',
@@ -325,5 +326,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return $this->loginHistories()->latest()->first()?->created_at;
     }
 
-  
+    public function getLastSeenAttribute()
+    {
+        return $this->last_seen_at?->diffForHumans();
+    }
 }

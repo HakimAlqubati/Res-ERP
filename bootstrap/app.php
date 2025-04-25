@@ -18,9 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             ->group('tenant', [
                 \Spatie\Multitenancy\Http\Middleware\NeedsTenant::class,
                 \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
-            ]);
+            ])
+            ->web(append: [
+                \App\Http\Middleware\TrackUserLastActivity::class
+            ])
+        ;
         $middleware->alias([
             'check' => \App\Http\Middleware\CheckAuthenticated::class,
+            'lastSeen' => \App\Http\Middleware\TrackUserLastActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
