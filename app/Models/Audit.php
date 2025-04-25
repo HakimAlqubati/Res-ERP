@@ -43,6 +43,11 @@ class Audit extends Model
                 $detail = \App\Models\OrderDetails::find($this->auditable_id);
                 return $detail?->order_id;
             }
+
+            if ($this->auditable_type === 'App\\Models\\PurchaseInvoiceDetail') {
+                $purchaseDetail = \App\Models\PurchaseInvoiceDetail::find($this->auditable_id);
+                return $purchaseDetail?->purchaseInvoice?->id;
+            }
         } catch (\Throwable) {
         }
 
@@ -56,10 +61,7 @@ class Audit extends Model
                 $unitPrice = \App\Models\UnitPrice::find($this->auditable_id);
                 return $unitPrice?->product?->name;
             }
-            // if ($this->auditable_type === 'App\\Models\\PurchaseInvoiceDetail') {
-            //     $unitPrice = \App\Models\UnitPrice::find($this->auditable_id);
-            //     return $unitPrice?->product?->name;
-            // }
+            
             if ($this->auditable_type === 'App\\Models\\OrderDetails') {
                 return '-';
             }

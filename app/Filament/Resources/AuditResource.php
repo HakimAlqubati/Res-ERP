@@ -71,16 +71,17 @@ class AuditResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('auditable_type')
                     ->label('Model')
-                    ->options([
-                        'App\\Models\\Order' => 'Order',
-                        'App\\Models\\Product' => 'Product',
-                        'App\\Models\\UnitPrice' => 'UnitPrice',
-                        'App\\Models\\OrderDetails' => 'OrderDetails',
-                        // Add more if needed
-                    ])
+                    ->options(
+                        fn() => Audit::query()
+                            ->select('auditable_type')
+                            ->distinct()
+                            ->pluck('auditable_type')
+                            ->mapWithKeys(fn($type) => [$type => class_basename($type)])
+                            ->toArray()
+                    )
                     ->searchable(),
 
-                    ],FiltersLayout::AboveContent)
+            ], FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
             ])
