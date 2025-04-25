@@ -37,7 +37,7 @@ class AuditResource extends Resource
     {
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->sortable()->searchable(),
+                TextColumn::make('id')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('user.name')
                     ->label('User')
@@ -58,10 +58,10 @@ class AuditResource extends Resource
                     ->label('Model')
                     ->formatStateUsing(fn(string $state) => class_basename($state)),
 
-                TextColumn::make('auditable_id')->label('Model ID')->sortable(),
-                IconColumn::make('has_parent')->label('Has Parent')->boolean()->alignCenter(true),
-                TextColumn::make('parent_id')->label('Parent ID')->sortable(),
-                TextColumn::make('parent_name')->label('Parent Name'),
+                TextColumn::make('auditable_id')->label('Model ID')->sortable()->searchable()->alignCenter(true),
+                IconColumn::make('has_parent')->label('Has Parent')->boolean()->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('parent_id')->label('Parent ID')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                // TextColumn::make('parent_name')->label('Parent Name'),
 
                 TextColumn::make('created_at')
                     ->label('When')
