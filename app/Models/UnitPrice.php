@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\UnitPriceSyncService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -33,5 +34,13 @@ class UnitPrice extends Model implements Auditable
             'package_size' => $this->package_size,
             'order' => $this->order,
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $unitPrice) {
+            // Automatically update package sizes in related tables
+            UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
+        });
     }
 }
