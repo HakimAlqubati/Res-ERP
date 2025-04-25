@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -34,7 +35,7 @@ class AuditResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->searchable(),
 
@@ -68,8 +69,18 @@ class AuditResource extends Resource
                     ->tooltip(fn($record) => $record->created_at->format('Y-m-d H:i:s')),
             ])
             ->filters([
-                //
-            ])
+                Tables\Filters\SelectFilter::make('auditable_type')
+                    ->label('Model')
+                    ->options([
+                        'App\\Models\\Order' => 'Order',
+                        'App\\Models\\Product' => 'Product',
+                        'App\\Models\\UnitPrice' => 'UnitPrice',
+                        'App\\Models\\OrderDetails' => 'OrderDetails',
+                        // Add more if needed
+                    ])
+                    ->searchable(),
+
+                    ],FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
             ])
