@@ -320,4 +320,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->hasMany(UserLoginHistory::class);
     }
+    public function getLastLoginAtAttribute()
+    {
+        return $this->loginHistories()->latest()->first()?->created_at;
+    }
+
+  
 }
