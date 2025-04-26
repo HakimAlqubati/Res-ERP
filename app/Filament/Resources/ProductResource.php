@@ -417,7 +417,7 @@ class ProductResource extends Resource
                                                     $unitId = $get('unit_id');
                                                     $record = $livewire->form->getRecord();
 
-                                                    // static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
+                                                    static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
                                                 }
                                             ];
                                         })
