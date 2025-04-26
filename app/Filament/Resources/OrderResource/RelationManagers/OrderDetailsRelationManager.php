@@ -55,7 +55,7 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');
-                    }))
+                    }))->sortable()
                     ->alignCenter(true),
                 // Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
