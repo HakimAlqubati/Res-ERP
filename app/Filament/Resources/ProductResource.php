@@ -312,7 +312,7 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(4)
+                                ->columns(3)
                                 // ->hiddenOn(Pages\EditProduct::class)
 
                                 ->columnSpanFull()->minItems(1)
@@ -383,27 +383,47 @@ class ProductResource extends Resource
                                             }
                                         })
 
-                                        ->afterStateUpdated(function (Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $units = $get('../../units') ?? [];
-
-                                            $prices = collect($units)->pluck('price')->filter(fn($val) => $val !== null)->map(fn($v) => floatval($v))->values();
-
-                                            $isValid = true;
-                                            for ($i = 1; $i < count($prices); $i++) {
-                                                if ($prices[$i] < $prices[$i - 1]) {
-                                                    $isValid = false;
-                                                    break;
-                                                }
+                                            if (count($units) < 2) {
+                                                return; // لازم يكون فيه أكثر من وحدة عشان نوزع الأسعار
+                                            }
+                                            $unitsArray = array_values($units);
+                                            $firstUnit = $unitsArray[0] ?? null;
+                                            if (! $firstUnit) {
+                                                return;
                                             }
 
-                                            // if (! $isValid) {
-                                            //     showWarningNotifiMessage(
-                                            //         'Invalid Unit Prices',
-                                            //         'Each unit price must be greater than or equal to the previous unit.'
-                                            //     );
+                                            $firstPackageSize = $firstUnit['package_size'] ?? null;
+                                            $firstPrice = $firstUnit['price'] ?? null;
 
-                                            //     $set('price', null); // reset if invalid
-                                            // }
+                                            if (! $firstPackageSize || ! $firstPrice) {
+                                                return;
+                                            }
+
+                                            $newUnits = [];
+
+                                            foreach ($unitsArray as $index => $unit) {
+                                                if ($index === 0) {
+                                                    $newUnits[] = $unit; // أول وحدة السعر ثابت (الي عدله المستخدم)
+                                                    continue;
+                                                }
+
+                                                $currentPackageSize = $unit['package_size'] ?? 1;
+
+                                                // 🧮 الحساب:
+                                                $newPrice = round($firstPrice * ($currentPackageSize / $firstPackageSize), 2);
+
+                                                $newUnits[] = array_merge($unit, [
+                                                    'price' => $newPrice,
+                                                ]);
+                                            }
+
+                                            // لأننا استخدمنا array_values فالمفاتيح تغيرت، نحولهم بنفس المفاتيح القديمة
+                                            $originalKeys = array_keys($units);
+                                            $updatedUnits = array_combine($originalKeys, $newUnits);
+
+                                            $set('../../units', $updatedUnits);
                                         }),
                                     TextInput::make('package_size')->numeric()->default(0)->required()
                                         // ->maxLength(4)
@@ -440,10 +460,10 @@ class ProductResource extends Resource
                                                 $set('price', round(($firstPrice / $firstPackageSize) * $state, 2));
                                             }
                                         }),
-                                    Toggle::make('show_in_invoices')
-                                        ->inline(false)
-                                        ->label(__('lang.show_in_invoices'))
-                                        ->default(true),
+                                    // Toggle::make('show_in_invoices')
+                                    //     ->inline(false)
+                                    //     ->label(__('lang.show_in_invoices'))
+                                    //     ->default(true),
 
                                 ])->orderColumn('order')->reorderable()
                                 ->disabled(function (callable $get, $livewire) {
@@ -463,7 +483,7 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(4)
+                                ->columns(3)
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
@@ -571,10 +591,10 @@ class ProductResource extends Resource
                                         })
                                         ->required()
                                         ->label(__('lang.price')),
-                                    Toggle::make('show_in_invoices')
-                                        ->inline(false)
-                                        ->label(__('lang.show_in_invoices'))
-                                        ->default(true),
+                                    // Toggle::make('show_in_invoices')
+                                    //     ->inline(false)
+                                    //     ->label(__('lang.show_in_invoices'))
+                                    //     ->default(true),
 
 
                                 ])->orderColumn('order')
