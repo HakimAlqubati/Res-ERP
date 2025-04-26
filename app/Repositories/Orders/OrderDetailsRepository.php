@@ -80,25 +80,25 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
                             if (is_null($unitPrice)) {
                                 throw new \Exception('No unit price');
                             }
-                            // DB::table('orders_details')
-                            //     ->where('id', $orderDetailData['id'])
-                            //     ->update([
-                            //         'product_id' => $orderDetailData['product_id'],
-                            //         'unit_id' => $orderDetailData['unit_id'],
-                            //         'updated_by' => auth()->user()->id,
-                            //         'updated_at' => now(),
-                            //         'package_size' => $unitPrice->package_size,
-                            //         'quantity' => $orderDetailData['quantity'],
-                            //     ]);
+                            DB::table('orders_details')
+                                ->where('id', $orderDetailData['id'])
+                                ->update([
+                                    'product_id' => $orderDetailData['product_id'],
+                                    'unit_id' => $orderDetailData['unit_id'],
+                                    'updated_by' => auth()->user()->id,
+                                    'updated_at' => now(),
+                                    'package_size' => $unitPrice->package_size,
+                                    'available_quantity' => $orderDetailData['quantity'],
+                                ]);
 
-                            $orderDetail->update([
-                                'product_id' => $orderDetailData['product_id'],
-                                'unit_id' => $orderDetailData['unit_id'],
-                                'updated_by' => auth()->user()->id,
-                                'updated_at' => now(),
-                                'package_size' => $unitPrice->package_size,
-                                'available_quantity' => $orderDetailData['quantity'],
-                            ]);
+                            // $orderDetail->update([
+                            //     'product_id' => $orderDetailData['product_id'],
+                            //     'unit_id' => $orderDetailData['unit_id'],
+                            //     'updated_by' => auth()->user()->id,
+                            //     'updated_at' => now(),
+                            //     'package_size' => $unitPrice->package_size,
+                            //     'available_quantity' => $orderDetailData['quantity'],
+                            // ]);
 
                             $responses[] = [
                                 'success' => true,
