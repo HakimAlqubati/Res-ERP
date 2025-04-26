@@ -97,7 +97,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
                                 'updated_by' => auth()->user()->id,
                                 'updated_at' => now(),
                                 'package_size' => $unitPrice->package_size,
-                                'quantity' => $orderDetailData['quantity'],
+                                'available_quantity' => $orderDetailData['quantity'],
                             ]);
 
                             $responses[] = [
