@@ -40,6 +40,8 @@ class OrderDetailsRelationManager extends RelationManager
     {
         return $table->striped()
             ->columns([
+                Tables\Columns\TextColumn::make('id')->label(__('lang.id'))->alignCenter(true)->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
                 // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
                 Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code'))->alignCenter(true)->searchable(),
@@ -58,8 +60,7 @@ class OrderDetailsRelationManager extends RelationManager
                     }))->sortable()
                     ->alignCenter(true),
                 // Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
-                ,
+                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true),
             ])
             ->filters([
                 //
