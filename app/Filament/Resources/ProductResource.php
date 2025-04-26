@@ -47,6 +47,7 @@ use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use PDO;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -317,6 +318,7 @@ class ProductResource extends Resource
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
+
                                 ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
                                     return [
                                         function (string $attribute, $value, \Closure $fail) use ($get) {
@@ -334,12 +336,10 @@ class ProductResource extends Resource
                                             $unitPriceRecordId = str_replace('record-', '', $arguments['item']);
                                         }
 
-                                        if (!$unitPriceRecordId) {
-                                            showWarningNotifiMessage(__('⚠️ Invalid unit record.'));
-                                            throw new Halt(__('⚠️ Invalid unit record.'));
-                                        }
 
-                                        static::validateUnitDeletion($unitPriceRecordId, $record);
+                                        if ($unitPriceRecordId) {
+                                            static::validateUnitDeletion($unitPriceRecordId, $record);
+                                        }
                                     });
                                 })
                                 ->orderable('product_id')
@@ -349,7 +349,8 @@ class ProductResource extends Resource
                                         ->searchable()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
-                                        })->searchable(),
+                                        })->searchable()
+                                        ,
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
                                         // ->maxLength(6)
@@ -409,7 +410,17 @@ class ProductResource extends Resource
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(onBlur: true)
+                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                            return [
+                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                                    $productId = $livewire->form->getRecord()?->id ?? null;
+                                                    $unitId = $get('unit_id');
+                                                    $record = $livewire->form->getRecord();
 
+                                                    static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
+                                                }
+                                            ];
+                                        })
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $allUnits = $get('../../units') ?? [];
                                             $thisUnitId = $get('unit_id');
@@ -458,12 +469,10 @@ class ProductResource extends Resource
                                             $unitPriceRecordId = str_replace('record-', '', $arguments['item']);
                                         }
 
-                                        if (!$unitPriceRecordId) {
-                                            showWarningNotifiMessage(__('⚠️ Invalid unit record.'));
-                                            throw new Halt(__('⚠️ Invalid unit record.'));
-                                        }
 
-                                        static::validateUnitDeletion($unitPriceRecordId, $record);
+                                        if ($unitPriceRecordId) {
+                                            static::validateUnitDeletion($unitPriceRecordId, $record);
+                                        }
                                     });
                                 })
                                 ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
@@ -874,7 +883,7 @@ class ProductResource extends Resource
         }
     }
 
-    public static function validateUnitDeletion(string $unitPriceRecordId, ?Model $record = null): void
+    public static function validateUnitDeletion($unitPriceRecordId, ?Model $record = null): void
     {
         $unitId = UnitPrice::find($unitPriceRecordId)?->unit_id ?? null;
         $productId = $record?->id ?? null;
