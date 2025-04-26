@@ -66,51 +66,49 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
 
                         case 'update':
 
-                            // Calculate the new price based on the quantity and unit price.
-                            // $price = $orderDetailData['quantity'] * $unitPrice->price;
-                            // Update the order detail with the new values.
-                            // $orderDetail= OrderDetails::findOrFail($orderDetailData['id']);
-                            // $orderDetail->product_id = $orderDetailData['product_id'];
-                            // $orderDetail->unit_id = $orderDetailData['unit_id'];
-                            // $orderDetail->price = $price;
-                            // $orderDetail->updated_by = auth()->user()->id;
-                            // $orderDetail->save();
-
-
                             Log::info('updatingOrderDetail', [
                                 'orderDetailData' => $orderDetailData,
                             ]);
+                            $unitId = $orderDetail->unit_id;
+                            if (isset($orderDetailData['unit_id']) && !is_null($orderDetailData['unit_id'])) {
+                                $unitId = $orderDetailData['unit_id'];
+                            }
                             $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
-                                ->where('unit_id', $orderDetail->unit_id)
+                                ->where('unit_id', $unitId)
                                 ->first();
-                            DB::table('orders_details')
-                                ->where('id', $orderDetailData['id'])
-                                ->update([
-                                    'product_id' => $orderDetailData['product_id'],
-                                    'unit_id' => $orderDetailData['unit_id'],
-                                    'updated_by' => auth()->user()->id,
-                                    'updated_at' => now(),
-                                    'package_size' => $unitPrice->package_size,
-                                ]);
-                            // dd('s', $orderDetailData['operation'], $orderDetailData, $orderDetail);
+
+                            if (is_null($unitPrice)) {
+                                throw new \Exception('No unit price');
+                            }
+                            // DB::table('orders_details')
+                            //     ->where('id', $orderDetailData['id'])
+                            //     ->update([
+                            //         'product_id' => $orderDetailData['product_id'],
+                            //         'unit_id' => $orderDetailData['unit_id'],
+                            //         'updated_by' => auth()->user()->id,
+                            //         'updated_at' => now(),
+                            //         'package_size' => $unitPrice->package_size,
+                            //         'quantity' => $orderDetailData['quantity'],
+                            //     ]);
+
+                            $orderDetail->update([
+                                'product_id' => $orderDetailData['product_id'],
+                                'unit_id' => $orderDetailData['unit_id'],
+                                'updated_by' => auth()->user()->id,
+                                'updated_at' => now(),
+                                'package_size' => $unitPrice->package_size,
+                                'quantity' => $orderDetailData['quantity'],
+                            ]);
 
                             $responses[] = [
                                 'success' => true,
                                 'id' => $orderDetailData['id'],
+                                'data' => DB::table('orders_details')
+                                    ->where('id', $orderDetailData['id'])->get(),
                                 'message' => 'Order detail updated successfully',
                             ];
                             break;
 
-                        case 'destroy':
-
-                            // Delete the order detail.
-                            $orderDetail->delete();
-                            $responses[] = [
-                                'success' => true,
-                                'id' => $orderDetailData['id'],
-                                'message' => 'Order detail deleted successfully',
-                            ];
-                            break;
                         default:
 
                             throw new \Exception('Invalid operation: ' . $orderDetailData['operation']);
