@@ -349,8 +349,7 @@ class ProductResource extends Resource
                                         ->searchable()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
-                                        })->searchable()
-                                        ,
+                                        })->searchable(),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
                                         // ->maxLength(6)
@@ -447,6 +446,19 @@ class ProductResource extends Resource
                                         ->default(true),
 
                                 ])->orderColumn('order')->reorderable()
+                                ->disabled(function (callable $get, $livewire) {
+                                    $record = $livewire->form->getRecord();
+                                    if (! $record) return false;
+                                    $productId = $record->id ?? null;
+                                    if (! $productId) return false;
+
+                                    $hasRelatedData = \App\Models\OrderDetails::where('product_id', $productId)->exists() ||
+                                        \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
+                                        \App\Models\InventoryTransaction::where('product_id', $productId)->exists() ||
+                                        \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+
+                                    return $hasRelatedData;
+                                })
 
 
                         ]),
@@ -565,7 +577,22 @@ class ProductResource extends Resource
                                         ->default(true),
 
 
-                                ])->orderColumn('order')->reorderable()
+                                ])->orderColumn('order')
+                                ->reorderable()
+                                ->disabled(function (callable $get, $livewire) {
+                                    $record = $livewire->form->getRecord();
+                                    if (! $record) return false;
+                                    $productId = $record->id ?? null;
+                                    if (! $productId) return false;
+
+                                    $hasRelatedData = \App\Models\OrderDetails::where('product_id', $productId)->exists() ||
+                                        \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
+                                        \App\Models\InventoryTransaction::where('product_id', $productId)->exists() ||
+                                        \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+
+                                    return $hasRelatedData;
+                                })
+
 
 
                         ]),

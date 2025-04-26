@@ -40,7 +40,7 @@ class UnitPrice extends Model implements Auditable
     {
         static::saved(function (self $unitPrice) {
             // Automatically update package sizes in related tables
-            UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
+            // UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
         });
     }
 }
