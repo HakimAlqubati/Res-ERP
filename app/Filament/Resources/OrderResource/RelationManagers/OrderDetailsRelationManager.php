@@ -75,15 +75,16 @@ class OrderDetailsRelationManager extends RelationManager
                             ->numeric()->minValue(0)
                             ->default(fn($record) => $record->available_quantity),
                     ])
-                ])->action(function ($record, $data) {
-                    try {
-                        $record->update($data);
-                        showSuccessNotifiMessage('done');
-                    } catch (\Exception $e) {
-                        showWarningNotifiMessage('faild', $e->getMessage());
-                        throw $e;
-                    }
-                })
+                ])
+                    ->action(function ($record, $data) {
+                        try {
+                            $record->update($data);
+                            showSuccessNotifiMessage('done');
+                        } catch (\Exception $e) {
+                            showWarningNotifiMessage('faild', $e->getMessage());
+                            throw $e;
+                        }
+                    })->hidden()
                 // Tables\Actions\EditAction::make()->label(__('lang.change_or_add_purchase_supplier'))
                 //     ->using(function (Model $record, array $data): Model {
 

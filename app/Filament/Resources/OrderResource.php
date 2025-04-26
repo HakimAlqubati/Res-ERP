@@ -499,6 +499,7 @@ class OrderResource extends Resource
 
     public static function canDelete(Model $record): bool
     {
+        return false;
         if (isSuperAdmin()) {
             return true;
         }
@@ -507,6 +508,7 @@ class OrderResource extends Resource
 
     public static function canDeleteAny(): bool
     {
+        return false;
         if (isSuperAdmin()) {
             return true;
         }
@@ -516,6 +518,7 @@ class OrderResource extends Resource
 
     public static function canEdit(Model $record): bool
     {
+        return false;
         if (isSuperAdmin()) {
             return true;
         }
