@@ -314,7 +314,7 @@ class ProductResource extends Resource
                             Repeater::make('units')->label(__('lang.units_prices'))
                                 ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
-                                ->helperText('Note: Please add units in order from largest to smallest.')
+
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
@@ -447,19 +447,14 @@ class ProductResource extends Resource
 
                                 ])->orderColumn('order')->reorderable()
                                 ->disabled(function (callable $get, $livewire) {
-                                    $record = $livewire->form->getRecord();
-                                    if (! $record) return false;
-                                    $productId = $record->id ?? null;
-                                    if (! $productId) return false;
-
-                                    $hasRelatedData = \App\Models\OrderDetails::where('product_id', $productId)->exists() ||
-                                        \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
-                                        \App\Models\InventoryTransaction::where('product_id', $productId)->exists() ||
-                                        \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
-
-                                    return $hasRelatedData;
+                                    return static::isProductLocked($livewire->form->getRecord());
                                 })
-
+                                ->helperText(function (callable $get, $livewire) {
+                                    if (static::isProductLocked($livewire->form->getRecord())) {
+                                        return '⚠️ You cannot edit units because this product has related transactions';
+                                    }
+                                    return 'Please add units in order from largest to smallest.';
+                                })
 
                         ]),
                     Step::make('manafacturingProductunits')->label('Units')
@@ -470,7 +465,12 @@ class ProductResource extends Resource
                             Repeater::make('units')->label(__('lang.units_prices'))
                                 ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
-                                ->helperText('Note: Please add units in order from to largest.')
+                                ->helperText(function (callable $get, $livewire) {
+                                    if (static::isProductLocked($livewire->form->getRecord())) {
+                                        return '⚠️ You cannot edit units because this product has related transactions';
+                                    }
+                                    return 'Please add units in order from largest to smallest.';
+                                })
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
@@ -579,18 +579,9 @@ class ProductResource extends Resource
 
                                 ])->orderColumn('order')
                                 ->reorderable()
+
                                 ->disabled(function (callable $get, $livewire) {
-                                    $record = $livewire->form->getRecord();
-                                    if (! $record) return false;
-                                    $productId = $record->id ?? null;
-                                    if (! $productId) return false;
-
-                                    $hasRelatedData = \App\Models\OrderDetails::where('product_id', $productId)->exists() ||
-                                        \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
-                                        \App\Models\InventoryTransaction::where('product_id', $productId)->exists() ||
-                                        \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
-
-                                    return $hasRelatedData;
+                                    return static::isProductLocked($livewire->form->getRecord());
                                 })
 
 
@@ -1007,5 +998,22 @@ class ProductResource extends Resource
             }
             return;
         }
+    }
+
+    protected static function isProductLocked(?Model $record): bool
+    {
+        if (! $record) {
+            return false;
+        }
+
+        $productId = $record->id ?? null;
+        if (! $productId) {
+            return false;
+        }
+
+        return \App\Models\OrderDetails::where('product_id', $productId)->exists()
+            || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists()
+            || \App\Models\InventoryTransaction::where('product_id', $productId)->exists()
+            || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
     }
 }
