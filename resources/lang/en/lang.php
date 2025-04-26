@@ -198,5 +198,7 @@ return [
     'branch_type' => 'Branch Type',
     'only_one_hq_allowed' => 'Only one HQ branch is allowed. Please activate the existing one or delete it first.',
 
+    'show_in_invoices' => 'Display in Invoices \ Orders',
+
 
 ];

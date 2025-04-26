@@ -14,6 +14,7 @@ use App\Models\UnitPrice;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Actions\Action as ActionsAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -31,6 +32,7 @@ use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Exceptions\Halt;
 use Filament\Support\RawJs;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -309,12 +311,37 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(3)
+                                ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
-                                ->helperText('Note: Please add units in order from smallest to largest.')
+                                ->helperText('Note: Please add units in order from largest to smallest.')
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
+                                ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                    return [
+                                        function (string $attribute, $value, \Closure $fail) use ($get) {
+                                            $units = $get('units') ?? [];
+
+                                            // validation مع رسالة رسمية
+                                            ProductResource::validateUnitsPackageSizeOrder($units, $fail);
+                                        }
+                                    ];
+                                })
+                                ->deleteAction(function (ActionsAction $action) {
+                                    $action->before(function (array $arguments, Repeater $component, $record) {
+                                        $unitPriceRecordId = null;
+                                        if (str_starts_with($arguments['item'], 'record-')) {
+                                            $unitPriceRecordId = str_replace('record-', '', $arguments['item']);
+                                        }
+
+                                        if (!$unitPriceRecordId) {
+                                            showWarningNotifiMessage(__('⚠️ Invalid unit record.'));
+                                            throw new Halt(__('⚠️ Invalid unit record.'));
+                                        }
+
+                                        static::validateUnitDeletion($unitPriceRecordId, $record);
+                                    });
+                                })
                                 ->orderable('product_id')
                                 ->schema([
                                     Select::make('unit_id')->required()
@@ -403,6 +430,10 @@ class ProductResource extends Resource
                                                 $set('price', round(($firstPrice / $firstPackageSize) * $state, 2));
                                             }
                                         }),
+                                    Toggle::make('show_in_invoices')
+                                        ->inline(false)
+                                        ->label(__('lang.show_in_invoices'))
+                                        ->default(true),
 
                                 ])->orderColumn('order')->reorderable()
 
@@ -414,17 +445,62 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(3)
+                                ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
-                                ->helperText('Note: Please add units in order from smallest to largest.')
+                                ->helperText('Note: Please add units in order from to largest.')
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('unitPrices')
+                                ->deleteAction(function (ActionsAction $action) {
+                                    $action->before(function (array $arguments, Repeater $component, $record) {
+                                        $unitPriceRecordId = null;
+                                        if (str_starts_with($arguments['item'], 'record-')) {
+                                            $unitPriceRecordId = str_replace('record-', '', $arguments['item']);
+                                        }
+
+                                        if (!$unitPriceRecordId) {
+                                            showWarningNotifiMessage(__('⚠️ Invalid unit record.'));
+                                            throw new Halt(__('⚠️ Invalid unit record.'));
+                                        }
+
+                                        static::validateUnitDeletion($unitPriceRecordId, $record);
+                                    });
+                                })
+                                ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                    return [
+                                        function (string $attribute, $value, \Closure $fail) use ($get) {
+                                            $units = $get('units') ?? [];
+
+                                            // validation مع رسالة رسمية
+                                            ProductResource::validateUnitsPackageSizeOrder($units, $fail);
+                                        }
+                                    ];
+                                })
+
+
                                 ->orderable('product_id')
                                 ->schema([
                                     Select::make('unit_id')->required()
                                         ->label(__('lang.unit'))
                                         ->searchable()
+                                        ->dehydrated()
+                                        ->disabled(function ($get, $livewire) {
+                                            $productId = $livewire->form->getRecord()?->id ?? null;
+                                            $unitId = $get('unit_id');
+
+                                            if (!$productId || !$unitId) {
+                                                return false;
+                                            }
+
+                                            $isUsed =
+                                                \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                                \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                                \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                                \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+
+                                            return $isUsed;
+                                        })
+
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
                                         })->searchable()
@@ -437,10 +513,23 @@ class ProductResource extends Resource
                                             if ($finalPrice == 0) {
                                                 $finalPrice = $totalNetPrice;
                                             }
-                                            $set('price', $packageSize * $finalPrice);
+                                            $res = round($packageSize * $finalPrice, 2);
+                                            $set('price', $res);
                                         }),
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
+
+                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                            return [
+                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                                    $productId = $livewire->form->getRecord()?->id ?? null;
+                                                    $unitId = $get('unit_id');
+                                                    $record = $livewire->form->getRecord();
+
+                                                    static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
+                                                }
+                                            ];
+                                        })
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($record, $livewire, $set, $state, $get) {
                                             $productItems  = $get('../../productItems') ?? [];
@@ -449,7 +538,8 @@ class ProductResource extends Resource
                                             if ($finalPrice == 0) {
                                                 $finalPrice = $totalNetPrice;
                                             }
-                                            $set('price', $state * $finalPrice);
+                                            $res = round($state * $finalPrice, 2);
+                                            $set('price', $res);
                                         })
                                         ->label(__('lang.package_size')),
                                     TextInput::make('price')
@@ -459,7 +549,11 @@ class ProductResource extends Resource
                                             return $finalPrice;
                                         })
                                         ->required()
-                                        ->label(__('lang.price'))
+                                        ->label(__('lang.price')),
+                                    Toggle::make('show_in_invoices')
+                                        ->inline(false)
+                                        ->label(__('lang.show_in_invoices'))
+                                        ->default(true),
 
 
                                 ])->orderColumn('order')->reorderable()
@@ -777,6 +871,105 @@ class ProductResource extends Resource
             $set('units', $updatedUnits);
         } else {
             $set('../../units', $updatedUnits);
+        }
+    }
+
+    public static function validateUnitDeletion(string $unitPriceRecordId, ?Model $record = null): void
+    {
+        $unitId = UnitPrice::find($unitPriceRecordId)?->unit_id ?? null;
+        $productId = $record?->id ?? null;
+
+        if (!$productId || !$unitId) {
+            showWarningNotifiMessage(__('⚠️ Missing product or unit information.'));
+            throw new Halt(__('⚠️ Missing product or unit information.'));
+        }
+
+        $isUsed =
+            \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+            \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+            \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+            \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+
+        if ($isUsed) {
+            showWarningNotifiMessage(__('⚠️ Cannot delete this unit because it is already used in orders, invoices, or inventory.'));
+            throw new Halt(__('⚠️ Cannot delete this unit because it is already used.'));
+        }
+    }
+
+    public static function validatePackageSizeChange($productId, $unitId, $newValue, callable $fail, ?Model $record = null): void
+    {
+        if (! $productId || ! $unitId) {
+            return;
+        }
+
+        $unitPriceRecord = $record?->unitPrices()->where('unit_id', $unitId)->first();
+
+        if (! $unitPriceRecord) {
+            return;
+        }
+
+        $oldPackageSize = $unitPriceRecord->package_size ?? null;
+
+        if ($oldPackageSize !== null && floatval($newValue) != floatval($oldPackageSize)) {
+            $isUsed =
+                \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+
+            if ($isUsed) {
+                $fail(__('Package size modification is not allowed because this unit is already used in orders, invoices, or inventory.'));
+            }
+        }
+    }
+    public static function validateUnitsPackageSizeOrder(array $units, callable $fail = null): void
+    {
+        $packageSizes = collect($units)
+            ->pluck('package_size')
+            ->filter(fn($value) => $value !== null)
+            ->map(fn($value) => floatval($value))
+            ->values();
+
+        $count = $packageSizes->count();
+
+        if ($count === 0) {
+            return;
+        }
+
+        // 1️⃣ التأكد من الترتيب من الأكبر إلى الأصغر
+        for ($i = 1; $i < $count; $i++) {
+            if ($packageSizes[$i] > $packageSizes[$i - 1]) {
+                $message = __('⚠️ Package sizes must be sorted from largest to smallest.');
+                if ($fail) {
+                    $fail($message);
+                } else {
+                    showWarningNotifiMessage($message);
+                }
+                return;
+            }
+        }
+
+        // 2️⃣ التأكد أن آخر واحدة فقط = 1
+        if ($packageSizes->last() !== 1.0) {
+            $message = __('⚠️ The last unit package size must be exactly 1.');
+            if ($fail) {
+                $fail($message);
+            } else {
+                showWarningNotifiMessage($message);
+            }
+            return;
+        }
+
+        // 3️⃣ ممنوع أكثر من واحدة قيمتها = 1
+        $oneCount = $packageSizes->filter(fn($size) => $size === 1.0)->count();
+        if ($oneCount > 1) {
+            $message = __('⚠️ Only one unit can have a package size of 1.');
+            if ($fail) {
+                $fail($message);
+            } else {
+                showWarningNotifiMessage($message);
+            }
+            return;
         }
     }
 }

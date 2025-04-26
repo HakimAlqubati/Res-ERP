@@ -14,8 +14,8 @@ class UnitPrice extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'unit_prices';
     public $primaryKey = 'id';
-    protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
-    protected $auditInclude = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
+    protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity','show_in_invoices'];
+    protected $auditInclude = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity','show_in_invoices'];
     public function product()
     {
         return $this->belongsTo(Product::class);
