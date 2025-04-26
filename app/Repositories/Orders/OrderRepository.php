@@ -445,6 +445,7 @@ class OrderRepository implements OrderRepositoryInterface
                     ]),
                 ],
                 'notes' => 'string',
+                'quantity' => 'nullable|numeric|min:0.01',
                 'full_quantity' => 'boolean',
                 'active' => 'boolean',
             ]);
