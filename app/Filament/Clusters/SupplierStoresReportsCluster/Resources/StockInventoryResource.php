@@ -89,34 +89,45 @@ class StockInventoryResource extends Resource
                                 ->label('Product')->searchable()
                                 ->options(function () {
                                     return Product::where('active', 1)
-                                        // ->unmanufacturingCategory()
-                                        ->pluck('name', 'id');
+                                        ->get(['name', 'id', 'code'])
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ]);
                                 })
-                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                    // ->unmanufacturingCategory()
-                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->name)
+                                ->getSearchResultsUsing(function (string $search): array {
+                                    return Product::where('active', 1)
+                                        ->where(function ($query) use ($search) {
+                                            $query->where('name', 'like', "%{$search}%")
+                                                ->orWhere('code', 'like', "%{$search}%");
+                                        })
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ])
+                                        ->toArray();
+                                })
+                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
 
                             Select::make('unit_id')->label('Unit')
-                                ->options(
-                                    function (callable $get) {
+                                ->options(function (callable $get) {
+                                    $product = \App\Models\Product::find($get('product_id'));
+                                    if (! $product) return [];
 
-                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
-
-                                        if ($unitPrices)
-                                            return array_column($unitPrices, 'unit_name', 'unit_id');
-                                        return [];
-                                    }
-                                )
+                                    return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                })
                                 ->searchable()
                                 ->reactive()
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
-                                    )->where('unit_id', $state)->first();
+                                    )
+                                        ->showInInvoices()
+                                        ->where('unit_id', $state)->first();
 
                                     $inventoryService = new InventoryService($get('product_id'), $state, $get('store_id'));
                                     $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;

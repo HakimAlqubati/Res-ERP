@@ -45,7 +45,9 @@ class InventoryResource extends Resource
             ->columns([
 
                 Tables\Columns\TextColumn::make('id')
-                    ->label('ID'),
+                    ->label('ID')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('product.code')
+                    ->label('Product Code'),
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product'),
 
@@ -70,12 +72,19 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('store.name')
                     ->label('Store'),
 
-                Tables\Columns\TextColumn::make('remaining_qty')->hidden()
-                    ->label('Remaining Qty')->alignCenter(true)
-                    ->getStateUsing(fn($record) => $record->getRemainingQtyAttribute()),
+
 
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes'),
+                Tables\Columns\TextColumn::make('transactionable_id')
+                    ->label('Transaction ID')->searchable(isIndividual: true)
+                    ->sortable()->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('formatted_transactionable_type')
+                    ->label('Transaction Type')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
@@ -86,10 +95,40 @@ class InventoryResource extends Resource
                 //         Forms\Components\TextInput::make('value')->label('Product Name'),
                 //     ]),
 
-                SelectFilter::make('product_id')
-                    ->label('Product')
-                    ->options(Product::active()->get()->pluck('display_name', 'id')->toArray())
-                    ->searchable()->multiple()
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))
+                    ->multiple()
+                    ->searchable()
+                    ->options(fn() => Product::where('active', 1)
+                        ->get()
+                        ->mapWithKeys(fn($product) => [
+                            $product->id => "{$product->code} - {$product->name}"
+                        ])
+                        ->toArray())
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(
+                        fn($value): ?string =>
+                        optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                    ),
+                SelectFilter::make('store_id')->options(fn() => \App\Models\Store::all()
+                    ->mapWithKeys(fn($store) => [
+                        $store->id => $store->name
+                    ])
+                    ->toArray())
+                    ->label(__('lang.store'))
+
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
@@ -120,7 +159,7 @@ class InventoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isFinanceManager() || isSystemManager()) {
             return true;
         }
         return false;

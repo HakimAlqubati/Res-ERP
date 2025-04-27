@@ -56,6 +56,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'last_seen_at',
     ];
     protected $auditInclude = [
         'name',
@@ -201,7 +202,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isStoreManager()
     {
-        return in_array(5, $this->roles->pluck('id')->toArray());
+        return in_array(5, $this->roles->pluck('id')->toArray()) || isFinanceManager();
 
         if (getCurrentRole() == 5) {
             return true;
@@ -319,5 +320,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function loginHistories()
     {
         return $this->hasMany(UserLoginHistory::class);
+    }
+    public function getLastLoginAtAttribute()
+    {
+        return $this->loginHistories()->latest()->first()?->created_at;
+    }
+
+    public function getLastSeenAttribute()
+    {
+        return $this->last_seen_at?->diffForHumans();
     }
 }

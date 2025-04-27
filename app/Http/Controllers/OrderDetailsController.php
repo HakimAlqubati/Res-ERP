@@ -77,7 +77,7 @@ class OrderDetailsController extends Controller
 
     public function update(Request $request)
     {
-        $this->orderDetailsRepository->updateWithFifo($request);
+        return $this->orderDetailsRepository->updateWithFifo($request);
         $pricing_method = getCalculatingPriceOfOrdersMethod();
 
         if ($pricing_method == 'fifo') {

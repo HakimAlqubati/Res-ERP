@@ -185,23 +185,21 @@ class PurchaseInvoiceResource extends Resource
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
                                 ->disabledOn('edit')
-                                ->options(
-                                    function (callable $get) {
+                                ->options(function (callable $get) {
+                                    $product = \App\Models\Product::find($get('product_id'));
+                                    if (! $product) return [];
 
-                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
-
-                                        if ($unitPrices)
-                                            return array_column($unitPrices, 'unit_name', 'unit_id');
-                                        return [];
-                                    }
-                                )
+                                    return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                })
                                 ->searchable()
                                 ->reactive()
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
-                                    )->where('unit_id', $state)->first();
+                                    )
+                                        ->showInInvoices()
+                                        ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price ?? 0);
 
                                     $set('total_price', ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')));
@@ -404,7 +402,7 @@ class PurchaseInvoiceResource extends Resource
         return static::can('create');
     }
 
-    
+
     public static function canEdit(Model $record): bool
     {
         if (isSuperVisor()) {

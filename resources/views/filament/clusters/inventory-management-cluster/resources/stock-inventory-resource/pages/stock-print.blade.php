@@ -120,8 +120,7 @@
     <!-- Table Section -->
     <table>
         <thead>
-            <tr>
-                <th>Product ID</th>
+            <tr> 
                 <th>Product Code</th>
                 <th>Product Name</th>
                 <th>Unit</th>
@@ -132,8 +131,7 @@
             @foreach ($products as $product)
                 @if (!empty($product->unitPrices))
                     @foreach ($product->unitPrices as $unit)
-                        <tr>
-                            <td>{{ $product->id }}</td>
+                        <tr> 
                             <td>{{ $product->code }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ $unit->unit->name ?? 'N/A' }}</td> <!-- Display Unit Name -->

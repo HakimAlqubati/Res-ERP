@@ -61,10 +61,10 @@ Route::get('/to_try_order', function (Request $request) {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
-Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'lastSeen'])->group(function () {
     Route::get('/report_products', [ProductController::class, 'reportProducts']);
     Route::get('/user', [AuthController::class, 'getCurrnetUser']);
     Route::apiResource('products', ProductController::class);
@@ -102,6 +102,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
 });
+
+Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
 Route::get('/testInventoryReport2', function (Request $request) {

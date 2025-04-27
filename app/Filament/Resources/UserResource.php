@@ -313,7 +313,8 @@ class UserResource extends Resource
 
                 Tables\Columns\IconColumn::make('is_blocked')
                     ->boolean()->alignCenter(true)
-                    ->label(__("lang.is_blocked")),
+                    ->label(__("lang.is_blocked"))->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('last_login_at')->label('Last Login')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')
@@ -428,7 +429,7 @@ class UserResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])->withMax('loginHistories as last_login_at', 'created_at');
     }
 
     public static function canViewAny(): bool

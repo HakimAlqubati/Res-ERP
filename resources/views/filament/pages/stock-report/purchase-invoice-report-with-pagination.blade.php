@@ -13,7 +13,7 @@
                 </th>
             </x-filament-tables::row>
             <x-filament-tables::row>
-                <th>{{ __('lang.product_id') }} </th>
+                <th>{{ __('lang.product_code') }} </th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
                 <th>{{ __('lang.quantity') }}</th>
@@ -38,7 +38,7 @@
                     $sum_unit_price += $unit_price;
                 @endphp
                 <x-filament-tables::row>
-                    <x-filament-tables::cell> {{ $invoice_item->product_id }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $invoice_item->product_code }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $invoice_item->product_name }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $invoice_item->unit_name }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $invoice_item->quantity }} </x-filament-tables::cell>

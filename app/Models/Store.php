@@ -75,6 +75,9 @@ class Store extends Model implements Auditable
 
     public function scopeWithManagedStores($query)
     {
+        if(isFinanceManager()){
+            return $query;
+        }
         if (isStoreManager()) {
             return $query->whereIn('id', auth()->user()->managed_stores_ids);
         } else {

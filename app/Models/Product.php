@@ -65,6 +65,10 @@ class Product extends Model implements Auditable
 
     public function unitPrices()
     {
+        return $this->hasMany(UnitPrice::class)->where('show_in_invoices', 1);
+    }
+    public function allUnitPrices()
+    {
         return $this->hasMany(UnitPrice::class);
     }
 

@@ -40,8 +40,11 @@ class OrderDetailsRelationManager extends RelationManager
     {
         return $table->striped()
             ->columns([
+                Tables\Columns\TextColumn::make('id')->label(__('lang.id'))->alignCenter(true)->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
                 // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
+                Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code'))->alignCenter(true)->searchable(),
                 Tables\Columns\TextColumn::make('product_id')->label(__('lang.product_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
                 // Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),
@@ -54,11 +57,10 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');
-                    }))
+                    }))->sortable()
                     ->alignCenter(true),
                 // Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
-                ,
+                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true),
             ])
             ->filters([
                 //
@@ -73,15 +75,16 @@ class OrderDetailsRelationManager extends RelationManager
                             ->numeric()->minValue(0)
                             ->default(fn($record) => $record->available_quantity),
                     ])
-                ])->action(function ($record, $data) {
-                    try {
-                        $record->update($data);
-                        showSuccessNotifiMessage('done');
-                    } catch (\Exception $e) {
-                        showWarningNotifiMessage('faild', $e->getMessage());
-                        throw $e;
-                    }
-                })
+                ])
+                    ->action(function ($record, $data) {
+                        try {
+                            $record->update($data);
+                            showSuccessNotifiMessage('done');
+                        } catch (\Exception $e) {
+                            showWarningNotifiMessage('faild', $e->getMessage());
+                            throw $e;
+                        }
+                    })->hidden()
                 // Tables\Actions\EditAction::make()->label(__('lang.change_or_add_purchase_supplier'))
                 //     ->using(function (Model $record, array $data): Model {
 

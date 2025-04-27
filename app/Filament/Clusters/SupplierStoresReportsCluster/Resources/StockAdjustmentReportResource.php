@@ -51,6 +51,7 @@ class StockAdjustmentReportResource extends Resource
     {
         return $table->striped()
             ->columns([
+                TextColumn::make('product.code'),
                 TextColumn::make('product.name'),
                 TextColumn::make('unit.name'),
                 TextColumn::make('package_size')->alignCenter(true),

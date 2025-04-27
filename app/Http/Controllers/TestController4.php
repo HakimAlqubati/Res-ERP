@@ -35,7 +35,7 @@ class TestController4 extends Controller
         if ($request->has('customer_id')) {
             $where[] = 'o.customer_id = ' . (int) $request->customer_id;
         }
- 
+
 
         if ($request->has('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
@@ -119,9 +119,16 @@ class TestController4 extends Controller
 
         $branches = DB::table('branches')->where('active', 1)
             ->get(['id', 'name'])->keyBy('id');
-
+        $orderIds = collect($orders)->pluck('id')->unique()->toArray();
+        $ordersWithPreviousQty = DB::table('orders_details')
+            ->whereIn('order_id', $orderIds)
+            ->where('is_created_due_to_qty_preivous_order', 1)
+            ->pluck('order_id')
+            ->unique()
+            ->flip();
         // 🧩 Transform result
-        $orders = collect($orders)->map(function ($order) use ($branches, $customers) {
+        $orders = collect($orders)->map(function ($order) use ($branches, $customers, $ordersWithPreviousQty) {
+
             return [
                 'id' => $order->id,
                 'active' => $order->active,
@@ -133,6 +140,8 @@ class TestController4 extends Controller
                 'total_price' => 0,
                 'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i:s'),
                 'updated_at' => Carbon::parse($order->updated_at)->format('Y-m-d H:i:s'),
+                'has_created_due_to_previous_order' => isset($ordersWithPreviousQty[$order->id]),
+
             ];
         });
 

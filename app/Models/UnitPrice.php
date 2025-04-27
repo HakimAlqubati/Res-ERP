@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\UnitPriceSyncService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -13,8 +14,8 @@ class UnitPrice extends Model implements Auditable
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
     protected $table = 'unit_prices';
     public $primaryKey = 'id';
-    protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
-    protected $auditInclude = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity'];
+    protected $fillable = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity','show_in_invoices'];
+    protected $auditInclude = ['unit_id', 'product_id', 'price', 'package_size', 'order', 'minimum_quantity','show_in_invoices'];
     public function product()
     {
         return $this->belongsTo(Product::class);
@@ -33,5 +34,19 @@ class UnitPrice extends Model implements Auditable
             'package_size' => $this->package_size,
             'order' => $this->order,
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $unitPrice) {
+            // Automatically update package sizes in related tables
+            // UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
+        });
+    }
+
+
+    public function scopeShowInInvoices($query)
+    {
+        return $query->where('show_in_invoices', true);
     }
 }

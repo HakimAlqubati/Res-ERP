@@ -11,6 +11,7 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
+
             <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
                     <x-filament-tables::row class="header_report">
@@ -33,6 +34,7 @@
                         </th>
                     </x-filament-tables::row>
                     <x-filament-tables::row>
+                        <th>Product Code</th>
                         <th>Product Name</th>
                         <th>Unit ID</th>
                         <th>Unit Name</th>
@@ -45,7 +47,10 @@
                         @foreach ($productReport as $data)
                             <x-filament-tables::row>
                                 <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    <strong>{{ $data['product_name'] .'-'. $data['product_id'] }}</strong>
+                                    <strong>{{ $data['product_code'] }}</strong>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                    <strong>{{ $data['product_name'] }}</strong>
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                     {{ $data['unit_id'] }}
@@ -64,6 +69,8 @@
                     @endforeach
                 </tbody>
             </x-filament-tables::table>
+
+
         </div>
 
         {{-- Pagination Controls --}}
@@ -72,6 +79,20 @@
             @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
                 {{ $pagination->links() }}
             @endif
+            <div class="flex justify-end mb-2">
+                <form method="GET">
+                    <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
+                    <select name="perPage" id="perPage" onchange="this.form.submit()"
+                        class="border border-gray-300 px-3 py-1 rounded-md text-sm">
+                        @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
+                            <option value="{{ $option }}"
+                                {{ request('perPage', 15) == $option ? 'selected' : '' }}>
+                                {{ is_numeric($option) ? $option : 'All' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
         </div>
         {{-- @endif --}}
     @else
