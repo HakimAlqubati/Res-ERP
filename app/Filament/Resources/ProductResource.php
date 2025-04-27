@@ -235,7 +235,7 @@ class ProductResource extends Resource
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state ?? 0, $get('qty_waste_percentage') ?? 0));
 
                                             static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required(),
+                                        })->required()->minValue(0),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
                                         // ->numeric()
@@ -262,7 +262,7 @@ class ProductResource extends Resource
                                             $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
                                             $set('total_price', $res);
                                             static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required(),
+                                        })->required()->minValue(0),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
@@ -440,7 +440,7 @@ class ProductResource extends Resource
                                             $updatedUnits = array_combine($originalKeys, $newUnits);
 
                                             $set('../../units', $updatedUnits);
-                                        }),
+                                        })->minValue(0),
                                     TextInput::make('package_size')
 
                                         ->numeric()->default(0)->required()->minValue(0)
@@ -590,7 +590,7 @@ class ProductResource extends Resource
                                         }),
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
-
+                                        ->minValue(0)
                                         ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
                                             return [
                                                 function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
@@ -619,7 +619,7 @@ class ProductResource extends Resource
                                         ->default(function ($record, $livewire) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             return $finalPrice;
-                                        })
+                                        })->minValue(0)
                                         ->required()
                                         ->label(__('lang.price')),
 
