@@ -489,7 +489,7 @@ class ProductResource extends Resource
                                         ->disabled(function (callable $get, $livewire) {
                                             return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
                                         })
-                                        ,
+                                        ->dehydrated(),
 
                                 ])
                                 ->orderColumn('order')
@@ -995,7 +995,7 @@ class ProductResource extends Resource
         }
     }
     public static function validateUnitsPackageSizeOrder(array $units, callable $fail = null): void
-    {
+    { 
         // ✅ أول شيء: ناخذ فقط الوحدات الظاهرة في الفواتير
         $filteredUnits = collect($units)
             ->filter(fn($unit) => ($unit['show_in_invoices'] ?? false)) // فقط التي show_in_invoices = true
