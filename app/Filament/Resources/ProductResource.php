@@ -348,7 +348,7 @@ class ProductResource extends Resource
                                 ->schema([
                                     Select::make('unit_id')->required()
                                         ->label(__('lang.unit'))
-                                        ->searchable()
+                                        ->searchable()->distinct()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
                                         })->searchable()
@@ -551,6 +551,7 @@ class ProductResource extends Resource
                                 ->schema([
                                     Select::make('unit_id')->required()
                                         ->label(__('lang.unit'))
+                                        ->distinct()
                                         ->searchable()
                                         ->dehydrated()
                                         ->disabled(function ($get, $livewire) {
@@ -995,8 +996,7 @@ class ProductResource extends Resource
         }
     }
     public static function validateUnitsPackageSizeOrder(array $units, callable $fail = null): void
-    { 
-        // ✅ أول شيء: ناخذ فقط الوحدات الظاهرة في الفواتير
+    {
         $filteredUnits = collect($units)
             ->filter(fn($unit) => ($unit['show_in_invoices'] ?? false)) // فقط التي show_in_invoices = true
             ->values(); // إعادة ترتيب الفهرس
