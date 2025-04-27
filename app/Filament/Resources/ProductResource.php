@@ -351,12 +351,26 @@ class ProductResource extends Resource
                                         ->searchable()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
-                                        })->searchable(),
+                                        })->searchable()
+                                        ->disabled(function (callable $get, $livewire) {
+                                            $isNew = is_null($get('id'));
+                                            if ($isNew) {
+                                                return false;
+                                            }
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                        }),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
                                         // ->maxLength(6)
                                         // ->mask(RawJs::make('$money($input)'))
                                         // ->stripCharacters(',')   
+                                        ->disabled(function (callable $get, $livewire) {
+                                            $isNew = is_null($get('id'));
+                                            if ($isNew) {
+                                                return false;
+                                            }
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                        })
                                         ->live(onBlur: true)
 
                                         ->afterStateHydrated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get) {
@@ -461,19 +475,31 @@ class ProductResource extends Resource
                                             if ($firstPrice && $state != 0) {
                                                 $set('price', round(($firstPrice / $firstPackageSize) * $state, 7));
                                             }
+                                        })->disabled(function (callable $get, $livewire) {
+                                            $isNew = is_null($get('id'));
+                                            if ($isNew) {
+                                                return false;
+                                            }
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
                                         }),
                                     Toggle::make('show_in_invoices')
                                         ->inline(false)
                                         ->label(__('lang.show_in_invoices'))
-                                        ->default(true),
+                                        ->default(false)
+                                        ->disabled(function (callable $get, $livewire) {
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                        })
+                                        ,
 
-                                ])->orderColumn('order')->reorderable()
-                                ->disabled(function (callable $get, $livewire) {
-                                    return static::isProductLocked($livewire->form->getRecord());
-                                })
+                                ])
+                                ->orderColumn('order')
+                                ->reorderable()
+                                // ->disabled(function (callable $get, $livewire) {
+                                //     return static::isProductLocked($livewire->form->getRecord());
+                                // })
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
-                                        return '⚠️ You cannot edit units because this product has related transactions';
+                                        return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing or assembly purposes only.';
                                     }
                                     return 'Please add units in order from largest to smallest.';
                                 })
@@ -489,7 +515,7 @@ class ProductResource extends Resource
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
-                                        return '⚠️ You cannot edit units because this product has related transactions';
+                                        return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing or assembly purposes only.';
                                     }
                                     return 'Please add units in order from largest to smallest.';
                                 })
@@ -593,7 +619,7 @@ class ProductResource extends Resource
                                         })
                                         ->required()
                                         ->label(__('lang.price')),
-                                    
+
 
 
                                 ])->orderColumn('order')
@@ -925,16 +951,16 @@ class ProductResource extends Resource
         $unitId = UnitPrice::find($unitPriceRecordId)?->unit_id ?? null;
         $productId = $record?->id ?? null;
 
-        if (!$productId || !$unitId) {
+        if (!$productId) {
             showWarningNotifiMessage(__('⚠️ Missing product or unit information.'));
             throw new Halt(__('⚠️ Missing product or unit information.'));
         }
 
         $isUsed =
-            \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+            \App\Models\OrderDetails::where('product_id', $productId)->exists() ||
+            \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
+            \App\Models\InventoryTransaction::where('product_id', $productId)->exists() ||
+            \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
 
         if ($isUsed) {
             showWarningNotifiMessage(__('⚠️ Cannot delete this unit because it is already used in orders, invoices, or inventory.'));
