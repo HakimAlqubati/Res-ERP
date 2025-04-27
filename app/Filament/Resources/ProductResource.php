@@ -441,7 +441,9 @@ class ProductResource extends Resource
 
                                             $set('../../units', $updatedUnits);
                                         }),
-                                    TextInput::make('package_size')->numeric()->default(0)->required()
+                                    TextInput::make('package_size')
+
+                                        ->numeric()->default(0)->required()->minValue(0)
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(onBlur: true)
@@ -499,7 +501,7 @@ class ProductResource extends Resource
                                 // })
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
-                                        return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing or assembly purposes only.';
+                                        return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing';
                                     }
                                     return 'Please add units in order from largest to smallest.';
                                 })
@@ -515,7 +517,7 @@ class ProductResource extends Resource
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
-                                        return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing or assembly purposes only.';
+                                        return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing';
                                     }
                                     return 'Please add units in order from largest to smallest.';
                                 })
