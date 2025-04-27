@@ -188,7 +188,9 @@ class ProductResource extends Resource
                                         ->options(
                                             function (callable $get) {
 
-                                                $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
+                                                $unitPrices = UnitPrice::where('product_id', $get('product_id'))
+                                                    ->orderBy('package_size', 'asc')
+                                                    ->get()->toArray();
 
                                                 if ($unitPrices)
                                                     return array_column($unitPrices, 'unit_name', 'unit_id');
@@ -312,12 +314,12 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(3)
+                                ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
 
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
-                                ->relationship('unitPrices')
+                                ->relationship('allUnitPrices')
 
                                 ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
                                     return [
@@ -457,13 +459,13 @@ class ProductResource extends Resource
                                             $firstPackageSize = $firstUnit['package_size'] ?? null;
 
                                             if ($firstPrice && $state != 0) {
-                                                $set('price', round(($firstPrice / $firstPackageSize) * $state, 2));
+                                                $set('price', round(($firstPrice / $firstPackageSize) * $state, 7));
                                             }
                                         }),
-                                    // Toggle::make('show_in_invoices')
-                                    //     ->inline(false)
-                                    //     ->label(__('lang.show_in_invoices'))
-                                    //     ->default(true),
+                                    Toggle::make('show_in_invoices')
+                                        ->inline(false)
+                                        ->label(__('lang.show_in_invoices'))
+                                        ->default(true),
 
                                 ])->orderColumn('order')->reorderable()
                                 ->disabled(function (callable $get, $livewire) {
@@ -493,7 +495,7 @@ class ProductResource extends Resource
                                 })
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
-                                ->relationship('unitPrices')
+                                ->relationship('allUnitPrices')
                                 ->deleteAction(function (ActionsAction $action) {
                                     $action->before(function (array $arguments, Repeater $component, $record) {
                                         $unitPriceRecordId = null;
@@ -591,10 +593,7 @@ class ProductResource extends Resource
                                         })
                                         ->required()
                                         ->label(__('lang.price')),
-                                    // Toggle::make('show_in_invoices')
-                                    //     ->inline(false)
-                                    //     ->label(__('lang.show_in_invoices'))
-                                    //     ->default(true),
+                                    
 
 
                                 ])->orderColumn('order')
@@ -971,7 +970,12 @@ class ProductResource extends Resource
     }
     public static function validateUnitsPackageSizeOrder(array $units, callable $fail = null): void
     {
-        $packageSizes = collect($units)
+        // ✅ أول شيء: ناخذ فقط الوحدات الظاهرة في الفواتير
+        $filteredUnits = collect($units)
+            ->filter(fn($unit) => ($unit['show_in_invoices'] ?? false)) // فقط التي show_in_invoices = true
+            ->values(); // إعادة ترتيب الفهرس
+
+        $packageSizes = $filteredUnits
             ->pluck('package_size')
             ->filter(fn($value) => $value !== null)
             ->map(fn($value) => floatval($value))

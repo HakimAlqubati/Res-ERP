@@ -43,4 +43,10 @@ class UnitPrice extends Model implements Auditable
             // UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
         });
     }
+
+
+    public function scopeShowInInvoices($query)
+    {
+        return $query->where('show_in_invoices', true);
+    }
 }

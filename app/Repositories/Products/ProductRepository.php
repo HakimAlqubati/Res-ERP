@@ -24,6 +24,7 @@ class ProductRepository implements ProductRepositoryInterface
     {
         // Get the value of the ID and category ID filters from the request, or null if they're not set.
         $id = $request->input('id');
+        $code = $request->input('code');
         $categoryId = $request->input('category_id');
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
 
@@ -47,6 +48,10 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($id, function ($query) use ($id) {
                 return $query->where('id', $id);
             })
+            ->when($code, function ($query) use ($code) {
+                return $query->where('code', $code);
+            })
+            
             ->when($categoryId, function ($query) use ($categoryId) {
                 return $query->where('category_id', $categoryId);
             });
@@ -74,7 +79,7 @@ class ProductRepository implements ProductRepositoryInterface
         // $sql = vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
         //     return is_numeric($binding) ? $binding : "'{$binding}'";
         // })->toArray());
-        
+
         // dd($sql);
         $products = $query->get();
 
