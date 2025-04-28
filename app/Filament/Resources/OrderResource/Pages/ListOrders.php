@@ -5,6 +5,8 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource;
 use App\Imports\OrdersImport;
 use App\Models\Order;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -24,9 +26,9 @@ class ListOrders extends ListRecords
     }
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make(),
-            Actions\Action::make('importOrders')
+        return [ 
+            CreateAction::make(),
+            Action::make('importOrders')
                 ->label('Import Orders')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->form([
@@ -39,6 +41,7 @@ class ListOrders extends ListRecords
                     // ->rules(['.xls', '.xlsx'])
                 ])
                 ->color('success')
+                ->visible(fn (): bool => auth()->user()->can('import_order'))
                 ->action(function (array $data) {
                     $filePath = 'public/' . $data['file'];
                     $import = new OrdersImport();

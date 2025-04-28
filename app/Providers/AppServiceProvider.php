@@ -21,9 +21,11 @@ use App\Observers\TaskObserver;
 use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
+use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Livewire\DatabaseNotifications;
 use Filament\Notifications\Livewire\Notifications;
 use Filament\Notifications\Notification as BaseNotification;
+use Filament\Resources\Resource;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Enums\Alignment;
@@ -62,17 +64,27 @@ class AppServiceProvider extends ServiceProvider
         // NotificationAttendance::configureUsing(function (NotificationAttendance $notification): void {
         //     $notification->view('filament.notifications.notification');
         // });
-        
-        
-        
+
+
+
         // Notifications::alignment(Alignment::Start);
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
             $switch
                 ->locales(['ar', 'en']); // also accepts a closure
         });
+        FilamentShield::configurePermissionIdentifierUsing(
+            fn($resource) => str($resource::getModel())
+                ->afterLast('\\')
+                ->when(
+                    is_subclass_of($resource, Resource::class),
+                    fn($str) => $str->snake()->replace('_', '-'), // هنا تحويل snake إلى dash -
+                    fn($str) => $str->kebab()
+                )
+                ->toString()
+        );
 
         FilamentAsset::register([
-            // Js::make('custom-script', __DIR__ . '/../../tune.js'),
+            Js::make('custom-script', __DIR__ . '/../../tune.js'),
             Js::make('custom-script', ''),
             Css::make('main', ''),
             Css::make('keypad', ''),
@@ -84,7 +96,7 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
-        // Gate::policy(Task::class, \App\Policies\TaskPolicy::class);
-
+        Gate::policy(\App\Models\Order::class, \App\Policies\OrderPolicy::class);
+        Gate::policy(\App\Models\EmployeeFileType::class, \App\Policies\EmployeeFileTypePolicy::class);
     }
 }

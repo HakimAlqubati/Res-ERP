@@ -12,4 +12,8 @@ class HRSalarySettingCluster extends Cluster
     {
         return 'Payroll Settings';
     }
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }

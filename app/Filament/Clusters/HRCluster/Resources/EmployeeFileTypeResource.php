@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeFileTypeResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeFileTypeResource\RelationManagers;
 use App\Models\EmployeeFileType;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -25,8 +26,20 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class EmployeeFileTypeResource extends Resource
+class EmployeeFileTypeResource extends Resource  implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+        ];
+    }
+    protected static ?string $slug = 'employee-file-type';
     protected static ?string $model = EmployeeFileType::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -55,7 +68,7 @@ class EmployeeFileTypeResource extends Resource
                             TextInput::make('field_name')
                                 ->label('Field Name')
                                 ->required(),
-                                Select::make('field_type')
+                            Select::make('field_type')
                                 ->label('Field Type')
                                 ->required()
                                 ->options([
@@ -68,7 +81,7 @@ class EmployeeFileTypeResource extends Resource
                         ->label('')
                         ->createItemButtonLabel('Add New Dynamic Field'),
                 ])
-                ->columnSpanFull(),
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -114,41 +127,4 @@ class EmployeeFileTypeResource extends Resource
     {
         return static::getModel()::count();
     }
-
-    public static function canViewAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
-            return true;
-        }
-        return false;
-    }
-
-    
-    public static function canDelete(Model $record): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
-
-   
-    public static function canForceDelete(Model $record): bool
-    {
-        return false;
-    }
-
-    public static function canForceDeleteAny(): bool
-    {
-        return false;
-    }
-
 }

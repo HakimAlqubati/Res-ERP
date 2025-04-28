@@ -13,4 +13,9 @@ class HRAttenanceCluster extends Cluster
         return 'Attendance Management';
         return __('lang.attenance_management');
     }
+
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }

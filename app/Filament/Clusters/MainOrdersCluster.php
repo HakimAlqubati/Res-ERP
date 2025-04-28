@@ -11,4 +11,11 @@ class MainOrdersCluster extends Cluster
     {
         return __('lang.orders');
     }
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission(['view_any_order', 'view_any_purchased_order'])) {
+            return true;
+        }
+        return false;
+    }
 }

@@ -12,4 +12,8 @@ class HRServiceRequestCluster extends Cluster
     {
         return 'Service Request';
     }
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }

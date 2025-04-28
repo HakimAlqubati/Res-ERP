@@ -11,6 +11,7 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\FakeModelReports\GeneralReportOfProducts;
 use App\Models\OrderDetails;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -23,7 +24,16 @@ use \Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class GeneralReportOfProductsResource extends Resource
+implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+        ];
+    }
+
     protected static ?string $model = GeneralReportOfProducts::class;
     protected static ?string $slug = 'general-report-products';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

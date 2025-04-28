@@ -98,15 +98,15 @@ class AdminPanelProvider extends PanelProvider
                 ) {
                     $group[] =  NavigationGroup::make(__('menu.hr_ms'))
                         ->items(array_merge(
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ?  HRCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isMaintenanceManager()) ?  HRTasksSystem::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isMaintenanceManager()) ? HRServiceRequestCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff()) ? HRAttenanceCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRAttendanceReport::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRTaskReport::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isMaintenanceManager()) ? HRCircularCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRApplicationsCluster::getNavigationItems() : [],
+                            HRCluster::canAccess() ? HRCluster::getNavigationItems() : [],
+                            HRTasksSystem::canAccess() ? HRTasksSystem::getNavigationItems() : [],
+                            HRServiceRequestCluster::canAccess() ? HRServiceRequestCluster::getNavigationItems() : [],
+                            HRAttenanceCluster::canAccess() ? HRAttenanceCluster::getNavigationItems() : [],
+                            HRAttendanceReport::canAccess() ? HRAttendanceReport::getNavigationItems() : [],
+                            HRTaskReport::canAccess() ? HRTaskReport::getNavigationItems() : [],
+                            HRCircularCluster::canAccess() ? HRCircularCluster::getNavigationItems() : [],
+                            HRSalaryCluster::canAccess() ? HRSalaryCluster::getNavigationItems() : [],
+                            HRApplicationsCluster::canAccess() ? HRApplicationsCluster::getNavigationItems() : [],
                         ));
                 }
 
@@ -119,13 +119,13 @@ class AdminPanelProvider extends PanelProvider
 
                     $group[] =  NavigationGroup::make(__('menu.supply_and_inventory'))
                         ->items(array_merge(
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  MainOrdersCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],
-                            //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportCluster::getNavigationItems() : [],
+                            MainOrdersCluster::canAccess() ? MainOrdersCluster::getNavigationItems() : [],
+                            ProductUnitCluster::getNavigationItems(),
+                            ReportOrdersCluster::getNavigationItems(),
+                            SupplierCluster::getNavigationItems(),
+                            SupplierStoresReportsCluster::getNavigationItems(),
+                            InventoryManagementCluster::getNavigationItems(),
+                            InventoryReportCluster::getNavigationItems(),
 
                         ));
                 }
@@ -135,8 +135,8 @@ class AdminPanelProvider extends PanelProvider
                     [
                         NavigationGroup::make(__('lang.user_and_roles'))
                             ->items(array_merge(
-                                (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems() : [],
-                                isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
+                                UserResource::canAccess() ? UserResource::getNavigationItems() : [],
+                                RoleResource::canAccess() ? RoleResource::getNavigationItems() : []
                             )),
                         NavigationGroup::make(__('lang.branches'))
                             ->items(array_merge(
@@ -180,7 +180,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make('System settings')
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems() : [],
-                                ((isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) &&
+                                ((HRSalarySettingCluster::canAccess())   &&
 
                                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
                                     ||
@@ -285,8 +285,8 @@ class AdminPanelProvider extends PanelProvider
                 FilamentShieldPlugin::make()
                     ->gridColumns([
                         'default' => 1,
-                        'sm' => 2,
-                        'lg' => 3
+                        'sm' => 1,
+                        'lg' => 1
                     ])
                     ->sectionColumnSpan(1)
                     ->checkboxListColumns([
