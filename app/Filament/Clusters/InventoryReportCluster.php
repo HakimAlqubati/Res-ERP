@@ -11,4 +11,12 @@ class InventoryReportCluster extends Cluster
     {
         return __('menu.inventory_reports');
     }
+
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission(['view_any_inventory-transaction-trucking-report'])) {
+            return true;
+        }
+        return false;
+    }
 }

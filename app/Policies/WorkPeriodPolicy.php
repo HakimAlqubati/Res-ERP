@@ -15,7 +15,7 @@ class WorkPeriodPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_work::period');
+        return $user->can('view_any_work-period');
     }
 
     /**
@@ -23,7 +23,7 @@ class WorkPeriodPolicy
      */
     public function view(User $user, WorkPeriod $workPeriod): bool
     {
-        return $user->can('view_work::period');
+        return $user->can('view_work-period');
     }
 
     /**
@@ -31,7 +31,7 @@ class WorkPeriodPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_work::period');
+        return $user->can('create_work-period');
     }
 
     /**
@@ -39,7 +39,7 @@ class WorkPeriodPolicy
      */
     public function update(User $user, WorkPeriod $workPeriod): bool
     {
-        return $user->can('update_work::period');
+        return $user->can('update_work-period');
     }
 
     /**
@@ -47,7 +47,7 @@ class WorkPeriodPolicy
      */
     public function delete(User $user, WorkPeriod $workPeriod): bool
     {
-        return $user->can('delete_work::period');
+        return $user->can('delete_work-period');
     }
 
     /**
@@ -55,7 +55,7 @@ class WorkPeriodPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_work::period');
+        return $user->can('delete_any_work-period');
     }
 
     /**
@@ -63,7 +63,7 @@ class WorkPeriodPolicy
      */
     public function forceDelete(User $user, WorkPeriod $workPeriod): bool
     {
-        return $user->can('force_delete_work::period');
+        return $user->can('force_delete_work-period');
     }
 
     /**
@@ -71,7 +71,7 @@ class WorkPeriodPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_work::period');
+        return $user->can('force_delete_any_work-period');
     }
 
     /**
@@ -79,7 +79,7 @@ class WorkPeriodPolicy
      */
     public function restore(User $user, WorkPeriod $workPeriod): bool
     {
-        return $user->can('restore_work::period');
+        return $user->can('restore_work-period');
     }
 
     /**
@@ -87,7 +87,7 @@ class WorkPeriodPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_work::period');
+        return $user->can('restore_any_work-period');
     }
 
     /**
@@ -95,7 +95,7 @@ class WorkPeriodPolicy
      */
     public function replicate(User $user, WorkPeriod $workPeriod): bool
     {
-        return $user->can('replicate_work::period');
+        return $user->can('replicate_work-period');
     }
 
     /**
@@ -103,6 +103,6 @@ class WorkPeriodPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_work::period');
+        return $user->can('reorder_work-period');
     }
 }

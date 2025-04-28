@@ -15,7 +15,7 @@ class AttendancePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_employees::attednace::report');
+        return $user->can('view_any_attendance');
     }
 
     /**
@@ -23,7 +23,7 @@ class AttendancePolicy
      */
     public function view(User $user, Attendance $attendance): bool
     {
-        return $user->can('view_employees::attednace::report');
+        return $user->can('view_attendance');
     }
 
     /**
@@ -31,7 +31,7 @@ class AttendancePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_employees::attednace::report');
+        return $user->can('create_attendance');
     }
 
     /**
@@ -39,7 +39,7 @@ class AttendancePolicy
      */
     public function update(User $user, Attendance $attendance): bool
     {
-        return $user->can('update_employees::attednace::report');
+        return $user->can('update_attendance');
     }
 
     /**
@@ -47,7 +47,7 @@ class AttendancePolicy
      */
     public function delete(User $user, Attendance $attendance): bool
     {
-        return $user->can('delete_employees::attednace::report');
+        return $user->can('delete_attendance');
     }
 
     /**
@@ -55,7 +55,7 @@ class AttendancePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_employees::attednace::report');
+        return $user->can('delete_any_attendance');
     }
 
     /**
@@ -63,7 +63,7 @@ class AttendancePolicy
      */
     public function forceDelete(User $user, Attendance $attendance): bool
     {
-        return $user->can('force_delete_employees::attednace::report');
+        return $user->can('force_delete_attendance');
     }
 
     /**
@@ -71,7 +71,7 @@ class AttendancePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_employees::attednace::report');
+        return $user->can('force_delete_any_attendance');
     }
 
     /**
@@ -79,7 +79,7 @@ class AttendancePolicy
      */
     public function restore(User $user, Attendance $attendance): bool
     {
-        return $user->can('restore_employees::attednace::report');
+        return $user->can('restore_attendance');
     }
 
     /**
@@ -87,7 +87,7 @@ class AttendancePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_employees::attednace::report');
+        return $user->can('restore_any_attendance');
     }
 
     /**
@@ -95,7 +95,7 @@ class AttendancePolicy
      */
     public function replicate(User $user, Attendance $attendance): bool
     {
-        return $user->can('replicate_employees::attednace::report');
+        return $user->can('replicate_attendance');
     }
 
     /**
@@ -103,6 +103,6 @@ class AttendancePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_employees::attednace::report');
+        return $user->can('reorder_attendance');
     }
 }

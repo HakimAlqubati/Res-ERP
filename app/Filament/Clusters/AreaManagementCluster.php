@@ -11,4 +11,16 @@ class AreaManagementCluster extends Cluster
     {
         return __('menu.area_management');
     }
+
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_district',
+            'view_any_country',
+            'view_any_city'
+        ])) {
+            return true;
+        }
+        return false;
+    }
 }

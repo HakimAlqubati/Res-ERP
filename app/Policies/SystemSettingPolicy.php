@@ -15,7 +15,7 @@ class SystemSettingPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_system::setting');
+        return $user->can('view_any_system-setting');
     }
 
     /**
@@ -23,7 +23,7 @@ class SystemSettingPolicy
      */
     public function view(User $user, SystemSetting $systemSetting): bool
     {
-        return $user->can('view_system::setting');
+        return $user->can('view_system-setting');
     }
 
     /**
@@ -31,7 +31,7 @@ class SystemSettingPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_system::setting');
+        return $user->can('create_system-setting');
     }
 
     /**
@@ -39,7 +39,7 @@ class SystemSettingPolicy
      */
     public function update(User $user, SystemSetting $systemSetting): bool
     {
-        return $user->can('update_system::setting');
+        return $user->can('update_system-setting');
     }
 
     /**
@@ -47,7 +47,7 @@ class SystemSettingPolicy
      */
     public function delete(User $user, SystemSetting $systemSetting): bool
     {
-        return $user->can('delete_system::setting');
+        return $user->can('delete_system-setting');
     }
 
     /**
@@ -55,7 +55,7 @@ class SystemSettingPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_system::setting');
+        return $user->can('delete_any_system-setting');
     }
 
     /**
@@ -63,7 +63,7 @@ class SystemSettingPolicy
      */
     public function forceDelete(User $user, SystemSetting $systemSetting): bool
     {
-        return $user->can('force_delete_system::setting');
+        return $user->can('force_delete_system-setting');
     }
 
     /**
@@ -71,7 +71,7 @@ class SystemSettingPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_system::setting');
+        return $user->can('force_delete_any_system-setting');
     }
 
     /**
@@ -79,7 +79,7 @@ class SystemSettingPolicy
      */
     public function restore(User $user, SystemSetting $systemSetting): bool
     {
-        return $user->can('restore_system::setting');
+        return $user->can('restore_system-setting');
     }
 
     /**
@@ -87,7 +87,7 @@ class SystemSettingPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_system::setting');
+        return $user->can('restore_any_system-setting');
     }
 
     /**
@@ -95,7 +95,7 @@ class SystemSettingPolicy
      */
     public function replicate(User $user, SystemSetting $systemSetting): bool
     {
-        return $user->can('replicate_system::setting');
+        return $user->can('replicate_system-setting');
     }
 
     /**
@@ -103,6 +103,6 @@ class SystemSettingPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_system::setting');
+        return $user->can('reorder_system-setting');
     }
 }

@@ -14,6 +14,9 @@ class HRServiceRequestCluster extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission(['view_any_service-request', 'view_any_equipment'])) {
+            return true;
+        }
         return false;
     }
 }

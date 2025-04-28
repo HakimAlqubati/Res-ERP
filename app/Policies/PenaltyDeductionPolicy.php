@@ -15,7 +15,7 @@ class PenaltyDeductionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_penalty::deduction');
+        return $user->can('view_any_penalty-deduction');
     }
 
     /**
@@ -23,7 +23,7 @@ class PenaltyDeductionPolicy
      */
     public function view(User $user, PenaltyDeduction $penaltyDeduction): bool
     {
-        return $user->can('view_penalty::deduction');
+        return $user->can('view_penalty-deduction');
     }
 
     /**
@@ -31,7 +31,7 @@ class PenaltyDeductionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_penalty::deduction');
+        return $user->can('create_penalty-deduction');
     }
 
     /**
@@ -39,7 +39,7 @@ class PenaltyDeductionPolicy
      */
     public function update(User $user, PenaltyDeduction $penaltyDeduction): bool
     {
-        return $user->can('update_penalty::deduction');
+        return $user->can('update_penalty-deduction');
     }
 
     /**
@@ -47,7 +47,7 @@ class PenaltyDeductionPolicy
      */
     public function delete(User $user, PenaltyDeduction $penaltyDeduction): bool
     {
-        return $user->can('delete_penalty::deduction');
+        return $user->can('delete_penalty-deduction');
     }
 
     /**
@@ -55,7 +55,7 @@ class PenaltyDeductionPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_penalty::deduction');
+        return $user->can('delete_any_penalty-deduction');
     }
 
     /**
@@ -63,7 +63,7 @@ class PenaltyDeductionPolicy
      */
     public function forceDelete(User $user, PenaltyDeduction $penaltyDeduction): bool
     {
-        return $user->can('force_delete_penalty::deduction');
+        return $user->can('force_delete_penalty-deduction');
     }
 
     /**
@@ -71,7 +71,7 @@ class PenaltyDeductionPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_penalty::deduction');
+        return $user->can('force_delete_any_penalty-deduction');
     }
 
     /**
@@ -79,7 +79,7 @@ class PenaltyDeductionPolicy
      */
     public function restore(User $user, PenaltyDeduction $penaltyDeduction): bool
     {
-        return $user->can('restore_penalty::deduction');
+        return $user->can('restore_penalty-deduction');
     }
 
     /**
@@ -87,7 +87,7 @@ class PenaltyDeductionPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_penalty::deduction');
+        return $user->can('restore_any_penalty-deduction');
     }
 
     /**
@@ -95,7 +95,7 @@ class PenaltyDeductionPolicy
      */
     public function replicate(User $user, PenaltyDeduction $penaltyDeduction): bool
     {
-        return $user->can('replicate_penalty::deduction');
+        return $user->can('replicate_penalty-deduction');
     }
 
     /**
@@ -103,6 +103,6 @@ class PenaltyDeductionPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_penalty::deduction');
+        return $user->can('reorder_penalty-deduction');
     }
 }

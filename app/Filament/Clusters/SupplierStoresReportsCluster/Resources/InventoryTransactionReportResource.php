@@ -56,7 +56,7 @@ class InventoryTransactionReportResource extends Resource
                     ->label(__('lang.product'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    }) ->getSearchResultsUsing(function (string $search): array {
+                    })->getSearchResultsUsing(function (string $search): array {
                         return Product::where('active', 1)
                             ->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
@@ -100,5 +100,10 @@ class InventoryTransactionReportResource extends Resource
         return [
             'index' => Pages\ListInventoryTransactionReport::route('/'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_inventory-transaction-trucking-report');
     }
 }

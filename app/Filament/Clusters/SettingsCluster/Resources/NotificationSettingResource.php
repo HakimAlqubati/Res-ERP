@@ -113,4 +113,9 @@ class NotificationSettingResource extends Resource
             'edit' => Pages\EditNotificationSetting::route('/{record}/edit'),
         ];
     }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('view_any_notification-setting');
+    }
 }

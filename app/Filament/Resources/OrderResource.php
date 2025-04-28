@@ -75,6 +75,10 @@ implements HasShieldPermissions
     {
         return __('lang.orders');
     }
+    public static function getPluralLabel(): string
+    {
+        return 'Orders';
+    }
     public static function form(Form $form): Form
     {
         return $form

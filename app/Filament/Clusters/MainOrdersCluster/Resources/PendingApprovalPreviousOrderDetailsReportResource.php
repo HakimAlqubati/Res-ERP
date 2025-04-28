@@ -6,6 +6,7 @@ use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\Pages;
 use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\RelationManagers;
 use App\Models\FakeModelReports\PendingApprovalPreviousOrderDetailsReport;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -19,7 +20,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PendingApprovalPreviousOrderDetailsReportResource extends Resource
+implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
     protected static ?string $model = PendingApprovalPreviousOrderDetailsReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -27,7 +35,15 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
     protected static ?string $cluster = MainOrdersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
+    public static function getPluralLabel(): ?string
+    {
+        return 'Previous Quantity Orders';
+    }
 
+    public static function getPluralModelLabel(): string
+    {
+        return 'Previous Quantity Orders';
+    }
     public static function table(Table $table): Table
     {
         return $table
@@ -57,5 +73,9 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
         return [
             'index' => Pages\ListPendingApprovalPreviousOrderDetailsReports::route('/'),
         ];
+    }
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_pending-approval-previous-order-details-report');
     }
 }

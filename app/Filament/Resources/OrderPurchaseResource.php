@@ -10,6 +10,7 @@ use App\Filament\Resources\OrderPurchaseResource\Pages\ViewOrderPurchase;
 use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
 use App\Models\Branch;
 use App\Models\Order;
+use App\Models\OrderPurchased;
 use App\Models\Product;
 use App\Models\Supplier;
 use App\Models\UnitPrice;
@@ -40,24 +41,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrderPurchaseResource extends Resource
-implements HasShieldPermissions
 {
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_purchased',
-            'view_any_purchased',
-            'create_purchased',
-            'update_purchased',
-            'delete_purchased',
-            'delete_any_purchased',
-            'publish_purchased',
-            'import_purchased',
-            'cancel_purchased',
-            'export_purchased',
-        ];
-    }
-    protected static ?string $model = Order::class;
+    protected static ?string $model = OrderPurchased::class;
     protected static ?string $slug = 'purchased-orders';
     // protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $cluster = MainOrdersCluster::class;
@@ -256,8 +241,18 @@ implements HasShieldPermissions
     {
         return static::getModel()::where('is_purchased', 1)->count();
     }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_order-purchased');
+    }
     public static function canCreate(): bool
     {
-        return auth()->user()->can('create_purchased_order::purchase');
+        return auth()->user()->can('create_order-purchased');
     }
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()->can('view_order-purchased');
+    }
+
 }

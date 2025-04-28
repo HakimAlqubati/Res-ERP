@@ -303,14 +303,7 @@ class WorkPeriodResource extends Resource
     {
         return static::getModel()::count();
     }
-    public static function canViewAny(): bool
-    {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
-            return true;
-        }
-        return false;
-    }
-
+ 
     public static function calculateDayAndNight($startAt, $endAt): bool
     {
         // Logic to set default based on time fields

@@ -13,4 +13,15 @@ class HRLeaveManagementCluster extends Cluster
         return 'Attendance Management';
         return __('menu.leave_management');
     }
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_weekly-holiday',
+            'view_any_leave-type',
+            'view_any_holiday',
+        ])) {
+            return true;
+        }
+        return false;
+    }
 }

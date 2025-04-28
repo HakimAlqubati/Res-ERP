@@ -336,31 +336,4 @@ class MonthSalaryResource extends Resource
                 ->default(array_keys($employeeOptions)),
         ];
     }
-
-
-
-    public static function canCreate(): bool
-    {
-
-        if (isSystemManager()  || isSuperAdmin() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        if (isSystemManager() || isSuperAdmin() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
 }

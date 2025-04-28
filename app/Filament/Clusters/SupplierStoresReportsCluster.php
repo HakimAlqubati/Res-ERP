@@ -11,4 +11,12 @@ class SupplierStoresReportsCluster extends Cluster
     {
         return __('menu.stores_cluster');
     }
+
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission(['view_any_store', 'view_any_inventory_transaction'])) {
+            return true;
+        }
+        return false;
+    }
 }

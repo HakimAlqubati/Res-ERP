@@ -807,7 +807,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
                         return false;
-                    }),
+                    })->visible(fn(): bool => auth()->user()->can('can_move_task')),
 
                 Action::make('AddComment')->button()
                     ->hidden(function ($record) {
@@ -964,58 +964,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                 SoftDeletingScope::class,
             ]);
     }
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     return static::getModel()::query();
-    //     $query = static::getModel()::query();
 
-    //     if (
-    //         static::isScopedToTenant() &&
-    //         ($tenant = Filament::getTenant())
-    //     ) {
-    //         static::scopeEloquentQueryToTenant($query, $tenant);
-    //     }
-
-    //     // if (!isSuperAdmin() && auth()->user()->can('view_own_task')) {
-    //     //     $query->where('assigned_to', auth()->user()->id)
-    //     //         ->orWhere('assigned_to', auth()->user()?->employee?->id)
-    //     //         ->orWhere('created_by', auth()->user()->id)
-    //     //     ;
-    //     // }
-
-    //     if (!in_array(getCurrentRole(), [1, 3])) {
-    //         // $query->where('assigned_to', auth()->user()->id)
-    //         //     ->orWhere('assigned_to', auth()->user()?->employee?->id)
-    //         //         ->orWhere('created_by', auth()->user()->id)
-    //         $query->Where('created_by', auth()->user()->id)->orWhere('assigned_to', auth()->user()?->employee?->id);
-    //         // $query->Where('assigned_to', auth()->user()->id)
-    //         // $query->Where('created_by', auth()->user()->id)
-    //         ;
-    //     }
-    //     return $query;
-    // }
-
-    public static function canCreate(): bool
-    {
-        // if (isSuperAdmin() || auth()->user()->can('create_task')) {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        if (
-            isSuperAdmin() || isSystemManager() || (isBranchManager() && ($record->assigned_by == auth()?->user()?->id || $record->assigned_to == auth()?->user()?->employee?->id))
-            // (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
-            || isStuff() || isFinanceManager()
-        ) {
-            return true;
-        }
-        return false;
-    }
     public static function getRequrPatternKeysAndValues(array $data)
     {
         // Use array_filter to get the keys starting with 'requr_pattern_'
@@ -1035,45 +984,10 @@ class TaskResource extends Resource implements HasShieldPermissions
         return static::$label;
     }
 
-    public static function canViewAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
 
-    public static function canDelete(Model $record): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
 
-    public static function canDeleteAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
 
-    public static function canForceDelete(Model $record): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
 
-    public static function canForceDeleteAny(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
 
     public static function getRecordSubNavigation(Page $page): array
     {

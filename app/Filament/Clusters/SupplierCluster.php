@@ -11,4 +11,12 @@ class SupplierCluster extends Cluster
     {
         return __('lang.supplier_supplier_invoice');
     }
+
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission(['view_any_supplier', 'view_any_purchase_invoice'])) {
+            return true;
+        }
+        return false;
+    }
 }

@@ -30,7 +30,6 @@ implements HasShieldPermissions
     {
         return [
             'view',
-            'view_any',
         ];
     }
 
@@ -198,7 +197,11 @@ implements HasShieldPermissions
         return $final_result;
     }
 
-
+    
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_general-report-of-products');
+    }
 
     public static function getPages(): array
     {

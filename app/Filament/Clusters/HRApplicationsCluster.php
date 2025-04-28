@@ -14,6 +14,11 @@ class HRApplicationsCluster extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_employee-application'
+        ])) {
+            return true;
+        }
         return false;
     }
 }

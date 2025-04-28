@@ -417,49 +417,4 @@ class AttendnaceResource extends Resource
         return $query;
     }
 
-    public static function canDelete(Model $record): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canForceDelete(Model $record): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canForceDeleteAny(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canViewAny(): bool
-    {
-        if (isSystemManager() || isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
-        return static::can('create');
-    }
 }

@@ -92,8 +92,9 @@ class AppServiceProvider extends ServiceProvider
             fn(): View => view('filament.login_extra')
         );
 
-        // Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
+        Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
         Gate::policy(\App\Models\Order::class, \App\Policies\OrderPolicy::class);
+        // Gate::policy(\App\Models\DailyTasksSettingUp::class, \App\Policies\DailyTasksSettingUpPolicy::class);
         Gate::policy(\App\Models\EmployeeFileType::class, \App\Policies\EmployeeFileTypePolicy::class);
     }
 }

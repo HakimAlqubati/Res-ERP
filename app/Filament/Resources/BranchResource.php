@@ -82,7 +82,7 @@ class BranchResource extends Resource
                                             Branch::TYPE_POPUP => __('lang.popup_branch'),
                                         ])
                                         ->default(Branch::TYPE_BRANCH)
-                                 
+
                                         ->reactive(),
                                     Toggle::make('manager_abel_show_orders')
                                         ->label(__('stock.manager_abel_show_orders'))
@@ -359,30 +359,11 @@ class BranchResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        return true;
+        return auth()->user()->can('view_any_branch');
     }
 
-    public static function canCreate(): bool
+    public static function canAccess(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
+        return self::canViewAny();
     }
 }

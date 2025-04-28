@@ -22,6 +22,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -514,5 +515,19 @@ class SettingResource extends Resource
             'index' => Pages\CreateSetting::route('/'),
             // 'edit' => Pages\EditSetting::route('/'),
         ];
+    }
+    public static function canEdit(Model $record): bool
+    {
+        return auth()->user()->can('update_setting');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_setting');
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
     }
 }

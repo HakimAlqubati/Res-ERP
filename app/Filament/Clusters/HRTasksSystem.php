@@ -18,6 +18,9 @@ class HRTasksSystem extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission(['view_any_task', 'view_any_daily-tasks-setting-up'])) {
+            return true;
+        }
         return false;
     }
 }

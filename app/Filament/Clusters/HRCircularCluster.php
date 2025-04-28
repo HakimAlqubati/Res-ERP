@@ -14,6 +14,11 @@ class HRCircularCluster extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_circular',
+        ])) {
+            return true;
+        }
         return false;
     }
 }

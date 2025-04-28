@@ -13,7 +13,11 @@ class MainOrdersCluster extends Cluster
     }
     public static function canAccess(): bool
     {
-        if (auth()->user()->hasAnyPermission(['view_any_order', 'view_any_purchased_order'])) {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_order',
+            'view_any_purchased-order',
+            'view_any_order-transfer',
+        ])) {
             return true;
         }
         return false;

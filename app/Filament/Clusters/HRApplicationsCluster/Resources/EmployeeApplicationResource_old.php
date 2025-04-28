@@ -606,19 +606,8 @@ class EmployeeApplicationResource_old extends Resource
         return static::getModel()::count();
     }
 
-    public static function canCreate(): bool
-    {
-        return true;
-        return static::can('create');
-    }
-
-    public static function canViewAny(): bool
-    {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager() || isStuff() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
+    
+ 
 
     private static function approveDepartureRequest(): Action
     {
@@ -1087,20 +1076,5 @@ class EmployeeApplicationResource_old extends Resource
             });
     }
 
-
-    public static function canDelete(Model $record): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
+  
 }

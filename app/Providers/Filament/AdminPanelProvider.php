@@ -118,12 +118,12 @@ class AdminPanelProvider extends PanelProvider
                     $group[] =  NavigationGroup::make(__('menu.supply_and_inventory'))
                         ->items(array_merge(
                             MainOrdersCluster::canAccess() ? MainOrdersCluster::getNavigationItems() : [],
-                            ProductUnitCluster::getNavigationItems(),
-                            ReportOrdersCluster::getNavigationItems(),
-                            SupplierCluster::getNavigationItems(),
-                            SupplierStoresReportsCluster::getNavigationItems(),
-                            InventoryManagementCluster::getNavigationItems(),
-                            InventoryReportCluster::getNavigationItems(),
+                            ProductUnitCluster::canAccess() ?     ProductUnitCluster::getNavigationItems() : [],
+                            // ReportOrdersCluster::getNavigationItems(),
+                            SupplierCluster::canAccess() ?    SupplierCluster::getNavigationItems() : [],
+                            SupplierStoresReportsCluster::canAccess() ? SupplierStoresReportsCluster::getNavigationItems() : [],
+                            InventoryManagementCluster::canAccess() ? InventoryManagementCluster::getNavigationItems() : [],
+                            InventoryReportCluster::canAccess() ? InventoryReportCluster::getNavigationItems() : [],
 
                         ));
                 }
@@ -138,13 +138,13 @@ class AdminPanelProvider extends PanelProvider
                             )),
                         NavigationGroup::make(__('lang.branches'))
                             ->items(array_merge(
-                                (isSuperAdmin() || isSystemManager() || isBranchManager()) ? BranchResource::getNavigationItems() : [],
+                                BranchResource::canAccess() ? BranchResource::getNavigationItems() : [],
                                 //  ProductResource::getNavigationItems(),
                             )),
 
                         NavigationGroup::make(__('menu.area_management'))
                             ->items(array_merge(
-                                (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems() : [],
+                                AreaManagementCluster::canAccess() ? AreaManagementCluster::getNavigationItems() : [],
                             )),
                     ]
                 );
@@ -159,7 +159,7 @@ class AdminPanelProvider extends PanelProvider
                         [
                             NavigationGroup::make('Requests of Visits')
                                 ->items(array_merge(
-                                    (isSuperAdmin() || isSystemManager()) ? ApprovalResource::getNavigationItems() : [],
+                                    ApprovalResource::canAccess() ? ApprovalResource::getNavigationItems() : [],
                                     //  (isSuperAdmin() || isSystemManager() || isBranchManager()) ? VisitLogResource::getNavigationItems(): [] ,
                                 )),
 
@@ -167,26 +167,25 @@ class AdminPanelProvider extends PanelProvider
                         ]
                     );
                 }
+
+
                 $group =  array_merge(
                     $group,
                     [
                         NavigationGroup::make('System settings')
                             ->items(array_merge(
-                                (isSuperAdmin() || isSystemManager() || isFinanceManager()) ? SettingResource::getNavigationItems() : [],
-                                ((HRSalarySettingCluster::canAccess())   &&
-
-                                    ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
+                                SettingResource::canAccess() ? SettingResource::getNavigationItems() : [],
+                                HRSalarySettingCluster::canAccess() &&  (($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
                                     ||
                                     is_null($currentTenant)
 
                                 ) ? HRSalarySettingCluster::getNavigationItems() : [],
-                                ((isSuperAdmin() || isSystemManager() || isBranchManager())) && (($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
+                                HRLeaveManagementCluster::canAccess()   && (($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
                                     ||
                                     is_null($currentTenant)) ? HRLeaveManagementCluster::getNavigationItems() : [],
-                                ((isSuperAdmin() || isSystemManager() || isFinanceManager()))
+                                NotificationSettingResource::canAccess()
                                     ? NotificationSettingResource::getNavigationItems() : [],
 
-                                //    (isSuperAdmin() || isSystemManager()) ? SettingsCluster::getNavigationItems(): [] ,
                             )),
                         NavigationGroup::make('Tenants')
                             ->items(array_merge(

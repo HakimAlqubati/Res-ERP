@@ -14,6 +14,12 @@ class HRSalaryCluster extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_month-salary',
+            'view_any_penalty-deduction',
+        ])) {
+            return true;
+        }
         return false;
     }
 }

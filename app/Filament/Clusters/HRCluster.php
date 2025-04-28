@@ -15,7 +15,7 @@ class HRCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        if (auth()->user()->hasAnyPermission(['view_any_employee','view_any_position','view_any_employee_file_type'])) {
+        if (auth()->user()->hasAnyPermission(['view_any_employee','view_any_position','view_any_employee-file-type'])) {
             return true;
         }
         return false;

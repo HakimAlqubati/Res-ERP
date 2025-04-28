@@ -10,6 +10,7 @@ use App\Models\Branch;
 use App\Models\FakeModelReports\ReportProductQuantities;
 use App\Models\OrderDetails;
 use App\Models\Product;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -21,7 +22,14 @@ use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
 
 class ReportProductQuantitiesResource extends Resource
+implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
     protected static ?string $model = ReportProductQuantities::class;
     protected static ?string $slug = 'report-product-quantities';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -133,5 +141,10 @@ class ReportProductQuantitiesResource extends Resource
             ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
             ->orderByRaw('NULL');
         return $query;
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_report-product-quantities');
     }
 }

@@ -15,7 +15,7 @@ class MonthSalaryPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_month::salary');
+        return $user->can('view_any_month-salary');
     }
 
     /**
@@ -23,7 +23,7 @@ class MonthSalaryPolicy
      */
     public function view(User $user, MonthSalary $monthSalary): bool
     {
-        return $user->can('view_month::salary');
+        return $user->can('view_month-salary');
     }
 
     /**
@@ -31,7 +31,7 @@ class MonthSalaryPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_month::salary');
+        return $user->can('create_month-salary');
     }
 
     /**
@@ -39,7 +39,7 @@ class MonthSalaryPolicy
      */
     public function update(User $user, MonthSalary $monthSalary): bool
     {
-        return $user->can('update_month::salary');
+        return $user->can('update_month-salary');
     }
 
     /**
@@ -47,7 +47,7 @@ class MonthSalaryPolicy
      */
     public function delete(User $user, MonthSalary $monthSalary): bool
     {
-        return $user->can('delete_month::salary');
+        return $user->can('delete_month-salary');
     }
 
     /**
@@ -55,7 +55,7 @@ class MonthSalaryPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_month::salary');
+        return $user->can('delete_any_month-salary');
     }
 
     /**
@@ -63,7 +63,7 @@ class MonthSalaryPolicy
      */
     public function forceDelete(User $user, MonthSalary $monthSalary): bool
     {
-        return $user->can('force_delete_month::salary');
+        return $user->can('force_delete_month-salary');
     }
 
     /**
@@ -71,7 +71,7 @@ class MonthSalaryPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_month::salary');
+        return $user->can('force_delete_any_month-salary');
     }
 
     /**
@@ -79,7 +79,7 @@ class MonthSalaryPolicy
      */
     public function restore(User $user, MonthSalary $monthSalary): bool
     {
-        return $user->can('restore_month::salary');
+        return $user->can('restore_month-salary');
     }
 
     /**
@@ -87,7 +87,7 @@ class MonthSalaryPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_month::salary');
+        return $user->can('restore_any_month-salary');
     }
 
     /**
@@ -95,7 +95,7 @@ class MonthSalaryPolicy
      */
     public function replicate(User $user, MonthSalary $monthSalary): bool
     {
-        return $user->can('replicate_month::salary');
+        return $user->can('replicate_month-salary');
     }
 
     /**
@@ -103,6 +103,6 @@ class MonthSalaryPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_month::salary');
+        return $user->can('reorder_month-salary');
     }
 }

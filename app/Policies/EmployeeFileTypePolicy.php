@@ -15,7 +15,7 @@ class EmployeeFileTypePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_employee_file');
+        return $user->can('view_any_employee-file-type');
     }
 
     /**
@@ -23,7 +23,7 @@ class EmployeeFileTypePolicy
      */
     public function view(User $user, EmployeeFileType $employeeFileType): bool
     {
-        return $user->can('view_employee_file');
+        return $user->can('view_employee-file-type');
     }
 
     /**
@@ -31,7 +31,7 @@ class EmployeeFileTypePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_employee_file');
+        return $user->can('create_employee-file-type');
     }
 
     /**
@@ -39,7 +39,7 @@ class EmployeeFileTypePolicy
      */
     public function update(User $user, EmployeeFileType $employeeFileType): bool
     {
-        return $user->can('update_employee_file');
+        return $user->can('update_employee-file-type');
     }
 
     /**
@@ -47,7 +47,7 @@ class EmployeeFileTypePolicy
      */
     public function delete(User $user, EmployeeFileType $employeeFileType): bool
     {
-        return $user->can('delete_employee_file');
+        return $user->can('delete_employee-file-type');
     }
 
     /**
@@ -55,7 +55,7 @@ class EmployeeFileTypePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_employee_file');
+        return $user->can('delete_any_employee-file-type');
     }
 
     /**
@@ -63,7 +63,7 @@ class EmployeeFileTypePolicy
      */
     public function forceDelete(User $user, EmployeeFileType $employeeFileType): bool
     {
-        return $user->can('force_delete_employee_file');
+        return $user->can('force_delete_employee-file-type');
     }
 
     /**
@@ -71,7 +71,7 @@ class EmployeeFileTypePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_employee_file');
+        return $user->can('force_delete_any_employee-file-type');
     }
 
     /**
@@ -79,7 +79,7 @@ class EmployeeFileTypePolicy
      */
     public function restore(User $user, EmployeeFileType $employeeFileType): bool
     {
-        return $user->can('restore_employee_file');
+        return $user->can('restore_employee-file-type');
     }
 
     /**
@@ -87,7 +87,7 @@ class EmployeeFileTypePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_employee_file');
+        return $user->can('restore_any_employee-file-type');
     }
 
     /**
@@ -95,7 +95,7 @@ class EmployeeFileTypePolicy
      */
     public function replicate(User $user, EmployeeFileType $employeeFileType): bool
     {
-        return $user->can('replicate_employee_file');
+        return $user->can('replicate_employee-file-type');
     }
 
     /**
@@ -103,6 +103,6 @@ class EmployeeFileTypePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_employee_file');
+        return $user->can('reorder_employee-file-type');
     }
 }

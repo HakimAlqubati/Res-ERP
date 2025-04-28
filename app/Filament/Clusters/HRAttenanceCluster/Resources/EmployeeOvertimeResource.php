@@ -650,45 +650,4 @@ class EmployeeOvertimeResource extends Resource
                 SoftDeletingScope::class,
             ]);
     }
-
-    public static function canCreate(): bool
-    {
-        if (isSystemManager() || isSuperAdmin() || isBranchManager()) {
-            return true;
-        }
-        return false;
-        return static::can('create');
-    }
-
-
-    public static function canForceDelete(Model $record): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canForceDeleteAny(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-    public static function canDeleteAny(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
 }

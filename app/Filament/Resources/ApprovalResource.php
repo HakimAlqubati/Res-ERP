@@ -109,18 +109,16 @@ class ApprovalResource extends Resource
         return static::getModel()::count();
     }
 
-    public static function canView(Model $record): bool
-    {
-        if (isSuperAdmin() || isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
+    
 
+    public static function canAccess(): bool
+    {
+        return self::canViewAny();
+    }
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager()) {
+        if (auth()->user()->can('view_any_approval')) {
             return true;
         }
         return false;

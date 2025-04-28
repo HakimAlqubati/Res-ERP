@@ -15,7 +15,7 @@ class DailyTasksSettingUpPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_daily::tasks::setting::up');
+        return $user->can('view_any_daily-tasks-setting-up');
     }
 
     /**
@@ -23,7 +23,7 @@ class DailyTasksSettingUpPolicy
      */
     public function view(User $user, DailyTasksSettingUp $dailyTasksSettingUp): bool
     {
-        return $user->can('view_daily::tasks::setting::up');
+        return $user->can('view_daily-tasks-setting-up');
     }
 
     /**
@@ -31,7 +31,7 @@ class DailyTasksSettingUpPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_daily::tasks::setting::up');
+        return $user->can('create_daily-tasks-setting-up');
     }
 
     /**
@@ -39,7 +39,7 @@ class DailyTasksSettingUpPolicy
      */
     public function update(User $user, DailyTasksSettingUp $dailyTasksSettingUp): bool
     {
-        return $user->can('update_daily::tasks::setting::up');
+        return $user->can('update_daily-tasks-setting-up');
     }
 
     /**
@@ -47,7 +47,7 @@ class DailyTasksSettingUpPolicy
      */
     public function delete(User $user, DailyTasksSettingUp $dailyTasksSettingUp): bool
     {
-        return $user->can('delete_daily::tasks::setting::up');
+        return $user->can('delete_daily-tasks-setting-up');
     }
 
     /**
@@ -55,7 +55,7 @@ class DailyTasksSettingUpPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_daily::tasks::setting::up');
+        return $user->can('delete_any_daily-tasks-setting-up');
     }
 
     /**
@@ -63,7 +63,7 @@ class DailyTasksSettingUpPolicy
      */
     public function forceDelete(User $user, DailyTasksSettingUp $dailyTasksSettingUp): bool
     {
-        return $user->can('force_delete_daily::tasks::setting::up');
+        return $user->can('force_delete_daily-tasks-setting-up');
     }
 
     /**
@@ -71,7 +71,7 @@ class DailyTasksSettingUpPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_daily::tasks::setting::up');
+        return $user->can('force_delete_any_daily-tasks-setting-up');
     }
 
     /**
@@ -79,7 +79,7 @@ class DailyTasksSettingUpPolicy
      */
     public function restore(User $user, DailyTasksSettingUp $dailyTasksSettingUp): bool
     {
-        return $user->can('restore_daily::tasks::setting::up');
+        return $user->can('restore_daily-tasks-setting-up');
     }
 
     /**
@@ -87,7 +87,7 @@ class DailyTasksSettingUpPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_daily::tasks::setting::up');
+        return $user->can('restore_any_daily-tasks-setting-up');
     }
 
     /**
@@ -95,7 +95,7 @@ class DailyTasksSettingUpPolicy
      */
     public function replicate(User $user, DailyTasksSettingUp $dailyTasksSettingUp): bool
     {
-        return $user->can('replicate_daily::tasks::setting::up');
+        return $user->can('replicate_daily-tasks-setting-up');
     }
 
     /**
@@ -103,6 +103,6 @@ class DailyTasksSettingUpPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_daily::tasks::setting::up');
+        return $user->can('reorder_daily-tasks-setting-up');
     }
 }

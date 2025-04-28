@@ -14,6 +14,13 @@ class HRSalarySettingCluster extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_allowance',
+            'view_any_deduction',
+            'view_any_monthly-incentive',
+        ])) {
+            return true;
+        }
         return false;
     }
 }

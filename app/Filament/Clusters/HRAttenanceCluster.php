@@ -16,6 +16,14 @@ class HRAttenanceCluster extends Cluster
 
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_work-period',
+            'view_any_attendance',
+            'view_any_employee-overtime',
+            'view_any_attendance-images-uploaded'
+        ])) {
+            return true;
+        }
         return false;
     }
 }

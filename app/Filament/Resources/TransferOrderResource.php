@@ -5,11 +5,20 @@ namespace App\Filament\Resources;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
+use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderTransfer;
+use App\Models\Product;
+use App\Models\Store;
+use App\Models\UnitPrice;
+use App\Services\FifoInventoryService;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
@@ -26,7 +35,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TransferOrderResource extends Resource
 {
-    protected static ?string $model = Order::class;
+    protected static ?string $model = OrderTransfer::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Orders';
@@ -48,14 +57,113 @@ class TransferOrderResource extends Resource
     }
     public static function form(Form $form): Form
     {
-
         return $form
             ->schema([
-                TextInput::make('id')->label('Order id'),
-                TextInput::make('customer.name')->label('customer'),
-                TextInput::make('status')->label('Status'),
-                TextInput::make('total')->label('total'),
-                TextInput::make('branch.name')->label('branch'),
+                Fieldset::make()->schema([
+                    Grid::make()->columns(3)->schema([
+                        Select::make('branch_id')->required()
+                            ->label(__('lang.branch'))
+                            ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
+                        Select::make('status')->required()
+                            ->label(__('lang.order_status'))
+                            ->options([
+                                Order::ORDERED => 'Ordered',
+                                Order::READY_FOR_DELEVIRY => 'Ready for delivery',
+                                Order::PROCESSING => 'processing',
+                                Order::DELEVIRED => 'delevired',
+                            ])->default(Order::ORDERED),
+                        Select::make('stores')->multiple()->required()
+                            ->label(__('lang.store'))
+                            // ->disabledOn('edit')
+                            ->options([
+                                Store::active()
+                                    // ->withManagedStores()
+                                    ->get()->pluck('name', 'id')->toArray()
+                            ])
+                        // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
+                        // ->default(function ($record) {
+                        //     dd($record);
+                        // })
+                        ,
+                    ]),
+                    // Repeater for Order Details
+                    Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
+                        ->label(__('lang.order_details'))->columns(9)
+                        ->relationship() // Relationship with the OrderDetails model
+                        ->schema([
+                            Select::make('product_id')
+                                ->label(__('lang.product'))
+                                ->searchable()
+                                // ->disabledOn('edit')
+                                ->options(function () {
+                                    return Product::where('active', 1)
+                                        ->unmanufacturingCategory()
+                                        ->pluck('name', 'id');
+                                })
+                               
+                                ->reactive()
+                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                ->searchable()->columnSpan(function ($record) {
+
+                                    if ($record) {
+                                        return 2;
+                                    } else {
+                                        return 3;
+                                    }
+                                })->required(),
+                            Select::make('unit_id')
+                                ->label(__('lang.unit'))
+                                // ->disabledOn('edit')
+                                ->options(
+                                    function (callable $get) {
+
+                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
+
+                                        if ($unitPrices)
+                                            return array_column($unitPrices, 'unit_name', 'unit_id');
+                                        return [];
+                                    }
+                                )
+                                ->searchable()
+                                ->reactive()
+                                ->columnSpan(2)->required(),
+                            TextInput::make('purchase_invoice_id')->label(__('lang.purchase_invoice_id'))->readOnly()->visibleOn('view'),
+                            TextInput::make('package_size')->label(__('lang.package_size'))->readOnly()->columnSpan(1),
+                            
+                            TextInput::make('quantity')
+                                ->label(__('lang.quantity'))
+                                ->numeric()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $set('available_quantity', $state);
+
+                                    $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
+                                })
+                                ->rules([
+                                    fn($get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
+                                        $fifoService = new FifoInventoryService($get('product_id'), $get('unit_id'), $value);
+                                        $result = $fifoService->allocateOrder();
+                                        if (!$result['success']) {
+                                            $fail($result['message']);
+                                        }
+                                    },
+                                ])
+                                ->required()->default(1),
+
+                            TextInput::make('price')
+                                ->label(__('lang.price'))->readOnly()
+                                ->numeric()
+                                ->required()->columnSpan(1),
+                            TextInput::make('total_price')
+                                ->label(__('lang.total_price'))
+                                ->numeric()
+                                ->readOnly()->columnSpan(1),
+                        ])
+                       
+                        ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
+                        ->required(),
+
+                ])
             ]);
     }
 
@@ -143,9 +251,7 @@ class TransferOrderResource extends Resource
     {
         return [
             'index' => Pages\ListTransferOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'view' => Pages\ViewOrder::route('/{record}'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'view' => Pages\ViewOrderTransfer::route('/{record}'),
         ];
     }
 
@@ -193,10 +299,10 @@ class TransferOrderResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_order::transfer');
+        return auth()->user()->can('view_any_order-transfer');
     }
     public static function canView(Model $record): bool
     {
-        return auth()->user()->can('view_order::transfer');
+        return auth()->user()->can('view_order-transfer');
     }
 }

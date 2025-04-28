@@ -15,7 +15,7 @@ class EmployeeOvertimePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_employee::overtime');
+        return $user->can('view_any_employee-overtime');
     }
 
     /**
@@ -23,7 +23,7 @@ class EmployeeOvertimePolicy
      */
     public function view(User $user, EmployeeOvertime $employeeOvertime): bool
     {
-        return $user->can('view_employee::overtime');
+        return $user->can('view_employee-overtime');
     }
 
     /**
@@ -31,7 +31,7 @@ class EmployeeOvertimePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_employee::overtime');
+        return $user->can('create_employee-overtime');
     }
 
     /**
@@ -39,7 +39,7 @@ class EmployeeOvertimePolicy
      */
     public function update(User $user, EmployeeOvertime $employeeOvertime): bool
     {
-        return $user->can('update_employee::overtime');
+        return $user->can('update_employee-overtime');
     }
 
     /**
@@ -47,7 +47,7 @@ class EmployeeOvertimePolicy
      */
     public function delete(User $user, EmployeeOvertime $employeeOvertime): bool
     {
-        return $user->can('delete_employee::overtime');
+        return $user->can('delete_employee-overtime');
     }
 
     /**
@@ -55,7 +55,7 @@ class EmployeeOvertimePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_employee::overtime');
+        return $user->can('delete_any_employee-overtime');
     }
 
     /**
@@ -63,7 +63,7 @@ class EmployeeOvertimePolicy
      */
     public function forceDelete(User $user, EmployeeOvertime $employeeOvertime): bool
     {
-        return $user->can('force_delete_employee::overtime');
+        return $user->can('force_delete_employee-overtime');
     }
 
     /**
@@ -71,7 +71,7 @@ class EmployeeOvertimePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_employee::overtime');
+        return $user->can('force_delete_any_employee-overtime');
     }
 
     /**
@@ -79,7 +79,7 @@ class EmployeeOvertimePolicy
      */
     public function restore(User $user, EmployeeOvertime $employeeOvertime): bool
     {
-        return $user->can('restore_employee::overtime');
+        return $user->can('restore_employee-overtime');
     }
 
     /**
@@ -87,7 +87,7 @@ class EmployeeOvertimePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_employee::overtime');
+        return $user->can('restore_any_employee-overtime');
     }
 
     /**
@@ -95,7 +95,7 @@ class EmployeeOvertimePolicy
      */
     public function replicate(User $user, EmployeeOvertime $employeeOvertime): bool
     {
-        return $user->can('replicate_employee::overtime');
+        return $user->can('replicate_employee-overtime');
     }
 
     /**
@@ -103,6 +103,6 @@ class EmployeeOvertimePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_employee::overtime');
+        return $user->can('reorder_employee-overtime');
     }
 }

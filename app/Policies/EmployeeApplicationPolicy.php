@@ -15,7 +15,7 @@ class EmployeeApplicationPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_employee::application');
+        return $user->can('view_any_employee-application');
     }
 
     /**
@@ -23,7 +23,7 @@ class EmployeeApplicationPolicy
      */
     public function view(User $user, EmployeeApplication $employeeApplication): bool
     {
-        return $user->can('view_employee::application');
+        return $user->can('view_employee-application');
     }
 
     /**
@@ -31,7 +31,7 @@ class EmployeeApplicationPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_employee::application');
+        return $user->can('create_employee-application');
     }
 
     /**
@@ -39,7 +39,7 @@ class EmployeeApplicationPolicy
      */
     public function update(User $user, EmployeeApplication $employeeApplication): bool
     {
-        return $user->can('update_employee::application');
+        return $user->can('update_employee-application');
     }
 
     /**
@@ -47,7 +47,7 @@ class EmployeeApplicationPolicy
      */
     public function delete(User $user, EmployeeApplication $employeeApplication): bool
     {
-        return $user->can('delete_employee::application');
+        return $user->can('delete_employee-application');
     }
 
     /**
@@ -55,7 +55,7 @@ class EmployeeApplicationPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_employee::application');
+        return $user->can('delete_any_employee-application');
     }
 
     /**
@@ -63,7 +63,7 @@ class EmployeeApplicationPolicy
      */
     public function forceDelete(User $user, EmployeeApplication $employeeApplication): bool
     {
-        return $user->can('force_delete_employee::application');
+        return $user->can('force_delete_employee-application');
     }
 
     /**
@@ -71,7 +71,7 @@ class EmployeeApplicationPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_employee::application');
+        return $user->can('force_delete_any_employee-application');
     }
 
     /**
@@ -79,7 +79,7 @@ class EmployeeApplicationPolicy
      */
     public function restore(User $user, EmployeeApplication $employeeApplication): bool
     {
-        return $user->can('restore_employee::application');
+        return $user->can('restore_employee-application');
     }
 
     /**
@@ -87,7 +87,7 @@ class EmployeeApplicationPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_employee::application');
+        return $user->can('restore_any_employee-application');
     }
 
     /**
@@ -95,7 +95,7 @@ class EmployeeApplicationPolicy
      */
     public function replicate(User $user, EmployeeApplication $employeeApplication): bool
     {
-        return $user->can('replicate_employee::application');
+        return $user->can('replicate_employee-application');
     }
 
     /**
@@ -103,6 +103,6 @@ class EmployeeApplicationPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_employee::application');
+        return $user->can('reorder_employee-application');
     }
 }
