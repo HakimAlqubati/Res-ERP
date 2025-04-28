@@ -6,10 +6,12 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Equipment;
 use App\Models\Order;
+use App\Models\OrderDetails;
 use App\Models\Product;
 use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
+use App\Services\MultiProductsInventoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,14 +195,15 @@ class TestController4 extends Controller
                 'id',
                 'name'
             ])->keyBy('id');
-        $details = collect($details)->map(function ($detail) use ($products, $units) {
+        $service = new MultiProductsInventoryService();
+        $details = collect($details)->map(function ($detail) use ($products, $units, $service) {
             return [
                 'id' => $detail->id,
                 'order_id' => $detail->order_id,
                 'product_id' => $detail->product_id,
                 'product_name' => $products[$detail->product_id]->name ?? null,
                 'product_category' => $products[$detail->product_id]->category_id ?? null,
-                // 'unit_prices' => $products[$detail->product_id]->unitPrices ?? null,
+                'unit_prices' => $service->getProductUnitPrices($detail->product_id),
                 'unit_id' => $detail->unit_id,
                 'unit_name' => $units[$detail->unit_id]->name ?? null,
                 'quantity' => $detail->quantity,
@@ -273,5 +276,60 @@ class TestController4 extends Controller
             'last_page' => ceil($total / $perPage),
             'data' => $orders,
         ]);
+    }
+
+
+    public function generatePendingApprovalPreviousOrderDetailsReport(Request $request)
+    {
+        $groupByOrder = $request->boolean('group_by_order', true); // ✅ افتراضي مفعّل التجميع
+
+        // Fetch order details with the required conditions
+        $orderDetails = OrderDetails::where('is_created_due_to_qty_preivous_order', 1)
+            ->whereHas('order', function ($query) {
+                $query->where('status', Order::PENDING_APPROVAL);
+            })
+            ->get();
+
+        if ($groupByOrder) {
+            // 🧩 إذا طلب تجميع
+            $grouped = $orderDetails->groupBy('order_id');
+
+            $result = [];
+            foreach ($grouped as $orderId => $details) {
+                $totalQuantity = $details->sum('quantity');
+
+                $result[] = [
+                    'order_id' => $orderId,
+                    'total_quantity' => $totalQuantity,
+                    'details' => $details->map(function ($detail) {
+                        return [
+                            'order_detail_id' => $detail->id,
+                            'product_id' => $detail->product_id,
+                            'product_name' => $detail->product?->name,
+                            'unit_id' => $detail->unit_id,
+                            'unit_name' => $detail->unit?->name,
+                            'quantity' => $detail->quantity,
+                        ];
+                    })->toArray(),
+                ];
+            }
+
+            return response()->json($result);
+        } else {
+            // 🧩 إذا طلب عدم تجميع
+            $result = $orderDetails->map(function ($detail) {
+                return [
+                    'order_detail_id' => $detail->id,
+                    'order_id' => $detail->order_id,
+                    'product_id' => $detail->product_id,
+                    'product_name' => $detail->product?->name,
+                    'unit_id' => $detail->unit_id,
+                    'unit_name' => $detail->unit?->name,
+                    'quantity' => $detail->quantity,
+                ];
+            });
+
+            return response()->json($result);
+        }
     }
 }
