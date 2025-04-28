@@ -15,7 +15,7 @@ class PurchaseInvoicePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_purchase::invoice');
+        return $user->can('view_any_purchase-invoice');
     }
 
     /**
@@ -23,7 +23,7 @@ class PurchaseInvoicePolicy
      */
     public function view(User $user, PurchaseInvoice $purchaseInvoice): bool
     {
-        return $user->can('view_purchase::invoice');
+        return $user->can('view_purchase-invoice');
     }
 
     /**
@@ -31,7 +31,7 @@ class PurchaseInvoicePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_purchase::invoice');
+        return $user->can('create_purchase-invoice');
     }
 
     /**
@@ -39,7 +39,7 @@ class PurchaseInvoicePolicy
      */
     public function update(User $user, PurchaseInvoice $purchaseInvoice): bool
     {
-        return $user->can('update_purchase::invoice');
+        return $user->can('update_purchase-invoice');
     }
 
     /**
@@ -47,7 +47,7 @@ class PurchaseInvoicePolicy
      */
     public function delete(User $user, PurchaseInvoice $purchaseInvoice): bool
     {
-        return $user->can('delete_purchase::invoice');
+        return $user->can('delete_purchase-invoice');
     }
 
     /**
@@ -55,7 +55,7 @@ class PurchaseInvoicePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_purchase::invoice');
+        return $user->can('delete_any_purchase-invoice');
     }
 
     /**
@@ -63,7 +63,7 @@ class PurchaseInvoicePolicy
      */
     public function forceDelete(User $user, PurchaseInvoice $purchaseInvoice): bool
     {
-        return $user->can('force_delete_purchase::invoice');
+        return $user->can('force_delete_purchase-invoice');
     }
 
     /**
@@ -71,7 +71,7 @@ class PurchaseInvoicePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_purchase::invoice');
+        return $user->can('force_delete_any_purchase-invoice');
     }
 
     /**
@@ -79,7 +79,7 @@ class PurchaseInvoicePolicy
      */
     public function restore(User $user, PurchaseInvoice $purchaseInvoice): bool
     {
-        return $user->can('restore_purchase::invoice');
+        return $user->can('restore_purchase-invoice');
     }
 
     /**
@@ -87,7 +87,7 @@ class PurchaseInvoicePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_purchase::invoice');
+        return $user->can('restore_any_purchase-invoice');
     }
 
     /**
@@ -95,7 +95,7 @@ class PurchaseInvoicePolicy
      */
     public function replicate(User $user, PurchaseInvoice $purchaseInvoice): bool
     {
-        return $user->can('replicate_purchase::invoice');
+        return $user->can('replicate_purchase-invoice');
     }
 
     /**
@@ -103,6 +103,6 @@ class PurchaseInvoicePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_purchase::invoice');
+        return $user->can('reorder_purchase-invoice');
     }
 }

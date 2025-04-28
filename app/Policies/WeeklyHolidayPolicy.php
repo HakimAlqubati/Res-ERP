@@ -15,7 +15,7 @@ class WeeklyHolidayPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_weekly::holiday');
+        return $user->can('view_any_weekly-holiday');
     }
 
     /**
@@ -23,7 +23,7 @@ class WeeklyHolidayPolicy
      */
     public function view(User $user, WeeklyHoliday $weeklyHoliday): bool
     {
-        return $user->can('view_weekly::holiday');
+        return $user->can('view_weekly-holiday');
     }
 
     /**
@@ -31,7 +31,7 @@ class WeeklyHolidayPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_weekly::holiday');
+        return $user->can('create_weekly-holiday');
     }
 
     /**
@@ -39,7 +39,7 @@ class WeeklyHolidayPolicy
      */
     public function update(User $user, WeeklyHoliday $weeklyHoliday): bool
     {
-        return $user->can('update_weekly::holiday');
+        return $user->can('update_weekly-holiday');
     }
 
     /**
@@ -47,7 +47,7 @@ class WeeklyHolidayPolicy
      */
     public function delete(User $user, WeeklyHoliday $weeklyHoliday): bool
     {
-        return $user->can('delete_weekly::holiday');
+        return $user->can('delete_weekly-holiday');
     }
 
     /**
@@ -55,7 +55,7 @@ class WeeklyHolidayPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_weekly::holiday');
+        return $user->can('delete_any_weekly-holiday');
     }
 
     /**
@@ -63,7 +63,7 @@ class WeeklyHolidayPolicy
      */
     public function forceDelete(User $user, WeeklyHoliday $weeklyHoliday): bool
     {
-        return $user->can('force_delete_weekly::holiday');
+        return $user->can('force_delete_weekly-holiday');
     }
 
     /**
@@ -71,7 +71,7 @@ class WeeklyHolidayPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_weekly::holiday');
+        return $user->can('force_delete_any_weekly-holiday');
     }
 
     /**
@@ -79,7 +79,7 @@ class WeeklyHolidayPolicy
      */
     public function restore(User $user, WeeklyHoliday $weeklyHoliday): bool
     {
-        return $user->can('restore_weekly::holiday');
+        return $user->can('restore_weekly-holiday');
     }
 
     /**
@@ -87,7 +87,7 @@ class WeeklyHolidayPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_weekly::holiday');
+        return $user->can('restore_any_weekly-holiday');
     }
 
     /**
@@ -95,7 +95,7 @@ class WeeklyHolidayPolicy
      */
     public function replicate(User $user, WeeklyHoliday $weeklyHoliday): bool
     {
-        return $user->can('replicate_weekly::holiday');
+        return $user->can('replicate_weekly-holiday');
     }
 
     /**
@@ -103,6 +103,6 @@ class WeeklyHolidayPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_weekly::holiday');
+        return $user->can('reorder_weekly-holiday');
     }
 }

@@ -15,7 +15,7 @@ class StockSupplyOrderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_stock::supply::order');
+        return $user->can('view_any_stock-supply-order');
     }
 
     /**
@@ -23,7 +23,7 @@ class StockSupplyOrderPolicy
      */
     public function view(User $user, StockSupplyOrder $stockSupplyOrder): bool
     {
-        return $user->can('view_stock::supply::order');
+        return $user->can('view_stock-supply-order');
     }
 
     /**
@@ -31,7 +31,7 @@ class StockSupplyOrderPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_stock::supply::order');
+        return $user->can('create_stock-supply-order');
     }
 
     /**
@@ -39,7 +39,7 @@ class StockSupplyOrderPolicy
      */
     public function update(User $user, StockSupplyOrder $stockSupplyOrder): bool
     {
-        return $user->can('update_stock::supply::order');
+        return $user->can('update_stock-supply-order');
     }
 
     /**
@@ -47,7 +47,7 @@ class StockSupplyOrderPolicy
      */
     public function delete(User $user, StockSupplyOrder $stockSupplyOrder): bool
     {
-        return $user->can('delete_stock::supply::order');
+        return $user->can('delete_stock-supply-order');
     }
 
     /**
@@ -55,7 +55,7 @@ class StockSupplyOrderPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_stock::supply::order');
+        return $user->can('delete_any_stock-supply-order');
     }
 
     /**
@@ -63,7 +63,7 @@ class StockSupplyOrderPolicy
      */
     public function forceDelete(User $user, StockSupplyOrder $stockSupplyOrder): bool
     {
-        return $user->can('force_delete_stock::supply::order');
+        return $user->can('force_delete_stock-supply-order');
     }
 
     /**
@@ -71,7 +71,7 @@ class StockSupplyOrderPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_stock::supply::order');
+        return $user->can('force_delete_any_stock-supply-order');
     }
 
     /**
@@ -79,7 +79,7 @@ class StockSupplyOrderPolicy
      */
     public function restore(User $user, StockSupplyOrder $stockSupplyOrder): bool
     {
-        return $user->can('restore_stock::supply::order');
+        return $user->can('restore_stock-supply-order');
     }
 
     /**
@@ -87,7 +87,7 @@ class StockSupplyOrderPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_stock::supply::order');
+        return $user->can('restore_any_stock-supply-order');
     }
 
     /**
@@ -95,7 +95,7 @@ class StockSupplyOrderPolicy
      */
     public function replicate(User $user, StockSupplyOrder $stockSupplyOrder): bool
     {
-        return $user->can('replicate_stock::supply::order');
+        return $user->can('replicate_stock-supply-order');
     }
 
     /**
@@ -103,6 +103,6 @@ class StockSupplyOrderPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_stock::supply::order');
+        return $user->can('reorder_stock-supply-order');
     }
 }

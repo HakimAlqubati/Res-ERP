@@ -15,7 +15,7 @@ class InventoryTransactionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_inventory-transaction-trucking-report');
+        return $user->can('view_any_inventory-transaction');
     }
 
     /**
@@ -23,7 +23,7 @@ class InventoryTransactionPolicy
      */
     public function view(User $user, InventoryTransaction $inventoryTransaction): bool
     {
-        return $user->can('view_inventory-transaction-trucking-report');
+        return $user->can('view_inventory-transaction');
     }
 
     /**
@@ -31,7 +31,7 @@ class InventoryTransactionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_inventory-transaction-trucking-report');
+        return $user->can('create_inventory-transaction');
     }
 
     /**
@@ -39,7 +39,7 @@ class InventoryTransactionPolicy
      */
     public function update(User $user, InventoryTransaction $inventoryTransaction): bool
     {
-        return $user->can('update_inventory-transaction-trucking-report');
+        return $user->can('update_inventory-transaction');
     }
 
     /**
@@ -47,7 +47,7 @@ class InventoryTransactionPolicy
      */
     public function delete(User $user, InventoryTransaction $inventoryTransaction): bool
     {
-        return $user->can('delete_inventory-transaction-trucking-report');
+        return $user->can('delete_inventory-transaction');
     }
 
     /**
@@ -55,7 +55,7 @@ class InventoryTransactionPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_inventory-transaction-trucking-report');
+        return $user->can('delete_any_inventory-transaction');
     }
 
     /**
@@ -63,7 +63,7 @@ class InventoryTransactionPolicy
      */
     public function forceDelete(User $user, InventoryTransaction $inventoryTransaction): bool
     {
-        return $user->can('force_delete_inventory-transaction-trucking-report');
+        return $user->can('force_delete_inventory-transaction');
     }
 
     /**
@@ -71,7 +71,7 @@ class InventoryTransactionPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_inventory-transaction-trucking-report');
+        return $user->can('force_delete_any_inventory-transaction');
     }
 
     /**
@@ -79,7 +79,7 @@ class InventoryTransactionPolicy
      */
     public function restore(User $user, InventoryTransaction $inventoryTransaction): bool
     {
-        return $user->can('restore_inventory-transaction-trucking-report');
+        return $user->can('restore_inventory-transaction');
     }
 
     /**
@@ -87,7 +87,7 @@ class InventoryTransactionPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_inventory-transaction-trucking-report');
+        return $user->can('restore_any_inventory-transaction');
     }
 
     /**
@@ -95,7 +95,7 @@ class InventoryTransactionPolicy
      */
     public function replicate(User $user, InventoryTransaction $inventoryTransaction): bool
     {
-        return $user->can('replicate_inventory-transaction-trucking-report');
+        return $user->can('replicate_inventory-transaction');
     }
 
     /**
@@ -103,6 +103,6 @@ class InventoryTransactionPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_inventory-transaction-trucking-report');
+        return $user->can('reorder_inventory-transaction');
     }
 }

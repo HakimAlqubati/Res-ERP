@@ -15,7 +15,7 @@ class StockInventoryPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_stock::inventory');
+        return $user->can('view_any_stock-inventory');
     }
 
     /**
@@ -23,7 +23,7 @@ class StockInventoryPolicy
      */
     public function view(User $user, StockInventory $stockInventory): bool
     {
-        return $user->can('view_stock::inventory');
+        return $user->can('view_stock-inventory');
     }
 
     /**
@@ -31,7 +31,7 @@ class StockInventoryPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_stock::inventory');
+        return $user->can('create_stock-inventory');
     }
 
     /**
@@ -39,7 +39,7 @@ class StockInventoryPolicy
      */
     public function update(User $user, StockInventory $stockInventory): bool
     {
-        return $user->can('update_stock::inventory');
+        return $user->can('update_stock-inventory');
     }
 
     /**
@@ -47,7 +47,7 @@ class StockInventoryPolicy
      */
     public function delete(User $user, StockInventory $stockInventory): bool
     {
-        return $user->can('delete_stock::inventory');
+        return $user->can('delete_stock-inventory');
     }
 
     /**
@@ -55,7 +55,7 @@ class StockInventoryPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_stock::inventory');
+        return $user->can('delete_any_stock-inventory');
     }
 
     /**
@@ -63,7 +63,7 @@ class StockInventoryPolicy
      */
     public function forceDelete(User $user, StockInventory $stockInventory): bool
     {
-        return $user->can('force_delete_stock::inventory');
+        return $user->can('force_delete_stock-inventory');
     }
 
     /**
@@ -71,7 +71,7 @@ class StockInventoryPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_stock::inventory');
+        return $user->can('force_delete_any_stock-inventory');
     }
 
     /**
@@ -79,7 +79,7 @@ class StockInventoryPolicy
      */
     public function restore(User $user, StockInventory $stockInventory): bool
     {
-        return $user->can('restore_stock::inventory');
+        return $user->can('restore_stock-inventory');
     }
 
     /**
@@ -87,7 +87,7 @@ class StockInventoryPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_stock::inventory');
+        return $user->can('restore_any_stock-inventory');
     }
 
     /**
@@ -95,7 +95,7 @@ class StockInventoryPolicy
      */
     public function replicate(User $user, StockInventory $stockInventory): bool
     {
-        return $user->can('replicate_stock::inventory');
+        return $user->can('replicate_stock-inventory');
     }
 
     /**
@@ -103,6 +103,6 @@ class StockInventoryPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_stock::inventory');
+        return $user->can('reorder_stock-inventory');
     }
 }

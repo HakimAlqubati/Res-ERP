@@ -15,7 +15,7 @@ class TaskCommentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_task::comment');
+        return $user->can('view_any_task-comment');
     }
 
     /**
@@ -23,7 +23,7 @@ class TaskCommentPolicy
      */
     public function view(User $user, TaskComment $taskComment): bool
     {
-        return $user->can('view_task::comment');
+        return $user->can('view_task-comment');
     }
 
     /**
@@ -31,7 +31,7 @@ class TaskCommentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_task::comment');
+        return $user->can('create_task-comment');
     }
 
     /**
@@ -39,7 +39,7 @@ class TaskCommentPolicy
      */
     public function update(User $user, TaskComment $taskComment): bool
     {
-        return $user->can('update_task::comment');
+        return $user->can('update_task-comment');
     }
 
     /**
@@ -47,7 +47,7 @@ class TaskCommentPolicy
      */
     public function delete(User $user, TaskComment $taskComment): bool
     {
-        return $user->can('delete_task::comment');
+        return $user->can('delete_task-comment');
     }
 
     /**
@@ -55,7 +55,7 @@ class TaskCommentPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_task::comment');
+        return $user->can('delete_any_task-comment');
     }
 
     /**
@@ -63,7 +63,7 @@ class TaskCommentPolicy
      */
     public function forceDelete(User $user, TaskComment $taskComment): bool
     {
-        return $user->can('force_delete_task::comment');
+        return $user->can('force_delete_task-comment');
     }
 
     /**
@@ -71,7 +71,7 @@ class TaskCommentPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_task::comment');
+        return $user->can('force_delete_any_task-comment');
     }
 
     /**
@@ -79,7 +79,7 @@ class TaskCommentPolicy
      */
     public function restore(User $user, TaskComment $taskComment): bool
     {
-        return $user->can('restore_task::comment');
+        return $user->can('restore_task-comment');
     }
 
     /**
@@ -87,7 +87,7 @@ class TaskCommentPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_task::comment');
+        return $user->can('restore_any_task-comment');
     }
 
     /**
@@ -95,7 +95,7 @@ class TaskCommentPolicy
      */
     public function replicate(User $user, TaskComment $taskComment): bool
     {
-        return $user->can('replicate_task::comment');
+        return $user->can('replicate_task-comment');
     }
 
     /**
@@ -103,6 +103,6 @@ class TaskCommentPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_task::comment');
+        return $user->can('reorder_task-comment');
     }
 }

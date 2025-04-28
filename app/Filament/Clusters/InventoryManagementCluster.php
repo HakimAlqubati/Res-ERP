@@ -15,10 +15,10 @@ class InventoryManagementCluster extends Cluster
     public static function canAccess(): bool
     {
         if (auth()->user()->hasAnyPermission([
-            'view_any_stock_supply_order',
-            'view_any_stock_issue_order',
-            'view_any_stock_adjustment_reason',
-            'view_any_stock_inventory_detail'
+            'view_any_stock-supply-order',
+            'view_any_stock-issue-order',
+            'view_any_stock-adjustment-reason',
+            'view_any_stock-inventory-detail'
         ])) {
             return true;
         }

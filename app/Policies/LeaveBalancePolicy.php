@@ -15,7 +15,7 @@ class LeaveBalancePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_leave::balance');
+        return $user->can('view_any_leave-balance');
     }
 
     /**
@@ -23,7 +23,7 @@ class LeaveBalancePolicy
      */
     public function view(User $user, LeaveBalance $leaveBalance): bool
     {
-        return $user->can('view_leave::balance');
+        return $user->can('view_leave-balance');
     }
 
     /**
@@ -31,7 +31,7 @@ class LeaveBalancePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_leave::balance');
+        return $user->can('create_leave-balance');
     }
 
     /**
@@ -39,7 +39,7 @@ class LeaveBalancePolicy
      */
     public function update(User $user, LeaveBalance $leaveBalance): bool
     {
-        return $user->can('update_leave::balance');
+        return $user->can('update_leave-balance');
     }
 
     /**
@@ -47,7 +47,7 @@ class LeaveBalancePolicy
      */
     public function delete(User $user, LeaveBalance $leaveBalance): bool
     {
-        return $user->can('delete_leave::balance');
+        return $user->can('delete_leave-balance');
     }
 
     /**
@@ -55,7 +55,7 @@ class LeaveBalancePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_leave::balance');
+        return $user->can('delete_any_leave-balance');
     }
 
     /**
@@ -63,7 +63,7 @@ class LeaveBalancePolicy
      */
     public function forceDelete(User $user, LeaveBalance $leaveBalance): bool
     {
-        return $user->can('force_delete_leave::balance');
+        return $user->can('force_delete_leave-balance');
     }
 
     /**
@@ -71,7 +71,7 @@ class LeaveBalancePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_leave::balance');
+        return $user->can('force_delete_any_leave-balance');
     }
 
     /**
@@ -79,7 +79,7 @@ class LeaveBalancePolicy
      */
     public function restore(User $user, LeaveBalance $leaveBalance): bool
     {
-        return $user->can('restore_leave::balance');
+        return $user->can('restore_leave-balance');
     }
 
     /**
@@ -87,7 +87,7 @@ class LeaveBalancePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_leave::balance');
+        return $user->can('restore_any_leave-balance');
     }
 
     /**
@@ -95,7 +95,7 @@ class LeaveBalancePolicy
      */
     public function replicate(User $user, LeaveBalance $leaveBalance): bool
     {
-        return $user->can('replicate_leave::balance');
+        return $user->can('replicate_leave-balance');
     }
 
     /**
@@ -103,6 +103,6 @@ class LeaveBalancePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_leave::balance');
+        return $user->can('reorder_leave-balance');
     }
 }

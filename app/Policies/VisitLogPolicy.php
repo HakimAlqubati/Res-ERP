@@ -15,7 +15,7 @@ class VisitLogPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_visit::log');
+        return $user->can('view_any_visit-log');
     }
 
     /**
@@ -23,7 +23,7 @@ class VisitLogPolicy
      */
     public function view(User $user, VisitLog $visitLog): bool
     {
-        return $user->can('view_visit::log');
+        return $user->can('view_visit-log');
     }
 
     /**
@@ -31,7 +31,7 @@ class VisitLogPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_visit::log');
+        return $user->can('create_visit-log');
     }
 
     /**
@@ -39,7 +39,7 @@ class VisitLogPolicy
      */
     public function update(User $user, VisitLog $visitLog): bool
     {
-        return $user->can('update_visit::log');
+        return $user->can('update_visit-log');
     }
 
     /**
@@ -47,7 +47,7 @@ class VisitLogPolicy
      */
     public function delete(User $user, VisitLog $visitLog): bool
     {
-        return $user->can('delete_visit::log');
+        return $user->can('delete_visit-log');
     }
 
     /**
@@ -55,7 +55,7 @@ class VisitLogPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_visit::log');
+        return $user->can('delete_any_visit-log');
     }
 
     /**
@@ -63,7 +63,7 @@ class VisitLogPolicy
      */
     public function forceDelete(User $user, VisitLog $visitLog): bool
     {
-        return $user->can('force_delete_visit::log');
+        return $user->can('force_delete_visit-log');
     }
 
     /**
@@ -71,7 +71,7 @@ class VisitLogPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_visit::log');
+        return $user->can('force_delete_any_visit-log');
     }
 
     /**
@@ -79,7 +79,7 @@ class VisitLogPolicy
      */
     public function restore(User $user, VisitLog $visitLog): bool
     {
-        return $user->can('restore_visit::log');
+        return $user->can('restore_visit-log');
     }
 
     /**
@@ -87,7 +87,7 @@ class VisitLogPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_visit::log');
+        return $user->can('restore_any_visit-log');
     }
 
     /**
@@ -95,7 +95,7 @@ class VisitLogPolicy
      */
     public function replicate(User $user, VisitLog $visitLog): bool
     {
-        return $user->can('replicate_visit::log');
+        return $user->can('replicate_visit-log');
     }
 
     /**
@@ -103,6 +103,6 @@ class VisitLogPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_visit::log');
+        return $user->can('reorder_visit-log');
     }
 }

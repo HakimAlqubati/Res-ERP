@@ -15,7 +15,7 @@ class LeaveApplicationPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_leave::application');
+        return $user->can('view_any_leave-application');
     }
 
     /**
@@ -23,7 +23,7 @@ class LeaveApplicationPolicy
      */
     public function view(User $user, LeaveApplication $leaveApplication): bool
     {
-        return $user->can('view_leave::application');
+        return $user->can('view_leave-application');
     }
 
     /**
@@ -31,7 +31,7 @@ class LeaveApplicationPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_leave::application');
+        return $user->can('create_leave-application');
     }
 
     /**
@@ -39,7 +39,7 @@ class LeaveApplicationPolicy
      */
     public function update(User $user, LeaveApplication $leaveApplication): bool
     {
-        return $user->can('update_leave::application');
+        return $user->can('update_leave-application');
     }
 
     /**
@@ -47,7 +47,7 @@ class LeaveApplicationPolicy
      */
     public function delete(User $user, LeaveApplication $leaveApplication): bool
     {
-        return $user->can('delete_leave::application');
+        return $user->can('delete_leave-application');
     }
 
     /**
@@ -55,7 +55,7 @@ class LeaveApplicationPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_leave::application');
+        return $user->can('delete_any_leave-application');
     }
 
     /**
@@ -63,7 +63,7 @@ class LeaveApplicationPolicy
      */
     public function forceDelete(User $user, LeaveApplication $leaveApplication): bool
     {
-        return $user->can('force_delete_leave::application');
+        return $user->can('force_delete_leave-application');
     }
 
     /**
@@ -71,7 +71,7 @@ class LeaveApplicationPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_leave::application');
+        return $user->can('force_delete_any_leave-application');
     }
 
     /**
@@ -79,7 +79,7 @@ class LeaveApplicationPolicy
      */
     public function restore(User $user, LeaveApplication $leaveApplication): bool
     {
-        return $user->can('restore_leave::application');
+        return $user->can('restore_leave-application');
     }
 
     /**
@@ -87,7 +87,7 @@ class LeaveApplicationPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_leave::application');
+        return $user->can('restore_any_leave-application');
     }
 
     /**
@@ -95,7 +95,7 @@ class LeaveApplicationPolicy
      */
     public function replicate(User $user, LeaveApplication $leaveApplication): bool
     {
-        return $user->can('replicate_leave::application');
+        return $user->can('replicate_leave-application');
     }
 
     /**
@@ -103,6 +103,6 @@ class LeaveApplicationPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_leave::application');
+        return $user->can('reorder_leave-application');
     }
 }

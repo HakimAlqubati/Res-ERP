@@ -15,7 +15,7 @@ class TaskAttachmentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_task::attachment');
+        return $user->can('view_any_task-attachment');
     }
 
     /**
@@ -23,7 +23,7 @@ class TaskAttachmentPolicy
      */
     public function view(User $user, TaskAttachment $taskAttachment): bool
     {
-        return $user->can('view_task::attachment');
+        return $user->can('view_task-attachment');
     }
 
     /**
@@ -31,7 +31,7 @@ class TaskAttachmentPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_task::attachment');
+        return $user->can('create_task-attachment');
     }
 
     /**
@@ -39,7 +39,7 @@ class TaskAttachmentPolicy
      */
     public function update(User $user, TaskAttachment $taskAttachment): bool
     {
-        return $user->can('update_task::attachment');
+        return $user->can('update_task-attachment');
     }
 
     /**
@@ -47,7 +47,7 @@ class TaskAttachmentPolicy
      */
     public function delete(User $user, TaskAttachment $taskAttachment): bool
     {
-        return $user->can('delete_task::attachment');
+        return $user->can('delete_task-attachment');
     }
 
     /**
@@ -55,7 +55,7 @@ class TaskAttachmentPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_task::attachment');
+        return $user->can('delete_any_task-attachment');
     }
 
     /**
@@ -63,7 +63,7 @@ class TaskAttachmentPolicy
      */
     public function forceDelete(User $user, TaskAttachment $taskAttachment): bool
     {
-        return $user->can('force_delete_task::attachment');
+        return $user->can('force_delete_task-attachment');
     }
 
     /**
@@ -71,7 +71,7 @@ class TaskAttachmentPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_task::attachment');
+        return $user->can('force_delete_any_task-attachment');
     }
 
     /**
@@ -79,7 +79,7 @@ class TaskAttachmentPolicy
      */
     public function restore(User $user, TaskAttachment $taskAttachment): bool
     {
-        return $user->can('restore_task::attachment');
+        return $user->can('restore_task-attachment');
     }
 
     /**
@@ -87,7 +87,7 @@ class TaskAttachmentPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_task::attachment');
+        return $user->can('restore_any_task-attachment');
     }
 
     /**
@@ -95,7 +95,7 @@ class TaskAttachmentPolicy
      */
     public function replicate(User $user, TaskAttachment $taskAttachment): bool
     {
-        return $user->can('replicate_task::attachment');
+        return $user->can('replicate_task-attachment');
     }
 
     /**
@@ -103,6 +103,6 @@ class TaskAttachmentPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_task::attachment');
+        return $user->can('reorder_task-attachment');
     }
 }
