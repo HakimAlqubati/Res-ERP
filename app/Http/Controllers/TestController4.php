@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
+use App\Services\MultiProductsInventoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -193,14 +194,15 @@ class TestController4 extends Controller
                 'id',
                 'name'
             ])->keyBy('id');
-        $details = collect($details)->map(function ($detail) use ($products, $units) {
+        $service = new MultiProductsInventoryService();
+        $details = collect($details)->map(function ($detail) use ($products, $units, $service) {
             return [
                 'id' => $detail->id,
                 'order_id' => $detail->order_id,
                 'product_id' => $detail->product_id,
                 'product_name' => $products[$detail->product_id]->name ?? null,
                 'product_category' => $products[$detail->product_id]->category_id ?? null,
-                // 'unit_prices' => $products[$detail->product_id]->unitPrices ?? null,
+                'unit_prices' => $service->getProductUnitPrices($detail->product_id),
                 'unit_id' => $detail->unit_id,
                 'unit_name' => $units[$detail->unit_id]->name ?? null,
                 'quantity' => $detail->quantity,
