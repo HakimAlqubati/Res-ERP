@@ -12,4 +12,8 @@ class HRTaskReport extends Cluster
     { 
         return __('menu.task_reports');
     }
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }

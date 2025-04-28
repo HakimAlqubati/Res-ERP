@@ -12,4 +12,8 @@ class HRCircularCluster extends Cluster
     {
         return 'Engagement';
     }
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }

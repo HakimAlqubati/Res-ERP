@@ -44,25 +44,30 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderResource extends Resource
+implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'publish',
+            'import',
+            'cancel',
+            'export',
+        ];
+    }
     protected static ?string $cluster = MainOrdersCluster::class;
-    // public static function getPermissionPrefixes(): array
-    // {
-    //     return [
-    //         'view',
-    //         'view_any',
-    //         'create',
-    //         'update',
-    //         'delete',
-    //         'delete_any',
-    //         'publish',
-    //     ];
-    // }
+
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     protected static ?string $model = Order::class;
-
+    protected static ?string $label = 'Orders';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Orders';
     protected static ?string $recordTitleAttribute = 'id';
@@ -233,6 +238,7 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // dd(auth()->user()->roles, auth()->user()->getAllPermissions()->pluck('name')->toArray());
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.order_id'))
@@ -337,7 +343,7 @@ class OrderResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(fn(): bool => isSuperVisor()),
+                    })->visible(fn(): bool => auth()->user()->can('cancel_order')),
                 Tables\Actions\Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
@@ -474,13 +480,7 @@ class OrderResource extends Resource
 
         return $query;
     }
-    public static function canCreate(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
+
 
     public static function getEloquentQuery(): Builder
     {
@@ -496,32 +496,6 @@ class OrderResource extends Resource
         return $record->id;
     }
 
+    
 
-    public static function canDelete(Model $record): bool
-    {
-        return false;
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        return false;
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-
-    public static function canEdit(Model $record): bool
-    {
-        return false;
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
 }

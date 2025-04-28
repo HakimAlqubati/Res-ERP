@@ -72,7 +72,7 @@ class AllowanceResource extends Resource
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
                 TextColumn::make('percentage')->suffix(' % '),
-                Tables\Columns\ToggleColumn::make('active')->disabled(fn():bool=>isBranchManager()),
+                Tables\Columns\ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([
                 //
@@ -107,32 +107,5 @@ class AllowanceResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
-    }
-
-    public static function canViewAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
-
-
-
-    public static function canEdit(Model $record): bool
-    {
-        if (isSuperAdmin() ||  isSystemManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canCreate(): bool
-    {
-
-        if (isSystemManager()  || isSuperAdmin()) {
-            return true;
-        }
-        return false;
     }
 }

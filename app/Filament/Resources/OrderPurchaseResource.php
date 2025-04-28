@@ -15,6 +15,7 @@ use App\Models\Supplier;
 use App\Models\UnitPrice;
 use App\Tables\Columns\count_items_order;
 use App\Tables\Columns\TotalOrder;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -39,13 +40,30 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrderPurchaseResource extends Resource
+implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_purchased',
+            'view_any_purchased',
+            'create_purchased',
+            'update_purchased',
+            'delete_purchased',
+            'delete_any_purchased',
+            'publish_purchased',
+            'import_purchased',
+            'cancel_purchased',
+            'export_purchased',
+        ];
+    }
     protected static ?string $model = Order::class;
     protected static ?string $slug = 'purchased-orders';
     // protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $cluster = MainOrdersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
+    protected static ?string $label = 'Order Purchased';
     // protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
     {
@@ -226,11 +244,6 @@ class OrderPurchaseResource extends Resource
         ];
     }
 
-    public static function canDeleteAny(): bool
-    {
-        return static::can('deleteAny');
-    }
-
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -242,5 +255,9 @@ class OrderPurchaseResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_purchased', 1)->count();
+    }
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create_purchased_order::purchase');
     }
 }

@@ -12,4 +12,8 @@ class HRApplicationsCluster extends Cluster
     {
         return 'Requests';
     }
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }

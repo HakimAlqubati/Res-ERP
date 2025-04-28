@@ -402,10 +402,17 @@ class RoleResource extends Resource implements HasShieldPermissions
 
     public static function canViewAny(): bool
     {
+    
         if(isSystemManager() || isSuperAdmin()){
             return true;
         }
         return false;
         return static::can('viewAny');
     }
+    public static function canAccess(): bool
+    {
+        return true;
+        return static::canViewAny();
+    }
+
 }

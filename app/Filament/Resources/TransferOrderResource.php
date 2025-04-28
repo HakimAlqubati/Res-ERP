@@ -7,6 +7,7 @@ use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
 use App\Models\OrderTransfer;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
@@ -33,6 +34,10 @@ class TransferOrderResource extends Resource
 
     protected static ?string $label = 'Transfers';
     protected static ?string $navigationLabel = 'Transfers list';
+    public static function getPluralLabel(): string
+    {
+        return 'Transfers';
+    }
     public static ?string $slug = 'transfers-list';
     protected static ?string $cluster = MainOrdersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -184,5 +189,14 @@ class TransferOrderResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])->count();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_order::transfer');
+    }
+    public static function canView(Model $record): bool
+    {
+        return auth()->user()->can('view_order::transfer');
     }
 }

@@ -69,7 +69,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         FilamentAsset::register([
-            // Js::make('custom-script', __DIR__ . '/../../tune.js'),
+            Js::make('custom-script', __DIR__ . '/../../tune.js'),
             Js::make('custom-script', ''),
             Css::make('main', ''),
             Css::make('keypad', ''),
@@ -81,7 +81,8 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
-        // Gate::policy(Task::class, \App\Policies\TaskPolicy::class);
+        Gate::policy(\App\Models\Order::class, \App\Policies\OrderPolicy::class);
+        Gate::policy(\App\Models\EmployeeFileType::class, \App\Policies\EmployeeFileTypePolicy::class);
 
     }
 }

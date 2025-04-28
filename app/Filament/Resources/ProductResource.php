@@ -861,6 +861,7 @@ class ProductResource extends Resource
             Pages\ManageProducts::class,
             Pages\CreateProduct::class,
             Pages\EditProduct::class,
+            Pages\ViewProduct::class,
             // Pages\ViewEmployee::class,
         ]);
     }

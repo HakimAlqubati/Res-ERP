@@ -12,5 +12,12 @@ class HRCluster extends Cluster
     {
         return __('lang.departments_and_employees');
     }
- 
+
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission(['view_any_employee','view_any_position','view_any_employee_file_type'])) {
+            return true;
+        }
+        return false;
+    }
 }

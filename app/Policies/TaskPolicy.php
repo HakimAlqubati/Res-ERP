@@ -2,28 +2,26 @@
 
 namespace App\Policies;
 
-use App\Models\Task;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Models\Task;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TaskPolicy
 {
+    use HandlesAuthorization;
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_task') || $user->can('view_own_task');
-    }
-    public function viewOwn(User $user): bool
-    {
-        return $user->can('view_own_task');
+        return $user->can('view_any_task');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user): bool
+    public function view(User $user, Task $task): bool
     {
         return $user->can('view_task');
     }
@@ -39,7 +37,7 @@ class TaskPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user): bool
+    public function update(User $user, Task $task): bool
     {
         return $user->can('update_task');
     }
@@ -47,46 +45,64 @@ class TaskPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user): bool
+    public function delete(User $user, Task $task): bool
     {
-        return $user->can('delete_task');
+        return $user->can('{{ Delete }}');
     }
 
     /**
-     * Determine whether the user can restore the model.
+     * Determine whether the user can bulk delete.
      */
-    public function restore(User $user): bool
+    public function deleteAny(User $user): bool
     {
-        return $user->can('restore_task');
+        return $user->can('{{ DeleteAny }}');
     }
 
     /**
-     * Determine whether the user can permanently delete the model.
+     * Determine whether the user can permanently delete.
      */
-    public function forceDelete(User $user): bool
+    public function forceDelete(User $user, Task $task): bool
     {
-        return $user->can('forse_delete_task');
+        return $user->can('{{ ForceDelete }}');
     }
 
-  
-    
-    public function rating(User $user): bool
+    /**
+     * Determine whether the user can permanently bulk delete.
+     */
+    public function forceDeleteAny(User $user): bool
     {
-        return $user->can('rating_task');
+        return $user->can('{{ ForceDeleteAny }}');
     }
 
-    public function addComment(User $user): bool
+    /**
+     * Determine whether the user can restore.
+     */
+    public function restore(User $user, Task $task): bool
     {
-        return $user->can('add_comment_task');
+        return $user->can('{{ Restore }}');
     }
-   
-    public function addPhoto(User $user): bool
+
+    /**
+     * Determine whether the user can bulk restore.
+     */
+    public function restoreAny(User $user): bool
     {
-        return $user->can('add_photo_task');
+        return $user->can('{{ RestoreAny }}');
     }
-   
-    public function moveStatus(User $user): bool
+
+    /**
+     * Determine whether the user can replicate.
+     */
+    public function replicate(User $user, Task $task): bool
     {
-        return $user->can('move_status_task');
+        return $user->can('{{ Replicate }}');
+    }
+
+    /**
+     * Determine whether the user can reorder.
+     */
+    public function reorder(User $user): bool
+    {
+        return $user->can('{{ Reorder }}');
     }
 }

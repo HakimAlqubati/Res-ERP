@@ -21,6 +21,7 @@ use App\Models\MonthlyIncentive;
 use App\Models\Position;
 use App\Models\UserType;
 use App\Services\S3ImageService;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Actions\Action as ComponentsActionsAction;
@@ -67,6 +68,7 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class EmployeeResource extends Resource
 {
+    
     protected static ?string $model = Employee::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = HRCluster::class;
@@ -815,49 +817,5 @@ class EmployeeResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-    }
-    // public function canCreate(){
-    //     return false;
-    // }
-
-    public static function canCreate(): bool
-    {
-
-        if (isSystemManager()  || isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDelete(Model $record): bool
-    {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canDeleteAny(): bool
-    {
-        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canEdit(Model $record): bool
-    {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canViewAny(): bool
-    {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) {
-            return true;
-        }
-        return false;
     }
 }

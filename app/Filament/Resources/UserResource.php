@@ -434,6 +434,10 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return true;
+        return auth()->user()->can('view_any_user') || auth()->user()->can('view_own_profile');
+    }
+    public static function canAccess(): bool
+    {
+        return static::canViewAny();
     }
 }

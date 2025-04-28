@@ -16,4 +16,8 @@ class HRAttendanceReport extends Cluster
         return 'Reports';
         return __('lang.attednance_reports');
     }
+    public static function canAccess(): bool
+    {
+        return false;
+    }
 }
