@@ -190,22 +190,22 @@ class TestController4 extends Controller
         $user = auth()->user();
 
         // Check if branch is kitchen
-        if ($user->branch->is_kitchen) {
-            // First, check if the order contains any manufacturing category product
-            $check = DB::selectOne("
-                SELECT 1
-                FROM orders_details od
-                JOIN products p ON od.product_id = p.id
-                JOIN categories c ON p.category_id = c.id
-                WHERE od.order_id = ? AND c.is_manafacturing = 1
-                LIMIT 1
-            ", [$id]);
+        // if ($user->branch->is_kitchen) {
+        //     // First, check if the order contains any manufacturing category product
+        //     $check = DB::selectOne("
+        //         SELECT 1
+        //         FROM orders_details od
+        //         JOIN products p ON od.product_id = p.id
+        //         JOIN categories c ON p.category_id = c.id
+        //         WHERE od.order_id = ? AND c.is_manafacturing = 1
+        //         LIMIT 1
+        //     ", [$id]);
 
-            // If not manufacturing-related, return empty
-            if (!$check) {
-                return response()->json([]); // Or customize message
-            }
-        }
+        //     // If not manufacturing-related, return empty
+        //     if (!$check) {
+        //         return response()->json([]); // Or customize message
+        //     }
+        // }
 
         $query = "
         SELECT
@@ -226,7 +226,18 @@ class TestController4 extends Controller
         if ($user->branch->is_kitchen) {
             if (!isStoreManager()) {
                 $query .= "JOIN products p ON od.product_id = p.id
-            JOIN categories c ON p.category_id = c.id and c.is_manafacturing = 1 ";
+            JOIN categories c ON p.category_id = c.id
+            JOIN orders o ON od.order_id = o.id
+            ";
+
+                $query .= "
+AND (
+    (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
+    OR
+    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+)
+";
+
                 $otherBranchesCategories = \App\Models\Branch::centralKitchens()
                     ->where('id', '!=', auth()->user()?->branch?->id)
                     ->with('categories:id')
