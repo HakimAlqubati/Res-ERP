@@ -20,6 +20,7 @@
         "filament/spatie-laravel-media-library-plugin": "^3.2",
         "filament/tables": "^3.2",
         "google/apiclient": "^2.18",
+        "google/cloud-vision": "^2.0",
         "hugomyb/filament-media-action": "^3.1",
         "irazasyed/larasupport": "^1.1",
         "joshembling/image-optimizer": "^1.4",
@@ -41,6 +42,7 @@
         "spatie/laravel-multitenancy": "4.0",
         "spatie/laravel-permission": "^6.9",
         "spatie/laravel-translatable": "^6.8",
+        "thiagoalessio/tesseract_ocr": "^2.13",
         "ysfkaya/filament-phone-input": "^3.1"
     },
     "require-dev": {

@@ -27,12 +27,15 @@ use App\Models\Supplier;
 use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
+use App\Services\Ocr\TesseractService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Multitenancy\Contracts\IsTenant;
 use Spatie\Permission\Models\Role;
 
@@ -680,4 +683,47 @@ Route::get('/testOcr', [OCRController::class, 'test']);
 Route::get('/testLog', function () {
     \Illuminate\Support\Facades\Log::error('Testing log error');
     dd('Logged');
+});
+Route::get('/test-ocr', function () {
+    $ocrService = new TesseractService();
+
+    // مسار الصورة (تأكد أن الصورة موجودة)
+    $path = Storage::disk('public')->path('ocr-uploads/test.jpg');
+
+    $text = $ocrService->extractText($path, 'ara'); // أو 'eng'
+
+    dd($text);
+});
+
+Route::get('/ocr-to-json', function () {
+    putenv('PATH=' . getenv('PATH') . ';C:\Program Files\Tesseract-OCR'); 
+
+    $imagePath = storage_path('app/public/ocr-uploads/test.jpg');
+
+    $text = (new \thiagoalessio\TesseractOCR\TesseractOCR($imagePath))
+        ->lang('ara')
+        ->psm(6)
+        ->run();
+    return $text;
+    return response()->json($text);
+});
+
+Route::get('/ocr-space', function () {
+    $filePath = storage_path('app/public/ocr-uploads/test.jpg'); // أو صورة png, jpg
+
+
+    $response = Http::timeout(60)
+        ->asMultipart()->post('https://api.ocr.space/parse/image', [
+            'apikey' => env('OCR_SPACE_API_KEY'),
+            'file' => fopen($filePath, 'r'),
+            'language' => 'ara',
+            'isOverlayRequired' => 'false',
+        ]);
+
+    $body = $response->json();
+    $text = $body['ParsedResults'][0]['ParsedText'] ?? '';
+    return $text;
+    // $lines = array_values(array_filter(array_map('trim', explode("\n", $text))));
+
+    return response()->json($text);
 });
