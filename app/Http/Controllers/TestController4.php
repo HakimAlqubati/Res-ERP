@@ -87,12 +87,21 @@ class TestController4 extends Controller
             if ($user->branch?->is_central_kitchen && count($customCategories)) {
                 // Can't filter by category easily in raw SQL, handled in Eloquent, you may ignore here or redesign this logic
                 // You can later filter on front-end if needed
+                $categoryIds = implode(',', $customCategories);
+
+                $where[] = "EXISTS (
+                    SELECT 1
+                    FROM orders_details od
+                    JOIN products p ON od.product_id = p.id
+                    JOIN categories c ON p.category_id = c.id
+                    WHERE od.order_id = o.id AND c.id IN ($categoryIds)
+                ) OR o.customer_id = {$user->id}";
             }
         }
 
         // 🧠 Assemble WHERE clause
         $whereSql = implode(' AND ', $where);
-
+        // dd($whereSql,$user->branch?->is_central_kitchen);
         // 📊 Get total count
         $total = DB::table('orders as o')
             ->whereRaw($whereSql)
