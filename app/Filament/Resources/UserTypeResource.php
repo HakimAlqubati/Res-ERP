@@ -8,9 +8,14 @@ use App\Models\Role;
 use App\Models\UserType;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -25,32 +30,59 @@ class UserTypeResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                ->required()
-                ->maxLength(255),
+                TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
 
-            Forms\Components\Textarea::make('description'),
+                Select::make('code')
+                    ->required()
+                    ->options([
+                        'super_admin' => 'Super Admin',
+                        'system_manager' => 'System Manager',
+                        'branch_manager' => 'Branch Manager',
+                        'store_manager' => 'Store Manager',
+                        'finance_manager' => 'Finance Manager',
+                        'maintenance_manager' => 'Maintenance Manager',
+                        'super_visor' => 'Supervisor',
+                        'attendance' => 'Attendance User',
+                        'driver' => 'Driver',
+                        'stuff' => 'Stuff',
+                        'branch_user' => 'Branch User',
+                        // Add more if needed
+                    ])
+                    ->searchable(),
 
-            Select::make('role_ids')
-            ->label('Roles')
-            ->options(\Spatie\Permission\Models\Role::get()->pluck('name','id'))->multiple()->required(),
-            
+                TextInput::make('level')
+                    ->numeric()
+                    ->required(),
 
-            Forms\Components\Toggle::make('active')
-                ->label('Is Active')
-                ->default(true),
+                Select::make('scope')
+                    ->required()
+                    ->options([
+                        'branch' => 'Branch',
+                        'store' => 'Store',
+                        'all' => 'All',
+                    ]),
+
+                Toggle::make('active')
+                    ->default(true),
+
+                Forms\Components\Textarea::make('description')
+                    ->maxLength(65535),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('name')->searchable(),
-                Tables\Columns\TextColumn::make('role_names')->label('Roles'),
-                Tables\Columns\IconColumn::make('active')->boolean(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime(),
+                TextColumn::make('id')->sortable()->searchable(),
+                TextColumn::make('name')->sortable()->searchable(),
+                TextColumn::make('code')->sortable()->searchable(),
+                TextColumn::make('level')->sortable(),
+                TextColumn::make('scope')->sortable(),
+                IconColumn::make('active')->label('Active')->sortable()->boolean()->alignCenter(true),
+                TextColumn::make('description')->limit(30)->searchable(),
             ])
             ->filters([
                 //

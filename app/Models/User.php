@@ -18,7 +18,7 @@ use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
-
+use Illuminate\Database\Eloquent\Casts\Attribute; 
 class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 
@@ -161,78 +161,50 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function isSuperVisor()
     {
-        return in_array(15, $this->roles->pluck('id')->toArray());
+        return auth()->user()->isType('super_visor');
     }
     public function isBranchManager()
     {
-        return in_array(7, $this->roles->pluck('id')->toArray());
-
-        if (getCurrentRole() == 7) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('branch_manager');
     }
     public function isFinanceManager()
     {
-        if (getCurrentRole() == 16) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('finance_manager');
     }
     public function isSuperAdmin()
     {
-        if (getCurrentRole() == 1) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('super_admin');
     }
     public function isAttendance()
     {
-        if (getCurrentRole() == 17) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('attendance');
     }
     public function isSystemManager()
     {
-        if (getCurrentRole() == 3) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('system_manager');
     }
     public function isStoreManager()
     {
-        return in_array(5, $this->roles->pluck('id')->toArray()) || isFinanceManager();
-
-        if (getCurrentRole() == 5) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('store_manager');
     }
     public function isBranchUser()
     {
-        return in_array(8, $this->roles->pluck('id')->toArray());
+        return auth()->user()->isType('branch_user');
     }
     public function isDriver()
     {
-        return in_array(6, $this->roles->pluck('id')->toArray());
+        return auth()->user()->isType('driver');
     }
     public function isMaintenanceManager()
     {
-        if (getCurrentRole() == 14) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('maintenance_manager');
     }
     public function isStuff()
     {
-        if (in_array(getCurrentRole(), [8, 9, 10, 6])) {
-            return true;
-        }
-        return false;
+        return auth()->user()->isType('stuff');
     }
 
-    public function getIsBranchManagerAttribute() {}
+
     // public function canAccessFilament(): bool
     // {
     //     return true;
@@ -329,5 +301,114 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function getLastSeenAttribute()
     {
         return $this->last_seen_at?->diffForHumans();
+    }
+    public function userType()
+    {
+        return $this->belongsTo(UserType::class, 'user_type');
+    }
+
+    /**
+     * Check if user has a specific user type code (or multiple codes).
+     */
+    public function isType(string|array $codes): bool
+    {
+        if (!$this->userType) {
+            return false;
+        }
+
+        $codes = (array) $codes;
+
+        return in_array($this->userType->code, $codes);
+    }
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'user_branches');
+    }
+
+    public function stores()
+    {
+        return $this->belongsToMany(Store::class, 'user_stores');
+    }
+
+    public function canAccessBranch($branchId): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true; // يحق للسوبر ادمن ومدير النظام الوصول لكل الفروع
+        }
+
+        // إذا كان نطاق المستخدم على مستوى فرع branch
+        if ($this->userType?->scope === 'branch') {
+            return $this->branches()->where('branch_id', $branchId)->exists();
+        }
+
+        // لو كان نطاق المستخدم all (لجميع الفروع)
+        if ($this->userType?->scope === 'all') {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function canAccessStore($storeId): bool
+    {
+        if ($this->isSuperAdmin() || $this->isSystemManager()) {
+            return true; // وصول مفتوح للسوبر أدمن ومدير النظام
+        }
+
+        if ($this->userType?->scope === 'store') {
+            return $this->stores()->where('store_id', $storeId)->exists();
+        }
+
+        if ($this->userType?->scope === 'all') {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function canViewEverything(): bool
+    {
+        return $this->userType?->scope === 'all' || $this->isSuperAdmin() || $this->isSystemManager();
+    }
+    public function getAccessibleBranchIds(): array
+    {
+        if ($this->canViewEverything()) {
+            return Branch::pluck('id')->toArray(); // جميع الفروع
+        }
+
+        if ($this->userType?->scope === 'branch') {
+            return $this->branches()->pluck('branches.id')->toArray();
+        }
+
+        return [];
+    }
+
+    public function getAccessibleStoreIds(): array
+    {
+        if ($this->canViewEverything()) {
+            return Store::pluck('id')->toArray(); // جميع المخازن
+        }
+
+        if ($this->userType?->scope === 'store') {
+            return $this->stores()->pluck('stores.id')->toArray();
+        }
+
+        return [];
+    }
+
+    public function canManageStores(): bool
+    {
+        return $this->userType?->can_manage_stores;
+    }
+
+    public function canManageBranches(): bool
+    {
+        return $this->userType?->can_manage_branches;
+    }
+    public function typeCode(): Attribute
+    {
+        return Attribute::get(
+            fn() => $this->userType?->code ?? null
+        );
     }
 }

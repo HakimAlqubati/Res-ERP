@@ -112,53 +112,59 @@ class UserResource extends Resource
                                 ->options(getNationalities()) // Loads nationalities from JSON file
                                 ->searchable()
                                 ->nullable(),
+
+                            Fieldset::make()->label('Set user type and role')->schema([
+                                Select::make('user_type')
+                                    ->label('User Type')
+                                    ->options(UserType::getSelectableTypes())
+                                    ->required()
+                                    ->live(),
+                                CheckboxList::make('roles')->required()
+                                    ->label('Roles')
+                                    ->relationship('roles')->columns(3)
+                                    // ->maxItems(1)
+                                    ->live()
+                                    ->options(function (Get $get) {
+                                        return Role::select('name', 'id')
+                                            ->orderBy('name', 'asc')
+                                            ->get()->pluck('name', 'id');
+                                    }),
+                            ]),
+                            Fieldset::make('Access Control')
+                                ->label('Branch & Store Access')
+                                ->schema([
+                                    CheckboxList::make('branches')->bulkToggleable()
+                                        ->relationship('branches', 'name') // جاهز بسبب علاقة belongsToMany
+                                        ->label('Branches Access')
+                                        ->columns(2)
+                                        ->searchable()
+                                        ->helperText('Select the branches the user can access.'),
+
+                                    CheckboxList::make('stores')->bulkToggleable()
+                                        ->relationship('stores', 'name') // جاهز بسبب علاقة belongsToMany
+                                        ->label('Stores Access')
+                                        ->columns(2)
+                                        ->searchable()
+                                        ->helperText('Select the stores the user can access.'),
+                                ]),
                             Select::make('branch_id')
                                 ->label('Branch')
-                                ->required()
-                                ->visible(function (Get $get) {
-                                    $roles = $get('roles') ?? [];
-                                    return !in_array(5, $roles);
-                                })
+                                ->required(false)
+                                // ->visible(function (Get $get) {
+                                //     $roles = $get('roles') ?? [];
+                                //     return !in_array(5, $roles);
+                                // })
                                 ->searchable()
-                                ->options(function () {
-                                    return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
+                                ->options(function ($get) {
+                                    if ($get('branches')) {
+                                        return Branch::whereIn('id', $get('branches'))->pluck('name', 'id');
+                                    }
+                                    return [];
                                 }),
                         ]),
 
                     ]),
 
-                    Fieldset::make()->label('Set user type and role')->schema([
-                        Select::make('user_type')
-                            ->label('User type')
-                            // ->options(getUserTypes())
-                            ->options(
-                                UserType::select('name', 'id')
-                                    // ->whereNotIn('id', [2,3,4])
-                                    ->get()->pluck('name', 'id')
-                            )
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-
-                                //  dd($roles,$state);
-                            }),
-                        CheckboxList::make('roles')->required()
-                            ->label('Roles')
-                            ->relationship('roles')
-                            // ->maxItems(1)
-                            ->live()
-                            ->options(function (Get $get) {
-                                // dd($get('user_type'),'hi');
-                                if ($get('user_type')) {
-                                    $roles = getRolesByTypeId($get('user_type'));
-                                    // dd($roles,gettype($roles));
-                                    return Role::select('name', 'id')
-                                        ->whereIn('id', $roles)
-                                        ->orderBy('name', 'asc')
-                                        ->get()->pluck('name', 'id');
-                                }
-                            }),
-                    ]),
                     Grid::make()->columns(2)->schema([
 
                         Select::make('owner_id')
@@ -266,6 +272,7 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
 
+        dd(User::find(189)->isStoreManager(), auth()->user()->isType(['store_manager']));
         return $table
             ->striped()
             ->defaultSort('id', 'desc')
@@ -280,6 +287,12 @@ class UserResource extends Resource
                     ->limit(20)
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false)
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('userType.name')
+                    ->label('User Type')
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('type_code')
+                    ->label('Typecode')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->copyMessage('Email address copied')
