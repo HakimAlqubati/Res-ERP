@@ -223,7 +223,7 @@ class TestController4 extends Controller
             od.is_created_due_to_qty_preivous_order,
             od.previous_order_id
         FROM orders_details od ";
-        if ($user->branch->is_kitchen) {
+        if (isBranchUser() &&  $user->branch->is_kitchen) {
             if (!isStoreManager()) {
                 $query .= "JOIN products p ON od.product_id = p.id
             JOIN categories c ON p.category_id = c.id
