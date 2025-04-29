@@ -268,6 +268,24 @@ AND (
                  ";
             }
         }
+        if (isStoreManager() && !isBranchManager()) {
+            $allCustomizedCategories = \App\Models\Branch::centralKitchens()
+                ->with('categories:id')
+                ->get()
+                ->pluck('categories')
+                ->flatten()
+                ->pluck('id')
+                ->unique()
+                ->toArray();
+            if (count($allCustomizedCategories)) {
+                $allCustomizedCategoriesStr = implode(',', $allCustomizedCategories);
+                $query .= "
+                JOIN products p ON od.product_id = p.id
+                JOIN categories c ON p.category_id = c.id 
+                JOIN orders o ON od.order_id = o.id
+                and c.id NOT IN ($allCustomizedCategoriesStr) ";
+            }
+        }
         $query .=  "WHERE od.order_id = ?";
 
         $details = DB::select($query, [$id]);
