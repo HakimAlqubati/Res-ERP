@@ -185,29 +185,84 @@ class TestController4 extends Controller
 
     public function testGetOrdersDetails($id)
     {
-        $details = DB::select("
+
+
+        $user = auth()->user();
+
+        // Check if branch is kitchen
+        if ($user->branch->is_kitchen) {
+            // First, check if the order contains any manufacturing category product
+            $check = DB::selectOne("
+                SELECT 1
+                FROM orders_details od
+                JOIN products p ON od.product_id = p.id
+                JOIN categories c ON p.category_id = c.id
+                WHERE od.order_id = ? AND c.is_manafacturing = 1
+                LIMIT 1
+            ", [$id]);
+
+            // If not manufacturing-related, return empty
+            if (!$check) {
+                return response()->json([]); // Or customize message
+            }
+        }
+
+        $query = "
         SELECT
             od.id,
             od.order_id,
             od.product_id,
            
             od.unit_id,
-            u.name AS unit_name,
+           
             od.available_quantity AS quantity,
             od.available_quantity,
             od.price,
             od.available_in_store,
-            cu.id AS created_by,
-            cu.name AS created_by_user_name,
+           
             od.is_created_due_to_qty_preivous_order,
             od.previous_order_id
-        FROM orders_details od
-         
-        LEFT JOIN units u ON u.id = od.unit_id
-        LEFT JOIN users cu ON cu.id = od.created_by
-        WHERE od.order_id = ?
-    ", [$id]);
+        FROM orders_details od ";
+        if ($user->branch->is_kitchen) {
+            if (!isStoreManager()) {
+                $query .= "JOIN products p ON od.product_id = p.id
+            JOIN categories c ON p.category_id = c.id and c.is_manafacturing = 1 ";
+                $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                    ->where('id', '!=', auth()->user()?->branch?->id)
+                    ->with('categories:id')
+                    ->get()
+                    ->pluck('categories')
+                    ->flatten()
+                    ->pluck('id')
+                    ->unique()
+                    ->toArray();
+                if (count($otherBranchesCategories)) {
+                    $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
+                    $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
+                }
+            } else {
+                $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
+                $query .= "JOIN products p ON od.product_id = p.id
+                JOIN categories c ON p.category_id = c.id and c.is_manafacturing = 1 ";
+                if (count($customCategories) > 0) {
+                    $categoryIds = implode(',', $customCategories);
+                    $query .= " and c.id IN ($categoryIds) ";
+                }
+            }
+        }
+        $query .=  "WHERE od.order_id = ?";
 
+        $details = DB::select($query, [$id]);
+
+        // if(auth()->user()->branch->is_kitchen){
+        // $where[] = "EXISTS (
+        //     SELECT 1
+        //     FROM orders_details od
+        //     JOIN products p ON od.product_id = p.id
+        //     JOIN categories c ON p.category_id = c.id
+        //     WHERE od.order_id = o.id AND c.is_manafacturing = 1
+        // ) OR o.customer_id = {$user->id}";
+        // }
         $productIds = collect($details)->pluck('product_id')->unique()->toArray();
         $products = DB::table('products')->whereIn('id', $productIds)
             ->get([
@@ -237,8 +292,6 @@ class TestController4 extends Controller
                 'available_quantity' => $detail->available_quantity,
                 'price' => $detail->price,
                 'available_in_store' => $detail->available_in_store,
-                // 'created_by' => $detail->created_by,
-                // 'created_by_user_name' => $detail->created_by_user_name,
                 'is_created_due_to_qty_preivous_order' => $detail->is_created_due_to_qty_preivous_order,
                 'previous_order_id' => $detail->previous_order_id
             ];
