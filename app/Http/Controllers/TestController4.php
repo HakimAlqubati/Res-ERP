@@ -112,7 +112,7 @@ class TestController4 extends Controller
                     FROM orders_details od
                     JOIN products p ON od.product_id = p.id
                     JOIN categories c ON p.category_id = c.id
-                    WHERE od.order_id = o.id AND c.id IN ($categoryIds)
+                    WHERE od.order_id = o.id AND c.id NOT IN  ($categoryIds)
                 ) OR o.customer_id = {$user->id}";
             }
         }
