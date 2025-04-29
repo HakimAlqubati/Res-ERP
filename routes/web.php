@@ -696,7 +696,7 @@ Route::get('/test-ocr', function () {
 });
 
 Route::get('/ocr-to-json', function () {
-    putenv('PATH=' . getenv('PATH') . ';C:\Program Files\Tesseract-OCR'); 
+    putenv('PATH=' . getenv('PATH') . ';C:\Program Files\Tesseract-OCR');
 
     $imagePath = storage_path('app/public/ocr-uploads/test.jpg');
 
@@ -726,4 +726,39 @@ Route::get('/ocr-space', function () {
     // $lines = array_values(array_filter(array_map('trim', explode("\n", $text))));
 
     return response()->json($text);
+});
+
+
+Route::get('/analyze-invoice', function () {
+    $apiKey = env('OPENAI_API_KEY');
+
+    // صورة موجودة على رابط عام (أو ارفعها على S3 / CDN)
+    $imageUrl = "http://localhost/storage/ocr-uploads/test.jpg";
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $apiKey,
+        'Content-Type' => 'application/json',
+    ])->post('https://api.openai.com/v1/chat/completions', [
+        'model' => 'gpt-3.5-turbo',
+        'messages' => [
+            [
+                'role' => 'user',
+                'content' => [
+                    [
+                        'type' => 'image_url',
+                        'image_url' => [
+                            'url' => $imageUrl
+                        ]
+                    ],
+                    [
+                        'type' => 'text',
+                        'text' => 'Extract all products from this invoice with quantity, unit price, and total, in JSON.'
+                    ]
+                ]
+            ]
+        ],
+        'max_tokens' => 1000
+    ]);
+
+    return $response->json();
 });
