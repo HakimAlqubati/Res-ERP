@@ -10,9 +10,12 @@ use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Store;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Toggle;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,7 +56,27 @@ class InventoryTransactionReportResource extends Resource
                     ->label(__('lang.product'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    })->options(Product::active()->get()->pluck('name', 'id')),
+                    }) ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    }),
                 SelectFilter::make("store_id")
                     ->label(__('lang.store'))->searchable()
                     ->query(function (Builder $q, $data) {
@@ -61,6 +84,13 @@ class InventoryTransactionReportResource extends Resource
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
+                Filter::make('show_extra_fields')
+                    ->label('Show Extra')
+                    ->form([
+                        Toggle::make('only_available')
+                            ->inline(false)
+                            ->label('Show Available in Stock')
+                    ]),
             ], FiltersLayout::AboveContent);
     }
 
@@ -71,6 +101,4 @@ class InventoryTransactionReportResource extends Resource
             'index' => Pages\ListInventoryTransactionReport::route('/'),
         ];
     }
-
-
 }

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Repositories\Orders\OrderRepository;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -104,5 +106,14 @@ class OrderController extends Controller
     public function exportTransfer($id)
     {
         return $this->orderRepository->exportTransfer($id);
+    }
+
+    public function generate(Request $request, Order $order)
+    {
+        $order->load(['orderDetails.product', 'branch', 'customer']); // eager load data
+
+        $pdf = PDF::loadView('pdf.order', compact('order'));
+
+        return $pdf->download("order_{$order->id}.pdf");
     }
 }

@@ -70,22 +70,39 @@ class PurchaseInvoiceReportResource extends Resource
                     return $q;
                 })->options(Supplier::get()->pluck('name', 'id')),
             SelectFilter::make("product_id")
-                ->searchable()
                 ->label(__('lang.product'))
                 ->multiple()
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Product::where('active', 1)->get()->pluck('name', 'id')),
-
+                ->searchable()
+                ->options(fn() => Product::where('active', 1)
+                    ->get()
+                    ->mapWithKeys(fn($product) => [
+                        $product->id => "{$product->code} - {$product->name}"
+                    ])
+                    ->toArray())
+                ->getSearchResultsUsing(function (string $search): array {
+                    return Product::where('active', 1)
+                        ->where(function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        })
+                        ->limit(50)
+                        ->get()
+                        ->mapWithKeys(fn($product) => [
+                            $product->id => "{$product->code} - {$product->name}"
+                        ])
+                        ->toArray();
+                })
+                ->getOptionLabelUsing(
+                    fn($value): ?string =>
+                    optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                ),
             SelectFilter::make("invoice_no")
                 ->searchable()
                 ->label(__('lang.invoice_no'))
                 ->query(function (Builder $q, $data) {
                     return $q;
                 })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
-            Filter::make('show_invoice_no')->label(__('lang.show_invoice_no'))
-            ,
+            Filter::make('show_invoice_no')->label(__('lang.show_invoice_no')),
         ], FiltersLayout::AboveContent);
     }
-
 }

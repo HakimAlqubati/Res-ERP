@@ -22,6 +22,8 @@ class Category extends Model implements Auditable
         'description',
         'active',
         'is_manafacturing',
+        'code_starts_with',
+        'waste_stock_percentage',
     ];
     protected $auditInclude = [
         'name',
@@ -29,6 +31,8 @@ class Category extends Model implements Auditable
         'description',
         'active',
         'is_manafacturing',
+        'code_starts_with',
+        'waste_stock_percentage',
     ];
 
     public function products()
@@ -41,6 +45,7 @@ class Category extends Model implements Auditable
         return [
             'category_id' => $this->id,
             'category_name' => $this->name,
+            'is_manafacturing' => $this->is_manafacturing,
             'products' => $this->products,
         ];
     }

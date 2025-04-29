@@ -56,7 +56,7 @@ class InventoryService
         $result = [];
         foreach ($unitPrices as  $unitPrice) {
             $result[] = [
-                'unit_id' => $unitPrice['unit_id'],
+                'unit_id'   => $unitPrice['unit_id'],
                 'order' => $unitPrice['order'],
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],

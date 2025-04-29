@@ -4,9 +4,11 @@ namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
+use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\WorkPeriod;
 use Filament\Forms;
+use Illuminate\Database\Eloquent\Collection;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -22,6 +24,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\Yaml\Inline;
 
@@ -157,6 +160,7 @@ class WorkPeriodResource extends Resource
 
             ])
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::select('id', 'name')->where('active', 1)->pluck('name', 'id')),
             ])
             ->actions([
@@ -218,7 +222,25 @@ class WorkPeriodResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make()
+                    Tables\Actions\BulkAction::make('delete')
+                        ->label('Bulk Delete')
+                        ->icon('heroicon-o-trash')
+                        ->action(function (Collection $records) {
+                            $employeePeriodsExistingCount = DB::table('hr_employee_periods')->whereIn('period_id', $records->pluck('id'))->count();
+
+                            $periodInAttendanceCount = Attendance::where('period_id')->whereIn('period_id', $records->pluck('id'))->count();
+
+                            $countValidate = $periodInAttendanceCount + $employeePeriodsExistingCount;
+                            if ($countValidate > 0) {
+                                showWarningNotifiMessage('Cannot delete: shifts assigned.');
+                                return;
+                            }
+                            $records->each->delete();
+                            showSuccessNotifiMessage('Deleted');
+                        })
+                        // ->action(fn(Collection $records) => $records->each->delete())
+                        ->deselectRecordsAfterCompletion(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ])

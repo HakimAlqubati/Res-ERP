@@ -487,7 +487,9 @@ class EmployeeApplicationResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::whereHas('employee', function ($q) {
+            $q->whereNull('deleted_at'); // ignore soft-deleted employees
+        })->count();
     }
 
     public static function canCreate(): bool
@@ -1296,11 +1298,14 @@ class EmployeeApplicationResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = static::getModel()::query();
- 
-        if(isStuff()){
-            $query->where('employee_id',auth()->user()->employee->id);
+
+        if (isStuff()) {
+            $query->where('employee_id', auth()->user()->employee->id);
         }
 
+        $query->whereHas('employee', function ($q) {
+            $q->whereNull('deleted_at'); // ignore soft-deleted employees
+        });
         return $query;
     }
 }

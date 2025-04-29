@@ -42,6 +42,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -112,7 +113,8 @@ class PurchaseInvoiceResource extends Resource
                             ->label('Has Attachment')
                             ->inline(false)->live(),
                         Toggle::make('has_description')
-                            ->label('Has Description')->inline(false)->live(),
+                            ->label('Has Description')->inline(false)
+                            ->live(),
 
                     ]),
                     Textarea::make('cancel_reason')->label('Cancel Reason')
@@ -134,7 +136,7 @@ class PurchaseInvoiceResource extends Resource
                         })->hiddenOn('view'),
                     Repeater::make('units')->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
-                        ->columns(8)
+                        ->columns(9)
                         ->defaultItems(1)
                         ->deletable(function ($record) {
                             if (is_null($record)) {
@@ -154,36 +156,51 @@ class PurchaseInvoiceResource extends Resource
                                 ->options(function () {
                                     return Product::where('active', 1)
                                         ->unmanufacturingCategory()
-                                        ->pluck('name', 'id');
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ]);
                                 })
-                                ->getSearchResultsUsing(fn(string $search): array => Product::where('active', 1)
-                                    ->unmanufacturingCategory()
-                                    ->where('name', 'like', "%{$search}%")->limit(50)->pluck('name', 'id')->toArray())
-                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->name)
+                                ->getSearchResultsUsing(function (string $search): array {
+                                    return Product::where('active', 1)
+                                        ->where(function ($query) use ($search) {
+                                            $query->where('name', 'like', "%{$search}%")
+                                                ->orWhere('code', 'like', "%{$search}%");
+                                        })->unmanufacturingCategory()
+                                        ->limit(50)
+                                        ->get()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}"
+                                        ])
+                                        ->toArray();
+                                })
+                                ->getOptionLabelUsing(fn($value): ?string => Product::unmanufacturingCategory()->find($value)?->code . ' - ' . Product::find($value)?->name)
                                 ->reactive()
-                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
+                                ->afterStateUpdated(function ($set, $state) {
+                                    $set('unit_id', null);
+                                    $product = Product::find($state);
+                                    $set('waste_stock_percentage', $product?->waste_stock_percentage);
+                                })
                                 ->searchable()->columnSpan(2)
                                 ->required(),
                             Select::make('unit_id')
                                 ->label(__('lang.unit'))
                                 ->disabledOn('edit')
-                                ->options(
-                                    function (callable $get) {
+                                ->options(function (callable $get) {
+                                    $product = \App\Models\Product::find($get('product_id'));
+                                    if (! $product) return [];
 
-                                        $unitPrices = UnitPrice::where('product_id', $get('product_id'))->get()->toArray();
-
-                                        if ($unitPrices)
-                                            return array_column($unitPrices, 'unit_name', 'unit_id');
-                                        return [];
-                                    }
-                                )
+                                    return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                })
                                 ->searchable()
                                 ->reactive()
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
-                                    )->where('unit_id', $state)->first();
+                                    )
+                                        ->showInInvoices()
+                                        ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price ?? 0);
 
                                     $set('total_price', ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')));
@@ -193,9 +210,9 @@ class PurchaseInvoiceResource extends Resource
                                 ->label(__('lang.package_size')),
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
-                                
+
                                 ->numeric()
-                                
+
                                 ->minValue(0.1)
                                 ->default(1)
                                 ->disabledOn('edit')
@@ -205,7 +222,7 @@ class PurchaseInvoiceResource extends Resource
                                 //         ->decimalPlaces(2)
                                 //         ->thousandsSeparator(',')
                                 // )
-                                ->reactive()
+                                ->live(onBlur: true)
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
@@ -222,7 +239,7 @@ class PurchaseInvoiceResource extends Resource
                                 //         ->decimalPlaces(2)
                                 //         ->thousandsSeparator(',')
                                 // )
-                                ->reactive()
+                                ->live(onBlur: true)
 
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                     $set('total_price', ((float) $state) * ((float)$get('quantity')));
@@ -230,6 +247,20 @@ class PurchaseInvoiceResource extends Resource
                             TextInput::make('total_price')->minValue(1)->label('Total Price')
                                 ->type('text')
                                 ->extraInputAttributes(['readonly' => true])->columnSpan(1),
+                            TextInput::make('waste_stock_percentage')
+                                ->label(__('lang.waste_stock_percentage'))
+                                ->suffix('%')
+                                ->type('number')
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->default(function (callable $get) {
+                                    $product = \App\Models\Product::find($get('product_id'));
+                                    return $product?->waste_stock_percentage ?? 0;
+                                })
+                                ->live(onBlur: true)
+                                ->columnSpan(1)
+                                ->required(),
+
 
                         ])
                 ])
@@ -287,7 +318,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(fn(): bool => isSuperVisor()),
                 Tables\Actions\ActionGroup::make([
 
                     Tables\Actions\EditAction::make()
@@ -364,5 +395,21 @@ class PurchaseInvoiceResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+    public static function canCreate(): bool
+    {
+        if (isSuperVisor()) {
+            return false;
+        }
+        return static::can('create');
+    }
+
+
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperVisor()) {
+            return false;
+        }
+        return static::can('update', $record);
     }
 }

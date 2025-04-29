@@ -12,8 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('units', function (Blueprint $table) {
-            $table->dropColumn('operation');
-            $table->enum('operation', ['*', '/'])->nullable()->after('conversion_factor');
+            if (Schema::hasColumn('units', 'operation')) {
+
+                $table->dropColumn('operation');
+                $table->enum('operation', ['*', '/'])->nullable()->after('conversion_factor');
+            }
         });
     }
 

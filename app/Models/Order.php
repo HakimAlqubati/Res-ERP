@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Services\MultiProductsInventoryService;
+use App\Services\ProductCostingService;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Order extends Model implements Auditable
@@ -26,6 +29,7 @@ class Order extends Model implements Auditable
     public const TYPE_NORMAL = 'normal';
     public const TYPE_MANUFACTURING = 'manufacturing';
     protected $fillable = [
+        'id',
         'customer_id',
         'status',
         'branch_id',
@@ -39,6 +43,7 @@ class Order extends Model implements Auditable
         'storeuser_id_update',
         'transfer_date',
         'is_purchased',
+        'supplier_id',
         'order_date',
         'store_id',
         'cancelled',
@@ -68,8 +73,15 @@ class Order extends Model implements Auditable
 
     protected $appends = [
         'status_log_date_time',
-        'status_log_creator_name'
+        'status_log_creator_name',
+        'store_names',
+        'store_ids',
     ];
+
+    // protected $casts = [
+    //     'stores' => 'array',
+    // ];
+
 
     public function orderDetails()
     {
@@ -207,51 +219,19 @@ class Order extends Model implements Auditable
         parent::boot();
 
         static::created(function ($order) {
-            if ($order->status == self::ORDERED) {
-                $branch = $order->branch;
 
-                if (
-                    $branch &&
-                    $branch->is_central_kitchen &&
-                    is_array($branch->customized_manufacturing_categories)
-                ) {
-                    // جلب جميع الفئات داخل الطلب
-                    $categoriesInOrder = $order->orderDetails()
-                        ->with('product.category')
-                        ->get()
-                        ->pluck('product.category.id')
-                        ->unique();
+            // Send notification to users with role ID = 5
+            DB::afterCommit(function () use ($order) {
 
-                    $intersect = array_intersect(
-                        $categoriesInOrder->toArray(),
-                        $branch->customized_manufacturing_categories
-                    );
-
-                    if (count($intersect)) {
-                        $storekeeper = optional(optional($branch->store)->storekeeper);
-                        if ($storekeeper && $storekeeper->fcm_token) {
-                            sendNotification(
-                                $storekeeper->fcm_token,
-                                'Manufacturing Order Created',
-                                "Order #{$order->id} contains manufacturing products and needs your attention."
-                            );
-                        }
-                    }
-                }
-                // Get store users with role ID 5
-                $storeUsers = User::whereHas("roles", function ($q) {
-                    $q->where("id", 5);
-                })->pluck('fcm_token')->filter()->toArray(); // Get device tokens
-
-                // Send notification to store users
-                foreach ($storeUsers as $deviceToken) {
+                $storeUsers = \App\Models\User::stores()->whereNotNull('fcm_token')->get();
+                foreach ($storeUsers as $user) {
                     sendNotification(
-                        $deviceToken,
-                        'New Order Received',
-                        'A new order #' . $order->id . ' has been placed and needs processing.'
+                        $user->fcm_token,
+                        '📦 طلب جديد تم إنشاؤه',
+                        "طلب رقم #{$order->id} تم إنشاؤه بنجاح."
                     );
                 }
-            }
+            });
             OrderLog::create([
                 'order_id'   => $order->id,
                 'created_by' => auth()->id() ?? null,
@@ -263,36 +243,14 @@ class Order extends Model implements Auditable
 
         static::updated(function ($order) {
 
-            // Check if status was updated
-            if ($order->isDirty('status')) {
-                // Handle specific status changes
-                switch ($order->status) {
-                    case self::PROCESSING:
-                    case self::READY_FOR_DELEVIRY:
-                        // Notify the customer (order's customer_id)
-                        if ($order->customer && $order->customer->fcm_token) {
-                            sendNotification(
-                                $order->customer->fcm_token,
-                                'Order Update',
-                                'Your order #' . $order->id . ' is now ' . ucfirst(str_replace('_', ' ', $order->status)) . '.'
-                            );
-                        }
-                        break;
-
-                    case self::DELEVIRED:
-                        // Notify store users with role ID 5
-                        $storeUsers = User::whereHas("roles", function ($q) {
-                            $q->where("id", 5);
-                        })->pluck('fcm_token')->filter()->toArray();
-
-                        foreach ($storeUsers as $deviceToken) {
-                            sendNotification(
-                                $deviceToken,
-                                'Order Delivered',
-                                'Order #' . $order->id . ' has been successfully delivered.'
-                            );
-                        }
-                        break;
+            if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY]) && $order->isDirty('status')) {
+                $customer = $order->customer;
+                if ($customer && $customer->fcm_token) {
+                    sendNotification(
+                        $customer->fcm_token,
+                        '📦 تحديث حالة الطلب',
+                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . self::getStatusLabels()[$order->status]
+                    );
                 }
             }
 
@@ -301,60 +259,68 @@ class Order extends Model implements Auditable
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
+                // (new \App\Services\Orders\OrderInventoryAllocator($order))
+                //     ->allocateFromManagedStores(auth()->user()?->managed_stores_ids ?? []);
+                foreach ($order->orderDetails as $detail) {
+                    $fifoService = new \App\Services\MultiProductsInventoryService(null, null, $detail->unit_id, null);
 
-                // if (!$order->store_id && isStoreManager() && !is_null(getDefaultStoreForCurrentStoreKeeper())) {
-                //     $order->update(['store_id' => getDefaultStoreForCurrentStoreKeeper()]);
-                // }
-                // if ($order->type == self::TYPE_NORMAL) {
-                foreach ($order->orderDetails as $orderDetail) {
-                    $storeId = getDefaultStoreForCurrentStoreKeeper();
-                    if ($orderDetail->product->is_manufacturing) {
-                        $storeId = Store::centralKitchen()->id;
+                    $allocations = $fifoService->allocateFIFO(
+                        $detail->product_id,
+                        $detail->unit_id,
+                        $detail->available_quantity // الكمية المطلوبة للصرف
+                        ,
+                        $order
+                    );
+
+
+                    foreach ($allocations as $alloc) {
+                        \App\Models\InventoryTransaction::create([
+                            'product_id'           => $detail->product_id,
+                            'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                            'quantity'             => $alloc['deducted_qty'],
+                            'unit_id'              => $alloc['target_unit_id'],
+                            'package_size'         => $alloc['target_unit_package_size'],
+                            'price'                => $alloc['price_based_on_unit'],
+                            'movement_date'        => $order->order_date ?? now(),
+                            'transaction_date'     => $order->order_date ?? now(),
+                            'store_id'             => $alloc['store_id'],
+                            'notes' => "Stock deducted for Order #{$order->id} from " .
+                                match ($alloc['transactionable_type'] ?? null) {
+                                    'PurchaseInvoice'     => 'Purchase Invoice',
+                                    'StockSupplyOrder'    => 'Stock Supply',
+                                    default               => 'Unknown Source',
+                                } .
+                                " #" . ($alloc['transactionable_id'] ?? 'N/A') .
+                                " with price " . number_format($alloc['price_based_on_unit'], 2),
+                            ($alloc['transaction_id'] ?? 'N/A') .
+                                " with price " . number_format($alloc['price_based_on_unit'], 2),
+                            'transactionable_id'   => $order->id,
+                            'transactionable_type' => \App\Models\Order::class,
+                            'source_transaction_id' => $alloc['transaction_id'],
+
+                        ]);
                     }
-                    \App\Models\InventoryTransaction::create([
-                        'product_id'           => $orderDetail->product_id,
-                        'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                        'quantity'             => $orderDetail->available_quantity,
-                        'unit_id'              => $orderDetail->unit_id,
-                        'purchase_invoice_id'  => $orderDetail->purchase_invoice_id,
-                        'movement_date'        => $order->order_date ?? now(),
-                        'package_size'         => $orderDetail->package_size,
-                        'store_id'             => $storeId,
-                        'transaction_date'     => $order->order_date ?? now(),
-                        'notes'                => 'Inventory created for order ' . $order->id,
-                        'transactionable_id'   => $order->id,
-                        'transactionable_type' => Order::class,
-                    ]);
                 }
-                // } elseif ($order->type == self::TYPE_MANUFACTURING) {
-                //     foreach ($order->orderDetails as $orderDetail) {
-                //         $detailAvailableQty =  $orderDetail->available_quantity;
-                //         $detailPackageSize = $orderDetail->package_size;
 
-                //         $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
-                //         $manafcturingProduct = $manufacturingService->getProductItems($orderDetail->product_id);
-                //         $productItems = $manafcturingProduct['product_items'];
-                //         $unitPrices = $manafcturingProduct['unit_prices'];
+                // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
 
-                //         foreach ($productItems as  $productItem) {
-                //             \App\Models\InventoryTransaction::create([
-                //                 'product_id'           => $productItem->product_id,
-                //                 'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                //                 'quantity'             => $detailAvailableQty * $productItem->quantity  * $detailPackageSize,
-                //                 'unit_id'              => $productItem->unit_id,
-                //                 'purchase_invoice_id'  => null,
-                //                 'movement_date'        => $order->order_date ?? now(),
-                //                 'package_size'         => $productItem->package_size,
-                //                 'store_id'             => $order->store_id,
-                //                 'transaction_date'     => $order->order_date ?? now(),
-                //                 'notes'                => 'Inventory created for manafacturing order ' . $order->id,
-                //                 'transactionable_id'   => $order->id,
-                //                 'transactionable_type' => Order::class,
-                //             ]);
-                //         }
-                //     }
-                //   }
+                foreach ($order->orderDetails as $detail) {
+                    $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
+                        ->pluck('parent_product_id')
+                        ->unique();
+
+                    foreach ($parentProducts as $parentProductId) {
+                        try {
+                            $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
+                            Log::info("🔄 تم تحديث أسعار {$count} مكونات لـ منتج مركب ID {$parentProductId}");
+                        } catch (\Throwable $e) {
+                            Log::error("❌ خطأ أثناء تحديث سعر المنتج المركب {$parentProductId}: {$e->getMessage()}");
+                        }
+                    }
+                }
             }
+
+
 
             if ($order->isDirty('status')) {
                 OrderLog::create([
@@ -449,5 +415,27 @@ class Order extends Model implements Auditable
                 $q2->where('is_manafacturing', true);
             });
         });
+    }
+
+    public function stores()
+    {
+        return $this->belongsToMany(Store::class, 'order_store');
+    }
+    public function getStoreNamesAttribute()
+    {
+        return $this->stores->pluck('name')->implode(', ');
+    }
+    public function getStoreIdsAttribute()
+    {
+        return $this->stores->pluck('id')->toArray();
+    }
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', 1);
     }
 }

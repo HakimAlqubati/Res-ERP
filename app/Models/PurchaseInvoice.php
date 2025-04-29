@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Services\ProductCostingService;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class PurchaseInvoice extends Model implements Auditable
@@ -123,17 +125,5 @@ class PurchaseInvoice extends Model implements Auditable
             return ['status' => 'error', 'message' => 'Failed to cancel purchase invoice: ' . $e->getMessage()];
         }
     }
-
-    // protected static function boot()
-    // {
-    //     parent::boot();
-
-    //     static::updated(function ($purchaseInvoice) {
-    //         if ($purchaseInvoice->cancelled) {
-    //             \App\Models\InventoryTransaction::where('referetransactionable_idnce_id', $purchaseInvoice->id)
-    //                 ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
-    //                 ->delete();
-    //         }
-    //     });
-    // }
+ 
 }

@@ -17,6 +17,7 @@ class StockSupplyOrderDetail extends Model implements Auditable
         'quantity',
         'price',
         'package_size',
+        'waste_stock_percentage',
     ];
     protected $auditInclude = [
         'stock_supply_order_id',
@@ -25,6 +26,7 @@ class StockSupplyOrderDetail extends Model implements Auditable
         'quantity',
         'price',
         'package_size',
+        'waste_stock_percentage',
     ];
 
     public function order()
@@ -76,6 +78,7 @@ class StockSupplyOrderDetail extends Model implements Auditable
                 'notes' => $notes,
                 'transactionable_id' => $stockSupplyDetail->stock_supply_order_id,
                 'transactionable_type' => StockSupplyOrder::class,
+                'waste_stock_percentage' => $stockSupplyDetail->waste_stock_percentage,
             ]);
         });
     }

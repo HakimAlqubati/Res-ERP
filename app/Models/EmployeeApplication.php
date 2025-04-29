@@ -210,7 +210,7 @@ class EmployeeApplication extends Model
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
-            } elseif (isStuff() || isFinanceManager()) {
+            } elseif ((isStuff() || isFinanceManager()) && auth()->user()->has_employee) {
                 static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
                     $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
                 });

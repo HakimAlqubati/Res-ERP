@@ -290,6 +290,7 @@ if (!function_exists('isOrderCompletedIfQtyLessThanZero')) {
     function isOrderCompletedIfQtyLessThanZero()
     {
 
+        return setting('completed_order_if_not_qty');
         return   SystemSetting::select('completed_order_if_not_qty')->first()->completed_order_if_not_qty;
     }
 }

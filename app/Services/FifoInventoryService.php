@@ -35,7 +35,6 @@ class FifoInventoryService
         $availablePurchases = $this->getPurchaseQuantities();
         $remainingQuantity = $this->orderQuantity;
         $allocations = [];
-
         // جلب تفاصيل الوحدات المرتبطة بالمنتج
         $unitPrices = $this->inventoryService->getProductUnitPrices($this->productId);
         $packageSize = $this->getPackageSizeForUnit($unitPrices, $this->unitId);
@@ -67,12 +66,12 @@ class FifoInventoryService
             // Step 1: Calculate already ordered quantities from this purchase
             $previousOrders = $this->getOrderedQuantities($purchase->transactionable_id);
             $totalOrderedQty = $previousOrders->sum(fn($order) => $order->quantity * $order->package_size);
-
+            
             // Step 2: Determine remaining quantity available for allocation
             $availableQty = ($purchase->quantity * $purchase->package_size) - $totalOrderedQty;
             $adjustedPrice = ($purchase->price / $purchase->package_size) * $packageSize;
             // تحويل الكمية المتاحة إلى الوحدة المطلوبة باستخدام package_size
-            $availableQtyInUnit = $availableQty / $packageSize;
+            $availableQtyInUnit = $availableQty / $packageSize; 
 
             if ($availableQtyInUnit <= 0) {
                 continue; // Skip if no quantity is left from this purchase
@@ -122,7 +121,7 @@ class FifoInventoryService
                 'movement_date' => $purchase->movement_date,
             ];
             // throw new Exception("Insufficient inventory. {$remainingQuantity} units could not be allocated.");
-        }
+        } 
         return $allocations;
     }
 
@@ -150,11 +149,25 @@ class FifoInventoryService
      */
     private function getPurchaseQuantities()
     {
+        // $usedPurchaseInvoiceIds = InventoryTransaction::query()
+        //     ->whereNotNull('purchase_invoice_id')
+        //     ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+        //     ->pluck('purchase_invoice_id')
+        //     ->toArray();
         return InventoryTransaction::query()
             ->where('product_id', $this->productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            // ->whereNotIn('id', $usedPurchaseInvoiceIds)
             ->orderBy('movement_date', 'asc')
-            ->get(['id', 'quantity', 'package_size', 'price', 'movement_date', 'transactionable_id', 'store_id']);
+            ->get([
+                'id',
+                'quantity',
+                'package_size',
+                'price',
+                'movement_date',
+                'transactionable_id',
+                'store_id'
+            ]);
     }
 
     /**

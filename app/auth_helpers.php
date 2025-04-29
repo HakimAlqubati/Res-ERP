@@ -25,6 +25,33 @@ if (!function_exists('isBranchManager')) {
         return false;
     }
 }
+if (!function_exists('isSuperVisor')) {
+    function isSuperVisor()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isSuperVisor();
+        }
+        return false;
+    }
+}
+if (!function_exists('isBranchUser')) {
+    function isBranchUser()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isBranchUser();
+        }
+        return false;
+    }
+}
+if (!function_exists('isDriver')) {
+    function isDriver()
+    {
+        if (auth()->check()) {
+            return auth()->user()->isDriver();
+        }
+        return false;
+    }
+}
 if (!function_exists('isFinanceManager')) {
     function isFinanceManager()
     {

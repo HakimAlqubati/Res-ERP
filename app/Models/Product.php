@@ -11,12 +11,14 @@ use Spatie\Translatable\HasTranslations;
 class Product extends Model implements Auditable
 {
     use HasFactory,
-        SoftDeletes, \OwenIt\Auditing\Auditable
+        SoftDeletes,
+        \OwenIt\Auditing\Auditable
         // , HasTranslations
     ;
     // public $translatable = ['name', 'description'];
 
     protected $fillable = [
+        'id',
         'name',
         'code',
         'description',
@@ -27,6 +29,7 @@ class Product extends Model implements Auditable
         'main_unit_id',
         'basic_price',
         'minimum_stock_qty',
+        'waste_stock_percentage',
     ];
     protected $auditInclude = [
         'name',
@@ -39,8 +42,9 @@ class Product extends Model implements Auditable
         'main_unit_id',
         'basic_price',
         'minimum_stock_qty',
+        'waste_stock_percentage',
     ];
-    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices'];
+    protected $appends = ['unit_prices_count', 'product_items_count', 'is_manufacturing', 'formatted_unit_prices', 'display_name'];
 
     /**
      * Scope to filter products with at least 2 unit prices.
@@ -60,6 +64,10 @@ class Product extends Model implements Auditable
     }
 
     public function unitPrices()
+    {
+        return $this->hasMany(UnitPrice::class)->where('show_in_invoices', 1);
+    }
+    public function allUnitPrices()
     {
         return $this->hasMany(UnitPrice::class);
     }
@@ -85,6 +93,7 @@ class Product extends Model implements Auditable
         return [
             'product_id' => $this->id,
             'product_name' => $this->name,
+            'product_code' => $this->code,
             'description' => $this->description,
             'unit_prices' => $this->unitPrices,
             'product_items' => $this->productItems,
@@ -184,5 +193,37 @@ class Product extends Model implements Auditable
         return $this->unitPrices->map(function ($unitPrice) {
             return "{$unitPrice->unit->name} : {$unitPrice->price}";
         })->implode(', ');
+    }
+
+    public static function generateProductCode($categoryId): string
+    {
+        $category = \App\Models\Category::find($categoryId);
+        if (!$category || !$category->code_starts_with) {
+            return '';
+        }
+
+        $prefix = $category->code_starts_with;
+
+        // Get latest product with this prefix
+        $lastProduct = static::where('category_id', $categoryId)
+            ->where('code', 'like', $prefix . '%')
+            ->orderBy('code', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastProduct) {
+            $lastCode = (int)substr($lastProduct->code, strlen($prefix));
+            $nextNumber = $lastCode + 1;
+        }
+
+        return $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+    }
+    public function productPriceHistories()
+    {
+        return $this->hasMany(ProductPriceHistory::class, 'product_id');
+    }
+    public function getDisplayNameAttribute()
+    {
+        return "{$this->name} ({$this->code})";
     }
 }

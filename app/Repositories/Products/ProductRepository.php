@@ -24,30 +24,64 @@ class ProductRepository implements ProductRepositoryInterface
     {
         // Get the value of the ID and category ID filters from the request, or null if they're not set.
         $id = $request->input('id');
+        $code = $request->input('code');
         $categoryId = $request->input('category_id');
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
 
+
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
-        $products = Product::active()
+        $query = Product::active()
             // ->when($isManufacturing, function ($query) {
             //     return $query->manufacturingCategory()->hasProductItems();
             // })
             ->when($isManufacturing, function ($query) {
                 return $query->manufacturingCategory()
-                // ->hasProductItems()
+                    // ->hasProductItems()
                 ;
             }, function ($query) {
                 // return $query->unmanufacturingCategory();
             })
             ->HasUnitPrices()
             ->with(['unitPrices' => function ($query) {
-                $query->orderBy('order', 'asc'); 
+                $query->orderBy('order', 'asc');
             }])
             ->when($id, function ($query) use ($id) {
                 return $query->where('id', $id);
-            })->when($categoryId, function ($query) use ($categoryId) {
+            })
+            ->when($code, function ($query) use ($code) {
+                return $query->where('code', $code);
+            })
+            
+            ->when($categoryId, function ($query) use ($categoryId) {
                 return $query->where('category_id', $categoryId);
-            })->get();
+            });
+
+        if (auth()->user()->branch && auth()->user()->branch->is_kitchen && $isManufacturing) {
+            $customCategories = auth()->user()?->branch?->categories()->pluck('category_id')->toArray() ?? [];
+            $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                ->where('id', '!=', auth()->user()?->branch?->id) // نستثني فرع المستخدم
+                ->with('categories:id')
+                ->get()
+                ->pluck('categories')
+                ->flatten()
+                ->pluck('id')
+                ->unique()
+                ->toArray();
+
+            if (count($customCategories) > 0) {
+                $query->whereIn('category_id', $customCategories);
+            }
+            if (count($otherBranchesCategories) > 0) {
+                $query->whereNotIn('category_id', $otherBranchesCategories);
+            }
+        }
+
+        // $sql = vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
+        //     return is_numeric($binding) ? $binding : "'{$binding}'";
+        // })->toArray());
+
+        // dd($sql);
+        $products = $query->get();
 
         // Return a collection of product resources.
         return ProductResource::collection($products);

@@ -3,11 +3,16 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
+use App\Imports\OrdersImport;
 use App\Models\Order;
+use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ListOrders extends ListRecords
 {
@@ -21,6 +26,37 @@ class ListOrders extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            Actions\Action::make('importOrders')
+                ->label('Import Orders')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->form([
+                    FileUpload::make('file')
+                        ->label('Upload Excel File')
+                        ->required()
+                        ->disk('public')
+                        ->directory('order_imports')
+
+                    // ->rules(['.xls', '.xlsx'])
+                ])
+                ->color('success')
+                ->action(function (array $data) {
+                    $filePath = 'public/' . $data['file'];
+                    $import = new OrdersImport();
+
+                    try {
+                        \Maatwebsite\Excel\Facades\Excel::import($import, $filePath);
+
+
+                        $count = $import->getSuccessfulImportsCount();
+                        if ($count > 0) {
+                            showSuccessNotifiMessage("✅ Imported {$count} orders successfully.");
+                        } else {
+                            showWarningNotifiMessage("⚠️ No orders were added. Please check your file format.");
+                        }
+                    } catch (\Throwable $e) {
+                        showWarningNotifiMessage('❌ Failed to import orders: ' . $e->getMessage());
+                    }
+                })
         ];
     }
 

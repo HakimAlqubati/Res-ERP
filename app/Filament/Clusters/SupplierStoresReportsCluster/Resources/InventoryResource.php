@@ -7,14 +7,17 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResour
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
+use App\Models\Product;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class InventoryResource extends Resource
@@ -37,10 +40,14 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-        ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
 
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('product.code')
+                    ->label('Product Code'),
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product'),
 
@@ -57,27 +64,71 @@ class InventoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('package_size')->alignCenter(true)
                     ->label('Package Size'),
-
+                Tables\Columns\TextColumn::make('price')
+                    ->label('Price')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('movement_date')
-                    ->label('Movement Date')
+                    ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('store.name')
                     ->label('Store'),
 
-                Tables\Columns\TextColumn::make('remaining_qty')->hidden()
-                    ->label('Remaining Qty')->alignCenter(true)
-                    ->getStateUsing(fn($record) => $record->getRemainingQtyAttribute()),
+
 
                 Tables\Columns\TextColumn::make('notes')
                     ->label('Notes'),
+                Tables\Columns\TextColumn::make('transactionable_id')
+                    ->label('Transaction ID')->searchable(isIndividual: true)
+                    ->sortable()->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('formatted_transactionable_type')
+                    ->label('Transaction Type')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
             ])
             ->filters([
-                Filter::make('product')
-                    ->label('Product')
-                    ->query(fn(Builder $query, array $data) => $query->whereHas('product', fn($q) => $q->where('name', 'like', "%{$data['value']}%")))
-                    ->form([
-                        Forms\Components\TextInput::make('value')->label('Product Name'),
-                    ]),
+                // Filter::make('product')
+                //     ->label('Product')
+                //     ->query(fn(Builder $query, array $data) => $query->whereHas('product', fn($q) => $q->where('name', 'like', "%{$data['value']}%")))
+                //     ->form([
+                //         Forms\Components\TextInput::make('value')->label('Product Name'),
+                //     ]),
+
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))
+                    ->multiple()
+                    ->searchable()
+                    ->options(fn() => Product::where('active', 1)
+                        ->get()
+                        ->mapWithKeys(fn($product) => [
+                            $product->id => "{$product->code} - {$product->name}"
+                        ])
+                        ->toArray())
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(
+                        fn($value): ?string =>
+                        optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                    ),
+                SelectFilter::make('store_id')->options(fn() => \App\Models\Store::all()
+                    ->mapWithKeys(fn($store) => [
+                        $store->id => $store->name
+                    ])
+                    ->toArray())
+                    ->label(__('lang.store'))
+
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
@@ -85,6 +136,7 @@ class InventoryResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -107,7 +159,7 @@ class InventoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isFinanceManager() || isSystemManager()) {
             return true;
         }
         return false;
@@ -116,5 +168,20 @@ class InventoryResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
+    }
+    public static function canForceDelete(Model $record): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canForceDeleteAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }

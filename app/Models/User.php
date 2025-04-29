@@ -12,19 +12,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
 
-class User extends Authenticatable implements FilamentUser,Auditable
+class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 
 {
-    use HasApiTokens, HasFactory, Notifiable, 
-    HasRoles, SoftDeletes, HasPanelShield, DynamicConnection,
-    \OwenIt\Auditing\Auditable;
+    use HasApiTokens,
+        HasFactory,
+        Notifiable,
+        HasRoles,
+        SoftDeletes,
+        HasPanelShield,
+        DynamicConnection,
+        \OwenIt\Auditing\Auditable;
 
 
     /**
@@ -50,6 +56,7 @@ class User extends Authenticatable implements FilamentUser,Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'last_seen_at',
     ];
     protected $auditInclude = [
         'name',
@@ -102,11 +109,11 @@ class User extends Authenticatable implements FilamentUser,Auditable
         return $this->group === 'Filament Users';
     }
 
-    public function branch()
+    public function manageBranches()
     {
-        return $this->hasOne(Branch::class, 'manager_id');
+        return $this->hasMany(Branch::class, 'manager_id');
     }
-    public function branch2()
+    public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_id');
     }
@@ -122,6 +129,23 @@ class User extends Authenticatable implements FilamentUser,Auditable
 
     public function getAvatarImageAttribute()
     {
+        // Check if avatar is set and exists on S3
+        if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
+            return Storage::disk('s3')->url($this->avatar);
+        }
+
+        // Ensure the default image exists on the local storage
+        $defaultAvatarPath = 'employees/default/avatar.png';
+
+        if (Storage::disk('public')->exists($defaultAvatarPath)) {
+            return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
+            return Storage::disk('public')->url($defaultAvatarPath);
+        }
+        // If file is not found, return a fallback URL
+        return asset('images/default-avatar.png');
+    }
+    public function getAvatarImageAttribute_old()
+    {
         $default = 'users/default/avatar.png';
         if (is_null($this->avatar)) {
             return url('/storage') . '/' . $default;
@@ -135,8 +159,14 @@ class User extends Authenticatable implements FilamentUser,Auditable
         return $this->hasOne(Employee::class, 'user_id', 'id');
     }
 
+    public function isSuperVisor()
+    {
+        return in_array(15, $this->roles->pluck('id')->toArray());
+    }
     public function isBranchManager()
     {
+        return in_array(7, $this->roles->pluck('id')->toArray());
+
         if (getCurrentRole() == 7) {
             return true;
         }
@@ -172,10 +202,20 @@ class User extends Authenticatable implements FilamentUser,Auditable
     }
     public function isStoreManager()
     {
+        return in_array(5, $this->roles->pluck('id')->toArray()) || isFinanceManager();
+
         if (getCurrentRole() == 5) {
             return true;
         }
         return false;
+    }
+    public function isBranchUser()
+    {
+        return in_array(8, $this->roles->pluck('id')->toArray());
+    }
+    public function isDriver()
+    {
+        return in_array(6, $this->roles->pluck('id')->toArray());
     }
     public function isMaintenanceManager()
     {
@@ -242,7 +282,7 @@ class User extends Authenticatable implements FilamentUser,Auditable
 
     public function getManagedStoresIdsAttribute()
     {
-        if(!auth()->check()){
+        if (!auth()->check()) {
             return [];
         }
         $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
@@ -266,5 +306,28 @@ class User extends Authenticatable implements FilamentUser,Auditable
             }
         }
         return $isBlocked;
+    }
+
+    public function getRolesTitleAttribute()
+    {
+        return $this->roles->pluck('name')->implode(', ');
+    }
+
+    public function ownedUsers()
+    {
+        return $this->hasMany(User::class, 'owner_id');
+    }
+    public function loginHistories()
+    {
+        return $this->hasMany(UserLoginHistory::class);
+    }
+    public function getLastLoginAtAttribute()
+    {
+        return $this->loginHistories()->latest()->first()?->created_at;
+    }
+
+    public function getLastSeenAttribute()
+    {
+        return $this->last_seen_at?->diffForHumans();
     }
 }

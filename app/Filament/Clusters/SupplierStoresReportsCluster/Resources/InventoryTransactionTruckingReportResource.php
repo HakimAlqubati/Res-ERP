@@ -4,10 +4,11 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInventoryTransactionTruckingReport;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 
 use App\Models\InventoryTransaction;
-use App\Models\Product; 
+use App\Models\Product;
+use Filament\Forms\Components\Select;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
@@ -44,17 +45,41 @@ class InventoryTransactionTruckingReportResource extends Resource
 
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))->searchable()
-                    ->query(function (Builder $q, $data) {
-                        return $q;
-                    })->options(Product::active()->get()->pluck('name', 'id')),
-            ],FiltersLayout::AboveContent);
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    }),
+                SelectFilter::make('movement_type')->label('Type')->options([
+                    InventoryTransaction::MOVEMENT_IN => 'In',
+                    InventoryTransaction::MOVEMENT_OUT => 'Out',
+                ])
+            ], FiltersLayout::AboveContent);
     }
 
-  
+
     public static function getPages(): array
     {
         return [
-            'index' => ListInventoryTransactionTruckingReport::route('/'),
+            'index' => Pages\ListInventoryTransactionTruckingReport::route('/'),
+            'tracking_cat' => Pages\CategoryInventoryTrackingReport::route('/tracking_cat'),
+            'summary_report' => Pages\InventorySummaryReport::route('/summary_report'),
         ];
     }
 }

@@ -476,11 +476,14 @@ if (!function_exists('employeeAttendances')) {
                 // Get attendances for the current period and date
                 $query = DB::table('hr_attendances as a')
                     ->where('accepted', 1)
+                    ->join('hr_employees as e', 'e.id', '=', 'a.employee_id')
+
                     ->where('a.employee_id', '=', $employeeId)
                     ->whereDate('a.check_date', '=', $date)
                     ->where('a.period_id', '=', $period->period_id)
-                    ->select('a.*') // Adjust selection as needed
-                    ->whereNull('a.deleted_at');
+                    ->whereNull('e.deleted_at')
+                    ->whereNull('a.deleted_at')
+                    ->select('a.*');
 
                 if (request()->query('filterStatus') && !is_null(request()->query('filterStatus'))) {
                     // $query->where('a.status', request()->query('filterStatus'));
@@ -814,9 +817,11 @@ if (!function_exists('employeeAttendancesByDate')) {
                     // Get attendances for the current period and date
                     $attendances = DB::table('hr_attendances as a')
                         ->where('accepted', 1)
+                        ->join('hr_employees as e', 'e.id', '=', 'a.employee_id')
                         ->where('a.employee_id', '=', $employeeId)
                         ->whereDate('a.check_date', '=', $date)
                         ->where('a.period_id', '=', $period->period_id)
+                        ->whereNull('e.deleted_at')
                         ->select('a.*') // Adjust selection as needed
                         ->whereNull('a.deleted_at')
                         ->get();

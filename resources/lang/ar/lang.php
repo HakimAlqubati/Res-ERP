@@ -167,5 +167,19 @@ return [
     'no' => 'لا',
     'allow_login' => 'إزالة الحظر',
     'is_blocked' => 'محظور من تسجيل الدخول',
-];
+    'branch_type' => 'نوع',
+    'branch' => 'الفرع',
+    'central_kitchen' => 'المطبخ المركزي',
+    'hq' => 'المقر الرئيسي',
+    'product_code_helper' => 'يتم توليد هذا الرمز تلقائيًا بناءً على الفئة المختارة، لضمان أن يكون لكل منتج مُعرّف فريد مثل FOO001، FOO002، وهكذا.',
+    'status_active' => 'نشط',
+    'status_unactive' => 'غير نشط',
+    'waste_stock_percentage' => 'نسبة هدر المخزون %',
+    'popup_branch' => 'فرع Popup',
+    'more_description' => 'مزيد من التفاصيل',
+    'normal_branch' => 'فرع عادي',
+    'branch_type' => 'النوع',
+    'only_one_hq_allowed' => 'يسمح بفرع رئيسي واحد فقط. يرجى تفعيل الفرع الموجود أو حذفه أولاً.',
+    'show_in_invoices' => 'عرض في فواتير الشراء والطلبات',
 
+];

@@ -13,6 +13,7 @@ use App\Models\User;
 use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -28,74 +29,129 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
 
     public function updateWithFifo($request)
     {
+        DB::beginTransaction();
+
         $data = $request->all();
         // Initialize an array to hold the responses.
-        $responses = [];
-        // Loop through the order detail IDs and update or delete each one.
-        foreach ($data['orders_details'] as $orderDetailData) {
-            // Find the order detail with the specified ID.
-            $orderDetail = OrderDetails::find($orderDetailData['id']);
 
-            // Find the new product by ID.
-            $product = Product::find($orderDetailData['product_id']);
-            
-            
-            // Check if the new product is in the same category as the original product.
-            if ($product->category_id !== $orderDetail->product->category_id) {
-                // Return an error response if the new product is not in the same category as the original product.
-                $responses[] = [
-                    'success' => false,
-                    'id' => $orderDetailData['id'],
-                    'message' => sprintf(
-                        'The "%s" product (category: "%s") cannot be used to replace the "%s" product (category: "%s"). The new product must be in the same category as the original product.',
-                        $product->name,
-                        $product->category->name,
-                        $orderDetail->product->name,
-                        $orderDetail->product->category->name
-                    ),
-                ];
-                continue;
+        try {
+            $responses = [];
+            // Loop through the order detail IDs and update or delete each one.
+            foreach ($data['orders_details'] as $orderDetailData) {
+                try {
+                    // Find the order detail with the specified ID.
+                    $orderDetail = OrderDetails::find($orderDetailData['id']);
+
+                    // Find the new product by ID.
+                    $product = Product::find($orderDetailData['product_id']);
+
+
+                    // Check if the new product is in the same category as the original product.
+                    if ($product->category_id !== $orderDetail->product->category_id) {
+                        // Return an error response if the new product is not in the same category as the original product.
+                        $responses[] = [
+                            'success' => false,
+                            'id' => $orderDetailData['id'],
+                            'message' => sprintf(
+                                'The "%s" product (category: "%s") cannot be used to replace the "%s" product (category: "%s"). The new product must be in the same category as the original product.',
+                                $product->name,
+                                $product->category->name,
+                                $orderDetail->product->name,
+                                $orderDetail->product->category->name
+                            ),
+                        ];
+                        continue;
+                    }
+                    switch ($orderDetailData['operation']) {
+
+                        case 'update':
+
+                            Log::info('updatingOrderDetail', [
+                                'orderDetailData' => $orderDetailData,
+                            ]);
+                            $unitId = $orderDetail->unit_id;
+                            if (isset($orderDetailData['unit_id']) && !is_null($orderDetailData['unit_id'])) {
+                                $unitId = $orderDetailData['unit_id'];
+                            }
+                            $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
+                                ->where('unit_id', $unitId)
+                                ->first();
+
+                            if (is_null($unitPrice)) {
+                                throw new \Exception('No unit price');
+                            }
+                            DB::table('orders_details')
+                                ->where('id', $orderDetailData['id'])
+                                ->update([
+                                    'product_id' => $orderDetailData['product_id'],
+                                    'unit_id' => $orderDetailData['unit_id'],
+                                    'updated_by' => auth()->user()->id,
+                                    'updated_at' => now(),
+                                    'package_size' => $unitPrice->package_size,
+                                    'available_quantity' => $orderDetailData['quantity'],
+                                ]);
+
+                            // $orderDetail->update([
+                            //     'product_id' => $orderDetailData['product_id'],
+                            //     'unit_id' => $orderDetailData['unit_id'],
+                            //     'updated_by' => auth()->user()->id,
+                            //     'updated_at' => now(),
+                            //     'package_size' => $unitPrice->package_size,
+                            //     'available_quantity' => $orderDetailData['quantity'],
+                            // ]);
+
+                            $responses[] = [
+                                'success' => true,
+                                'id' => $orderDetailData['id'],
+                                'data' => DB::table('orders_details')
+                                    ->where('id', $orderDetailData['id'])->get(),
+                                'message' => 'Order detail updated successfully',
+                            ];
+                            break;
+
+                        default:
+
+                            throw new \Exception('Invalid operation: ' . $orderDetailData['operation']);
+
+                            // Return an error response if the operation is invalid.
+                            $responses[] = [
+                                'success' => false,
+                                'id' => $orderDetailData['id'],
+                                'message' => 'Invalid operation: ' . $orderDetailData['operation'],
+                            ];
+                    }
+                } catch (\Exception $e) {
+                    $responses[] = [
+                        'success' => false,
+                        'id' => $orderDetailData['id'] ?? null,
+                        'message' => 'Failed to process: ' . $e->getMessage(),
+                    ];
+
+                    // Continue processing other items despite this failure
+                    continue;
+                }
             }
-
-            if ($orderDetailData['operation'] === 'update') {
-                // Calculate the new price based on the quantity and unit price.
-                // $price = $orderDetailData['quantity'] * $unitPrice->price;
- 
-                // Update the order detail with the new values.
-                $orderDetail->fill($orderDetailData);
-                $orderDetail->product_id = $orderDetailData['product_id'];
-                $orderDetail->unit_id = $orderDetailData['unit_id'];
-                // $orderDetail->price = $price;
-                $orderDetail->updated_by = auth()->user()->id;
-                $orderDetail->save();
-
-                $responses[] = [
-                    'success' => true,
-                    'id' => $orderDetailData['id'],
-                    'message' => 'Order detail updated successfully',
-                ];
-            } elseif ($orderDetailData['operation'] === 'destroy') {
-                // Delete the order detail.
-                $orderDetail->delete();
-                $responses[] = [
-                    'success' => true,
-                    'id' => $orderDetailData['id'],
-                    'message' => 'Order detail deleted successfully',
-                ];
-            } else {
-                // Return an error response if the operation is invalid.
-                $responses[] = [
-                    'success' => false,
-                    'id' => $orderDetailData['id'],
-                    'message' => 'Invalid operation: ' . $orderDetailData['operation'],
-                ];
+            if (isset($responses[0]['success']) && $responses[0]['success'] == true) {
+                Order::find($orderDetail['order_id'])->update(['storeuser_id_update' => auth()->user()->id]);
             }
+            // Return the array of responses.
+            DB::commit();
+
+            return response()->json($responses);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::critical("Transaction failed in updateWithFifo", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'A system error occurred. Changes were not saved.',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        if (isset($responses[0]['success']) && $responses[0]['success'] == true) {
-            Order::find($orderDetail['order_id'])->update(['storeuser_id_update' => auth()->user()->id]);
-        }
-        // Return the array of responses.
-        return response()->json($responses);
     }
     public function updateWithUnitPrices($request)
     {

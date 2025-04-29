@@ -677,3 +677,7 @@ Route::get('/analyze', function () {
     // return $response;
 });
 Route::get('/testOcr', [OCRController::class, 'test']);
+Route::get('/testLog', function () {
+    \Illuminate\Support\Facades\Log::error('Testing log error');
+    dd('Logged');
+});

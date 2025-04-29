@@ -26,7 +26,7 @@ class ReportProductQuantitiesResource extends Resource
     protected static ?string $slug = 'report-product-quantities';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = MainOrdersCluster::class;
-    protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = true;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
 
@@ -93,14 +93,13 @@ class ReportProductQuantitiesResource extends Resource
                         DatePicker::make('end_date')
                             ->label('End Date'),
                     ])
-                    // ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
 
-                    //     return $query->when(
-                    //         isset($data['start_date']) && isset($data['end_date']),
-                    //         fn($query) => $query->whereBetween('orders.created_at', [$data['start_date'], $data['end_date']])
-                    //     );
-                    // })
-                    ,
+                        return $query->when(
+                            isset($data['start_date']) && isset($data['end_date']),
+                            fn($query) => $query->whereBetween('orders.created_at', [$data['start_date'], $data['end_date']])
+                        );
+                    }),
             ], layout: FiltersLayout::AboveContent);
     }
 
@@ -108,10 +107,10 @@ class ReportProductQuantitiesResource extends Resource
     {
         // return static::getModel()::query()->orderBy('product');
         // // Extract filter values from the request
-        $updates = request()->input('components.0.updates', []); 
-        // $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
-        // $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
-        // dd($product_id,$updates);
+        $updates = request()->input('components.0.updates', []);
+        $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
+        $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
+        // dd($updates, $start_date, $end_date);
         // Build the query using Eloquent
         $query = OrderDetails::query()
             ->select(
@@ -127,8 +126,12 @@ class ReportProductQuantitiesResource extends Resource
             ->join('branches', 'orders.branch_id', '=', 'branches.id')
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->whereNull('orders.deleted_at')
+            ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
+                $query->whereBetween('orders.created_at', [$start_date, $end_date]);
+            })
             // ->where('products.id', $product_id)
-            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price');
+            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
+            ->orderByRaw('NULL');
         return $query;
     }
 }

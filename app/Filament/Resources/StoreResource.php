@@ -77,7 +77,7 @@ class StoreResource extends Resource
                 TextColumn::make('name')->searchable()->label(__('lang.name'))->toggleable(),
                 TextColumn::make('location')->searchable()->label(__('lang.location'))->toggleable(),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
-                TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable(),
+                TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable()->default('-'),
                 CheckboxColumn::make('default_store')
                     ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
                 CheckboxColumn::make('is_central_kitchen')
@@ -90,11 +90,7 @@ class StoreResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Action::make('report')
-                    ->label(__('lang.open_report'))
-                    ->action(function ($record) {
-                        redirect('admin/stores-report?tableFilters[store_id][value]=' . $record->id);
-                    }),
+                
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),

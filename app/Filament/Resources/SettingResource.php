@@ -368,26 +368,26 @@ class SettingResource extends Resource
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
                                 Fieldset::make('')->columns(3)->schema([
-                                    Select::make('calculating_orders_price_method')
-                                        ->label(__('system_settings.calculating_orders_price_method'))
-                                        ->options([
-                                            'from_unit_prices' => __('system_settings.from_unit_prices'),
-                                            'fifo' => __('system_settings.fifo'),
-                                        ])
-                                        ->default('from_unit_prices') // Default to 1 second
-                                        ->helperText('Choose method calculating orders.')
-                                        ->native(false)
-                                        ->required(),
+                                    // Select::make('calculating_orders_price_method')
+                                    //     ->label(__('system_settings.calculating_orders_price_method'))
+                                    //     ->options([
+                                    //         'from_unit_prices' => __('system_settings.from_unit_prices'),
+                                    //         'fifo' => __('system_settings.fifo'),
+                                    //     ])
+                                    //     ->default('from_unit_prices') // Default to 1 second
+                                    //     ->helperText('Choose method calculating orders.')
+                                    //     ->native(false)
+                                    //     ->required(),
                                     TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
                                     TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
                                     Grid::make()->columns(2)->schema([
-                                        Toggle::make('completed_order_if_not_qty')->inline(false)
-                                            ->label(__('system_settings.completed_order_if_not_qty'))
-                                            // ->onIcon('heroicon-s-lightning-bolt')
-                                            ->offIcon('heroicon-s-user')
-                                            ->onColor('success')
-                                            ->offColor('danger')
-                                            ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
+                                        // Toggle::make('completed_order_if_not_qty')->inline(false)
+                                        //     ->label(__('system_settings.completed_order_if_not_qty'))
+                                        //     // ->onIcon('heroicon-s-lightning-bolt')
+                                        //     ->offIcon('heroicon-s-user')
+                                        //     ->onColor('success')
+                                        //     ->offColor('danger')
+                                        //     ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
                                         Toggle::make('enable_user_orders_to_store')->inline(false)
                                             ->label(__('system_settings.enable_user_orders_to_store'))
                                             // ->onIcon('heroicon-s-lightning-bolt')
@@ -395,6 +395,11 @@ class SettingResource extends Resource
                                             ->onColor('success')
                                             ->offColor('danger')
                                             ->helperText(__('system_settings.enable_user_orders_to_store')),
+                                        Toggle::make('create_auto_order_when_stock_empty')
+                                            ->inline(false)
+                                            ->label('Auto-create order if stock is unavailable')
+                                            ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
+                                            ->default(false),
                                     ])
                                 ]),
                             ]),
@@ -454,20 +459,20 @@ class SettingResource extends Resource
                                                 ->default(1)
                                                 ->numeric(),
                                         ]),
-                                    // Fieldset::make()->label('Setup Mobile Application Login Methos')
-                                    //     ->columns(2)
-                                    //     ->schema([
-                                    //         Select::make('login_method')->options(['phone_number' => 'Phone', 'email' => 'email'])->label('Login Methos'),
-                                    //         Select::make('login_auth_type')
-                                    //             ->label('Login Authentication Method')
-                                    //             ->options([
-                                    //                 'password' => 'Email/Phone with Password',
-                                    //                 'otp' => 'OTP via Email',
-                                    //             ])
-                                    //             ->default('password')
-                                    //             ->required()
-                                    //             ->helperText('Choose how users should authenticate when logging in.'),
-                                    //     ])
+                                    Fieldset::make()->label('Setup Mobile Application Login Methos')
+                                        ->columns(2)
+                                        ->schema([
+                                            Select::make('login_method')->options(['phone_number' => 'Phone', 'email' => 'email'])->label('Login Methos'),
+                                            Select::make('login_auth_type')
+                                                ->label('Login Authentication Method')
+                                                ->options([
+                                                    'password' => 'Email/Phone with Password',
+                                                    'otp' => 'OTP via Email',
+                                                ])
+                                                ->default('password')
+                                                ->required()
+                                                ->helperText('Choose how users should authenticate when logging in.'),
+                                        ])
                                 ]),
                             ]),
                     ]),

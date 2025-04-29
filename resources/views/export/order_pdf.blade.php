@@ -13,7 +13,7 @@
     body {
         font-family: 'examplefont', sans-serif !important;
         background-color: #ffffff;
-        direction: rtl !important;
+        direction: ltr !important;
         width: 22cm;
         /* width: 100%; */
         text-align: justify;
@@ -97,10 +97,10 @@
         <div style="width: 34%;float: center">
             <p class="mt-5"> {{ __('lang.branch') . ' ' . $order->branch->name }} </p>
             {{-- <p class="mt-5"> {{ __('lang.branch_manager') . ' ' . $order->customer->name }} </p> --}}
-            <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}# </p>
+            <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}#  -{{$order->created_at}}</p>
         </div>
 
-        <div style="width: 33%;float: right">
+        <div style="width: 33%;float: left">
         </div>
     </div>
     <hr>
@@ -108,12 +108,12 @@
         <thead>
 
             <tr>
-                <th> {{ __('lang.product_id') }} </th>
+                <th> {{ __('lang.product_code') }} </th>
                 <th> {{ __('lang.product') }} </th>
                 <th> {{ __('lang.unit') }} </th>
                 <th> {{ __('lang.quantity') }} </th>
-                {{-- <th> {{ __('lang.unit_price') }} </th> --}}
-                {{-- <th> {{ __('lang.total_price') }} </th> --}}
+                <th> {{ __('lang.unit_price') }} </th>
+                <th> {{ __('lang.total_price') }} </th>
             </tr>
 
         </thead>
@@ -130,12 +130,12 @@
                     $totalPrices += $valDetail->price * $valDetail->available_quantity;
                 @endphp
                 <tr>
-                    <td> {{ $valDetail->product_id }} </td>
+                    <td> {{ $valDetail->product?->code }} </td>
                     <td> {{ $valDetail->product->name }} </td>
                     <td> {{ $valDetail->unit->name }} </td>
                     <td> {{ $valDetail->available_quantity }} </td>
-                    {{-- <td> {{ $valDetail->price }} </td> --}}
-                    {{-- <td> {{ $valDetail->price * $valDetail->available_quantity }} </td> --}}
+                    <td> {{ $valDetail->price }} </td>
+                    <td> {{ $valDetail->price * $valDetail->available_quantity }} </td>
                 </tr>
             @endforeach
         </tbody>
@@ -146,8 +146,8 @@
                     {{ __('lang.total') }}
                 </th>
                 <th> {{ $totalQty }} </th>
-                {{-- <th> {{ $totalPrice }} </th>
-                <th> {{ $totalPrices }} </th> --}}
+                <th> {{ $totalPrice }} </th>
+                <th> {{ $totalPrices }} </th>
             </tr>
         </tfoot>
     </table>

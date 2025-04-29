@@ -11,6 +11,7 @@ use App\Models\District;
 use App\Models\User;
 use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -27,6 +28,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -57,41 +59,83 @@ class BranchResource extends Resource
                                 Select::make('manager_id')
                                     ->label(__('lang.branch_manager'))
                                     ->options(User::whereHas('roles', function ($q) {
-                                            $q->where('id', 7);
-                                        })
+                                        $q->where('id', 7);
+                                    })
                                         ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Grid::make()->columns(4)->schema([
                                     Toggle::make('active')
-                                        ->inline(false)
+                                        ->inline(false)->default(true)
                                         ->label(__('lang.active')),
-                                    Toggle::make('is_hq')
-                                        ->inline(false)
-                                        ->label(__('lang.is_hq')),
-                                    // Toggle for is_central_kitchen
-                                    Toggle::make('is_central_kitchen')
-                                        ->label(__('stock.is_central_kitchen'))
-                                        ->inline(false)
-                                        ->default(false)
-
-                                        ->live(),
+                                    Select::make('type')
+                                        ->label(__('lang.branch_type'))
+                                        ->required()
+                                        ->default(function () {
+                                            // 🧠 التقاط قيمة type من URL تلقائياً (activeTab)
+                                            $tab = request()->get('activeTab');
+                                            return in_array($tab, Branch::TYPES) ? $tab : Branch::TYPE_BRANCH;
+                                        })
+                                        ->options([
+                                            Branch::TYPE_BRANCH => __('lang.normal_branch'),
+                                            Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
+                                            Branch::TYPE_HQ => __('lang.hq'),
+                                            Branch::TYPE_POPUP => __('lang.popup_branch'),
+                                        ])
+                                        ->default(Branch::TYPE_BRANCH)
+                                 
+                                        ->reactive(),
                                     Toggle::make('manager_abel_show_orders')
                                         ->label(__('stock.manager_abel_show_orders'))
                                         ->inline(false)
                                         ->default(false)
-                                        ->visible(fn(callable $get) => $get('is_central_kitchen')),
+                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+
                                     Select::make('store_id')
                                         ->label(__('stock.store_id'))
                                         ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
-                                        ->searchable()->requiredIf('is_central_kitchen', true)
-                                        ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
-                                    Select::make('customized_manufacturing_categories')
+                                        ->searchable()
+                                        ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
+                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                    Select::make('categories')
                                         ->label(__('stock.customized_manufacturing_categories'))
-                                        ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
-                                        ->searchable()->multiple()
-                                        ->hidden(fn(callable $get) => !$get('is_central_kitchen')),
-                                ]),
+                                        // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                        ->relationship('categories', 'name')
 
+                                        ->searchable()->multiple()
+                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+
+                                ]),
+                                Fieldset::make()->columns(2)
+                                    ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                    ->label('Set Start and End Date for Popup Branch')
+                                    ->schema([
+                                        DateTimePicker::make('start_date')
+                                            ->default(now()->addDay())
+
+                                            ->label(__('lang.start_date'))
+                                            ->required(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if ($state) {
+                                                    $newEndDate = \Illuminate\Support\Carbon::parse($state)->addDay();
+                                                    $set('end_date', $newEndDate);
+                                                }
+                                            }),
+
+                                        DateTimePicker::make('end_date')
+                                            ->label(__('lang.end_date'))
+                                            ->default(now()->addDays(2))
+
+                                            ->required(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->after('start_date')
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
+                                        Textarea::make('more_description')
+                                            ->label(__('lang.more_description'))
+                                            ->rows(3)->columnSpanFull()
+                                            ->nullable()
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
+                                    ]),
                                 Textarea::make('address')
                                     ->columnSpanFull()
                                     ->label(__('lang.address')),
@@ -197,29 +241,48 @@ class BranchResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
-                TextColumn::make('id')->label(__('lang.branch_id')),
-                SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
+                TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true),
+                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
                         return null;
                     })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
+                TextColumn::make('type_title')->label(__('lang.branch_type')),
+                IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
                     // ->limit(100)
-                    ->words(5),
-                IconColumn::make('is_central_kitchen')
-                    ->label(__('stock.is_central_kitchen'))
-                    ->boolean()->alignCenter(true)->toggleable(),
+                    ->words(5)->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
+                TextColumn::make('category_names')->label(__('stock.customized_manufacturing_categories'))->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user.email')->label('Email')->copyable(),
                 TextColumn::make('total_quantity')->label(__('lang.quantity'))
                     ->action(function ($record) {
                         redirect('admin/branch-store-report?tableFilters[branch_id][value]=' . $record->id);
-                    }),
+                    })->hidden(),
+                TextColumn::make('start_date')
+                    ->label(__('lang.start_date'))
+                    ->dateTime('Y-m-d')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('end_date')
+                    ->label(__('lang.end_date'))
+                    ->dateTime('Y-m-d')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
 
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+
+                // Tables\Filters\SelectFilter::make('category')
+                //     ->label(__('stock.customized_manufacturing_categories'))
+                //     ->options(\App\Models\Category::pluck('name', 'id'))
+                // ->query(function (Builder $query, $value) {
+                //     $query->whereHas('categories', fn($q) => $q->where('id', $value));
+                // }),
             ])
             ->actions([
                 Action::make('add_area')
@@ -269,6 +332,8 @@ class BranchResource extends Resource
         return [
             'index' => Pages\ManageBranches::route('/'),
             'edit' => Pages\EditBranch::route('/{record}/edit'),
+            'create' => Pages\CreateBranch::route('/create'),
+
 
         ];
     }

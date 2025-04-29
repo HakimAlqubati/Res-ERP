@@ -16,7 +16,6 @@ class CreateOrderPurchase extends CreateRecord
 
         if (in_array(getCurrentRole(), [1, 3])) {
             $data['customer_id'] = Branch::find($data['branch_id'])->manager_id;
-
         } else {
             $data['branch_id'] = auth()->user()->branch->id;
             $data['customer_id'] = auth()->user()->id;
@@ -27,5 +26,8 @@ class CreateOrderPurchase extends CreateRecord
         // dd($data['purchaseInvoiceDetails']);
         return $data;
     }
-
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

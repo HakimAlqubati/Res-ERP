@@ -30,6 +30,7 @@ use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -40,6 +41,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderResource extends Resource
 {
@@ -85,13 +87,19 @@ class OrderResource extends Resource
                                 Order::PROCESSING => 'processing',
                                 Order::DELEVIRED => 'delevired',
                             ])->default(Order::ORDERED),
-                        Select::make('store_id')->required()
-                            ->label(__('lang.store'))->disabledOn('edit')
+                        Select::make('stores')->multiple()->required()
+                            ->label(__('lang.store'))
+                            // ->disabledOn('edit')
                             ->options([
                                 Store::active()
-                                    ->withManagedStores()
+                                    // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
-                            ])->default(Store::defaultStore()?->id),
+                            ])
+                        // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
+                        // ->default(function ($record) {
+                        //     dd($record);
+                        // })
+                        ,
                     ]),
                     // Repeater for Order Details
                     Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
@@ -240,6 +248,8 @@ class OrderResource extends Resource
                     ->searchable(isIndividual: true)->toggleable(isToggledHiddenByDefault: true)
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
+                // TextColumn::make('store.name')->label(__('lang.store')),
+                TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([
@@ -249,11 +259,10 @@ class OrderResource extends Resource
                         'success' => static fn($state): bool => $state === Order::DELEVIRED,
                         'danger' => static fn($state): bool => $state === Order::PROCESSING,
                     ])
-                    ->iconPosition('after')->toggleable(isToggledHiddenByDefault: true),
+                    ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
                 TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
-                ->numeric()
-                ,
+                    ->numeric(),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -328,7 +337,7 @@ class OrderResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(fn(): bool => isSuperVisor()),
                 Tables\Actions\Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
@@ -365,12 +374,13 @@ class OrderResource extends Resource
                             $currentStatus = $record->STATUS;
                             $nextStatus = implode(', ', array_keys($record->getNextStatuses()));
                             $record->update(['status' => $nextStatus]);
-                            showSuccessNotifiMessage('done', 'Done Moved to {$nextStatus}');
+                            showSuccessNotifiMessage('done', "Done Moved to {$nextStatus}");
                             DB::commit();
                         } catch (\Throwable $th) {
                             //throw $th;
 
-                            showWarningNotifiMessage('Error', 'There was an error moving the task. Please try again.');
+                            Log::error('error_modify_status', [$th->getMessage()]);
+                            showWarningNotifiMessage('Error', $th->getMessage());
                             DB::rollBack();
                         }
                         // Add a log entry for the "moved" action
@@ -380,7 +390,9 @@ class OrderResource extends Resource
                             return true;
                         }
                         return false;
-                    })->hidden(),
+                    })
+                    // ->visible(fn(): bool => isSuperAdmin())
+                    ->hidden(),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
@@ -392,7 +404,14 @@ class OrderResource extends Resource
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
                 Tables\Actions\ForceDeleteBulkAction::make(),
-
+                BulkAction::make('exportOrdersWithDetails')
+                    ->label('Export Orders + Details')
+                    ->action(function ($records) {
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\OrdersExport2($records),
+                            'orders_with_details.xlsx'
+                        );
+                    })
                 // ExportBulkAction::make()
             ]);
     }
@@ -477,10 +496,11 @@ class OrderResource extends Resource
         return $record->id;
     }
 
+
     public static function canDelete(Model $record): bool
     {
-        return true;
-        if(isSuperAdmin()){
+        return false;
+        if (isSuperAdmin()) {
             return true;
         }
         return false;
@@ -488,6 +508,7 @@ class OrderResource extends Resource
 
     public static function canDeleteAny(): bool
     {
+        return false;
         if (isSuperAdmin()) {
             return true;
         }
@@ -498,7 +519,7 @@ class OrderResource extends Resource
     public static function canEdit(Model $record): bool
     {
         return false;
-        if (isSuperAdmin() || isBranchManager() || isSystemManager() || isStuff() || isFinanceManager()) {
+        if (isSuperAdmin()) {
             return true;
         }
         return false;

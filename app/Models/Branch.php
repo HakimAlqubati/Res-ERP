@@ -25,11 +25,15 @@ class Branch extends Model implements HasMedia, Auditable
         'address',
         'manager_id',
         'active',
-        'is_hq',
-        'is_central_kitchen',
+
+
         'store_id',
         'manager_abel_show_orders',
-        'customized_manufacturing_categories',
+
+        'type',
+        'start_date',
+        'end_date',
+        'more_description',
     ];
     protected $auditInclude = [
         'id',
@@ -37,17 +41,34 @@ class Branch extends Model implements HasMedia, Auditable
         'address',
         'manager_id',
         'active',
-        'is_hq',
-        'is_central_kitchen',
+
+
         'store_id',
         'manager_abel_show_orders',
-        'customized_manufacturing_categories',
-    ];
 
-    protected $casts = [
-        'customized_manufacturing_categories' => 'array',
+        'type',
+        'start_date',
+        'end_date',
+        'more_description',
     ];
-    
+    protected $appends = ['customized_categories'];
+
+    // ✅ Constants
+    public const TYPE_BRANCH = 'branch';
+    public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
+    public const TYPE_HQ = 'hq';
+    public const TYPE_POPUP = 'popup';
+    // ✅ Optional: Array of allowed types
+    public const TYPES = [
+        self::TYPE_BRANCH,
+        self::TYPE_CENTRAL_KITCHEN,
+        self::TYPE_HQ,
+        self::TYPE_POPUP,
+    ];
+    // protected $casts = [
+
+    // ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'manager_id');
@@ -129,6 +150,123 @@ class Branch extends Model implements HasMedia, Auditable
     public function toArray()
     {
         $data = parent::toArray();
+        $data['is_central_kitchen'] = (int) $this->isKitchen;
+        $data['customized_categories'] = $this->categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+            ];
+        });
         return $data;
+    }
+
+    public function getisCentralKitchenAttribute(): bool
+    {
+        return $this->type === self::TYPE_CENTRAL_KITCHEN;
+    }
+    public function getValidStoreIdAttribute(): ?int
+    {
+        if (
+            $this->isKitchen &&
+            $this->categories()->exists() &&
+            $this->store
+        ) {
+            return $this->store_id;
+        }
+        if (
+            auth()->check() &&
+            $this->manager_id === auth()->id() &&
+            $this->isKitchen &&
+            $this->store
+        ) {
+            return $this->store_id;
+        }
+        return null;
+    }
+
+
+    public function scopeCentralKitchens($query)
+    {
+        return $query->where('type', self::TYPE_CENTRAL_KITCHEN);
+    }
+    public function scopeBranches($query)
+    {
+        return $query->where('type', self::TYPE_BRANCH);
+    }
+    public function scopeHQBranches($query)
+    {
+        return $query->where('type', self::TYPE_HQ);
+    }
+    public function getIsKitchenAttribute(): bool
+    {
+        return $this->type === self::TYPE_CENTRAL_KITCHEN;
+    }
+
+    public function getIsBranchAttribute(): bool
+    {
+        return $this->type === self::TYPE_BRANCH;
+    }
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'branch_category', 'branch_id', 'category_id');
+    }
+
+    public function getCategoryNamesAttribute()
+    {
+        return $this->categories->pluck('name')->toArray();
+    }
+
+    public function scopeNormal($query)
+    {
+        return $query->whereIn('type', [
+            self::TYPE_BRANCH,
+            self::TYPE_HQ,
+        ]);
+    }
+
+    public function scopeWithAllTypes($query)
+    {
+        return $query->whereIn('type', self::TYPES);
+    }
+
+    public function scopePopups($query)
+    {
+        return $query->where('type', self::TYPE_POPUP);
+    }
+
+    public function getIsPopupAttribute(): bool
+    {
+        return $this->type === self::TYPE_POPUP;
+    }
+    public function getTypeTitleAttribute(): string
+    {
+        return match ($this->type) {
+            self::TYPE_BRANCH => __('lang.branch'),
+            self::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
+            self::TYPE_HQ => __('lang.hq'),
+            self::TYPE_POPUP => __('lang.popup_branch'),
+            default => __('lang.unknown'),
+        };
+    }
+
+    public function scopeActivePopups($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('type', '!=', self::TYPE_POPUP)
+                ->orWhere(function ($q2) {
+                    $q2->where('type', self::TYPE_POPUP)
+                        ->where('end_date', '>=', now()->format('Y-m-d'));
+                });
+        });
+    }
+
+    public function getCustomizedCategoriesAttribute()
+    {
+        return $this->categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+            ];
+        });
     }
 }

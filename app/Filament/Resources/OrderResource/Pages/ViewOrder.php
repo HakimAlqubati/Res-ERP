@@ -7,7 +7,7 @@ use App\Models\Order;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Pages\Actions\Action;
 use Filament\Pages\Actions\EditAction;
-use niklasravnsborg\LaravelPdf\Facades\Pdf;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 
 class ViewOrder extends ViewRecord
 {
@@ -25,6 +25,7 @@ class ViewOrder extends ViewRecord
         ];
     }
 
+    
     public function exportToExcel()
     {
         return redirect('orders/export/' . $this->record->id);
@@ -39,7 +40,7 @@ class ViewOrder extends ViewRecord
             'orderDetails' => $orderDetails,
         ];
         
-        $pdf = Pdf::loadView('export.order_pdf', $data);
+        $pdf = PDF::loadView('export.order_pdf', $data);
 
         return response()
             ->streamDownload(function () use ($pdf) {
@@ -49,6 +50,7 @@ class ViewOrder extends ViewRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
+        $data['stores'] = $data['store_ids'];
         // $data['customer_id'] = $this?->record?->customer?->name;
         // $data['branch_id'] = $this?->record?->branch?->name;
         return $data;

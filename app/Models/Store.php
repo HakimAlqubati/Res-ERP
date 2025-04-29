@@ -59,6 +59,13 @@ class Store extends Model implements Auditable
         return $this->belongsTo(User::class, 'storekeeper_id');
     }
 
+    public function scopeCentralKitchenStores($query)
+    {
+        if (auth()->user()->branch->is_kitchen) {
+            return $query->where('id', auth()->user()->branch->store_id);
+        };
+    }
+
     public function getStorekeeperNameAttribute()
     {
         return $this->storekeeper->name ?? '';
@@ -66,6 +73,9 @@ class Store extends Model implements Auditable
 
     public function scopeWithManagedStores($query)
     {
+        if(isFinanceManager()){
+            return $query;
+        }
         if (isStoreManager()) {
             return $query->whereIn('id', auth()->user()->managed_stores_ids);
         } else {
@@ -85,12 +95,12 @@ class Store extends Model implements Auditable
                     ->where('id', '!=', $store->id) // Exclude the current store
                     ->update(['default_store' => false]);
             }
-            if ($store->is_central_kitchen) {
-                // Unset the previous default store
-                Store::where('is_central_kitchen', true)
-                    ->where('id', '!=', $store->id) // Exclude the current store
-                    ->update(['is_central_kitchen' => false]);
-            }
+            // if ($store->is_central_kitchen) {
+            //     // Unset the previous default store
+            //     Store::where('is_central_kitchen', true)
+            //         ->where('id', '!=', $store->id) // Exclude the current store
+            //         ->update(['is_central_kitchen' => false]);
+            // }
         });
 
         // static::saving(function ($store) {
@@ -110,5 +120,10 @@ class Store extends Model implements Auditable
     public function branches()
     {
         return $this->hasMany(Branch::class, 'store_id');
+    }
+
+    public function orders()
+    {
+        return $this->belongsToMany(Order::class, 'order_store');
     }
 }

@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Services\ProductCostingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class PurchaseInvoiceDetail extends Model implements Auditable
 {
-    use HasFactory,\OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable;
     protected $fillable = [
         'purchase_invoice_id',
         'product_id',
@@ -17,6 +19,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         'quantity',
         'price',
         'package_size',
+        'waste_stock_percentage',
     ];
     protected $auditInclude = [
         'purchase_invoice_id',
@@ -25,6 +28,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         'quantity',
         'price',
         'package_size',
+        'waste_stock_percentage',
     ];
     protected $appends = ['total_price'];
 
@@ -65,6 +69,8 @@ class PurchaseInvoiceDetail extends Model implements Auditable
     {
         parent::boot();
         static::created(function ($purchaseInvoiceDetail) {
+
+
             $notes = 'Purchase invoice with id ' . $purchaseInvoiceDetail->purchase_invoice_id;
             if (isset($purchaseInvoiceDetail->purchaseInvoice->store_id)) {
                 $notes .= ' in (' . $purchaseInvoiceDetail->purchaseInvoice->store->name . ')';
@@ -83,7 +89,10 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'transaction_date' => $purchaseInvoiceDetail->purchaseInvoice->date ?? now(),
                 'transactionable_id' => $purchaseInvoiceDetail->purchase_invoice_id,
                 'transactionable_type' => PurchaseInvoice::class,
+                'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
             ]);
+
+        
         });
     }
 }

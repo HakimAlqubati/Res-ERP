@@ -27,6 +27,8 @@ class OrderDetails extends Model implements Auditable
         'orderd_product_id',
         'ordered_unit_id',
         'package_size',
+        'is_created_due_to_qty_preivous_order',
+        'previous_order_id'
     ];
     protected $auditInclude = [
         'order_id',
@@ -45,6 +47,8 @@ class OrderDetails extends Model implements Auditable
         'orderd_product_id',
         'ordered_unit_id',
         'package_size',
+        'is_created_due_to_qty_preivous_order',
+        'previous_order_id'
     ];
 
     protected $appends = ['total_price'];
@@ -153,38 +157,66 @@ class OrderDetails extends Model implements Auditable
                 ]);
             }
         });
-        // static::created(function ($orderDetail) {
-        //     $notes = 'Order with id ' . $orderDetail->order_id;
-        //     if (isset($orderDetail->order->store_id)) {
-        //         $notes .= ' in (' . $orderDetail->order->store->name . ')';
-        //     }
-        //     // Subtract from inventory transactions
-        //     \App\Models\InventoryTransaction::create([
-        //         'product_id' => $orderDetail->product_id,
-        //         'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-        //         'quantity' =>  $orderDetail->quantity,
-        //         'unit_id' => $orderDetail->unit_id,
-        //         'purchase_invoice_id' => $orderDetail?->purchase_invoice_id,
-        //         'movement_date' => $orderDetail->order->date ?? now(),
-        //         'package_size' => $orderDetail->package_size,
-        //         'store_id' => $orderDetail->order?->store_id,
-        //         'transaction_date' => $orderDetail->order->date ?? now(),
-        //         'notes' => $notes,
-        //         'transactionable_id' => $orderDetail->order_id,
-        //         'transactionable_type' => Order::class,
-        //     ]);
-        // });
     }
 
     public function scopeManufacturingOnlyForStore($query)
     {
-        
-        if ($query->first()->order->branch_id != auth()->user()->branch->id) {
+        return $query;
+        $order = $query->first()?->order;
+
+        // فقط لو الطلب مو من إنشاء نفس المستخدم
+        if (
+            $order && $order->created_by !== auth()->id()
+            || (isset($order->customer_id) && $order->customer_id !== auth()->id())
+        ) {
+            $user = auth()->user();
+            $branch = $user->branch;
+
+            // فقط لو كان مطبخ مركزي
+            if ($branch && $branch->is_kitchen) {
+                // التخصصات المخصصة لهذا الفرع
+                $customizedCategoriesIds = $branch->categories()->pluck('categories.id')->toArray();
+
+                // التخصصات المخصصة لفروع المطابخ المركزية الأخرى
+                $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                    ->where('id', '!=', $branch->id) // نستثني فرع المستخدم
+                    ->with('categories:id')
+                    ->get()
+                    ->pluck('categories')
+                    ->flatten()
+                    ->pluck('id')
+                    ->unique()
+                    ->toArray();
+                return $query->whereHas('product.category', function ($q) use ($customizedCategoriesIds, $otherBranchesCategories) {
+
+
+                    $q->where('is_manafacturing', true)
+                        ->when(
+                            count($customizedCategoriesIds),
+                            function ($query) use ($customizedCategoriesIds) {
+
+                                // ✅ إذا عنده تخصصات → يرجع فقط تخصصاته
+                                $query->whereIn('id', $customizedCategoriesIds);
+                            },
+                            function ($query) use ($otherBranchesCategories) {
+                                // ❌ إذا ما عنده → يستثني تخصصات الفروع الأخرى
+                                $query->whereNotIn('id', $otherBranchesCategories);
+                            }
+                        )
+                    ;
+                });
+            }
+
+            // باقي المستخدمين يشوفون فقط المنتجات التصنيعية
             return $query->whereHas('product.category', function ($q) {
                 $q->where('is_manafacturing', true);
             });
         }
+
+        return $query;
     }
+
+
     public function getTotalPriceAttribute()
     {
         return $this->available_quantity * $this->price;
