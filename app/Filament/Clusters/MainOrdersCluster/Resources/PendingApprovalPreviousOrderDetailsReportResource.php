@@ -56,7 +56,7 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
                 Filter::make('show_extra_fields')
                     ->label('')
                     ->form([
-                        Toggle::make('only_available')
+                        Toggle::make('group_by_order')
                             ->inline(false)
                             ->label('Group by Order')
                     ], FiltersLayout::AboveContent),

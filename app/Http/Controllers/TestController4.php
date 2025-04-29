@@ -12,6 +12,7 @@ use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
+use App\Services\Orders\Reports\ReorderDueToStockReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -290,55 +291,8 @@ class TestController4 extends Controller
 
     public function generatePendingApprovalPreviousOrderDetailsReport(Request $request)
     {
-        $groupByOrder = $request->boolean('group_by_order', true); // ✅ افتراضي مفعّل التجميع
-
-        // Fetch order details with the required conditions
-        $orderDetails = OrderDetails::where('is_created_due_to_qty_preivous_order', 1)
-            ->whereHas('order', function ($query) {
-                $query->where('status', Order::PENDING_APPROVAL);
-            })
-            ->get();
-
-        if ($groupByOrder) {
-            // 🧩 إذا طلب تجميع
-            $grouped = $orderDetails->groupBy('order_id');
-
-            $result = [];
-            foreach ($grouped as $orderId => $details) {
-                $totalQuantity = $details->sum('quantity');
-
-                $result[] = [
-                    'order_id' => $orderId,
-                    'total_quantity' => $totalQuantity,
-                    'details' => $details->map(function ($detail) {
-                        return [
-                            'order_detail_id' => $detail->id,
-                            'product_id' => $detail->product_id,
-                            'product_name' => $detail->product?->name,
-                            'unit_id' => $detail->unit_id,
-                            'unit_name' => $detail->unit?->name,
-                            'quantity' => $detail->quantity,
-                        ];
-                    })->toArray(),
-                ];
-            }
-
-            return response()->json($result);
-        } else {
-            // 🧩 إذا طلب عدم تجميع
-            $result = $orderDetails->map(function ($detail) {
-                return [
-                    'order_detail_id' => $detail->id,
-                    'order_id' => $detail->order_id,
-                    'product_id' => $detail->product_id,
-                    'product_name' => $detail->product?->name,
-                    'unit_id' => $detail->unit_id,
-                    'unit_name' => $detail->unit?->name,
-                    'quantity' => $detail->quantity,
-                ];
-            });
-
-            return response()->json($result);
-        }
+        $groupByOrder = $request->boolean('group_by_order', false);
+         $result =  (new ReorderDueToStockReportService())->getReorderDueToStockReport($groupByOrder);
+        return response()->json([$result,count($result)]);
     }
 }
