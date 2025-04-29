@@ -99,10 +99,10 @@ class TestController4 extends Controller
         }
 
         if (isStoreManager()) {
-            $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
 
+            $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
             $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
-            if ($user->branch?->is_central_kitchen && count($customCategories)) {
+            if (isBranchManager() && $user->branch?->is_central_kitchen && count($customCategories)) {
                 // Can't filter by category easily in raw SQL, handled in Eloquent, you may ignore here or redesign this logic
                 // You can later filter on front-end if needed
                 $categoryIds = implode(',', $customCategories);
@@ -112,8 +112,27 @@ class TestController4 extends Controller
                     FROM orders_details od
                     JOIN products p ON od.product_id = p.id
                     JOIN categories c ON p.category_id = c.id
-                    WHERE od.order_id = o.id AND c.id NOT IN  ($categoryIds)
+                    WHERE od.order_id = o.id AND c.id IN ($categoryIds)
                 ) OR o.customer_id = {$user->id}";
+            } else {
+                $allCustomizedCategories = \App\Models\Branch::centralKitchens()
+                    ->with('categories:id')
+                    ->get()
+                    ->pluck('categories')
+                    ->flatten()
+                    ->pluck('id')
+                    ->unique()
+                    ->toArray();
+                if (count($allCustomizedCategories)) {
+                    $allCustomizedCategoriesStr = implode(',', $allCustomizedCategories);
+                    $where[] = "EXISTS (
+                        SELECT 1
+                        FROM orders_details od
+                        JOIN products p ON od.product_id = p.id
+                        JOIN categories c ON p.category_id = c.id
+                        WHERE od.order_id = o.id AND c.id NOT IN  ($allCustomizedCategoriesStr)
+                    ) OR o.customer_id = {$user->id}";
+                }
             }
         }
 
