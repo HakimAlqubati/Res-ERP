@@ -28,6 +28,24 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
 
+    public static function getLabel(): ?string
+    {
+        return 'Reorders from Stock Out';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Reorders from Stock Out';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Reorders from Stock Out';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Reorders from Stock Out';
+    }
     public static function table(Table $table): Table
     {
         return $table
