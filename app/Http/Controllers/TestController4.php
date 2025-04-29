@@ -228,9 +228,7 @@ class TestController4 extends Controller
                 $query .= "JOIN products p ON od.product_id = p.id
             JOIN categories c ON p.category_id = c.id
             JOIN orders o ON od.order_id = o.id
-            ";
-
-                $query .= "
+            
 AND (
     (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
     OR
@@ -254,11 +252,20 @@ AND (
             } else {
                 $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
                 $query .= "JOIN products p ON od.product_id = p.id
-                JOIN categories c ON p.category_id = c.id and c.is_manafacturing = 1 ";
+                JOIN categories c ON p.category_id = c.id 
+                JOIN orders o ON od.order_id = o.id
+                ";
+
                 if (count($customCategories) > 0) {
                     $categoryIds = implode(',', $customCategories);
-                    $query .= " and c.id IN ($categoryIds) ";
+                    // $query .= " and c.id IN ($categoryIds) ";
                 }
+                $query .= " AND (
+                     (o.customer_id != {$user->id} AND c.is_manafacturing = 1 and c.id IN ($categoryIds)) 
+                    OR
+                    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+                     )
+                 ";
             }
         }
         $query .=  "WHERE od.order_id = ?";
