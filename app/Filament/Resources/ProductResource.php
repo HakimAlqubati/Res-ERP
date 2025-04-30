@@ -14,6 +14,7 @@ use App\Models\UnitPrice;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
 use Filament\Actions\Action;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Actions\Action as ActionsAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
@@ -811,8 +812,8 @@ class ProductResource extends Resource
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
-                ])
-                Tables\Actions\ForceDeleteAction::make(),
+                ]),
+                ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
