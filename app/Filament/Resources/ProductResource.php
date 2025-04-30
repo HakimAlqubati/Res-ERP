@@ -815,7 +815,7 @@ class ProductResource extends Resource
                 ]),
                 ])
                 ->bulkActions([
-                ForceDeleteAction::make(),
+                // ForceDeleteAction::make(),
                 Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
                     ->action(function (Collection $records) {
                         $productIds = $records->pluck('id')->toArray();
