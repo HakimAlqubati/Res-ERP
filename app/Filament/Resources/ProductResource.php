@@ -812,7 +812,7 @@ class ProductResource extends Resource
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
                 ])
-                // Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
