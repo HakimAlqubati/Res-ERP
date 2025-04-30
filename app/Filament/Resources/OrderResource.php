@@ -32,6 +32,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -233,7 +234,12 @@ class OrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        return $table
+        
+            ->deferLoading()
+            ->striped()
+            ->extremePaginationLinks()
+
             ->columns([
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
