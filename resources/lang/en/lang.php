@@ -199,6 +199,6 @@ return [
     'only_one_hq_allowed' => 'Only one HQ branch is allowed. Please activate the existing one or delete it first.',
 
     'show_in_invoices' => 'Display in Invoices \ Orders',
-
+    'category.is_manafacturing' => 'Is Manufacturing',
 
 ];

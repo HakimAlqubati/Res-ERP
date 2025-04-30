@@ -61,4 +61,13 @@ class Category extends Model implements Auditable
     {
         return $query->where('is_manafacturing', '=', true);
     }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'branch_category', 'category_id', 'branch_id');
+    }
+    public function getBranchNamesAttribute(): string
+    {
+        return $this->branches->pluck('name')->implode(', ');
+    }
 }
