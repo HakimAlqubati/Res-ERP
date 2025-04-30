@@ -43,6 +43,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as ActionTable;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\ForceDeleteBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
@@ -816,6 +817,7 @@ class ProductResource extends Resource
                 ])
                 ->bulkActions([
                 // ForceDeleteAction::make(),
+                ForceDeleteBulkAction::make(),
                 Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
                     ->action(function (Collection $records) {
                         $productIds = $records->pluck('id')->toArray();
