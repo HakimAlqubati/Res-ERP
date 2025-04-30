@@ -820,7 +820,7 @@ class ProductResource extends Resource
             ->bulkActions([
                 BulkAction::make('exportProductsWithUnits')
                     ->label('Export with Unit Prices')
-                    ->icon('heroicon-o-download')
+                    // ->icon('heroicon-o-download')
                     ->action(function (Collection $records): BinaryFileResponse {
                         $data = [];
 
