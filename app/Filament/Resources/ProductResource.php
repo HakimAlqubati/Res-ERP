@@ -849,7 +849,7 @@ class ProductResource extends Resource
 
                             public function headings(): array
                             {
-                                return ['product_id', 'product_name', 'product_code', 'category', 'unit', 'price'];
+                                return ['product_id', 'product_name', 'product_code', 'category', 'unit'];
                             }
                         }, 'products_with_units.xlsx');
                     })
