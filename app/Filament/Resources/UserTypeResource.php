@@ -7,7 +7,9 @@ use App\Filament\Resources\UserTypeResource\RelationManagers;
 use App\Models\Role;
 use App\Models\UserType;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
@@ -19,6 +21,7 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Str;
 
 class UserTypeResource extends Resource
 {
@@ -30,45 +33,41 @@ class UserTypeResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
+                Fieldset::make()
+                    ->columns(3)
+                    ->schema([
+                        TextInput::make('name')
+                            ->required()
+                            ->maxLength(255)->live(onBlur: true)
+                            ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
+                                $set('code', Str::slug($state));
+                            }),
+                        TextInput::make('code')->disabled()
+                            ->dehydrated()
+                            ->required()->unique(ignoreRecord: true)
+                            ->maxLength(255),
+                        Toggle::make('active')->inline(false)
+                            ->default(true),
+                        Select::make('scope')
+                            ->options([
+                                'branch' => 'Branch',
+                                'store' => 'Store',
+                                'all' => 'All',
+                            ]),
+                        Select::make('parent_type_id')
+                            ->label('Parent Type (optional)')
+                            ->relationship('parent', 'name')
+                            ->searchable()
+                            ->nullable(),
 
-                Select::make('code')
-                    ->required()
-                    ->options([
-                        'super_admin' => 'Super Admin',
-                        'system_manager' => 'System Manager',
-                        'branch_manager' => 'Branch Manager',
-                        'store_manager' => 'Store Manager',
-                        'finance_manager' => 'Finance Manager',
-                        'maintenance_manager' => 'Maintenance Manager',
-                        'super_visor' => 'Supervisor',
-                        'attendance' => 'Attendance User',
-                        'driver' => 'Driver',
-                        'stuff' => 'Stuff',
-                        'branch_user' => 'Branch User',
-                        // Add more if needed
-                    ])
-                    ->searchable(),
 
-                TextInput::make('level')
-                    ->numeric()
-                    ->required(),
-
-                Select::make('scope')
-                    ->required()
-                    ->options([
-                        'branch' => 'Branch',
-                        'store' => 'Store',
-                        'all' => 'All',
+                        Textarea::make('description')
+                            ->columnSpanFull(),
                     ]),
 
-                Toggle::make('active')
-                    ->default(true),
 
-                Forms\Components\Textarea::make('description')
-                    ->maxLength(65535),
+
+
             ]);
     }
 
@@ -79,8 +78,11 @@ class UserTypeResource extends Resource
                 TextColumn::make('id')->sortable()->searchable(),
                 TextColumn::make('name')->sortable()->searchable(),
                 TextColumn::make('code')->sortable()->searchable(),
-                TextColumn::make('level')->sortable(),
+                TextColumn::make('getLevel')->sortable()->alignCenter(true)
+                    ->label('Level')
+                    ->getStateUsing(fn(UserType $record) => $record->getLevel()),
                 TextColumn::make('scope')->sortable(),
+                TextColumn::make('parent.name')->label('Parent Type')->toggleable(),
                 IconColumn::make('active')->label('Active')->sortable()->boolean()->alignCenter(true),
                 TextColumn::make('description')->limit(30)->searchable(),
             ])

@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Traits\DynamicConnection;
+use App\Traits\HasUserTypeAccess;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -18,7 +19,8 @@ use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Database\Eloquent\Casts\Attribute; 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 
@@ -30,7 +32,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         SoftDeletes,
         HasPanelShield,
         DynamicConnection,
-        \OwenIt\Auditing\Auditable;
+        \OwenIt\Auditing\Auditable,
+        HasUserTypeAccess;
 
 
     /**
@@ -49,7 +52,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'phone_number',
         'avatar',
         'is_employee',
-        'user_type',
+        'user_type_id',
         'active',
         'gender',
         'nationality',
@@ -68,7 +71,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'phone_number',
         'avatar',
         'is_employee',
-        'user_type',
+        'user_type_id',
         'active',
         'gender',
         'nationality',
@@ -144,65 +147,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
         // If file is not found, return a fallback URL
         return asset('images/default-avatar.png');
     }
-    public function getAvatarImageAttribute_old()
-    {
-        $default = 'users/default/avatar.png';
-        if (is_null($this->avatar)) {
-            return url('/storage') . '/' . $default;
-        }
-        return url('/storage') . '/' . $this->avatar;
-        return storage_path($this->avatar);
-    }
+
 
     public function employee()
     {
         return $this->hasOne(Employee::class, 'user_id', 'id');
     }
-
-    public function isSuperVisor()
-    {
-        return auth()->user()->isType('super_visor');
-    }
-    public function isBranchManager()
-    {
-        return auth()->user()->isType('branch_manager');
-    }
-    public function isFinanceManager()
-    {
-        return auth()->user()->isType('finance_manager');
-    }
-    public function isSuperAdmin()
-    {
-        return auth()->user()->isType('super_admin');
-    }
-    public function isAttendance()
-    {
-        return auth()->user()->isType('attendance');
-    }
-    public function isSystemManager()
-    {
-        return auth()->user()->isType('system_manager');
-    }
-    public function isStoreManager()
-    {
-        return auth()->user()->isType('store_manager');
-    }
-    public function isBranchUser()
-    {
-        return auth()->user()->isType('branch_user');
-    }
-    public function isDriver()
-    {
-        return auth()->user()->isType('driver');
-    }
-    public function isMaintenanceManager()
-    {
-        return auth()->user()->isType('maintenance_manager');
-    }
-    public function isStuff()
-    {
-        return auth()->user()->isType('stuff');
-    }
+ 
+ 
 
 
     // public function canAccessFilament(): bool
@@ -304,22 +256,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function userType()
     {
-        return $this->belongsTo(UserType::class, 'user_type');
+        return $this->belongsTo(UserType::class, 'user_type_id');
     }
 
-    /**
-     * Check if user has a specific user type code (or multiple codes).
-     */
-    public function isType(string|array $codes): bool
-    {
-        if (!$this->userType) {
-            return false;
-        }
-
-        $codes = (array) $codes;
-
-        return in_array($this->userType->code, $codes);
-    }
     public function branches()
     {
         return $this->belongsToMany(Branch::class, 'user_branches');
@@ -410,5 +349,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return Attribute::get(
             fn() => $this->userType?->code ?? null
         );
+    }
+    public function getTypeCodeAttribute()
+    {
+        return $this->userType?->code;
     }
 }
