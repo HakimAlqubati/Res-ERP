@@ -54,7 +54,7 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch'))->alignCenter(true),
                 // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('remaining_quantity')->label(__('lang.remaining_quantity'))
+                Tables\Columns\TextColumn::make('remaining_quantity')->label(__('stock.remaining_quantity'))
                     ->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $service = new  MultiProductsInventoryService(null, $record->product_id, $record->unit_id);
