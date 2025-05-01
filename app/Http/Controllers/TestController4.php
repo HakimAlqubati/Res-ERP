@@ -12,6 +12,7 @@ use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
+use App\Services\Orders\Reports\ReorderDueToStockReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -67,8 +68,25 @@ class TestController4 extends Controller
                         ->pluck('id')->toArray();
 
                     if (count($branchIds)) {
+                        $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                            ->where('id', '!=', auth()->user()?->branch?->id)
+                            ->with('categories:id')
+                            ->get()
+                            ->pluck('categories')
+                            ->flatten()
+                            ->pluck('id')
+                            ->unique()
+                            ->toArray();
+                        $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
                         $branchIdsStr = implode(',', $branchIds);
                         $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$user->branch->id})";
+                        $where[] = "EXISTS (
+                            SELECT 1
+                            FROM orders_details od
+                            JOIN products p ON od.product_id = p.id
+                            JOIN categories c ON p.category_id = c.id
+                            WHERE od.order_id = o.id AND c.is_manafacturing = 1 and c.id NOT IN ($otherBranchesCategoriesStr)
+                        ) OR o.customer_id = {$user->id}";
                     } else {
                         $where[] = "o.branch_id = {$user->branch->id}";
                     }
@@ -81,18 +99,46 @@ class TestController4 extends Controller
         }
 
         if (isStoreManager()) {
-            $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
 
+            $where[] = "o.status != '" . Order::PENDING_APPROVAL . "'";
             $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
-            if ($user->branch?->is_central_kitchen && count($customCategories)) {
+            if (isBranchManager() && $user->branch?->is_central_kitchen && count($customCategories)) {
                 // Can't filter by category easily in raw SQL, handled in Eloquent, you may ignore here or redesign this logic
                 // You can later filter on front-end if needed
+                $categoryIds = implode(',', $customCategories);
+
+                $where[] = "EXISTS (
+                    SELECT 1
+                    FROM orders_details od
+                    JOIN products p ON od.product_id = p.id
+                    JOIN categories c ON p.category_id = c.id
+                    WHERE od.order_id = o.id AND c.id IN ($categoryIds)
+                ) OR o.customer_id = {$user->id}";
+            } else {
+                $allCustomizedCategories = \App\Models\Branch::centralKitchens()
+                    ->with('categories:id')
+                    ->get()
+                    ->pluck('categories')
+                    ->flatten()
+                    ->pluck('id')
+                    ->unique()
+                    ->toArray();
+                if (count($allCustomizedCategories)) {
+                    $allCustomizedCategoriesStr = implode(',', $allCustomizedCategories);
+                    $where[] = "EXISTS (
+                        SELECT 1
+                        FROM orders_details od
+                        JOIN products p ON od.product_id = p.id
+                        JOIN categories c ON p.category_id = c.id
+                        WHERE od.order_id = o.id AND c.id NOT IN  ($allCustomizedCategoriesStr)
+                    ) OR o.customer_id = {$user->id}";
+                }
             }
         }
 
         // 🧠 Assemble WHERE clause
         $whereSql = implode(' AND ', $where);
-
+        // dd($whereSql,$user->branch?->is_central_kitchen);
         // 📊 Get total count
         $total = DB::table('orders as o')
             ->whereRaw($whereSql)
@@ -158,29 +204,121 @@ class TestController4 extends Controller
 
     public function testGetOrdersDetails($id)
     {
-        $details = DB::select("
+
+
+        $user = auth()->user();
+
+        // Check if branch is kitchen
+        // if ($user->branch->is_kitchen) {
+        //     // First, check if the order contains any manufacturing category product
+        //     $check = DB::selectOne("
+        //         SELECT 1
+        //         FROM orders_details od
+        //         JOIN products p ON od.product_id = p.id
+        //         JOIN categories c ON p.category_id = c.id
+        //         WHERE od.order_id = ? AND c.is_manafacturing = 1
+        //         LIMIT 1
+        //     ", [$id]);
+
+        //     // If not manufacturing-related, return empty
+        //     if (!$check) {
+        //         return response()->json([]); // Or customize message
+        //     }
+        // }
+
+        $query = "
         SELECT
             od.id,
             od.order_id,
             od.product_id,
            
             od.unit_id,
-            u.name AS unit_name,
+           
             od.available_quantity AS quantity,
             od.available_quantity,
             od.price,
             od.available_in_store,
-            cu.id AS created_by,
-            cu.name AS created_by_user_name,
+           
             od.is_created_due_to_qty_preivous_order,
             od.previous_order_id
-        FROM orders_details od
-         
-        LEFT JOIN units u ON u.id = od.unit_id
-        LEFT JOIN users cu ON cu.id = od.created_by
-        WHERE od.order_id = ?
-    ", [$id]);
+        FROM orders_details od ";
+        if (isBranchManager() &&  $user->branch->is_kitchen) {
+            
+            if (!isStoreManager()) {
+                $query .= "JOIN products p ON od.product_id = p.id
+            JOIN categories c ON p.category_id = c.id
+            JOIN orders o ON od.order_id = o.id
+            
+AND (
+    (o.customer_id != {$user->id} AND c.is_manafacturing = 1)
+    OR
+    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+)
+";
 
+                $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                    ->where('id', '!=', auth()->user()?->branch?->id)
+                    ->with('categories:id')
+                    ->get()
+                    ->pluck('categories')
+                    ->flatten()
+                    ->pluck('id')
+                    ->unique()
+                    ->toArray();
+                if (count($otherBranchesCategories)) {
+                    $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
+                    $query .= " and c.id NOT IN ($otherBranchesCategoriesStr) ";
+                }
+            } else {
+                $customCategories = $user->branch?->categories()->pluck('category_id')->toArray() ?? [];
+                $query .= "JOIN products p ON od.product_id = p.id
+                JOIN categories c ON p.category_id = c.id 
+                JOIN orders o ON od.order_id = o.id
+                ";
+
+                if (count($customCategories) > 0) {
+                    $categoryIds = implode(',', $customCategories);
+                    // $query .= " and c.id IN ($categoryIds) ";
+                }
+                $query .= " AND (
+                     (o.customer_id != {$user->id} AND c.is_manafacturing = 1 and c.id IN ($categoryIds)) 
+                    OR
+                    (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
+                     )
+                 ";
+            }
+        }
+        if (isStoreManager() && !isBranchManager()) {
+            $allCustomizedCategories = \App\Models\Branch::centralKitchens()
+                ->with('categories:id')
+                ->get()
+                ->pluck('categories')
+                ->flatten()
+                ->pluck('id')
+                ->unique()
+                ->toArray();
+            if (count($allCustomizedCategories)) {
+                $allCustomizedCategoriesStr = implode(',', $allCustomizedCategories);
+                $query .= "
+                JOIN products p ON od.product_id = p.id
+                JOIN categories c ON p.category_id = c.id 
+                JOIN orders o ON od.order_id = o.id
+                and c.id NOT IN ($allCustomizedCategoriesStr) ";
+            }
+        }
+        $query .=  "WHERE od.order_id = ?";
+
+        $details = DB::select($query, [$id]);
+
+        // if(auth()->user()->branch->is_kitchen){
+        // $where[] = "EXISTS (
+        //     SELECT 1
+        //     FROM orders_details od
+        //     JOIN products p ON od.product_id = p.id
+        //     JOIN categories c ON p.category_id = c.id
+        //     WHERE od.order_id = o.id AND c.is_manafacturing = 1
+        // ) OR o.customer_id = {$user->id}";
+        // }
         $productIds = collect($details)->pluck('product_id')->unique()->toArray();
         $products = DB::table('products')->whereIn('id', $productIds)
             ->get([
@@ -210,8 +348,6 @@ class TestController4 extends Controller
                 'available_quantity' => $detail->available_quantity,
                 'price' => $detail->price,
                 'available_in_store' => $detail->available_in_store,
-                // 'created_by' => $detail->created_by,
-                // 'created_by_user_name' => $detail->created_by_user_name,
                 'is_created_due_to_qty_preivous_order' => $detail->is_created_due_to_qty_preivous_order,
                 'previous_order_id' => $detail->previous_order_id
             ];
@@ -281,55 +417,8 @@ class TestController4 extends Controller
 
     public function generatePendingApprovalPreviousOrderDetailsReport(Request $request)
     {
-        $groupByOrder = $request->boolean('group_by_order', true); // ✅ افتراضي مفعّل التجميع
-
-        // Fetch order details with the required conditions
-        $orderDetails = OrderDetails::where('is_created_due_to_qty_preivous_order', 1)
-            ->whereHas('order', function ($query) {
-                $query->where('status', Order::PENDING_APPROVAL);
-            })
-            ->get();
-
-        if ($groupByOrder) {
-            // 🧩 إذا طلب تجميع
-            $grouped = $orderDetails->groupBy('order_id');
-
-            $result = [];
-            foreach ($grouped as $orderId => $details) {
-                $totalQuantity = $details->sum('quantity');
-
-                $result[] = [
-                    'order_id' => $orderId,
-                    'total_quantity' => $totalQuantity,
-                    'details' => $details->map(function ($detail) {
-                        return [
-                            'order_detail_id' => $detail->id,
-                            'product_id' => $detail->product_id,
-                            'product_name' => $detail->product?->name,
-                            'unit_id' => $detail->unit_id,
-                            'unit_name' => $detail->unit?->name,
-                            'quantity' => $detail->quantity,
-                        ];
-                    })->toArray(),
-                ];
-            }
-
-            return response()->json($result);
-        } else {
-            // 🧩 إذا طلب عدم تجميع
-            $result = $orderDetails->map(function ($detail) {
-                return [
-                    'order_detail_id' => $detail->id,
-                    'order_id' => $detail->order_id,
-                    'product_id' => $detail->product_id,
-                    'product_name' => $detail->product?->name,
-                    'unit_id' => $detail->unit_id,
-                    'unit_name' => $detail->unit?->name,
-                    'quantity' => $detail->quantity,
-                ];
-            });
-
-            return response()->json($result);
-        }
+        $groupByOrder = $request->boolean('group_by_order', false);
+        $result =  (new ReorderDueToStockReportService())->getReorderDueToStockReport($groupByOrder);
+        return response()->json([$result, count($result)]);
     }
 }

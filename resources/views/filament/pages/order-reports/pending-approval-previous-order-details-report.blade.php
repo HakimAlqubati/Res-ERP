@@ -14,7 +14,9 @@
             <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
                     <x-filament-tables::row class="header_report">
-                        <th>Order ID</th>
+                        @if (!$groupByOrder)
+                            <th>Order ID</th>
+                        @endif
                         <th>Product Code</th>
                         <th>Product Name</th>
                         <th>Unit ID</th>
@@ -28,7 +30,9 @@
                             {{-- Grouped --}}
                             @foreach ($row['details'] as $detail)
                                 <x-filament-tables::row>
-                                    <x-filament-tables::cell>{{ $row['order_id'] }}</x-filament-tables::cell>
+                                    @if (!$groupByOrder)
+                                        <x-filament-tables::cell>{{ $row['order_id'] }}</x-filament-tables::cell>
+                                    @endif
                                     <x-filament-tables::cell>{{ $detail['product_code'] }}</x-filament-tables::cell>
                                     <x-filament-tables::cell>{{ $detail['product_name'] }}</x-filament-tables::cell>
                                     <x-filament-tables::cell>{{ $detail['unit_id'] }}</x-filament-tables::cell>
@@ -40,7 +44,9 @@
                         @else
                             {{-- Ungrouped --}}
                             <x-filament-tables::row>
-                                <x-filament-tables::cell>{{ $row['order_id'] }}</x-filament-tables::cell>
+                                @if (!$groupByOrder)
+                                    <x-filament-tables::cell>{{ $row['order_id'] }}</x-filament-tables::cell>
+                                @endif
                                 <x-filament-tables::cell>{{ $row['product_code'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $row['product_name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $row['unit_id'] }}</x-filament-tables::cell>

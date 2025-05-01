@@ -6,6 +6,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -35,7 +36,11 @@ class DetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('price')->label(__('lang.price'))->alignCenter(true)
-                    ->formatStateUsing(fn($state) => formatMoney($state)),
+                    ->formatStateUsing(fn($state) => formatMoney($state))
+                    ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
+                        return $query->select('price');
+                    }))
+                    ,
                 Tables\Columns\TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
                     ->formatStateUsing(fn($state) => formatMoney($state)),
             ])

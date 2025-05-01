@@ -35,7 +35,9 @@ class AuditResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()->defaultSort('id', 'desc')
+        return $table->striped()
+            ->paginated([10, 25, 50, 100])
+            ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
 

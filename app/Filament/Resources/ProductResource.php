@@ -14,6 +14,7 @@ use App\Models\UnitPrice;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
 use Filament\Actions\Action;
+use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Actions\Action as ActionsAction;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\FileUpload;
@@ -42,12 +43,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as ActionTable;
 use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Actions\ForceDeleteBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use PDO;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 // use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -811,10 +815,49 @@ class ProductResource extends Resource
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
-                ])
-                // Tables\Actions\ForceDeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
+                BulkAction::make('exportProductsWithUnits')
+                    ->label('Export with Unit Prices')
+                    // ->icon('heroicon-o-download')
+                    ->action(function (Collection $records): BinaryFileResponse {
+                        $data = [];
+
+                        foreach ($records as $product) {
+                            $product->load(['unitPrices.unit', 'category']);
+                            foreach ($product->unitPrices as $unitPrice) {
+                                $data[] = [
+                                    'product_id' => $product->id,
+                                    'product_name' => $product->name,
+                                    'product_code' => $product->code,
+                                    'category' => $product->category?->name ?? '',
+                                    'unit' => $unitPrice->unit?->name ?? '',
+                                    // 'price' => $unitPrice->price,
+                                ];
+                            }
+                        }
+
+                        // توليد وتصدير Excel
+                        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings {
+                            public function __construct(public array $data) {}
+
+                            public function collection()
+                            {
+                                return collect($this->data);
+                            }
+
+                            public function headings(): array
+                            {
+                                return ['product_id', 'product_name', 'product_code', 'category', 'unit'];
+                            }
+                        }, 'products_with_units.xlsx');
+                    })
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->color('success'),
+                // ForceDeleteAction::make(),
+                ForceDeleteBulkAction::make(),
                 Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
                     ->action(function (Collection $records) {
                         $productIds = $records->pluck('id')->toArray();

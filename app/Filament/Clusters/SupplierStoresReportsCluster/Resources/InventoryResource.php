@@ -5,10 +5,14 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
+use App\Imports\InventoryTransactionsImport;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use Filament\Actions\Action;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -19,6 +23,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Actions\Action as HeaderAction;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryResource extends Resource
 {
@@ -42,6 +49,39 @@ class InventoryResource extends Resource
         return $table->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
+            ->headerActions([
+                HeaderAction::make('import_inventory')->hidden()
+                    ->label('Import Inventory Excel')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Upload Excel File')
+                            ->required()
+                            ->disk('public')
+                            ->directory('inventory_imports'),
+                    ])
+                    ->color('success')
+                    ->action(function (array $data) {
+                        $path = 'public/' . $data['file'];
+                        $import = new InventoryTransactionsImport();
+
+                        try {
+                            Excel::import($import, $path);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Import Successful')
+                                ->success()
+                                ->body('Inventory records were imported successfully.')
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Log::error('Inventory import failed', ['error' => $e->getMessage()]);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Import Failed')
+                                ->danger()
+                                ->body('Failed to import inventory: ' . $e->getMessage())
+                                ->send();
+                        }
+                    }),
+            ])
             ->columns([
 
                 Tables\Columns\TextColumn::make('id')
@@ -50,7 +90,8 @@ class InventoryResource extends Resource
                     ->label('Product Code'),
                 Tables\Columns\TextColumn::make('product.name')
                     ->label('Product'),
-
+                Tables\Columns\TextColumn::make('store.name')
+                    ->label('Store'),
                 Tables\Columns\TextColumn::make('movement_type_title')->alignCenter(true)
                     ->label('Movement Type')
                     ->sortable(),
@@ -69,8 +110,7 @@ class InventoryResource extends Resource
                 Tables\Columns\TextColumn::make('movement_date')
                     ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('store.name')
-                    ->label('Store'),
+
 
 
 
@@ -122,16 +162,43 @@ class InventoryResource extends Resource
                         fn($value): ?string =>
                         optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
                     ),
-                SelectFilter::make('store_id')->options(fn() => \App\Models\Store::all()
-                    ->mapWithKeys(fn($store) => [
-                        $store->id => $store->name
-                    ])
+                SelectFilter::make('store_id')->options(fn() => \App\Models\Store::active()
+                    ->get(['id', 'name'])
+                    ->pluck('name', 'id')
+
                     ->toArray())
                     ->label(__('lang.store'))
 
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
+
+                ActionGroup::make([
+                    Tables\Actions\Action::make('editStore')
+                        ->visible(fn(): bool => auth()->user()->email == 'admin@admin.com')
+                        ->form([
+                            \Filament\Forms\Components\Select::make('store_id')
+                                ->label('Store')
+                                ->required()
+                                ->searchable()
+                                ->options(
+                                    \App\Models\Store::active()->pluck('name', 'id')
+                                ),
+                        ])->action(function ($record, $data) {
+                            $record->update([
+                                'store_id' => $data['store_id'],
+                            ]);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Store Updated')
+                                ->success()
+                                ->body('Store updated successfully.')
+                                ->send();
+                        })
+                        ->label('Edit Store')
+                        ->color('warning')
+                        ->icon('heroicon-m-pencil-square'),
+
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
