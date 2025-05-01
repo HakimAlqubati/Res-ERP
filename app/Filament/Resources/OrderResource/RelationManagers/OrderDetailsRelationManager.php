@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
+use App\Services\MultiProductsInventoryService;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
@@ -53,6 +54,14 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch'))->alignCenter(true),
                 // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('remaining_quantity')->label(__('lang.remaining_quantity'))
+                    ->alignCenter(true)
+                    ->getStateUsing(function ($record) {
+                        $service = new  MultiProductsInventoryService(null, $record->product_id, $record->unit_id);
+                        $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
+
+                        return $remainingQty;
+                    }),
                 Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
