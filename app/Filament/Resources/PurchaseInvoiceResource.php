@@ -76,13 +76,12 @@ class PurchaseInvoiceResource extends Resource
                     Grid::make()->columns(6)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
-                            ->required()
+                            ->required(false)
                             ->unique(ignoreRecord: true)
                             ->default(fn(): int => (PurchaseInvoice::query()
                                 ->orderBy('id', 'desc')
                                 ->value('id') + 1 ?? 1))
-                            ->placeholder('Enter invoice number')
-                            ->disabledOn('edit'),
+                            ->placeholder('Enter invoice number'),
                         DatePicker::make('date')
                             ->required()
                             ->placeholder('Select date')
