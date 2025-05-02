@@ -214,12 +214,6 @@ class PurchaseInvoiceResource extends Resource
                                 ->minValue(0.1)
                                 ->default(1)
                                 ->disabledOn('edit')
-                                // ->mask(
-                                //     fn (TextInput\Mask $mask) => $mask
-                                //         ->numeric()
-                                //         ->decimalPlaces(2)
-                                //         ->thousandsSeparator(',')
-                                // )
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
 
@@ -231,12 +225,6 @@ class PurchaseInvoiceResource extends Resource
                                 ->minValue(1)
                                 // ->integer()
                                 ->disabledOn('edit')
-                                // ->mask(
-                                //     fn (TextInput\Mask $mask) => $mask
-                                //         ->numeric()
-                                //         ->decimalPlaces(2)
-                                //         ->thousandsSeparator(',')
-                                // )
                                 ->live(onBlur: true)
 
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {

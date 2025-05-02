@@ -27,7 +27,7 @@ class PurchaseInvoiceReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     /**
      * @deprecated Use `getModelLabel()` instead.
@@ -55,7 +55,8 @@ class PurchaseInvoiceReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->filters([
+        return $table
+        ->filters([
             SelectFilter::make("store_id")
                 ->searchable()
                 ->label(__('lang.store'))
