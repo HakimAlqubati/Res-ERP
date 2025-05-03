@@ -1,11 +1,50 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            table,
+            table * {
+                visibility: visible;
+            }
+
+            table {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            .filament-tables-pagination,
+            .filament-header-actions,
+            .filament-header,
+            .filament-tables-filters,
+            .filament::page>form,
+            .mb-4.flex.justify-end {
+                display: none !important;
+            }
+        }
+    </style>
+
     @if ($reportData->isNotEmpty())
+        <div class="mb-4 flex justify-end">
+            <button onclick="window.print()" class="bg-primary-600 text-white px-4 py-2 rounded shadow">
+                🖨️ Print Report
+            </button>
+        </div>
         <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports">
             <thead>
                 <x-filament-tables::row class="header_report">
                     <th colspan="3">
-                        <h3>Products Not Inventoried Between {{ $startDate }} - {{ $endDate }}</h3>
+                        <h3>Products Not Inventoried Between {{ $startDate }} - {{ $endDate }}
+                            - {{ '      ' }}
+                            In ({{ $store }})
+
+                        </h3>
+
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
@@ -27,6 +66,19 @@
         <!-- Pagination Links -->
         <div class="mt-4">
             {{ $reportData->appends(request()->query())->links('vendor.pagination.tailwind') }}
+        </div>
+        <div class="flex justify-end mb-2">
+            <form method="GET">
+                <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
+                <select name="perPage" id="perPage" onchange="this.form.submit()"
+                    class="border border-gray-300 px-3 py-1 rounded-md text-sm">
+                    @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
+                        <option value="{{ $option }}" {{ request('perPage', 15) == $option ? 'selected' : '' }}>
+                            {{ is_numeric($option) ? $option : 'All' }}
+                        </option>
+                    @endforeach
+                </select>
+            </form>
         </div>
     @else
         <div class="text-center text-gray-500 mt-6">

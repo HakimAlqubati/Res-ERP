@@ -10,9 +10,11 @@ use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MissingInventoryProductsReportResource\Pages\ListMissingInventoryProductsReport;
+use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 
 class MissingInventoryProductsReportResource extends Resource
 {
@@ -54,6 +56,15 @@ class MissingInventoryProductsReportResource extends Resource
                             ->label('End Date')
                             ->default(now()->endOfMonth()),
                     ]),
+                SelectFilter::make('store_id')->label('Store')->options(
+                    function () {
+                        return Store::active()
+                            ->get(['name', 'id'])->pluck('name', 'id')->toArray();
+                    }
+                )
+
+                    ->hidden(fn() => isStuff() || isMaintenanceManager())
+                    ->searchable(),
             ], FiltersLayout::AboveContent)
             ->actions([]);
     }
