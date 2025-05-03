@@ -36,6 +36,7 @@ class ReorderDueToStockReportService
                     'unit_id' => $first->unit_id,
                     'unit_name' => $first->unit?->name,
                     'quantity' => $items->sum('quantity'), // ✅ نجمع الكميات
+                    'created_at' => $first->created_at, // أول تاريخ فقط (للتناسق)
                 ];
             }
         } else {
@@ -50,6 +51,7 @@ class ReorderDueToStockReportService
                     'unit_id' => $detail->unit_id,
                     'unit_name' => $detail->unit?->name,
                     'quantity' => $detail->quantity,
+                    'created_at' => $detail->created_at,
                 ];
             });
         }

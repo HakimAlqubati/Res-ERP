@@ -22,6 +22,9 @@
                         <th>Unit ID</th>
                         <th>Unit Name</th>
                         <th>Quantity</th>
+                        @if (!$groupByOrder)
+                            <th>Created At</th>
+                        @endif
                     </x-filament-tables::row>
                 </thead>
                 <tbody>
@@ -39,6 +42,12 @@
                                     <x-filament-tables::cell>{{ $detail['unit_name'] }}</x-filament-tables::cell>
                                     <x-filament-tables::cell
                                         class="font-bold">{{ $detail['quantity'] }}</x-filament-tables::cell>
+                                    @if (!$groupByOrder)
+                                        <x-filament-tables::cell class="font-bold">
+                                            {{ date('Y-m-d', strtotime($detail['created_at'])) }}<br>
+                                            {{ date('H:i:s', strtotime($detail['created_at'])) }}
+                                        </x-filament-tables::cell>
+                                    @endif
                                 </x-filament-tables::row>
                             @endforeach
                         @else
@@ -53,6 +62,14 @@
                                 <x-filament-tables::cell>{{ $row['unit_name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell
                                     class="font-bold">{{ $row['quantity'] }}</x-filament-tables::cell>
+
+
+                                @if (!$groupByOrder)
+                                    <x-filament-tables::cell class="font-bold">
+                                        {{ date('Y-m-d', strtotime($row['created_at'])) }}<br>
+                                        {{ date('H:i:s', strtotime($row['created_at'])) }}
+                                    </x-filament-tables::cell>
+                                @endif
                             </x-filament-tables::row>
                         @endif
                     @endforeach

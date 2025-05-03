@@ -365,10 +365,20 @@ class SettingResource extends Resource
                             ])->hidden(function () {
                                 return hideHrForTenant();
                             }),
-                        Tab::make('Orders Settings')->hidden(fn(): bool => isFinanceManager())
+                        Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
-                                Fieldset::make('')->columns(3)->schema([
+                                Fieldset::make('')->label('Purchase Settings')->columns(3)->schema([
+                                    Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
+                                        ->inline(false)
+                                        ->label('Purchase Invoice No Required and Disabled on Edit')
+                                        ->offIcon('heroicon-s-user')
+                                        ->onColor('success')
+                                        ->offColor('danger')
+                                        ->helperText('Enable this to require and disable editing of the purchase invoice number.')
+                                        ->default(false),
+                                ]),
+                                Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
                                     // Select::make('calculating_orders_price_method')
                                     //     ->label(__('system_settings.calculating_orders_price_method'))
                                     //     ->options([

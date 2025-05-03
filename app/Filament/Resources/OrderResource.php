@@ -104,7 +104,7 @@ implements HasShieldPermissions
                                 Store::active()
                                     // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
-                            ])
+                            ])->hidden()
                         // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
                         // ->default(function ($record) {
                         //     dd($record);
@@ -244,7 +244,7 @@ implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
-        
+
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -264,7 +264,7 @@ implements HasShieldPermissions
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 // TextColumn::make('store.name')->label(__('lang.store')),
-                TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
+                // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([
@@ -504,7 +504,4 @@ implements HasShieldPermissions
     {
         return $record->id;
     }
-
-    
-
 }

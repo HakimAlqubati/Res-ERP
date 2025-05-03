@@ -102,9 +102,9 @@ class OrderRepository implements OrderRepositoryInterface
 
         if (
             isBranchUser() && isset(auth()->user()->branch)
-        ) { 
+        ) {
             $query->where('customer_id', auth()->user()->owner->id)
-            ->where('branch_id',auth()->user()->branch_id)
+                ->where('branch_id', auth()->user()->branch_id)
             ;
         }
         if ($request->has('id')) {
@@ -129,7 +129,8 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
-        $orders = $query->orderBy('created_at', 'DESC')->limit(20)
+        
+        $orders = $query->orderBy('created_at', 'DESC')->limit(60)
             ->get();
 
         return OrderResource::collection($orders)->filter();

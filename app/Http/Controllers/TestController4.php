@@ -13,6 +13,7 @@ use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Orders\Reports\ReorderDueToStockReportService;
+use App\Services\StockInventoryReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -420,5 +421,23 @@ AND (
         $groupByOrder = $request->boolean('group_by_order', false);
         $result =  (new ReorderDueToStockReportService())->getReorderDueToStockReport($groupByOrder);
         return response()->json([$result, count($result)]);
+    }
+
+    public function missingProducts(Request $request)
+    {
+
+
+        $products = StockInventoryReportService::getProductsNotInventoriedBetween(
+            $request->start_date,
+            $request->end_date
+        );
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $products,
+            'count' => $products->count(),
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+        ]);
     }
 }

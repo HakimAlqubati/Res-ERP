@@ -304,20 +304,20 @@ class Order extends Model implements Auditable
 
                 // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
 
-                foreach ($order->orderDetails as $detail) {
-                    $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
-                        ->pluck('parent_product_id')
-                        ->unique();
+                // foreach ($order->orderDetails as $detail) {
+                // $parentProducts = ProductItem::whereIn('product_id', $order->orderDetails->pluck('product_id')->toArray())
+                //     ->pluck('parent_product_id')
+                //     ->unique();
 
-                    foreach ($parentProducts as $parentProductId) {
-                        try {
-                            $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
-                            Log::info("🔄 تم تحديث أسعار {$count} مكونات لـ منتج مركب ID {$parentProductId}");
-                        } catch (\Throwable $e) {
-                            Log::error("❌ خطأ أثناء تحديث سعر المنتج المركب {$parentProductId}: {$e->getMessage()}");
-                        }
-                    }
-                }
+                // foreach ($parentProducts as $parentProductId) {
+                //     try {
+                //         // $count = ProductCostingService::updateComponentPricesForProduct($parentProductId);
+                //         // Log::info("🔄 تم تحديث أسعار {$count} مكونات لـ منتج مركب ID {$parentProductId}");
+                //     // } catch (\Throwable $e) {
+                //         // Log::error("❌ خطأ أثناء تحديث سعر المنتج المركب {$parentProductId}: {$e->getMessage()}");
+                //     }
+                // }
+                // }
             }
 
 

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\Unit;
 use App\Models\UnitPrice;
+use App\Services\BatchProductCostingService;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
 use Filament\Actions\Action;
@@ -818,6 +819,34 @@ class ProductResource extends Resource
                 ]),
             ])
             ->bulkActions([
+                BulkAction::make('updateComponentPrices')
+                    ->label('Update Price')
+                    ->icon('heroicon-o-currency-dollar')->button()
+                    ->color('info')
+                    ->action(function (Collection $records) {
+
+                        $result = [];
+                        foreach ($records as $record) {
+
+                            $count = ProductCostingService::updateComponentPricesForProduct($record->id);
+                            if ($count > 0) {
+                                $result[] = "✅ تم تحديث أسعار {$count} من المكونات للمنتج {$record->name}.";
+                            } else {
+                                $result[] = "⚠️ لم يتم تحديث أي مكوّن للمنتج {$record->name}. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.";
+                            }
+                        }
+                        Log::info('Update Component Prices Results:', $result);
+                    }),
+                BulkAction::make('updateComponentPricesNew')
+                    ->label('Update Price New')
+                    ->icon('heroicon-o-currency-dollar')->button()
+                    ->color('info')
+                    ->action(function (Collection $records) {
+                        $productIds = $records->pluck('id')->toArray();
+                        BatchProductCostingService::updateComponentPricesForMany($productIds);
+                        showSuccessNotifiMessage('Done for ' . count($productIds) . ' products');
+                    }),
+
                 BulkAction::make('exportProductsWithUnits')
                     ->label('Export with Unit Prices')
                     // ->icon('heroicon-o-download')

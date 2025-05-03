@@ -512,6 +512,12 @@ if (!function_exists('setting')) {
         return \App\Models\Setting::getSetting($key);
     }
 }
+if (!function_exists('settingWithDefault')) {
+    function settingWithDefault($key, $default = null)
+    {
+        return \App\Models\Setting::getSetting($key, $default);
+    }
+}
 
 /**
  * to get nationalities
