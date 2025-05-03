@@ -24,3 +24,4 @@ Route::put('update-device-token', [FcmController::class, 'updateDeviceToken']);
 Route::post('send-fcm-notification', [FcmController::class, 'sendFcmNotification']);
 Route::get('/testGetBranches', [TestController3::class, 'testGetBranches']);
 Route::get('/generatePendingApprovalPreviousOrderDetailsReport', [TestController4::class, 'generatePendingApprovalPreviousOrderDetailsReport']);
+Route::get('productsNotInventoried', [TestController4::class, 'missingProducts']);
