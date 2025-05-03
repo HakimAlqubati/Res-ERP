@@ -66,8 +66,8 @@
 
                                 @if (!$groupByOrder)
                                     <x-filament-tables::cell class="font-bold">
-                                        {{ date('Y-m-d', strtotime($detail['created_at'])) }}<br>
-                                        {{ date('H:i:s', strtotime($detail['created_at'])) }}
+                                        {{ date('Y-m-d', strtotime($row['created_at'])) }}<br>
+                                        {{ date('H:i:s', strtotime($row['created_at'])) }}
                                     </x-filament-tables::cell>
                                 @endif
                             </x-filament-tables::row>
