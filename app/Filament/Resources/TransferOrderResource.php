@@ -56,7 +56,7 @@ class TransferOrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->paginated(true)
             ->columns([
                 TextColumn::make('id')->label(__('lang.order_id'))->toggleable(isToggledHiddenByDefault: false)
@@ -72,9 +72,9 @@ class TransferOrderResource extends Resource
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 TextColumn::make('customer.name')->label(__('lang.branch_manager'))->toggleable()
                     ->searchable(isIndividual: true)
-                    ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
+                    ->tooltip(fn(Model $record): string => "By {$record->customer?->name}"),
 
-                TextColumn::make('item_count')->label(__('lang.item_counts')),
+                TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
                 TextColumn::make('total_amount')->label(__('lang.total_amount')),
                 TextColumn::make('transfer_date')
                     ->label(__('lang.transfer_date'))

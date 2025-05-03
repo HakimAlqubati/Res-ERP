@@ -95,7 +95,7 @@ class OrderResource extends Resource
                                 Store::active()
                                     // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
-                            ])
+                            ])->hidden()
                         // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
                         // ->default(function ($record) {
                         //     dd($record);
@@ -255,7 +255,7 @@ class OrderResource extends Resource
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 // TextColumn::make('store.name')->label(__('lang.store')),
-                TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
+                // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([
