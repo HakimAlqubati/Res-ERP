@@ -9,7 +9,7 @@ use Illuminate\Support\Carbon;
 
 class StockInventoryReportService
 {
-    public static function getProductsNotInventoriedBetween($startDate, $endDate)
+    public static function getProductsNotInventoriedBetween($startDate, $endDate, $perPage = 15)
     {
         $inventoryIds = StockInventory::whereBetween('inventory_date', [$startDate, $endDate])
             ->pluck('id');
@@ -19,6 +19,6 @@ class StockInventoryReportService
             ->unique();
 
         // Return products NOT in inventory details
-        return Product::whereNotIn('id', $productIdsInInventories)->get();
+        return Product::whereNotIn('id', $productIdsInInventories)->paginate($perPage);
     }
 }

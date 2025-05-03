@@ -18,7 +18,7 @@ class ListMissingInventoryProductsReport extends ListRecords
     {
         $start = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
-        $products = StockInventoryReportService::getProductsNotInventoriedBetween($start, $end);
+        $products = StockInventoryReportService::getProductsNotInventoriedBetween($start, $end,20);
 
         return [
             'reportData' => $products,

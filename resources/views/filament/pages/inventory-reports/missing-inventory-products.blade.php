@@ -24,6 +24,10 @@
                 @endforeach
             </tbody>
         </x-filament-tables::table>
+        <!-- Pagination Links -->
+        <div class="mt-4">
+            {{ $reportData->appends(request()->query())->links('vendor.pagination.tailwind') }}
+        </div>
     @else
         <div class="text-center text-gray-500 mt-6">
             <p>No products missing from inventory within the selected dates.</p>
