@@ -818,6 +818,23 @@ class ProductResource extends Resource
                 ]),
             ])
             ->bulkActions([
+                BulkAction::make('updateComponentPrices')
+                    ->label('Update Price')
+                    ->icon('heroicon-o-currency-dollar')->button()
+                    ->color('info')
+                    ->action(function (Collection $records) {
+                        $result = [];
+                        foreach ($records as $record) {
+                            $count = ProductCostingService::updateComponentPricesForProduct($record->id);
+                            if ($count > 0) {
+                                $result[] = "✅ تم تحديث أسعار {$count} من المكونات للمنتج {$record->name}.";
+                            } else {
+                                $result[] = "⚠️ لم يتم تحديث أي مكوّن للمنتج {$record->name}. تأكد من أن المنتج مركب أو أن هناك أسعار متاحة.";
+                            }
+                        }
+                        Log::info('Update Component Prices Results:', $result);
+                    }),
+
                 BulkAction::make('exportProductsWithUnits')
                     ->label('Export with Unit Prices')
                     // ->icon('heroicon-o-download')
