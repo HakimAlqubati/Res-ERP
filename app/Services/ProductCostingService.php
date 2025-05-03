@@ -134,4 +134,55 @@ class ProductCostingService
             ->orderByDesc('id')
             ->first();
     }
+
+    public static function updateComponentPricesForProductInstance(\App\Models\Product $product): int
+    {
+        if (!$product->is_manufacturing || !$product->relationLoaded('productItems')) {
+            return 0;
+        }
+
+        $updatedCount = 0;
+
+        foreach ($product->productItems as $item) {
+            $price = self::getEffectiveProductCostFIFOOrLast($item->product_id, $item->unit_id);
+
+            if (is_null($price)) {
+                continue;
+            }
+
+            $transaction = self::getInventoryTransactionForCost($item->product_id, $item->unit_id, $price);
+
+            \App\Models\ProductPriceHistory::create([
+                'product_id'       => $product->id,
+                'product_item_id'  => $item->id,
+                'unit_id'          => $item->unit_id,
+                'old_price'        => $item->price,
+                'new_price'        => $price,
+                'source_type'      => $transaction?->transactionable_type,
+                'source_id'        => $transaction?->transactionable_id,
+                'note'             => 'Auto update during costing process',
+            ]);
+
+            $item->price = $price;
+            $item->total_price = $price * $item->quantity;
+            $item->total_price_after_waste = \App\Models\ProductItem::calculateTotalPriceAfterWaste(
+                $item->total_price,
+                $item->qty_waste_percentage ?? 0
+            );
+            $item->save();
+
+            $updatedCount++;
+        }
+
+        // تحديث سعر المنتج المركب بعد تحديث المكونات
+        $finalPrice = $product->productItems->sum('total_price_after_waste') ?? 0;
+
+        foreach ($product->unitPrices as $unitPrice) {
+            $packageSize = $unitPrice->package_size ?: 1;
+            $unitPrice->price = round($packageSize * $finalPrice, 2);
+            $unitPrice->save();
+        }
+
+        return $updatedCount;
+    }
 }
