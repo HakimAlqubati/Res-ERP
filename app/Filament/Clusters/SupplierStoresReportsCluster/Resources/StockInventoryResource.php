@@ -156,7 +156,7 @@ class StockInventoryResource extends Resource
                                 ->label('System Qty')
                                 ->required(),
                             TextInput::make('difference')->readOnly()
-                                ->rule('not_in:0', 'Now Allowed')
+                                // ->rule('not_in:0', 'Now Allowed')
 
                                 ->numeric(),
                         ])->addActionLabel('Add Item')
