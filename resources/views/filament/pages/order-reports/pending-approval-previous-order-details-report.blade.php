@@ -44,7 +44,7 @@
                                         class="font-bold">{{ $detail['quantity'] }}</x-filament-tables::cell>
                                     @if (!$groupByOrder)
                                         <x-filament-tables::cell
-                                            class="font-bold">{{ $detail['quantity'] }}</x-filament-tables::cell>
+                                            class="font-bold">{{ $detail['created_at'] }}</x-filament-tables::cell>
                                     @endif
                                 </x-filament-tables::row>
                             @endforeach
@@ -64,7 +64,7 @@
 
                                 @if (!$groupByOrder)
                                     <x-filament-tables::cell
-                                        class="font-bold">{{ $row['quantity'] }}</x-filament-tables::cell>
+                                        class="font-bold">{{ $row['created_at'] }}</x-filament-tables::cell>
                                 @endif
                             </x-filament-tables::row>
                         @endif
