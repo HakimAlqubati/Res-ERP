@@ -30,12 +30,17 @@
     </style>
 
     @if ($reportData->isNotEmpty())
-        <div class="mb-4 flex justify-end">
+        <div class="mb-4 flex justify-end gap-2">
+
             <button onclick="window.print()" class="bg-primary-600 text-white px-4 py-2 rounded shadow">
                 🖨️ Print Report
             </button>
+            <button onclick="exportTableToExcel('report-table', 'missing_inventory_report')"
+                class="bg-primary-600 text-white px-4 py-2 rounded shadow">
+                📥 Export to Excel
+            </button>
         </div>
-        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports">
+        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
             <thead>
                 <x-filament-tables::row class="header_report">
                     <th colspan="3">
@@ -86,3 +91,17 @@
         </div>
     @endif
 </x-filament::page>
+
+<script>
+    function exportTableToExcel(tableId, filename = '') {
+        const downloadLink = document.createElement("a");
+        const table = document.getElementById(tableId);
+        const tableHTML = table.outerHTML.replace(/ /g, '%20');
+
+        filename = filename ? filename + '.xls' : 'excel_data.xls';
+
+        downloadLink.href = 'data:application/vnd.ms-excel,' + tableHTML;
+        downloadLink.download = filename;
+        downloadLink.click();
+    }
+</script>
