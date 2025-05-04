@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\StockIssueOrder;
 use App\Models\Store;
 use App\Models\UnitPrice;
+use App\Services\MultiProductsInventoryService;
+use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -120,6 +122,10 @@ class StockIssueOrderResource extends Resource
 
                                     $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
                                     $set('package_size',  $unitPrice->package_size ?? 0);
+
+                                    $service = new  MultiProductsInventoryService(null, $get('product_id'), $state);
+                                    $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
+                                    $set('remaining_quantity', $remainingQty);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size')),
@@ -127,13 +133,34 @@ class StockIssueOrderResource extends Resource
                                 ->numeric()
                                 ->required()
                                 ->minValue(0.1)
-                                ->label('Quantity'),
+                                ->label('Quantity')
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function ($get, $set, $state) {
+                                    $service = new  MultiProductsInventoryService(null, $get('product_id'), $get('unit_id'));
+                                    $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
+                                    $set('remaining_quantity', $remainingQty);
+                                })
+                                ->rules([
+                                    function ($get) {
+                                        return function (string $attribute, $value, Closure $fail) use ($get) {
+                                            $remainingQty = (float) $get('remaining_quantity');
+                                            if ($value > $remainingQty) {
+                                                $fail("Quantity cannot exceed remaining stock ({$remainingQty}).");
+                                            }
+                                        };
+                                    },
+                                ]),
+                            TextInput::make('remaining_quantity')
+                                ->numeric()
+                                ->readOnly()
+                                ->label('Remaining Qty')
+
 
 
                         ])
                         ->minItems(1)
                         ->label('Issued Items')
-                        ->columns(6),
+                        ->columns(7),
                 ])
             ]);
     }
