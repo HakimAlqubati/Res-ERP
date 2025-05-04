@@ -98,7 +98,7 @@ class PurchaseInvoiceReportResource extends Resource
                     optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
                 ),
             SelectFilter::make("invoice_no")
-                ->searchable()
+                ->searchable()->multiple()
                 ->label(__('lang.invoice_no'))
                 ->query(function (Builder $q, $data) {
                     return $q;

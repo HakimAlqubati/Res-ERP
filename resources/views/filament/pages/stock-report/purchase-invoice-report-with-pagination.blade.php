@@ -1,14 +1,14 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
     {{-- @if (isset($branch_id)) --}}
-    <x-filament-tables::table class="w-full text-sm text-left pretty reports"   id="report-table">
+    <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
         <thead style="top:64px;" class="fixed-header">
 
             <x-filament-tables::row>
                 <th colspan="3">
                     {{ __('lang.store') }}: ({{ $purchase_invoice_data['store_name'] }})
                 </th>
-                <th colspan="{{$show_invoice_no == true ? '4' : '3'}}">
+                <th colspan="{{ $show_invoice_no == true ? '4' : '3' }}">
                     {{ __('lang.supplier') }}: ({{ $purchase_invoice_data['supplier_name'] }})
                 </th>
             </x-filament-tables::row>
@@ -33,7 +33,7 @@
                 @php
                     $unit_price = $invoice_item->unit_price;
                     $sub_total = $invoice_item->unit_price * $invoice_item->quantity;
-        
+
                     $total_sub_total += $sub_total;
                     $sum_unit_price += $unit_price;
                 @endphp
@@ -51,21 +51,39 @@
                     <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
                 </x-filament-tables::row>
             @endforeach
-        
+
             <x-filament-tables::row>
-                <x-filament-tables::cell colspan="{{ $show_invoice_no ? '5' : '4' }}"> {{ __('lang.total') }} </x-filament-tables::cell>
+                <x-filament-tables::cell colspan="{{ $show_invoice_no ? '5' : '4' }}"> {{ __('lang.total') }}
+                </x-filament-tables::cell>
                 <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell>
                 <x-filament-tables::cell> {{ $total_sub_total }} </x-filament-tables::cell>
             </x-filament-tables::row>
         </tbody>
-        
+
         {{-- 🔹 Add Pagination Links --}}
         <tr>
             <td colspan="100%">
                 {{ $purchase_invoice_data['results']->links() }}
             </td>
         </tr>
-        
+
+
+
+
 
     </x-filament-tables::table>
+    <div class="flex justify-end mb-2">
+        <form method="GET">
+            <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
+            <select name="perPage" id="perPage" onchange="this.form.submit()"
+                class="border border-gray-300 px-3 py-1 rounded-md text-sm">
+                @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
+                    <option value="{{ $option }}" {{ request('perPage', 15) == $option ? 'selected' : '' }}>
+                        {{ is_numeric($option) ? $option : 'All' }}
+                    </option>
+                @endforeach
+            </select>
+        </form>
+    </div>
+
 </x-filament-panels::page>
