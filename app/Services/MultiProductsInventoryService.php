@@ -322,6 +322,8 @@ class MultiProductsInventoryService
             Log::info("❌ Unit ID: $unitId not found for product ID: $productId.");
             throw new \Exception("❌ Unit ID: $unitId not found for product ID: $productId.");
         }
+
+        // dd($requestedQty);
         $existingDetail = $sourceModel->orderDetails()
             ->where('product_id', $productId)
             ->where('unit_id', $unitId)->first();
@@ -368,11 +370,15 @@ class MultiProductsInventoryService
                 ]);
                 Log::info("🔄 Updated existing order detail in pending order #{$existingOrder->id} (product_id: $productId, unit_id: $unitId).");
             } else {
-                // ➕ إنشاء صف جديد إذا الوحدة مختلفة
+                $previousOrderedQty = $sourceModel->orderDetails()
+                    ->where('product_id', $productId)
+                    ->where('unit_id', $unitId)
+                    ->sum('quantity');
+
                 $existingOrder->orderDetails()->create([
                     'product_id' => $productId,
                     'unit_id' => $unitId,
-                    'quantity' => $requestedQty,
+                    'quantity' => $previousOrderedQty,
                     'price' => getUnitPrice($productId, $unitId),
                     'package_size' => $targetUnit->package_size,
                     'created_by' => auth()->id(),
