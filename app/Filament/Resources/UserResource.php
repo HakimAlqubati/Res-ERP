@@ -382,7 +382,7 @@ class UserResource extends Resource
 
                                 showWarningNotifiMessage('Faild', $e->getMessage());
                             }
-                        })->requiresConfirmation(),
+                        })->requiresConfirmation()->hidden(),
                 ])
             ])
             ->bulkActions([
