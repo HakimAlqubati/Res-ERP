@@ -241,7 +241,7 @@ class MultiProductsInventoryService
         $maxOrder = $productUnitPrices->max('order');
         $maxPackageSize = $productUnitPrices->max('package_size');
 
-        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder, $query,$maxPackageSize) {
+        return $productUnitPrices->map(function ($unitPrice) use ($maxOrder, $query, $maxPackageSize) {
             $minimumQty = 0;
             if ($unitPrice->order == $maxOrder) {
                 $minimumQty = $query->first()->product->minimum_stock_qty ?? 0;
@@ -282,7 +282,7 @@ class MultiProductsInventoryService
     public function getProductsBelowMinimumQuantityًWithPagination($perPage = 15)
     {
         $inventory = $this->getInventoryReport()['report'];
-        
+
         $lowStockProducts = [];
         foreach ($inventory as $productData) {
             foreach ($productData as $product) {
@@ -322,8 +322,11 @@ class MultiProductsInventoryService
             Log::info("❌ Unit ID: $unitId not found for product ID: $productId.");
             throw new \Exception("❌ Unit ID: $unitId not found for product ID: $productId.");
         }
+        $existingDetail = $sourceModel->orderDetails()
+            ->where('product_id', $productId)
+            ->where('unit_id', $unitId)->first();
         if ($requestedQty > $inventoryRemainingQty) {
-            if (setting('create_auto_order_when_stock_empty')) {
+            if (setting('create_auto_order_when_stock_empty') && $existingDetail && $existingDetail->available_quantity == 0) {
                 // ✅ البحث عن طلب معلق موجود لنفس الفرع والعميل
                 $existingOrder = \App\Models\Order::where('customer_id', $sourceModel->customer_id)
                     ->where('branch_id', $sourceModel->branch_id)
@@ -378,10 +381,10 @@ class MultiProductsInventoryService
 
                 // تصفير الكمية في الطلب الأصلي
                 if ($sourceModel) {
-                    $sourceModel->orderDetails()
-                        ->where('product_id', $productId)
-                        ->where('unit_id', $unitId)
-                        ->update(['available_quantity' => 0]);
+                    // $sourceModel->orderDetails()
+                    //     ->where('product_id', $productId)
+                    //     ->where('unit_id', $unitId)
+                    //     ->update(['available_quantity' => 0]);
                 }
 
 
