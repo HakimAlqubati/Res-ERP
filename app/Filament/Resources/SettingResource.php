@@ -370,7 +370,7 @@ class SettingResource extends Resource
                                 Fieldset::make('')->label('Purchase Settings')->columns(3)->schema([
                                     Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
                                         ->inline(false)
-                                        ->label('Purchase Invoice No Required and Disabled on Edit')
+                                        ->label('Purchase Invoice Number Required and Disabled on Edit')
                                         ->offIcon('heroicon-s-user')
                                         ->onColor('success')
                                         ->offColor('danger')
