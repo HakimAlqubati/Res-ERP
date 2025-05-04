@@ -53,7 +53,7 @@ class GoodsReceivedNoteDetail extends Model
         parent::boot();
 
         static::created(function ($grnDetail) {
-            if (!setting('grn_affects_inventory', false)) {
+            if (!settingWithDefault('grn_affects_inventory', false)) {
                 return;
             }
 
