@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\DynamicConnection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -268,5 +269,13 @@ class Branch extends Model implements HasMedia, Auditable
                 'name' => $category->name,
             ];
         });
+    }
+    public function scopeAccessibleBranches(Builder $query): Builder
+    {
+        if (auth()->check()) {
+            return $query->whereIn('id', auth()->user()->getAccessibleBranchIds());
+        }
+
+        return $query;
     }
 }

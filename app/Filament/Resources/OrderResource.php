@@ -473,7 +473,9 @@ implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('is_purchased', 0)->count();
+        return static::getModel()::where('is_purchased', 0)
+            ->accessibleBranches()
+            ->count();
     }
 
     public function isTableSearchable(): bool
@@ -493,11 +495,15 @@ implements HasShieldPermissions
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->where('is_purchased', 0)
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+
+        $query = parent::getEloquentQuery()
+            ->where('is_purchased', 0);
+
+        $query->accessibleBranches();
+
+        return  $query->withoutGlobalScopes([
+            SoftDeletingScope::class,
+        ]);
     }
 
     public static function getGlobalSearchResultTitle(Model $record): string

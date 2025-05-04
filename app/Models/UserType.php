@@ -15,11 +15,16 @@ class UserType extends Model
         'scope',
         'description',
         'active',
-        'can_manage_stores',
-        'can_manage_branches',
+        'can_access_all_branches',
+        'can_access_all_stores',
         'parent_type_id',
+        'default_roles',
     ];
 
+
+    protected $casts  = [
+        'default_roles' => 'array',
+    ];
 
 
     /**
@@ -93,4 +98,10 @@ class UserType extends Model
             }
         });
     }
+
+    // public function getDefaultRolesAsString(): string
+    // {
+    //     $roles = \Spatie\Permission\Models\Role::whereIn('id', $this->default_roles)->pluck('name');
+    //     return is_array($roles) ? implode(', ', $roles) : '';
+    // }
 }

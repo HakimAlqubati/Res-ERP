@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\MultiProductsInventoryService;
 use App\Services\ProductCostingService;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -437,5 +438,13 @@ class Order extends Model implements Auditable
     public function scopeActive($query)
     {
         return $query->where('active', 1);
+    }
+    public function scopeAccessibleBranches(Builder $query): Builder
+    {
+        if (auth()->check()) {
+            return $query->whereIn('branch_id', auth()->user()->getAccessibleBranchIds());
+        }
+
+        return $query;
     }
 }

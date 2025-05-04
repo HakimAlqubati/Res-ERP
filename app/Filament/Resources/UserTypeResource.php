@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\UserTypeScope;
 use App\Filament\Resources\UserTypeResource\Pages;
 use App\Filament\Resources\UserTypeResource\RelationManagers;
-use App\Models\Role;
+
 use App\Models\UserType;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -34,7 +36,7 @@ class UserTypeResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()
-                    ->columns(3)
+                    ->columns(2)
                     ->schema([
                         TextInput::make('name')
                             ->required()
@@ -46,19 +48,38 @@ class UserTypeResource extends Resource
                             ->dehydrated()
                             ->required()->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        Toggle::make('active')->inline(false)
-                            ->default(true),
+
                         Select::make('scope')
-                            ->options([
-                                'branch' => 'Branch',
-                                'store' => 'Store',
-                                'all' => 'All',
-                            ]),
+                            ->options(collect(UserTypeScope::cases())
+                                ->mapWithKeys(fn($case) => [$case->value => $case->label()])
+                                ->toArray()),
                         Select::make('parent_type_id')
                             ->label('Parent Type (optional)')
                             ->relationship('parent', 'name')
                             ->searchable()
                             ->nullable(),
+                        Grid::make()->columnSpanFull()->columns(3)->schema([
+                            Toggle::make('active')->inline(false)
+                                ->default(true),
+                            Toggle::make('can_access_all_branches')
+                                ->label('Can Access All Branches')
+                                ->inline(false)
+                                ->default(false),
+
+                            Toggle::make('can_access_all_stores')
+                                ->label('Can Access All Stores')
+                                ->inline(false)
+                                ->default(false),
+                        ]),
+                        Select::make('default_roles')
+                            ->label('Default Roles')
+
+                            ->multiple()
+
+                            ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')) // أو إذا لم تكن هناك علاقة مباشرة
+                            ->searchable()
+                            ->preload()
+                            ->columnSpanFull(),
 
 
                         Textarea::make('description')
@@ -75,22 +96,66 @@ class UserTypeResource extends Resource
     {
         return $table->striped()
             ->columns([
-                TextColumn::make('id')->sortable()->searchable(),
+                TextColumn::make('id')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')->sortable()->searchable(),
-                TextColumn::make('code')->sortable()->searchable(),
+                TextColumn::make('code')->sortable()->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('getLevel')->sortable()->alignCenter(true)
                     ->label('Level')
-                    ->getStateUsing(fn(UserType $record) => $record->getLevel()),
+                    ->getStateUsing(fn(UserType $record) => $record->getLevel())->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('scope')->sortable(),
                 TextColumn::make('parent.name')->label('Parent Type')->toggleable(),
                 IconColumn::make('active')->label('Active')->sortable()->boolean()->alignCenter(true),
-                TextColumn::make('description')->limit(30)->searchable(),
+                TextColumn::make('default_roles')
+                    ->label('Default Roles')
+                    ->getStateUsing(function (UserType $record) {
+                        $defaultRoles = $record->default_roles ?? [];
+                        if (empty($defaultRoles)) {
+                            return '-';
+                        }
+                        return \Spatie\Permission\Models\Role::whereIn('id', $defaultRoles)->pluck('name')->implode(', ');
+                    })
+                    ->limit(50)->wrap()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                IconColumn::make('can_access_all_branches')
+                    ->label('All Branches')
+                    ->boolean()
+                    ->alignCenter(true)
+                    ->toggleable(),
+
+                IconColumn::make('can_access_all_stores')
+                    ->label('All Stores')
+                    ->boolean()
+                    ->alignCenter(true)
+                    ->toggleable(),
+                // TextColumn::make('description')->limit(30)->searchable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('assignRoles')
+                    ->label('Assign Roles')->button()
+                    ->icon('heroicon-o-key')
+                    ->form([
+                        Select::make('default_roles')
+                            ->label('Default Roles')
+                            ->multiple()
+                            ->options(\Spatie\Permission\Models\Role::pluck('name', 'id'))
+                            ->searchable()
+                            ->preload(),
+                    ])
+                    ->action(function (\Filament\Tables\Actions\Action $action, array $data, UserType $record) {
+                        $record->update([
+                            'default_roles' => $data['default_roles'],
+                        ]);
+
+                        $action->successNotificationTitle('Roles updated successfully.');
+                    })
+                    ->modalHeading('Assign Default Roles')
+                    ->modalSubmitActionLabel('Save')
+                    ->color('primary'),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

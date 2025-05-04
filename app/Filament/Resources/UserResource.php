@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\Models\LoginAttempt;
 use App\Models\User;
 use App\Models\UserType;
+use Dom\Text;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
@@ -117,12 +118,16 @@ class UserResource extends Resource
                                 Fieldset::make()->label('')->schema([
                                     Select::make('user_type_id')
                                         ->label('User Type')
-                                        ->options(UserType::active()->pluck('name', 'id'))
+                                        ->options(UserType::active()
+                                            ->pluck('name', 'id'))
                                         ->required()
                                         ->live()
                                         ->afterStateUpdated(function ($state, callable $set) {
-                                            $scope = UserType::find($state)?->scope;
+                                            $type = UserType::find($state);
+                                            $scope = $type?->scope;
+                                            $defaultRoles = $type?->default_roles ?? [];
                                             $set('user_type_scope', $scope);
+                                            $set('roles', $defaultRoles);
                                         }),
                                     Hidden::make('user_type_scope') // مخزن مؤقت للسكوپ لاستخدامه في العرض فقط
                                         ->dehydrated(false),
@@ -141,18 +146,20 @@ class UserResource extends Resource
                                     ->label('Branch & Store Access')
                                     ->schema([
                                         CheckboxList::make('branches')->bulkToggleable()
-                                            ->relationship('branches', 'name') // جاهز بسبب علاقة belongsToMany
+                                            ->options(Branch::select('name', 'id')
+                                                ->active()->accessibleBranches()
+                                                ->pluck('name', 'id'))
                                             ->label('Branches Access')
                                             ->columns(2)
                                             ->searchable()
-                                            ->visible(fn(Get $get) => $get('user_type_scope') === 'branch')
+                                            ->visible(fn(Get $get) => in_array($get('user_type_scope'), ['branch', 'all']))
                                             ->helperText('Select the branches the user can access.'),
 
                                         CheckboxList::make('stores')->bulkToggleable()
                                             ->relationship('stores', 'name') // جاهز بسبب علاقة belongsToMany
                                             ->label('Stores Access')
                                             ->columns(2)
-                                            ->visible(fn(Get $get) => $get('user_type_scope') === 'store')
+                                            ->visible(fn(Get $get) => in_array($get('user_type_scope'), ['store', 'all']))
                                             ->searchable()
                                             ->helperText('Select the stores the user can access.'),
                                     ]),
@@ -293,17 +300,7 @@ class UserResource extends Resource
                     ->sortable()->searchable()
                     ->searchable(isIndividual: true, isGlobal: false)
                     ->toggleable(isToggledHiddenByDefault: false),
-                
-                    TextColumn::make('isBranchManager')
-                    ->label('Branch Manager')
-                    ->getStateUsing(fn(User $record) => $record->isBranchManager()),
-                
-                    TextColumn::make('isSystemManager')
-                    ->label('Store Manager')
-                    ->getStateUsing(fn(User $record) => $record->isStoreManager()),
-                    TextColumn::make('isBranchUser')
-                    ->label('Branch User')
-                    ->getStateUsing(fn(User $record) => $record->isBranchUser()),
+
                 TextColumn::make('email')->icon('heroicon-m-envelope')->copyable()
                     ->copyMessage('Email address copied')
                     ->copyMessageDuration(1500)
@@ -317,8 +314,11 @@ class UserResource extends Resource
                     ->copyMessage('Phone number copied')
                     ->copyMessageDuration(1500),
 
+                TextColumn::make('userType.name')->label('Type'),
                 TextColumn::make('branch.name')->searchable()->label('Branch')
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('accessible_branch_names')->label('Branches')
+                    ->limit(50),
                 TextColumn::make('owner.name')->searchable()->label('Manager')
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('first_role.name')->label('Role')
@@ -452,7 +452,9 @@ class UserResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ])->withMax('loginHistories as last_login_at', 'created_at');
+            ])
+
+            ->withMax('loginHistories as last_login_at', 'created_at');
     }
 
     public static function canViewAny(): bool

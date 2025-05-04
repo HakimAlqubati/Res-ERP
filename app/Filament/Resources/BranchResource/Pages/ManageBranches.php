@@ -25,18 +25,24 @@ class ManageBranches extends ManageRecords
             Branch::TYPE_BRANCH => Tab::make(__('Standard Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->normal())
                 ->icon('heroicon-o-building-storefront')
-                ->badge(Branch::normal()->count())
+                ->badge(Branch::normal()
+                    ->accessibleBranches()
+                    ->count())
                 ->badgeColor('success'),
 
             Branch::TYPE_CENTRAL_KITCHEN => Tab::make(__('Manufacturing Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->centralKitchens())
                 ->icon('heroicon-o-fire')
-                ->badge(Branch::centralKitchens()->count())
+                ->badge(Branch::centralKitchens()
+                    ->accessibleBranches()
+                    ->count())
                 ->badgeColor('warning'),
             Branch::TYPE_POPUP => Tab::make(__('Popup Branches'))
                 ->modifyQueryUsing(fn(Builder $query) => $query->popups())
                 ->icon('heroicon-o-sparkles')
-                ->badge(Branch::popups()->count())
+                ->badge(Branch::popups()
+                    ->accessibleBranches()
+                    ->count())
                 ->badgeColor('info'),
 
         ];

@@ -127,12 +127,12 @@ class StoreResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
-        $query->withManagedStores();
+        $query->accessibleStores();
         return $query;
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return Store::active()->accessibleStores()->count();
     }
 }

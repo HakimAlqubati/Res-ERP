@@ -19,7 +19,7 @@ trait HasUserTypeAccess
 
     public function isSuperAdmin(): bool
     {
-        return $this->isType('super_admin');
+        return in_array(1, $this->roles->pluck('id')->toArray());
     }
 
     public function isSystemManager(): bool
@@ -70,5 +70,12 @@ trait HasUserTypeAccess
     public function isMaintenanceManager(): bool
     {
         return $this->isType('maintenance_manager');
+    }
+
+    public function getAccessibleBranchNamesAttribute(): string
+    {
+        return $this->branches()
+            ->pluck('name')
+            ->implode(', ');
     }
 }

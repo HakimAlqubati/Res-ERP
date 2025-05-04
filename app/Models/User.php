@@ -99,7 +99,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'email_verified_at' => 'datetime',
     ];
 
-    protected $appends = ['managed_stores_ids'];
+    protected $appends = [
+        'managed_stores_ids',
+        'accessible_branch_names',
+    ];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
     public static $filamentAdminColumn = 'is_filament_admin'; // The name of a boolean column in your database.
@@ -153,8 +156,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->hasOne(Employee::class, 'user_id', 'id');
     }
- 
- 
+
+
 
 
     // public function canAccessFilament(): bool
@@ -307,12 +310,12 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function canViewEverything(): bool
     {
-        return $this->userType?->scope === 'all' || $this->isSuperAdmin() || $this->isSystemManager();
+        return $this->userType?->scope === 'all';
     }
     public function getAccessibleBranchIds(): array
     {
-        if ($this->canViewEverything()) {
-            return Branch::pluck('id')->toArray(); // جميع الفروع
+        if ($this->canViewEverything() || ($this->userType && $this?->userType?->can_access_all_branches)) {
+            return Branch::active()->pluck('id')->toArray(); // جميع الفروع
         }
 
         if ($this->userType?->scope === 'branch') {
@@ -324,8 +327,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function getAccessibleStoreIds(): array
     {
-        if ($this->canViewEverything()) {
-            return Store::pluck('id')->toArray(); // جميع المخازن
+        if ($this->canViewEverything() || $this->userType->can_access_all_branches) {
+            return Store::active()->pluck('id')->toArray(); // جميع المخازن
         }
 
         if ($this->userType?->scope === 'store') {

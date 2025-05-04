@@ -10,6 +10,7 @@ use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
@@ -163,6 +164,7 @@ class InventoryResource extends Resource
                         optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
                     ),
                 SelectFilter::make('store_id')->options(fn() => \App\Models\Store::active()
+                    ->accessibleStores()
                     ->get(['id', 'name'])
                     ->pluck('name', 'id')
 
@@ -182,7 +184,9 @@ class InventoryResource extends Resource
                                 ->required()
                                 ->searchable()
                                 ->options(
-                                    \App\Models\Store::active()->pluck('name', 'id')
+                                    \App\Models\Store::active()
+                                        ->accessibleStores()
+                                        ->pluck('name', 'id')
                                 ),
                         ])->action(function ($record, $data) {
                             $record->update([
@@ -224,31 +228,23 @@ class InventoryResource extends Resource
         ];
     }
 
-    public static function canViewAny(): bool
+
+    public static function getEloquentQuery(): Builder
     {
-        if (isSuperAdmin() || isFinanceManager() || isSystemManager()) {
-            return true;
+        $query = static::getModel()::query();
+
+        if (
+            static::isScopedToTenant() &&
+            ($tenant = Filament::getTenant())
+        ) {
+            static::scopeEloquentQueryToTenant($query, $tenant);
         }
-        return false;
+        return $query->accessibleStores();
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
-    }
-    public static function canForceDelete(Model $record): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
-    }
-
-    public static function canForceDeleteAny(): bool
-    {
-        if (isSuperAdmin()) {
-            return true;
-        }
-        return false;
+        return InventoryTransaction::query()
+            ->accessibleStores()->count();
     }
 }

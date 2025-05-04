@@ -268,6 +268,12 @@ class AdminPanelProvider extends PanelProvider
             // })
             ->authMiddleware([
                 Authenticate::class,
+            ])->userMenuItems([
+                'edit-profile' => \Filament\Navigation\UserMenuItem::make()
+                    ->label('Edit Profile')
+                    ->url(fn() => \App\Filament\Resources\UserResource::getUrl('edit', ['record' => auth()->id()]))
+                    ->openUrlInNewTab()
+                    ->icon('heroicon-o-user-circle'),
             ])
             ->sidebarCollapsibleOnDesktop()
             // ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

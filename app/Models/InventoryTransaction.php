@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -235,5 +236,13 @@ class InventoryTransaction extends Model implements Auditable
     public function store()
     {
         return $this->belongsTo(Store::class, 'store_id');
+    }
+    public function scopeAccessibleStores(Builder $query): Builder
+    {
+        if (auth()->check()) {
+            return $query->whereIn('store_id', auth()->user()->getAccessibleStoreIds());
+        }
+
+        return $query;
     }
 }
