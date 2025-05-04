@@ -10,7 +10,8 @@
                         <h3>({{ 'Inventory Trucking' }})</h3>
                     </th>
                     <th colspan="2" style="text-align: center;">
-                        <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
+                        <img class="circle-image" src="{{ asset('/storage/' . setting('company_logo') . '') }}"
+                            alt="">
                     </th>
                 </x-filament-tables::row>
                 <x-filament-tables::row>
@@ -18,7 +19,7 @@
                     <th>{{ 'Transaction Type' }}</th>
                     <th>{{ 'Transaction ID' }}</th>
                     <th>{{ 'Unit' }}</th>
-                    <th>{{'Qty per Pack'}}</th>
+                    <th>{{ 'Qty per Pack' }}</th>
                     <th>{{ 'Qty' }}</th>
                     <th colspan="2">{{ 'Notes' }}</th>
                 </x-filament-tables::row>
