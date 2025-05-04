@@ -53,7 +53,7 @@ class GoodsReceivedNoteResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return setting('purchase_invoice_from_grn_only', false);
+        return settingWithDefault('purchase_invoice_from_grn_only', false);
     }
 
 
