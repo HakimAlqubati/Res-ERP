@@ -47,4 +47,36 @@ class GoodsReceivedNoteDetail extends Model
     {
         return $this->quantity * $this->price;
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($grnDetail) {
+            if (!setting('grn_affects_inventory', false)) {
+                return;
+            }
+
+            $grn = $grnDetail->grn;
+            $notes = 'GRN with id ' . $grn?->id;
+            if ($grn?->store?->name) {
+                $notes .= ' in (' . $grn->store->name . ')';
+            }
+
+            \App\Models\InventoryTransaction::create([
+                'product_id' => $grnDetail->product_id,
+                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                'quantity' => $grnDetail->quantity,
+                'package_size' => $grnDetail->package_size,
+                'price' => $grnDetail->price,
+                'movement_date' => $grn->grn_date ?? now(),
+                'unit_id' => $grnDetail->unit_id,
+                'store_id' => $grn->store_id,
+                'notes' => $notes,
+                'transaction_date' => $grn->grn_date ?? now(),
+                'transactionable_id' => $grn->id,
+                'transactionable_type' => \App\Models\GoodsReceivedNote::class,
+            ]);
+        });
+    }
 }

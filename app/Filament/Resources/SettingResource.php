@@ -388,24 +388,21 @@ class SettingResource extends Resource
                                         ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
                                         ->searchable()
                                         ->required(),
-
                                     Select::make('grn_approver_role_id')->multiple()
                                         ->label('Role Allowed to Approve GRN')
                                         ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
                                         ->searchable()
                                         ->required(),
-
                                     Toggle::make('grn_affects_inventory')->inline(false)
                                         ->label('Affect Inventory Upon GRN Creation')
                                         ->default(false)
                                         ->helperText('If enabled, GRN will directly impact stock levels.'),
-
-                                    Toggle::make('auto_create_purchase_invoice')->inline(false)
-                                        ->label('Auto-create Purchase Invoice After Approval')
+                                    Toggle::make('purchase_invoice_affects_inventory')
+                                        ->label('Affect Inventory Upon Purchase Invoice Creation')
                                         ->default(true)
-                                        ->helperText('Automatically generate a purchase invoice when GRN is approved.'),
+                                        ->inline(false)
+                                        ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
                                 ]),
-
 
                                 Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
                                     // Select::make('calculating_orders_price_method')
