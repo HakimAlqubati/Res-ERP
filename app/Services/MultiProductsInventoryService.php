@@ -325,77 +325,73 @@ class MultiProductsInventoryService
         $existingDetail = $sourceModel->orderDetails()
             ->where('product_id', $productId)
             ->where('unit_id', $unitId)->first();
-        if ($requestedQty > $inventoryRemainingQty) {
-            if (setting('create_auto_order_when_stock_empty') && $existingDetail && $existingDetail->available_quantity == 0) {
-                // ✅ البحث عن طلب معلق موجود لنفس الفرع والعميل
-                $existingOrder = \App\Models\Order::where('customer_id', $sourceModel->customer_id)
-                    ->where('branch_id', $sourceModel->branch_id)
-                    ->where('status', \App\Models\Order::PENDING_APPROVAL)
-                    ->latest()->active()
-                    ->first();
+        if (
+            setting('create_auto_order_when_stock_empty')
+            && $existingDetail &&
+            ($existingDetail->available_quantity == 0)
+        ) {
+            // ✅ البحث عن طلب معلق موجود لنفس الفرع والعميل
+            $existingOrder = \App\Models\Order::where('customer_id', $sourceModel->customer_id)
+                ->where('branch_id', $sourceModel->branch_id)
+                ->where('status', \App\Models\Order::PENDING_APPROVAL)
+                ->latest()->active()
+                ->first();
 
-                // ✏️ إذا لم يوجد، ننشئ طلب جديد
-                if (!$existingOrder) {
-                    $existingOrder = \App\Models\Order::create([
-                        'customer_id' => $sourceModel->customer_id,
-                        'branch_id' => $sourceModel->branch_id,
-                        'status' => \App\Models\Order::PENDING_APPROVAL,
-                        'order_date' => now(),
-                        'type' => \App\Models\Order::TYPE_NORMAL,
-                        'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
-                    ]);
+            // ✏️ إذا لم يوجد، ننشئ طلب جديد
+            if (!$existingOrder) {
+                $existingOrder = \App\Models\Order::create([
+                    'customer_id' => $sourceModel->customer_id,
+                    'branch_id' => $sourceModel->branch_id,
+                    'status' => \App\Models\Order::PENDING_APPROVAL,
+                    'order_date' => now(),
+                    'type' => \App\Models\Order::TYPE_NORMAL,
+                    'notes' => "Auto-generated due to stock unavailability from Order #{$sourceModel?->id}",
+                ]);
 
-                    Log::info("✅ Created new pending approval order #{$existingOrder->id} due to stock unavailability.");
-                } else {
-                    Log::info("📌 Used existing pending approval order #{$existingOrder->id}.");
-                }
-
-                // ➕ إضافة أو تحديث التفاصيل للطلب المعلّق
-                $existingDetail = $existingOrder->orderDetails()
-                    ->where('product_id', $productId)
-                    ->where('unit_id', $unitId)
-                    ->first();
-
-                if ($existingDetail) {
-                    // 🔄 تحديث السطر الحالي إذا نفس الوحدة
-                    $existingDetail->update([
-                        'quantity' => $existingDetail->quantity + $requestedQty,
-                        'available_quantity' => $existingDetail->quantity + $requestedQty,
-                        'updated_by' => auth()->id(),
-                    ]);
-                    Log::info("🔄 Updated existing order detail in pending order #{$existingOrder->id} (product_id: $productId, unit_id: $unitId).");
-                } else {
-                    // ➕ إنشاء صف جديد إذا الوحدة مختلفة
-                    $existingOrder->orderDetails()->create([
-                        'product_id' => $productId,
-                        'unit_id' => $unitId,
-                        'quantity' => $requestedQty,
-                        'price' => getUnitPrice($productId, $unitId),
-                        'package_size' => $targetUnit->package_size,
-                        'created_by' => auth()->id(),
-                        'is_created_due_to_qty_preivous_order' => true,
-                        'previous_order_id' => $sourceModel->id,
-                    ]);
-                    Log::info("🆕 Created new order detail in pending order #{$existingOrder->id} for product_id: $productId, unit_id: $unitId.");
-                }
-
-                // تصفير الكمية في الطلب الأصلي
-                if ($sourceModel) {
-                    // $sourceModel->orderDetails()
-                    //     ->where('product_id', $productId)
-                    //     ->where('unit_id', $unitId)
-                    //     ->update(['available_quantity' => 0]);
-                }
-
-
-                return []; // لا تخصص شيء للطلب الأصلي
+                Log::info("✅ Created new pending approval order #{$existingOrder->id} due to stock unavailability.");
             } else {
+                Log::info("📌 Used existing pending approval order #{$existingOrder->id}.");
+            }
+
+            // ➕ إضافة أو تحديث التفاصيل للطلب المعلّق
+            $existingDetail = $existingOrder->orderDetails()
+                ->where('product_id', $productId)
+                ->where('unit_id', $unitId)
+                ->first();
+
+            if ($existingDetail) {
+                // 🔄 تحديث السطر الحالي إذا نفس الوحدة
+                $existingDetail->update([
+                    'quantity' => $existingDetail->quantity + $requestedQty,
+                    'available_quantity' => $existingDetail->quantity + $requestedQty,
+                    'updated_by' => auth()->id(),
+                ]);
+                Log::info("🔄 Updated existing order detail in pending order #{$existingOrder->id} (product_id: $productId, unit_id: $unitId).");
+            } else {
+                // ➕ إنشاء صف جديد إذا الوحدة مختلفة
+                $existingOrder->orderDetails()->create([
+                    'product_id' => $productId,
+                    'unit_id' => $unitId,
+                    'quantity' => $requestedQty,
+                    'price' => getUnitPrice($productId, $unitId),
+                    'package_size' => $targetUnit->package_size,
+                    'created_by' => auth()->id(),
+                    'is_created_due_to_qty_preivous_order' => true,
+                    'previous_order_id' => $sourceModel->id,
+                ]);
+                Log::info("🆕 Created new order detail in pending order #{$existingOrder->id} for product_id: $productId, unit_id: $unitId.");
+            }
+        } else {
+            if ($requestedQty > $inventoryRemainingQty) {
+
                 $productName = $targetUnit->product->name ?? 'Unknown Product';
                 $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
                 Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
                 throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
             }
         }
+
+
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
