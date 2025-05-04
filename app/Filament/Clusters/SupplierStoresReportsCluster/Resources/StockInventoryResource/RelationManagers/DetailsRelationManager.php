@@ -124,8 +124,7 @@ class DetailsRelationManager extends RelationManager
                                                     ->toArray();
                                             })
                                             ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-                                            ->columnSpan(2)
-                                            ,
+                                            ->columnSpan(2),
                                         Forms\Components\Select::make('unit_id')
                                             ->label('Unit')
                                             ->required()
@@ -154,6 +153,8 @@ class DetailsRelationManager extends RelationManager
                                         $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_DECREASE;
                                     } elseif ($detail['quantity'] > 0) {
                                         $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_INCREASE;
+                                    } elseif ($detail['quantity'] == 0) {
+                                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_EQUAL;
                                     }
                                 }
 
