@@ -87,30 +87,32 @@ class EditGoodsReceivedNoteV2 extends EditRecord implements Forms\Contracts\HasF
 
     public function approve(): void
     {
-        DB::transaction(function () {
-            $invoice = PurchaseInvoice::create([
-                'date' => now(),
-                'supplier_id' => $this->record->supplier_id,
-                'description' => 'Auto-created from GRN #' . $this->record->grn_number,
-                'store_id' => $this->record->store_id,
-                'grn_id' => $this->record->id,
-                'invoice_no' => 'INV-' . now()->timestamp,
+        // DB::transaction(function () {
+        $invoice = PurchaseInvoice::create([
+            'date' => now(),
+            'supplier_id' => $this->record->supplier_id,
+            'description' => 'Auto-created from GRN #' . $this->record->grn_number,
+            'store_id' => $this->record->store_id,
+            'invoice_no' => 'INV-' . now()->timestamp,
+        ]);
+
+        foreach ($this->data['items'] as $item) {
+            PurchaseInvoiceDetail::create([
+                'purchase_invoice_id' => $invoice->id,
+                'product_id' => $item['product_id'],
+                'unit_id' => $item['unit_id'],
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+                'package_size' => $item['package_size'],
+                'waste_stock_percentage' => $item['waste_stock_percentage'],
             ]);
+        }
 
-            foreach ($this->data['items'] as $item) {
-                PurchaseInvoiceDetail::create([
-                    'purchase_invoice_id' => $invoice->id,
-                    'product_id' => $item['product_id'],
-                    'unit_id' => $item['unit_id'],
-                    'quantity' => $item['quantity'],
-                    'price' => $item['price'],
-                    'package_size' => $item['package_size'],
-                    'waste_stock_percentage' => $item['waste_stock_percentage'],
-                ]);
-            }
-
-            $this->record->update(['status' => GoodsReceivedNote::STATUS_APPROVED]);
-        });
+        $this->record->update([
+            'status' => GoodsReceivedNote::STATUS_APPROVED,
+            'purchase_invoice_id' => $invoice->id,
+        ]);
+        // });
 
         Notification::make()
             ->title('GRN Approved and Purchase Invoice Created')
