@@ -68,7 +68,7 @@ class GoodsReceivedNoteDetail extends Model
                 'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
                 'quantity' => $grnDetail->quantity,
                 'package_size' => $grnDetail->package_size,
-                'price' => $grnDetail->price,
+                'price' => getUnitPrice($grnDetail->product_id, $grnDetail->unit_id),
                 'movement_date' => $grn->grn_date ?? now(),
                 'unit_id' => $grnDetail->unit_id,
                 'store_id' => $grn->store_id,
