@@ -53,7 +53,7 @@ class GoodsReceivedNoteResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return setting('purchase_invoice_from_grn_only', false);
     }
 
 
@@ -69,7 +69,9 @@ class GoodsReceivedNoteResource extends Resource
                                 ->default(fn(): int => (GoodsReceivedNote::query()
                                     ->orderBy('id', 'desc')
                                     ->value('id') + 1 ?? 1))
-                                ->unique(ignoreRecord: true)->helperText('Enter GRN Number')->required(),
+                                ->unique(ignoreRecord: true)
+                                ->readOnly()
+                                ->helperText('Enter GRN Number')->required(),
                             DatePicker::make('grn_date')
                                 ->label('GRN Date')->default(now())
                                 ->required(),
@@ -96,14 +98,6 @@ class GoodsReceivedNoteResource extends Resource
                                 ->columnSpanFull(),
                         ]),
 
-                    TextInput::make('items_count')
-                        ->label('Items Count?')
-                        ->helperText('Enter the number of items')
-                        ->visibleOn('create')
-                        ->numeric()
-                        ->minValue(1)
-                        ->live()
-                        ->afterStateUpdated(fn($state, callable $set) => $set('grnDetails', array_fill(0, (int) $state, []))),
 
                     Fieldset::make('Details')->columnSpanFull()
                         ->hiddenOn('edit')
@@ -187,7 +181,7 @@ class GoodsReceivedNoteResource extends Resource
 
                                 ])
                                 ->createItemButtonLabel('Add Item')
-                                ->collapsible()
+                                ->collapsible()->addable()
                                 ->defaultItems(1),
                         ]),
 
@@ -217,46 +211,52 @@ class GoodsReceivedNoteResource extends Resource
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('Reject')
-                    ->label('Reject')
-                    ->color('danger')->button()
-                    ->icon('heroicon-o-x-circle')
-                    ->form([
-                        Textarea::make('cancel_reason')
-                            ->label('Rejection Reason')
-                            ->required(),
-                    ])
-                    ->action(function ($record, array $data) {
-                        $record->update([
-                            'status' => GoodsReceivedNote::STATUS_REJECTED,
-                            'cancel_reason' => $data['cancel_reason'],
-                        ]);
-                    })
-                    ->requiresConfirmation(),
+                // Tables\Actions\Action::make('Reject')
+                //     ->label('Reject')
+                //     ->color('danger')->button()
+                //     ->icon('heroicon-o-x-circle')
+                //     ->form([
+                //         Textarea::make('cancel_reason')
+                //             ->label('Rejection Reason')
+                //             ->required(),
+                //     ])
+                //     ->action(function ($record, array $data) {
+                //         $record->update([
+                //             'status' => GoodsReceivedNote::STATUS_REJECTED,
+                //             'cancel_reason' => $data['cancel_reason'],
+                //         ]);
+                //     })
+                //     ->requiresConfirmation(),
 
-                Tables\Actions\Action::make('Cancel')
-                    ->label('Cancel')
-                    ->color('warning')->button()
-                    ->icon('heroicon-o-backspace')
-                    ->form([
-                        Textarea::make('cancel_reason')
-                            ->label('Cancellation Reason')
-                            ->required(),
-                    ])
-                    ->action(function ($record, array $data) {
-                        $record->update([
-                            'status' => GoodsReceivedNote::STATUS_CANCELLED,
-                            'cancel_reason' => $data['cancel_reason'],
-                        ]);
-                    })
-                    ->requiresConfirmation(),
+                // Tables\Actions\Action::make('Cancel')
+                //     ->label('Cancel')
+                //     ->color('warning')->button()
+                //     ->icon('heroicon-o-backspace')
+                //     ->form([
+                //         Textarea::make('cancel_reason')
+                //             ->label('Cancellation Reason')
+                //             ->required(),
+                //     ])
+                //     ->action(function ($record, array $data) {
+                //         $record->update([
+                //             'status' => GoodsReceivedNote::STATUS_CANCELLED,
+                //             'cancel_reason' => $data['cancel_reason'],
+                //         ]);
+                //     })
+                //     ->requiresConfirmation(),
                 Tables\Actions\Action::make('Approve')
                     ->label('Approve')
                     ->color('success')
                     ->icon('heroicon-o-check-badge')
                     ->url(fn($record) => static::getUrl('approve-grn', ['record' => $record]))
                     ->button()
-                    ->visible(fn($record) => $record->status === GoodsReceivedNote::STATUS_CREATED),
+                    ->visible(function ($record) {
+                        $allowedRoles = setting('grn_approver_role_id', []);
+                        $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
+
+                        return $record->status === GoodsReceivedNote::STATUS_CREATED &&
+                            count(array_intersect($userRoles, $allowedRoles)) > 0;
+                    }),
 
             ])
             ->bulkActions([
@@ -269,7 +269,7 @@ class GoodsReceivedNoteResource extends Resource
     public static function getRelations(): array
     {
         return [
-            GrnDetailsRelationManager::class,
+            // GrnDetailsRelationManager::class,
         ];
     }
 
@@ -295,5 +295,13 @@ class GoodsReceivedNoteResource extends Resource
             Pages\CreateGoodsReceivedNote::class,
             Pages\EditGoodsReceivedNote::class,
         ]);
+    }
+
+    public static function canCreate(): bool
+    {
+        $allowedRoles = setting('grn_entry_role_id', []);
+        $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
+
+        return count(array_intersect($userRoles, $allowedRoles)) > 0;
     }
 }

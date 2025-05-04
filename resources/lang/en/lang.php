@@ -200,5 +200,5 @@ return [
 
     'show_in_invoices' => 'Display in Invoices \ Orders',
     'category.is_manafacturing' => 'Is Manufacturing',
-
+    'has_grn' => 'Has GRN',
 ];

@@ -377,6 +377,36 @@ class SettingResource extends Resource
                                         ->helperText('Enable this to require and disable editing of the purchase invoice number.')
                                         ->default(false),
                                 ]),
+                                Fieldset::make('GRN Workflow Settings')->columns(2)->schema([
+                                    Toggle::make('purchase_invoice_from_grn_only')
+                                        ->inline(false)->columnSpanFull()
+                                        ->label('Use GRN to Create Purchase Invoices Only')
+                                        ->helperText('If enabled, purchase invoices can only be created through GRN.')
+                                        ->default(false),
+                                    Select::make('grn_entry_role_id')->multiple()
+                                        ->label('Role Allowed to Create GRN')
+                                        ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
+                                        ->searchable()
+                                        ->required(),
+
+                                    Select::make('grn_approver_role_id')->multiple()
+                                        ->label('Role Allowed to Approve GRN')
+                                        ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
+                                        ->searchable()
+                                        ->required(),
+
+                                    Toggle::make('grn_affects_inventory')->inline(false)
+                                        ->label('Affect Inventory Upon GRN Creation')
+                                        ->default(false)
+                                        ->helperText('If enabled, GRN will directly impact stock levels.'),
+
+                                    Toggle::make('auto_create_purchase_invoice')->inline(false)
+                                        ->label('Auto-create Purchase Invoice After Approval')
+                                        ->default(true)
+                                        ->helperText('Automatically generate a purchase invoice when GRN is approved.'),
+                                ]),
+
+
                                 Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
                                     // Select::make('calculating_orders_price_method')
                                     //     ->label(__('system_settings.calculating_orders_price_method'))

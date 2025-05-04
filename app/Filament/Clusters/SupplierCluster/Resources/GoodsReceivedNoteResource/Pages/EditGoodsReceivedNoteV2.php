@@ -124,4 +124,8 @@ class EditGoodsReceivedNoteV2 extends EditRecord implements Forms\Contracts\HasF
     {
         return static::getResource()::getUrl('index');
     }
+    protected function getFormActions(): array
+    {
+        return [];
+    }
 }

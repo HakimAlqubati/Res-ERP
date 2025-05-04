@@ -182,4 +182,5 @@ return [
     'only_one_hq_allowed' => 'يسمح بفرع رئيسي واحد فقط. يرجى تفعيل الفرع الموجود أو حذفه أولاً.',
     'show_in_invoices' => 'عرض في فواتير الشراء والطلبات',
     'category.is_manafacturing' => 'فئة منتج مركب؟',
+    'has_grn' => 'مرتبط بـ GRN',
 ];

@@ -283,7 +283,13 @@ class PurchaseInvoiceResource extends Resource
                 // ->trueIcon('heroicon-o-badge-check')
                 // ->falseIcon('heroicon-o-x-circle')
                 ,
-
+                IconColumn::make('has_grn')->alignCenter(true)->label(__('lang.has_grn'))->boolean()
+                    ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('grn.grn_number')
+                    ->label('GRN Number')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true)
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make()
@@ -390,6 +396,9 @@ class PurchaseInvoiceResource extends Resource
     }
     public static function canCreate(): bool
     {
+        if (setting('purchase_invoice_from_grn_only', false)) {
+            return false;
+        }
         if (isSuperVisor()) {
             return false;
         }
