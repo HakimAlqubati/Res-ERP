@@ -93,7 +93,7 @@ class EditGoodsReceivedNoteV2 extends EditRecord implements Forms\Contracts\HasF
             'supplier_id' => $this->record->supplier_id,
             'description' => 'Auto-created from GRN #' . $this->record->grn_number,
             'store_id' => $this->record->store_id,
-            'invoice_no' => 'INV-' . now()->timestamp,
+            'invoice_no' => PurchaseInvoice::autoInvoiceNo(),
         ]);
 
         foreach ($this->data['items'] as $item) {

@@ -59,6 +59,8 @@ class GoodsReceivedNoteResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $isEditOperation = $form->getOperation() == 'edit';
+
         return $form
             ->schema([
                 Card::make([
@@ -72,7 +74,7 @@ class GoodsReceivedNoteResource extends Resource
                                 ->unique(ignoreRecord: true)
                                 ->readOnly()
                                 ->helperText('Enter GRN Number')->required(),
-                            DatePicker::make('grn_date')
+                            DatePicker::make('grn_date')->disabledOn('edit')
                                 ->label('GRN Date')->default(now())
                                 ->required(),
 
@@ -82,7 +84,7 @@ class GoodsReceivedNoteResource extends Resource
                                     Store::active()->pluck('name', 'id')->toArray()
                                 )->default(getDefaultStore())
                                 ->label('Store')->searchable()
-                                ->required(),
+                                ->required()->disabledOn('edit'),
                             Select::make('status')->disabled()->dehydrated()
                                 ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
                                 ->options(GoodsReceivedNote::getStatusOptions())
@@ -100,7 +102,6 @@ class GoodsReceivedNoteResource extends Resource
 
 
                     Fieldset::make('Details')->columnSpanFull()
-                        ->hiddenOn('edit')
                         ->schema([
                             Repeater::make('grnDetails')->columnSpanFull()
                                 ->relationship()
@@ -181,7 +182,10 @@ class GoodsReceivedNoteResource extends Resource
 
                                 ])
                                 ->createItemButtonLabel('Add Item')
-                                ->collapsible()->addable()
+                                ->collapsible()
+                                ->addable(function () use ($isEditOperation) {
+                                    return !$isEditOperation;
+                                })
                                 ->defaultItems(1),
                         ]),
 

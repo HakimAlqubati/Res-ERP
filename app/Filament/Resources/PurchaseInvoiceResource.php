@@ -78,9 +78,7 @@ class PurchaseInvoiceResource extends Resource
                             ->label(__('lang.invoice_no'))
                             ->required(fn(): bool => settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false))
                             ->unique(ignoreRecord: true)
-                            ->default(fn(): int => (PurchaseInvoice::query()
-                                ->orderBy('id', 'desc')
-                                ->value('id') + 1 ?? 1))
+                            ->default(fn(): int => PurchaseInvoice::autoInvoiceNo())
                             ->placeholder('Enter invoice number')
                             ->disabled(function ($record) {
                                 $setting = settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false);

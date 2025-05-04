@@ -133,4 +133,11 @@ class PurchaseInvoice extends Model implements Auditable
     {
         return $this->grn()->exists();
     }
+    public static function autoInvoiceNo()
+    {
+        return (PurchaseInvoice::query()
+            ->orderBy('id', 'desc')
+            ->withTrashed()
+            ->value('id') + 1 ?? 1);
+    }
 }
