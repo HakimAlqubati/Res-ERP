@@ -206,7 +206,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->searchable()->alignCenter(true)->toggleable(),
                 TextColumn::make('grn_date')->label('Date')->date()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->searchable()->toggleable(),
-                TextColumn::make('status')->label('Status')->badge()->toggleable(),
+                // TextColumn::make('status')->label('Status')->badge()->toggleable(),
                 TextColumn::make('details_count')->searchable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
@@ -249,7 +249,7 @@ class GoodsReceivedNoteResource extends Resource
                 //     })
                 //     ->requiresConfirmation(),
                 Tables\Actions\Action::make('Approve')
-                    ->label('Approve')
+                    ->label('Input Prices')
                     ->color('success')
                     ->icon('heroicon-o-check-badge')
                     ->url(fn($record) => static::getUrl('approve-grn', ['record' => $record]))
