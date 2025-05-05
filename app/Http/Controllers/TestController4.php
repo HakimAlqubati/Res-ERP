@@ -12,6 +12,7 @@ use App\Services\FifoInventoryService;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
+use App\Services\Orders\Reports\OrdersReportsService;
 use App\Services\Orders\Reports\ReorderDueToStockReportService;
 use App\Services\StockInventoryReportService;
 use Carbon\Carbon;
@@ -244,7 +245,7 @@ class TestController4 extends Controller
             od.previous_order_id
         FROM orders_details od ";
         if (isBranchManager() &&  $user->branch->is_kitchen) {
-            
+
             if (!isStoreManager()) {
                 $query .= "JOIN products p ON od.product_id = p.id
             JOIN categories c ON p.category_id = c.id
@@ -438,6 +439,47 @@ AND (
             'count' => $products->count(),
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
+        ]);
+    }
+
+    public function branchConsumptionReport(Request $request)
+    {
+        $intervalType = $request->input('interval_type', OrdersReportsService::INTERVAL_DAILY);
+
+        if (!in_array($intervalType, OrdersReportsService::INTERVALS)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Invalid interval_type value. Allowed: daily, weekly, monthly.',
+            ], 422);
+        }
+        $fromDate = $request->input('from_date', now()->subDays(7)->format('Y-m-d'));
+        $toDate = $request->input('to_date', now()->format('Y-m-d'));
+        $branchIds = $request->input('branch_ids');      // array
+        $productIds = $request->input('product_ids');    // array
+        $categoryIds = $request->input('category_ids');
+        if ($productIds && !is_array($productIds)) {
+            $productIds = explode(',', $productIds);
+        }
+        if ($branchIds && !is_array($branchIds)) {
+            $branchIds = explode(',', $branchIds);
+        }
+        if ($categoryIds && !is_array($categoryIds)) {
+            $categoryIds = explode(',', $categoryIds);
+        }
+
+        $data = OrdersReportsService::getBranchConsumption(
+            $fromDate,
+            $toDate,
+            $branchIds,
+            $productIds,
+            $categoryIds,
+        );
+
+        return view('reports.branch-consumption', [
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+            'intervalType' => $intervalType,
+            'data' => $data,
         ]);
     }
 }

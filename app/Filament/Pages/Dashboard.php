@@ -3,10 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Clusters\MainOrdersCluster\Resources\OrderResource\Widgets\BranchConsumptionChart;
+use App\Filament\Clusters\MainOrdersCluster\Resources\OrderResource\Widgets\TopProductsChart;
 use App\Filament\Widgets\CircularWidget;
 use App\Filament\Widgets\EmployeeSearchWidget;
 use App\Filament\Widgets\QuickLinksWidget;
 use App\Filament\Widgets\TaskWidget;
+
 use App\Models\CustomTenantModel;
 use Illuminate\Contracts\Support\Htmlable;
 use Spatie\Multitenancy\Contracts\IsTenant;
@@ -32,6 +34,7 @@ class Dashboard extends \Filament\Pages\Dashboard
         $widgets = [];
         // $widgets[] = BranchConsumptionChart::class;
         $widgets[] = QuickLinksWidget::class;
+        $widgets[] = TopProductsChart::class;
         $modules = json_decode($currentTenant?->modules, true);
         if (
             is_null($currentTenant) ||

@@ -11,36 +11,7 @@
 
 <x-filament-widgets::widget class="fi-wi-chart">
 
-    <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-    <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <div x-data x-init="const initSelect = () => {
-        const el = $('.select2-branches');
-        el.select2();
-        el.on('change', function() {
-            @this.set('branchIds', $(this).val());
-        });
-    };
-    initSelect();
-    Livewire.on('updateChartData', () => {
-        initSelect();
-    });" class="space-y-4">
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-            <select wire:ignore multiple class="select2-branches w-full rounded-md border-gray-300">
-                @foreach ($this->getBranchOptions() as $id => $name)
-                    <option value="{{ $id }}" @if (in_array($id, $branchIds)) selected @endif>
-                        {{ $name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-    </div>
-
-
+ 
     <x-filament::section :description="$description" :heading="$heading">
         <div class="flex flex-wrap gap-4 mb-6">
             {{-- Date From --}}

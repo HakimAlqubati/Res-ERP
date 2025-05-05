@@ -142,6 +142,8 @@ Route::get('productsSearch', function (\Illuminate\Http\Request $request) {
 });
 
 Route::get('branchConsumptionReport', [BranchConsumptionController::class, 'index']);
+Route::get('branchConsumptionReport/topBranches', [BranchConsumptionController::class, 'topBranches']);
+Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::class, 'topProducts']);
 
 
 require base_path('routes/custom_route.php');

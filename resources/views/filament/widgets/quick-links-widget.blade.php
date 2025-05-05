@@ -16,8 +16,8 @@
                 </x-filament::link>
 
                 {{-- Products --}}
-                <x-filament::link badge-color="info" color="primary" icon="heroicon-o-cube" icon-position="before"
-                    tooltip="Go to Products Page" class="link">
+                <x-filament::link :href="route('filament.admin.product-unit.resources.products.index')" badge-color="info" color="primary" icon="heroicon-o-cube"
+                    icon-position="before" tooltip="Go to Products Page" class="link">
                     {{ __('Products') }}
                     <x-slot name="badge">
                         {{ \App\Models\Product::active()->count() }}
@@ -25,7 +25,7 @@
                 </x-filament::link>
 
                 {{-- Suppliers --}}
-                <x-filament::link class="link" badge-color="success" color="primary"
+                <x-filament::link :href="route('filament.admin.supplier')" class="link" badge-color="success" color="primary"
                     icon="heroicon-o-building-storefront" icon-position="before" tooltip="Go to Suppliers Page">
                     {{ __('Suppliers') }}
                     <x-slot name="badge">
@@ -34,7 +34,7 @@
                 </x-filament::link>
 
                 {{-- Stores --}}
-                <x-filament::link badge-color="warning" color="primary" icon="heroicon-o-home-modern"
+                <x-filament::link :href="route('filament.admin.supplier-stores-reports.resources.stores.index')" badge-color="warning" color="primary" icon="heroicon-o-home-modern"
                     icon-position="before" tooltip="Go to Stores Page" class="link">
                     {{ __('Stores') }}
                     <x-slot name="badge">
@@ -43,8 +43,8 @@
                 </x-filament::link>
 
                 {{-- Users --}}
-                <x-filament::link badge-color="purple" color="primary" icon="heroicon-o-user" icon-position="before"
-                    class="link" tooltip="Go to Users Page">
+                <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="purple" color="primary" icon="heroicon-o-user"
+                    icon-position="before" class="link" tooltip="Go to Users Page">
                     {{ __('Users') }}
                     <x-slot name="badge">
                         {{ \App\Models\User::count() }}
@@ -52,7 +52,7 @@
                 </x-filament::link>
 
                 {{-- Purchase Invoices --}}
-                <x-filament::link badge-color="gray" color="primary" icon="heroicon-o-receipt-percent"
+                <x-filament::link :href="route('filament.admin.supplier.resources.purchase-invoices.index')" badge-color="gray" color="primary" icon="heroicon-o-receipt-percent"
                     icon-position="before" tooltip="Go to Purchase Invoices" class="link">
                     {{ __('Purchases') }}
                     <x-slot name="badge">
@@ -75,7 +75,7 @@
                 </x-filament::link>
 
                 {{-- Attendance --}}
-                <x-filament::link badge-color="info" color="primary" icon="heroicon-o-calendar-days"
+                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary" icon="heroicon-o-calendar-days"
                     icon-position="before" tooltip="Attendance Records" class="link">
                     {{ __('Attendance') }}
                     <x-slot name="badge">
@@ -84,31 +84,33 @@
                 </x-filament::link>
 
                 {{-- Departments --}}
-                <x-filament::link badge-color="success" color="primary" icon="heroicon-o-building-office-2"
-                    icon-position="before" tooltip="Go to Departments" class="link">
+                <x-filament::link :href="route('filament.admin.resources.departments.index')" badge-color="success" color="primary"
+                    icon="heroicon-o-building-office-2" icon-position="before" tooltip="Go to Departments"
+                    class="link">
                     {{ __('Departments') }}
                     <x-slot name="badge">
                         {{ \App\Models\Department::count() }}
                     </x-slot>
                 </x-filament::link>
                 {{-- Tasks --}}
-                <x-filament::link badge-color="success" color="primary" icon="heroicon-o-pencil-square"
-                    icon-position="before" tooltip="Go to Tasks" class="link">
+                <x-filament::link :href="route('filament.admin.h-r-tasks-system.resources.tasks.index')" badge-color="success" color="primary"
+                    icon="heroicon-o-pencil-square" icon-position="before" tooltip="Go to Tasks" class="link">
                     {{ __('Tasks') }}
                     <x-slot name="badge">
                         {{ \App\Models\Task::count() }}
                     </x-slot>
                 </x-filament::link>
                 {{-- Circular --}}
-                <x-filament::link badge-color="success" color="primary" icon="heroicon-o-building-office-2"
-                    icon-position="before" tooltip="Go to Engagement" class="link">
+                <x-filament::link :href="route('filament.admin.h-r-circular.resources.circulars.index')" badge-color="success" color="primary"
+                    icon="heroicon-o-building-office-2" icon-position="before" tooltip="Go to Engagement"
+                    class="link">
                     {{ __('Engagement') }}
                     <x-slot name="badge">
                         {{ \App\Models\Circular::count() }}
                     </x-slot>
                 </x-filament::link>
                 {{-- Payroll --}}
-                <x-filament::link badge-color="success" color="primary" icon="heroicon-o-banknotes"
+                <x-filament::link :href="route('filament.admin.h-r-salary.resources.month-salaries.index')" badge-color="success" color="primary" icon="heroicon-o-banknotes"
                     icon-position="before" tooltip="Go to Payroll" class="link">
                     {{ __('Payroll') }}
                     <x-slot name="badge">
