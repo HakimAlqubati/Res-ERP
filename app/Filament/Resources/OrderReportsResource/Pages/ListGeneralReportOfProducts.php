@@ -13,7 +13,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Facades\DB;
-use niklasravnsborg\LaravelPdf\Facades\Pdf;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 use Filament\Pages\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 
@@ -210,7 +210,7 @@ class ListGeneralReportOfProducts extends ListRecords
         ];
 
 
-        $pdf = Pdf::loadView('export.reports.general-report-products', $data);
+        $pdf = PDF::loadView('export.reports.general-report-products', $data);
 
         return response()
             ->streamDownload(function () use ($pdf) {
