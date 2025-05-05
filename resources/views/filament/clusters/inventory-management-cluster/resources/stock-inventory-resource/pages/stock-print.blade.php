@@ -114,7 +114,7 @@
                 <div class="company-name">{{ setting('company_name') ?? 'Company Name' }}</div>
             </div>
         </div>
-        <h2>Stock Takes</h2>
+        <h2>Stocktakes</h2>
     </header>
 
     <!-- Table Section -->

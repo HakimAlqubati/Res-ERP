@@ -22,18 +22,18 @@ class MissingInventoryProductsReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = InventoryReportCluster::class;
+    protected static ?string $cluster = InventoryManagementCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 11;
 
     public static function getPluralLabel(): ?string
     {
-        return 'Missing Inventory Products Report';
+        return 'Unaudited Products';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Missing Inventory Products Report';
+        return 'Unaudited Products';
     }
 
 
@@ -80,7 +80,7 @@ class MissingInventoryProductsReportResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return 0;
+        return 'Report';
         return static::getModel()::whereNotNull('minimum_stock_qty')->count();
     }
 }

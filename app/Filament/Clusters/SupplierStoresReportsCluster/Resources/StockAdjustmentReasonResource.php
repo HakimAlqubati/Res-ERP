@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryManagementCluster;
+use App\Filament\Clusters\InventorySettingsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\RelationManagers;
@@ -28,9 +29,13 @@ class StockAdjustmentReasonResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = InventoryManagementCluster::class;
+    protected static ?string $cluster = InventorySettingsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 10;
+    public static function getModelLabel(): string
+    {
+        return 'Adjustment Reason';
+    }
     public static function form(Form $form): Form
     {
         return $form

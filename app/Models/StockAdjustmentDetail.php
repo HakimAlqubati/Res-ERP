@@ -60,4 +60,8 @@ class StockAdjustmentDetail extends Model implements Auditable
     {
         return $this->belongsTo(Unit::class);
     }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

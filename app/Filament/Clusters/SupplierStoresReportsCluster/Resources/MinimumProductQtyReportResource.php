@@ -22,12 +22,12 @@ class MinimumProductQtyReportResource extends Resource
 
     public static function getPluralLabel(): ?string
     {
-        return 'Minimum Product Quantity Report';
+        return 'Minimum Product Quantity';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Minimum Product Quantity Report';
+        return 'Minimum Product Quantity';
     }
 
 
@@ -52,7 +52,7 @@ class MinimumProductQtyReportResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return 0;
+        return 'Report';
         return static::getModel()::whereNotNull('minimum_stock_qty')->count();
     }
 }
