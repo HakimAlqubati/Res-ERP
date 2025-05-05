@@ -251,8 +251,8 @@ class GoodsReceivedNoteResource extends Resource
                 Tables\Actions\Action::make('Approve')
                     ->label('Input Prices')
                     ->color('success')
-                    ->icon('heroicon-o-check-badge')
-                    ->url(fn($record) => static::getUrl('approve-grn', ['record' => $record]))
+                    ->icon('heroicon-o-pencil-square')
+                    ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))
                     ->button()
                     ->visible(function ($record) {
                         $allowedRoles = setting('grn_approver_role_id', []);
@@ -283,7 +283,7 @@ class GoodsReceivedNoteResource extends Resource
             'index' => Pages\ListGoodsReceivedNotes::route('/'),
             'create' => Pages\CreateGoodsReceivedNote::route('/create'),
             'edit' => Pages\EditGoodsReceivedNote::route('/{record}/edit'),
-            'approve-grn' => Pages\EditGoodsReceivedNoteV2::route('/{record}/approve-grn'),
+            'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV2::route('/{record}/create-purchase-invoice'),
         ];
     }
 
