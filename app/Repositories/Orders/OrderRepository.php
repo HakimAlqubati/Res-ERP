@@ -240,6 +240,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $orderId = $pendingOrderId;
                 $orderStatus = $order->status; // Could be PENDING_APPROVAL or ORDERED
             } else {
+                
                 $order = Order::create([
                     'status' => $orderStatus,
                     'customer_id' => $customerId,

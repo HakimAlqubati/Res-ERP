@@ -749,9 +749,10 @@ class ProductResource extends Resource
                 Tables\Filters\Filter::make('smallest_package_not_one')
                     ->label('Min Package Size ≠ 1')
                     ->query(function (Builder $query) {
-                        $query->whereHas('allUnitPrices', function ($subQuery) {
-                            $subQuery
-                                ->selectRaw('product_id, MIN(package_size) as min_package_size, COUNT(*) as unit_count')
+                        $query->whereIn('id', function ($q) {
+                            $q->select('product_id')
+                                ->from('unit_prices')
+                                ->whereNull('deleted_at')
                                 ->groupBy('product_id')
                                 ->havingRaw('MIN(package_size) != 1 AND COUNT(*) > 1');
                         });
@@ -1112,7 +1113,7 @@ class ProductResource extends Resource
 
         // 2️⃣ التأكد أن آخر واحدة فقط = 1
         if ($packageSizes->last() !== 1.0) {
-            $message = __('⚠️ The last unit package size must be exactly 1.');
+            $message = __('⚠️ The last qty per pack must be exactly 1.');
             if ($fail) {
                 $fail($message);
             } else {
