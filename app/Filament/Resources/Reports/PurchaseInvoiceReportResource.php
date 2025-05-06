@@ -123,4 +123,12 @@ class PurchaseInvoiceReportResource extends Resource
 
             ], FiltersLayout::AboveContent);
     }
+    public static function getNavigationBadge(): ?string
+    {
+        return 'Report';
+    }
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Purchase Report';
+    }
 }

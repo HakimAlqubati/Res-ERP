@@ -7,7 +7,6 @@ use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\RelationManagers;
-use App\Filament\Resources\StockIssueOrderResource\Pages\StockInvetoryQuickLinks;
 use App\Models\Product;
 use App\Models\StockIssueOrder;
 use App\Models\Store;
@@ -168,7 +167,7 @@ class StockIssueOrderResource extends Resource
 
 
     public static function table(Table $table): Table
-    {
+    { 
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
@@ -187,7 +186,7 @@ class StockIssueOrderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ViewAction::make()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -211,7 +210,6 @@ class StockIssueOrderResource extends Resource
             'create' => Pages\CreateStockIssueOrder::route('/create'),
             'edit' => Pages\EditStockIssueOrder::route('/{record}/edit'),
             'view' => Pages\ViewStockIssueOrder::route('/{record}'),
-            'quick-links' => StockInvetoryQuickLinks::route('/quick-links'),
 
         ];
     }

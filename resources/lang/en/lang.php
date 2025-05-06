@@ -58,7 +58,7 @@ return [
     'price' => 'Price',
     'quantity' => 'Quantity',
     'purchase_invoice_details' => 'Supplier invoice details',
-    'purchase_invoice_report' => 'Purchasing reports',
+    'purchase_invoice_report' => 'Purchasing',
     'export_pdf' => 'Export PDF',
     'stores_report' => 'Stores report',
     'notes' => 'Notes',

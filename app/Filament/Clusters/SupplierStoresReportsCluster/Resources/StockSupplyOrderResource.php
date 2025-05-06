@@ -37,7 +37,7 @@ class StockSupplyOrderResource extends Resource
 
     protected static ?string $cluster = InventoryManagementCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 8;
     public static function form(Forms\Form $form): Forms\Form
     {
         return $form
