@@ -82,12 +82,7 @@ class OrderResource extends Resource
                             ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
                         Select::make('status')->required()
                             ->label(__('lang.order_status'))
-                            ->options([
-                                Order::ORDERED => 'Ordered',
-                                Order::READY_FOR_DELEVIRY => 'Ready for delivery',
-                                Order::PROCESSING => 'processing',
-                                Order::DELEVIRED => 'delevired',
-                            ])->default(Order::ORDERED),
+                            ->options( Order::getStatusLabels())->default(Order::ORDERED),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
                             // ->disabledOn('edit')

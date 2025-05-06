@@ -69,9 +69,11 @@ class OrderDetailsRelationManager extends RelationManager
                     }))->sortable()
                     ->alignCenter(true)
                     ->hidden(fn(): bool => isStoreManager()),
-                // Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
-                    ->hidden(fn(): bool => isStoreManager()),
+                Tables\Columns\TextColumn::make('total_unit_price')->label(__('lang.total'))->alignCenter(true)
+                ->summarize(Sum::make())
+                ,
+                // Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
+                //     ->hidden(fn(): bool => isStoreManager()),
             ])
             ->filters([
                 //
