@@ -393,15 +393,20 @@ class SettingResource extends Resource
                                         ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
                                         ->searchable()
                                         ->required(),
-                                    Toggle::make('grn_affects_inventory')->inline(false)
-                                        ->label('Affect Inventory Upon GRN Creation')
-                                        ->default(false)
-                                        ->helperText('If enabled, GRN will directly impact stock levels.'),
-                                    Toggle::make('purchase_invoice_affects_inventory')
-                                        ->label('Affect Inventory Upon Purchase Invoice Creation')
+                                    // Toggle::make('grn_affects_inventory')->inline(false)
+                                    //     ->label('Affect Inventory Upon GRN Creation')
+                                    //     ->default(false)
+                                    //     ->helperText('If enabled, GRN will directly impact stock levels.'),
+                                    // Toggle::make('purchase_invoice_affects_inventory')
+                                    //     ->label('Affect Inventory Upon Purchase Invoice Creation')
+                                    //     ->default(true)
+                                    //     ->inline(false)
+                                    //     ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
+                                    Toggle::make('affect_inventory_from_grn_only')
+                                        ->label('Affect Inventory from GRN Only')
+                                        ->helperText('If enabled, inventory will be updated from GRN only. If disabled, it will be updated from Purchase Invoice.')
                                         ->default(true)
-                                        ->inline(false)
-                                        ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
+                                        ->inline(false),
                                 ]),
 
                                 Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
