@@ -283,7 +283,8 @@ class GoodsReceivedNoteResource extends Resource
             'index' => Pages\ListGoodsReceivedNotes::route('/'),
             'create' => Pages\CreateGoodsReceivedNote::route('/create'),
             'edit' => Pages\EditGoodsReceivedNote::route('/{record}/edit'),
-            'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV2::route('/{record}/create-purchase-invoice'),
+            // 'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV2::route('/{record}/create-purchase-invoice'),
+            'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV3::route('/{record}/create-purchase-invoice'),
         ];
     }
 
