@@ -40,9 +40,19 @@ implements HasShieldPermissions
         return 'Previous Quantity Orders';
     }
 
+    public static function getLabel(): ?string
+    {
+        return 'Reorders from Stock Out';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Reorders from Stock Out';
+    } 
+
     public static function getPluralModelLabel(): string
     {
-        return 'Previous Quantity Orders';
+        return 'Reorders from Stock Out';
     }
     public static function table(Table $table): Table
     {
@@ -54,7 +64,7 @@ implements HasShieldPermissions
                 Filter::make('show_extra_fields')
                     ->label('')
                     ->form([
-                        Toggle::make('only_available')
+                        Toggle::make('group_by_order')
                             ->inline(false)
                             ->label('Group by Order')
                     ], FiltersLayout::AboveContent),

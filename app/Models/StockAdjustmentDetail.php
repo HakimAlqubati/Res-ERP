@@ -41,6 +41,7 @@ class StockAdjustmentDetail extends Model implements Auditable
     // Constants for adjustment types
     const ADJUSTMENT_TYPE_INCREASE = 'increase';
     const ADJUSTMENT_TYPE_DECREASE = 'decrease';
+    const ADJUSTMENT_TYPE_EQUAL = 'equal';
 
     /**
      * Relationships
@@ -58,5 +59,9 @@ class StockAdjustmentDetail extends Model implements Auditable
     public function unit()
     {
         return $this->belongsTo(Unit::class);
+    }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

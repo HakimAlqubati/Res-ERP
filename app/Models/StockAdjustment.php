@@ -31,6 +31,7 @@ class StockAdjustment extends Model implements Auditable
     // Constants for adjustment types
     const ADJUSTMENT_TYPE_INCREASE = 'increase';
     const ADJUSTMENT_TYPE_DECREASE = 'decrease';
+    const ADJUSTMENT_TYPE_EQUAL = 'equal';
 
 
     public function details()

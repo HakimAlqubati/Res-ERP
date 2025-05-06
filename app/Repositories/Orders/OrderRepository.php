@@ -102,9 +102,9 @@ class OrderRepository implements OrderRepositoryInterface
 
         if (
             isBranchUser() && isset(auth()->user()->branch)
-        ) { 
+        ) {
             $query->where('customer_id', auth()->user()->owner->id)
-            ->where('branch_id',auth()->user()->branch_id)
+                ->where('branch_id', auth()->user()->branch_id)
             ;
         }
         if ($request->has('id')) {
@@ -129,7 +129,8 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         // $query->where('branch_id', '!=', auth()->user()->branch_id);
-        $orders = $query->orderBy('created_at', 'DESC')->limit(20)
+
+        $orders = $query->orderBy('created_at', 'DESC')->limit(60)
             ->get();
 
         return OrderResource::collection($orders)->filter();
@@ -179,15 +180,21 @@ class OrderRepository implements OrderRepositoryInterface
             //     }
             // }
 
+
+            // Array to hold IDs of manufactured products.
             $allManufacturingBranches = Branch::active()
                 ->centralKitchens()
                 ->with('categories:id')
                 ->get(['id', 'store_id']);
 
             $manufacturedProductIds = [];
+
+            // Loop through each manufacturing branch to handle orders related to manufacturing products.
             foreach ($allManufacturingBranches as $branch) {
+                // Get categories for the current branch.
                 $categories = $branch->categories->pluck('id')->toArray();
 
+                // Filter order details based on whether they belong to a manufacturing category.
                 $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
                     $product = \App\Models\Product::find($item['product_id']);
                     $isForbidden = auth()->check() &&
@@ -199,7 +206,8 @@ class OrderRepository implements OrderRepositoryInterface
                     return $product && in_array($product->category_id, $categories);
                 })->values()->all();
 
-                if (count($productsForThisBranch)) {
+                // If there are any products for this branch, create a manufacturing order.
+                if (count($productsForThisBranch) > 0) {
                     $manufacturingOrder = Order::create([
                         'status' => Order::ORDERED,
                         'customer_id' => $customerId,
@@ -209,6 +217,8 @@ class OrderRepository implements OrderRepositoryInterface
                         'notes' => $notes,
                         'description' => $description,
                     ]);
+
+                    // Loop through each product and add it to the manufacturing order.
                     foreach ($productsForThisBranch as $productDetail) {
                         $productDetail['price'] = getUnitPrice($productDetail['product_id'], $productDetail['unit_id']);
                         $productDetail['order_id'] = $manufacturingOrder->id;
@@ -218,14 +228,17 @@ class OrderRepository implements OrderRepositoryInterface
                 }
             }
 
+            // Filter out the manufactured products from the normal order details.
             $normalOrderDetails = collect($allOrderDetails)->reject(function ($item) use ($manufacturedProductIds) {
                 return in_array($item['product_id'], $manufacturedProductIds);
             })->values()->all();
+
+            // If there is a pending order, update it; otherwise, create a new order.
             if ($pendingOrderId > 0) {
                 $order = Order::find($pendingOrderId);
                 $order->update(['updated_by' => auth()->id()]);
                 $orderId = $pendingOrderId;
-                $orderStatus = $order->status; // قد يكون PENDING_APPROVAL أو ORDERED
+                $orderStatus = $order->status; // Could be PENDING_APPROVAL or ORDERED
             } else {
                 $order = Order::create([
                     'status' => $orderStatus,
@@ -239,6 +252,8 @@ class OrderRepository implements OrderRepositoryInterface
 
                 $orderId = $order->id;
             }
+
+            // Process the normal order details: update existing items or create new ones.
             foreach ($normalOrderDetails as $detail) {
                 $existingDetail = OrderDetails::where([
                     ['order_id', '=', $orderId],
@@ -247,7 +262,7 @@ class OrderRepository implements OrderRepositoryInterface
                 ])->first();
 
                 if ($existingDetail) {
-                    // تحديث الكمية + السعر
+                    // Update quantity and price for existing item.
                     $newQuantity = $existingDetail->quantity + $detail['quantity'];
                     $existingDetail->update([
                         'quantity' => $newQuantity,
@@ -255,13 +270,14 @@ class OrderRepository implements OrderRepositoryInterface
                         'price' => getUnitPrice($detail['product_id'], $detail['unit_id']),
                     ]);
                 } else {
-                    // إدراج تفصيل جديد
+                    // Insert a new order detail.
                     $detail['order_id'] = $orderId;
                     $detail['price'] = getUnitPrice($detail['product_id'], $detail['unit_id']);
                     $detail['package_size'] = getUnitPricePackageSize($detail['product_id'], $detail['unit_id']);
                     OrderDetails::create($detail);
                 }
             }
+            // Success message depending on whether it's a new order or adding to an existing one.
             $message = $pendingOrderId > 0
                 ? 'Products added to pending approval order #' . $pendingOrderId
                 : 'New order created successfully';

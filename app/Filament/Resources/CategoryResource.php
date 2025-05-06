@@ -59,11 +59,11 @@ class CategoryResource extends Resource
                                     ->whereRaw('code_starts_with REGEXP "^[0-9]{2}$"') // فقط الأرقام
                                     ->orderByDesc('code_starts_with')
                                     ->value('code_starts_with');
-                        
+
                                 $nextCode = str_pad((intval($lastCode) + 1), 2, '0', STR_PAD_LEFT);
                                 return $nextCode;
                             })
-                          
+
                             ->helperText('Code must be exactly 2 digits (e.g., 01, 25, 99)'),
                         // Forms\Components\TextInput::make('waste_stock_percentage')
                         //     ->label('Waste %')
@@ -110,6 +110,10 @@ class CategoryResource extends Resource
                     ->searchable()
                     ->tooltip('Used to auto-generate product codes')
                     ->alignCenter(true)->toggleable(),
+                Tables\Columns\TextColumn::make('branch_names')
+                    ->label('Customized for Branches') 
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('waste_stock_percentage')
                 //     ->label('Waste %')
                 //     ->toggleable(isToggledHiddenByDefault: true)
@@ -119,8 +123,17 @@ class CategoryResource extends Resource
                 // Tables\Columns\TextColumn::make('products')->label('Number of products'),
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')->label(__('lang.active'))
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
+                Tables\Filters\SelectFilter::make('active')
+                    ->options([
+                        1 => __('lang.active'),
+                        0 => __('lang.status_unactive'),
+                    ]),
+
+                Tables\Filters\SelectFilter::make('is_manafacturing')
+                    ->options([
+                        1 => __('lang.category.is_manafacturing'),
+                    ]),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

@@ -13,6 +13,7 @@ use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestController3;
+use App\Http\Controllers\TestController4;
 use App\Mail\MailableEmployee;
 use App\Mail\TestEmail;
 use App\Models\Approval;
@@ -674,3 +675,5 @@ Route::get('/testLog', function () {
     \Illuminate\Support\Facades\Log::error('Testing log error');
     dd('Logged');
 });
+
+Route::get('admin/branchConsumptionReport', [TestController4::class, 'branchConsumptionReport']);

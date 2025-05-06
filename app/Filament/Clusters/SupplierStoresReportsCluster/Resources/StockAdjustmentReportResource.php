@@ -51,13 +51,16 @@ class StockAdjustmentReportResource extends Resource
     {
         return $table->striped()
             ->columns([
-                TextColumn::make('product.code'),
-                TextColumn::make('product.name'),
-                TextColumn::make('unit.name'),
-                TextColumn::make('package_size')->alignCenter(true),
+                TextColumn::make('product.code')->searchable()->label('Code')->toggleable()->sortable(),
+                TextColumn::make('product.name')->searchable()->toggleable(),
+                TextColumn::make('unit.name')->searchable()->toggleable(),
+                TextColumn::make('package_size')->alignCenter(true)->toggleable(),
                 TextColumn::make('quantity')->alignCenter(true),
                 TextColumn::make('adjustment_type')->alignCenter(true),
                 TextColumn::make('notes'),
+                TextColumn::make('createdBy.name')->label('Responsible')->searchable()->toggleable(),
+                TextColumn::make('adjustment_date')->label('Date')->searchable()->toggleable()->sortable(),
+
             ])
             ->filters([
                 //
@@ -65,8 +68,8 @@ class StockAdjustmentReportResource extends Resource
             ->actions([])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
             ])
         ;
@@ -82,6 +85,8 @@ class StockAdjustmentReportResource extends Resource
                 'quantity',
                 'adjustment_type',
                 'notes',
+                'created_by',
+                'adjustment_date',
             )->orderBy('id', 'desc');
         return $query;
     }

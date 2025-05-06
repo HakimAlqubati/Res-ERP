@@ -365,10 +365,47 @@ class SettingResource extends Resource
                             ])->hidden(function () {
                                 return hideHrForTenant();
                             }),
-                        Tab::make('Orders Settings')->hidden(fn(): bool => isFinanceManager())
+                        Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
-                                Fieldset::make('')->columns(3)->schema([
+                                Fieldset::make('')->label('Purchase Settings')->columns(3)->schema([
+                                    Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
+                                        ->inline(false)
+                                        ->label('Purchase Invoice Number Required and Disabled on Edit')
+                                        ->offIcon('heroicon-s-user')
+                                        ->onColor('success')
+                                        ->offColor('danger')
+                                        ->helperText('Enable this to require and disable editing of the purchase invoice number.')
+                                        ->default(false),
+                                ]),
+                                Fieldset::make('GRN Workflow Settings')->columns(2)->schema([
+                                    Toggle::make('purchase_invoice_from_grn_only')
+                                        ->inline(false)->columnSpanFull()
+                                        ->label('Use GRN to Create Purchase Invoices Only')
+                                        ->helperText('If enabled, purchase invoices can only be created through GRN.')
+                                        ->default(false),
+                                    Select::make('grn_entry_role_id')->multiple()
+                                        ->label('Role Allowed to Create GRN')
+                                        ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
+                                        ->searchable()
+                                        ->required(),
+                                    Select::make('grn_approver_role_id')->multiple()
+                                        ->label('Role Allowed to Approve GRN')
+                                        ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
+                                        ->searchable()
+                                        ->required(),
+                                    Toggle::make('grn_affects_inventory')->inline(false)
+                                        ->label('Affect Inventory Upon GRN Creation')
+                                        ->default(false)
+                                        ->helperText('If enabled, GRN will directly impact stock levels.'),
+                                    Toggle::make('purchase_invoice_affects_inventory')
+                                        ->label('Affect Inventory Upon Purchase Invoice Creation')
+                                        ->default(true)
+                                        ->inline(false)
+                                        ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
+                                ]),
+
+                                Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
                                     // Select::make('calculating_orders_price_method')
                                     //     ->label(__('system_settings.calculating_orders_price_method'))
                                     //     ->options([

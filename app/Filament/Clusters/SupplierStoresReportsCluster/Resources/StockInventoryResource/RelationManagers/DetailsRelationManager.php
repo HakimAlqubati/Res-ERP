@@ -41,13 +41,14 @@ class DetailsRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('product.name'),
-                Tables\Columns\TextColumn::make('unit.name'),
-                Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size')),
-                Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true),
-                Tables\Columns\TextColumn::make('physical_quantity')->alignCenter(true),
-                Tables\Columns\TextColumn::make('difference')->alignCenter(true),
-                IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented')),
+                Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('unit.name')->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size'))->toggleable(),
+                Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable(),
+                Tables\Columns\TextColumn::make('physical_quantity')->alignCenter(true)->toggleable()->sortable(),
+                Tables\Columns\TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
+                IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented'))
+                    ->toggleable()->sortable(),
             ])
             ->filters([
                 //
@@ -76,18 +77,12 @@ class DetailsRelationManager extends RelationManager
 
                         return [
                             Grid::make()->columns(2)->schema([
-                                // Forms\Components\Select::make('adjustment_type')
-                                //     ->label('Adjustment Type')
-                                //     ->options([
-                                //         StockAdjustment::ADJUSTMENT_TYPE_INCREASE => 'Increase',
-                                //         StockAdjustment::ADJUSTMENT_TYPE_DECREASE => 'Decrease',
-                                //     ])->default($defaultAdjustmentType)
-                                //     ->required()->hidden(),
                                 Forms\Components\Select::make('reason_id')
                                     ->label('Reason')->default(StockAdjustmentReason::getFirstId())
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
                                     ->required(),
                                 Forms\Components\Select::make('store_id')
+                                    ->label(__('lang.store'))
                                     ->default(getDefaultStore())
                                     ->options(
                                         Store::active()
@@ -124,8 +119,7 @@ class DetailsRelationManager extends RelationManager
                                                     ->toArray();
                                             })
                                             ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-                                            ->columnSpan(2)
-                                            ,
+                                            ->columnSpan(2),
                                         Forms\Components\Select::make('unit_id')
                                             ->label('Unit')
                                             ->required()
@@ -154,6 +148,8 @@ class DetailsRelationManager extends RelationManager
                                         $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_DECREASE;
                                     } elseif ($detail['quantity'] > 0) {
                                         $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_INCREASE;
+                                    } elseif ($detail['quantity'] == 0) {
+                                        $defaultAdjustmentType = StockAdjustment::ADJUSTMENT_TYPE_EQUAL;
                                     }
                                 }
 
@@ -170,10 +166,6 @@ class DetailsRelationManager extends RelationManager
                                     'created_by' => auth()->id(),
                                     'adjustment_date' => now(),
                                 ]);
-                                // Update is_adjustmented field for selected records
-                                $records->each(function ($record) {
-                                    $record->update(['is_adjustmented' => true]);
-                                });
 
 
                                 if ($detail['quantity'] > 0) {
@@ -218,6 +210,20 @@ class DetailsRelationManager extends RelationManager
                                         'package_size' => $detail['package_size'],
                                     ]);
                                 }
+                            }
+                            // Update is_adjustmented field for selected records
+                            $records->each(function ($record) {
+                                $record->update(['is_adjustmented' => true]);
+                            });
+
+                            // Finalize the inventory if all details adjusted
+                            $inventory = $records->first()->inventory;
+
+                            $allAdjusted = $inventory->details()->where('is_adjustmented', false)->count() === 0;
+
+                            if ($allAdjusted) {
+                                $inventory->finalized = true;
+                                $inventory->save();
                             }
                             showSuccessNotifiMessage('done', 'Stock adjustment created successfully.');
                             DB::commit();

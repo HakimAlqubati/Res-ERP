@@ -70,6 +70,9 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         parent::boot();
         static::created(function ($purchaseInvoiceDetail) {
 
+            if (! settingWithDefault('purchase_invoice_affects_inventory', true)) {
+                return;
+            }
 
             $notes = 'Purchase invoice with id ' . $purchaseInvoiceDetail->purchase_invoice_id;
             if (isset($purchaseInvoiceDetail->purchaseInvoice->store_id)) {
@@ -91,8 +94,6 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'transactionable_type' => PurchaseInvoice::class,
                 'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
             ]);
-
-        
         });
     }
 }

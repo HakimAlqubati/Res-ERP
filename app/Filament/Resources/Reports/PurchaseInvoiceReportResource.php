@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\Store;
 use App\Models\Supplier;
+use Filament\Forms\Components\Toggle;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
@@ -27,7 +28,7 @@ class PurchaseInvoiceReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     /**
      * @deprecated Use `getModelLabel()` instead.
@@ -55,54 +56,79 @@ class PurchaseInvoiceReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->filters([
-            SelectFilter::make("store_id")
-                ->searchable()
-                ->label(__('lang.store'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Store::get()->pluck('name', 'id')),
+        return $table
+            ->filters([
+                SelectFilter::make("store_id")
+                    ->searchable()
+                    ->label(__('lang.store'))
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(Store::get()->pluck('name', 'id')),
 
-            SelectFilter::make("supplier_id")
-                ->searchable()
-                ->label(__('lang.supplier'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Supplier::get()->pluck('name', 'id')),
-            SelectFilter::make("product_id")
-                ->label(__('lang.product'))
-                ->multiple()
-                ->searchable()
-                ->options(fn() => Product::where('active', 1)
-                    ->get()
-                    ->mapWithKeys(fn($product) => [
-                        $product->id => "{$product->code} - {$product->name}"
-                    ])
-                    ->toArray())
-                ->getSearchResultsUsing(function (string $search): array {
-                    return Product::where('active', 1)
-                        ->where(function ($query) use ($search) {
-                            $query->where('name', 'like', "%{$search}%")
-                                ->orWhere('code', 'like', "%{$search}%");
-                        })
-                        ->limit(50)
+                SelectFilter::make("supplier_id")
+                    ->searchable()
+                    ->label(__('lang.supplier'))
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(Supplier::get()->pluck('name', 'id')),
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))
+                    ->multiple()
+                    ->searchable()
+                    ->options(fn() => Product::where('active', 1)
                         ->get()
                         ->mapWithKeys(fn($product) => [
                             $product->id => "{$product->code} - {$product->name}"
                         ])
-                        ->toArray();
-                })
-                ->getOptionLabelUsing(
-                    fn($value): ?string =>
-                    optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
-                ),
-            SelectFilter::make("invoice_no")
-                ->searchable()
-                ->label(__('lang.invoice_no'))
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
-            Filter::make('show_invoice_no')->label(__('lang.show_invoice_no')),
-        ], FiltersLayout::AboveContent);
+                        ->toArray())
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(
+                        fn($value): ?string =>
+                        optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
+                    ),
+                SelectFilter::make("invoice_no")
+                    ->searchable()->multiple()
+                    ->label(__('lang.invoice_no'))
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
+                Filter::make('show_invoice_no')
+                ->toggle()
+                ->label(__('lang.show_invoice_no')),
+                // Toggle::make('show_invoice_no')
+                //     ->label(__('lang.show_invoice_no'))
+                //     ->default(false)
+                //     ->onColor('success')
+                //     ->offColor('danger')
+                //     ->inline(),
+                SelectFilter::make("category_id")
+                    ->label(__('lang.category'))
+                    ->multiple()
+                    ->searchable()
+                    ->options(function () {
+                        return \App\Models\Category::active()->pluck('name', 'id')->toArray();
+                    }),
+
+            ], FiltersLayout::AboveContent);
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        return 'Report';
+    }
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Purchase Report';
     }
 }

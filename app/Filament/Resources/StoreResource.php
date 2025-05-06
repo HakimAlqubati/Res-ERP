@@ -85,12 +85,15 @@ class StoreResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')
-                    ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
+                Tables\Filters\SelectFilter::make('active')
+                    ->options([
+                        1 => __('lang.active'),
+                        0 => __('lang.status_unactive'),
+                    ]),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),

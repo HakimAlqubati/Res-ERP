@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInve
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Contracts\Support\Htmlable;
 
 class EditStockInventory extends EditRecord
 {
@@ -13,10 +14,15 @@ class EditStockInventory extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            // Actions\DeleteAction::make(),
         ];
     }
-
+ 
+    public function getTitle(): string | Htmlable
+    {
+        return 'Finalize';
+    }
+    
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

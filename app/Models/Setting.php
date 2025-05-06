@@ -50,4 +50,43 @@ class Setting extends Model  implements Auditable
             ['value' => $value]
         );
     }
+
+    public function getValueAttribute($value)
+    {
+        // Cast to array إذا كان المفتاح من نوع متعدد القيم
+        if (in_array($this->key, [
+            'grn_entry_role_id',
+            'grn_approver_role_id',
+        ])) {
+            return json_decode($value, true) ?? [];
+        }
+
+        // Cast to boolean
+        if (in_array($this->key, [
+            'grn_affects_inventory',
+            'auto_create_purchase_invoice',
+        ])) {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return $value;
+    }
+
+    public function setValueAttribute($value)
+    {
+        if (in_array($this->key, [
+            'grn_entry_role_id',
+            'grn_approver_role_id',
+        ])) {
+            $this->attributes['value'] = json_encode($value);
+            return;
+        }
+
+        if (is_bool($value)) {
+            $this->attributes['value'] = $value ? 'true' : 'false';
+            return;
+        }
+
+        $this->attributes['value'] = $value;
+    }
 }

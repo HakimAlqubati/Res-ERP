@@ -13,6 +13,7 @@ use App\Models\Store;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use App\Services\InventoryService;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -40,22 +41,22 @@ class StockInventoryResource extends Resource
 
     protected static ?string $cluster = InventoryManagementCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 9;
 
     public static function getNavigationLabel(): string
     {
-        return 'Stock Takes';
+        return 'Stocktakes';
     }
     public static function getPluralLabel(): ?string
     {
-        return 'Stock Takes';
+        return 'Stocktakes';
     }
 
-    protected static ?string $pluralLabel = 'Stock Take';
+    protected static ?string $pluralLabel = 'Stocktake';
 
     public static function getModelLabel(): string
     {
-        return 'Stock Take';
+        return 'Stocktake';
     }
     public static function form(Form $form): Form
     {
@@ -65,9 +66,10 @@ class StockInventoryResource extends Resource
                     Grid::make()->columns(3)->schema([
                         DatePicker::make('inventory_date')
                             ->required()->default(now())
-                            ->label('Inventory Date'),
-                        Select::make('store_id')
+                            ->label('Inventory Date')->disabledOn('edit'),
+                        Select::make('store_id')->label(__('lang.store'))
                             ->default(getDefaultStore())
+                            ->disabledOn('edit')
                             ->options(
                                 Store::active()
                                     ->withManagedStores()
@@ -75,7 +77,7 @@ class StockInventoryResource extends Resource
                             )->required(),
 
                         Select::make('responsible_user_id')->searchable()->default(auth()->id())
-                            ->relationship('responsibleUser', 'name')
+                            ->relationship('responsibleUser', 'name')->disabledOn('edit')
                             ->required()
                             ->label('Responsible'),
                     ]),
@@ -156,7 +158,7 @@ class StockInventoryResource extends Resource
                                 ->label('System Qty')
                                 ->required(),
                             TextInput::make('difference')->readOnly()
-                                ->rule('not_in:0', 'Now Allowed')
+                                // ->rule('not_in:0', 'Now Allowed')
 
                                 ->numeric(),
                         ])->addActionLabel('Add Item')
@@ -179,10 +181,17 @@ class StockInventoryResource extends Resource
 
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Finalize')
+                    ->button()
+                    ->hidden(fn($record): bool => $record->finalized),
+                Tables\Actions\ViewAction::make()
+                    ->visible(fn($record): bool => $record->finalized)
+                    ->button()
+                    ->icon('heroicon-o-eye')->color('success'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -213,16 +222,22 @@ class StockInventoryResource extends Resource
         return $page->generateNavigationItems([
             Pages\ListStockInventories::class,
             Pages\CreateStockInventory::class,
-            Pages\EditStockInventory::class,
+            // Pages\EditStockInventory::class,
         ]);
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
+        $query = static::getModel()::query();
+
+        if (
+            static::isScopedToTenant() &&
+            ($tenant = Filament::getTenant())
+        ) {
+            static::scopeEloquentQueryToTenant($query, $tenant);
+        }
+
+        return $query;
     }
 
     public static function getNavigationBadge(): ?string

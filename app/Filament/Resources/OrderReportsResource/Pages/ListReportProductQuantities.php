@@ -15,7 +15,7 @@ use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use niklasravnsborg\LaravelPdf\Facades\Pdf;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 
 class ListReportProductQuantities extends ListRecords
 {
@@ -185,7 +185,7 @@ class ListReportProductQuantities extends ListRecords
             'total_price' => $data['total_price'],
         ];
 
-        $pdf = Pdf::loadView('export.reports.report-product-quantities', $data);
+        $pdf = PDF::loadView('export.reports.report-product-quantities', $data);
 
         return response()
             ->streamDownload(function () use ($pdf) {

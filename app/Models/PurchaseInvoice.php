@@ -24,6 +24,7 @@ class PurchaseInvoice extends Model implements Auditable
         'attachment',
         'cancelled',
         'cancel_reason',
+        'payment_method_id',
     ];
     protected $auditInclude = [
         'date',
@@ -34,8 +35,9 @@ class PurchaseInvoice extends Model implements Auditable
         'attachment',
         'cancelled',
         'cancel_reason',
+        'payment_method_id',
     ];
-    protected $appends = ['has_attachment', 'has_description', 'details_count'];
+    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn'];
 
     /**
      * Get the count of purchase invoice details.
@@ -125,5 +127,23 @@ class PurchaseInvoice extends Model implements Auditable
             return ['status' => 'error', 'message' => 'Failed to cancel purchase invoice: ' . $e->getMessage()];
         }
     }
- 
+    public function grn()
+    {
+        return $this->hasOne(GoodsReceivedNote::class, 'purchase_invoice_id');
+    }
+    public function getHasGrnAttribute(): bool
+    {
+        return $this->grn()->exists();
+    }
+    public static function autoInvoiceNo()
+    {
+        return (PurchaseInvoice::query()
+            ->orderBy('id', 'desc')
+            ->withTrashed()
+            ->value('id') + 1 ?? 1);
+    }
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
 }

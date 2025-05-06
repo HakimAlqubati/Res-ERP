@@ -19,6 +19,7 @@ use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
+use App\Filament\Clusters\InventorySettingsCluster;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
@@ -185,7 +186,8 @@ class AdminPanelProvider extends PanelProvider
                                     is_null($currentTenant)) ? HRLeaveManagementCluster::getNavigationItems() : [],
                                 NotificationSettingResource::canAccess()
                                     ? NotificationSettingResource::getNavigationItems() : [],
-
+                                InventorySettingsCluster::getNavigationItems(),
+                                //    (isSuperAdmin() || isSystemManager()) ? SettingsCluster::getNavigationItems(): [] ,
                             )),
                         NavigationGroup::make('Tenants')
                             ->items(array_merge(

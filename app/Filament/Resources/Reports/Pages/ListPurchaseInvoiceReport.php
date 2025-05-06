@@ -27,23 +27,39 @@ class ListPurchaseInvoiceReport extends ListRecords
 
     protected function getViewData(): array
     {
-        $store_id = __filament_request_select('store_id', 'all');
-        $supplier_id = __filament_request_select('supplier_id', 'all');
-        $product_ids = [];
-        $product_ids = __filament_request_select_multiple('product_id', [], true);
-        $show_invoice_no = $this->getTable()->getFilters()['show_invoice_no']->getState()['isActive'];
-        $invoice_no = __filament_request_select('invoice_no', 'all');
-        $purchase_invoice_data = $this->getPurchasesInvoiceDataWithPagination($product_ids, $store_id, $supplier_id, $invoice_no);
+        $perPage = request()->get('perPage', 20);
+        if ($perPage === 'all') {
+            $perPage = 9999; // سيتم إرجاع كل النتائج
+        }
+        $productsIds = [];
+        $invoiceNos = [];
+
+        $showInvoiceNo = $this->getTable()->getFilters()['show_invoice_no']->getState()['isActive'];
+
+        $productsIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
+        $invoiceNos = $this->getTable()->getFilters()['invoice_no']->getState()['values'] ?? [];
+        $supplierId = $this->getTable()->getFilters()['supplier_id']->getState()['value'] ?? 'all';
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? 'all';
+        $categoryIds = $this->getTable()->getFilters()['category_id']->getState()['values'] ?? [];
+
+        $purchase_invoice_data = $this->getPurchasesInvoiceDataWithPagination(
+            $productsIds,
+            $storeId,
+            $supplierId,
+            $invoiceNos,
+            $perPage,
+            $categoryIds
+        );
 
 
         return [
             'purchase_invoice_data' => $purchase_invoice_data,
-            'show_invoice_no' => $show_invoice_no,
+            'show_invoice_no' => $showInvoiceNo,
         ];
     }
 
 
- 
+
     protected function getActions(): array
     {
         return  [Action::make('Export to PDF')->label(__('lang.export_pdf'))
@@ -67,8 +83,14 @@ class ListPurchaseInvoiceReport extends ListRecords
             }, "purchase-invoice-report" . '.pdf');
     }
 
-    public function getPurchasesInvoiceDataWithPagination($product_ids, $store_id, $supplier_id, $invoice_no)
-    {
+    public function getPurchasesInvoiceDataWithPagination(
+        $productsIds,
+        $storeId,
+        $supplierId,
+        $invoiceNos,
+        $perPage = 20,
+        $categoryIds = []
+    ) {
         $store_name = 'All';
         $supplier_name = 'All';
 
@@ -91,30 +113,36 @@ class ListPurchaseInvoiceReport extends ListRecords
             ->join('units', 'purchase_invoice_details.unit_id', '=', 'units.id')
             ->leftJoin('suppliers', 'purchase_invoices.supplier_id', '=', 'suppliers.id')
             ->join('stores', 'purchase_invoices.store_id', '=', 'stores.id')
+            ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+
             ->where('purchase_invoices.active', 1);
-        
-        if (is_numeric($store_id)) {
-            $query->where('purchase_invoices.store_id', $store_id);
-            $store_name = Store::find($store_id)?->name;
+
+        if (!empty($categoryIds)) {
+            $query->whereIn('products.category_id', $categoryIds);
         }
 
-        if (is_numeric($supplier_id)) {
-            $query->where('purchase_invoices.supplier_id', $supplier_id);
-            $supplier_name = Supplier::find($supplier_id)?->name;
+        if (is_numeric($storeId)) {
+            $query->where('purchase_invoices.store_id', $storeId);
+            $store_name = Store::find($storeId)?->name;
         }
 
-        if (count($product_ids) > 0) {
-            $query->whereIn('purchase_invoice_details.product_id', $product_ids);
+        if (is_numeric($supplierId)) {
+            $query->where('purchase_invoices.supplier_id', $supplierId);
+            $supplier_name = Supplier::find($supplierId)?->name;
         }
 
-        if (isset($invoice_no) && $invoice_no !== 'all') {
-            $query->where('purchase_invoices.invoice_no', $invoice_no);
+        if (count($productsIds) > 0) {
+            $query->whereIn('purchase_invoice_details.product_id', $productsIds);
+        }
+
+        if (count($invoiceNos) > 0) {
+            $query->whereIn('purchase_invoices.invoice_no', $invoiceNos);
         }
 
         $query->whereNull('purchase_invoices.deleted_at');
 
         // 🔹 Apply pagination (change `10` to the number of records per page)
-        $results = $query->paginate(15);
+        $results = $query->paginate($perPage);
 
         return [
             'results' => $results,

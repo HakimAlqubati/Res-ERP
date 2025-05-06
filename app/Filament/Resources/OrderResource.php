@@ -32,6 +32,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -103,7 +104,7 @@ implements HasShieldPermissions
                                 Store::active()
                                     // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
-                            ])
+                            ])->hidden()
                         // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
                         // ->default(function ($record) {
                         //     dd($record);
@@ -242,8 +243,12 @@ implements HasShieldPermissions
 
     public static function table(Table $table): Table
     {
-        // dd(auth()->user()->roles, auth()->user()->getAllPermissions()->pluck('name')->toArray());
-        return $table->striped()
+        return $table
+        
+            ->deferLoading()
+            ->striped()
+            ->extremePaginationLinks()
+
             ->columns([
                 TextColumn::make('id')->label(__('lang.order_id'))
                     ->toggleable(isToggledHiddenByDefault: false)
@@ -259,7 +264,7 @@ implements HasShieldPermissions
                     ->tooltip(fn(Model $record): string => "By {$record->customer->name}"),
                 TextColumn::make('branch.name')->label(__('lang.branch')),
                 // TextColumn::make('store.name')->label(__('lang.store')),
-                TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
+                // TextColumn::make('store_names')->label(__('lang.store'))->toggleable(isToggledHiddenByDefault: true),
                 BadgeColumn::make('status')
                     ->label(__('lang.order_status'))
                     ->colors([

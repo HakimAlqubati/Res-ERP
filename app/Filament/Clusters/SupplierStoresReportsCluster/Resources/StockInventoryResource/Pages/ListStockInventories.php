@@ -15,10 +15,12 @@ class ListStockInventories extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('New Stock Take'),
+            Actions\CreateAction::make()
+            ->icon('heroicon-o-plus-circle')
+            ->label('New Stocktake'),
             Actions\Action::make('print')
 
-                ->label('Print Takes Paper')
+                ->label('Print Stocktake Template')
                 ->form([
                     Select::make('category_id')->label('Category')->columnSpanFull()
                         ->options(Category::active()->pluck('name', 'id'))
@@ -30,7 +32,8 @@ class ListStockInventories extends ListRecords
                 })
                 // ->openUrlInNewTab()
                 // ->url(fn() => url('/printStock'))
-                ->icon('heroicon-o-rectangle-stack'),
+                ->color('success')
+                ->icon('heroicon-o-printer'),
 
         ];
     }
