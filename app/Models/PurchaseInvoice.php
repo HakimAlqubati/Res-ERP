@@ -24,6 +24,7 @@ class PurchaseInvoice extends Model implements Auditable
         'attachment',
         'cancelled',
         'cancel_reason',
+        'payment_method_id',
     ];
     protected $auditInclude = [
         'date',
@@ -34,6 +35,7 @@ class PurchaseInvoice extends Model implements Auditable
         'attachment',
         'cancelled',
         'cancel_reason',
+        'payment_method_id',
     ];
     protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn'];
 
@@ -139,5 +141,9 @@ class PurchaseInvoice extends Model implements Auditable
             ->orderBy('id', 'desc')
             ->withTrashed()
             ->value('id') + 1 ?? 1);
+    }
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
     }
 }

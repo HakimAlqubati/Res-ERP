@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResou
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource;
 use App\Filament\Resources\PurchaseInvoiceResource;
 use App\Models\GoodsReceivedNote;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
@@ -42,6 +43,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
             'date' => now()->format('Y-m-d'),
             'store_id' => $this->record->store_id,
             'supplier_id' => $this?->record?->supplier_id,
+            'payment_method_id' => $this?->record?->payment_method_id,
             'units' => $this->record->grnDetails->map(function ($detail) {
                 return [
                     'product_id' => $detail->product_id,
@@ -58,10 +60,10 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
     protected function getFormSchema(): array
     {
         return [
-            Fieldset::make()->columns(4)->schema([
+            Fieldset::make()->columns(6)->schema([
 
                 TextInput::make('invoice_no')
-                    ->label('Invoice No')
+                    ->label('Invoice No')->columnSpan(2)
                     ->statePath('formData.invoice_no'),
 
                 DatePicker::make('date')
@@ -71,14 +73,20 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
 
                 Select::make('store_id')
                     ->label('Store')
-                    ->disabled()
+                    ->disabled()->columnSpan(1)
                     ->options(Store::pluck('name', 'id'))
                     ->statePath('formData.store_id'),
 
-                Select::make('supplier_id')
+                Select::make('supplier_id')->columnSpan(1)
                     ->label('Supplier')->searchable()
                     ->options(Supplier::pluck('name', 'id'))
                     ->statePath('formData.supplier_id'),
+                Select::make('payment_method_id')
+                    ->label('Payment Method')
+                    ->options(PaymentMethod::active()->get()->pluck('name', 'id'))
+                    ->searchable()
+                    
+                    ->statePath('formData.payment_method_id')
             ]),
 
             Repeater::make('units')
@@ -127,6 +135,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                     'supplier_id' => $data['supplier_id'],
                     'has_grn' => true,
                     'grn_id' => $this->record->id,
+                    'payment_method_id' => $data['payment_method_id']
                 ]);
 
                 foreach ($data['units'] as $item) {

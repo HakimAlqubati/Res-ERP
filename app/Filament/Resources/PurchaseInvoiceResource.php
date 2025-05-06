@@ -11,6 +11,7 @@ use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers\PurchaseInvo
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\Store;
@@ -40,6 +41,7 @@ use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -73,7 +75,7 @@ class PurchaseInvoiceResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->schema([
-                    Grid::make()->columns(6)->schema([
+                    Grid::make()->columns(4)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
                             ->required(fn(): bool => settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false))
@@ -94,6 +96,16 @@ class PurchaseInvoiceResource extends Resource
                             ->format('Y-m-d')
                             ->disabledOn('edit')
                             ->format('Y-m-d'),
+                        Toggle::make('has_attachment')
+                            ->label('Has Attachment')
+                            ->inline(false)->live(),
+                        Toggle::make('has_description')
+                            ->label('Has Description')->inline(false)
+                            ->live(),
+
+
+                    ]),
+                    Grid::make()->columns(3)->schema([
                         Select::make('supplier_id')->label(__('lang.supplier'))
                             ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
@@ -112,13 +124,11 @@ class PurchaseInvoiceResource extends Resource
                             )
                             ->disabledOn('edit')
                             ->searchable(),
-                        Toggle::make('has_attachment')
-                            ->label('Has Attachment')
-                            ->inline(false)->live(),
-                        Toggle::make('has_description')
-                            ->label('Has Description')->inline(false)
-                            ->live(),
-
+                        Select::make('payment_method_id')
+                            ->label('Payment Method')
+                            ->relationship('paymentMethod', 'name')
+                            ->searchable()
+                            ->preload()
                     ]),
                     Textarea::make('cancel_reason')->label('Cancel Reason')
                         ->placeholder('Cancel Reason')->hiddenOn('create')
@@ -287,10 +297,18 @@ class PurchaseInvoiceResource extends Resource
                     ->label('GRN Number')
                     ->sortable()
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('paymentMethod.name')
+                    ->label('Payment Method')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make()
+                Tables\Filters\TrashedFilter::make(),
+                SelectFilter::make('payment_method_id')
+                    ->label('Payment Method')
+                    ->options(PaymentMethod::active()->get()->pluck('name', 'id'))
             ])
             ->actions([
                 Tables\Actions\Action::make('cancel')
@@ -394,6 +412,7 @@ class PurchaseInvoiceResource extends Resource
     }
     public static function canCreate(): bool
     {
+        return true;
         if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
             return false;
         }
