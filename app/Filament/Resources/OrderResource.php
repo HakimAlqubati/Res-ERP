@@ -462,7 +462,7 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('is_purchased', 0)->count();
+        return static::getModel()::where('is_purchased', 0)->whereHas('orderDetails')->count();
     }
 
     public function isTableSearchable(): bool
