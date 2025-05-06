@@ -490,6 +490,7 @@ class OrderResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('is_purchased', 0)
+            ->whereHas('orderDetails') 
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
