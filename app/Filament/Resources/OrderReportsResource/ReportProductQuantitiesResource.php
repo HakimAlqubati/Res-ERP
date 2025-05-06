@@ -67,7 +67,8 @@ class ReportProductQuantitiesResource extends Resource
                 TextColumn::make('branch'),
                 TextColumn::make('unit'),
                 TextColumn::make('quantity')->alignCenter(true),
-                TextColumn::make('price'),
+                TextColumn::make('price')
+                    ->hidden(fn(): bool => isStoreManager()),
             ])
             ->filters([
                 // SelectFilter::make('product_id')

@@ -56,7 +56,7 @@ class ListOrders extends ListRecords
                     } catch (\Throwable $e) {
                         showWarningNotifiMessage('❌ Failed to import orders: ' . $e->getMessage());
                     }
-                })
+                })->hidden()
         ];
     }
 

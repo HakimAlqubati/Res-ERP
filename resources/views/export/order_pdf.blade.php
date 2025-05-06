@@ -97,7 +97,7 @@
         <div style="width: 34%;float: center">
             <p class="mt-5"> {{ __('lang.branch') . ' ' . $order->branch->name }} </p>
             {{-- <p class="mt-5"> {{ __('lang.branch_manager') . ' ' . $order->customer->name }} </p> --}}
-            <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}#  -{{$order->created_at}}</p>
+            <p class="mt-5"> {{ __('lang.order-no-') . $order->id }}# -{{ $order->created_at }}</p>
         </div>
 
         <div style="width: 33%;float: left">
@@ -112,8 +112,10 @@
                 <th> {{ __('lang.product') }} </th>
                 <th> {{ __('lang.unit') }} </th>
                 <th> {{ __('lang.quantity') }} </th>
-                <th> {{ __('lang.unit_price') }} </th>
-                <th> {{ __('lang.total_price') }} </th>
+                @if (!isStoreManager())
+                    <th> {{ __('lang.unit_price') }} </th>
+                    <th> {{ __('lang.total_price') }} </th>
+                @endif
             </tr>
 
         </thead>
@@ -134,22 +136,26 @@
                     <td> {{ $valDetail->product->name }} </td>
                     <td> {{ $valDetail->unit->name }} </td>
                     <td> {{ $valDetail->available_quantity }} </td>
-                    <td> {{ $valDetail->price }} </td>
-                    <td> {{ $valDetail->price * $valDetail->available_quantity }} </td>
+                    @if (!isStoreManager())
+                        <td> {{ $valDetail->price }} </td>
+                        <td> {{ $valDetail->price * $valDetail->available_quantity }} </td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>
-        <tfoot>
-            <tr>
+        @if (!isStoreManager())
+            <tfoot>
+                <tr>
 
-                <th colspan="3">
-                    {{ __('lang.total') }}
-                </th>
-                <th> {{ $totalQty }} </th>
-                <th> {{ $totalPrice }} </th>
-                <th> {{ $totalPrices }} </th>
-            </tr>
-        </tfoot>
+                    <th colspan="3">
+                        {{ __('lang.total') }}
+                    </th>
+                    <th> {{ $totalQty }} </th>
+                    <th> {{ $totalPrice }} </th>
+                    <th> {{ $totalPrices }} </th>
+                </tr>
+            </tfoot>
+        @endif
     </table>
 
 </body>

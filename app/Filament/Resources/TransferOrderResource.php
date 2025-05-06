@@ -75,7 +75,8 @@ class TransferOrderResource extends Resource
                     ->tooltip(fn(Model $record): string => "By {$record->customer?->name}"),
 
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
-                TextColumn::make('total_amount')->label(__('lang.total_amount')),
+                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
+                    ->hidden(fn(): bool => isStoreManager()),
                 TextColumn::make('transfer_date')
                     ->label(__('lang.transfer_date'))
                     ->sortable(),

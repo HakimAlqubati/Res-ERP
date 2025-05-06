@@ -27,7 +27,9 @@
                     <th>{{ __('lang.category') }}</th>
 
                     <th>{{ __('lang.quantity') }}</th>
-                    <th>{{ __('lang.price') }}</th>
+                    @if (!isStoreManager())
+                        <th>{{ __('lang.price') }}</th>
+                    @endif
                 </x-filament-tables::row>
             </thead>
             <tbody>
@@ -40,15 +42,19 @@
                                 {{ $data?->category }}</a>
                         </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data?->amount . ' ' . $data?->symbol }}
-                        </x-filament-tables::cell>
+                        @if (!isStoreManager())
+                            <x-filament-tables::cell> {{ $data?->amount . ' ' . $data?->symbol }}
+                            </x-filament-tables::cell>
+                        @endif
                     </x-filament-tables::row>
                 @endforeach
-                <x-filament-tables::row>
-                    <x-filament-tables::cell> {{ __('lang.total') }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $total_quantity }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $total_price }} </x-filament-tables::cell>
-                </x-filament-tables::row>
+                @if (!isStoreManager())
+                    <x-filament-tables::row>
+                        <x-filament-tables::cell> {{ __('lang.total') }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ $total_quantity }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ $total_price }} </x-filament-tables::cell>
+                    </x-filament-tables::row>
+                @endif
             </tbody>
 
         </x-filament-tables::table>

@@ -746,6 +746,16 @@ class ProductResource extends Resource
                     ->query(fn(Builder $query): Builder => $query->whereHas('category', fn($q) => $q->where('is_manafacturing', true))),
 
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\Filter::make('smallest_package_not_one')
+                    ->label('Min Package Size ≠ 1')
+                    ->query(function (Builder $query) {
+                        $query->whereHas('allUnitPrices', function ($subQuery) {
+                            $subQuery
+                                ->selectRaw('product_id, MIN(package_size) as min_package_size, COUNT(*) as unit_count')
+                                ->groupBy('product_id')
+                                ->havingRaw('MIN(package_size) != 1 AND COUNT(*) > 1');
+                        });
+                    })
             ])
             ->actions([
                 Tables\Actions\Action::make('updateUnitPrice')

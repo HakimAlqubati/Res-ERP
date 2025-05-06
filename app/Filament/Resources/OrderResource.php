@@ -235,7 +235,7 @@ class OrderResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        
+
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -267,8 +267,11 @@ class OrderResource extends Resource
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
-                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
-                    ->numeric(),
+                TextColumn::make(
+                    'total_amount'
+                )->label(__('lang.total_amount'))->alignCenter(true)
+                    ->numeric()
+                    ->hidden(fn(): bool => isStoreManager()),
                 TextColumn::make('created_at')
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -343,7 +346,7 @@ class OrderResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(fn(): bool => isSuperVisor()),
+                    })->hidden(fn(): bool => isSuperVisor() || isStoreManager()),
                 Tables\Actions\Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {

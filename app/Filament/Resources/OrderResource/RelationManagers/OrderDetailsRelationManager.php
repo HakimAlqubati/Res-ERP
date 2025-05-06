@@ -67,9 +67,11 @@ class OrderDetailsRelationManager extends RelationManager
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');
                     }))->sortable()
-                    ->alignCenter(true),
+                    ->alignCenter(true)
+                    ->hidden(fn(): bool => isStoreManager()),
                 // Tables\Columns\TextColumn::make('total_price')->label(__('lang.total'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
+                    ->hidden(fn(): bool => isStoreManager()),
             ])
             ->filters([
                 //

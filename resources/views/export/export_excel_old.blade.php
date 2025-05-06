@@ -10,13 +10,15 @@
         </tr>
         <tr>
             <th>#</th>
-            
+
             <th>Product name </th>
             <th>Product code </th>
             <th>Product Description </th>
             <th>Unit </th>
             <th>Quantity</th>
-            <th>Price</th>
+            @if (!isStoreManager())
+                <th>Price</th>
+            @endif
         </tr>
     </thead>
     <tbody>
@@ -30,13 +32,15 @@
             ?>
         <tr>
             <td>{{ $key }}</td>
-            
+
             <td>{{ $value->product_name ?? '--' }}</td>
             <td>{{ $value->product_code ?? '--' }}</td>
             <td>{{ $value->product_desc ?? '--' }}</td>
             <td>{{ $value->unit_name ?? '--' }}</td>
             <td>{{ $value->qty ?? '--' }}</td>
-            <td>{{ $value->price ?? '--' }}</td>
+            @if (!isStoreManager())
+                <td>{{ $value->price ?? '--' }}</td>
+            @endif
         </tr>
         <?php
         if( is_numeric ($value->price )) {
@@ -45,16 +49,17 @@
         }
             }
      } ?>
-        <tr style=" font-weight: 700;">
+        @if (!isStoreManager())
+            <tr style=" font-weight: 700;">
 
-            <td colspan="7" style="text-align: center">
-                Total price for orrder ID : #<?php echo $finalResult[0]->orderId; ?>
-            </td>
-            <td>
-                <?php echo (int) $total_price; ?>
-            </td>
-        </tr>
-
+                <td colspan="7" style="text-align: center">
+                    Total price for orrder ID : #<?php echo $finalResult[0]->orderId; ?>
+                </td>
+                <td>
+                    <?php echo (int) $total_price; ?>
+                </td>
+            </tr>
+        @endif
         <tr style="height: 110px;     font-weight: 700;">
             <td style="text-align: center" colspan="4" rowspan="3">Store manager: <h6><?php echo $finalResult[0]->manager_name; ?> </h6>
             </td>
