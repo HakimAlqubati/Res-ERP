@@ -493,8 +493,8 @@ class ProductResource extends Resource
                                         ->inline(false)
                                         ->label(__('lang.show_in_invoices'))
                                         ->default(false)
-                                        ->disabled(function (callable $get, $livewire) {
-                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                        ->disabled(function (callable $get, $record, $livewire) {
+                                            return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
                                         })
                                         ->dehydrated(),
 
@@ -1085,7 +1085,6 @@ class ProductResource extends Resource
         $filteredUnits = collect($units)
             ->filter(fn($unit) => ($unit['show_in_invoices'] ?? false)) // فقط التي show_in_invoices = true
             ->values(); // إعادة ترتيب الفهرس
-
         $packageSizes = $filteredUnits
             ->pluck('package_size')
             ->filter(fn($value) => $value !== null)
@@ -1135,13 +1134,35 @@ class ProductResource extends Resource
         }
     }
 
-    protected static function isProductLocked(?Model $record): bool
+    protected static function isProductLocked($record): bool
     {
         if (! $record) {
             return false;
         }
 
         $productId = $record->id ?? null;
+        if (! $productId) {
+            return false;
+        }
+
+        return \App\Models\OrderDetails::where('product_id', $productId)->exists()
+            || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists()
+            || \App\Models\InventoryTransaction::where('product_id', $productId)->exists()
+            || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+    }
+    protected static function isProductLockedForToggle($product, $record): bool
+    {
+        $existUnitPrices = $product?->unitPrices;
+        $smallestUnit = $existUnitPrices?->sortBy('package_size')->first();
+
+        if ($smallestUnit && $smallestUnit->package_size == 1) {
+            return true;
+        }
+        if (! $record) {
+            return false;
+        }
+
+        $productId = $product->id ?? null;
         if (! $productId) {
             return false;
         }
