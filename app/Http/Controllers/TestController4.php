@@ -158,6 +158,9 @@ class TestController4 extends Controller
             o.updated_at
         FROM orders o
         WHERE $whereSql
+          AND EXISTS (
+        SELECT 1 FROM orders_details od WHERE od.order_id = o.id
+        )
         ORDER BY o.created_at DESC
         LIMIT $perPage OFFSET $offset
     ");
@@ -360,61 +363,6 @@ AND (
 
 
 
-
-    public static function getOrders_beforeConditions($request)
-    {
-        // 📌 Pagination inputs
-        $page = max((int) $request->input('page', 1), 1);
-        $perPage = (int) $request->input('per_page', 20);
-        $offset = ($page - 1) * $perPage;
-
-        $total = DB::table('orders')->count();
-        $orders = DB::select("
-        SELECT
-            o.id, 
-            o.active, 
-            o.customer_id,
-            o.status,
-            o.branch_id,
-            o.created_at,
-            o.updated_at
-        FROM orders o
-        ORDER BY o.created_at DESC
-        LIMIT $perPage OFFSET $offset
-    ");
-
-        $customerIds = collect($orders)->pluck('customer_id')->unique()->toArray();
-        $customers = DB::table('users')->whereIn('id', $customerIds)
-            ->get(['id', 'name'])->keyBy('id');
-        $branches =
-            DB::table('branches')->where('active', 1)
-            ->get(['id', 'name'])->keyBy('id');
-
-        $orders = collect($orders)->map(function ($order) use ($branches, $customers) {
-            return [
-                'id' => $order->id,
-                'active' => $order->active,
-
-                'created_by' => $order->customer_id,
-                'created_by_user_name' => $customers[$order->customer_id]->name ?? null,
-                'request_state_name' => $order->status,
-                'branch_id' => $order->branch_id,
-                'branch_name' => $branches[$order->branch_id]->name,
-                'total_price' => 00,
-                'created_at' => Carbon::parse($order->created_at)->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::parse($order->updated_at)->format('Y-m-d H:i:s'),
-            ];
-        });
-
-        // 🔙 Return paginated response
-        return response()->json([
-            'current_page' => $page,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => ceil($total / $perPage),
-            'data' => $orders,
-        ]);
-    }
 
 
     public function generatePendingApprovalPreviousOrderDetailsReport(Request $request)
