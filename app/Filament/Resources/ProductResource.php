@@ -754,7 +754,7 @@ class ProductResource extends Resource
                                 ->from('unit_prices')
                                 ->whereNull('deleted_at')
                                 ->groupBy('product_id')
-                                ->havingRaw('MIN(package_size) != 1 AND COUNT(*) > 1');
+                                ->havingRaw('MIN(package_size) != 1');
                         });
                     })
             ])
