@@ -31,6 +31,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Filters\SelectFilter;
@@ -252,6 +253,10 @@ class ServiceRequestResource extends Resource
             ->columns([
                 Split::make([
                     Stack::make([
+                        SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                            ->circular()->alignCenter(true)->getStateUsing(function () {
+                                return null;
+                            })->limit(3),
                         TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable(),
                         TextColumn::make('name')->searchable(isIndividual: true)->sortable()
                             ->color(Color::Blue)
