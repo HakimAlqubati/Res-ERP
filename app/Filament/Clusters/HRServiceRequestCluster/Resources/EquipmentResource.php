@@ -182,7 +182,7 @@ class EquipmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped()->defaultSort('id','desc')
             ->columns([
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
