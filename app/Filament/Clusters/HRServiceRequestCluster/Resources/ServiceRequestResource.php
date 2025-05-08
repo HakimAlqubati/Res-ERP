@@ -62,25 +62,6 @@ class ServiceRequestResource extends Resource
                         ->schema([
                             Fieldset::make()->schema([
                                 Fieldset::make()->columns(2)->schema([
-                                    TextInput::make('name')
-                                        ->required()->label('Title')
-                                        ->maxLength(255)
-                                        ->disabled(condition: function ($record) {
-                                            if (isset($record)) {
-                                                if ($record->created_by == auth()->user()->id) {
-                                                    return false;
-                                                }
-                                                return true;
-                                            }
-                                        }),
-                                    Select::make('equipment_id')->label('Equipment')
-                                        ->options(function (Get $get) {
-                                            return Equipment::query()
-                                                ->where('branch_id', $get('branch_id'))
-                                                ->pluck('name', 'id');
-                                        })
-                                        ->searchable()
-                                        ->nullable(),
                                     Select::make('branch_id')->label('Branch')
                                         ->disabled(function ($record) {
                                             if (isset($record)) {
@@ -113,6 +94,26 @@ class ServiceRequestResource extends Resource
                                                 return true;
                                             }
                                         }),
+                                    TextInput::make('name')
+                                        ->required()->label('Title')
+                                        ->maxLength(255)
+                                        ->disabled(condition: function ($record) {
+                                            if (isset($record)) {
+                                                if ($record->created_by == auth()->user()->id) {
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+                                        }),
+                                    Select::make('equipment_id')->label('Equipment')
+                                        ->options(function (Get $get) {
+                                            return Equipment::query()
+                                                ->where('branch_id', $get('branch_id'))
+                                                ->pluck('name', 'id');
+                                        })
+                                        ->searchable()
+                                        ->nullable(),
+
 
                                 ]),
 
