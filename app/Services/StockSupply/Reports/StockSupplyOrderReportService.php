@@ -19,27 +19,30 @@ class StockSupplyOrderReportService
         $startDate,
         $endDate
     ): array {
-        $orders = StockSupplyOrder::with(['store', 'details.product', 'details.unit'])
+        $orders = StockSupplyOrder::with(['details.product', 'details.unit'])
             ->where('store_id', $storeId)
             ->whereBetween('order_date', [$startDate, $endDate])
             ->get();
 
-        return $orders->map(function ($order) {
-            return [
-                'order_id'     => $order->id,
-                'order_date'   => $order->order_date,
-                'store_name'   => $order->store->name ?? 'غير معروف',
-                'notes'        => $order->notes,
-                'item_count'   => $order->item_count,
-                'details'      => $order->details->map(function ($detail) {
-                    return [
-                        'product_code' => $detail->product->code ?? null,
-                        'product_name' => $detail->product->name ?? 'غير معروف',
-                        'unit_name'    => $detail->unit->name ?? 'غير معروف',
-                        'quantity'     => $detail->quantity,
+        $aggregated = [];
+
+        foreach ($orders as $order) {
+            foreach ($order->details as $detail) {
+                $key = $detail->product_id . '-' . $detail->unit_id;
+
+                if (!isset($aggregated[$key])) {
+                    $aggregated[$key] = [
+                        'product_name'   => $detail->product->name ?? 'Unknown',
+                        'product_code'   => $detail->product->code ?? null,
+                        'unit_name'      => $detail->unit->name ?? 'Unknown',
+                        'total_quantity' => 0,
                     ];
-                })->toArray(),
-            ];
-        })->toArray();
+                }
+
+                $aggregated[$key]['total_quantity'] += $detail->quantity;
+            }
+        }
+
+        return array_values($aggregated); // re-index the array for frontend use
     }
 }
