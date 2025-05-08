@@ -81,7 +81,7 @@ class ServiceRequestResource extends Resource
                                         ->live()
                                         ->required(),
 
-                                    Select::make('branch_area_id')->label('Branch area')
+                                    Select::make('branch_area_id')->label('Branch area')->required()
                                         ->options(function (Get $get) {
                                             return BranchArea::query()
                                                 ->where('branch_id', $get('branch_id'))
