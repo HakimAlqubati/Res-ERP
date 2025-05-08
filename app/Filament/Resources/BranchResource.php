@@ -243,7 +243,7 @@ class BranchResource extends Resource
     {
         return $table->striped()
             ->columns([
-                TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true),
+                TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
                         return null;
