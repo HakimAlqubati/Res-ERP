@@ -27,6 +27,8 @@ class ListStockSupplyOrderReports extends ListRecords
         return [
             'reportData' => $data,
             'store' => $store,
+            'startDate' => $startDate,
+            'endDate' => $enddate,
 
         ];
     }

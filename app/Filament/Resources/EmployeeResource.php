@@ -80,13 +80,7 @@ class EmployeeResource extends Resource
     {
         return __('lang.employees');
     }
-
-    public static function getWidgets(): array
-    {
-        return [
-            // CircularWidget::class, // Include the chart widget
-        ];
-    }
+ 
 
     public static function getLabel(): ?string
     {

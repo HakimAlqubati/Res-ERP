@@ -27,7 +27,20 @@ class StockSupplyOrderReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getNavigationLabel(): string
+    {
+        return 'Stock Supply';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Stock Supply';
+    }
+ 
 
+    public static function getLabel(): ?string
+    {
+        return 'Stock Supply';
+    }
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 10;
@@ -61,7 +74,7 @@ class StockSupplyOrderReportResource extends Resource
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     )
 
-            ],FiltersLayout::AboveContent);
+            ], FiltersLayout::AboveContent);
     }
 
 
@@ -72,5 +85,10 @@ class StockSupplyOrderReportResource extends Resource
             'index' => Pages\ListStockSupplyOrderReports::route('/'),
 
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return 'Report';
     }
 }

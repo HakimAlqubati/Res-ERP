@@ -32,12 +32,12 @@ class StockAdjustmentReportResource extends Resource
 
     public static function getPluralLabel(): ?string
     {
-        return 'Stock Adjustment Report';
+        return 'Stock Adjustment';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Stock Adjustment Report';
+        return 'Stock Adjustment';
     }
     public static function form(Form $form): Form
     {
@@ -100,15 +100,20 @@ class StockAdjustmentReportResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
-    }
+    // public static function getNavigationBadge(): ?string
+    // {
+    //     return static::getModel()::count();
+    // }
     public static function canDeleteAny(): bool
     {
         if (isSuperAdmin()) {
             return true;
         }
         return false;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return 'Report';
     }
 }
