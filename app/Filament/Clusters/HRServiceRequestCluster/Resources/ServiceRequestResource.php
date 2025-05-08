@@ -71,7 +71,8 @@ class ServiceRequestResource extends Resource
                                                 return true;
                                             }
                                         })
-                                        ->options(Branch::select('name', 'id')->pluck('name', 'id'))
+                                        ->options(Branch::branches()->active()
+                                            ->select('name', 'id')->pluck('name', 'id'))
                                         ->default(function () {
                                             if (isStuff()) {
                                                 return auth()->user()->branch_id;
