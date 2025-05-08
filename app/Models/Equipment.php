@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+
 class Equipment extends Model implements Auditable, HasMedia
 {
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, InteractsWithMedia;
@@ -88,8 +89,15 @@ class Equipment extends Model implements Auditable, HasMedia
             $equipment->qr_code = 'QR-' . date('YmdHis') . '-' . Auth::id();
         });
     }
+    
     public function type()
     {
         return $this->belongsTo(EquipmentType::class, 'type_id');
+    }
+
+    // Optional helper to access category directly from equipment
+    public function category()
+    {
+        return $this->type?->category();
     }
 }
