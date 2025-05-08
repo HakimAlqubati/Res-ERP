@@ -308,7 +308,10 @@ class PurchaseInvoiceResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('payment_method_id')
                     ->label('Payment Method')
-                    ->options(PaymentMethod::active()->get()->pluck('name', 'id'))
+                    ->options(PaymentMethod::active()->get()->pluck('name', 'id')),
+                SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->options(Supplier::get()->pluck('name', 'id'))
             ])
             ->actions([
                 Tables\Actions\Action::make('cancel')

@@ -403,7 +403,7 @@ class SettingResource extends Resource
                                     //     ->inline(false)
                                     //     ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
                                     Toggle::make('affect_inventory_from_grn_only')
-                                        ->label('Affect Inventory from GRN Only')
+                                        ->label('Update Inventory from GRN Only')
                                         ->helperText('If enabled, inventory will be updated from GRN only. If disabled, it will be updated from Purchase Invoice.')
                                         ->default(true)
                                         ->inline(false),
