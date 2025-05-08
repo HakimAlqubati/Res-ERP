@@ -20,7 +20,7 @@
                                 class="logo-img-report circle-image">
                         </th>
                         <th colspan="2" class="no_border_right_left text-left">
-                            <h3>Aggregated Stock Supply Report for ({{ $store }})</h3>
+                            <h3>Stock Supply Report for ({{ $store }})</h3>
                             <h5>
                                 Between {{ $startDate . ' & ' . $endDate }}
                             </h5>
