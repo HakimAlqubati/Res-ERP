@@ -39,7 +39,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-
+        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
+        $loader->alias('Debugbar', \Barryvdh\Debugbar\Facades\Debugbar::class);
         // $this->app->bind(BaseNotification::class, NotificationAttendanceCheck::class);
     }
 
@@ -70,10 +71,10 @@ class AppServiceProvider extends ServiceProvider
 
         FilamentAsset::register([
             // Js::make('custom-script', __DIR__ . '/../../tune.js'),
-            Js::make('custom-script', ''),
-            Css::make('main', ''),
-            Css::make('keypad', ''),
-            Js::make('example-local-script', asset('js/tune.js')),
+            // Js::make('custom-script', ''),
+            // Css::make('main', ''),
+            // Css::make('keypad', ''),
+            // Js::make('example-local-script', asset('js/tune.js')),
         ]);
         FilamentView::registerRenderHook(
             'panels::auth.login.form.after',

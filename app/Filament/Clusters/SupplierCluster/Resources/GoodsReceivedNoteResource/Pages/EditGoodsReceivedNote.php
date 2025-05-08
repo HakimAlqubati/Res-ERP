@@ -22,6 +22,9 @@ class EditGoodsReceivedNote extends EditRecord
     }
     protected function getFormActions(): array
     {
-        return [];
+        return [
+            $this->getSaveFormAction(),
+            $this->getCancelFormAction(),
+        ];
     }
 }

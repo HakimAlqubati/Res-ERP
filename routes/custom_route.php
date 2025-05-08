@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
@@ -27,3 +28,7 @@ Route::get('/generatePendingApprovalPreviousOrderDetailsReport', [TestController
 Route::get('productsNotInventoried', [TestController4::class, 'missingProducts']);
 
 Route::get('getStockSupplyReport', [TestController4::class, 'getStockSupplyReport']);
+
+Route::get('analyticsBranchConsumption', [BranchConsumptionAnalysisController::class, 'analyze']);
+
+Route::get('analyticsBranchConsumptionComparison', [BranchConsumptionAnalysisController::class, 'compare']);

@@ -72,11 +72,11 @@ class GoodsReceivedNoteResource extends Resource
                                     ->orderBy('id', 'desc')
                                     ->value('id') + 1 ?? 1))
                                 ->unique(ignoreRecord: true)
-                                ->readOnly()
+                                ->readOnly()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
                                 ->helperText('Enter GRN Number')->required(),
-                            DatePicker::make('grn_date')->disabledOn('edit')
+                            DatePicker::make('grn_date')
                                 ->label('GRN Date')->default(now())
-                                ->required(),
+                                ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
 
 
                             Select::make('store_id')
@@ -84,20 +84,21 @@ class GoodsReceivedNoteResource extends Resource
                                     Store::active()->pluck('name', 'id')->toArray()
                                 )->default(getDefaultStore())
                                 ->label('Store')->searchable()
-                                ->required()->disabledOn('edit'),
+                                ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
                             Select::make('status')->disabled()->dehydrated()
                                 ->label('Status')->default(GoodsReceivedNote::STATUS_CREATED)
                                 ->options(GoodsReceivedNote::getStatusOptions())
-                                ->required(),
+                                ->required()
+                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
                             Select::make('supplier_id')->label(__('lang.supplier'))
                                 ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                                 ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
                                 ->searchable()
                                 ->options(Supplier::limit(5)->get(['id', 'name'])->pluck('name', 'id'))
-                                ->disabledOn('edit'),
+                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
                             Textarea::make('notes')
                                 ->label('Notes')
-                                ->columnSpanFull(),
+                                ->columnSpanFull()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),
                         ]),
 
 
@@ -111,7 +112,7 @@ class GoodsReceivedNoteResource extends Resource
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
                                         ->searchable()
-                                        ->disabledOn('edit')
+
                                         ->options(function () {
                                             return Product::where('active', 1)
                                                 ->unmanufacturingCategory()
@@ -144,7 +145,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->required(),
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
-                                        ->disabledOn('edit')
+
                                         ->options(function (callable $get) {
                                             $product = \App\Models\Product::find($get('product_id'));
                                             if (!$product)
@@ -175,7 +176,7 @@ class GoodsReceivedNoteResource extends Resource
 
                                         ->minValue(0.1)
                                         ->default(1)
-                                        ->disabledOn('edit')
+
                                         ->live(onBlur: true)
                                         ->columnSpan(1)->required(),
 
@@ -183,8 +184,13 @@ class GoodsReceivedNoteResource extends Resource
                                 ])
                                 ->createItemButtonLabel('Add Item')
                                 ->collapsible()
-                                ->addable(function () use ($isEditOperation) {
-                                    return !$isEditOperation;
+                                ->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
+                                ->addable(function ($record) use ($isEditOperation) {
+
+                                    if ($isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED) {
+                                        return false;
+                                    }
+                                    return true;
                                 })
                                 ->defaultItems(1),
                         ]),
@@ -198,9 +204,16 @@ class GoodsReceivedNoteResource extends Resource
     {
         return $table
             ->striped()
-            ->defaultSort('id', 'desc')
+            ->defaultSort('updated_at', 'desc')
             ->columns([
-                TextColumn::make('grn_number')->label('GRN Number')
+                TextColumn::make('id')
+                    ->sortable()->alignCenter(true)
+                    ->label('ID')->toggleable()
+                    ->color('primary')
+                    ->weight(FontWeight::Bold),
+                TextColumn::make('grn_number')
+                    ->sortable()
+                    ->label('GRN Number')
                     ->color('primary')
                     ->weight(FontWeight::Bold)
                     ->searchable()->alignCenter(true)->toggleable(),
@@ -209,12 +222,16 @@ class GoodsReceivedNoteResource extends Resource
                 // TextColumn::make('status')->label('Status')->badge()->toggleable(),
                 TextColumn::make('details_count')->searchable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('updated_at')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->sortable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                // Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
                 // Tables\Actions\Action::make('Reject')
                 //     ->label('Reject')
                 //     ->color('danger')->button()
@@ -249,17 +266,30 @@ class GoodsReceivedNoteResource extends Resource
                 //     })
                 //     ->requiresConfirmation(),
                 Tables\Actions\Action::make('Approve')
+                    ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
+                    ->disabled(fn($record): bool =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
+                    ->color('success')->button()
+                    ->icon('heroicon-o-check-badge')
+                    ->requiresConfirmation()
+                    ->action(function ($record, array $data) {
+                        $record->update([
+                            'status' => GoodsReceivedNote::STATUS_APPROVED,
+                            'approved_by' => auth()->id(),
+                        ]);
+                    })
+                    ->requiresConfirmation(),
+                Tables\Actions\Action::make('CreatePurchaseInvoice')
                     ->label('Input Prices')
-                    ->color('success')
-                    ->icon('heroicon-o-pencil-square')
+                    ->color('primary')
+                    ->icon('heroicon-o-clipboard-document-check')
                     ->url(fn($record) => static::getUrl('create-purchase-invoice', ['record' => $record]))
                     ->button()
                     ->visible(function ($record) {
                         $allowedRoles = setting('grn_approver_role_id', []);
                         $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
 
-                        return $record->status === GoodsReceivedNote::STATUS_CREATED &&
-                            count(array_intersect($userRoles, $allowedRoles)) > 0;
+                        return $record->status == GoodsReceivedNote::STATUS_APPROVED && !$record->is_purchase_invoice_created  &&
+                            (count(array_intersect($userRoles, $allowedRoles)) > 0);
                     }),
 
             ])
