@@ -38,7 +38,8 @@ class Equipment extends Model implements Auditable, HasMedia
         'type_id',
         'operation_start_date',
         'warranty_end_date',
-        'next_service_date'
+        'next_service_date',
+        'branch_area_id',
     ];
     protected $auditInclude = [
         'asset_tag',
@@ -58,7 +59,8 @@ class Equipment extends Model implements Auditable, HasMedia
         'type_id',
         'operation_start_date',
         'warranty_end_date',
-        'next_service_date'
+        'next_service_date',
+        'branch_area_id',
     ];
 
     /**
@@ -89,7 +91,7 @@ class Equipment extends Model implements Auditable, HasMedia
             $equipment->qr_code = 'QR-' . date('YmdHis') . '-' . Auth::id();
         });
     }
-    
+
     public function type()
     {
         return $this->belongsTo(EquipmentType::class, 'type_id');
@@ -99,5 +101,10 @@ class Equipment extends Model implements Auditable, HasMedia
     public function category()
     {
         return $this->type?->category();
+    }
+
+    public function branchArea()
+    {
+        return $this->belongsTo(BranchArea::class, 'branch_area_id');
     }
 }

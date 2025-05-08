@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\RelationManagers;
 use App\Models\Branch;
+use App\Models\BranchArea;
 use App\Models\Equipment;
 use App\Models\EquipmentType;
 use Filament\Forms;
@@ -71,69 +72,88 @@ class EquipmentResource extends Resource
                                         ->unique(ignoreRecord: true)->hidden(),
                                 ]),
 
-                                Forms\Components\TextInput::make('serial_number')
-                                    ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
 
-                                    ->unique(ignoreRecord: true),
+                                Fieldset::make()->label('Set Branch & Area')->columns(2)->schema([
 
-                                Forms\Components\Select::make('branch_id')
-                                    ->label('Branch')
-                                    ->options(Branch::branches()->active()->pluck('name', 'id'))
-                                    ->required(),
+                                    Forms\Components\Select::make('branch_id')
+                                        ->label('Branch')
+                                        ->options(Branch::branches()->active()->pluck('name', 'id'))
+                                        ->required()->live(),
+                                    Select::make('branch_area_id')->label('Branch area')
+                                        ->options(function ($get) {
+                                            return BranchArea::query()
+                                                ->where('branch_id', $get('branch_id'))
+                                                ->pluck('name', 'id');
+                                        }),
+                                ]),
 
-                                Forms\Components\TextInput::make('make')
-                                    ->label('Make')
-                                    ->nullable()
-                                    ->prefixIcon('heroicon-s-bookmark-square')->prefixIconColor('primary'),
+                                Grid::make()->columns(3)->schema([
+                                    Forms\Components\TextInput::make('serial_number')
+                                        ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
 
-                                Forms\Components\TextInput::make('model')
-                                    ->label('Model')
-                                    ->prefixIcon('heroicon-s-wallet')->prefixIconColor('primary')
-                                    ->nullable(),
+                                        ->unique(ignoreRecord: true),
+                                    Forms\Components\TextInput::make('make')
+                                        ->label('Make')
+                                        ->nullable()
+                                        ->prefixIcon('heroicon-s-bookmark-square')->prefixIconColor('primary'),
 
-                                Forms\Components\TextInput::make('purchase_price')
-                                    ->label('Purchase Price')
-                                    ->prefixIcon('heroicon-s-currency-dollar')->prefixIconColor('primary')
-                                    ->numeric()
-                                    ->nullable(),
+                                    Forms\Components\TextInput::make('model')
+                                        ->label('Model')
+                                        ->prefixIcon('heroicon-s-wallet')->prefixIconColor('primary')
+                                        ->nullable(),
 
-                                Forms\Components\TextInput::make('size')
-                                    ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
-                                    ->label('Size')
-                                    ->nullable(),
+                                ]),
+                                Grid::make()->columns(3)->schema([
+                                    Forms\Components\TextInput::make('purchase_price')
+                                        ->label('Purchase Price')
+                                        ->prefixIcon('heroicon-s-currency-dollar')->prefixIconColor('primary')
+                                        ->numeric()
+                                        ->nullable(),
 
-                                Forms\Components\TextInput::make('periodic_service')
-                                    ->label('Periodic Service (Days)')
-                                    ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
-                                    ->numeric()
-                                    ->default(0),
+                                    Forms\Components\TextInput::make('size')
+                                        ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
+                                        ->label('Size')
+                                        ->nullable(),
 
-                                Forms\Components\DatePicker::make('last_serviced')
-                                    ->label('Last Serviced')->default(now())
-                                    ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary'),
+                                    Forms\Components\TextInput::make('periodic_service')
+                                        ->label('Periodic Service (Days)')
+                                        ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
+                                        ->numeric()
+                                        ->default(0),
+                                ]),
 
                                 // Forms\Components\FileUpload::make('warranty_file')
                                 //     ->label('Warranty File'),
 
                                 // Forms\Components\FileUpload::make('profile_picture')
                                 //     ->label('Profile Picture'),
-                                Fieldset::make()->label('Set Dates')->columns(3)->schema([
-                                    Forms\Components\DatePicker::make('operation_start_date')
-                                        ->label('Operation Start Date')
-                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                        ->default(now()->subYear()),
 
-                                    Forms\Components\DatePicker::make('warranty_end_date')
-                                        ->label('Warranty End Date')
-                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                        ->default(now()),
+                            ])
 
-                                    Forms\Components\DatePicker::make('next_service_date')
-                                        ->label('Next Service Date')
-                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                        ->default(now()),
-                                ])
+                        ]),
+                    Wizard\Step::make('Dates')
+                        ->icon('heroicon-o-calendar-date-range')
+                        ->schema([
+                            Fieldset::make()->label('Set Dates')->columns(4)->schema([
 
+                                Forms\Components\DatePicker::make('last_serviced')
+                                    ->label('Last Serviced')->default(now())
+                                    ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary'),
+
+                                Forms\Components\DatePicker::make('operation_start_date')
+                                    ->label('Operation Start Date')
+                                    ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                    ->default(now()->subYear()),
+
+                                Forms\Components\DatePicker::make('warranty_end_date')
+                                    ->label('Warranty End Date')
+                                    ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                    ->default(now()),
+
+                                Forms\Components\DatePicker::make('next_service_date')
+                                    ->label('Next Service Date')
+                                    ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                    ->default(now()),
                             ])
 
                         ]),
@@ -163,7 +183,7 @@ class EquipmentResource extends Resource
                                     ->downloadable(true)
                                     ->previewable(true)
                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                        return (string) str($file->getClientOriginalName())->prepend('branch-');
+                                        return (string) str($file->getClientOriginalName())->prepend('equipment-');
                                     })
                                     ->imageEditor()
                                     ->imageEditorAspectRatios([
