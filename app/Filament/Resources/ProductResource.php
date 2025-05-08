@@ -847,7 +847,7 @@ class ProductResource extends Resource
                             }
                         }
                         Log::info('Update Component Prices Results:', $result);
-                    }),
+                    })->hidden(),
                 BulkAction::make('updateComponentPricesNew')
                     ->label('Update Price New')
                     ->icon('heroicon-o-currency-dollar')->button()
