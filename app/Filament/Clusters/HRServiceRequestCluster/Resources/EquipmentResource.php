@@ -12,17 +12,21 @@ use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
+use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EquipmentResource extends Resource
 {
@@ -38,95 +42,141 @@ class EquipmentResource extends Resource
 
         return $form
             ->schema([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(3)->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Name')
-                            ->required()->prefixIconColor('primary')->columnSpan(1)
-                            ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-information-circle'),
+                Wizard::make([
+                    Wizard\Step::make('Basic data')
+                        ->icon('heroicon-o-bars-3-center-left')
+                        ->schema([
+                            Fieldset::make()->schema([
+                                Grid::make()->columns(3)->schema([
+                                    Forms\Components\TextInput::make('name')
+                                        ->label('Name')
+                                        ->required()->prefixIconColor('primary')->columnSpan(1)
+                                        ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-information-circle'),
 
 
-                        Forms\Components\Select::make('type_id')
-                            ->label('Type')
-                            ->options(EquipmentType::active()->pluck('name', 'id'))
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                $set('asset_tag', EquipmentResource::generateEquipmentCode($state));
-                            }),
-                        Forms\Components\TextInput::make('asset_tag')
-                            ->label('Asset Tag')
-                            ->required()->prefixIconColor('primary')->readOnly()
-                            ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-tag'),
-                        Forms\Components\TextInput::make('qr_code')->prefixIcon('heroicon-s-qr-code')->prefixIconColor('primary')
-                            ->label('QR Code')
-                            ->required()
-                            ->unique(ignoreRecord: true)->hidden(),
-                    ]),
+                                    Forms\Components\Select::make('type_id')
+                                        ->label('Type')
+                                        ->options(EquipmentType::active()->pluck('name', 'id'))
+                                        ->reactive()
+                                        ->afterStateUpdated(function ($state, callable $set) {
+                                            $set('asset_tag', EquipmentResource::generateEquipmentCode($state));
+                                        }),
+                                    Forms\Components\TextInput::make('asset_tag')
+                                        ->label('Asset Tag')
+                                        ->required()->prefixIconColor('primary')->readOnly()
+                                        ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-tag'),
+                                    Forms\Components\TextInput::make('qr_code')->prefixIcon('heroicon-s-qr-code')->prefixIconColor('primary')
+                                        ->label('QR Code')
+                                        ->required()
+                                        ->unique(ignoreRecord: true)->hidden(),
+                                ]),
 
-                    Forms\Components\TextInput::make('serial_number')
-                        ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
+                                Forms\Components\TextInput::make('serial_number')
+                                    ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
 
-                        ->unique(ignoreRecord: true),
+                                    ->unique(ignoreRecord: true),
 
-                    Forms\Components\Select::make('branch_id')
-                        ->label('Branch')
-                        ->options(Branch::branches()->active()->pluck('name', 'id'))
-                        ->required(),
+                                Forms\Components\Select::make('branch_id')
+                                    ->label('Branch')
+                                    ->options(Branch::branches()->active()->pluck('name', 'id'))
+                                    ->required(),
 
-                    Forms\Components\TextInput::make('make')
-                        ->label('Make')
-                        ->nullable()
-                        ->prefixIcon('heroicon-s-bookmark-square')->prefixIconColor('primary'),
+                                Forms\Components\TextInput::make('make')
+                                    ->label('Make')
+                                    ->nullable()
+                                    ->prefixIcon('heroicon-s-bookmark-square')->prefixIconColor('primary'),
 
-                    Forms\Components\TextInput::make('model')
-                        ->label('Model')
-                        ->prefixIcon('heroicon-s-wallet')->prefixIconColor('primary')
-                        ->nullable(),
+                                Forms\Components\TextInput::make('model')
+                                    ->label('Model')
+                                    ->prefixIcon('heroicon-s-wallet')->prefixIconColor('primary')
+                                    ->nullable(),
 
-                    Forms\Components\TextInput::make('purchase_price')
-                        ->label('Purchase Price')
-                        ->prefixIcon('heroicon-s-currency-dollar')->prefixIconColor('primary')
-                        ->numeric()
-                        ->nullable(),
+                                Forms\Components\TextInput::make('purchase_price')
+                                    ->label('Purchase Price')
+                                    ->prefixIcon('heroicon-s-currency-dollar')->prefixIconColor('primary')
+                                    ->numeric()
+                                    ->nullable(),
 
-                    Forms\Components\TextInput::make('size')
-                        ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
-                        ->label('Size')
-                        ->nullable(),
+                                Forms\Components\TextInput::make('size')
+                                    ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
+                                    ->label('Size')
+                                    ->nullable(),
 
-                    Forms\Components\TextInput::make('periodic_service')
-                        ->label('Periodic Service (Days)')
-                        ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
-                        ->numeric()
-                        ->default(0),
+                                Forms\Components\TextInput::make('periodic_service')
+                                    ->label('Periodic Service (Days)')
+                                    ->prefixIcon('heroicon-s-ellipsis-horizontal-circle')->prefixIconColor('primary')
+                                    ->numeric()
+                                    ->default(0),
 
-                    Forms\Components\DatePicker::make('last_serviced')
-                        ->label('Last Serviced')->default(now())
-                        ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary'),
+                                Forms\Components\DatePicker::make('last_serviced')
+                                    ->label('Last Serviced')->default(now())
+                                    ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary'),
 
-                    Forms\Components\FileUpload::make('warranty_file')
-                        ->label('Warranty File'),
+                                // Forms\Components\FileUpload::make('warranty_file')
+                                //     ->label('Warranty File'),
 
-                    Forms\Components\FileUpload::make('profile_picture')
-                        ->label('Profile Picture'),
-                    Fieldset::make()->label('Set Dates')->columns(3)->schema([
-                        Forms\Components\DatePicker::make('operation_start_date')
-                            ->label('Operation Start Date')
-                            ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                            ->default(now()->subYear()),
+                                // Forms\Components\FileUpload::make('profile_picture')
+                                //     ->label('Profile Picture'),
+                                Fieldset::make()->label('Set Dates')->columns(3)->schema([
+                                    Forms\Components\DatePicker::make('operation_start_date')
+                                        ->label('Operation Start Date')
+                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                        ->default(now()->subYear()),
 
-                        Forms\Components\DatePicker::make('warranty_end_date')
-                            ->label('Warranty End Date')
-                            ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                            ->default(now()),
+                                    Forms\Components\DatePicker::make('warranty_end_date')
+                                        ->label('Warranty End Date')
+                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                        ->default(now()),
 
-                        Forms\Components\DatePicker::make('next_service_date')
-                            ->label('Next Service Date')
-                            ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                            ->default(now()),
-                    ])
+                                    Forms\Components\DatePicker::make('next_service_date')
+                                        ->label('Next Service Date')
+                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                        ->default(now()),
+                                ])
 
-                ])
+                            ])
+
+                        ]),
+                    Wizard\Step::make('Images')
+                        ->icon('heroicon-o-photo')
+                        ->schema([
+                            Fieldset::make()->columns(1)->schema([
+                                SpatieMediaLibraryFileUpload::make('images')
+                                    ->disk('public')
+                                    ->label('')
+                                    ->directory('equipments')
+                                    ->columnSpanFull()
+                                    ->image()
+                                    ->multiple()
+                                    ->downloadable()
+                                    ->moveFiles()
+                                    ->previewable()
+                                    ->imagePreviewHeight('250')
+                                    ->loadingIndicatorPosition('right')
+                                    ->panelLayout('integrated')
+                                    ->removeUploadedFileButtonPosition('right')
+                                    ->uploadButtonPosition('right')
+                                    ->uploadProgressIndicatorPosition('right')
+                                    ->panelLayout('grid')
+                                    ->reorderable()
+                                    ->openable()
+                                    ->downloadable(true)
+                                    ->previewable(true)
+                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                        return (string) str($file->getClientOriginalName())->prepend('branch-');
+                                    })
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])->maxSize(800)
+                                    ->imageEditorMode(2)
+                                    ->imageEditorEmptyFillColor('#fff000')
+                                    ->circleCropper()
+                            ])
+                        ]),
+                ])->skippable()->columnSpanFull(),
             ]);
     }
 
@@ -134,6 +184,10 @@ class EquipmentResource extends Resource
     {
         return $table->striped()
             ->columns([
+                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                    ->circular()->alignCenter(true)->getStateUsing(function () {
+                        return null;
+                    })->limit(3),
                 TextColumn::make('name')->toggleable()
                     ->searchable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
