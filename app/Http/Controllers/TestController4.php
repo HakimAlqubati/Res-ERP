@@ -15,6 +15,7 @@ use App\Services\MultiProductsInventoryService;
 use App\Services\Orders\Reports\OrdersReportsService;
 use App\Services\Orders\Reports\ReorderDueToStockReportService;
 use App\Services\StockInventoryReportService;
+use App\Services\StockSupply\Reports\StockSupplyOrderReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -427,6 +428,20 @@ AND (
             'fromDate' => $fromDate,
             'toDate' => $toDate,
             'intervalType' => $intervalType,
+            'data' => $data,
+        ]);
+    }
+
+
+    public function getStockSupplyReport(Request $request)
+    {
+        $service = new StockSupplyOrderReportService();
+        $storeId = $request->input('store_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $data = $service->generateReport($storeId, $startDate, $endDate);
+
+        return response()->json([
             'data' => $data,
         ]);
     }

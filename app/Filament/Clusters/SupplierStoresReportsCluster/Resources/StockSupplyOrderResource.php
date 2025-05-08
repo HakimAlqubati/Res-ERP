@@ -149,11 +149,15 @@ class StockSupplyOrderResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([10, 25, 50, 100])
             ->striped()->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('order_date')->sortable()->label('Order Date'),
-                TextColumn::make('store.name')->label('Store'),
-                TextColumn::make('item_count')->label('Products Count')->alignCenter(true),
+                TextColumn::make('id')->sortable()->label('id')
+                    ->toggleable()->searchable(),
+                TextColumn::make('order_date')->sortable()->label('Order Date')
+                    ->toggleable(),
+                TextColumn::make('store.name')->label('Store')->toggleable()->searchable(),
+                TextColumn::make('item_count')->label('Products Count')->alignCenter(true)->toggleable(),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
                 IconColumn::make('cancelled')
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true),
