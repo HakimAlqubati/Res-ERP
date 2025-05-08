@@ -182,7 +182,7 @@ class EquipmentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()->defaultSort('id','desc')
+        return $table->striped()->defaultSort('id', 'desc')
             ->columns([
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
@@ -237,7 +237,11 @@ class EquipmentResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')
                     ->label('Branch')
-                    ->searchable()->options(fn() => \App\Models\Branch::active()->pluck('name', 'id')),
+                    ->searchable()->options(fn() => \App\Models\Branch::branches()
+                        ->active()->pluck('name', 'id')),
+                SelectFilter::make('type_id')
+                    ->label('Type')
+                    ->searchable()->options(fn() => \App\Models\EquipmentType::active()->pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
