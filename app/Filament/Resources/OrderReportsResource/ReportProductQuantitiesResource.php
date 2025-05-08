@@ -85,7 +85,7 @@ class ReportProductQuantitiesResource extends Resource
                     ),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()
-                    ->options(Branch::pluck('name', 'id')),
+                    ->options(Branch::branches()->active()->pluck('name', 'id')),
 
                 Filter::make('date_range')
                     ->form([
