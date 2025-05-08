@@ -5,10 +5,13 @@ namespace App\Filament\Clusters\HRServiceRequestCluster\Resources;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\RelationManagers;
+use App\Models\Branch;
 use App\Models\Equipment;
+use App\Models\EquipmentType;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
@@ -32,19 +35,28 @@ class EquipmentResource extends Resource
     protected static ?int $navigationSort = 2;
     public static function form(Form $form): Form
     {
+
         return $form
             ->schema([
                 Fieldset::make()->schema([
                     Grid::make()->columns(3)->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Name')
-                            ->required()->prefixIconColor('primary')->columnSpan(2)
+                            ->required()->prefixIconColor('primary')->columnSpan(1)
                             ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-information-circle'),
+
+
+                        Forms\Components\Select::make('type_id')
+                            ->label('Type')
+                            ->options(EquipmentType::active()->pluck('name', 'id'))
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('asset_tag', EquipmentResource::generateEquipmentCode($state));
+                            }),
                         Forms\Components\TextInput::make('asset_tag')
                             ->label('Asset Tag')
-                            ->required()->prefixIconColor('primary')
+                            ->required()->prefixIconColor('primary')->readOnly()
                             ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-tag'),
-
                         Forms\Components\TextInput::make('qr_code')->prefixIcon('heroicon-s-qr-code')->prefixIconColor('primary')
                             ->label('QR Code')
                             ->required()
@@ -53,12 +65,12 @@ class EquipmentResource extends Resource
 
                     Forms\Components\TextInput::make('serial_number')
                         ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
-                        ->required()
+
                         ->unique(ignoreRecord: true),
 
                     Forms\Components\Select::make('branch_id')
                         ->label('Branch')
-                        ->relationship('branch', 'name')
+                        ->options(Branch::branches()->active()->pluck('name', 'id'))
                         ->required(),
 
                     Forms\Components\TextInput::make('make')
@@ -89,17 +101,17 @@ class EquipmentResource extends Resource
                         ->default(0),
 
                     Forms\Components\DatePicker::make('last_serviced')
-                        ->label('Last Serviced')
+                        ->label('Last Serviced')->default(now())
                         ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary')
-                        ->nullable(),
+                        ,
 
                     Forms\Components\FileUpload::make('warranty_file')
                         ->label('Warranty File')
-                        ->nullable(),
+                        ,
 
                     Forms\Components\FileUpload::make('profile_picture')
                         ->label('Profile Picture')
-                        ->nullable(),
+                        ,
                 ])
             ]);
     }
@@ -188,5 +200,14 @@ class EquipmentResource extends Resource
             return static::getModel()::where('branch_id', auth()->user()->branch->id)->count();
         }
         return static::getModel()::count();
+    }
+    public static function generateEquipmentCode(?int $typeId): string
+    {
+        $prefix = \App\Models\EquipmentType::find($typeId)?->equipment_code_start_with ?? 'EQ';
+
+        // يمكنك استخدام رقم تسلسلي مختلف إذا أردت أن يكون خاص لكل نوع
+        $lastId = \App\Models\Equipment::max('id') + 1;
+
+        return $prefix . str_pad((string)$lastId, 4, '0', STR_PAD_LEFT);
     }
 }

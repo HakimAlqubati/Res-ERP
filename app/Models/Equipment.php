@@ -33,6 +33,7 @@ class Equipment extends Model implements Auditable
         'last_serviced',
         'creatd_by',
         'name',
+        'type_id',
     ];
     protected $auditInclude = [
         'asset_tag',
@@ -49,6 +50,7 @@ class Equipment extends Model implements Auditable
         'last_serviced',
         'creatd_by',
         'name',
+        'type_id',
     ];
 
     /**
@@ -78,5 +80,9 @@ class Equipment extends Model implements Auditable
             $equipment->creatd_by = Auth::id();
             $equipment->qr_code = 'QR-' . date('YmdHis') . '-' . Auth::id();
         });
+    }
+    public function type()
+    {
+        return $this->belongsTo(EquipmentType::class, 'type_id');
     }
 }
