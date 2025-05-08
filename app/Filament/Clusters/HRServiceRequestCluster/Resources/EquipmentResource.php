@@ -102,16 +102,30 @@ class EquipmentResource extends Resource
 
                     Forms\Components\DatePicker::make('last_serviced')
                         ->label('Last Serviced')->default(now())
-                        ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary')
-                        ,
+                        ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary'),
 
                     Forms\Components\FileUpload::make('warranty_file')
-                        ->label('Warranty File')
-                        ,
+                        ->label('Warranty File'),
 
                     Forms\Components\FileUpload::make('profile_picture')
-                        ->label('Profile Picture')
-                        ,
+                        ->label('Profile Picture'),
+                    Fieldset::make()->label('Set Dates')->columns(3)->schema([
+                        Forms\Components\DatePicker::make('operation_start_date')
+                            ->label('Operation Start Date')
+                            ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                            ->default(now()->subYear()),
+
+                        Forms\Components\DatePicker::make('warranty_end_date')
+                            ->label('Warranty End Date')
+                            ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                            ->default(now()),
+
+                        Forms\Components\DatePicker::make('next_service_date')
+                            ->label('Next Service Date')
+                            ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                            ->default(now()),
+                    ])
+
                 ])
             ]);
     }
@@ -147,6 +161,24 @@ class EquipmentResource extends Resource
                     ->label('Created At')
                     ->dateTime()
                     ->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('operation_start_date')
+                    ->label('Operation Start')
+
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('warranty_end_date')
+                    ->label('Warranty End')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('next_service_date')
+                    ->label('Next Service')
+                    ->date()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('branch_id')

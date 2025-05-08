@@ -34,6 +34,9 @@ class Equipment extends Model implements Auditable
         'creatd_by',
         'name',
         'type_id',
+        'operation_start_date',
+        'warranty_end_date',
+        'next_service_date'
     ];
     protected $auditInclude = [
         'asset_tag',
@@ -51,6 +54,9 @@ class Equipment extends Model implements Auditable
         'creatd_by',
         'name',
         'type_id',
+        'operation_start_date',
+        'warranty_end_date',
+        'next_service_date'
     ];
 
     /**
