@@ -193,7 +193,7 @@ class EquipmentResource extends Resource
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('asset_tag')
                     ->searchable()->toggleable()
-                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('qr_code')
                     ->searchable()->toggleable()->hidden(),
                 TextColumn::make('make')->toggleable()
