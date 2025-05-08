@@ -39,7 +39,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
     {
 
         $this->formData = [
-            'invoice_no' => PurchaseInvoice::autoInvoiceNo(),
+            'invoice_no' => null,
             'date' => now()->format('Y-m-d'),
             'store_id' => $this->record->store_id,
             'supplier_id' => $this?->record?->supplier_id,
