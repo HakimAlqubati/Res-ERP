@@ -82,7 +82,7 @@ class BranchResource extends Resource
                                             Branch::TYPE_POPUP => __('lang.popup_branch'),
                                         ])
                                         ->default(Branch::TYPE_BRANCH)
-                                 
+
                                         ->reactive(),
                                     Toggle::make('manager_abel_show_orders')
                                         ->label(__('stock.manager_abel_show_orders'))
@@ -271,7 +271,9 @@ class BranchResource extends Resource
                     ->label(__('lang.end_date'))
                     ->dateTime('Y-m-d')
                     ->toggleable(isToggledHiddenByDefault: true),
-
+                TextColumn::make('orders_count')
+                    ->formatStateUsing(fn($record): string => $record?->orders()?->count() ?? 0)
+                    ->label(__('lang.orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([

@@ -51,7 +51,7 @@ class Branch extends Model implements HasMedia, Auditable
         'end_date',
         'more_description',
     ];
-    protected $appends = ['customized_categories'];
+    protected $appends = ['customized_categories','orders_count'];
 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
@@ -268,5 +268,10 @@ class Branch extends Model implements HasMedia, Auditable
                 'name' => $category->name,
             ];
         });
+    }
+
+    public function getOrdersCountAttribute(): int
+    {
+        return $this->orders()->count();
     }
 }
