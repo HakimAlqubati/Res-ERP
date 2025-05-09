@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /login
+Disallow: /dashboard
+Allow: /
+
+Sitemap: https://nltworkbench.com/sitemap.xml
