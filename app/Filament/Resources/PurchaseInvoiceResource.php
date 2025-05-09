@@ -415,9 +415,9 @@ class PurchaseInvoiceResource extends Resource
     }
     public static function canCreate(): bool
     {
-        if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
-            return false;
-        }
+        // if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
+        //     return false;
+        // }
         if (isSuperVisor()) {
             return false;
         }

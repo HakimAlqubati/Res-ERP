@@ -112,7 +112,6 @@ class GoodsReceivedNoteResource extends Resource
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
                                         ->searchable()
-
                                         ->options(function () {
                                             return Product::where('active', 1)
                                                 ->unmanufacturingCategory()
@@ -162,9 +161,6 @@ class GoodsReceivedNoteResource extends Resource
                                             )
                                                 ->showInInvoices()
                                                 ->where('unit_id', $state)->first();
-
-
-
                                             $set('package_size',  $unitPrice->package_size ?? 0);
                                         })->columnSpan(2)->required(),
                                     TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -295,7 +291,7 @@ class GoodsReceivedNoteResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
