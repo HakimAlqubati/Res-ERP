@@ -418,7 +418,7 @@ class PurchaseInvoiceResource extends Resource
         // if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
         //     return false;
         // }
-        if (isSuperVisor()) {
+        if (isSuperVisor() || isStoreManager()) {
             return false;
         }
         return static::can('create');
