@@ -358,6 +358,7 @@ class ProductResource extends Resource
                                             return Unit::pluck('name', 'id');
                                         })->searchable()
                                         ->disabled(function (callable $get, $livewire) {
+                                            return false;
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
@@ -370,6 +371,7 @@ class ProductResource extends Resource
                                         // ->mask(RawJs::make('$money($input)'))
                                         // ->stripCharacters(',')   
                                         ->disabled(function (callable $get, $livewire) {
+                                            return false;
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
@@ -483,6 +485,7 @@ class ProductResource extends Resource
                                                 $set('price', round(($firstPrice / $firstPackageSize) * $state, 7));
                                             }
                                         })->disabled(function (callable $get, $livewire) {
+                                            return false;
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
@@ -494,6 +497,7 @@ class ProductResource extends Resource
                                         ->label(__('lang.show_in_invoices'))
                                         ->default(false)
                                         ->disabled(function (callable $get, $record, $livewire) {
+                                            return false;
                                             return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
                                         })
                                         ->dehydrated(),
@@ -634,6 +638,7 @@ class ProductResource extends Resource
                                 ->reorderable()
 
                                 ->disabled(function (callable $get, $livewire) {
+                                    return false;
                                     return static::isProductLocked($livewire->form->getRecord());
                                 })
 
@@ -698,10 +703,10 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: true),
                 Tables\Columns\TextColumn::make('code')
-                    ->label(__('lang.code'))
+                    ->label(__('lang.code'))->copyable()
                     ->searchable(isIndividual: false, isGlobal: true),
 
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('name')->copyable()
                     ->label(__('lang.name'))
                     ->toggleable()
 
