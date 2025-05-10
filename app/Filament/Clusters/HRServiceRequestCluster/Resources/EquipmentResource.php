@@ -147,11 +147,10 @@ class EquipmentResource extends Resource
                                     ->numeric()->columnSpan(1)
                                     ->default(1)
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
-                                        $state = (float)$state;
-                                        $startDate = $get('operation_start_date');
-                                        if ($startDate) {
-                                            $set('warranty_end_date', \Carbon\Carbon::parse($startDate)->addYears($state)->format('Y-m-d'));
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $purchaseDate = $get('purchase_date');
+                                        if ($purchaseDate) {
+                                            $set('warranty_end_date', \Carbon\Carbon::parse($purchaseDate)->addYears((float)$state)->format('Y-m-d'));
                                         }
                                     }),
 
@@ -171,7 +170,14 @@ class EquipmentResource extends Resource
                                     Forms\Components\DatePicker::make('purchase_date')
                                         ->label('Purchase Date')
                                         ->prefixIcon('heroicon-s-calendar')
-                                        ->default(now()),
+                                        ->default(now())
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $years = (float) $get('warranty_years');
+                                            if ($years) {
+                                                $set('warranty_end_date', \Carbon\Carbon::parse($state)->addYears($years)->format('Y-m-d'));
+                                            }
+                                        }),
 
                                     Forms\Components\DatePicker::make('warranty_end_date')
                                         ->label('Warranty End Date')
