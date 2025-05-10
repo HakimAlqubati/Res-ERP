@@ -54,7 +54,7 @@ class EquipmentResource extends Resource
                                         ->required()->prefixIconColor('primary')->columnSpan(1)
                                         ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-information-circle'),
                                     Forms\Components\Select::make('status')
-                                        ->label('Type')->required()
+                                        ->label('Status')->required()
                                         ->options(Equipment::STATUS_LABELS)->default(Equipment::STATUS_ACTIVE)
                                         ->prefixIcon('heroicon-s-chart-bar-square')->prefixIconColor('primary'),
 

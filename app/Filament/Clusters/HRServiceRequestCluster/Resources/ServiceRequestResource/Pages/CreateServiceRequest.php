@@ -29,17 +29,15 @@ class CreateServiceRequest extends CreateRecord
     {
         $equipmentId = request()->get('equipment_id');
 
-        $defaults = [];
         $defaults = [
             'status' => ServiceRequest::STATUS_NEW,
         ];
         if ($equipmentId && $equipment = Equipment::find($equipmentId)) {
-            $defaults = [
+            $defaults = array_merge($defaults, [
                 'equipment_id'    => $equipment->id,
                 'branch_id'       => $equipment->branch_id,
                 'branch_area_id'  => $equipment->branch_area_id,
-
-            ];
+            ]);
         }
         $this->form->fill($defaults);
     }
