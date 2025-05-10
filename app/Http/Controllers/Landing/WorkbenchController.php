@@ -10,4 +10,13 @@ class WorkbenchController extends Controller
     {
         return view('landing.workbench');
     }
+    public function restaurantErp()
+    {
+        return view('landing.restaurant-erp');
+    }
+
+    public function faq()
+    {
+        return view('landing.faq');
+    }
 }

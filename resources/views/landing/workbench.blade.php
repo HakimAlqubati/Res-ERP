@@ -11,7 +11,7 @@
         | نظام إدارة المخزون والطلبات
         | Workbench ERP | NLT Workbench ERP | النظام Workbench ERP|
     </title>
-    
+
     <meta name="description"
         content="NLT Workbench ERP هو نظام متخصص لإدارة المطاعم داخليًا، يُساعدك على التحكم الكامل في المخزون، الطلبات اليومية، التصنيع الداخلي، وتتبع أداء الفروع والتقارير بدقة. مناسب للمطاعم متعددة الفروع والمطابخ المركزية.">
 
@@ -103,6 +103,11 @@
 
 <body>
     <div class="container">
+        <figure>
+            <img src="https://nltworkbench.com/storage/logo/default.png"
+                alt="شعار نظام Workbench ERP لإدارة المطاعم والمخزون" width="200" height="auto" loading="lazy">
+            <figcaption>شعار Workbench ERP - مقدم من شركة NLT - ماليزيا</figcaption>
+        </figure>
         <h1>نظام Workbench ERP</h1>
         <p>نظام متخصص في إدارة العمليات الداخلية لسلسلة المطاعم، مثل:</p>
 
