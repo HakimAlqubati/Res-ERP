@@ -33,13 +33,16 @@ class Equipment extends Model implements Auditable, HasMedia
         'size',
         'periodic_service',
         'last_serviced',
-        'creatd_by',
+        'created_by',
         'name',
         'type_id',
         'operation_start_date',
         'warranty_end_date',
         'next_service_date',
         'branch_area_id',
+        'status',
+        'service_interval_days',
+        'warranty_years',
     ];
     protected $auditInclude = [
         'asset_tag',
@@ -54,15 +57,27 @@ class Equipment extends Model implements Auditable, HasMedia
         'size',
         'periodic_service',
         'last_serviced',
-        'creatd_by',
+        'created_by',
         'name',
         'type_id',
         'operation_start_date',
         'warranty_end_date',
         'next_service_date',
         'branch_area_id',
+        'status',
+        'service_interval_days',
+        'warranty_years',
     ];
 
+    const STATUS_ACTIVE = 'Active';
+    const STATUS_UNDER_MAINTENANCE = 'Under Maintenance';
+    const STATUS_RETIRED = 'Retired';
+
+    const STATUS_LABELS = [
+        self::STATUS_ACTIVE => 'Active',
+        self::STATUS_UNDER_MAINTENANCE => 'Under Maintenance',
+        self::STATUS_RETIRED => 'Retired',
+    ];
     /**
      * Relationship with the branch model (assuming you have one).
      */
@@ -76,18 +91,18 @@ class Equipment extends Model implements Auditable, HasMedia
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'creatd_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
-     * Automatically set the 'creatd_by' attribute when creating a new record.
+     * Automatically set the 'created_by' attribute when creating a new record.
      */
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function ($equipment) {
-            $equipment->creatd_by = Auth::id();
+            $equipment->created_by = Auth::id();
             $equipment->qr_code = 'QR-' . date('YmdHis') . '-' . Auth::id();
         });
     }
@@ -106,5 +121,24 @@ class Equipment extends Model implements Auditable, HasMedia
     public function branchArea()
     {
         return $this->belongsTo(BranchArea::class, 'branch_area_id');
+    }
+
+    public function scopeStatus($query, string $status)
+    {
+        return $query->where('status', $status);
+    }
+    public static function getStatusLabels(): array
+    {
+        return self::STATUS_LABELS;
+    }
+
+    public function getStatusBadgeColor(): string
+    {
+        return match ($this->status) {
+            self::STATUS_ACTIVE => 'success',
+            self::STATUS_UNDER_MAINTENANCE => 'warning',
+            self::STATUS_RETIRED => 'danger',
+            default => 'secondary',
+        };
     }
 }

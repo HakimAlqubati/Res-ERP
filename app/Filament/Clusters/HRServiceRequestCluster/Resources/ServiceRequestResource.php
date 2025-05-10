@@ -62,7 +62,7 @@ class ServiceRequestResource extends Resource
                         ->icon('heroicon-o-bars-3-center-left')
                         ->schema([
                             Fieldset::make()->schema([
-                                Fieldset::make()->columns(2)->schema([
+                                Fieldset::make()->columns(3)->schema([
                                     Select::make('branch_id')->label('Branch')
                                         ->disabled(function ($record) {
                                             if (isset($record)) {
@@ -96,26 +96,19 @@ class ServiceRequestResource extends Resource
                                                 return true;
                                             }
                                         }),
-                                    TextInput::make('name')
-                                        ->required()->label('Title')
-                                        ->maxLength(255)
-                                        ->disabled(condition: function ($record) {
-                                            if (isset($record)) {
-                                                if ($record->created_by == auth()->user()->id) {
-                                                    return false;
-                                                }
-                                                return true;
-                                            }
-                                        }),
+
                                     Select::make('equipment_id')->label('Equipment')
                                         ->options(function (Get $get) {
                                             return Equipment::query()
                                                 ->where('branch_id', $get('branch_id'))
+                                                ->where('branch_area_id', $get('branch_area_id'))
                                                 ->pluck('name', 'id');
-                                        })
-                                        ->searchable()
-                                        ->nullable(),
-
+                                        })->required()
+                                        ->searchable(),
+                                    Textarea::make('description')->label('')->required()
+                                        ->helperText('Description of service request')
+                                        ->columnSpanFull()
+                                        ->maxLength(500),
 
                                 ]),
 
@@ -181,63 +174,12 @@ class ServiceRequestResource extends Resource
                                 ]),
                             ])
                         ]),
-                    Wizard\Step::make('Description')
-                        ->icon('heroicon-o-document-text')
-                        ->schema([
-                            Fieldset::make()->label('Descripe your service request')->schema([
-                                Textarea::make('description')->label('')->required()
-                                    ->helperText('Description of service request')
-                                    ->columnSpanFull()
-                                    ->maxLength(500),
 
-                            ])
-                                ->disabled(function ($record) {
-                                    if (isset($record)) {
-                                        if ($record->created_by == auth()->user()->id) {
-                                            return false;
-                                        }
-                                        return true;
-                                    }
-                                }),
-
-                        ]),
                     Wizard\Step::make('Images')
                         ->icon('heroicon-o-photo')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                SpatieMediaLibraryFileUpload::make('images')
-                                    ->disk('public')
-                                    ->label('')
-                                    ->directory('service-requests')
-                                    ->columnSpanFull()
-                                    ->image()
-                                    ->multiple()
-                                    ->downloadable()
-                                    ->moveFiles()
-                                    ->previewable()
-                                    ->imagePreviewHeight('250')
-                                    ->loadingIndicatorPosition('right')
-                                    ->panelLayout('integrated')
-                                    ->removeUploadedFileButtonPosition('right')
-                                    ->uploadButtonPosition('right')
-                                    ->uploadProgressIndicatorPosition('right')
-                                    ->panelLayout('grid')
-                                    ->reorderable()
-                                    ->openable()
-                                    ->downloadable(true)
-                                    ->previewable(true)
-                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                        return (string) str($file->getClientOriginalName())->prepend('service-');
-                                    })
-                                    ->imageEditor()
-                                    ->imageEditorAspectRatios([
-                                        '16:9',
-                                        '4:3',
-                                        '1:1',
-                                    ])->maxSize(800)
-                                    ->imageEditorMode(2)
-                                    ->imageEditorEmptyFillColor('#fff000')
-                                    ->circleCropper()
+                                self::getMediaSpatieField(),
                             ])
                         ]),
                 ])->skippable()->columnSpanFull(),
@@ -526,57 +468,25 @@ class ServiceRequestResource extends Resource
                         }
                         return false;
                     })
-                        // ->hidden(function ($record) {
-                        //     if ($record->task_status == Task::STATUS_COMPLETED) {
-                        //         return true;
-                        //     }
-                        //     if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
-                        //         return true;
-                        //     }
-                        // })
                         ->form([
-
-                            FileUpload::make('image_path')
-                                ->disk('public')
-                                ->label('')
-                                ->directory('service_requests')
-                                ->columnSpanFull()
-                                ->image()
-                                ->multiple()
-                                ->resize(5)
-                                ->downloadable()
-                                ->previewable()
-                                ->imagePreviewHeight('250')
-                                ->loadingIndicatorPosition('left')
-                                ->panelLayout('integrated')
-                                ->removeUploadedFileButtonPosition('right')
-                                ->uploadButtonPosition('left')
-                                ->uploadProgressIndicatorPosition('left')
-                                ->panelLayout('grid')
-                                ->reorderable()
-                                ->openable()
-                                ->downloadable(true)
-                                ->previewable(true)
-                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                    return (string) str($file->getClientOriginalName())->prepend('service-request-');
-                                }),
+                            self::getMediaSpatieField(),
                         ])
                         ->action(function (array $data, $record): void {
-                            $serviceRequest = $record;
-                            if (isset($data['image_path']) && is_array($data['image_path']) && count($data['image_path']) > 0) {
-                                foreach ($data['image_path'] as $file) {
-                                    $serviceRequest->photos()->create([
-                                        'image_name' => $file,
-                                        'image_path' => $file,
-                                        'created_by' => auth()->user()->id,
-                                    ]);
+                            // إضافة الصور إلى media collection
+                            if (isset($data['images']) && is_array($data['images'])) {
+                                foreach ($data['images'] as $file) {
+                                    $record->addMedia($file)->toMediaCollection('images');
                                 }
-                                $record->logs()->create([
-                                    'created_by' => auth()->user()->id,
-                                    'description' => 'Images added',
-                                    'log_type' => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
-                                ]);
                             }
+                            $record->logToEquipment(
+                                \App\Models\EquipmentLog::ACTION_UPDATED,
+                                'New Images added to service request #' . $record->id
+                            );
+                            $record->logs()->create([
+                                'created_by' => auth()->user()->id,
+                                'description' => 'Images added',
+                                'log_type' => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
+                            ]);
                         })
                         ->button()
                         ->icon('heroicon-m-newspaper')
@@ -679,5 +589,42 @@ class ServiceRequestResource extends Resource
         }
 
         return true;
+    }
+
+    public static function getMediaSpatieField()
+    {
+        return SpatieMediaLibraryFileUpload::make('images')
+            ->disk('public')
+            ->label('')
+            ->directory('service-requests')
+            ->columnSpanFull()
+            ->image()
+            ->multiple()
+            ->downloadable()
+            ->appendFiles()
+            ->previewable()
+            ->imagePreviewHeight('250')
+            ->loadingIndicatorPosition('right')
+            ->panelLayout('integrated')
+            ->removeUploadedFileButtonPosition('right')
+            ->uploadButtonPosition('right')
+            ->uploadProgressIndicatorPosition('right')
+            ->panelLayout('grid')
+            ->reorderable()
+            ->openable()
+            ->downloadable(true)
+            ->previewable(true)
+            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                return (string) str($file->getClientOriginalName())->prepend('service-');
+            })
+            ->imageEditor()
+            ->imageEditorAspectRatios([
+                '16:9',
+                '4:3',
+                '1:1',
+            ])->maxSize(800)
+            ->imageEditorMode(2)
+            ->imageEditorEmptyFillColor('#fff000')
+            ->circleCropper();
     }
 }

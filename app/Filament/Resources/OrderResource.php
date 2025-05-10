@@ -82,7 +82,7 @@ class OrderResource extends Resource
                             ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
                         Select::make('status')->required()
                             ->label(__('lang.order_status'))
-                            ->options( Order::getStatusLabels())->default(Order::ORDERED),
+                            ->options(Order::getStatusLabels())->default(Order::ORDERED),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
                             // ->disabledOn('edit')
@@ -268,8 +268,11 @@ class OrderResource extends Resource
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager()),
                 TextColumn::make('created_at')
+                    ->formatStateUsing(function ($state) {
+                        return date('Y-m-d', strtotime($state)) . ' __ ' . date('H:i:s', strtotime($state));
+                    })
                     ->label(__('lang.created_at'))
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
@@ -490,7 +493,7 @@ class OrderResource extends Resource
     {
         return parent::getEloquentQuery()
             ->where('is_purchased', 0)
-            ->whereHas('orderDetails') 
+            ->whereHas('orderDetails')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

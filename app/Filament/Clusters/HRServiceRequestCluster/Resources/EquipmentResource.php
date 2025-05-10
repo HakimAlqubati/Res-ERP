@@ -48,12 +48,15 @@ class EquipmentResource extends Resource
                         ->icon('heroicon-o-bars-3-center-left')
                         ->schema([
                             Fieldset::make()->schema([
-                                Grid::make()->columns(3)->schema([
+                                Grid::make()->columns(2)->schema([
                                     Forms\Components\TextInput::make('name')
                                         ->label('Name')
                                         ->required()->prefixIconColor('primary')->columnSpan(1)
                                         ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-information-circle'),
-
+                                    Forms\Components\Select::make('status')
+                                        ->label('Type')->required()
+                                        ->options(Equipment::STATUS_LABELS)->default(Equipment::STATUS_ACTIVE)
+                                        ->prefixIcon('heroicon-s-chart-bar-square')->prefixIconColor('primary'),
 
                                     Forms\Components\Select::make('type_id')
                                         ->label('Type')
@@ -61,9 +64,11 @@ class EquipmentResource extends Resource
                                         ->reactive()
                                         ->afterStateUpdated(function ($state, callable $set) {
                                             $set('asset_tag', EquipmentResource::generateEquipmentCode($state));
-                                        }),
+                                        })
+                                        ->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
+
                                     Forms\Components\TextInput::make('asset_tag')
-                                        ->label('Asset Tag')
+                                        ->label('Asset Tag')->prefixIconColor('primary')
                                         ->required()->prefixIconColor('primary')->readOnly()
                                         ->unique(ignoreRecord: true)->prefixIcon('heroicon-s-tag'),
                                     Forms\Components\TextInput::make('qr_code')->prefixIcon('heroicon-s-qr-code')->prefixIconColor('primary')
@@ -78,13 +83,13 @@ class EquipmentResource extends Resource
                                     Forms\Components\Select::make('branch_id')
                                         ->label('Branch')
                                         ->options(Branch::branches()->active()->pluck('name', 'id'))
-                                        ->required()->live(),
+                                        ->required()->live()->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
                                     Select::make('branch_area_id')->label('Branch area')
                                         ->options(function ($get) {
                                             return BranchArea::query()
                                                 ->where('branch_id', $get('branch_id'))
                                                 ->pluck('name', 'id');
-                                        }),
+                                        })->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
                                 ]),
 
                                 Grid::make()->columns(3)->schema([
@@ -131,19 +136,59 @@ class EquipmentResource extends Resource
                             ])
 
                         ]),
-                    Wizard\Step::make('Dates')
+                    Wizard\Step::make('Dates')->label('Set Dates & Warranty')
                         ->icon('heroicon-o-calendar-date-range')
                         ->schema([
+
                             Fieldset::make()->label('Set Dates')->columns(4)->schema([
 
+                                Forms\Components\TextInput::make('warranty_years')
+                                    ->label('Warranty (Years)')
+                                    ->numeric()->columnSpan(2)
+                                    ->default(1)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
+                                        $state = (float)$state;
+                                        $startDate = $get('operation_start_date');
+                                        if ($startDate) {
+                                            $set('warranty_end_date', \Carbon\Carbon::parse($startDate)->addYears($state)->format('Y-m-d'));
+                                        }
+                                    }),
+
+                                Forms\Components\TextInput::make('service_interval_days')
+                                    ->label('Service Interval (Days)')
+                                    ->numeric()->columnSpan(2)
+                                    ->default(30)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
+                                        $state = (float)$state;
+                                        $lastServiced = $get('last_serviced'); 
+                                        if ($lastServiced) {
+                                            $set('next_service_date', \Carbon\Carbon::parse($lastServiced)->addDays($state)->format('Y-m-d'));
+                                        }
+                                    }),
                                 Forms\Components\DatePicker::make('last_serviced')
                                     ->label('Last Serviced')->default(now())
-                                    ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary'),
+                                    ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary')
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
+                                        $interval = $get('service_interval_days');
+                                        if ($interval) {
+                                            $set('next_service_date', \Carbon\Carbon::parse($state)->addDays($interval)->format('Y-m-d'));
+                                        }
+                                    }),
 
                                 Forms\Components\DatePicker::make('operation_start_date')
                                     ->label('Operation Start Date')
                                     ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                    ->default(now()->subYear()),
+                                    ->default(now()->subYear())
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
+                                        $years = $get('warranty_years');
+                                        if ($years) {
+                                            $set('warranty_end_date', \Carbon\Carbon::parse($state)->addYears($years)->format('Y-m-d'));
+                                        }
+                                    }),
 
                                 Forms\Components\DatePicker::make('warranty_end_date')
                                     ->label('Warranty End Date')
@@ -211,6 +256,13 @@ class EquipmentResource extends Resource
                 TextColumn::make('name')->toggleable()
                     ->searchable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->label('Status')
+                    ->colors([
+                        'success' => Equipment::STATUS_ACTIVE,
+                        'warning' => Equipment::STATUS_UNDER_MAINTENANCE,
+                        'danger'  => Equipment::STATUS_RETIRED,
+                    ])->alignCenter(true)->toggleable(),
                 TextColumn::make('asset_tag')
                     ->searchable()->toggleable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
@@ -222,15 +274,19 @@ class EquipmentResource extends Resource
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('serial_number')->toggleable()
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('branch.name')->toggleable()
+                    ->label('Branch')
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('branchArea.name')->toggleable()
+                    ->label('Branch Area')
+                    ->sortable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('purchase_price')->toggleable()
                     ->money('USD')
                     ->sortable()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('profile_picture')->toggleable()
                     ->label('Profile Picture')
                     ->rounded()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('branch.name')->toggleable()
-                    ->label('Branch')
-                    ->sortable()->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')->toggleable()
                     ->label('Created At')
                     ->dateTime()
@@ -266,6 +322,7 @@ class EquipmentResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('qrCodePrint')
+                    ->label('Print')
                     ->button()->icon('heroicon-o-qr-code')
                     ->url(fn($record): string => route('testQRCode', ['id' => $record->id]), true),
 

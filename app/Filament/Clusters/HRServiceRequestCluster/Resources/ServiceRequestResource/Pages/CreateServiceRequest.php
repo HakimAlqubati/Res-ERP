@@ -3,6 +3,7 @@
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages;
 
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource;
+use App\Models\Equipment;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestLog;
 use Filament\Resources\Pages\CreateRecord;
@@ -22,6 +23,25 @@ class CreateServiceRequest extends CreateRecord
         }
         $data['created_by'] = auth()->user()->id;
         return $data;
+    }
+
+    protected function fillForm(): void
+    {
+        $equipmentId = request()->get('equipment_id');
+
+        $defaults = [];
+        $defaults = [
+            'status' => ServiceRequest::STATUS_NEW,
+        ];
+        if ($equipmentId && $equipment = Equipment::find($equipmentId)) {
+            $defaults = [
+                'equipment_id'    => $equipment->id,
+                'branch_id'       => $equipment->branch_id,
+                'branch_area_id'  => $equipment->branch_area_id,
+
+            ];
+        }
+        $this->form->fill($defaults);
     }
 
     public function afterCreate(): void

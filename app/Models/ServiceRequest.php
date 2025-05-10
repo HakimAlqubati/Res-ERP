@@ -16,7 +16,6 @@ class ServiceRequest extends Model implements Auditable, HasMedia
 
     // Fillable fields
     protected $fillable = [
-        'name',
         'description',
         'branch_id',
         'branch_area_id',
@@ -30,7 +29,6 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         'equipment_id',
     ];
     protected $auditInclude = [
-        'name',
         'description',
         'branch_id',
         'branch_area_id',
@@ -155,11 +153,38 @@ class ServiceRequest extends Model implements Auditable, HasMedia
                 ; // Add your default query here
             });
         }
+
+        static::created(function ($request) {
+            $request->logToEquipment(
+                \App\Models\EquipmentLog::ACTION_SERVICED,
+                'Service request created: ' . $request->name
+            );
+        });
+
+        static::updated(function ($request) {
+            if ($request->isDirty('status')) {
+                $request->logToEquipment(
+                    \App\Models\EquipmentLog::ACTION_UPDATED,
+                    'Status changed to ' . $request->status . ' for request: ' . $request->name
+                );
+            }
+        });
     }
 
     // Scope for accepted service requests
     public function scopeAccepted($query)
     {
         return $query->where('accepted', true);
+    }
+
+    public function logToEquipment(string $action, string $description): void
+    {
+        if ($this->equipment_id) {
+            $this->equipment?->addLog(
+                $action,
+                $description,
+                auth()->id()
+            );
+        }
     }
 }
