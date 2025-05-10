@@ -279,7 +279,7 @@ class PurchaseInvoiceResource extends Resource
                     ->color('primary')->copyable()
                     ->weight(FontWeight::Bold)->alignCenter(true)
                     ->searchable()->sortable()->toggleable(),
-                TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-'),
+                TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-')->wrap(),
                 TextColumn::make('store.name')->label('Store')->toggleable(),
                 TextColumn::make('date')->sortable()->toggleable(),
                 TextColumn::make('description')->searchable()
