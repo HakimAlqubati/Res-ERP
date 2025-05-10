@@ -204,7 +204,7 @@ class EquipmentResource extends Resource
                                     ->afterStateUpdated(function ($state, callable $set,   $get) {
                                         $interval = $get('service_interval_days');
                                         if ($interval) {
-                                            $set('next_service_date', \Carbon\Carbon::parse((float)$state)->addDays($interval)->format('Y-m-d'));
+                                            $set('next_service_date', \Carbon\Carbon::parse($state)->addDays((float)$interval)->format('Y-m-d'));
                                         }
                                     }),
 
