@@ -600,17 +600,17 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
                                         ->minValue(0)
-                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
-                                            return [
-                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
-                                                    $productId = $livewire->form->getRecord()?->id ?? null;
-                                                    $unitId = $get('unit_id');
-                                                    $record = $livewire->form->getRecord();
+                                        // ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                        //     return [
+                                        //         function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                        //             $productId = $livewire->form->getRecord()?->id ?? null;
+                                        //             $unitId = $get('unit_id');
+                                        //             $record = $livewire->form->getRecord();
 
-                                                    static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
-                                                }
-                                            ];
-                                        })
+                                        //             static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
+                                        //         }
+                                        //     ];
+                                        // })
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($record, $livewire, $set, $state, $get) {
                                             $productItems  = $get('../../productItems') ?? [];
