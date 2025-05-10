@@ -95,7 +95,22 @@ class ServiceRequestResource extends Resource
                                                 }
                                                 return true;
                                             }
-                                        }),
+                                        })->rule(function (Get $get) {
+                                            $branchId = $get('branch_id');
+
+                                            // تحقق من وجود مناطق للفرع المحدد
+                                            $hasAreas = \App\Models\BranchArea::where('branch_id', $branchId)->exists();
+
+                                            return $hasAreas
+                                                ? 'required'
+                                                : function () {
+                                                    return fn() => false; // يمنع التقديم
+                                                };
+                                        })
+                                        ->validationMessages([
+                                            'required' => 'The branch area field is required. ⚠ Go to Branch to add Areas first.',
+                                            '*.0' => '',
+                                        ]),
 
                                     Select::make('equipment_id')->label('Equipment')
                                         ->options(function (Get $get) {
