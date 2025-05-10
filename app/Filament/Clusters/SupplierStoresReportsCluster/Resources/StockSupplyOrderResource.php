@@ -21,6 +21,7 @@ use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -247,5 +248,10 @@ class StockSupplyOrderResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        return Color::Blue;
     }
 }

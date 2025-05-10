@@ -12,6 +12,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQ
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MissingInventoryProductsReportResource\Pages\ListMissingInventoryProductsReport;
 use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
+use Filament\Support\Colors\Color;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -82,5 +83,9 @@ class MissingInventoryProductsReportResource extends Resource
     {
         return 'Report';
         return static::getModel()::whereNotNull('minimum_stock_qty')->count();
+    }
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        return Color::Yellow;
     }
 }

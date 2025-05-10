@@ -140,11 +140,11 @@ class EquipmentResource extends Resource
                         ->icon('heroicon-o-calendar-date-range')
                         ->schema([
 
-                            Fieldset::make()->label('Set Dates')->columns(4)->schema([
+                            Fieldset::make()->label('Set Dates')->columns(2)->schema([
 
                                 Forms\Components\TextInput::make('warranty_years')
                                     ->label('Warranty (Years)')
-                                    ->numeric()->columnSpan(2)
+                                    ->numeric()->columnSpan(1)
                                     ->default(1)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function ($state, callable $set,   $get) {
@@ -157,16 +157,40 @@ class EquipmentResource extends Resource
 
                                 Forms\Components\TextInput::make('service_interval_days')
                                     ->label('Service Interval (Days)')
-                                    ->numeric()->columnSpan(2)
+                                    ->numeric()->columnSpan(1)
                                     ->default(30)
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function ($state, callable $set,   $get) {
                                         $state = (float)$state;
-                                        $lastServiced = $get('last_serviced'); 
+                                        $lastServiced = $get('last_serviced');
                                         if ($lastServiced) {
                                             $set('next_service_date', \Carbon\Carbon::parse($lastServiced)->addDays($state)->format('Y-m-d'));
                                         }
                                     }),
+                                Grid::make()->columns(3)->columnSpanFull()->schema([
+                                    Forms\Components\DatePicker::make('purchase_date')
+                                        ->label('Purchase Date')
+                                        ->prefixIcon('heroicon-s-calendar')
+                                        ->default(now()),
+
+                                    Forms\Components\DatePicker::make('warranty_end_date')
+                                        ->label('Warranty End Date')
+                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                        ->default(now()),
+
+                                    Forms\Components\DatePicker::make('operation_start_date')
+                                        ->label('Operation Start Date')
+                                        ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
+                                        ->default(now()->subYear())
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function ($state, callable $set,   $get) {
+                                            $years = $get('warranty_years');
+                                            if ($years) {
+                                                $set('warranty_end_date', \Carbon\Carbon::parse($state)->addYears($years)->format('Y-m-d'));
+                                            }
+                                        }),
+
+                                ]),
                                 Forms\Components\DatePicker::make('last_serviced')
                                     ->label('Last Serviced')->default(now())
                                     ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary')
@@ -178,22 +202,8 @@ class EquipmentResource extends Resource
                                         }
                                     }),
 
-                                Forms\Components\DatePicker::make('operation_start_date')
-                                    ->label('Operation Start Date')
-                                    ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                    ->default(now()->subYear())
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
-                                        $years = $get('warranty_years');
-                                        if ($years) {
-                                            $set('warranty_end_date', \Carbon\Carbon::parse($state)->addYears($years)->format('Y-m-d'));
-                                        }
-                                    }),
 
-                                Forms\Components\DatePicker::make('warranty_end_date')
-                                    ->label('Warranty End Date')
-                                    ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                    ->default(now()),
+
 
                                 Forms\Components\DatePicker::make('next_service_date')
                                     ->label('Next Service Date')
