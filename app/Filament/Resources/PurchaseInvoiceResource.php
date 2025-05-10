@@ -286,6 +286,11 @@ class PurchaseInvoiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->searchable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
+                    TextColumn::make('total_amount')
+                    ->label(__('lang.total_amount')) 
+                    ->sortable()
+                    ->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()
                 // ->trueIcon('heroicon-o-badge-check')
@@ -302,7 +307,8 @@ class PurchaseInvoiceResource extends Resource
                     ->label('Payment Method')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+              
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

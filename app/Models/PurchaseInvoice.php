@@ -146,4 +146,9 @@ class PurchaseInvoice extends Model implements Auditable
     {
         return $this->belongsTo(PaymentMethod::class);
     }
+
+    public function getTotalAmountAttribute(): float
+    {
+        return $this->purchaseInvoiceDetails->sum('total_price');
+    }
 }
