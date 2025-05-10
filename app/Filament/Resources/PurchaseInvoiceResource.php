@@ -284,11 +284,10 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('date')->sortable()->toggleable(),
                 TextColumn::make('description')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('details_count')->searchable()->alignCenter(true)
+                TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
                     TextColumn::make('total_amount')
                     ->label(__('lang.total_amount')) 
-                    ->sortable()
                     ->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
