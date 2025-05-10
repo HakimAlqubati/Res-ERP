@@ -358,7 +358,6 @@ class ProductResource extends Resource
                                             return Unit::pluck('name', 'id');
                                         })->searchable()
                                         ->disabled(function (callable $get, $livewire) {
-                                            return false;
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
@@ -371,7 +370,6 @@ class ProductResource extends Resource
                                         // ->mask(RawJs::make('$money($input)'))
                                         // ->stripCharacters(',')   
                                         ->disabled(function (callable $get, $livewire) {
-                                            return false;
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
@@ -454,17 +452,17 @@ class ProductResource extends Resource
                                         // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(onBlur: true)
-                                        // ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
-                                        //     return [
-                                        //         function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
-                                        //             $productId = $livewire->form->getRecord()?->id ?? null;
-                                        //             $unitId = $get('unit_id');
-                                        //             $record = $livewire->form->getRecord();
+                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                            return [
+                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                                    $productId = $livewire->form->getRecord()?->id ?? null;
+                                                    $unitId = $get('unit_id');
+                                                    $record = $livewire->form->getRecord();
 
-                                        //             static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
-                                        //         }
-                                        //     ];
-                                        // })
+                                                    static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
+                                                }
+                                            ];
+                                        })
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $allUnits = $get('../../units') ?? [];
                                             $thisUnitId = $get('unit_id');
@@ -485,7 +483,6 @@ class ProductResource extends Resource
                                                 $set('price', round(($firstPrice / $firstPackageSize) * $state, 7));
                                             }
                                         })->disabled(function (callable $get, $livewire) {
-                                            return false;
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
@@ -497,7 +494,6 @@ class ProductResource extends Resource
                                         ->label(__('lang.show_in_invoices'))
                                         ->default(false)
                                         ->disabled(function (callable $get, $record, $livewire) {
-                                            return false;
                                             return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
                                         })
                                         ->dehydrated(),
@@ -600,17 +596,17 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
                                         ->minValue(0)
-                                        // ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
-                                        //     return [
-                                        //         function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
-                                        //             $productId = $livewire->form->getRecord()?->id ?? null;
-                                        //             $unitId = $get('unit_id');
-                                        //             $record = $livewire->form->getRecord();
+                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                            return [
+                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                                    $productId = $livewire->form->getRecord()?->id ?? null;
+                                                    $unitId = $get('unit_id');
+                                                    $record = $livewire->form->getRecord();
 
-                                        //             static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
-                                        //         }
-                                        //     ];
-                                        // })
+                                                    static::validatePackageSizeChange($productId, $unitId, $value, $fail, $record);
+                                                }
+                                            ];
+                                        })
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($record, $livewire, $set, $state, $get) {
                                             $productItems  = $get('../../productItems') ?? [];
@@ -638,7 +634,6 @@ class ProductResource extends Resource
                                 ->reorderable()
 
                                 ->disabled(function (callable $get, $livewire) {
-                                    return false;
                                     return static::isProductLocked($livewire->form->getRecord());
                                 })
 
@@ -703,10 +698,10 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: true),
                 Tables\Columns\TextColumn::make('code')
-                    ->label(__('lang.code'))->copyable()
+                    ->label(__('lang.code'))
                     ->searchable(isIndividual: false, isGlobal: true),
 
-                Tables\Columns\TextColumn::make('name')->copyable()
+                Tables\Columns\TextColumn::make('name')
                     ->label(__('lang.name'))
                     ->toggleable()
 
