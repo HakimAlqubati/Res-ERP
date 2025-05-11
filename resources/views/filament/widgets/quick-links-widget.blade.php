@@ -1,6 +1,45 @@
 <x-filament::widget>
+    <style>
+        .link {
+            transition: all 0.3s ease-in-out;
+            border-radius: 1rem;
+        }
+
+        .link:hover {
+            background-color: #f1f5f9 !important;
+            /* خلفية رمادية فاتحة */
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+        }
+    </style>
     <x-filament::card>
         {{-- First row --}}
+        <x-filament::fieldset label="{{ __('General') }}">
+            <x-filament::grid style="--cols-lg: repeat(3, minmax(0, 1fr));" class="lg:grid-cols-[--cols-lg]">
+                {{-- Users --}}
+                <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="purple" color="primary" icon="heroicon-o-user"
+                    icon-position="before" class="link" tooltip="Go to Users Page">
+                    {{ __('Users') }}
+                    <x-slot name="badge">
+                        {{ \App\Models\User::count() }}
+                    </x-slot>
+                </x-filament::link>
+                <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary" icon="heroicon-o-building-office-2"
+                    icon-position="before" class="link" tooltip="Go to Branches Page">
+                    {{ __('Branches') }}
+                    <x-slot name="badge">
+                        {{ \App\Models\Branch::count() }}
+                    </x-slot>
+                </x-filament::link>
+                <x-filament::link :href="route('filament.admin.area-management.resources.countries.index')" badge-color="primary" color="purple" icon="heroicon-o-globe-alt"
+                    icon-position="before" class="link" tooltip="Go to Area Management Page">
+                    {{ __('Area Management') }}
+                    <x-slot name="badge">
+                        {{ \App\Models\Country::count() }}
+                    </x-slot>
+                </x-filament::link>
+            </x-filament::grid>
+        </x-filament::fieldset>
         <x-filament::fieldset label="{{ __('Inventory Management') }}">
             <x-filament::grid style="--cols-lg: repeat(6, minmax(0, 1fr));" class="lg:grid-cols-[--cols-lg]">
                 {{-- Orders --}}
@@ -42,14 +81,7 @@
                     </x-slot>
                 </x-filament::link>
 
-                {{-- Users --}}
-                <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="purple" color="primary" icon="heroicon-o-user"
-                    icon-position="before" class="link" tooltip="Go to Users Page">
-                    {{ __('Users') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\User::count() }}
-                    </x-slot>
-                </x-filament::link>
+
 
                 {{-- Purchase Invoices --}}
                 <x-filament::link :href="route('filament.admin.supplier.resources.purchase-invoices.index')" badge-color="gray" color="primary" icon="heroicon-o-receipt-percent"
@@ -59,6 +91,16 @@
                         {{ \App\Models\PurchaseInvoice::count() }}
                     </x-slot>
                 </x-filament::link>
+
+                {{-- Inventory Reports --}}
+                <x-filament::link :href="route('filament.admin.inventory-reports')" badge-color="purple" color="primary" icon="heroicon-o-newspaper"
+                    icon-position="before" class="link" tooltip="Go to Inventory Reports">
+                    {{ __('Inventory') }}
+                    <x-slot name="badge">
+                        {{ 'Reports' }}
+                    </x-slot>
+                </x-filament::link>
+
             </x-filament::grid>
         </x-filament::fieldset>
 
