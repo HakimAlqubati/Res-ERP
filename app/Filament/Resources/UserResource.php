@@ -118,8 +118,9 @@ class UserResource extends Resource
                             CheckboxList::make('branches')->columns(3)
                                 ->relationship('branches')
                                 ->label('Branches')->columnSpanFull()->searchable()
-                                ->options(Branch::active()->get(['name', 'id'])
-                                    // ->withAccess()
+                                ->options(Branch::active()
+                                    ->withAccess()
+                                    ->get(['name', 'id'])
                                     ->pluck('name', 'id'))->bulkToggleable(),
 
 
@@ -428,14 +429,14 @@ class UserResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return User::query()
-            // ->withBranch()
+            ->withBranch()
             ->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            // ->withBranch()
+            ->withBranch()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])->withMax('loginHistories as last_login_at', 'created_at');

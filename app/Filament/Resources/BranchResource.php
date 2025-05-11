@@ -372,7 +372,7 @@ class BranchResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return Branch::withAccess()->active()->count();
     }
 
     public static function getRelations(): array
@@ -385,6 +385,7 @@ class BranchResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->withAccess()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

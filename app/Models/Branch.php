@@ -282,6 +282,7 @@ class Branch extends Model implements HasMedia, Auditable
 
     public function scopeWithAccess($query)
     {
+        return $query->whereIn('id',accessBranchesIds());
         $user = auth()->user();
 
         if (! $user) {
