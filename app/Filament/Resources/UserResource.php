@@ -119,7 +119,7 @@ class UserResource extends Resource
                                 ->relationship('branches')
                                 ->label('Branches')->columnSpanFull()->searchable()
                                 ->options(Branch::active()->get(['name', 'id'])
-                                    ->withAccess()
+                                    // ->withAccess()
                                     ->pluck('name', 'id'))->bulkToggleable(),
 
 

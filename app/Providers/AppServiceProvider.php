@@ -20,7 +20,9 @@ use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
 use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
+use Filament\Facades\Filament;
 use Filament\Livewire\DatabaseNotifications;
+use Filament\Navigation\UserMenuItem;
 use Filament\Notifications\Livewire\Notifications;
 use Filament\Notifications\Notification as BaseNotification;
 use Filament\Resources\Resource;
@@ -51,6 +53,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Filament::serving(function () {
+            Filament::registerUserMenuItems([
+                'profile' => UserMenuItem::make()
+                    ->label('Edit Profile')
+                    ->url(fn(): string => route(
+                        'filament.admin.resources.users.edit',
+                        ['record' => auth()->id()],
+                    ))
+                    ->icon('heroicon-m-user-circle'),
+            ]);
+        });
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
         CustomTenantModel::observe(TenantObserver::class);
         InventoryTransaction::observe(InventoryTransactionObserver::class);
