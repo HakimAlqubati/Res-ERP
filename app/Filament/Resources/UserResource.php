@@ -165,7 +165,7 @@ class UserResource extends Resource
                             ->options(function (Get $get) {
                                 // dd($get('user_type'),'hi');
                                 if ($get('user_type')) {
-                                    $roles = getRolesByTypeId($get('user_type'));
+                                    $roles = getRolesByTypeId($get('user_type')) ?? [];
                                     // dd($roles,gettype($roles));
                                     return Role::select('name', 'id')
                                         ->whereIn('id', $roles)
