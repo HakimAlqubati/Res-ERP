@@ -148,6 +148,7 @@ class UserResource extends Resource
                             ->options(
                                 UserType::select('name', 'id')
                                     // ->whereNotIn('id', [2,3,4])
+                                    ->active()
                                     ->get()->pluck('name', 'id')
                             )
                             ->required()
