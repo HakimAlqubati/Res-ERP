@@ -79,49 +79,63 @@ class UserResource extends Resource
                         Fieldset::make()->label('Personal data')->schema([
                             TextInput::make('name')->required()->unique(ignoreRecord: true),
                             TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-                            PhoneInput::make('phone_number')
-                                // ->numeric()
-                                ->initialCountry('MY')
-                                ->onlyCountries([
-                                    'MY',
-                                    'US',
-                                    'YE',
-                                    'AE',
-                                    'SA',
-                                ])
-                                ->required()
-                                ->unique(ignoreRecord: true)
-                                ->displayNumberFormat(PhoneInputNumberType::E164)
-                                ->autoPlaceholder('aggressive')
-                            // ->validateFor(
-                            //     country: 'MY',
-                            //     lenient: true, // default: false
-                            // )
-                            ,
-                            Select::make('gender')
-                                ->label('Gender')
-                                ->options([
-                                    1 => 'Male',
-                                    0 => 'Female',
-                                ])
-                                ->default(1)
-                                ->required(),
+                            Grid::make()->columns(3)->columnSpanFull()->schema([
+                                PhoneInput::make('phone_number')
+                                    // ->numeric()
+                                    ->initialCountry('MY')
+                                    ->onlyCountries([
+                                        'MY',
+                                        'US',
+                                        'YE',
+                                        'AE',
+                                        'SA',
+                                    ])
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->displayNumberFormat(PhoneInputNumberType::E164)
+                                    ->autoPlaceholder('aggressive')
+                                // ->validateFor(
+                                //     country: 'MY',
+                                //     lenient: true, // default: false
+                                // )
+                                ,
+                                Select::make('gender')
+                                    ->label('Gender')
+                                    ->options([
+                                        1 => 'Male',
+                                        0 => 'Female',
+                                    ])
+                                    ->default(1)
+                                    ->required(),
 
-                            Select::make('nationality')
-                                ->label('Nationality')
-                                ->options(getNationalities()) // Loads nationalities from JSON file
-                                ->searchable()
-                                ->nullable(),
+                                Select::make('nationality')
+                                    ->label('Nationality')
+                                    ->options(getNationalities()) // Loads nationalities from JSON file
+                                    ->searchable()
+                                    ->nullable(),
+
+                            ]),
+                            CheckboxList::make('branches')->columns(3)
+                                ->relationship('branches')
+                                ->label('Branches')->columnSpanFull()->searchable()
+                                ->options(Branch::active()->get(['name', 'id'])
+                                    ->withAccess()
+                                    ->pluck('name', 'id'))->bulkToggleable(),
+
+
                             Select::make('branch_id')
-                                ->label('Branch')
+                                ->label('Default Branch')
                                 ->required()
                                 ->visible(function (Get $get) {
                                     $roles = $get('roles') ?? [];
                                     return !in_array(5, $roles);
                                 })
                                 ->searchable()
-                                ->options(function () {
-                                    return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
+                                ->options(function ($get) {
+                                    return Branch::where('active', 1)
+                                        ->whereIn('id', $get('branches'))
+
+                                        ->select('name', 'id')->get()->pluck('name', 'id');
                                 }),
                         ]),
 
@@ -221,15 +235,6 @@ class UserResource extends Resource
                                 TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
 
 
-                                Select::make('branch_id')->label('Branch')
-                                    ->options(Branch::select('name', 'id')->pluck('name', 'id'))
-                                    ->default(function () {
-                                        if (isStuff()) {
-                                            return auth()->user()->branch_id;
-                                        }
-                                    })
-                                    ->live()
-                                    ->required(),
                                 Select::make('branch_area_id')->label('Branch area')
                                     ->options(function (Get $get) {
                                         return BranchArea::query()
@@ -421,12 +426,13 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return User::query()->withBranch()->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->withBranch()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])->withMax('loginHistories as last_login_at', 'created_at');

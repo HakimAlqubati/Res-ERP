@@ -68,7 +68,7 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class EmployeeResource extends Resource
 {
-    
+
     protected static ?string $model = Employee::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = HRCluster::class;
@@ -82,7 +82,7 @@ class EmployeeResource extends Resource
     {
         return __('lang.employees');
     }
- 
+
 
     public static function getLabel(): ?string
     {
@@ -223,7 +223,9 @@ class EmployeeResource extends Resource
                                             ->required()
                                             // ->disabledOn('edit')
                                             ->live()
-                                            ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                            ->options(Branch::where('active', 1)
+                                                ->withAccess()
+                                                ->select('id', 'name')->get()->pluck('name', 'id')),
                                         Toggle::make('is_ceo')->label('is_ceo')
                                             ->live()
                                             ->visible(fn($get): bool => $get('employee_type') == 1)
@@ -618,7 +620,7 @@ class EmployeeResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->options(Branch::where('active', 1)->get()->pluck('name', 'id')->toArray()),
+                    ->label(__('lang.branch'))->options(Branch::where('active', 1)->withAccess()->get()->pluck('name', 'id')->toArray()),
                 SelectFilter::make('nationality')
                     ->searchable()
                     ->multiple()
@@ -732,7 +734,7 @@ class EmployeeResource extends Resource
                         ->form([
                             Select::make('branch_id')
                                 ->label('Select New Branch')
-                                ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
+                                ->options(Branch::active()->withAccess()->get(['id', 'name'])->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
                                 ->required(),
                         ])
                         ->action(function (array $data, $record) {
@@ -808,6 +810,7 @@ class EmployeeResource extends Resource
     {
         return parent::getEloquentQuery()
             // ->where('role_id',8)
+            ->withBranch()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

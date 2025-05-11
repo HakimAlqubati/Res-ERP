@@ -143,4 +143,8 @@ class Equipment extends Model implements Auditable, HasMedia
             default => 'secondary',
         };
     }
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
+    }
 }

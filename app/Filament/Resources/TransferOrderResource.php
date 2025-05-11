@@ -100,7 +100,7 @@ class TransferOrderResource extends Resource
                                         ->unmanufacturingCategory()
                                         ->pluck('name', 'id');
                                 })
-                               
+
                                 ->reactive()
                                 ->afterStateUpdated(fn(callable $set) => $set('unit_id', null))
                                 ->searchable()->columnSpan(function ($record) {
@@ -129,7 +129,7 @@ class TransferOrderResource extends Resource
                                 ->columnSpan(2)->required(),
                             TextInput::make('purchase_invoice_id')->label(__('lang.purchase_invoice_id'))->readOnly()->visibleOn('view'),
                             TextInput::make('package_size')->label(__('lang.package_size'))->readOnly()->columnSpan(1),
-                            
+
                             TextInput::make('quantity')
                                 ->label(__('lang.quantity'))
                                 ->numeric()
@@ -159,7 +159,7 @@ class TransferOrderResource extends Resource
                                 ->numeric()
                                 ->readOnly()->columnSpan(1),
                         ])
-                       
+
                         ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
                         ->required(),
 
@@ -211,7 +211,7 @@ class TransferOrderResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->relationship('branch', 'name'),
+                    ->label(__('lang.branch'))->options(Branch::active()->withAccess()->pluck('name', 'id')),
                 Filter::make('created_at')
                     ->label(__('lang.created_at'))
                     ->form([
@@ -290,12 +290,16 @@ class TransferOrderResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return static::getModel()::query()->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
+        return static::getModel()::query()
+            ->whereIn('branch_id', accessBranchesIds())
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])->count();
+        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereIn('branch_id', accessBranchesIds())
+            ->count();
     }
 
     public static function canViewAny(): bool

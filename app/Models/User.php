@@ -330,4 +330,18 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->last_seen_at?->diffForHumans();
     }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'user_branches');
+    }
+
+    public function getBranchIdsAttribute(): array
+    {
+        return $this->branches()->pluck('branch_id')->toArray();
+    }
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
+    }
 }

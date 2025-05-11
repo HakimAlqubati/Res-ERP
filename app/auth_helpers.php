@@ -89,3 +89,9 @@ if (!function_exists('isStuff')) {
         return auth()?->user()?->isStuff();
     }
 }
+if (!function_exists('accessBranchesIds')) {
+    function accessBranchesIds()
+    {
+        return auth()?->user()?->branch_ids;
+    }
+}

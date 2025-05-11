@@ -75,6 +75,7 @@ implements HasShieldPermissions
                 SelectFilter::make("branch_id")
                     ->label(__('lang.branch'))
                     ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])->active()
+                        ->withAccess()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->form([
@@ -188,7 +189,7 @@ implements HasShieldPermissions
         return $final_result;
     }
 
-    
+
     public static function canViewAny(): bool
     {
         return auth()->user()->can('view_general-report-of-products');

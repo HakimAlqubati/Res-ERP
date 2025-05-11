@@ -94,6 +94,7 @@ implements HasShieldPermissions
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()
                     ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])
+                        ->withAccess()
                         ->active()->pluck('name', 'id')),
 
                 Filter::make('date_range')

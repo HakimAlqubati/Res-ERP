@@ -186,7 +186,7 @@ class AdminPanelProvider extends PanelProvider
                                     is_null($currentTenant)) ? HRLeaveManagementCluster::getNavigationItems() : [],
                                 NotificationSettingResource::canAccess()
                                     ? NotificationSettingResource::getNavigationItems() : [],
-                                InventorySettingsCluster::getNavigationItems(),
+                                InventorySettingsCluster::canAccess() ?   InventorySettingsCluster::getNavigationItems() : [],
                                 //    (isSuperAdmin() || isSystemManager()) ? SettingsCluster::getNavigationItems(): [] ,
                             )),
                         NavigationGroup::make('Tenants')

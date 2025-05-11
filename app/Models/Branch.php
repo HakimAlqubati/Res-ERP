@@ -51,7 +51,7 @@ class Branch extends Model implements HasMedia, Auditable
         'end_date',
         'more_description',
     ];
-    protected $appends = ['customized_categories','orders_count'];
+    protected $appends = ['customized_categories', 'orders_count'];
 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
@@ -273,5 +273,28 @@ class Branch extends Model implements HasMedia, Auditable
     public function getOrdersCountAttribute(): int
     {
         return $this->orders()->count();
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_branches');
+    }
+
+    public function scopeWithAccess($query)
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0'); // لا يرجع أي نتيجة إذا لم يكن المستخدم مسجلاً
+        }
+
+        // لو المستخدم مرتبط بفروع
+        if ($user->relationLoaded('branches')) {
+            $branchIds = $user->branches->pluck('branch_id');
+        } else {
+            $branchIds = $user->branches()->pluck('branch_id');
+        }
+
+        return $query->whereIn('id', $branchIds);
     }
 }

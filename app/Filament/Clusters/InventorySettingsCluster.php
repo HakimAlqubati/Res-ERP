@@ -12,4 +12,14 @@ class InventorySettingsCluster extends Cluster
     {
         return 'Supply & Inventory Settings';
     }
+    public static function canAccess(): bool
+    {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_stock-adjustment-reason',
+            'view_any_payment-method',
+        ])) {
+            return true;
+        }
+        return false;
+    }
 }

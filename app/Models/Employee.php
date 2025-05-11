@@ -712,4 +712,9 @@ class Employee extends Model implements Auditable
     {
         return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
     }
+
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
+    }
 }

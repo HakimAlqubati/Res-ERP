@@ -377,13 +377,7 @@ class EquipmentResource extends Resource
 
         ]);
     }
-    public static function getNavigationBadge(): ?string
-    {
-        if (auth()->user()->is_branch_manager) {
-            return static::getModel()::where('branch_id', auth()->user()->branch->id)->count();
-        }
-        return static::getModel()::count();
-    }
+   
     public static function generateEquipmentCode(?int $typeId): string
     {
         $prefix = \App\Models\EquipmentType::find($typeId)?->equipment_code_start_with ?? 'EQ';
@@ -392,5 +386,20 @@ class EquipmentResource extends Resource
         $lastId = \App\Models\Equipment::max('id') + 1;
 
         return $prefix . str_pad((string)$lastId, 4, '0', STR_PAD_LEFT);
+    }
+
+
+    public static function getNavigationBadge(): ?string
+    {
+        return Equipment::query()->withBranch()->count();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withBranch()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

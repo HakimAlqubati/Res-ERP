@@ -239,7 +239,6 @@ implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
-
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -308,7 +307,7 @@ implements HasShieldPermissions
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->relationship('branch', 'name'),
+                    ->label(__('lang.branch'))->options(Branch::active()->withAccess()->pluck('name', 'id')),
                 // Filter::make('active')->label(__('lang.active')),
                 Filter::make('created_at')
                     ->label(__('lang.created_at'))
@@ -472,10 +471,7 @@ implements HasShieldPermissions
         return null;
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::where('is_purchased', 0)->whereHas('orderDetails')->count();
-    }
+
 
     public function isTableSearchable(): bool
     {
@@ -492,10 +488,18 @@ implements HasShieldPermissions
     }
 
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::where('is_purchased', 0)
+            ->withBranch()
+            ->whereHas('orderDetails')->count();
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             ->where('is_purchased', 0)
+            ->withBranch()
             ->whereHas('orderDetails')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
@@ -506,7 +510,4 @@ implements HasShieldPermissions
     {
         return $record->id;
     }
-
-    
-
 }

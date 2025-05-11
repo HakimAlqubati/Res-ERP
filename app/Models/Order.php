@@ -438,4 +438,8 @@ class Order extends Model implements Auditable
     {
         return $query->where('active', 1);
     }
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
+    }
 }

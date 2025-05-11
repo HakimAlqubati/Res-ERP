@@ -26,7 +26,7 @@ class ListOrders extends ListRecords
     }
     protected function getHeaderActions(): array
     {
-        return [ 
+        return [
             CreateAction::make(),
             Action::make('importOrders')
                 ->label('Import Orders')
@@ -41,7 +41,7 @@ class ListOrders extends ListRecords
                     // ->rules(['.xls', '.xlsx'])
                 ])
                 ->color('success')
-                ->visible(fn (): bool => auth()->user()->can('import_order'))
+                ->visible(fn(): bool => auth()->user()->can('import_order'))
                 ->action(function (array $data) {
                     $filePath = 'public/' . $data['file'];
                     $import = new OrdersImport();
@@ -81,7 +81,10 @@ class ListOrders extends ListRecords
             'all' => Tab::make(__('All Orders'))
                 ->modifyQueryUsing(fn(Builder $query) => $query) // No filtering
                 ->icon('heroicon-o-circle-stack')
-                ->badge(Order::query()->count())
+                ->badge(Order::query()
+                    ->withBranch()
+                    ->whereHas('orderDetails')
+                    ->count())
                 ->badgeColor('gray'),
         ];
 
@@ -90,7 +93,9 @@ class ListOrders extends ListRecords
             $tabs[$status] = Tab::make($label)
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', $status))
                 ->icon(Order::getStatusIcon($status))
-                ->badge(Order::query()->where('status', $status)->count())
+                ->badge(Order::query()->where('status', $status)
+                    ->withBranch()
+                    ->whereHas('orderDetails')->count())
                 ->badgeColor(Order::getBadgeColor($status));
         }
 
