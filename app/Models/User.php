@@ -360,4 +360,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->userType?->can_access_all_stores ?? false;
     }
+    public function getHidePricesAttribute(): bool
+    {
+        $user = auth()->user();
+        return $user->userType?->hide_prices ?? false;
+    }
 }

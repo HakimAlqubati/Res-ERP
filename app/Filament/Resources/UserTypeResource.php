@@ -30,16 +30,19 @@ class UserTypeResource extends Resource
                     ->maxLength(255),
                 Forms\Components\Toggle::make('can_access_all_branches')
                     ->label('Can access all branches')
-                    ->default(false),
+                    ->default(false)->inline(false),
 
                 Forms\Components\Toggle::make('can_access_all_stores')
                     ->label('Can access all stores')
-                    ->default(false),
+                    ->default(false)->inline(false),
 
                 Forms\Components\Toggle::make('can_access_non_branch_data')
-                    ->label('Can access non-branch data')
+                    ->label('Can access non-branch data')->inline(false)
                     ->helperText('Allow viewing data not tied to a specific branch (e.g. users, global reports)')
                     ->default(false),
+                Forms\Components\Toggle::make('hide_prices')
+                    ->label('Hide Prices')->inline(false)
+                    ->helperText('Prevent this user type from seeing prices'),
                 Forms\Components\Textarea::make('description'),
 
                 Select::make('role_ids')

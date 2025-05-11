@@ -274,7 +274,7 @@ implements HasShieldPermissions
                     'total_amount'
                 )->label(__('lang.total_amount'))->alignCenter(true)
                     ->numeric()
-                    ->hidden(fn(): bool => isStoreManager()),
+                    ->hidden(fn(): bool => auth()->user()->hide_prices),
                 TextColumn::make('created_at')
                     ->formatStateUsing(function ($state) {
                         return date('Y-m-d', strtotime($state)) . ' __ ' . date('H:i:s', strtotime($state));

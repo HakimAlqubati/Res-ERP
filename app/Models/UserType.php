@@ -16,6 +16,7 @@ class UserType extends Model
         'can_access_all_branches',
         'can_access_all_stores',
         'can_access_non_branch_data',
+        'hide_prices',
     ];
 
     // Define role_ids as a JSON column
@@ -25,6 +26,7 @@ class UserType extends Model
         'can_access_all_branches' => 'boolean',
         'can_access_all_stores' => 'boolean',
         'can_access_non_branch_data' => 'boolean',
+        'hide_prices' => 'boolean',
 
     ];
 

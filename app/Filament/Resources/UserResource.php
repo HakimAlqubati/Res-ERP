@@ -191,44 +191,44 @@ class UserResource extends Resource
 
                     ]),
                     Fieldset::make()->label('')
-                    ->hiddenOn('view')
-                    ->schema([
-                        Grid::make()->columns(2)->schema([
-                            setting('password_contains_for') == 'easy_password' ?
-                                TextInput::make('password')
-                                ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->reactive()
-                                ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                        ->hiddenOn('view')
+                        ->schema([
+                            Grid::make()->columns(2)->schema([
+                                setting('password_contains_for') == 'easy_password' ?
+                                    TextInput::make('password')
+                                    ->password()
+                                    ->required(fn(string $context) => $context === 'create')
+                                    ->reactive()
+                                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
 
-                                : TextInput::make('password')
-                                ->label('Password')
-                                ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->reactive()
-                                ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                                ->rules([
-                                    'required',
-                                    'string',
-                                    Password::min(setting('password_min_length'))
-                                        ->mixedCase()
-                                        ->numbers()
-                                        ->symbols()
-                                        ->uncompromised(),
-                                ])
-                                ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
-                            // TextInput::make('password')
-                            //     ->password()
-                            //     ->required(fn(string $context) => $context === 'create')
-                            //     ->reactive()
-                            //     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                            TextInput::make('password_confirmation')
-                                ->password()
-                                ->required(fn(string $context) => $context === 'create')
-                                ->same('password')
-                                ->label('Confirm Password'),
+                                    : TextInput::make('password')
+                                    ->label('Password')
+                                    ->password()
+                                    ->required(fn(string $context) => $context === 'create')
+                                    ->reactive()
+                                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                                    ->rules([
+                                        'required',
+                                        'string',
+                                        Password::min(setting('password_min_length'))
+                                            ->mixedCase()
+                                            ->numbers()
+                                            ->symbols()
+                                            ->uncompromised(),
+                                    ])
+                                    ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
+                                // TextInput::make('password')
+                                //     ->password()
+                                //     ->required(fn(string $context) => $context === 'create')
+                                //     ->reactive()
+                                //     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+                                TextInput::make('password_confirmation')
+                                    ->password()
+                                    ->required(fn(string $context) => $context === 'create')
+                                    ->same('password')
+                                    ->label('Confirm Password'),
+                            ]),
                         ]),
-                    ]),
                 ]),
                 Fieldset::make()
                     ->visible(fn(Get $get): bool =>  $get('is_attendance_user'))->schema([
@@ -273,8 +273,7 @@ class UserResource extends Resource
     }
 
     public static function table(Table $table): Table
-    { 
-
+    {
         return $table
             ->striped()
             ->defaultSort('id', 'desc')
