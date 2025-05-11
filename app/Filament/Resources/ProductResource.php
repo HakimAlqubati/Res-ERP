@@ -491,7 +491,6 @@ class ProductResource extends Resource
                                         ->label(__('lang.show_in_invoices'))
                                         ->default(false)
                                         ->disabled(function (callable $get, $record, $livewire) {
-                                            return false;
                                             return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
                                         })
                                         ->dehydrated(),
