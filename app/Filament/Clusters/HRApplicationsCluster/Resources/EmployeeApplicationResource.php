@@ -230,7 +230,8 @@ class EmployeeApplicationResource extends Resource
                 ]),
                 SelectFilter::make('branch_id')
                     ->label('Branch')
-                    ->options(Branch::select('name', 'id')->pluck('name', 'id')),
+                    ->options(Branch::withAccess()
+                        ->active()->select('name', 'id')->pluck('name', 'id')),
             ])
             ->actions([
                 Tables\Actions\RestoreAction::make(),
@@ -492,8 +493,8 @@ class EmployeeApplicationResource extends Resource
         })->count();
     }
 
- 
-   
+
+
     private static function approveDepartureRequest(): Action
     {
         return Action::make('approveDepartureRequest')->label('Approve')->button()
@@ -971,8 +972,8 @@ class EmployeeApplicationResource extends Resource
             });
     }
 
-    
-  
+
+
 
     public static function leaveRequestForm($set, $get)
     {

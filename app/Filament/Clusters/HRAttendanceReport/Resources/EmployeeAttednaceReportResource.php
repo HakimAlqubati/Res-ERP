@@ -6,6 +6,7 @@ use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\FakeModelReports\AttendanceByEmployee;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Toggle;
@@ -24,7 +25,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeAttednaceReportResource extends Resource
 {
-    protected static ?string $model = Attendance::class;
+    protected static ?string $model = AttendanceByEmployee::class;
     protected static ?string $slug = 'employee-attendance-reports';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -109,7 +110,10 @@ class EmployeeAttednaceReportResource extends Resource
                 ]),
             ]);
     }
-
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_employee-attendance-report');
+    }
     public static function canCreate(): bool
     {
         return false;

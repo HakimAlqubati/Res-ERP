@@ -87,7 +87,7 @@ class EmployeeApplicationV2 extends Model implements Auditable
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
 
-    
+
     // Relationships
     public function employee()
     {
@@ -389,5 +389,10 @@ class EmployeeApplicationV2 extends Model implements Auditable
             return $details['detail_month'] ?? null;
         }
         return null;
+    }
+
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
     }
 }

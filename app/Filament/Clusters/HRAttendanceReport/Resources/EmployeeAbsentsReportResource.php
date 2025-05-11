@@ -46,58 +46,51 @@ class EmployeeAbsentsReportResource extends Resource
     {
         return $table
             ->emptyStateHeading('No data')
-            ->columns([
-
-            ])
+            ->columns([])
             ->filters([
-                SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
-                        ->select('name', 'id')
+                SelectFilter::make('branch_id')->label('Branch')->options(Branch::withAccess()->active()
+                    ->select('name', 'id')->get()->pluck('name', 'id'))
 
-                        ->get()->pluck('name', 'id'))
-                
                     ->default(function () {
                         if (isBranchManager()) {
                             return auth()->user()?->branch_id;
                         }
                     })
                     ->searchable(),
-                    Filter::make('filter_date')->label('')->form([
-                        DatePicker::make('date')
-                            ->label('Date')->default(date('Y-m-d')),
-                        TimePicker::make('current_time')
-                            ->label('Current time')
-                            ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
-                            ->withoutSeconds()
-                            ,
-                    ]),
+                Filter::make('filter_date')->label('')->form([
+                    DatePicker::make('date')
+                        ->label('Date')->default(date('Y-m-d')),
+                    TimePicker::make('current_time')
+                        ->label('Current time')
+                        ->default(now()->timezone('Asia/Kuala_Lumpur')->format('H:i'))
+                        ->withoutSeconds(),
+                ]),
 
             ], FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
-            ;
+        ;
     }
- 
+
     public static function canCreate(): bool
     {
         return false;
     }
 
-    
+
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isSystemManager() || isBranchManager() ) {
+        if (isSuperAdmin() || isSystemManager() || isBranchManager()) {
             return true;
         }
         return false;
     }
-    
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListEmployeeAbsentReports::route('/'),
         ];
     }
-
-
 }

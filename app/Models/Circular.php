@@ -17,7 +17,7 @@ class Circular extends Model implements Auditable
         'title',
         'description',
         'group_id',
-        'branch_ids',
+        'branch_ids',   
         'released_date',
         'active',
         'created_by',
@@ -53,19 +53,19 @@ class Circular extends Model implements Auditable
         return $this->belongsTo(UserType::class, 'group_id');
     }
 
-    protected static function booted()
-    {
+    // protected static function booted()
+    // {
 
-        if (!isSuperAdmin() && !isSystemManager()) {
+    //     if (!isSuperAdmin() && !isSystemManager()) {
 
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                $userType = auth()->user()->user_type;
-                $branchId = auth()->user()->branch_id;
-                // dd($branchId,$userType);
-                $builder->where('group_id', $userType)
-                    ->whereJsonContains('branch_ids', (string) $branchId); // Search within the branch_ids as a JSON array
+    //         static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+    //             $userType = auth()->user()->user_type;
+    //             $branchId = auth()->user()->branch_id;
+    //             // dd($branchId,$userType);
+    //             $builder->where('group_id', $userType)
+    //                 ->whereJsonContains('branch_ids', (string) $branchId); // Search within the branch_ids as a JSON array
 
-            });
-        }
-    }
+    //         });
+    //     }
+    // }
 }

@@ -10,7 +10,7 @@ class HRAttendanceReport extends Cluster
     protected static ?string $clusterBreadcrumb = 'HR';
     public static function getNavigationLabel(): string
     {
-        if(isStuff()){
+        if (isStuff()) {
             return 'My Records';
         }
         return 'Reports';
@@ -18,6 +18,12 @@ class HRAttendanceReport extends Cluster
     }
     public static function canAccess(): bool
     {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_employee-attendance-report',
+            'view_any_attendance-by-branch',
+        ])) {
+            return true;
+        }
         return false;
     }
 }
