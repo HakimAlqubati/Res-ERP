@@ -71,7 +71,8 @@ class OrderPurchaseResource extends Resource
                     Grid::make()->columns(4)->schema([
                         Select::make('branch_id')->required()
                             ->label(__('lang.branch'))->columnSpan(2)
-                            ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
+                            ->options(Branch::withAccess()
+                            ->active()->get(['id', 'name'])->pluck('name', 'id')),
                         Select::make('supplier_id')->label(__('lang.supplier'))->columnSpan(2)->required()
                             ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)

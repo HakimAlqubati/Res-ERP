@@ -88,7 +88,12 @@ class EmployeeOvertimeResource extends Resource
                                 ->helperText('Select to populate the branch employees')
                                 ->required()->searchable()
                                 ->live()
-                                ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                ->options(
+                                    Branch::withAccess()
+                                        ->active()
+                                        ->select('name', 'id')
+                                        ->get()->pluck('name', 'id')
+                                )
                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     $employees = Employee::where('branch_id', $state)->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
                                     $employeesWithOvertime = [];
@@ -494,7 +499,9 @@ class EmployeeOvertimeResource extends Resource
                 Tables\Filters\TrashedFilter::make()->visible(fn(): bool => isSuperAdmin()),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->multiple()
-                    ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
+                    ->options(Branch::withAccess()
+                        ->active()
+                        ->get()->pluck('name', 'id')),
                 SelectFilter::make('type')->label('Type')->options(EmployeeOvertime::getTypes()),
                 SelectFilter::make('approved')
                     ->label('Status')->multiple()

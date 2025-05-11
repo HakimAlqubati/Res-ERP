@@ -75,7 +75,8 @@ class LeaveBalanceResource extends Resource
                                 ->helperText('Select to populate the branch employees')
                                 ->required()
                                 ->live()
-                                ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                                ->options(Branch::withAccess()
+                                    ->active()->select('name', 'id')->get()->pluck('name', 'id'))
                                 ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     $employees = Employee::where('branch_id', $state)->where('active', 1)->select('name', 'id as employee_id')->get()->toArray();
                                     // Populate the Repeater with employees
@@ -190,7 +191,8 @@ class LeaveBalanceResource extends Resource
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
-                    ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
+                    ->label(__('lang.branch'))->options([Branch::withAccess()
+                        ->active()->get()->pluck('name', 'id')->toArray()]),
                 SelectFilter::make('leave_type_id')
                     ->searchable()
                     ->multiple()

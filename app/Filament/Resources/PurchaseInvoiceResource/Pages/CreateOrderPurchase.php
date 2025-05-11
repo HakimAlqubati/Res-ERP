@@ -18,8 +18,8 @@ class CreateOrderPurchase extends CreateRecord
             $data['customer_id'] = Branch::find($data['branch_id'])->manager_id;
         } else {
             $data['branch_id'] = auth()->user()->branch->id;
-            $data['customer_id'] = auth()->user()->id;
         }
+        $data['customer_id'] = Branch::find($data['branch_id'])->manager_id;
 
         $data['status'] = Order::DELEVIRED;
         $data['is_purchased'] = 1;
