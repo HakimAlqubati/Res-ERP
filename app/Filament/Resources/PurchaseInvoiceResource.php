@@ -289,6 +289,7 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
                     ->alignCenter(true)->money('MYR')
+                    ->hidden(fn(): bool => auth()->user()->hide_prices)
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()

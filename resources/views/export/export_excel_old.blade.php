@@ -16,7 +16,7 @@
             <th>Product Description </th>
             <th>Unit </th>
             <th>Quantity</th>
-            @if (!isStoreManager())
+            @if (!auth()->user()->hide_prices)
                 <th>Price</th>
             @endif
         </tr>
@@ -38,7 +38,7 @@
             <td>{{ $value->product_desc ?? '--' }}</td>
             <td>{{ $value->unit_name ?? '--' }}</td>
             <td>{{ $value->qty ?? '--' }}</td>
-            @if (!isStoreManager())
+            @if (!auth()->user()->hide_prices)
                 <td>{{ $value->price ?? '--' }}</td>
             @endif
         </tr>
@@ -49,7 +49,7 @@
         }
             }
      } ?>
-        @if (!isStoreManager())
+        @if (!auth()->user()->hide_prices)
             <tr style=" font-weight: 700;">
 
                 <td colspan="7" style="text-align: center">

@@ -27,7 +27,7 @@
                     <th>{{ __('lang.category') }}</th>
 
                     <th>{{ __('lang.quantity') }}</th>
-                    @if (!isStoreManager())
+                    @if (!auth()->user()->hide_prices)
                         <th>{{ __('lang.price') }}</th>
                     @endif
                 </x-filament-tables::row>
@@ -42,13 +42,13 @@
                                 {{ $data?->category }}</a>
                         </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
-                        @if (!isStoreManager())
+                        @if (!auth()->user()->hide_prices)
                             <x-filament-tables::cell> {{ $data?->amount . ' ' . $data?->symbol }}
                             </x-filament-tables::cell>
                         @endif
                     </x-filament-tables::row>
                 @endforeach
-                @if (!isStoreManager())
+                @if (!auth()->user()->hide_prices)
                     <x-filament-tables::row>
                         <x-filament-tables::cell> {{ __('lang.total') }} </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $total_quantity }} </x-filament-tables::cell>

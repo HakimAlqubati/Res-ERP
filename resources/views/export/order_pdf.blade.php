@@ -112,7 +112,7 @@
                 <th> {{ __('lang.product') }} </th>
                 <th> {{ __('lang.unit') }} </th>
                 <th> {{ __('lang.quantity') }} </th>
-                @if (!isStoreManager())
+                @if (!auth()->user()->hide_prices)
                     <th> {{ __('lang.unit_price') }} </th>
                     <th> {{ __('lang.total_price') }} </th>
                 @endif
@@ -136,14 +136,14 @@
                     <td> {{ $valDetail->product->name }} </td>
                     <td> {{ $valDetail->unit->name }} </td>
                     <td> {{ $valDetail->available_quantity }} </td>
-                    @if (!isStoreManager())
+                    @if (!auth()->user()->hide_prices)
                         <td> {{ $valDetail->price }} </td>
                         <td> {{ $valDetail->price * $valDetail->available_quantity }} </td>
                     @endif
                 </tr>
             @endforeach
         </tbody>
-        @if (!isStoreManager())
+        @if (!auth()->user()->hide_prices)
             <tfoot>
                 <tr>
 
