@@ -427,13 +427,15 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return User::query()->withBranch()->count();
+        return User::query()
+            // ->withBranch()
+            ->count();
     }
 
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->withBranch()
+            // ->withBranch()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])->withMax('loginHistories as last_login_at', 'created_at');
