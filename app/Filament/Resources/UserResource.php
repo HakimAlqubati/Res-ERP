@@ -190,7 +190,9 @@ class UserResource extends Resource
                             }),
 
                     ]),
-                    Fieldset::make()->label('')->schema([
+                    Fieldset::make()->label('')
+                    ->hiddenOn('view')
+                    ->schema([
                         Grid::make()->columns(2)->schema([
                             setting('password_contains_for') == 'easy_password' ?
                                 TextInput::make('password')
@@ -413,6 +415,7 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
+            'view' => Pages\ViewUser::route('/{record}'),
         ];
     }
 

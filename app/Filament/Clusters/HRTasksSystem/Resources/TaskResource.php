@@ -70,16 +70,7 @@ class TaskResource extends Resource implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
-        $query = static::getModel();
-
-        if (!in_array(getCurrentRole(), [1, 3])) {
-            return $query::where('assigned_to', auth()->user()->id)
-                ->orWhere('assigned_to', auth()->user()?->employee?->id)
-                ->orWhere('created_by', auth()->user()->id)->count();
-        }
-
-        return $query::count();
+        return static::getModel()::withBranch()->count();
     }
 
     public static function getPermissionPrefixes(): array
@@ -960,6 +951,7 @@ class TaskResource extends Resource implements HasShieldPermissions
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('is_daily', 0)
+            ->withBranch()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

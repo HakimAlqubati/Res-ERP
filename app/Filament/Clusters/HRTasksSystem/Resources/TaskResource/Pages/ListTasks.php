@@ -25,14 +25,15 @@ class ListTasks extends ListRecords
         return [
             'All' => Tab::make()
                 ->icon('heroicon-o-circle-stack') // Example icon
-                ->badge(Task::count()) // Count of "Rejected" tasks
+                ->badge(Task::withBranch()
+                    ->count()) // Count of "Rejected" tasks
                 ->modifyQueryUsing(fn(Builder $query) => $query),
 
             'New' => Tab::make()
                 ->badgeColor(Task::COLOR_NEW)
 
                 ->icon('heroicon-o-plus-circle') // Example icon for "New"
-                ->badge(Task::where('task_status', Task::STATUS_NEW)->count()) // Count of "Rejected" tasks
+                ->badge(Task::where('task_status', Task::STATUS_NEW)->withBranch()->count()) // Count of "Rejected" tasks
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_NEW)),
 
             // 'Pending' => Tab::make()
@@ -44,19 +45,19 @@ class ListTasks extends ListRecords
             'In progress' => Tab::make()
                 ->badgeColor(Task::COLOR_IN_PROGRESS)
                 ->icon('heroicon-o-arrow-right-circle') // Example icon for "In Progress"
-                ->badge(Task::where('task_status', Task::STATUS_IN_PROGRESS)->count()) // Count of "Rejected" tasks
+                ->badge(Task::where('task_status', Task::STATUS_IN_PROGRESS)->withBranch()->count()) // Count of "Rejected" tasks
 
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_IN_PROGRESS)),
 
             'Closed' => Tab::make()
                 ->badgeColor(Task::COLOR_CLOSED)
                 ->icon('heroicon-o-check-circle') // Example icon for "Closed"
-                ->badge(Task::where('task_status', Task::STATUS_CLOSED)->count()) 
+                ->badge(Task::where('task_status', Task::STATUS_CLOSED)->withBranch()->count())
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_CLOSED)),
             'Rejected' => Tab::make()
                 ->badgeColor(Task::COLOR_REJECTED)
                 ->icon(Task::ICON_REJECTED) // Example icon for "Closed"
-                ->badge(Task::where('task_status', Task::STATUS_REJECTED)->count()) // Count of "Rejected" tasks
+                ->badge(Task::where('task_status', Task::STATUS_REJECTED)->withBranch()->count()) // Count of "Rejected" tasks
 
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('task_status', Task::STATUS_REJECTED)),
         ];

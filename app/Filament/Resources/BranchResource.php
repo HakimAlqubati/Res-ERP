@@ -349,6 +349,7 @@ class BranchResource extends Resource
                             }),
                     ]),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
             ])
@@ -364,6 +365,7 @@ class BranchResource extends Resource
         return [
             'index' => Pages\ManageBranches::route('/'),
             'edit' => Pages\EditBranch::route('/{record}/edit'),
+            'view' => Pages\ViewBranch::route('/{record}'),
             'create' => Pages\CreateBranch::route('/create'),
 
 

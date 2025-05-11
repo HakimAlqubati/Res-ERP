@@ -70,21 +70,26 @@ class DailyTasksSettingUp extends Model
         return $this->hasOne(TaskScheduleRequrrencePattern::class, 'task_id');
     }
 
-    protected static function booted()
-    {
+    // protected static function booted()
+    // {
 
-        if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
-                });
-            } else if (isFinanceManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    $builder->where('assigned_to', auth()->user()->employee->id)
-                        ->orWhere('assigned_by', auth()->user()->id)
-                    ; // Add your default query here
-                });
-            }
-        }
+    //     if (auth()->check()) {
+    //         if (isBranchManager()) {
+    //             static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+    //                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
+    //             });
+    //         } else if (isFinanceManager()) {
+    //             static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+    //                 $builder->where('assigned_to', auth()->user()->employee->id)
+    //                     ->orWhere('assigned_by', auth()->user()->id)
+    //                 ; // Add your default query here
+    //             });
+    //         }
+    //     }
+    // }
+
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
     }
 }

@@ -31,7 +31,9 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DailyTasksSettingUpResource extends Resource
 {
@@ -254,7 +256,8 @@ class DailyTasksSettingUpResource extends Resource
                     ]
                 ),
                 SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
-                    Branch::select('name', 'id')->pluck('name', 'id')
+                    Branch::withAccess()->active()
+                        ->select('name', 'id')->pluck('name', 'id')
                 ),
             ], FiltersLayout::AboveContent)
             ->actions([
@@ -280,16 +283,7 @@ class DailyTasksSettingUpResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
-        $query = static::getModel();
-
-        if (!in_array(getCurrentRole(), [1, 16, 3])) {
-            return $query::where('assigned_by', auth()->user()->id)
-                ->orWhere('assigned_to', auth()->user()->id)
-                ->orWhere('assigned_to', auth()->user()?->employee?->id)->count();
-        }
-
-        return $query::count();
+        return static::getModel()::withBranch()->count();
     }
 
     public static function getPages(): array
@@ -301,6 +295,16 @@ class DailyTasksSettingUpResource extends Resource
             'view' => Pages\ViewDailyTasksSettingUp::route('/{record}'),
         ];
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withBranch()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+
 
     // public static function canViewAny(): bool
     // {

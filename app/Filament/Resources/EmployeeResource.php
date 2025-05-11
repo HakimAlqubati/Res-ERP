@@ -93,7 +93,35 @@ class EmployeeResource extends Resource
     {
         return $form
             ->schema([
-
+                Select::make('user_id')
+                    ->label('Select Existing User')
+                    ->searchable()
+                    ->preload()
+                    ->options(
+                        \App\Models\User::select('id', 'name', 'email')
+                            ->whereDoesntHave('employee') // Only users without an employee
+                            ->get()
+                            ->mapWithKeys(fn($user) => [$user->id => "{$user->name} ({$user->email})"])
+                    )
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state) {
+                            $user = \App\Models\User::find($state);
+                            $set('name', $user->name);
+                            $set('email', $user->email);
+                            $set('phone_number', $user->phone_number);
+                            $set('branch_id', $user->branch_id);
+                            $set('gender', $user->gender);
+                            $set('nationality', $user->nationality);
+                            // $set('lock_fields', true); // هذا المفتاح نستخدمه لجعل الحقول readonly
+                        } else {
+                            $set('lock_fields', false);
+                        }
+                    })
+                    ->columnSpanFull(),
+                Toggle::make('lock_fields')
+                    ->default(false)
+                    ->hidden(),
                 Wizard::make([
                     Wizard\Step::make('Personal & Employeement data')
                         ->icon('heroicon-o-user-circle')
@@ -111,13 +139,17 @@ class EmployeeResource extends Resource
                                                     }
                                                 },
                                             ])
-                                            ->columnSpan(1)->required(),
-                                        TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
+                                            ->columnSpan(1)
+                                            ->disabled(fn(Get $get) => $get('lock_fields') === true)
+                                            ->required(),
+                                        TextInput::make('email')->columnSpan(1)->email()
+                                            ->disabled(fn(Get $get) => $get('lock_fields') === true)
+                                            ->unique(ignoreRecord: true),
 
                                         TextInput::make('phone_number')
                                             ->unique(ignoreRecord: true)
                                             ->columnSpan(1)
-
+                                            ->disabled(fn(Get $get) => $get('lock_fields') === true)
                                             // ->numeric()
                                             ->maxLength(12)->minLength(8),
 
@@ -218,7 +250,9 @@ class EmployeeResource extends Resource
                                             ->live()
                                             ->options(UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
 
-                                        Select::make('branch_id')->columnSpan(1)->label('Branch')
+                                        Select::make('branch_id')->columnSpan(1)
+                                            ->disabled(fn(Get $get) => $get('lock_fields') === true)
+                                            ->label('Branch')
                                             ->searchable()
                                             ->required()
                                             // ->disabledOn('edit')
@@ -399,7 +433,7 @@ class EmployeeResource extends Resource
                                         ->collapsed()
                                         ->minItems(0) // Set the minimum number of items
                                         // Optional: set the maximum number of items
-                                        ->defaultItems(1) // Default number of items when the form loads
+                                        ->defaultItems(0) // Default number of items when the form loads
                                         ->columnSpan('full'), // Adjust the span as necessary
                                 ]),
                                 Fieldset::make()->label('Shift - RFID')->schema([
@@ -803,7 +837,7 @@ class EmployeeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        return static::getModel()::withBranch()->count();
     }
 
     public static function getEloquentQuery(): Builder

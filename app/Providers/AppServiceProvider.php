@@ -54,14 +54,34 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Filament::serving(function () {
+            $user = auth()->user();
+            $branchName = $user->branch->name ?? 'No Branch';
             Filament::registerUserMenuItems([
+                // اسم المستخدم
+                'user-name' => UserMenuItem::make()
+                    ->label($user?->name ?? 'User')
+                    ->icon('heroicon-m-user')
+                    ->url(fn(): string => route(
+                        'filament.admin.resources.users.view',
+                        ['record' => auth()->id()],
+                    ))->openUrlInNewTab()
+                    ->sort(-3),
+
+                'user-branch' => UserMenuItem::make()
+                    ->label("Branch: {$branchName}")
+                    ->icon('heroicon-m-building-storefront')
+                    ->url(null)
+                    ->color('gray')
+                    ->sort(-2),
+
                 'profile' => UserMenuItem::make()
                     ->label('Edit Profile')
                     ->url(fn(): string => route(
                         'filament.admin.resources.users.edit',
                         ['record' => auth()->id()],
-                    ))
-                    ->icon('heroicon-m-user-circle'),
+                    ))->openUrlInNewTab()
+                    ->icon('heroicon-m-user-circle')
+                    ->sort(-1),
             ]);
         });
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');

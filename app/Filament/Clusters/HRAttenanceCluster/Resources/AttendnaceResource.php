@@ -186,6 +186,8 @@ class AttendnaceResource extends Resource
                 SelectFilter::make('branch_id')->searchable()->label('Branch')
                     ->options(function (Get $get) {
                         return Branch::query()
+                            ->withAccess()
+                            ->active()
                             ->pluck('name', 'id');
                     }),
 
@@ -416,5 +418,4 @@ class AttendnaceResource extends Resource
         });
         return $query;
     }
-
 }

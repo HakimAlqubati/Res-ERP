@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
 {
-    use HasFactory, SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, DynamicConnection, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_month_salaries';
 
     protected $fillable = [
-        'name', 
+        'name',
         'start_month',
         'end_month',
         'notes',
@@ -24,7 +24,7 @@ class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
         'month',
     ];
     protected $auditInclude = [
-        'name', 
+        'name',
         'start_month',
         'end_month',
         'notes',
@@ -55,7 +55,7 @@ class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
     }
     public function createdBy()
     {
-        return $this->belongsTo(User::class,'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     protected static function booted()
@@ -65,5 +65,10 @@ class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }
+    }
+
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
     }
 }

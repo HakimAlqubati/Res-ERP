@@ -26,7 +26,9 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Maatwebsite\Excel\Facades\Excel;
 
 class MonthSalaryResource extends Resource
@@ -71,7 +73,8 @@ class MonthSalaryResource extends Resource
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
                         ->disabledOn('view')
-                        ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
+                        ->options(Branch::withAccess()->active()
+                            ->select('id', 'name')->get()->pluck('name', 'id'))
                         ->required()
 
                         ->helperText('Please, choose a branch'),
@@ -103,10 +106,7 @@ class MonthSalaryResource extends Resource
             ]);
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
-    }
+
 
     public static function table(Table $table): Table
     {
@@ -335,5 +335,20 @@ class MonthSalaryResource extends Resource
                 ->options($employeeOptions)
                 ->default(array_keys($employeeOptions)),
         ];
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::query()
+            ->withBranch()->count();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withBranch()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

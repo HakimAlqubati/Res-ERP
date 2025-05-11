@@ -48,11 +48,11 @@ class EmployeeDeductoinSummaryResource extends Resource
                 //
             ])
             ->filters([
-                SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
-                        ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
+                SelectFilter::make('branch_id')->label('Branch')->options(Branch::withAccess()->active()
+                    ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
                 SelectFilter::make('employee_id')->label('Employee')->options(
                     function () {
-                        return Employee::where('active', 1)
+                        return Employee::withBranch()->active()
                             ->get()
                             ->mapWithKeys(function ($employee) {
                                 return [$employee->id => $employee->name . ' - ' . $employee->id];

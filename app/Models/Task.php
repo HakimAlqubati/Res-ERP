@@ -424,4 +424,8 @@ class Task extends Model implements Auditable
 
         return 0; // If there are no steps, progress is 0%
     }
+    public function scopeWithBranch($query)
+    {
+        return $query->whereIn('branch_id', accessBranchesIds());
+    }
 }
