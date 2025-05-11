@@ -426,6 +426,11 @@ class Task extends Model implements Auditable
     }
     public function scopeWithBranch($query)
     {
+
+        $user = auth()->user();
+        if ($user?->userType?->can_access_all_branches) {
+            return $query;
+        }
         return $query->whereIn('branch_id', accessBranchesIds());
     }
 }

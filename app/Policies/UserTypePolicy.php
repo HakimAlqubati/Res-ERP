@@ -15,7 +15,7 @@ class UserTypePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_user::type');
+        return $user->can('view_any_user-type');
     }
 
     /**
@@ -23,7 +23,7 @@ class UserTypePolicy
      */
     public function view(User $user, UserType $userType): bool
     {
-        return $user->can('view_user::type');
+        return $user->can('view_user-type');
     }
 
     /**
@@ -31,7 +31,7 @@ class UserTypePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_user::type');
+        return $user->can('create_user-type');
     }
 
     /**
@@ -39,7 +39,7 @@ class UserTypePolicy
      */
     public function update(User $user, UserType $userType): bool
     {
-        return $user->can('update_user::type');
+        return $user->can('update_user-type');
     }
 
     /**
@@ -47,7 +47,7 @@ class UserTypePolicy
      */
     public function delete(User $user, UserType $userType): bool
     {
-        return $user->can('delete_user::type');
+        return $user->can('delete_user-type');
     }
 
     /**
@@ -55,7 +55,7 @@ class UserTypePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_user::type');
+        return $user->can('delete_any_user-type');
     }
 
     /**
@@ -63,7 +63,7 @@ class UserTypePolicy
      */
     public function forceDelete(User $user, UserType $userType): bool
     {
-        return $user->can('force_delete_user::type');
+        return $user->can('force_delete_user-type');
     }
 
     /**
@@ -71,7 +71,7 @@ class UserTypePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_user::type');
+        return $user->can('force_delete_any_user-type');
     }
 
     /**
@@ -79,7 +79,7 @@ class UserTypePolicy
      */
     public function restore(User $user, UserType $userType): bool
     {
-        return $user->can('restore_user::type');
+        return $user->can('restore_user-type');
     }
 
     /**
@@ -87,7 +87,7 @@ class UserTypePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_user::type');
+        return $user->can('restore_any_user-type');
     }
 
     /**
@@ -95,7 +95,7 @@ class UserTypePolicy
      */
     public function replicate(User $user, UserType $userType): bool
     {
-        return $user->can('replicate_user::type');
+        return $user->can('replicate_user-type');
     }
 
     /**
@@ -103,6 +103,6 @@ class UserTypePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_user::type');
+        return $user->can('reorder_user-type');
     }
 }

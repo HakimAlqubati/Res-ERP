@@ -340,8 +340,24 @@ class User extends Authenticatable implements FilamentUser, Auditable
     {
         return $this->branches()->pluck('branch_id')->toArray();
     }
+    public function userType()
+    {
+        return $this->belongsTo(UserType::class, 'user_type');
+    }
     public function scopeWithBranch($query)
     {
+        $user = auth()->user();
+        if ($user?->userType?->can_access_all_branches) {
+            return $query;
+        }
         return $query->whereIn('branch_id', accessBranchesIds());
+    }
+    public function getCanAccessAllBranchesAttribute(): bool
+    {
+        return $this->userType?->can_access_all_branches ?? false;
+    }
+    public function getCanAccessAllStoresAttribute(): bool
+    {
+        return $this->userType?->can_access_all_stores ?? false;
     }
 }

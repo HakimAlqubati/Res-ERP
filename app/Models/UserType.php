@@ -8,12 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 class UserType extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'description', 'role_ids', 'active',];
+    protected $fillable = [
+        'name',
+        'description',
+        'role_ids',
+        'active',
+        'can_access_all_branches',
+        'can_access_all_stores',
+        'can_access_non_branch_data',
+    ];
 
     // Define role_ids as a JSON column
     protected $casts = [
         'role_ids' => 'array',
         'active' => 'boolean',
+        'can_access_all_branches' => 'boolean',
+        'can_access_all_stores' => 'boolean',
+        'can_access_non_branch_data' => 'boolean',
 
     ];
 
