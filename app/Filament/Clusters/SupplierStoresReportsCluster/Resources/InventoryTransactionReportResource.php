@@ -104,7 +104,7 @@ class InventoryTransactionReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->can('view_any_inventory-transaction-trucking-report');
+        return auth()->user()->hasAnyPermission(['view_any_inventory-transaction-trucking-report','view_inventory::transaction::trucking::report']);
     }
     public static function getNavigationBadge(): ?string
     {

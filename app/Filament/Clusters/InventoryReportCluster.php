@@ -14,7 +14,10 @@ class InventoryReportCluster extends Cluster
 
     public static function canAccess(): bool
     {
-        if (auth()->user()->hasAnyPermission(['view_any_inventory-transaction-trucking-report'])) {
+        if (auth()->user()->hasAnyPermission([
+            'view_any_inventory-transaction-trucking-report',
+            'view_inventory::transaction::trucking::report'
+        ])) {
             return true;
         }
         return false;
