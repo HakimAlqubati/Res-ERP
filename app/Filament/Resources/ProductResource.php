@@ -326,16 +326,16 @@ class ProductResource extends Resource
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('allUnitPrices')
 
-                                ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
-                                    return [
-                                        function (string $attribute, $value, \Closure $fail) use ($get) {
-                                            $units = $get('units') ?? [];
+                                // ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                //     return [
+                                //         function (string $attribute, $value, \Closure $fail) use ($get) {
+                                //             $units = $get('units') ?? [];
 
-                                            // validation مع رسالة رسمية
-                                            ProductResource::validateUnitsPackageSizeOrder($units, $fail);
-                                        }
-                                    ];
-                                })
+                                //             // validation مع رسالة رسمية
+                                //             ProductResource::validateUnitsPackageSizeOrder($units, $fail);
+                                //         }
+                                //     ];
+                                // })
                                 ->deleteAction(function (ActionsAction $action) {
                                     $action->before(function (array $arguments, Repeater $component, $record) {
                                         $unitPriceRecordId = null;
@@ -543,16 +543,16 @@ class ProductResource extends Resource
                                         }
                                     });
                                 })
-                                ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
-                                    return [
-                                        function (string $attribute, $value, \Closure $fail) use ($get) {
-                                            $units = $get('units') ?? [];
+                                // ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                //     return [
+                                //         function (string $attribute, $value, \Closure $fail) use ($get) {
+                                //             $units = $get('units') ?? [];
 
-                                            // validation مع رسالة رسمية
-                                            ProductResource::validateUnitsPackageSizeOrder($units, $fail);
-                                        }
-                                    ];
-                                })
+                                //             // validation مع رسالة رسمية
+                                //             ProductResource::validateUnitsPackageSizeOrder($units, $fail);
+                                //         }
+                                //     ];
+                                // })
 
 
                                 ->orderable('product_id')
