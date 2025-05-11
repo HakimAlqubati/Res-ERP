@@ -63,7 +63,7 @@ class PurchaseInvoiceReportResource extends Resource
                     ->label(__('lang.store'))
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    })->options(Store::active()->get()->pluck('name', 'id')),
+                    })->options(Store::withAccess()->active()->get()->pluck('name', 'id')),
 
                 SelectFilter::make("supplier_id")
                     ->searchable()

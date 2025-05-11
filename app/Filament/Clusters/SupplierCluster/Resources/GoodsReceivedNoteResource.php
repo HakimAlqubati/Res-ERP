@@ -81,7 +81,7 @@ class GoodsReceivedNoteResource extends Resource
 
                             Select::make('store_id')
                                 ->options(
-                                    Store::active()->pluck('name', 'id')->toArray()
+                                    Store::withAccess()->active()->pluck('name', 'id')->toArray()
                                 )->default(getDefaultStore())
                                 ->label('Store')->searchable()
                                 ->required()->disabled(fn($record): bool => $isEditOperation && $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false),

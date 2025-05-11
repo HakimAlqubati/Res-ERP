@@ -73,7 +73,7 @@ class StockInventoryResource extends Resource
                             ->disabledOn('edit')
                             ->options(
                                 Store::active()
-                                    ->withManagedStores()
+                                ->withAccess()
                                     ->get(['name', 'id'])->pluck('name', 'id')
                             )->required(),
 

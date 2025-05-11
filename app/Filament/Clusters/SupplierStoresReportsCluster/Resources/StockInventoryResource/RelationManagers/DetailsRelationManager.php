@@ -86,7 +86,7 @@ class DetailsRelationManager extends RelationManager
                                     ->default(getDefaultStore())
                                     ->options(
                                         Store::active()
-                                            ->withManagedStores()
+                                            ->withAccess()
                                             ->get(['name', 'id'])->pluck('name', 'id')
                                     )->required(),
 

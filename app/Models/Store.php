@@ -73,7 +73,7 @@ class Store extends Model implements Auditable
 
     public function scopeWithManagedStores($query)
     {
-        if(isFinanceManager()){
+        if (isFinanceManager()) {
             return $query;
         }
         if (isStoreManager()) {
@@ -125,5 +125,20 @@ class Store extends Model implements Auditable
     public function orders()
     {
         return $this->belongsToMany(Order::class, 'order_store');
+    }
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_stores');
+    }
+    public function scopeWithAccess($query)
+    {
+        $user = auth()->user();
+
+        // إذا كان المستخدم يستطيع الوصول لجميع المخازن، لا نقيّد
+        if ($user?->userType?->can_access_all_stores ?? false) {
+            return $query;
+        }
+        // قيّد الاستعلام بالمخازن المرتبطة بالمستخدم
+        return $query->whereIn('id', $user->store_ids ?? []);
     }
 }

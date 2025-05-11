@@ -55,7 +55,7 @@ class StockIssueOrderResource extends Resource
                         // ->relationship('store', 'name')
                         ->options(
                             Store::active()
-                                ->withManagedStores()
+                                ->withAccess()
                                 ->get(['name', 'id'])->pluck('name', 'id')
                         )
                         ->default(getDefaultStore())

@@ -365,4 +365,14 @@ class User extends Authenticatable implements FilamentUser, Auditable
         $user = auth()->user();
         return $user->userType?->hide_prices ?? false;
     }
+
+    public function stores()
+    {
+        return $this->belongsToMany(Store::class, 'user_stores');
+    }
+
+    public function getStoreIdsAttribute(): array
+    {
+        return $this->stores()->pluck('store_id')->toArray();
+    }
 }

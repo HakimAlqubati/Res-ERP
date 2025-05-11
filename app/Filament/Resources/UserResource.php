@@ -9,6 +9,7 @@ use App\Models\Branch;
 use App\Models\BranchArea;
 use App\Models\Employee;
 use App\Models\LoginAttempt;
+use App\Models\Store;
 use App\Models\User;
 use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
@@ -123,7 +124,12 @@ class UserResource extends Resource
                                     ->get(['name', 'id'])
                                     ->pluck('name', 'id'))->bulkToggleable(),
 
-
+                            CheckboxList::make('stores')
+                                ->label('Allowed Stores')->relationship('stores')
+                                ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
+                                ->searchable()->bulkToggleable()->columns(3)
+                                ->helperText('Select the stores this user is allowed to access. The user will only see data related to these stores.')
+                                ->columnSpanFull(),
                             Select::make('branch_id')
                                 ->label('Default Branch')
                                 ->required()

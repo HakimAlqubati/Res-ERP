@@ -119,7 +119,7 @@ class PurchaseInvoiceResource extends Resource
                             ->default(getDefaultStore())
                             ->options(
                                 Store::where('active', 1)
-                                    ->withManagedStores()
+                                    ->withAccess()
                                     ->get(['id', 'name'])->pluck('name', 'id')
                             )
                             ->disabledOn('edit')

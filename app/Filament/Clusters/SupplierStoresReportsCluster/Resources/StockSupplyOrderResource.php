@@ -52,7 +52,7 @@ class StockSupplyOrderResource extends Resource
                         ->default(getDefaultStore())
                         ->options(
                             Store::active()
-                                ->withManagedStores()
+                                ->withAccess()
                                 ->get(['name', 'id'])->pluck('name', 'id')
                         )->required(),
 
