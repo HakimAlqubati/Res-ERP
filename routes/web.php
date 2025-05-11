@@ -677,3 +677,4 @@ Route::get('/testLog', function () {
 });
 
 Route::get('admin/branchConsumptionReport', [TestController4::class, 'branchConsumptionReport']);
+require __DIR__.'/landing.php';

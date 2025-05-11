@@ -28,7 +28,8 @@ class OrderDetails extends Model implements Auditable
         'ordered_unit_id',
         'package_size',
         'is_created_due_to_qty_preivous_order',
-        'previous_order_id'
+        'previous_order_id',
+        'total_unit_price',
     ];
     protected $auditInclude = [
         'order_id',
@@ -48,7 +49,8 @@ class OrderDetails extends Model implements Auditable
         'ordered_unit_id',
         'package_size',
         'is_created_due_to_qty_preivous_order',
-        'previous_order_id'
+        'previous_order_id',
+        'total_unit_price',
     ];
 
     protected $appends = ['total_price'];

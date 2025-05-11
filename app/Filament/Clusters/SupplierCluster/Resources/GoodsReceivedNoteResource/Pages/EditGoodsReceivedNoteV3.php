@@ -19,6 +19,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Str;
@@ -39,7 +40,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
     {
 
         $this->formData = [
-            'invoice_no' => PurchaseInvoice::autoInvoiceNo(),
+            'invoice_no' => null,
             'date' => now()->format('Y-m-d'),
             'store_id' => $this->record->store_id,
             'supplier_id' => $this?->record?->supplier_id,
@@ -85,8 +86,12 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                     ->label('Payment Method')
                     ->options(PaymentMethod::active()->get()->pluck('name', 'id'))
                     ->searchable()
-                    
-                    ->statePath('formData.payment_method_id')
+
+                    ->statePath('formData.payment_method_id'),
+                Textarea::make('description')->label(__('lang.description'))
+                    ->placeholder('Enter description')
+                    ->columnSpanFull()
+                    ->statePath('formData.description')
             ]),
 
             Repeater::make('units')
@@ -106,7 +111,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                     TextInput::make('quantity')
                         ->numeric()->disabled(),
                     TextInput::make('package_size')->numeric()->disabled(),
-                    TextInput::make('price')->numeric()->label('Price')->required()
+                    TextInput::make('price')->numeric()->label('Unit Price')->required()
                         ->live(onBlur: true)
                         ->minValue(1)
                         ->rule('gte:1')
@@ -133,6 +138,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                     'date' => $data['date'],
                     'store_id' => $data['store_id'],
                     'supplier_id' => $data['supplier_id'],
+                    'description' => $data['description'],
                     'has_grn' => true,
                     'grn_id' => $this->record->id,
                     'payment_method_id' => $data['payment_method_id']
@@ -144,7 +150,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                 }
 
                 $this->record->update([
-                    'status' => GoodsReceivedNote::STATUS_APPROVED,
+                    'is_purchase_invoice_created' => true,
                     'purchase_invoice_id' => $invoice->id,
                     'approved_by' => auth()->id()
                 ]);

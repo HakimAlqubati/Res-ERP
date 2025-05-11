@@ -20,6 +20,7 @@ use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -64,45 +65,74 @@ class BranchResource extends Resource
                                         ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Grid::make()->columns(4)->schema([
-                                    Toggle::make('active')
-                                        ->inline(false)->default(true)
-                                        ->label(__('lang.active')),
-                                    Select::make('type')
-                                        ->label(__('lang.branch_type'))
-                                        ->required()
+
+                                    //     ->label(__('lang.active')),
+                                    // Select::make('type')
+                                    //     ->label(__('lang.branch_type'))
+                                    //     ->required()
+                                    //     ->default(function () {
+                                    //         // 🧠 التقاط قيمة type من URL تلقائياً (activeTab)
+                                    //         $tab = request()->get('activeTab');
+                                    //         return in_array($tab, Branch::TYPES) ? $tab : Branch::TYPE_BRANCH;
+                                    //     })
+                                    //     ->options([
+                                    //         Branch::TYPE_BRANCH => __('lang.normal_branch'),
+                                    //         Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
+                                    //         Branch::TYPE_HQ => __('lang.hq'),
+                                    //         Branch::TYPE_POPUP => __('lang.popup_branch'),
+                                    //     ])
+                                    //     ->default(Branch::TYPE_BRANCH)
+
+                                    //     ->reactive(),
+                                    ToggleButtons::make('type')->required()
                                         ->default(function () {
-                                            // 🧠 التقاط قيمة type من URL تلقائياً (activeTab)
                                             $tab = request()->get('activeTab');
                                             return in_array($tab, Branch::TYPES) ? $tab : Branch::TYPE_BRANCH;
-                                        })
-                                        ->options([
+                                        })->options([
                                             Branch::TYPE_BRANCH => __('lang.normal_branch'),
                                             Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
                                             Branch::TYPE_HQ => __('lang.hq'),
                                             Branch::TYPE_POPUP => __('lang.popup_branch'),
-                                        ])
+                                        ])->columns(4)
                                         ->default(Branch::TYPE_BRANCH)
+                                        ->icons([
+                                            Branch::TYPE_BRANCH => 'heroicon-o-building-storefront',
+                                            Branch::TYPE_CENTRAL_KITCHEN => 'heroicon-o-fire',
+                                            Branch::TYPE_HQ => 'heroicon-o-building-storefront',
+                                            Branch::TYPE_POPUP => 'heroicon-o-sparkles',
+                                        ])
+                                        ->colors([
+                                            Branch::TYPE_BRANCH => 'warning',
+                                            Branch::TYPE_CENTRAL_KITCHEN => 'info',
+                                            Branch::TYPE_HQ => 'success',
+                                            Branch::TYPE_POPUP => 'danger',
+                                        ])
+                                        ->inline()
+                                        ->reactive()->columnSpan(3),
+                                    Toggle::make('active')
+                                        ->inline(false)->default(true),
+                                    Grid::make()->columnSpanFull()->columns(3)->schema([
+                                        Toggle::make('manager_abel_show_orders')
+                                            ->label(__('stock.manager_abel_show_orders'))
+                                            ->inline(false)
+                                            ->default(false)
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
 
-                                        ->reactive(),
-                                    Toggle::make('manager_abel_show_orders')
-                                        ->label(__('stock.manager_abel_show_orders'))
-                                        ->inline(false)
-                                        ->default(false)
-                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        Select::make('store_id')
+                                            ->label(__('stock.store_id'))
+                                            ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        Select::make('categories')
+                                            ->label(__('stock.customized_manufacturing_categories'))
+                                            // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                            ->relationship('categories', 'name')
 
-                                    Select::make('store_id')
-                                        ->label(__('stock.store_id'))
-                                        ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
-                                        ->searchable()
-                                        ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
-                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
-                                    Select::make('categories')
-                                        ->label(__('stock.customized_manufacturing_categories'))
-                                        // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
-                                        ->relationship('categories', 'name')
+                                            ->searchable()->multiple()
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
 
-                                        ->searchable()->multiple()
-                                        ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                    ]),
 
                                 ]),
                                 Fieldset::make()->columns(2)
@@ -243,7 +273,7 @@ class BranchResource extends Resource
     {
         return $table->striped()
             ->columns([
-                TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true),
+                TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
                         return null;
@@ -271,7 +301,9 @@ class BranchResource extends Resource
                     ->label(__('lang.end_date'))
                     ->dateTime('Y-m-d')
                     ->toggleable(isToggledHiddenByDefault: true),
-
+                TextColumn::make('orders_count')
+                    ->formatStateUsing(fn($record): string => $record?->orders()?->count() ?? 0)
+                    ->label(__('lang.orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([

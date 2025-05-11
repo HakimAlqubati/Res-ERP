@@ -174,19 +174,14 @@ class InventoryResource extends Resource
                 // Tables\Actions\EditAction::make(),
 
                 ActionGroup::make([
-                    Tables\Actions\Action::make('editStore')
+
+                    Tables\Actions\Action::make('editPackageSize')
                         ->visible(fn(): bool => auth()->user()->email == 'admin@admin.com')
                         ->form([
-                            \Filament\Forms\Components\Select::make('store_id')
-                                ->label('Store')
-                                ->required()
-                                ->searchable()
-                                ->options(
-                                    \App\Models\Store::active()->pluck('name', 'id')
-                                ),
+                            \Filament\Forms\Components\TextInput::make('package_size')->required(),
                         ])->action(function ($record, $data) {
                             $record->update([
-                                'store_id' => $data['store_id'],
+                                'package_size' => $data['package_size'],
                             ]);
                             \Filament\Notifications\Notification::make()
                                 ->title('Store Updated')
@@ -194,7 +189,7 @@ class InventoryResource extends Resource
                                 ->body('Store updated successfully.')
                                 ->send();
                         })
-                        ->label('Edit Store')
+                        ->label('Edit Package Size')
                         ->color('warning')
                         ->icon('heroicon-m-pencil-square'),
 

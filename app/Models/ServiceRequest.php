@@ -6,15 +6,16 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class ServiceRequest extends Model implements Auditable
+class ServiceRequest extends Model implements Auditable, HasMedia
 {
-    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable;
+    use HasFactory, DynamicConnection, \OwenIt\Auditing\Auditable, InteractsWithMedia;
     protected $table = 'hr_service_requests';
 
     // Fillable fields
     protected $fillable = [
-        'name',
         'description',
         'branch_id',
         'branch_area_id',
@@ -28,7 +29,6 @@ class ServiceRequest extends Model implements Auditable
         'equipment_id',
     ];
     protected $auditInclude = [
-        'name',
         'description',
         'branch_id',
         'branch_area_id',
@@ -153,11 +153,38 @@ class ServiceRequest extends Model implements Auditable
                 ; // Add your default query here
             });
         }
+
+        static::created(function ($request) {
+            $request->logToEquipment(
+                \App\Models\EquipmentLog::ACTION_SERVICED,
+                'Service request created: ' . $request->name
+            );
+        });
+
+        static::updated(function ($request) {
+            if ($request->isDirty('status')) {
+                $request->logToEquipment(
+                    \App\Models\EquipmentLog::ACTION_UPDATED,
+                    'Status changed to ' . $request->status . ' for request: ' . $request->name
+                );
+            }
+        });
     }
 
     // Scope for accepted service requests
     public function scopeAccepted($query)
     {
         return $query->where('accepted', true);
+    }
+
+    public function logToEquipment(string $action, string $description): void
+    {
+        if ($this->equipment_id) {
+            $this->equipment?->addLog(
+                $action,
+                $description,
+                auth()->id()
+            );
+        }
     }
 }

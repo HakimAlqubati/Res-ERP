@@ -80,7 +80,7 @@ class PurchaseInvoiceResource extends Resource
                             ->label(__('lang.invoice_no'))
                             ->required(fn(): bool => settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false))
                             ->unique(ignoreRecord: true)
-                            ->default(fn(): int => PurchaseInvoice::autoInvoiceNo())
+                            // ->default(fn(): int => PurchaseInvoice::autoInvoiceNo())
                             ->placeholder('Enter invoice number')
                             ->disabled(function ($record) {
                                 $setting = settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false);
@@ -279,12 +279,16 @@ class PurchaseInvoiceResource extends Resource
                     ->color('primary')->copyable()
                     ->weight(FontWeight::Bold)->alignCenter(true)
                     ->searchable()->sortable()->toggleable(),
-                TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-'),
+                TextColumn::make('supplier.name')->label('Supplier')->toggleable()->default('-')->wrap(),
                 TextColumn::make('store.name')->label('Store')->toggleable(),
                 TextColumn::make('date')->sortable()->toggleable(),
                 TextColumn::make('description')->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('details_count')->searchable()->alignCenter(true)
+                TextColumn::make('details_count')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: false),
+                    TextColumn::make('total_amount')
+                    ->label(__('lang.total_amount')) 
+                    ->alignCenter(true)->money('MYR')
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()
@@ -302,13 +306,17 @@ class PurchaseInvoiceResource extends Resource
                     ->label('Payment Method')
                     ->searchable()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+              
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('payment_method_id')
                     ->label('Payment Method')
-                    ->options(PaymentMethod::active()->get()->pluck('name', 'id'))
+                    ->options(PaymentMethod::active()->get()->pluck('name', 'id')),
+                SelectFilter::make('supplier_id')
+                    ->label('Supplier')
+                    ->options(Supplier::get()->pluck('name', 'id'))
             ])
             ->actions([
                 Tables\Actions\Action::make('cancel')
@@ -412,11 +420,10 @@ class PurchaseInvoiceResource extends Resource
     }
     public static function canCreate(): bool
     {
-        return true;
-        if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
-            return false;
-        }
-        if (isSuperVisor()) {
+        // if (settingWithDefault('purchase_invoice_from_grn_only', false)) {
+        //     return false;
+        // }
+        if (isSuperVisor() || isStoreManager()) {
             return false;
         }
         return static::can('create');

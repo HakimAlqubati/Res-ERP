@@ -493,8 +493,8 @@ class ProductResource extends Resource
                                         ->inline(false)
                                         ->label(__('lang.show_in_invoices'))
                                         ->default(false)
-                                        ->disabled(function (callable $get, $livewire) {
-                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                        ->disabled(function (callable $get, $record, $livewire) {
+                                            return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
                                         })
                                         ->dehydrated(),
 
@@ -746,6 +746,17 @@ class ProductResource extends Resource
                     ->query(fn(Builder $query): Builder => $query->whereHas('category', fn($q) => $q->where('is_manafacturing', true))),
 
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\Filter::make('smallest_package_not_one')
+                    ->label('Min Package Size ≠ 1')
+                    ->query(function (Builder $query) {
+                        $query->whereIn('id', function ($q) {
+                            $q->select('product_id')
+                                ->from('unit_prices')
+                                ->whereNull('deleted_at')
+                                ->groupBy('product_id')
+                                ->havingRaw('MIN(package_size) != 1');
+                        });
+                    })
             ])
             ->actions([
                 Tables\Actions\Action::make('updateUnitPrice')
@@ -836,7 +847,7 @@ class ProductResource extends Resource
                             }
                         }
                         Log::info('Update Component Prices Results:', $result);
-                    }),
+                    })->hidden(),
                 BulkAction::make('updateComponentPricesNew')
                     ->label('Update Price New')
                     ->icon('heroicon-o-currency-dollar')->button()
@@ -1075,7 +1086,6 @@ class ProductResource extends Resource
         $filteredUnits = collect($units)
             ->filter(fn($unit) => ($unit['show_in_invoices'] ?? false)) // فقط التي show_in_invoices = true
             ->values(); // إعادة ترتيب الفهرس
-
         $packageSizes = $filteredUnits
             ->pluck('package_size')
             ->filter(fn($value) => $value !== null)
@@ -1103,7 +1113,7 @@ class ProductResource extends Resource
 
         // 2️⃣ التأكد أن آخر واحدة فقط = 1
         if ($packageSizes->last() !== 1.0) {
-            $message = __('⚠️ The last unit package size must be exactly 1.');
+            $message = __('⚠️ The last qty per pack must be exactly 1.');
             if ($fail) {
                 $fail($message);
             } else {
@@ -1125,13 +1135,35 @@ class ProductResource extends Resource
         }
     }
 
-    protected static function isProductLocked(?Model $record): bool
+    protected static function isProductLocked($record): bool
     {
         if (! $record) {
             return false;
         }
 
         $productId = $record->id ?? null;
+        if (! $productId) {
+            return false;
+        }
+
+        return \App\Models\OrderDetails::where('product_id', $productId)->exists()
+            || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists()
+            || \App\Models\InventoryTransaction::where('product_id', $productId)->exists()
+            || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+    }
+    protected static function isProductLockedForToggle($product, $record): bool
+    {
+        $existUnitPrices = $product?->unitPrices;
+        $smallestUnit = $existUnitPrices?->sortBy('package_size')->first();
+
+        if ($smallestUnit && $smallestUnit->package_size == 1) {
+            return true;
+        }
+        if (! $record) {
+            return false;
+        }
+
+        $productId = $product->id ?? null;
         if (! $productId) {
             return false;
         }

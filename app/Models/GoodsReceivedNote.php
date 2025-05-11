@@ -17,8 +17,6 @@ class GoodsReceivedNote extends Model implements Auditable
         'store_id',
         'grn_number',
         'notes',
-        'is_approved',
-        'is_cancelled',
         'created_by',
         'updated_by',
         'approved_by',
@@ -26,6 +24,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'cancel_reason',
         'supplier_id',
         'status',
+        'is_purchase_invoice_created',
     ];
 
     protected $auditInclude = [
@@ -34,8 +33,6 @@ class GoodsReceivedNote extends Model implements Auditable
         'store_id',
         'grn_number',
         'notes',
-        'is_approved',
-        'is_cancelled',
         'created_by',
         'updated_by',
         'approved_by',
@@ -43,6 +40,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'cancel_reason',
         'supplier_id',
         'status',
+        'is_purchase_invoice_created',
     ];
     protected $appends = ['details_count'];
     const STATUS_CREATED   = 'created';
@@ -129,5 +127,39 @@ class GoodsReceivedNote extends Model implements Auditable
     public function getStatusLabelAttribute(): string
     {
         return self::getStatusOptions()[$this->status] ?? ucfirst($this->status);
+    }
+
+    protected static function booted()
+    {
+        static::updated(function ($grn) {
+            if (
+                $grn->isDirty('status') &&
+                $grn->status === self::STATUS_APPROVED 
+                &&
+                settingWithDefault('affect_inventory_from_grn_only', false)
+            ) {
+                foreach ($grn->grnDetails as $detail) {
+                    $notes = 'GRN with id ' . $grn->id;
+                    if ($grn->store?->name) {
+                        $notes .= ' in (' . $grn->store->name . ')';
+                    }
+
+                    \App\Models\InventoryTransaction::create([
+                        'product_id' => $detail->product_id,
+                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                        'quantity' => $detail->quantity,
+                        'package_size' => $detail->package_size,
+                        'price' => getUnitPrice($detail->product_id, $detail->unit_id),
+                        'movement_date' => $grn->grn_date ?? now(),
+                        'unit_id' => $detail->unit_id,
+                        'store_id' => $grn->store_id,
+                        'notes' => $notes,
+                        'transaction_date' => $grn->grn_date ?? now(),
+                        'transactionable_id' => $grn->id,
+                        'transactionable_type' => self::class,
+                    ]);
+                }
+            }
+        });
     }
 }

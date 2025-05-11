@@ -27,15 +27,15 @@ class InventoryTransactionReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
     {
-        return 'Inventory Report';
+        return 'Inventory';
     }
     public static function getNavigationLabel(): string
     {
-        return 'Inventory Report';
+        return 'Inventory';
     }
     public static function getPluralLabel(): ?string
     {
-        return 'Inventory Report';
+        return 'Inventory';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -106,4 +106,9 @@ class InventoryTransactionReportResource extends Resource
     {
         return auth()->user()->can('view_any_inventory-transaction-trucking-report');
     }
+    public static function getNavigationBadge(): ?string
+    {
+        return 'Report';
+    }
+
 }

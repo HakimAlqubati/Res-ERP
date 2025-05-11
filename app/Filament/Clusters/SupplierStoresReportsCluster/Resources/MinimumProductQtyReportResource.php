@@ -22,12 +22,12 @@ class MinimumProductQtyReportResource extends Resource
 
     public static function getPluralLabel(): ?string
     {
-        return 'Minimum Product Quantity';
+        return 'Minimum Product Qty';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Minimum Product Quantity';
+        return 'Minimum Product Qty';
     }
 
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
@@ -25,3 +26,9 @@ Route::post('send-fcm-notification', [FcmController::class, 'sendFcmNotification
 Route::get('/testGetBranches', [TestController3::class, 'testGetBranches']);
 Route::get('/generatePendingApprovalPreviousOrderDetailsReport', [TestController4::class, 'generatePendingApprovalPreviousOrderDetailsReport']);
 Route::get('productsNotInventoried', [TestController4::class, 'missingProducts']);
+
+Route::get('getStockSupplyReport', [TestController4::class, 'getStockSupplyReport']);
+
+Route::get('analyticsBranchConsumption', [BranchConsumptionAnalysisController::class, 'analyze']);
+
+Route::get('analyticsBranchConsumptionComparison', [BranchConsumptionAnalysisController::class, 'compare']);

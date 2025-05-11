@@ -24,7 +24,7 @@ class NotificationSettingResource extends Resource
 {
     protected static ?string $model = NotificationSetting::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
 
     protected static ?string $slug = 'notification-settings';
     // protected static ?string $cluster = SettingsCluster::class;

@@ -25,7 +25,7 @@ class ViewOrder extends ViewRecord
         ];
     }
 
-    
+
     public function exportToExcel()
     {
         return redirect('orders/export/' . $this->record->id);
@@ -34,12 +34,12 @@ class ViewOrder extends ViewRecord
     {
         $order = Order::find($this->record->id);
         $orderDetails = $order?->orderDetails;
-         
+
         $data = [
             'order' => $order,
             'orderDetails' => $orderDetails,
         ];
-        
+
         $pdf = PDF::loadView('export.order_pdf', $data);
 
         return response()
@@ -47,12 +47,19 @@ class ViewOrder extends ViewRecord
                 $pdf->stream("order_no" . '.pdf');
             }, "order_no" . "_" . $this->record->id . '.pdf');
     }
+ 
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        $data['stores'] = $data['store_ids'];
-        // $data['customer_id'] = $this?->record?->customer?->name;
-        // $data['branch_id'] = $this?->record?->branch?->name;
+        $order = Order::with('orderDetails')->find($this->record->id);
+        if ($order) {
+            foreach ($order->orderDetails as $detail) {
+                $detail->update([
+                    'total_unit_price' => $detail->available_quantity * $detail->price,
+                ]);
+            }
+        }
+
         return $data;
     }
 }

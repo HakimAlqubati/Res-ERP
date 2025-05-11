@@ -91,12 +91,7 @@ implements HasShieldPermissions
                             ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
                         Select::make('status')->required()
                             ->label(__('lang.order_status'))
-                            ->options([
-                                Order::ORDERED => 'Ordered',
-                                Order::READY_FOR_DELEVIRY => 'Ready for delivery',
-                                Order::PROCESSING => 'processing',
-                                Order::DELEVIRED => 'delevired',
-                            ])->default(Order::ORDERED),
+                            ->options(Order::getStatusLabels())->default(Order::ORDERED),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
                             // ->disabledOn('edit')
@@ -244,7 +239,7 @@ implements HasShieldPermissions
     public static function table(Table $table): Table
     {
         return $table
-        
+
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -276,11 +271,17 @@ implements HasShieldPermissions
                     ])
                     ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
-                TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
-                    ->numeric(),
+                TextColumn::make(
+                    'total_amount'
+                )->label(__('lang.total_amount'))->alignCenter(true)
+                    ->numeric()
+                    ->hidden(fn(): bool => isStoreManager()),
                 TextColumn::make('created_at')
+                    ->formatStateUsing(function ($state) {
+                        return date('Y-m-d', strtotime($state)) . ' __ ' . date('H:i:s', strtotime($state));
+                    })
                     ->label(__('lang.created_at'))
-                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
@@ -473,7 +474,7 @@ implements HasShieldPermissions
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('is_purchased', 0)->count();
+        return static::getModel()::where('is_purchased', 0)->whereHas('orderDetails')->count();
     }
 
     public function isTableSearchable(): bool
@@ -495,6 +496,7 @@ implements HasShieldPermissions
     {
         return parent::getEloquentQuery()
             ->where('is_purchased', 0)
+            ->whereHas('orderDetails')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

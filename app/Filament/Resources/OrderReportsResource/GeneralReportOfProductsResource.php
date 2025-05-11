@@ -74,16 +74,7 @@ implements HasShieldPermissions
             ->filters([
                 SelectFilter::make("branch_id")
                     ->label(__('lang.branch'))
-                    ->query(function (\Illuminate\Database\Eloquent\Builder $q, $data) {
-                        return $q;
-                    })->options(Branch::where('active', 1)
-                        ->get()->pluck('name', 'id')),
-                SelectFilter::make("branch_id")
-                    ->label(__('lang.branch'))
-                    // ->query(function (Builder $q, $data) {
-                    //     return $q;
-                    // })
-                    ->options(Branch::where('active', 1)
+                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->form([

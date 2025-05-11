@@ -15,8 +15,10 @@ use App\Models\ServiceRequestLog;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\Page;
@@ -29,6 +31,7 @@ use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Filters\SelectFilter;
@@ -54,167 +57,147 @@ class ServiceRequestResource extends Resource
 
         return $form
             ->schema([
-                Fieldset::make()->schema([
+                Wizard::make([
+                    Wizard\Step::make('Basic data')
+                        ->icon('heroicon-o-bars-3-center-left')
+                        ->schema([
+                            Fieldset::make()->schema([
+                                Fieldset::make()->columns(3)->schema([
+                                    Select::make('branch_id')->label('Branch')
+                                        ->disabled(function ($record) {
+                                            if (isset($record)) {
+                                                if ($record->created_by == auth()->user()->id) {
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+                                        })
+                                        ->options(Branch::branches()->active()
+                                            ->select('name', 'id')->pluck('name', 'id'))
+                                        ->default(function () {
+                                            if (isStuff()) {
+                                                return auth()->user()->branch_id;
+                                            }
+                                        })
+                                        ->live()
+                                        ->required(),
 
-                    Fieldset::make()->columns(2)->schema([
-                        TextInput::make('name')
-                            ->required()
-                            ->maxLength(255)
-                            ->disabled(condition: function ($record) {
-                                if (isset($record)) {
-                                    if ($record->created_by == auth()->user()->id) {
-                                        return false;
-                                    }
-                                    return true;
-                                }
-                            }),
-                        Select::make('branch_id')->label('Branch')
-                            ->disabled(function ($record) {
-                                if (isset($record)) {
-                                    if ($record->created_by == auth()->user()->id) {
-                                        return false;
-                                    }
-                                    return true;
-                                }
-                            })
-                            ->options(Branch::select('name', 'id')->pluck('name', 'id'))
-                            ->default(function () {
-                                if (isStuff()) {
-                                    return auth()->user()->branch_id;
-                                }
-                            })
-                            ->live()
-                            ->required(),
+                                    Select::make('branch_area_id')->label('Branch area')->required()
+                                        ->options(function (Get $get) {
+                                            return BranchArea::query()
+                                                ->where('branch_id', $get('branch_id'))
+                                                ->pluck('name', 'id');
+                                        })
+                                        ->disabled(function ($record) {
+                                            if (isset($record)) {
+                                                if ($record->created_by == auth()->user()->id) {
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+                                        })->rule(function (Get $get) {
+                                            $branchId = $get('branch_id');
 
-                        Select::make('branch_area_id')->label('Branch area')->required()
-                            ->options(function (Get $get) {
-                                return BranchArea::query()
-                                    ->where('branch_id', $get('branch_id'))
-                                    ->pluck('name', 'id');
-                            })
-                            ->disabled(function ($record) {
-                                if (isset($record)) {
-                                    if ($record->created_by == auth()->user()->id) {
-                                        return false;
-                                    }
-                                    return true;
-                                }
-                            }),
-                        Select::make('equipment_id')->label('Equipment')
-                            ->options(function (Get $get) {
-                                return Equipment::query()
-                                    ->where('branch_id', $get('branch_id'))
-                                    ->pluck('name', 'id');
-                            })
-                            ->searchable()
-                            ->nullable(),
-                    ]),
-                    Fieldset::make()->label('Descripe your service request')->schema([
-                        Textarea::make('description')->label('')->required()
-                            ->helperText('Description of service request')
-                            ->columnSpanFull()
-                            ->maxLength(500),
+                                            // تحقق من وجود مناطق للفرع المحدد
+                                            $hasAreas = \App\Models\BranchArea::where('branch_id', $branchId)->exists();
 
-                    ])
-                        ->disabled(function ($record) {
-                            if (isset($record)) {
-                                if ($record->created_by == auth()->user()->id) {
-                                    return false;
-                                }
-                                return true;
-                            }
-                        }),
+                                            return $hasAreas
+                                                ? 'required'
+                                                : function () {
+                                                    return fn() => false; // يمنع التقديم
+                                                };
+                                        })
+                                        ->validationMessages([
+                                            'required' => 'The branch area field is required. ⚠ Go to Branch to add Areas first.',
+                                            '*.0' => '',
+                                        ]),
 
-                    Fieldset::make()->columns(4)->schema([
-                        Select::make('assigned_to')
-                            ->options(fn(Get $get): Collection => Employee::query()
-                                ->where('active', 1)
-                                ->where('branch_id', $get('branch_id'))
-                                ->pluck('name', 'id'))
-                            ->searchable()
-                            ->disabledOn('edit')
-                            ->helperText(function (Model $record = null) {
-                                if ($record) {
-                                    return 'To reassign, go to table page ';
-                                }
-                            })
-                            ->nullable(),
-                        Select::make('urgency')
-                            ->options([
-                                ServiceRequest::URGENCY_HIGH => 'High',
-                                ServiceRequest::URGENCY_MEDIUM => 'Medium',
-                                ServiceRequest::URGENCY_LOW => 'Low',
+                                    Select::make('equipment_id')->label('Equipment')
+                                        ->options(function (Get $get) {
+                                            return Equipment::query()
+                                                ->where('branch_id', $get('branch_id'))
+                                                ->where('branch_area_id', $get('branch_area_id'))
+                                                ->pluck('name', 'id');
+                                        })->required()
+                                        ->searchable(),
+                                    Textarea::make('description')->label('')->required()
+                                        ->helperText('Description of service request')
+                                        ->columnSpanFull()
+                                        ->maxLength(500),
+
+                                ]),
+
+                                Fieldset::make()->columns(4)->schema([
+                                    Select::make('assigned_to')
+                                        ->options(fn(Get $get): Collection => Employee::query()
+                                            ->where('active', 1)
+                                            ->where('branch_id', $get('branch_id'))
+                                            ->pluck('name', 'id'))
+                                        ->searchable()
+                                        ->disabledOn('edit')
+                                        ->helperText(function (Model $record = null) {
+                                            if ($record) {
+                                                return 'To reassign, go to table page ';
+                                            }
+                                        })
+                                        ->nullable(),
+                                    Select::make('urgency')
+                                        ->options([
+                                            ServiceRequest::URGENCY_HIGH => 'High',
+                                            ServiceRequest::URGENCY_MEDIUM => 'Medium',
+                                            ServiceRequest::URGENCY_LOW => 'Low',
+                                        ])
+                                        ->disabled(function () {
+                                            if (isset($record)) {
+                                                if ($record->created_by == auth()->user()->id) {
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+                                        })
+                                        ->required(),
+
+                                    Select::make('impact')
+                                        ->options([
+                                            ServiceRequest::IMPACT_HIGH => 'High',
+                                            ServiceRequest::IMPACT_MEDIUM => 'Medium',
+                                            ServiceRequest::IMPACT_LOW => 'Low',
+                                        ])
+                                        ->disabled(function () {
+                                            if (isset($record)) {
+                                                if ($record->created_by == auth()->user()->id) {
+                                                    return false;
+                                                }
+                                                return true;
+                                            }
+                                        })
+                                        ->required(),
+                                    Select::make('status')
+                                        ->default(ServiceRequest::STATUS_NEW)
+                                        ->options([
+                                            ServiceRequest::STATUS_NEW => 'New',
+                                            ServiceRequest::STATUS_PENDING => 'Pending',
+                                            ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
+                                            ServiceRequest::STATUS_CLOSED => 'Closed',
+                                        ])->disabled()
+                                        ->helperText(function (Model $record = null) {
+                                            if ($record) {
+                                                return 'To change status, go to table page ';
+                                            }
+                                        })
+                                        ->required(),
+                                ]),
                             ])
-                            ->disabled(function () {
-                                if (isset($record)) {
-                                    if ($record->created_by == auth()->user()->id) {
-                                        return false;
-                                    }
-                                    return true;
-                                }
-                            })
-                            ->required(),
+                        ]),
 
-                        Select::make('impact')
-                            ->options([
-                                ServiceRequest::IMPACT_HIGH => 'High',
-                                ServiceRequest::IMPACT_MEDIUM => 'Medium',
-                                ServiceRequest::IMPACT_LOW => 'Low',
+                    Wizard\Step::make('Images')
+                        ->icon('heroicon-o-photo')
+                        ->schema([
+                            Fieldset::make()->columns(1)->schema([
+                                self::getMediaSpatieField(),
                             ])
-                            ->disabled(function () {
-                                if (isset($record)) {
-                                    if ($record->created_by == auth()->user()->id) {
-                                        return false;
-                                    }
-                                    return true;
-                                }
-                            })
-                            ->required(),
-                        Select::make('status')
-                            ->default(ServiceRequest::STATUS_NEW)
-                            ->options([
-                                ServiceRequest::STATUS_NEW => 'New',
-                                ServiceRequest::STATUS_PENDING => 'Pending',
-                                ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
-                                ServiceRequest::STATUS_CLOSED => 'Closed',
-                            ])->disabled()
-                            ->helperText(function (Model $record = null) {
-                                if ($record) {
-                                    return 'To change status, go to table page ';
-                                }
-                            })
-                            ->required(),
-                    ]),
-                    Fieldset::make()->label('ِAdd photos')->schema([
-
-                        FileUpload::make('file_path')
-                            ->label('')
-                            ->disk('public')
-                            ->directory('service_requests')
-                            ->visibility('public')
-                            ->columnSpanFull()
-                            ->imagePreviewHeight('250')
-                            ->image()
-                            ->resize(5)
-                            ->loadingIndicatorPosition('left')
-                            // ->panelAspectRatio('2:1')
-                            ->panelLayout('integrated')
-                            ->removeUploadedFileButtonPosition('right')
-                            ->uploadButtonPosition('left')
-                            ->uploadProgressIndicatorPosition('left')
-                            ->multiple()
-                            ->panelLayout('grid')
-                            ->reorderable()
-                            ->openable()
-                            ->downloadable()
-                            // ->hiddenOn('create')
-                            ->previewable()
-                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                return (string) str($file->getClientOriginalName())->prepend('service-request-');
-                            }),
-
-                    ]),
-                ]),
+                        ]),
+                ])->skippable()->columnSpanFull(),
             ]);
     }
 
@@ -227,6 +210,10 @@ class ServiceRequestResource extends Resource
             ->columns([
                 Split::make([
                     Stack::make([
+                        SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                            ->circular()->alignCenter(true)->getStateUsing(function () {
+                                return null;
+                            })->limit(3),
                         TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable(),
                         TextColumn::make('name')->searchable(isIndividual: true)->sortable()
                             ->color(Color::Blue)
@@ -294,8 +281,8 @@ class ServiceRequestResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('equipment_id')
-                ->label('Equipment')
-                ->searchable()->options(fn() => \App\Models\Equipment::query()->pluck('name', 'id')),
+                    ->label('Equipment')
+                    ->searchable()->options(fn() => \App\Models\Equipment::query()->pluck('name', 'id')),
             ])
             ->actions([
                 ActionGroup::make([
@@ -496,57 +483,25 @@ class ServiceRequestResource extends Resource
                         }
                         return false;
                     })
-                        // ->hidden(function ($record) {
-                        //     if ($record->task_status == Task::STATUS_COMPLETED) {
-                        //         return true;
-                        //     }
-                        //     if (!isSuperAdmin() && !auth()->user()->can('add_photo_task')) {
-                        //         return true;
-                        //     }
-                        // })
                         ->form([
-
-                            FileUpload::make('image_path')
-                                ->disk('public')
-                                ->label('')
-                                ->directory('service_requests')
-                                ->columnSpanFull()
-                                ->image()
-                                ->multiple()
-                                ->resize(5)
-                                ->downloadable()
-                                ->previewable()
-                                ->imagePreviewHeight('250')
-                                ->loadingIndicatorPosition('left')
-                                ->panelLayout('integrated')
-                                ->removeUploadedFileButtonPosition('right')
-                                ->uploadButtonPosition('left')
-                                ->uploadProgressIndicatorPosition('left')
-                                ->panelLayout('grid')
-                                ->reorderable()
-                                ->openable()
-                                ->downloadable(true)
-                                ->previewable(true)
-                                ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                    return (string) str($file->getClientOriginalName())->prepend('service-request-');
-                                }),
+                            self::getMediaSpatieField(),
                         ])
                         ->action(function (array $data, $record): void {
-                            $serviceRequest = $record;
-                            if (isset($data['image_path']) && is_array($data['image_path']) && count($data['image_path']) > 0) {
-                                foreach ($data['image_path'] as $file) {
-                                    $serviceRequest->photos()->create([
-                                        'image_name' => $file,
-                                        'image_path' => $file,
-                                        'created_by' => auth()->user()->id,
-                                    ]);
+                            // إضافة الصور إلى media collection
+                            if (isset($data['images']) && is_array($data['images'])) {
+                                foreach ($data['images'] as $file) {
+                                    $record->addMedia($file)->toMediaCollection('images');
                                 }
-                                $record->logs()->create([
-                                    'created_by' => auth()->user()->id,
-                                    'description' => 'Images added',
-                                    'log_type' => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
-                                ]);
                             }
+                            $record->logToEquipment(
+                                \App\Models\EquipmentLog::ACTION_UPDATED,
+                                'New Images added to service request #' . $record->id
+                            );
+                            $record->logs()->create([
+                                'created_by' => auth()->user()->id,
+                                'description' => 'Images added',
+                                'log_type' => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
+                            ]);
                         })
                         ->button()
                         ->icon('heroicon-m-newspaper')
@@ -632,4 +587,59 @@ class ServiceRequestResource extends Resource
         return $query::query();
     }
 
+    public static function canDelete(Model $record): bool
+    {
+        if (isMaintenanceManager() || isSystemManager() || isSuperAdmin() || isBranchManager()) {
+            return true;
+        }
+        return false;
+        return static::can('delete', $record);
+    }
+
+    public static function canCreate(): bool
+    {
+        // if (isSuperAdmin() || auth()->user()->can('create_task')) {
+        if (isFinanceManager()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function getMediaSpatieField()
+    {
+        return SpatieMediaLibraryFileUpload::make('images')
+            ->disk('public')
+            ->label('')
+            ->directory('service-requests')
+            ->columnSpanFull()
+            ->image()
+            ->multiple()
+            ->downloadable()
+            ->appendFiles()
+            ->previewable()
+            ->imagePreviewHeight('250')
+            ->loadingIndicatorPosition('right')
+            ->panelLayout('integrated')
+            ->removeUploadedFileButtonPosition('right')
+            ->uploadButtonPosition('right')
+            ->uploadProgressIndicatorPosition('right')
+            ->panelLayout('grid')
+            ->reorderable()
+            ->openable()
+            ->downloadable(true)
+            ->previewable(true)
+            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                return (string) str($file->getClientOriginalName())->prepend('service-');
+            })
+            ->imageEditor()
+            ->imageEditorAspectRatios([
+                '16:9',
+                '4:3',
+                '1:1',
+            ])->maxSize(800)
+            ->imageEditorMode(2)
+            ->imageEditorEmptyFillColor('#fff000')
+            ->circleCropper();
+    }
 }

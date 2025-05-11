@@ -75,7 +75,8 @@ implements HasShieldPermissions
                 TextColumn::make('branch'),
                 TextColumn::make('unit'),
                 TextColumn::make('quantity')->alignCenter(true),
-                TextColumn::make('price'),
+                TextColumn::make('price')
+                    ->hidden(fn(): bool => isStoreManager()),
             ])
             ->filters([
                 // SelectFilter::make('product_id')
@@ -92,7 +93,8 @@ implements HasShieldPermissions
                     ),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()
-                    ->options(Branch::pluck('name', 'id')),
+                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])
+                        ->active()->pluck('name', 'id')),
 
                 Filter::make('date_range')
                     ->form([

@@ -20,8 +20,10 @@
                 @if ($show_invoice_no == true)
                     <th>{{ __('lang.invoice_no') }}</th>
                 @endif
-                <th>{{ __('lang.unit_price') }}</th>
-                <th>{{ __('lang.total_amount') }}</th>
+                @if (!isStoreManager())
+                    <th>{{ __('lang.unit_price') }}</th>
+                    <th>{{ __('lang.total_amount') }}</th>
+                @endif
             </x-filament-tables::row>
         </thead>
         <tbody>
@@ -47,17 +49,20 @@
                             {{ '(' . $invoice_item->purchase_invoice_id . ') ' . $invoice_item->invoice_no }}
                         </x-filament-tables::cell>
                     @endif
-                    <x-filament-tables::cell> {{ $unit_price }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
+                    @if (!isStoreManager())
+                        <x-filament-tables::cell> {{ $unit_price }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
+                    @endif
                 </x-filament-tables::row>
             @endforeach
-
-            <x-filament-tables::row>
-                <x-filament-tables::cell colspan="{{ $show_invoice_no ? '5' : '4' }}"> {{ __('lang.total') }}
-                </x-filament-tables::cell>
-                <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell>
-                <x-filament-tables::cell> {{ $total_sub_total }} </x-filament-tables::cell>
-            </x-filament-tables::row>
+            @if (!isStoreManager())
+                <x-filament-tables::row>
+                    <x-filament-tables::cell colspan="{{ $show_invoice_no ? '5' : '4' }}"> {{ __('lang.total') }}
+                    </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $total_sub_total }} </x-filament-tables::cell>
+                </x-filament-tables::row>
+            @endif
         </tbody>
 
         {{-- 🔹 Add Pagination Links --}}

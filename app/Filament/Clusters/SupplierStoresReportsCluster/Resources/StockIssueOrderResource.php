@@ -24,6 +24,7 @@ use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -167,8 +168,9 @@ class StockIssueOrderResource extends Resource
 
 
     public static function table(Table $table): Table
-    { 
+    {
         return $table
+            ->paginated([10, 25, 50, 100])
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('order_date')->sortable()->label('Order Date'),
@@ -264,5 +266,10 @@ class StockIssueOrderResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function getNavigationBadgeColor(): string | array | null
+    {
+        return Color::Red;
     }
 }

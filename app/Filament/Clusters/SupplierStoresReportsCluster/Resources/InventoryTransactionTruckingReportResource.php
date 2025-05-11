@@ -82,4 +82,9 @@ class InventoryTransactionTruckingReportResource extends Resource
             'summary_report' => Pages\InventorySummaryReport::route('/summary_report'),
         ];
     }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return 'Report';
+    }
 }
