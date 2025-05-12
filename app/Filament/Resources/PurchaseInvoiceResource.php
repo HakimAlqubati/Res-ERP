@@ -286,8 +286,8 @@ class PurchaseInvoiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
-                    TextColumn::make('total_amount')
-                    ->label(__('lang.total_amount')) 
+                TextColumn::make('total_amount')
+                    ->label(__('lang.total_amount'))
                     ->alignCenter(true)->money('MYR')
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
@@ -306,8 +306,12 @@ class PurchaseInvoiceResource extends Resource
                     ->label('Payment Method')
                     ->searchable()
                     ->sortable()
-                    ->toggleable()
-              
+                    ->toggleable(),
+                IconColumn::make('has_inventory_transaction')
+                    ->label('Inventory Added') // أو الترجمة المناسبة
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter()
+
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
