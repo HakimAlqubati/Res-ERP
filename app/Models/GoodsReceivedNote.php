@@ -42,7 +42,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'status',
         'is_purchase_invoice_created',
     ];
-    protected $appends = ['details_count','has_inventory_transaction'];
+    protected $appends = ['details_count', 'has_inventory_transaction'];
     const STATUS_CREATED   = 'created';
     const STATUS_APPROVED  = 'approved';
     const STATUS_CANCELLED = 'cancelled';
@@ -165,6 +165,7 @@ class GoodsReceivedNote extends Model implements Auditable
 
     public function getHasInventoryTransactionAttribute(): bool
     {
-        return $this->inventoryTransactions()->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)->exists();
+        return $this->where('transactionable_id', $this->id)
+            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)->exists();
     }
 }
