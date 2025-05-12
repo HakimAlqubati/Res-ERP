@@ -37,7 +37,7 @@ class PurchaseInvoice extends Model implements Auditable
         'cancel_reason',
         'payment_method_id',
     ];
-    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn'];
+    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn', 'has_inventory_transaction'];
 
     /**
      * Get the count of purchase invoice details.
@@ -150,5 +150,13 @@ class PurchaseInvoice extends Model implements Auditable
     public function getTotalAmountAttribute(): float
     {
         return $this->purchaseInvoiceDetails->sum('total_price');
+    }
+
+    public function getHasInventoryTransactionAttribute(): bool
+    {
+        return \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $this->id)
+            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->exists();
     }
 }

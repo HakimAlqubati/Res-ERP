@@ -27,6 +27,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -221,6 +222,10 @@ class GoodsReceivedNoteResource extends Resource
                 TextColumn::make('updated_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
+                IconColumn::make('has_inventory_transaction')
+                    ->label('Inventory Added') // أو الترجمة المناسبة
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter()
             ])
             ->filters([
                 //

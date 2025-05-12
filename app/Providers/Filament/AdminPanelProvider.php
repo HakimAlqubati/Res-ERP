@@ -143,10 +143,6 @@ class AdminPanelProvider extends PanelProvider
                                 //  ProductResource::getNavigationItems(),
                             )),
 
-                        NavigationGroup::make(__('menu.area_management'))
-                            ->items(array_merge(
-                                AreaManagementCluster::canAccess() ? AreaManagementCluster::getNavigationItems() : [],
-                            )),
                     ]
                 );
                 if (
@@ -186,9 +182,14 @@ class AdminPanelProvider extends PanelProvider
                                     is_null($currentTenant)) ? HRLeaveManagementCluster::getNavigationItems() : [],
                                 NotificationSettingResource::canAccess()
                                     ? NotificationSettingResource::getNavigationItems() : [],
-                                InventorySettingsCluster::canAccess() ?   InventorySettingsCluster::getNavigationItems() : [],
-                                //    (isSuperAdmin() || isSystemManager()) ? SettingsCluster::getNavigationItems(): [] ,
+                                InventorySettingsCluster::getNavigationItems(),
+
+                                (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems() : [],
                             )),
+                        // NavigationGroup::make(__('menu.area_management'))
+                        //     ->items(array_merge(
+                        //         (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems() : [],
+                        //     )),
                         NavigationGroup::make('Tenants')
                             ->items(array_merge(
                                 (isSuperAdmin() && ((count(explode('.', request()->getHost())) == 1 && env('APP_ENV') == 'local')

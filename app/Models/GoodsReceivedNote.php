@@ -42,7 +42,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'status',
         'is_purchase_invoice_created',
     ];
-    protected $appends = ['details_count'];
+    protected $appends = ['details_count', 'has_inventory_transaction'];
     const STATUS_CREATED   = 'created';
     const STATUS_APPROVED  = 'approved';
     const STATUS_CANCELLED = 'cancelled';
@@ -134,7 +134,7 @@ class GoodsReceivedNote extends Model implements Auditable
         static::updated(function ($grn) {
             if (
                 $grn->isDirty('status') &&
-                $grn->status === self::STATUS_APPROVED 
+                $grn->status === self::STATUS_APPROVED
                 &&
                 settingWithDefault('affect_inventory_from_grn_only', false)
             ) {
@@ -161,5 +161,11 @@ class GoodsReceivedNote extends Model implements Auditable
                 }
             }
         });
+    }
+
+    public function getHasInventoryTransactionAttribute(): bool
+    {
+        return $this->where('transactionable_id', $this->id)
+            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)->exists();
     }
 }

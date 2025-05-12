@@ -236,4 +236,21 @@ class InventoryTransaction extends Model implements Auditable
     {
         return $this->belongsTo(Store::class, 'store_id');
     }
+    public static function moveToStore(array $data): self
+    {
+        return self::create([
+            'product_id'           => $data['product_id'],
+            'movement_type'        => $data['movement_type'], // use InventoryTransaction::MOVEMENT_IN / OUT
+            'quantity'             => $data['quantity'],
+            'unit_id'              => $data['unit_id'],
+            'package_size'         => $data['package_size'] ?? 1,
+            'store_id'             => $data['store_id'],
+            'price'                => $data['price'] ?? 0,
+            'transaction_date'     => $data['transaction_date'] ?? now(),
+            'movement_date'        => $data['movement_date'] ?? now(),
+            'notes'                => $data['notes'] ?? null,
+            'transactionable_id'   => $data['transactionable']?->id ?? null,
+            'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
+        ]);
+    }
 }

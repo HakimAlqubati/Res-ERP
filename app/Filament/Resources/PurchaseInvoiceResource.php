@@ -307,7 +307,11 @@ class PurchaseInvoiceResource extends Resource
                     ->label('Payment Method')
                     ->searchable()
                     ->sortable()
-                    ->toggleable()
+                    ->toggleable(),
+                IconColumn::make('has_inventory_transaction')
+                    ->label('Inventory Added') // أو الترجمة المناسبة
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter()
 
             ])
             ->filters([

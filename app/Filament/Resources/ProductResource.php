@@ -366,9 +366,6 @@ class ProductResource extends Resource
                                         }),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
-                                        // ->maxLength(6)
-                                        // ->mask(RawJs::make('$money($input)'))
-                                        // ->stripCharacters(',')   
                                         ->disabled(function (callable $get, $livewire) {
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
@@ -501,9 +498,6 @@ class ProductResource extends Resource
                                 ])
                                 ->orderColumn('order')
                                 ->reorderable()
-                                // ->disabled(function (callable $get, $livewire) {
-                                //     return static::isProductLocked($livewire->form->getRecord());
-                                // })
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
                                         return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing';
@@ -698,10 +692,10 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: true),
                 Tables\Columns\TextColumn::make('code')
-                    ->label(__('lang.code'))
+                    ->label(__('lang.code'))->copyable()
                     ->searchable(isIndividual: false, isGlobal: true),
 
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('name')->copyable()
                     ->label(__('lang.name'))
                     ->toggleable()
 
@@ -1057,6 +1051,7 @@ class ProductResource extends Resource
 
     public static function validatePackageSizeChange($productId, $unitId, $newValue, callable $fail, ?Model $record = null): void
     {
+
         if (! $productId || ! $unitId) {
             return;
         }
