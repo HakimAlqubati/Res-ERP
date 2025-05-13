@@ -314,6 +314,12 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('creator_name')
                     ->label('Creator')
                     ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label('Created At')->date('Y-m-d')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('date')
+                    ->label('Date')->date('Y-m-d')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
