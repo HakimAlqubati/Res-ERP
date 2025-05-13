@@ -154,9 +154,26 @@ class PurchaseInvoice extends Model implements Auditable
 
     public function getHasInventoryTransactionAttribute(): bool
     {
-        return \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+        // تحقق من الإدخالات المباشرة
+        $hasDirectInventory = \App\Models\InventoryTransaction::where('transactionable_type', self::class)
             ->where('transactionable_id', $this->id)
             ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
             ->exists();
+
+        if ($hasDirectInventory) {
+            return true;
+        }
+
+        // إذا لا توجد إدخالات مباشرة، تحقق من GRN المرتبطة
+        $grn = $this->grn;
+
+        if ($grn) {
+            return \App\Models\InventoryTransaction::where('transactionable_type', \App\Models\GoodsReceivedNote::class)
+                ->where('transactionable_id', $grn->id)
+                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+                ->exists();
+        }
+
+        return false;
     }
 }
