@@ -38,7 +38,7 @@ class PurchaseInvoice extends Model implements Auditable
         'cancel_reason',
         'created_by',
     ];
-    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn', 'has_inventory_transaction'];
+    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn', 'has_inventory_transaction', 'creator_name'];
 
     /**
      * Get the count of purchase invoice details.
@@ -184,5 +184,14 @@ class PurchaseInvoice extends Model implements Auditable
                 $model->created_by = auth()->id();
             }
         });
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
+    public function getCreatorNameAttribute()
+    {
+        return $this->creator?->name ?? null;
     }
 }
