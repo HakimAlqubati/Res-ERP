@@ -348,7 +348,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(fn(): bool => isSuperVisor()),
+                    })->hidden(fn(): bool => isSuperVisor())->hidden(),
                 Tables\Actions\ActionGroup::make([
 
                     Tables\Actions\EditAction::make()
