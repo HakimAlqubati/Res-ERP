@@ -32,3 +32,4 @@ Route::get('getStockSupplyReport', [TestController4::class, 'getStockSupplyRepor
 Route::get('analyticsBranchConsumption', [BranchConsumptionAnalysisController::class, 'analyze']);
 
 Route::get('analyticsBranchConsumptionComparison', [BranchConsumptionAnalysisController::class, 'compare']);
+Route::get('/returnOrders', [TestController4::class, 'returnOrders']);

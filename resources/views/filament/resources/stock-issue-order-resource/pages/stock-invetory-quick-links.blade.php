@@ -33,8 +33,9 @@
 
                 </x-filament::link>
                 {{-- Stock Supply Orders --}}
-                <x-filament::link :href="route('filament.admin.inventory-management.resources.stock-supply-orders.index')" class="link" badge-color="success" color="primary"
-                    icon="heroicon-o-arrow-down-tray" icon-position="before" tooltip="Go to Stock Supply Orders Page">
+                <x-filament::link  :href="route('filament.admin.inventory-management.resources.stock-supply-orders.index')" class="link" badge-color="success"
+                    color="primary" icon="heroicon-o-arrow-down-tray" icon-position="before"
+                    tooltip="Go to Stock Supply Orders Page">
                     {{ __('Stock Supply Orders') }}
                     <x-slot name="badge">
                         {{ \App\Models\StockSupplyOrder::count() }}
@@ -45,7 +46,8 @@
                 <x-filament::link :href="route(
                     'filament.admin.inventory-management.resources.missing-inventory-products-reports.index',
                 )" class="link" badge-color="warning" color="primary"
-                    icon="heroicon-m-exclamation-triangle" icon-position="before" tooltip="Go to Missing Inventory Products Page">
+                    icon="heroicon-m-exclamation-triangle" icon-position="before"
+                    tooltip="Go to Missing Inventory Products Page">
                     {{ __('Unaudited Products') }}
                     <x-slot name="badge">
                         {{ 'Report' }}

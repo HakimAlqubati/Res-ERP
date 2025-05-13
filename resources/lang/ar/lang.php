@@ -183,4 +183,6 @@ return [
     'show_in_invoices' => 'عرض في فواتير الشراء والطلبات',
     'category.is_manafacturing' => 'فئة منتج مركب؟',
     'has_grn' => 'مرتبط بـ GRN',
+    'not_specified' => 'غير محدد',
+
 ];

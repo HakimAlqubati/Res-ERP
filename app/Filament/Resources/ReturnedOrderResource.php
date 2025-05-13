@@ -186,7 +186,8 @@ class ReturnedOrderResource extends Resource
             ->columns([
                 TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(),
                 TextColumn::make('order.id')->label('Original Order ID')->sortable()->alignCenter(true)->toggleable(),
-                TextColumn::make('branch.name')->label('Branch Name')->sortable()->toggleable(),
+                TextColumn::make('branch.name')->label('Branch')->sortable()->toggleable(),
+                TextColumn::make('store.name')->label('Store')->sortable()->toggleable(),
                 TextColumn::make('returned_date')->label('Returned Date')->date()->toggleable(),
                 TextColumn::make('status')->label('Status')->badge()->toggleable()->alignCenter(true),
                 TextColumn::make('creator.name')->label('Created By')->toggleable(),
@@ -302,8 +303,5 @@ class ReturnedOrderResource extends Resource
         return false;
     }
 
-    public static function shouldRegisterNavigation(): bool
-    {
-        return false;
-    }
+    
 }

@@ -51,7 +51,7 @@ if (!function_exists('getName')) {
 if (!function_exists('formatMoney')) {
     function formatMoney($amount)
     {
-        $currency = setting('currency_symbol');
+        $currency = settingWithDefault('currency_symbol', 'MYR');
         return $currency . ' ' . number_format($amount, 2);
     }
 }

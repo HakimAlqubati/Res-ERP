@@ -14,6 +14,7 @@ use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
 use App\Services\Orders\Reports\OrdersReportsService;
 use App\Services\Orders\Reports\ReorderDueToStockReportService;
+use App\Services\Orders\Reports\ReturnedOrdersReportService;
 use App\Services\StockInventoryReportService;
 use App\Services\StockSupply\Reports\StockSupplyOrderReportService;
 use Carbon\Carbon;
@@ -444,5 +445,15 @@ AND (
         return response()->json([
             'data' => $data,
         ]);
+    }
+
+    public function returnOrders(Request $request)
+    {
+        $reportService = new ReturnedOrdersReportService();
+        
+        $filters = $request->only(['branch_id', 'store_id', 'status', 'date_from', 'date_to']);
+        
+        $report = $reportService->generate($filters);
+        return response()->json($report);
     }
 }
