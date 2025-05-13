@@ -221,12 +221,8 @@ class InventoryResource extends Resource
 
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin() || isFinanceManager() || isSystemManager()) {
-            return true;
-        }
-        return false;
+        return auth()->user()->can('view_any_inventory-transaction');
     }
-
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
