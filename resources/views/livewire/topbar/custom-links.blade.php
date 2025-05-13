@@ -68,20 +68,7 @@
         </div>
     </div>
 
-
-    <div class="relative" x-data="{ open: false }">
-        {{-- الزر --}}
-        <button @click="open = !open"
-            class="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-primary-600 transition">
-            <span class="text-[15px]">📦 Inventory</span>
-            <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-        </button>
  
-    </div>
-
-
 
 
     {{-- عرض الوقت الحالي --}}
@@ -103,33 +90,33 @@
 </style>
 
 @push('scripts')
-    <script>
-        function updateClock() {
-            const now = new Date();
+<script>
+    function updateClock() {
+        const now = new Date();
 
-            const timeString = now.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: true
-            });
+        const timeString = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
 
-            const dateString = now.toLocaleDateString('en-GB', {
-                year: 'numeric',
-                month: 'short',
-                day: '2-digit'
-            });
+        const dateString = now.toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit'
+        });
 
-            const dayString = now.toLocaleDateString('en-US', {
-                weekday: 'long'
-            });
+        const dayString = now.toLocaleDateString('en-US', {
+            weekday: 'long'
+        });
 
-            document.getElementById('current-time').textContent = timeString;
-            document.getElementById('current-date').textContent = dateString;
-            document.getElementById('current-day').textContent = dayString;
-        }
+        document.getElementById('current-time').textContent = timeString;
+        document.getElementById('current-date').textContent = dateString;
+        document.getElementById('current-day').textContent = dayString;
+    }
 
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
+    setInterval(updateClock, 60000); // تحديث كل دقيقة بدل كل ثانية
+    updateClock(); // تشغيل أول مرة
+</script>
 @endpush
+
