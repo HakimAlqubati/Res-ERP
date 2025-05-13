@@ -6,6 +6,7 @@
     <div class="ml-auto text-sm text-gray-600 font-medium time flex items-center gap-x-2">
         🕒 <span id="current-time">--:--:--</span>
         📅 <span id="current-date">--/--/----</span>
+        - <span id="current-day">---</span>
     </div>
 
 </div>
@@ -19,6 +20,7 @@
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 </style>
+
 @push('scripts')
     <script>
         function updateClock() {
@@ -37,8 +39,13 @@
                 day: '2-digit'
             });
 
+            const dayString = now.toLocaleDateString('en-US', {
+                weekday: 'long'
+            });
+
             document.getElementById('current-time').textContent = timeString;
             document.getElementById('current-date').textContent = dateString;
+            document.getElementById('current-day').textContent = dayString;
         }
 
         setInterval(updateClock, 1000);
