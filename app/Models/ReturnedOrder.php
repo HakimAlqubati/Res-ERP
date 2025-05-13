@@ -23,6 +23,7 @@ class ReturnedOrder extends Model
         'approved_by',
         'created_by',
         'store_id',
+        'cancel_reason',
     ];
 
     protected $casts = [
@@ -93,5 +94,15 @@ class ReturnedOrder extends Model
     public function scopeApproved($query)
     {
         return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function scopeWithBranch($query)
+    {
+
+        $user = auth()->user();
+        if ($user?->userType?->can_access_all_branches) {
+            return $query;
+        }
+        return $query->whereIn('branch_id', accessBranchesIds());
     }
 }

@@ -8,6 +8,8 @@ use App\Filament\Resources\ReturnedOrderResource\RelationManagers;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\ReturnedOrder;
+use App\Models\Store;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -28,8 +30,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 
-class ReturnedOrderResource extends Resource
+class ReturnedOrderResource extends Resource implements HasShieldPermissions
 {
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'delete',
+            'delete_any',
+            'publish',
+            'approve',
+            'reject',
+        ];
+    }
     protected static ?string $model = ReturnedOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -48,7 +64,7 @@ class ReturnedOrderResource extends Resource
                             ->searchable()
                             ->required()->live()
                             ->getSearchResultsUsing(function (string $search) {
-                                return \App\Models\Order::where('id', 'like', "%{$search}%")
+                                return \App\Models\Order::where('id', 'like', "%{$search}%")->withBranch()->whereHas('orderDetails')
                                     ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
                                     ->limit(5)
                                     ->pluck('id', 'id');
@@ -81,9 +97,9 @@ class ReturnedOrderResource extends Resource
                             ->reactive()
                             ->relationship('branch', 'name')->disabled()->dehydrated(),
                         Select::make('store_id')
-                            ->label('Store')
+                            ->label('Store')->hiddenOn('create')
                             ->required()
-                            ->relationship('store', 'name'),
+                            ->options(Store::withAccess()->active()->pluck('name', 'id')),
                         DatePicker::make('returned_date')
                             ->label('Returned Date')->default(now())
                             ->required(),
@@ -104,6 +120,7 @@ class ReturnedOrderResource extends Resource
                     ])->columns(5),
 
                 Fieldset::make('Returned Products Details')
+
                     ->schema([
                         Repeater::make('details')
                             ->relationship()
@@ -173,6 +190,10 @@ class ReturnedOrderResource extends Resource
                                     ->rows(2)
                             ])
                             ->defaultItems(1)
+                            ->maxItems(function ($get) {
+                                $orderItemCount = Order::find($get('original_order_id'))?->item_count ?? 1;
+                                return $orderItemCount;
+                            })
                             ->createItemButtonLabel('Add Product')
                             ->columnSpanFull()
                     ])
@@ -201,9 +222,18 @@ class ReturnedOrderResource extends Resource
                 Tables\Actions\EditAction::make()->visible(fn($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
                 Tables\Actions\Action::make('Approve')->button()
                     ->label('Approve')
-                    ->color('success')
+                    ->color('success')->form(function ($record) {
+                        return [
+                            Select::make('store_id')
+                                ->label('Store')->hiddenOn('create')
+                                ->required()
+                                ->default(fn($record) => $record->store_id)
+                                ->options(Store::withAccess()->active()->pluck('name', 'id')),
+                        ];
+                    })
                     ->icon('heroicon-o-check')
-                    ->visible(fn($record) => $record->status === ReturnedOrder::STATUS_CREATED)
+                    ->visible(fn($record) => ($record->status === ReturnedOrder::STATUS_CREATED &&
+                        auth()->user()->can('approve_returned-order')))
                     ->requiresConfirmation()
                     ->action(function ($record) {
                         if (!$record->store_id) {
@@ -243,14 +273,18 @@ class ReturnedOrderResource extends Resource
                     ->label('Reject')
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
-                    ->visible(fn($record) => $record->status === ReturnedOrder::STATUS_CREATED)
+                    ->visible(fn($record) => ($record->status === ReturnedOrder::STATUS_CREATED && auth()->user()->can('reject_returned-order')))
                     ->requiresConfirmation()
-                    ->action(function ($record) {
+                    ->form([
+                        Textarea::make('cancel_reason')->columnSpanFull()->label('Cacel Reason')->required()
+                    ])
+                    ->action(function ($record, $data) {
                         try {
                             DB::transaction(function () use ($record) {
                                 $record->update([
                                     'status' => ReturnedOrder::STATUS_REJECTED,
                                     'approved_by' => auth()->id(),
+                                    'cancel_reason' => $data['cancel_reason']
                                 ]);
                             });
                             showSuccessNotifiMessage('Returned order rejected.');
@@ -281,12 +315,10 @@ class ReturnedOrderResource extends Resource
             'index' => Pages\ListReturnedOrders::route('/'),
             'create' => Pages\CreateReturnedOrder::route('/create'),
             'edit' => Pages\EditReturnedOrder::route('/{record}/edit'),
+            'view' => Pages\ViewReturnedOrder::route('/{record}'),
         ];
     }
-    public static function getNavigationBadge(): ?string
-    {
-        return self::getModel()::count();
-    }
+
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
@@ -297,11 +329,32 @@ class ReturnedOrderResource extends Resource
     }
     public static function canEdit(Model $record): bool
     {
-        if ($record->status === ReturnedOrder::STATUS_CREATED) {
+        if ($record->status === ReturnedOrder::STATUS_CREATED && auth()->user()->can('update_returned-order')) {
             return true;
         }
         return false;
     }
 
-    
+    public static function canCreate(): bool
+    {
+        return auth()->user()->can('create_returned-order');
+    }
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_any_returned-order');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::withBranch()->count();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withBranch()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
 }

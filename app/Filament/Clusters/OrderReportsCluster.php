@@ -11,4 +11,9 @@ class OrderReportsCluster extends Cluster
     {
         return __('menu.order_reports');
     }
+
+    public static function canAccess(): bool
+    {
+        return true;
+    }
 }
