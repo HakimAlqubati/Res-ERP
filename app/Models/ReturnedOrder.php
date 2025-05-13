@@ -90,4 +90,8 @@ class ReturnedOrder extends Model
     {
         return $this->belongsTo(Store::class);
     }
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
 }

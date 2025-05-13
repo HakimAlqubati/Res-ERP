@@ -165,7 +165,9 @@ class GoodsReceivedNote extends Model implements Auditable
 
     public function getHasInventoryTransactionAttribute(): bool
     {
-        return $this->where('transactionable_id', $this->id)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)->exists();
+        return \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $this->id)
+            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->exists();;
     }
 }

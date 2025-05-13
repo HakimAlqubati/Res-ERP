@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderReportsResource;
 
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
+use App\Filament\Clusters\OrderReportsCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails;
 use App\Filament\Resources\OrderReportsResource\Pages\ListGeneralReportOfProducts;
@@ -36,9 +37,9 @@ implements HasShieldPermissions
     protected static ?string $model = GeneralReportOfProducts::class;
     protected static ?string $slug = 'general-report-products';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = MainOrdersCluster::class;
+    protected static ?string $cluster = OrderReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
     /**
      * @deprecated Use `getModelLabel()` instead.
      */

@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\MainOrdersCluster\Resources;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\Pages;
 use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\RelationManagers;
+use App\Filament\Clusters\OrderReportsCluster;
 use App\Models\FakeModelReports\PendingApprovalPreviousOrderDetailsReport;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
@@ -32,13 +33,9 @@ implements HasShieldPermissions
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = MainOrdersCluster::class;
+    protected static ?string $cluster = OrderReportsCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 5;
-    public static function getPluralLabel(): ?string
-    {
-        return 'Previous Quantity Orders';
-    }
+    protected static ?int $navigationSort = 3;
 
     public static function getLabel(): ?string
     {

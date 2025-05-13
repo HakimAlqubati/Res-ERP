@@ -23,6 +23,7 @@ use App\Filament\Clusters\InventorySettingsCluster;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderCluster\Resources\OrderResource;
+use App\Filament\Clusters\OrderReportsCluster;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Clusters\SettingsCluster;
@@ -118,13 +119,14 @@ class AdminPanelProvider extends PanelProvider
 
                     $group[] =  NavigationGroup::make(__('menu.supply_and_inventory'))
                         ->items(array_merge(
-                            MainOrdersCluster::canAccess() ? MainOrdersCluster::getNavigationItems() : [],
-                            ProductUnitCluster::canAccess() ?     ProductUnitCluster::getNavigationItems() : [],
-                            // ReportOrdersCluster::getNavigationItems(),
-                            SupplierCluster::canAccess() ?    SupplierCluster::getNavigationItems() : [],
-                            SupplierStoresReportsCluster::canAccess() ? SupplierStoresReportsCluster::getNavigationItems() : [],
-                            InventoryManagementCluster::canAccess() ? InventoryManagementCluster::getNavigationItems() : [],
-                            InventoryReportCluster::canAccess() ? InventoryReportCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  MainOrdersCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  OrderReportsCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ProductUnitCluster::getNavigationItems() : [],
+                            //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportCluster::getNavigationItems() : [],
 
                         ));
                 }
