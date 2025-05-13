@@ -223,7 +223,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
                 IconColumn::make('has_inventory_transaction')
-                    ->label('Inventory Added') // أو الترجمة المناسبة
+                    ->label('Inventory Updated')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter()
             ])

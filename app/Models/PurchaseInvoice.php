@@ -25,6 +25,7 @@ class PurchaseInvoice extends Model implements Auditable
         'cancelled',
         'cancel_reason',
         'payment_method_id',
+        'created_by',
     ];
     protected $auditInclude = [
         'date',
@@ -35,9 +36,9 @@ class PurchaseInvoice extends Model implements Auditable
         'attachment',
         'cancelled',
         'cancel_reason',
-        'payment_method_id',
+        'created_by',
     ];
-    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn', 'has_inventory_transaction'];
+    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn', 'has_inventory_transaction', 'creator_name'];
 
     /**
      * Get the count of purchase invoice details.
@@ -175,5 +176,22 @@ class PurchaseInvoice extends Model implements Auditable
         }
 
         return false;
+    }
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $model->created_by = auth()->id();
+            }
+        });
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
+    public function getCreatorNameAttribute()
+    {
+        return $this->creator?->name ?? null;
     }
 }

@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class ReturnedOrder extends Model
+class ReturnedOrder extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
 
     const STATUS_CREATED  = 'created';
     const STATUS_APPROVED = 'approved';
@@ -24,6 +25,16 @@ class ReturnedOrder extends Model
         'created_by',
         'store_id',
         'cancel_reason',
+    ];
+    protected $auditInclude = [
+        'original_order_id',
+        'branch_id',
+        'reason',
+        'returned_date',
+        'status',
+        'approved_by',
+        'created_by',
+        'store_id',
     ];
 
     protected $casts = [

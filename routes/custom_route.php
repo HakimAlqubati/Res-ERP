@@ -4,6 +4,8 @@ use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
+use App\Models\Audit;
+use App\Models\PurchaseInvoice;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/custom-route', function () {
@@ -33,3 +35,38 @@ Route::get('analyticsBranchConsumption', [BranchConsumptionAnalysisController::c
 
 Route::get('analyticsBranchConsumptionComparison', [BranchConsumptionAnalysisController::class, 'compare']);
 Route::get('/returnOrders', [TestController4::class, 'returnOrders']);
+
+Route::get('/updateCreatedByInPurchaseInvoice', function () {;
+    logger()->info('Started updating created_by in purchase_invoices');
+
+    $updatedIds = [];
+
+    PurchaseInvoice::whereNull('created_by')->chunkById(100, function ($invoices) use (&$updatedIds) {
+        foreach ($invoices as $invoice) {
+            $audit = Audit::query()
+                // where('auditable_type', PurchaseInvoice::class)
+                ->where('auditable_id', $invoice->id)
+                ->where('auditable_type', PurchaseInvoice::class)
+
+                ->where('event', 'created')
+                ->whereNotNull('user_id')
+                ->orderBy('id')
+                ->first();
+
+            
+
+            if ($audit && $audit->user_id) {
+                $invoice->update(['created_by' => $audit->user_id]);
+                $updatedIds[] = $invoice->id;
+            }
+        }
+    });
+
+    logger()->info('Finished updating created_by in purchase_invoices');
+
+    return response()->json([
+        'message' => 'Updated created_by in purchase_invoices successfully.',
+        'updated_ids' => $updatedIds,
+        'count' => count($updatedIds),
+    ]);
+});

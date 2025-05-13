@@ -45,6 +45,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -309,9 +310,18 @@ class PurchaseInvoiceResource extends Resource
                     ->sortable()
                     ->toggleable(),
                 IconColumn::make('has_inventory_transaction')
-                    ->label('Inventory Added') // أو الترجمة المناسبة
+                    ->label('Inventory Updated')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
-                    ->alignCenter()
+                    ->alignCenter(),
+                TextColumn::make('creator_name')
+                    ->label('Creator')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label('Created At')->date('Y-m-d')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('date')
+                    ->label('Date')->date('Y-m-d')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
@@ -346,9 +356,38 @@ class PurchaseInvoiceResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    })->hidden(fn(): bool => auth()->user()->hide_prices),
+                    })->hidden(fn(): bool => isSuperVisor())->hidden(),
                 Tables\Actions\ActionGroup::make([
-
+                    Tables\Actions\Action::make('create_inventory')
+                        ->label('Create Inventory')
+                        ->icon('heroicon-o-plus-circle')->button()
+                        ->color('success')
+                        ->visible(fn($record) => !$record->has_inventory_transaction)
+                        ->action(function ($record) {
+                            DB::beginTransaction();
+                            try {
+                                foreach ($record->details as $detail) {
+                                    \App\Models\InventoryTransaction::moveToStore([
+                                        'product_id' => $detail->product_id,
+                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'quantity' => $detail->quantity,
+                                        'unit_id' => $detail->unit_id,
+                                        'package_size' => $detail->package_size,
+                                        'store_id' => $record->store_id,
+                                        'price' => $detail->price,
+                                        'transaction_date' => $record->date,
+                                        'movement_date' => $record->date,
+                                        'notes' => 'Manual inventory from purchase invoice #' . $record->invoice_no,
+                                        'transactionable' => $record,
+                                    ]);
+                                }
+                                DB::commit();
+                                showSuccessNotifiMessage('Done');
+                            } catch (\Exception $e) {
+                                DB::rollBack();
+                                showWarningNotifiMessage($e->getMessage());
+                            }
+                        }),
                     Tables\Actions\EditAction::make()
                         ->icon('heroicon-s-pencil'),
                     Tables\Actions\Action::make('download')

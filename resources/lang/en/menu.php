@@ -6,7 +6,7 @@ return [
     'hr_ms' => 'People & Collaboration',
     'supply_and_inventory' => 'Supply & Inventory',
     'stores_cluster' => 'Stores',
-    'area_management'=> 'Area Management',
+    'area_management'=> 'Geo Management',
     'inventory_management' => 'Inventory Management',
     'settings' => 'Settings',
     'leave_management' => 'Leave Management',
