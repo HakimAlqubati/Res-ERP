@@ -14,7 +14,7 @@
 
         {{-- القائمة --}}
         <div x-show="open" @click.outside="open = false" x-transition
-            class="absolute left-0 mt-2 w-80 rounded-xl shadow-xl bg-white border border-gray-200 z-50 p-4 space-y-3">
+            class="absolute left-0 mt-2 w-180 rounded-xl shadow-xl bg-white border border-gray-200 z-50 p-4 space-y-3">
 
             {{-- كل عنصر منسق مثل الـ x-filament::link --}}
             <a href="{{ route('filament.admin.inventory-management.resources.stock-issue-orders.index') }}"

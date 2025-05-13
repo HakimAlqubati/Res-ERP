@@ -57,6 +57,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'is_attendance_user',
         'fcm_token',
         'last_seen_at',
+        'store_id',
     ];
     protected $auditInclude = [
         'name',
@@ -75,6 +76,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'branch_area_id',
         'is_attendance_user',
         'fcm_token',
+        'store_id',
     ];
 
     /**
@@ -374,5 +376,9 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function getStoreIdsAttribute(): array
     {
         return $this->stores()->pluck('store_id')->toArray();
+    }
+    public function store()
+    {
+        return $this->belongsTo(\App\Models\Store::class, 'store_id');
     }
 }

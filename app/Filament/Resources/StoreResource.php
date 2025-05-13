@@ -51,14 +51,13 @@ class StoreResource extends Resource
     {
         return $form
             ->schema([
-                Fieldset::make()->columns(4)->schema([
+                Fieldset::make()->columns(3)->schema([
                     TextInput::make('name')->label(__('lang.name'))->required(),
                     Select::make('storekeeper_id')->searchable()
                         ->label(__('stock.storekeeper'))
                         ->options(User::select('name', 'id')
                             ->stores()->pluck('name', 'id')),
-                    Toggle::make('active')->label(__('lang.active'))->default(1)->inline(false),
-                    Toggle::make('default_store')->label(__('lang.default'))->default(0)->inline(false),
+                    Toggle::make('active')->label(__('lang.active'))->default(1)->inline(false), 
                     Toggle::make('is_central_kitchen')->label(__('stock.is_central_kitchen'))->default(0)->inline(false),
 
 
@@ -78,8 +77,7 @@ class StoreResource extends Resource
                 TextColumn::make('location')->searchable()->label(__('lang.location'))->toggleable(),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable(),
                 TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable()->default('-'),
-                CheckboxColumn::make('default_store')
-                    ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
+
                 CheckboxColumn::make('is_central_kitchen')
                     ->label(__('stock.is_central_kitchen'))->disableClick()->toggleable()->alignCenter(true),
 

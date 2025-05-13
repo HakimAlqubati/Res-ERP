@@ -21,6 +21,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -62,221 +63,413 @@ class UserResource extends Resource
     {
 
         return $form
+
             ->schema([
-
-                Fieldset::make()->label('')->columns(2)->schema([
-                    Toggle::make('is_exist_employee')->label('')
-                        ->inline(false)->helperText('Check if you want to create a user account for existing employee')
-                        ->live(),
-                    Toggle::make('is_attendance_user')->label('')
-                        ->inline(false)->helperText('Check if you want to create a user account for attendance webcam')
-                        ->live(),
-                ])->hiddenOn('edit'),
-                Fieldset::make()->visible(fn(Get $get): bool => $get('is_exist_employee'))
-                    ->schema(formUserForExistingEmployee()),
-                Fieldset::make()->visible(fn(Get $get): bool => !$get('is_exist_employee') && !$get('is_attendance_user'))->schema([
-
-                    Grid::make()->columns(3)->schema([
-                        Fieldset::make()->label('Personal data')->schema([
-                            TextInput::make('name')->required()->unique(ignoreRecord: true),
-                            TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-                            Grid::make()->columns(3)->columnSpanFull()->schema([
-                                PhoneInput::make('phone_number')
-                                    // ->numeric()
-                                    ->initialCountry('MY')
-                                    ->onlyCountries([
-                                        'MY',
-                                        'US',
-                                        'YE',
-                                        'AE',
-                                        'SA',
-                                    ])
-                                    ->required()
-                                    ->unique(ignoreRecord: true)
-                                    ->displayNumberFormat(PhoneInputNumberType::E164)
-                                    ->autoPlaceholder('aggressive')
-                                // ->validateFor(
-                                //     country: 'MY',
-                                //     lenient: true, // default: false
-                                // )
-                                ,
-                                Select::make('gender')
-                                    ->label('Gender')
-                                    ->options([
-                                        1 => 'Male',
-                                        0 => 'Female',
-                                    ])
-                                    ->default(1)
-                                    ->required(),
-
-                                Select::make('nationality')
-                                    ->label('Nationality')
-                                    ->options(getNationalities()) // Loads nationalities from JSON file
-                                    ->searchable()
-                                    ->nullable(),
-
-                            ]),
-                            CheckboxList::make('branches')->columns(3)
-                                ->relationship('branches')
-                                ->label('Branches')->columnSpanFull()->searchable()
-                                ->options(Branch::active()
-                                    ->withAccess()
-                                    ->get(['name', 'id'])
-                                    ->pluck('name', 'id'))->bulkToggleable(),
-
-                            CheckboxList::make('stores')
-                                ->label('Allowed Stores')->relationship('stores')
-                                ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
-                                ->searchable()->bulkToggleable()->columns(3)
-                                ->helperText('Select the stores this user is allowed to access. The user will only see data related to these stores.')
-                                ->columnSpanFull(),
-                            Select::make('branch_id')
-                                ->label('Default Branch')
-                                ->required()
-                                ->visible(function (Get $get) {
-                                    $roles = $get('roles') ?? [];
-                                    return !in_array(5, $roles);
-                                })
-                                ->searchable()
-                                ->options(function ($get) {
-                                    return Branch::where('active', 1)
-                                        ->whereIn('id', $get('branches'))
-
-                                        ->select('name', 'id')->get()->pluck('name', 'id');
-                                }),
-                        ]),
-
-                    ]),
-
-                    Fieldset::make()->label('Set user type and role')->schema([
-                        Select::make('user_type')
-                            ->label('User type')
-                            // ->options(getUserTypes())
-                            ->options(
-                                UserType::select('name', 'id')
-                                    // ->whereNotIn('id', [2,3,4])
-                                    ->active()
-                                    ->get()->pluck('name', 'id')
-                            )
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
-
-                                //  dd($roles,$state);
-                            }),
-                        CheckboxList::make('roles')->required()
-                            ->label('Roles')
-                            ->relationship('roles')
-                            // ->maxItems(1)
-                            ->live()
-                            ->options(function (Get $get) {
-                                // dd($get('user_type'),'hi');
-                                if ($get('user_type')) {
-                                    $roles = getRolesByTypeId($get('user_type')) ?? [];
-                                    // dd($roles,gettype($roles));
-                                    return Role::select('name', 'id')
-                                        ->whereIn('id', $roles)
-                                        ->orderBy('name', 'asc')
-                                        ->get()->pluck('name', 'id');
-                                }
-                            }),
-                    ]),
-                    Grid::make()->columns(2)->schema([
-
-                        Select::make('owner_id')
-                            ->visible(function (Get $get) {
-                                if (in_array($get('user_type'), [3, 4])) {
-                                    return true;
-                                }
-                            })
-                            ->label('Manager')
-                            ->searchable()
-                            ->options(function () {
-                                return User::query()->select('name', 'id')->get()->pluck('name', 'id');
-                            }),
-
-                    ]),
-                    Fieldset::make()->label('')
-                        ->hiddenOn('view')
+                Wizard::make([
+                    Wizard\Step::make('Basic data')
+                        ->icon('heroicon-o-user-circle')
                         ->schema([
-                            Grid::make()->columns(2)->schema([
-                                setting('password_contains_for') == 'easy_password' ?
-                                    TextInput::make('password')
-                                    ->password()
-                                    ->required(fn(string $context) => $context === 'create')
-                                    ->reactive()
-                                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            Fieldset::make()->schema([
+                                Grid::make()->columns(3)->schema([
+                                    Fieldset::make()->label('Personal data')->schema([
+                                        TextInput::make('name')->required()->unique(ignoreRecord: true),
+                                        TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+                                        Grid::make()->columns(3)->columnSpanFull()->schema([
+                                            PhoneInput::make('phone_number')
+                                                // ->numeric()
+                                                ->initialCountry('MY')
+                                                ->onlyCountries([
+                                                    'MY',
+                                                    'US',
+                                                    'YE',
+                                                    'AE',
+                                                    'SA',
+                                                ])
+                                                ->required()
+                                                ->unique(ignoreRecord: true)
+                                                ->displayNumberFormat(PhoneInputNumberType::E164)
+                                                ->autoPlaceholder('aggressive')
+                                            // ->validateFor(
+                                            //     country: 'MY',
+                                            //     lenient: true, // default: false
+                                            // )
+                                            ,
+                                            Select::make('gender')
+                                                ->label('Gender')
+                                                ->options([
+                                                    1 => 'Male',
+                                                    0 => 'Female',
+                                                ])
+                                                ->default(1)
+                                                ->required(),
 
-                                    : TextInput::make('password')
-                                    ->label('Password')
-                                    ->password()
-                                    ->required(fn(string $context) => $context === 'create')
-                                    ->reactive()
-                                    ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                                    ->rules([
-                                        'required',
-                                        'string',
-                                        Password::min(setting('password_min_length'))
-                                            ->mixedCase()
-                                            ->numbers()
-                                            ->symbols()
-                                            ->uncompromised(),
-                                    ])
-                                    ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
-                                // TextInput::make('password')
-                                //     ->password()
-                                //     ->required(fn(string $context) => $context === 'create')
-                                //     ->reactive()
-                                //     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                                TextInput::make('password_confirmation')
-                                    ->password()
-                                    ->required(fn(string $context) => $context === 'create')
-                                    ->same('password')
-                                    ->label('Confirm Password'),
+                                            Select::make('nationality')
+                                                ->label('Nationality')
+                                                ->options(getNationalities()) // Loads nationalities from JSON file
+                                                ->searchable()
+                                                ->nullable(),
+
+                                        ]),
+
+                                    ]),
+
+                                ]),
+
+                                Fieldset::make()->label('Set user type and role')->schema([
+                                    Select::make('user_type')
+                                        ->label('User type')
+                                        // ->options(getUserTypes())
+                                        ->options(
+                                            UserType::select('name', 'id')
+                                                // ->whereNotIn('id', [2,3,4])
+                                                ->active()
+                                                ->get()->pluck('name', 'id')
+                                        )
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+
+                                            //  dd($roles,$state);
+                                        }),
+                                    CheckboxList::make('roles')->required()
+                                        ->label('Roles')
+                                        ->relationship('roles')
+                                        // ->maxItems(1)
+                                        ->live()
+                                        ->options(function (Get $get) {
+                                            // dd($get('user_type'),'hi');
+                                            if ($get('user_type')) {
+                                                $roles = getRolesByTypeId($get('user_type')) ?? [];
+                                                // dd($roles,gettype($roles));
+                                                return Role::select('name', 'id')
+                                                    ->whereIn('id', $roles)
+                                                    ->orderBy('name', 'asc')
+                                                    ->get()->pluck('name', 'id');
+                                            }
+                                        })->visible(fn($get): bool => $get('user_type')  > 0),
+                                ]),
+                                Grid::make()->columns(2)->schema([
+
+                                    Select::make('owner_id')
+                                        ->visible(function (Get $get) {
+                                            if (in_array($get('user_type'), [3, 4])) {
+                                                return true;
+                                            }
+                                        })
+                                        ->label('Manager')
+                                        ->searchable()
+                                        ->options(function () {
+                                            return User::query()->select('name', 'id')->get()->pluck('name', 'id');
+                                        }),
+
+                                ]),
+                                Fieldset::make()->label('')
+                                    ->hiddenOn('view')
+                                    ->schema([
+                                        Grid::make()->columns(2)->schema([
+                                            setting('password_contains_for') == 'easy_password' ?
+                                                TextInput::make('password')
+                                                ->password()
+                                                ->required(fn(string $context) => $context === 'create')
+                                                ->reactive()
+                                                ->dehydrateStateUsing(fn($state) => Hash::make($state))
+
+                                                : TextInput::make('password')
+                                                ->label('Password')
+                                                ->password()
+                                                ->required(fn(string $context) => $context === 'create')
+                                                ->reactive()
+                                                ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                                                ->rules([
+                                                    'required',
+                                                    'string',
+                                                    Password::min(setting('password_min_length'))
+                                                        ->mixedCase()
+                                                        ->numbers()
+                                                        ->symbols()
+                                                        ->uncompromised(),
+                                                ])
+                                                ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
+
+                                            TextInput::make('password_confirmation')
+                                                ->password()
+                                                ->required(fn(string $context) => $context === 'create')
+                                                ->same('password')
+                                                ->label('Confirm Password'),
+                                        ]),
+                                    ]),
                             ]),
+
                         ]),
-                ]),
-                Fieldset::make()
-                    ->visible(fn(Get $get): bool =>  $get('is_attendance_user'))->schema([
+                    Wizard\Step::make('Branches & Stores')
+                        ->icon('heroicon-o-building-office-2')
+                        ->schema([
+                            Fieldset::make()->columnSpanFull()->schema([
+                                CheckboxList::make('branches')->columns(3)
+                                    ->relationship('branches')
+                                    ->label('Allowed Branches')->columnSpanFull()->searchable()
+                                    ->options(Branch::active()
+                                        ->withAccess()
+                                        ->get(['name', 'id'])
+                                        ->pluck('name', 'id'))->bulkToggleable(),
 
-                        Grid::make()->columns(3)->schema([
-                            Fieldset::make()->label('')->schema([
-                                TextInput::make('name')->live()->afterStateUpdated(fn($set, $state) => $set('attendanceDevice.name', $state))->required()->unique(ignoreRecord: true),
-                                TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+                                Select::make('branch_id')
+                                    ->label('Default Branch')
+                                    ->required(false)
+                                    ->columnSpanFull()
+                                    ->searchable()
+                                    ->options(function ($get) {
+                                        return Branch::where('active', 1)
+                                            ->whereIn('id', $get('branches'))
 
+                                            ->select('name', 'id')->get()->pluck('name', 'id');
+                                    }),
+                            ]),
+                            Fieldset::make()->columnSpanFull()->schema([
+                                CheckboxList::make('stores')
+                                    ->label('Allowed Stores')->relationship('stores')
+                                    ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
+                                    ->searchable()->bulkToggleable()->columns(3)
+                                    ->helperText('Select the stores this user is allowed to access. The user will only see data related to these stores.')
+                                    ->columnSpanFull(),
+                                Select::make('store_id')
+                                    ->label('Default Store')
+                                    ->required(false)
+                                    ->columnSpanFull()
+                                    ->searchable()
+                                    ->options(function ($get) {
+                                        return Store::active()
+                                            ->whereIn('id', $get('stores'))
 
-                                Select::make('branch_area_id')->label('Branch area')
-                                    ->options(function (Get $get) {
-                                        return BranchArea::query()
-                                            ->where('branch_id', $get('branch_id'))
-                                            ->pluck('name', 'id');
+                                            ->select('name', 'id')->get()->pluck('name', 'id');
                                     }),
                             ]),
 
-                        ]),
-                        Fieldset::make()->relationship('attendanceDevice')->schema([
-                            TextInput::make('name')->columnSpanFull()->label('Device Name'),
-                            Textarea::make('description')->columnSpanFull()->label('Device Description'),
-                        ]),
+                        ])
+                ])->skippable()->columnSpanFull(),
 
 
-                        Fieldset::make()->label('')->schema([
-                            Grid::make()->columns(2)->schema([
-                                TextInput::make('password')
-                                    ->password()
-                                    ->required(fn(string $context) => $context === 'create')
-                                    ->reactive()
-                                    ->dehydrateStateUsing(fn($state) => Hash::make($state)),
-                                TextInput::make('password_confirmation')
-                                    ->password()
-                                    ->required(fn(string $context) => $context === 'create')
-                                    ->same('password')
-                                    ->label('Confirm Password'),
-                            ]),
-                        ]),
-                    ]),
             ]);
     }
+    // public static function formOld(Form $form): Form
+    // {
+
+    //     return $form
+    //         ->schema([
+
+    //             Fieldset::make()->label('')->columns(2)->schema([
+    //                 // Toggle::make('is_exist_employee')->label('')
+    //                 //     ->inline(false)->helperText('Check if you want to create a user account for existing employee')
+    //                 //     ->live(),
+    //                 Toggle::make('is_attendance_user')->label('')
+    //                     ->inline(false)->helperText('Check if you want to create a user account for attendance webcam')
+    //                     ->live(),
+    //             ])->hiddenOn('edit'),
+    //             // Fieldset::make()->visible(fn(Get $get): bool => $get('is_exist_employee'))
+    //             //     ->schema(formUserForExistingEmployee()),
+    //             Fieldset::make()->visible(fn(Get $get): bool => !$get('is_exist_employee') && !$get('is_attendance_user'))->schema([
+
+    //                 Grid::make()->columns(3)->schema([
+    //                     Fieldset::make()->label('Personal data')->schema([
+    //                         TextInput::make('name')->required()->unique(ignoreRecord: true),
+    //                         TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+    //                         Grid::make()->columns(3)->columnSpanFull()->schema([
+    //                             PhoneInput::make('phone_number')
+    //                                 // ->numeric()
+    //                                 ->initialCountry('MY')
+    //                                 ->onlyCountries([
+    //                                     'MY',
+    //                                     'US',
+    //                                     'YE',
+    //                                     'AE',
+    //                                     'SA',
+    //                                 ])
+    //                                 ->required()
+    //                                 ->unique(ignoreRecord: true)
+    //                                 ->displayNumberFormat(PhoneInputNumberType::E164)
+    //                                 ->autoPlaceholder('aggressive')
+    //                             // ->validateFor(
+    //                             //     country: 'MY',
+    //                             //     lenient: true, // default: false
+    //                             // )
+    //                             ,
+    //                             Select::make('gender')
+    //                                 ->label('Gender')
+    //                                 ->options([
+    //                                     1 => 'Male',
+    //                                     0 => 'Female',
+    //                                 ])
+    //                                 ->default(1)
+    //                                 ->required(),
+
+    //                             Select::make('nationality')
+    //                                 ->label('Nationality')
+    //                                 ->options(getNationalities()) // Loads nationalities from JSON file
+    //                                 ->searchable()
+    //                                 ->nullable(),
+
+    //                         ]),
+    //                         CheckboxList::make('branches')->columns(3)
+    //                             ->relationship('branches')
+    //                             ->label('Branches')->columnSpanFull()->searchable()
+    //                             ->options(Branch::active()
+    //                                 ->withAccess()
+    //                                 ->get(['name', 'id'])
+    //                                 ->pluck('name', 'id'))->bulkToggleable(),
+
+    //                         CheckboxList::make('stores')
+    //                             ->label('Allowed Stores')->relationship('stores')
+    //                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
+    //                             ->searchable()->bulkToggleable()->columns(3)
+    //                             ->helperText('Select the stores this user is allowed to access. The user will only see data related to these stores.')
+    //                             ->columnSpanFull(),
+    //                         Select::make('branch_id')
+    //                             ->label('Default Branch')
+    //                             ->required()
+    //                             ->visible(function (Get $get) {
+    //                                 $roles = $get('roles') ?? [];
+    //                                 return !in_array(5, $roles);
+    //                             })
+    //                             ->searchable()
+    //                             ->options(function ($get) {
+    //                                 return Branch::where('active', 1)
+    //                                     ->whereIn('id', $get('branches'))
+
+    //                                     ->select('name', 'id')->get()->pluck('name', 'id');
+    //                             }),
+    //                     ]),
+
+    //                 ]),
+
+    //                 Fieldset::make()->label('Set user type and role')->schema([
+    //                     Select::make('user_type')
+    //                         ->label('User type')
+    //                         // ->options(getUserTypes())
+    //                         ->options(
+    //                             UserType::select('name', 'id')
+    //                                 // ->whereNotIn('id', [2,3,4])
+    //                                 ->active()
+    //                                 ->get()->pluck('name', 'id')
+    //                         )
+    //                         ->required()
+    //                         ->live()
+    //                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+
+    //                             //  dd($roles,$state);
+    //                         }),
+    //                     CheckboxList::make('roles')->required()
+    //                         ->label('Roles')
+    //                         ->relationship('roles')
+    //                         // ->maxItems(1)
+    //                         ->live()
+    //                         ->options(function (Get $get) {
+    //                             // dd($get('user_type'),'hi');
+    //                             if ($get('user_type')) {
+    //                                 $roles = getRolesByTypeId($get('user_type')) ?? [];
+    //                                 // dd($roles,gettype($roles));
+    //                                 return Role::select('name', 'id')
+    //                                     ->whereIn('id', $roles)
+    //                                     ->orderBy('name', 'asc')
+    //                                     ->get()->pluck('name', 'id');
+    //                             }
+    //                         }),
+    //                 ]),
+    //                 Grid::make()->columns(2)->schema([
+
+    //                     Select::make('owner_id')
+    //                         ->visible(function (Get $get) {
+    //                             if (in_array($get('user_type'), [3, 4])) {
+    //                                 return true;
+    //                             }
+    //                         })
+    //                         ->label('Manager')
+    //                         ->searchable()
+    //                         ->options(function () {
+    //                             return User::query()->select('name', 'id')->get()->pluck('name', 'id');
+    //                         }),
+
+    //                 ]),
+    //                 Fieldset::make()->label('')
+    //                     ->hiddenOn('view')
+    //                     ->schema([
+    //                         Grid::make()->columns(2)->schema([
+    //                             setting('password_contains_for') == 'easy_password' ?
+    //                                 TextInput::make('password')
+    //                                 ->password()
+    //                                 ->required(fn(string $context) => $context === 'create')
+    //                                 ->reactive()
+    //                                 ->dehydrateStateUsing(fn($state) => Hash::make($state))
+
+    //                                 : TextInput::make('password')
+    //                                 ->label('Password')
+    //                                 ->password()
+    //                                 ->required(fn(string $context) => $context === 'create')
+    //                                 ->reactive()
+    //                                 ->dehydrateStateUsing(fn($state) => Hash::make($state))
+    //                                 ->rules([
+    //                                     'required',
+    //                                     'string',
+    //                                     Password::min(setting('password_min_length'))
+    //                                         ->mixedCase()
+    //                                         ->numbers()
+    //                                         ->symbols()
+    //                                         ->uncompromised(),
+    //                                 ])
+    //                                 ->helperText(__('lang.password_requirements', ['min' => setting('password_min_length')])),
+    //                             // TextInput::make('password')
+    //                             //     ->password()
+    //                             //     ->required(fn(string $context) => $context === 'create')
+    //                             //     ->reactive()
+    //                             //     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+    //                             TextInput::make('password_confirmation')
+    //                                 ->password()
+    //                                 ->required(fn(string $context) => $context === 'create')
+    //                                 ->same('password')
+    //                                 ->label('Confirm Password'),
+    //                         ]),
+    //                     ]),
+    //             ]),
+    //             // Fieldset::make()
+    //             //     ->visible(fn(Get $get): bool =>  $get('is_attendance_user'))->schema([
+
+    //             //         Grid::make()->columns(3)->schema([
+    //             //             Fieldset::make()->label('')->schema([
+    //             //                 TextInput::make('name')->live()->afterStateUpdated(fn($set, $state) => $set('attendanceDevice.name', $state))->required()->unique(ignoreRecord: true),
+    //             //                 TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
+
+
+    //             //                 Select::make('branch_area_id')->label('Branch area')
+    //             //                     ->options(function (Get $get) {
+    //             //                         return BranchArea::query()
+    //             //                             ->where('branch_id', $get('branch_id'))
+    //             //                             ->pluck('name', 'id');
+    //             //                     }),
+    //             //             ]),
+
+    //             //         ]),
+    //             //         Fieldset::make()->relationship('attendanceDevice')->schema([
+    //             //             TextInput::make('name')->columnSpanFull()->label('Device Name'),
+    //             //             Textarea::make('description')->columnSpanFull()->label('Device Description'),
+    //             //         ]),
+
+
+    //             //         Fieldset::make()->label('')->schema([
+    //             //             Grid::make()->columns(2)->schema([
+    //             //                 TextInput::make('password')
+    //             //                     ->password()
+    //             //                     ->required(fn(string $context) => $context === 'create')
+    //             //                     ->reactive()
+    //             //                     ->dehydrateStateUsing(fn($state) => Hash::make($state)),
+    //             //                 TextInput::make('password_confirmation')
+    //             //                     ->password()
+    //             //                     ->required(fn(string $context) => $context === 'create')
+    //             //                     ->same('password')
+    //             //                     ->label('Confirm Password'),
+    //             //             ]),
+    //             //         ]),
+    //             //     ]),
+    //         ]);
+    // }
 
     public static function table(Table $table): Table
     {

@@ -263,6 +263,8 @@ if (!function_exists('getAdminsToNotify')) {
 if (!function_exists('getDefaultStore')) {
     function getDefaultStore()
     {
+        $defaultStoreId = auth()->user()->store_id ?? null;
+        return $defaultStoreId;
         $defaultStoreId = Store::where('default_store', 1)->where('active', 1)->select('id')->first()?->id;
         if (is_null($defaultStoreId)) {
             $defaultStoreId = 0;
