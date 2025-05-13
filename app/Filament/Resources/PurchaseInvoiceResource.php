@@ -45,6 +45,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
@@ -356,7 +357,36 @@ class PurchaseInvoiceResource extends Resource
                         }
                     })->hidden(fn(): bool => isSuperVisor())->hidden(),
                 Tables\Actions\ActionGroup::make([
-
+                    Tables\Actions\Action::make('create_inventory')
+                        ->label('Create Inventory')
+                        ->icon('heroicon-o-plus-circle')->button()
+                        ->color('success')
+                        ->visible(fn($record) => !$record->has_inventory_transaction)
+                        ->action(function ($record) {
+                            DB::beginTransaction();
+                            try {
+                                foreach ($record->details as $detail) {
+                                    \App\Models\InventoryTransaction::moveToStore([
+                                        'product_id' => $detail->product_id,
+                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'quantity' => $detail->quantity,
+                                        'unit_id' => $detail->unit_id,
+                                        'package_size' => $detail->package_size,
+                                        'store_id' => $record->store_id,
+                                        'price' => $detail->price,
+                                        'transaction_date' => $record->date,
+                                        'movement_date' => $record->date,
+                                        'notes' => 'Manual inventory from purchase invoice #' . $record->invoice_no,
+                                        'transactionable' => $record,
+                                    ]);
+                                }
+                                DB::commit();
+                                showSuccessNotifiMessage('Done');
+                            } catch (\Exception $e) {
+                                DB::rollBack();
+                                showWarningNotifiMessage($e->getMessage());
+                            }
+                        }),
                     Tables\Actions\EditAction::make()
                         ->icon('heroicon-s-pencil'),
                     Tables\Actions\Action::make('download')
