@@ -377,7 +377,7 @@ class PurchaseInvoiceResource extends Resource
                                         'price' => $detail->price,
                                         'transaction_date' => $record->date,
                                         'movement_date' => $record->date,
-                                        'notes' => 'Manual inventory from purchase invoice #' . $record->invoice_no,
+                                        'notes' => 'Purchase invoice with id #' . $record->id . ' ' . $record->store->name ?? '',
                                         'transactionable' => $record,
                                     ]);
                                 }
