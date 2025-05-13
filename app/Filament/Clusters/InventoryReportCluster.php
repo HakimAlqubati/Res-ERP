@@ -16,6 +16,7 @@ class InventoryReportCluster extends Cluster
     {
         if (auth()->user()->hasAnyPermission([
             'view_any_inventory-report',
+            'view_inventory-report',
             'view_any_inventory-tracking-report'
         ])) {
             return true;

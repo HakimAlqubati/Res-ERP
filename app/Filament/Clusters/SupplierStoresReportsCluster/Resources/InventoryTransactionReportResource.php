@@ -29,10 +29,10 @@ class InventoryTransactionReportResource extends Resource implements HasShieldPe
     public static function getPermissionPrefixes(): array
     {
         return [
-            'view_any',
+            'view',
         ];
     }
-    protected static ?string $model = InventoryTrackingReport::class;
+    protected static ?string $model = InventoryReport::class;
     protected static ?string $slug = 'inventory-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
@@ -115,7 +115,7 @@ class InventoryTransactionReportResource extends Resource implements HasShieldPe
     public static function canViewAny(): bool
     {
         return auth()->user()->hasAnyPermission([
-            'view_any_inventory-report'
+            'view_inventory-report'
         ]);
     }
     public static function getNavigationBadge(): ?string
