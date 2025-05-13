@@ -5,8 +5,10 @@ namespace App\Filament\Resources;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Resources\StockSupplyOrderReportResource\Pages;
 use App\Filament\Resources\StockSupplyOrderReportResource\RelationManagers;
+use App\Models\FakeModelReports\StockSupplyReport;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -21,9 +23,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class StockSupplyOrderReportResource extends Resource
+class StockSupplyOrderReportResource extends Resource implements HasShieldPermissions
 {
-    protected static ?string $model = StockSupplyOrder::class;
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
+    protected static ?string $model = StockSupplyReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 

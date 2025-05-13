@@ -4,15 +4,23 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
-use App\Models\Product; 
+use App\Models\Product;
 use Filament\Pages\SubNavigationPosition;
-use Filament\Resources\Resource; 
-use Filament\Tables\Table; 
+use Filament\Resources\Resource;
+use Filament\Tables\Table;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource\Pages;
+use App\Models\FakeModelReports\MinimumProductQtyReport;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
-class MinimumProductQtyReportResource extends Resource
+class MinimumProductQtyReportResource extends Resource implements HasShieldPermissions
 {
-    protected static ?string $model = Product::class;
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
+    protected static ?string $model = MinimumProductQtyReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -54,5 +62,10 @@ class MinimumProductQtyReportResource extends Resource
     {
         return 'Report';
         return static::getModel()::whereNotNull('minimum_stock_qty')->count();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_minimum-product-qty-report');
     }
 }

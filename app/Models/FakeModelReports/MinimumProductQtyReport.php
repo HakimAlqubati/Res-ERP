@@ -5,9 +5,9 @@ namespace App\Models\FakeModelReports;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class GeneralReportOfProducts extends Model
+class MinimumProductQtyReport extends Model
 {
-    use \Sushi\Sushi,HasFactory;
+    use \Sushi\Sushi;
     public $incrementing = false;
 
     protected $schema = [

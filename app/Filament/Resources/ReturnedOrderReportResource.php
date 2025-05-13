@@ -7,6 +7,8 @@ use App\Filament\Resources\ReturnedOrderReportResource\Pages;
 use App\Filament\Resources\ReturnedOrderReportResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\FakeModelReports\ReturnedOrderReport;
+use App\Models\FakeModelReports\ReturnOrderReport;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
@@ -21,8 +23,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ReturnedOrderReportResource extends Resource
+implements HasShieldPermissions
 {
-    protected static ?string $model = ReturnedOrderReport::class;
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+        ];
+    }
+    protected static ?string $model = ReturnOrderReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -60,6 +69,10 @@ class ReturnedOrderReportResource extends Resource
         ];
     }
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()->can('view_return-order-report');
+    }
     public static function getPages(): array
     {
         return [

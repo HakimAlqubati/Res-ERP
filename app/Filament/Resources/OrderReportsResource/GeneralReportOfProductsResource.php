@@ -11,6 +11,7 @@ use App\Filament\Resources\OrderReportsResource\Pages\ListGeneralReportOfProduct
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\FakeModelReports\GeneralReportOfProducts;
+use App\Models\FakeModelReports\ReportByCategory;
 use App\Models\OrderDetails;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\DatePicker;
@@ -34,7 +35,7 @@ implements HasShieldPermissions
         ];
     }
 
-    protected static ?string $model = GeneralReportOfProducts::class;
+    protected static ?string $model = ReportByCategory::class;
     protected static ?string $slug = 'general-report-products';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = OrderReportsCluster::class;

@@ -5,9 +5,10 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
-
+use App\Models\FakeModelReports\InventoryTrackingReport;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\Select;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -16,9 +17,15 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class InventoryTransactionTruckingReportResource extends Resource
+class InventoryTransactionTruckingReportResource extends Resource implements HasShieldPermissions
 {
-    protected static ?string $model = InventoryTransaction::class;
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_any',
+        ];
+    }
+    protected static ?string $model = InventoryTrackingReport::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string

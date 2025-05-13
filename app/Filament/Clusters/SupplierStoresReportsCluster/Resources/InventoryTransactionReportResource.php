@@ -6,10 +6,13 @@ use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 use App\Models\Category;
+use App\Models\FakeModelReports\InventoryReport;
+use App\Models\FakeModelReports\InventoryTrackingReport;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Store;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Toggle;
 use Filament\Pages\SubNavigationPosition;
@@ -20,9 +23,16 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class InventoryTransactionReportResource extends Resource
+class InventoryTransactionReportResource extends Resource implements HasShieldPermissions
 {
-    protected static ?string $model = InventoryTransaction::class;
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view_any',
+        ];
+    }
+    protected static ?string $model = InventoryTrackingReport::class;
     protected static ?string $slug = 'inventory-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
@@ -104,11 +114,12 @@ class InventoryTransactionReportResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->hasAnyPermission(['view_any_inventory-transaction-trucking-report','view_inventory::transaction::trucking::report']);
+        return auth()->user()->hasAnyPermission([
+            'view_any_inventory-report'
+        ]);
     }
     public static function getNavigationBadge(): ?string
     {
         return 'Report';
     }
-
 }
