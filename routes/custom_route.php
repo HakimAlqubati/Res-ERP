@@ -36,18 +36,7 @@ Route::get('analyticsBranchConsumption', [BranchConsumptionAnalysisController::c
 Route::get('analyticsBranchConsumptionComparison', [BranchConsumptionAnalysisController::class, 'compare']);
 Route::get('/returnOrders', [TestController4::class, 'returnOrders']);
 
-Route::get('/updateCreatedByInPurchaseInvoice', function () {
-
-    // $audits = Audit::query()
-    //     ->where('auditable_type', PurchaseInvoice::class)
-    //     // where('auditable_id', $invoice->id)
-    //     // ->where('auditable_type', 'like', '%App\\Models\\PurchaseInvoice%')
-
-    //     ->where('event', 'created')
-    //     ->whereNotNull('user_id')
-    //     ->orderBy('id')
-    //     ->get();
-    // return $audits;
+Route::get('/updateCreatedByInPurchaseInvoice', function () {;
     logger()->info('Started updating created_by in purchase_invoices');
 
     $updatedIds = [];

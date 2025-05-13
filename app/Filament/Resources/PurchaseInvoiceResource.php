@@ -308,12 +308,12 @@ class PurchaseInvoiceResource extends Resource
                     ->sortable()
                     ->toggleable(),
                 IconColumn::make('has_inventory_transaction')
-                    ->label('Inventory Added') // أو الترجمة المناسبة
+                    ->label('Inventory Updated')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
                 TextColumn::make('creator_name')
                     ->label('Creator')
-                    ->toggleable(isToggledHiddenByDefault:true),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
