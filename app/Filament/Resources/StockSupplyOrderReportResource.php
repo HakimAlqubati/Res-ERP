@@ -79,7 +79,7 @@ class StockSupplyOrderReportResource extends Resource implements HasShieldPermis
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(
-                        Store::active()->get()->pluck('name', 'id')->toArray()
+                        Store::active()->withAccess()->get()->pluck('name', 'id')->toArray()
                     )
 
             ], FiltersLayout::AboveContent);
