@@ -4,9 +4,9 @@
 
     {{-- عرض الوقت الحالي --}}
     <div class="ml-auto text-sm text-gray-600 font-medium time flex items-center gap-x-2">
-        🕒 <span id="current-time">--:--:--</span>
         📅 <span id="current-date">--/--/----</span>
         - <span id="current-day">---</span>
+        🕒 <span id="current-time">--:--:--</span>
     </div>
 
 </div>
