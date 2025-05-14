@@ -32,6 +32,7 @@ class ListInventoryTransactionReport extends ListRecords
 
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination($perPage);
+        
         $reportData = $report['reportData'] ?? $report;
         $pagination = $report['pagination'] ?? $report;
 
