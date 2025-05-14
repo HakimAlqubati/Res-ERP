@@ -4,6 +4,7 @@ use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
+use App\Http\Controllers\TestController5;
 use App\Models\Audit;
 use App\Models\PurchaseInvoice;
 use Illuminate\Support\Facades\Route;
@@ -53,7 +54,7 @@ Route::get('/updateCreatedByInPurchaseInvoice', function () {;
                 ->orderBy('id')
                 ->first();
 
-            
+
 
             if ($audit && $audit->user_id) {
                 $invoice->update(['created_by' => $audit->user_id]);
@@ -70,3 +71,6 @@ Route::get('/updateCreatedByInPurchaseInvoice', function () {;
         'count' => count($updatedIds),
     ]);
 });
+
+
+Route::get('/testo', [TestController5::class, 'testo']);

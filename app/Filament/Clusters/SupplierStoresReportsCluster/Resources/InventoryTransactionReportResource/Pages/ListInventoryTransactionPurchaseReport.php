@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\Inventory
 
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionPurchaseReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource;
+use App\Http\Controllers\TestController5;
 use App\Models\Product;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryPurchasedService;
@@ -19,28 +20,11 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
 
     protected function getViewData(): array
     {
-        $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
-        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
-        $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
-        // $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
-        $unitId = 'all';
-        $inventoryService = new MultiProductsInventoryPurchasedService($categoryId, $productId, $unitId, $storeId);
-
-        // ⬅️ احصل على القيمة من الاستعلام أو استخدم 15 كقيمة افتراضية
-        $perPage = request()->get('perPage', 15);
-        if ($perPage === 'all') {
-            $perPage = 9999; // سيتم إرجاع كل النتائج
-        }
-
-        // Get paginated report data
-        $report = $inventoryService->getInventoryReportWithPagination($perPage);
-
-        $reportData = $report['reportData'] ?? $report;
-        $pagination = $report['pagination'] ?? $report;
 
 
-        return ['reportData' => $reportData, 'pagination' => $pagination];
+        $ctrl5 = new TestController5();
+
+        $reportData = $ctrl5->testo();
+        return ['reportData' => $reportData, 'pagination' => null];
     }
-
-    
 }

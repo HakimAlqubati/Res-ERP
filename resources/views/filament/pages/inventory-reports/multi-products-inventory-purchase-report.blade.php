@@ -34,47 +34,32 @@
                         </th>
                     </x-filament-tables::row>
                     <x-filament-tables::row>
-                        <th>Product Code</th>
+                        <th>Product id</th>
                         <th>Product Name</th>
-                        <th>Unit ID</th>
-                        <th>Unit Name</th>
+                        <th>Unit  </th> 
                         <th>Qty per Pack</th>
                         <th>Purchased Qty</th>
                         <th>Price</th>
-                        <th>Total Price</th>
+                        {{-- <th>Total Price</th> --}}
                     </x-filament-tables::row>
                 </thead>
                 <tbody>
-                    @foreach ($reportData as $productReport)
-                        @foreach ($productReport as $data)
-                            <x-filament-tables::row>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    <strong>{{ $data['product_code'] }}</strong>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    <strong>{{ $data['product_name'] }}</strong>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    {{ $data['unit_id'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    {{ $data['unit_name'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    {{ $data['package_size'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
-                                    {{ $data['remaining_qty'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
-                                    {{ $data['price'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
-                                    {{ ($data['remaining_qty'] * $data['price']) }}
-                                </x-filament-tables::cell>
-                            </x-filament-tables::row>
-                        @endforeach
+                    @foreach ($reportData as $data)
+                        <x-filament-tables::row>
+                            <x-filament-tables::cell>{{ $data['product_id'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['product_name'] }}</x-filament-tables::cell>
+                            {{-- <x-filament-tables::cell>{{ $data['unit_id'] }}</x-filament-tables::cell> --}}
+                            <x-filament-tables::cell>{{ $data['largest_unit'] }}</x-filament-tables::cell>
+                            
+                            <x-filament-tables::cell>{{ $data['package_size'] }}</x-filament-tables::cell>
+                            {{-- <x-filament-tables::cell>{{ $data['total_in'] }}</x-filament-tables::cell> --}}
+                            <x-filament-tables::cell>{{ $data['net_quantity'] }}</x-filament-tables::cell>
+                            {{-- <x-filament-tables::cell>{{ $data['total_out'] }}</x-filament-tables::cell> --}}
+                            
+                            <x-filament-tables::cell>{{ $data['unit_price'] }}</x-filament-tables::cell>
+                        </x-filament-tables::row>
                     @endforeach
+
                 </tbody>
             </x-filament-tables::table>
 

@@ -133,6 +133,10 @@ class MultiProductsInventoryPurchasedService
     }
 
 
+    public function getInventoryForProduct2($productId)
+    {
+
+    }
     public function getInventoryForProduct($productId)
     {
         $queryIn = DB::table('inventory_transactions')

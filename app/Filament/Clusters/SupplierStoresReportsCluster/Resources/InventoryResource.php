@@ -135,6 +135,37 @@ class InventoryResource extends Resource
                 //         Forms\Components\TextInput::make('value')->label('Product Name'),
                 //     ]),
 
+                SelectFilter::make('id')
+                    ->label('ID')
+                    ->searchable()
+                    ->options(function () {
+                        return InventoryTransaction::query()
+                            ->orderBy('id', 'asc') // ترتيب تصاعدي
+                            ->limit(10)
+                            ->pluck('id', 'id')
+                            ->toArray();
+                    })
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return InventoryTransaction::query()
+                            ->when(is_numeric($search), function ($query) use ($search) {
+                                // أولًا جلب ID مطابق تمامًا
+                                $query->where('id', $search);
+                            }, function ($query) use ($search) {
+                                // ثم تطابق جزئي فقط إن لم يكن رقماً دقيقاً
+                                $query->where('id', 'like', "%$search%");
+                            })
+                            ->orWhere(function ($query) use ($search) {
+                                // في حالة كان رقمًا جزئيًا لكن لا توجد نتيجة دقيقة
+                                $query->where('id', 'like', "%$search%");
+                            })
+                            ->orderBy('id', 'asc')
+                            ->limit(10)
+                            ->pluck('id', 'id')
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(fn($value) => "ID: $value"),
+
+
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))
                     ->multiple()

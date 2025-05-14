@@ -312,7 +312,6 @@ class MultiProductsInventoryService
 
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {
-
         $inventoryReportProduct = $this->getInventoryForProduct($productId);
         $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
