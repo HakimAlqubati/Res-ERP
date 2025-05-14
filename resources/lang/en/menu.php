@@ -12,5 +12,6 @@ return [
     'leave_management' => 'Leave Management',
     'inventory_reports' => 'Inventory Reports',
     'task_reports' => 'Task Reports',
-    'order_reports' => 'Branch Orders',
+    'order_reports' => 'Order Reports',
+    'branch_orders' => 'Branch Orders',
 ];
