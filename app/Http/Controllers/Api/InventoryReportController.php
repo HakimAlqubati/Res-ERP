@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Services\BranchOrderSupplyReportService;
+use App\Services\MultiProductsInventoryPurchasedService;
 use App\Services\MultiProductsInventoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -118,5 +119,15 @@ class InventoryReportController extends Controller
         $result = $service->branchQuantities($branchId, $productId);
         $res = ['reportData' => $result];
         return response()->json($res);
+    }
+
+    public function testInventoryPurchasedReport()
+    {
+        $inventoryService = new MultiProductsInventoryPurchasedService();
+
+        // Get paginated report data
+        $report = $inventoryService->getInventoryReportWithPagination(15);
+
+        return response()->json([$report]);
     }
 }

@@ -107,6 +107,7 @@ Route::middleware('auth:api')->group(function () {
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
+Route::get('/testInventoryPurchasedReport', [App\Http\Controllers\Api\InventoryReportController::class, 'testInventoryPurchasedReport']);
 Route::get('/testInventoryReport2', function (Request $request) {
     $productIds = OrderDetails::where('order_id', $request->order_id)->pluck('product_id')->toArray();
     $report = [];
