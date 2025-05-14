@@ -128,8 +128,7 @@ class MultiProductsInventoryService
     {
         $queryIn = DB::table('inventory_transactions')
             ->whereNull('deleted_at')
-            ->where('product_id', $productId)
-            // ->where('transactionable_type', 'App\\Models\\PurchaseInvoice')
+            ->where('product_id', $productId) 
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN);
 
         $queryOut = DB::table('inventory_transactions')
