@@ -41,4 +41,6 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
 
         return ['reportData' => $reportData, 'pagination' => $pagination];
     }
+
+    
 }

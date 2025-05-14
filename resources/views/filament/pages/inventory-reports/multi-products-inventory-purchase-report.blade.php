@@ -38,8 +38,8 @@
                         <th>Product Name</th>
                         <th>Unit ID</th>
                         <th>Unit Name</th>
-                        <th>Package Size</th>
-                        <th>Quantity in Stock</th>
+                        <th>Qty per Pack</th>
+                        <th>Purchased Qty</th>
                         <th>Price</th>
                         <th>Total Price</th>
                     </x-filament-tables::row>
