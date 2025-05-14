@@ -27,7 +27,7 @@
                         <th colspan="2" class="no_border_right_left text-center">
                             <h3>Inventory Report</h3>
                         </th>
-                        <th colspan="4"
+                        <th colspan="5"
                             class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
                             style="text-align: center;">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
@@ -40,7 +40,8 @@
                         <th>Unit Name</th>
                         <th>Package Size</th>
                         <th>Quantity in Stock</th>
-                        <th>Price</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
                     </x-filament-tables::row>
                 </thead>
                 <tbody>
@@ -67,6 +68,9 @@
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
                                     {{ $data['price'] }}
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
+                                    {{ $data['remaining_qty'] * $data['price'] }}
                                 </x-filament-tables::cell>
                             </x-filament-tables::row>
                         @endforeach
