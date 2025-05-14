@@ -93,7 +93,7 @@
                 </x-filament::link>
 
                 {{-- Inventory Reports --}}
-                <x-filament::link :href="route('filament.admin.inventory-reports')" badge-color="purple" color="primary" icon="heroicon-o-newspaper"
+                <x-filament::link :href="route('filament.admin.inventory-report.resources.inventory-report.index')" badge-color="purple" color="primary" icon="heroicon-o-newspaper"
                     icon-position="before" class="link" tooltip="Go to Inventory Reports">
                     {{ __('Inventory') }}
                     <x-slot name="badge">
