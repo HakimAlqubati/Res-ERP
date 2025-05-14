@@ -25,7 +25,8 @@
                             </div>
                         </th>
                         <th colspan="2" class="no_border_right_left text-center">
-                            <h3>Inventory Report</h3>
+                            <h3>Inventory By Purchase
+                            </h3>
                         </th>
                         <th colspan="5"
                             class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
