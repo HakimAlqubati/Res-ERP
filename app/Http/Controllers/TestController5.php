@@ -96,16 +96,19 @@ class TestController5 extends Controller
             }
 
             if ($max) {
-                $converted[] = [
-                    'product_id'    => $max->product_id,
-                    'product_name'  => $max->product_name,
-                    'largest_unit'  => $max->largest_unit,
-                    'package_size'  => $max->package_size,
-                    'total_in'      => round($max->total_in / $max->package_size, 2),
-                    'total_out'     => round($max->total_out / $max->package_size, 2),
-                    'net_quantity'  => round($max->net_quantity / $max->package_size, 2),
-                    'unit_price'    => $max->unit_price,
-                ];
+                $netQty = round($max->net_quantity / $max->package_size, 2);
+                if ($netQty > 0) {
+                    $converted[] = [
+                        'product_id'    => $max->product_id,
+                        'product_name'  => $max->product_name,
+                        'largest_unit'  => $max->largest_unit,
+                        'package_size'  => $max->package_size,
+                        'total_in'      => round($max->total_in / $max->package_size, 2),
+                        'total_out'     => round($max->total_out / $max->package_size, 2),
+                        'net_quantity'  => $netQty,
+                        'unit_price'    => $max->unit_price,
+                    ];
+                }
             }
         }
 

@@ -36,7 +36,7 @@
                     <x-filament-tables::row>
                         <th>Product id</th>
                         <th>Product Name</th>
-                        <th>Unit  </th> 
+                        <th>Unit </th>
                         <th>Qty per Pack</th>
                         <th>Purchased Qty</th>
                         <th>Price</th>
@@ -50,12 +50,12 @@
                             <x-filament-tables::cell>{{ $data['product_name'] }}</x-filament-tables::cell>
                             {{-- <x-filament-tables::cell>{{ $data['unit_id'] }}</x-filament-tables::cell> --}}
                             <x-filament-tables::cell>{{ $data['largest_unit'] }}</x-filament-tables::cell>
-                            
+
                             <x-filament-tables::cell>{{ $data['package_size'] }}</x-filament-tables::cell>
                             {{-- <x-filament-tables::cell>{{ $data['total_in'] }}</x-filament-tables::cell> --}}
                             <x-filament-tables::cell>{{ $data['net_quantity'] }}</x-filament-tables::cell>
                             {{-- <x-filament-tables::cell>{{ $data['total_out'] }}</x-filament-tables::cell> --}}
-                            
+
                             <x-filament-tables::cell>{{ $data['unit_price'] }}</x-filament-tables::cell>
                         </x-filament-tables::row>
                     @endforeach
@@ -68,7 +68,7 @@
 
         {{-- Pagination Controls --}}
         {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
-        <div class="mt-4">
+        {{-- <div class="mt-4">
             @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
                 {{ $pagination->links() }}
             @endif
@@ -85,8 +85,8 @@
                         @endforeach
                     </select>
                 </form>
-            </div>
-        </div>
+            </div> 
+        </div> --}}
         {{-- @endif --}}
     @else
         <div class="please_select_message_div text-center">
