@@ -105,4 +105,11 @@ class InventoryTransactionPurchaseReportResource extends Resource
     {
         return 'Report';
     }
+    public static function canViewAny(): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
 }
