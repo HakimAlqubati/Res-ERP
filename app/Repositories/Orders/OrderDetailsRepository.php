@@ -89,6 +89,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
                                     'updated_at' => now(),
                                     'package_size' => $unitPrice->package_size,
                                     'available_quantity' => $orderDetailData['quantity'],
+                                    'price' => $unitPrice->price,
                                 ]);
 
                             // $orderDetail->update([
