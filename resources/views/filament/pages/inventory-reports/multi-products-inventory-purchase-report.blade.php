@@ -23,7 +23,7 @@
                                 class="logo-left circle-image">
                         </th>
                         <th colspan="6" class="no_border_right_left text-center">
-                            <h3>Inventory Difference Report (Purchased vs Ordered)</h3>
+                            <h3>Inventory Difference Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
                         </th>
                         <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
