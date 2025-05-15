@@ -21,11 +21,12 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
 
     protected function getViewData(): array
     {
+        $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
-
-        $purchased = $reportService->getProductSummaryPerInvoice(); // or with filters
-        $ordered = $reportService->getOrderedProductsLinkedToPurchase();
+        $filters = ['product_id' => $productId];
+        $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
+        $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
         return ['reportData' => $diffReport, 'pagination' => null];

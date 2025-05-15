@@ -1,9 +1,15 @@
 <x-filament::page>
+    {{ $this->getTableFiltersForm() }}
     {{-- Print Button --}}
     <div class="flex justify-end mb-4">
         <button id="printReport"
             class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
             🖨️ Print
+        </button>
+
+        <button id="exportExcel"
+            class="px-6 py-2 font-semibold rounded-md border border-green-600 bg-green-500 hover:bg-green-700 transition duration-300 shadow-md">
+            📥 Export Excel
         </button>
     </div>
 
@@ -66,6 +72,28 @@
             window.print();
             document.body.innerHTML = originalContent;
             location.reload(); // Restore after print
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        document.getElementById("exportExcel").addEventListener("click", function() {
+            const table = document.querySelector("#reportContent table");
+            const wb = XLSX.utils.table_to_book(table, {
+                sheet: "Inventory Report"
+            });
+            XLSX.writeFile(wb, "inventory_difference_report.xlsx");
+        });
+
+        document.getElementById("printReport").addEventListener("click", function() {
+            const originalContent = document.body.innerHTML;
+            const printContent = document.getElementById("reportContent").innerHTML;
+
+            document.body.innerHTML = printContent;
+            window.print();
+            document.body.innerHTML = originalContent;
+            location.reload();
         });
     </script>
 

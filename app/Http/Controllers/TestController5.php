@@ -34,10 +34,12 @@ class TestController5 extends Controller
 
     public function orderdData(Request $request)
     {
-        $productId = $request->input('product_id');
+        $filters = $request->only([
+            'product_id',
+        ]);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $orderdData = $reportService->getOrderedProductsLinkedToPurchase($productId);
+        $orderdData = $reportService->getOrderedProductsLinkedToPurchase($filters);
         return [
             'count' => count($orderdData),
             'data' => $orderdData,
@@ -46,10 +48,14 @@ class TestController5 extends Controller
 
     public function purchasedVSordered(Request $request)
     {
-        $reportService = new PurchaseInvoiceProductSummaryReportService();
+        $filters = $request->only([
+            'product_id',
+        ]);
 
-        $purchased = $reportService->getProductSummaryPerInvoice(); // or with filters
-        $ordered = $reportService->getOrderedProductsLinkedToPurchase();
+        $reportService = new PurchaseInvoiceProductSummaryReportService();
+ 
+        $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
+        $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
 

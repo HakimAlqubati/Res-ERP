@@ -52,31 +52,31 @@ class InventoryTransactionPurchaseReportResource extends Resource
                 //     ->query(function (Builder $q, $data) {
                 //         return $q;
                 //     })->options(Category::active()->get()->pluck('name', 'id')),
-                // SelectFilter::make("product_id")
-                //     ->label(__('lang.product'))->searchable()
-                //     ->query(function (Builder $q, $data) {
-                //         return $q;
-                //     })->getSearchResultsUsing(function (string $search): array {
-                //         return Product::where('active', 1)
-                //             ->where(function ($query) use ($search) {
-                //                 $query->where('name', 'like', "%{$search}%")
-                //                     ->orWhere('code', 'like', "%{$search}%");
-                //             })
-                //             ->limit(50)
-                //             ->get()
-                //             ->mapWithKeys(fn($product) => [
-                //                 $product->id => "{$product->code} - {$product->name}"
-                //             ])
-                //             ->toArray();
-                //     })
-                //     ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-                //     ->options(function () {
-                //         return Product::where('active', 1)
-                //             ->get()
-                //             ->mapWithKeys(fn($product) => [
-                //                 $product->id => "{$product->code} - {$product->name}"
-                //             ]);
-                //     }),
+                SelectFilter::make("product_id")
+                    ->label(__('lang.product'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->getSearchResultsUsing(function (string $search): array {
+                        return Product::where('active', 1)
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    }),
                 // SelectFilter::make("store_id")
                 //     ->label(__('lang.store'))->searchable()
                 //     ->query(function (Builder $q, $data) {

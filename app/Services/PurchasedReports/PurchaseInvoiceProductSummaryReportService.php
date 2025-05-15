@@ -112,12 +112,11 @@ class PurchaseInvoiceProductSummaryReportService
 
             // نحول كل الكميات للوحدة الصغيرة
             foreach ($entries as $entry) {
-                
+
                 $multiplier = $entry->package_size / $smallestPackageSize;
                 $convertedQty = $entry->qty * $multiplier;
                 $totalQty += $convertedQty;
-                $totalCost += $entry->price;
-
+                $totalCost = $entry->price;
             }
 
             $final[] = [
@@ -125,14 +124,14 @@ class PurchaseInvoiceProductSummaryReportService
                 'product_name' => $productName,
                 'qty'          => round($totalQty, 2),
                 'unit_name'    => $unitName,
-                'price' => $totalCost,
+                'price' => round($totalCost, 2),
             ];
         }
 
         return $final;
     }
     // ✅ الدالة الجديدة لتنفيذ استعلام تتبع الطلبات المرتبطة بالمشتريات
-    public function getOrderedProductsLinkedToPurchase(?int $productId = null)
+    public function getOrderedProductsLinkedToPurchase(array $filters  = [])
     {
         $query = DB::table('inventory_transactions as it')
             ->join('products as p', 'it.product_id', '=', 'p.id')
@@ -160,10 +159,8 @@ class PurchaseInvoiceProductSummaryReportService
                     });
             });
 
-
-        // ✅ تطبيق الفلتر على المنتج إذا تم تمريره
-        if (!is_null($productId)) {
-            $query->where('it.product_id', $productId);
+        if (isset($filters['product_id'])) {
+            $query->where('it.product_id', $filters['product_id']);
         }
         $result = $query->groupBy(
             'it.product_id',
