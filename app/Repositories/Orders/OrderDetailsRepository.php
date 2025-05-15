@@ -69,14 +69,13 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
                             Log::info('updatingOrderDetail', [
                                 'orderDetailData' => $orderDetailData,
                             ]);
-                            $unitId = $orderDetail->unit_id;
-                            if (isset($orderDetailData['unit_id']) && !is_null($orderDetailData['unit_id'])) {
-                                $unitId = $orderDetailData['unit_id'];
-                            }
-                            $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
-                                ->where('unit_id', $unitId)
-                                ->first();
-
+                            // $unitId = $orderDetail->unit_id;
+                            // if (isset($orderDetailData['unit_id']) && !is_null($orderDetailData['unit_id'])) {
+                            //     $unitId = $orderDetailData['unit_id'];
+                            // }
+                            $unitPrice = UnitPrice::where('product_id',$orderDetailData['product_id'])
+                                ->where('unit_id', $orderDetailData['unit_id'])
+                                ->first(); 
                             if (is_null($unitPrice)) {
                                 throw new \Exception('No unit price');
                             }
