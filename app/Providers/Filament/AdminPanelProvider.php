@@ -125,7 +125,7 @@ class AdminPanelProvider extends PanelProvider
                             //  (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  ReportOrdersCluster::getNavigationItems(): [], 
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportCluster::getNavigationItems() : [],
 
                         ));
@@ -184,7 +184,7 @@ class AdminPanelProvider extends PanelProvider
                                     is_null($currentTenant)) ? HRLeaveManagementCluster::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isFinanceManager()))
                                     ? NotificationSettingResource::getNavigationItems() : [],
-                                InventorySettingsCluster::getNavigationItems(),
+                                isSuperAdmin() ? InventorySettingsCluster::getNavigationItems() : [],
 
                                 (isSuperAdmin() || isSystemManager()) ? AreaManagementCluster::getNavigationItems() : [],
                             )),

@@ -70,8 +70,7 @@ class OrderDetailsRelationManager extends RelationManager
                     ->alignCenter(true)
                     ->hidden(fn(): bool => isStoreManager()),
                 Tables\Columns\TextColumn::make('total_unit_price')->label(__('lang.total'))->alignCenter(true)
-                ->summarize(Sum::make())
-                ,
+                    ->summarize(Sum::make())->hidden(fn(): bool => isStoreManager()),
                 // Tables\Columns\TextColumn::make('total_price_with_currency')->label(__('lang.total'))->alignCenter(true)
                 //     ->hidden(fn(): bool => isStoreManager()),
             ])

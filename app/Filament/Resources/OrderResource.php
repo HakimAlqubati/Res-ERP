@@ -446,7 +446,7 @@ class OrderResource extends Resource
     {
         return $page->generateNavigationItems([
             Pages\ListOrders::class,
-            Pages\CreateOrder::class,
+            // Pages\CreateOrder::class,
             Pages\ViewOrder::class,
             Pages\EditOrder::class,
         ]);
