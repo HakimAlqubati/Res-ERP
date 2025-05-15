@@ -402,11 +402,11 @@ class SettingResource extends Resource
                                     //     ->default(true)
                                     //     ->inline(false)
                                     //     ->helperText('If disabled, purchase invoice details will not be added to inventory.'),
-                                    Toggle::make('affect_inventory_from_grn_only')
-                                        ->label('Update Inventory from GRN Only')
-                                        ->helperText('If enabled, inventory will be updated from GRN only. If disabled, it will be updated from Purchase Invoice.')
-                                        ->default(true)
-                                        ->inline(false),
+                                    // Toggle::make('affect_inventory_from_grn_only')
+                                    //     ->label('Update Inventory from GRN Only')
+                                    //     ->helperText('If enabled, inventory will be updated from GRN only. If disabled, it will be updated from Purchase Invoice.')
+                                    //     ->default(true)
+                                    //     ->inline(false),
                                 ]),
 
                                 Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
