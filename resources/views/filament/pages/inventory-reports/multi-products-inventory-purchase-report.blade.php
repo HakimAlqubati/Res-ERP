@@ -22,7 +22,7 @@
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
                                 class="logo-left circle-image">
                         </th>
-                        <th colspan="5" class="no_border_right_left text-center">
+                        <th colspan="6" class="no_border_right_left text-center">
                             <h3>Inventory Difference Report (Purchased vs Ordered)</h3>
                         </th>
                         <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
@@ -37,6 +37,7 @@
                         <th>Purchased Qty</th>
                         <th>Ordered Qty</th>
                         <th>Qty in Stock</th>
+                        <th>Unit Price</th>
                         <th>Price</th>
                     </x-filament-tables::row>
                 </thead>
@@ -60,6 +61,7 @@
                                 </a>
                             </x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['unit_price'] }}</x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $data['price'] }}</x-filament-tables::cell>
                         </x-filament-tables::row>
                     @endforeach

@@ -247,6 +247,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'purchased_qty'  => round($purchase['qty'], 2),
                 'ordered_qty'    => round($orderedQty, 2),
                 'difference'     => $difference,
+                'unit_price' => $purchase['price'],
                 'price' => $purchase['price'] * $difference,
             ];
         }
