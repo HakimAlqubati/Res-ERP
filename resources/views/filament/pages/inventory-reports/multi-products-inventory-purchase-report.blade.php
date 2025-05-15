@@ -38,7 +38,7 @@
                         <th>Ordered Qty</th>
                         <th>Qty in Stock</th>
                         <th>Unit Price</th>
-                        <th>Price</th>
+                        <th>Total Price</th>
                     </x-filament-tables::row>
                 </thead>
 
