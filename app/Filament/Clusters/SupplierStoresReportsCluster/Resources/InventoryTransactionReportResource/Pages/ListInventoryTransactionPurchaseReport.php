@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryPurchasedService;
 use App\Services\MultiProductsInventoryService;
+use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -21,10 +22,12 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
     protected function getViewData(): array
     {
 
+        $reportService = new PurchaseInvoiceProductSummaryReportService();
 
-        $ctrl5 = new TestController5();
+        $purchased = $reportService->getProductSummaryPerInvoice(); // or with filters
+        $ordered = $reportService->getOrderedProductsLinkedToPurchase();
 
-        $reportData = $ctrl5->testo();
-        return ['reportData' => $reportData, 'pagination' => null];
+        $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
+        return ['reportData' => $diffReport, 'pagination' => null];
     }
 }

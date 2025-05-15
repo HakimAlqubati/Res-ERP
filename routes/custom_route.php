@@ -73,4 +73,6 @@ Route::get('/updateCreatedByInPurchaseInvoice', function () {;
 });
 
 
-Route::get('/testo', [TestController5::class, 'testo']);
+Route::get('/stockCostReport', [TestController5::class, 'stockCostReport']);
+Route::get('/orderdData', [TestController5::class, 'orderdData']);
+Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']);

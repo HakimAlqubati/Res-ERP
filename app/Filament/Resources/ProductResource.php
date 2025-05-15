@@ -947,7 +947,7 @@ class ProductResource extends Resource
     {
         return [
             // RelationManagers\UnitPricesRelationManager::class,
-            RelationManagers\ProductPriceHistoriesRelationManager::class,
+            // RelationManagers\ProductPriceHistoriesRelationManager::class,
 
         ];
     }

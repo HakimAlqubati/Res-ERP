@@ -7,91 +7,52 @@
         </button>
     </div>
 
-    {{ $this->getTableFiltersForm() }}
-
     @if (!empty($reportData))
         <div id="reportContent">
-
             <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
                     <x-filament-tables::row class="header_report">
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-
-                            <div style="width: 100%;">
-
-                                <img style="display: inline-block;"
-                                    src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
-                                    class="logo-left circle-image">
-                            </div>
+                            <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
+                                class="logo-left circle-image">
                         </th>
-                        <th colspan="2" class="no_border_right_left text-center">
-                            <h3>Inventory By Purchase
-                            </h3>
+                        <th colspan="5" class="no_border_right_left text-center">
+                            <h3>Inventory Difference Report (Purchased vs Ordered)</h3>
                         </th>
-                        <th colspan="5"
-                            class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
-                            style="text-align: center;">
+                        <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                         </th>
                     </x-filament-tables::row>
+
                     <x-filament-tables::row>
-                        <th>Product id</th>
+                        <th>Product ID</th>
                         <th>Product Name</th>
-                        <th>Unit </th>
-                        <th>Qty per Pack</th>
+                        <th>Unit</th>
                         <th>Purchased Qty</th>
-                        <th>Price</th>
-                        {{-- <th>Total Price</th> --}}
+                        <th>Ordered Qty</th>
+                        <th>Difference</th>
+                        <th>Unit Price</th>
                     </x-filament-tables::row>
                 </thead>
+
                 <tbody>
                     @foreach ($reportData as $data)
                         <x-filament-tables::row>
                             <x-filament-tables::cell>{{ $data['product_id'] }}</x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $data['product_name'] }}</x-filament-tables::cell>
-                            {{-- <x-filament-tables::cell>{{ $data['unit_id'] }}</x-filament-tables::cell> --}}
-                            <x-filament-tables::cell>{{ $data['largest_unit'] }}</x-filament-tables::cell>
-
-                            <x-filament-tables::cell>{{ $data['package_size'] }}</x-filament-tables::cell>
-                            {{-- <x-filament-tables::cell>{{ $data['total_in'] }}</x-filament-tables::cell> --}}
-                            <x-filament-tables::cell>{{ $data['net_quantity'] }}</x-filament-tables::cell>
-                            {{-- <x-filament-tables::cell>{{ $data['total_out'] }}</x-filament-tables::cell> --}}
-
-                            <x-filament-tables::cell>{{ $data['unit_price'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['purchased_qty'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['ordered_qty'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ $data['price'] }}</x-filament-tables::cell>
                         </x-filament-tables::row>
                     @endforeach
-
                 </tbody>
             </x-filament-tables::table>
-
-
         </div>
-
-        {{-- Pagination Controls --}}
-        {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
-        {{-- <div class="mt-4">
-            @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                {{ $pagination->links() }}
-            @endif
-            <div class="flex justify-end mb-2">
-                <form method="GET">
-                    <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-                    <select name="perPage" id="perPage" onchange="this.form.submit()"
-                        class="border border-gray-300 px-3 py-1 rounded-md text-sm">
-                        @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                            <option value="{{ $option }}"
-                                {{ request('perPage', 15) == $option ? 'selected' : '' }}>
-                                {{ is_numeric($option) ? $option : 'All' }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
-            </div> 
-        </div> --}}
-        {{-- @endif --}}
     @else
         <div class="please_select_message_div text-center">
-            <h1 class="please_select_message_text">No inventory data available.</h1>
+            <h1 class="please_select_message_text">No data available.</h1>
         </div>
     @endif
 
@@ -104,11 +65,11 @@
             document.body.innerHTML = printContent;
             window.print();
             document.body.innerHTML = originalContent;
-            location.reload(); // Reload to restore the page
+            location.reload(); // Restore after print
         });
     </script>
 
-    {{-- CSS to Hide Button in Print Mode --}}
+    {{-- CSS to Hide Print Button --}}
     <style>
         @media print {
             #printReport {
@@ -116,5 +77,4 @@
             }
         }
     </style>
-
 </x-filament::page>
