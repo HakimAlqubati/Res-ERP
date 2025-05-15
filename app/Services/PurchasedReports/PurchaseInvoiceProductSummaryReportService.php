@@ -26,6 +26,7 @@ class PurchaseInvoiceProductSummaryReportService
                 DB::raw('SUM(inventory_transactions.quantity) as qty'),
                 DB::raw('SUM(inventory_transactions.price) as price')
             )
+            ->whereNotIn('inventory_transactions.product_id', [116])
             ->where('inventory_transactions.movement_type', 'in')
             ->where('inventory_transactions.transactionable_type', 'App\\Models\\PurchaseInvoice');
 
@@ -159,6 +160,7 @@ class PurchaseInvoiceProductSummaryReportService
                 // 'it.source_transaction_id as source_id',
                 // DB::raw('(SELECT transactionable_id FROM inventory_transactions WHERE id = it.source_transaction_id) as purchase_id')
             )
+            ->whereNotIn('it.product_id', [116])
             ->whereIn('it.source_transaction_id', function ($subquery) {
                 $subquery->select('it1.source_transaction_id')
                     ->distinct()
