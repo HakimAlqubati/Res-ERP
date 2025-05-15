@@ -99,6 +99,8 @@ class InventoryTransactionPurchaseReportResource extends Resource
     {
         return [
             'index' => Pages\ListInventoryTransactionPurchaseReport::route('/'),
+            'purchase-details' => Pages\PurchaseDetails::route('/purchase-details/{product}'),
+            'order-details' => Pages\OrderDetails::route('/order-details/{product}'),
         ];
     }
     public static function getNavigationBadge(): ?string

@@ -8,7 +8,7 @@
                 <th colspan="3">
                     {{ __('lang.store') }}: ({{ $purchase_invoice_data['store_name'] }})
                 </th>
-                <th colspan="{{ $show_invoice_no == true ? '4' : '3' }}">
+                <th colspan="{{ $show_invoice_no == true ? '5' : '4' }}">
                     {{ __('lang.supplier') }}: ({{ $purchase_invoice_data['supplier_name'] }})
                 </th>
             </x-filament-tables::row>
@@ -20,6 +20,7 @@
                 @if ($show_invoice_no == true)
                     <th>{{ __('lang.invoice_no') }}</th>
                 @endif
+                <th> {{ __('lang.date') }} </th>
                 @if (!isStoreManager())
                     <th>{{ __('lang.unit_price') }}</th>
                     <th>{{ __('lang.total_amount') }}</th>
@@ -49,6 +50,9 @@
                             {{ '(' . $invoice_item->purchase_invoice_id . ') ' . $invoice_item->invoice_no }}
                         </x-filament-tables::cell>
                     @endif
+                    <x-filament-tables::cell>
+                        {{ $invoice_item->purchase_date }}
+                    </x-filament-tables::cell>
                     @if (!isStoreManager())
                         <x-filament-tables::cell> {{ $unit_price }} </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
@@ -57,9 +61,9 @@
             @endforeach
             @if (!isStoreManager())
                 <x-filament-tables::row>
-                    <x-filament-tables::cell colspan="{{ $show_invoice_no ? '5' : '4' }}"> {{ __('lang.total') }}
+                    <x-filament-tables::cell colspan="{{ $show_invoice_no ? '7' : '6' }}"> {{ __('lang.total') }}
                     </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell>
+                    {{-- <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell> --}}
                     <x-filament-tables::cell> {{ $total_sub_total }} </x-filament-tables::cell>
                 </x-filament-tables::row>
             @endif

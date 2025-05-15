@@ -202,5 +202,5 @@ return [
     'category.is_manafacturing' => 'Is Manufacturing',
     'has_grn' => 'Has GRN',
     'not_specified' => 'Not specified',
-
+    'date' => 'Date',
 ];

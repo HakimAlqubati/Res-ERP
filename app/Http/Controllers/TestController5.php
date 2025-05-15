@@ -18,6 +18,7 @@ class TestController5 extends Controller
             'purchase_invoice_id',
             'date_from',
             'date_to',
+            'details'
         ]);
 
         $groupByInvoice = $request->boolean('group_by_invoice', false);
@@ -36,6 +37,7 @@ class TestController5 extends Controller
     {
         $filters = $request->only([
             'product_id',
+            'details',
         ]);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
@@ -50,6 +52,7 @@ class TestController5 extends Controller
     {
         $filters = $request->only([
             'product_id',
+            'group_by_invoice'
         ]);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();

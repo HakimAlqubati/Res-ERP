@@ -9,6 +9,9 @@ class PurchaseInvoiceProductSummaryReportService
 {
     public function getProductSummaryPerInvoice(array $filters = [], bool $groupByInvoice = false, bool $groupByPrice = false)
     {
+        if (isset($filters['group_by_invoice']) && $filters['group_by_invoice'] == 1) {
+            $groupByInvoice = 1;
+        }
 
         $query = DB::table('inventory_transactions')
             ->join('products', 'inventory_transactions.product_id', '=', 'products.id')
@@ -17,6 +20,7 @@ class PurchaseInvoiceProductSummaryReportService
             ->select(
                 'products.id as product_id',
                 'products.name as product_name',
+                'products.code as product_code',
                 'units.name as unit_name',
                 'inventory_transactions.package_size',
                 DB::raw('SUM(inventory_transactions.quantity) as qty'),
@@ -61,6 +65,7 @@ class PurchaseInvoiceProductSummaryReportService
             'inventory_transactions.unit_id',
             'products.id',
             'products.name',
+            'products.code',
             'units.name',
             'inventory_transactions.package_size',
         ];
@@ -75,7 +80,12 @@ class PurchaseInvoiceProductSummaryReportService
 
         $query->groupBy(...$groupBy);
 
-        $result = $query->get();
+        $result = $query
+            ->orderBy('inventory_transactions.transactionable_id', 'asc')
+            ->get();
+        if (isset($filters['details']) && $filters['details'] == true) {
+            return $result;
+        }
         $grouped = collect($result)->groupBy('product_id')->toArray();
         return $this->transformPurchasedGroupedResults($grouped);
         return $grouped;
@@ -109,6 +119,7 @@ class PurchaseInvoiceProductSummaryReportService
 
 
             $productName = $entries[0]->product_name; // يفترض الاسم ثابت
+            $productCode = $entries[0]->product_code; // يفترض الاسم ثابت
 
             // نحول كل الكميات للوحدة الصغيرة
             foreach ($entries as $entry) {
@@ -121,6 +132,8 @@ class PurchaseInvoiceProductSummaryReportService
 
             $final[] = [
                 'product_id'   => $productId,
+                'product_code'   => $productCode,
+                'product_name' => $productName,
                 'product_name' => $productName,
                 'qty'          => round($totalQty, 2),
                 'unit_name'    => $unitName,
@@ -170,6 +183,11 @@ class PurchaseInvoiceProductSummaryReportService
             'it.package_size'
         )
             ->get();
+
+        if (isset($filters['details']) && $filters['details'] == true) {
+            return $result;
+        }
+
         $grouped = collect($result)->groupBy('product_id')->toArray();
         return $this->transformOrderedGroupedResults($grouped);
         return $grouped;
@@ -220,15 +238,16 @@ class PurchaseInvoiceProductSummaryReportService
         foreach ($purchased as $purchase) {
             $productId = $purchase['product_id'];
             $orderedQty = isset($orderedMap[$productId]) ? $orderedMap[$productId]['qty'] : 0;
-
+            $difference = round($purchase['qty'] - $orderedQty, 2);
             $report[] = [
                 'product_id'     => $productId,
                 'product_name'   => $purchase['product_name'],
+                'product_code'   => $purchase['product_code'],
                 'unit_name'      => $purchase['unit_name'],
                 'purchased_qty'  => round($purchase['qty'], 2),
                 'ordered_qty'    => round($orderedQty, 2),
-                'difference'     => round($purchase['qty'] - $orderedQty, 2),
-                'price' => $purchase['price'],
+                'difference'     => $difference,
+                'price' => $purchase['price'] * $difference,
             ];
         }
 

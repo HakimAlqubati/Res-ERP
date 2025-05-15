@@ -24,7 +24,7 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $filters = ['product_id' => $productId];
+        $filters = ['product_id' => $productId, 'group_by_invoice' => 1];
         $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
         $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 

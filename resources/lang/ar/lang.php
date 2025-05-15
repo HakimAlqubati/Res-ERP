@@ -184,5 +184,5 @@ return [
     'category.is_manafacturing' => 'فئة منتج مركب؟',
     'has_grn' => 'مرتبط بـ GRN',
     'not_specified' => 'غير محدد',
-
+    'date' => 'التاريخ',
 ];
