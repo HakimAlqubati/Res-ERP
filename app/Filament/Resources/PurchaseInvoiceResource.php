@@ -390,7 +390,7 @@ class PurchaseInvoiceResource extends Resource
                                 DB::rollBack();
                                 showWarningNotifiMessage($e->getMessage());
                             }
-                        }),
+                        })->hidden(),
                     Tables\Actions\EditAction::make()
                         ->icon('heroicon-s-pencil'),
                     Tables\Actions\Action::make('download')
