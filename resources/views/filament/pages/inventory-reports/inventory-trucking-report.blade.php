@@ -25,6 +25,9 @@
                 </x-filament-tables::row>
             </thead>
             <tbody>
+                @php
+                    $totalQty = 0;
+                @endphp
                 @foreach ($reportData as $data)
                     <x-filament-tables::row>
                         <x-filament-tables::cell> {{ $data->movement_date }} </x-filament-tables::cell>
@@ -40,8 +43,21 @@
                         <x-filament-tables::cell> {{ $data->quantity }} </x-filament-tables::cell>
                         <x-filament-tables::cell colspan="2"> {{ $data->notes }} </x-filament-tables::cell>
                     </x-filament-tables::row>
+                    @php
+                        $totalQty += $data->quantity;
+                    @endphp
                 @endforeach
             </tbody>
+            @if ($unitId && !is_null($unitId) && isset($movementType) && !is_null($movementType))
+                <tfoot>
+                    <x-filament-tables::row class="font-bold bg-gray-100">
+                        <x-filament-tables::cell colspan="5" class="text-right">Total
+                            Quantity:</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $totalQty }}</x-filament-tables::cell>
+                        <x-filament-tables::cell colspan="2"></x-filament-tables::cell>
+                    </x-filament-tables::row>
+                </tfoot>
+            @endif
         </x-filament-tables::table>
 
         {{-- Pagination Links --}}

@@ -32,6 +32,6 @@ class ListInventoryTransactionTruckingReport extends ListRecords
                 return $item;
             });
         }
-        return ['reportData' => $reportData, 'product' => $product];
+        return ['reportData' => $reportData, 'product' => $product, 'unitId' => $unitId, 'movementType' => $movementType];
     }
 }
