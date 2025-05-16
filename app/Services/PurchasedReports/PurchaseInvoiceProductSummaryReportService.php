@@ -336,14 +336,28 @@ class PurchaseInvoiceProductSummaryReportService
             ->join('products as p', 'it.product_id', '=', 'p.id')
             ->join('units as u', 'it.unit_id', '=', 'u.id')
             ->select(
+                // 'it.transactionable_id as order_id',
                 'it.product_id',
                 'p.name as p_name',
                 'u.name as unit',
                 DB::raw('SUM(it.quantity) as qty'),
-                'it.package_size'
+                'it.package_size',
+                // 'it.source_transaction_id as source_id',
+                // DB::raw('(SELECT transactionable_id FROM inventory_transactions WHERE id = it.source_transaction_id) as purchase_id')
             )
             ->whereNotIn('it.product_id', [116])
-            ->where('it.transactionable_type', 'ExcelImport');
+            ->whereIn('it.source_transaction_id', function ($subquery) {
+                $subquery->select('it1.source_transaction_id')
+                    ->distinct()
+                    ->from('inventory_transactions as it1')
+                    ->where('it1.transactionable_type', 'App\\Models\\Order')
+                    ->whereExists(function ($existsQuery) {
+                        $existsQuery->select(DB::raw(1))
+                            ->from('inventory_transactions as it2')
+                            ->whereRaw('it2.id = it1.source_transaction_id')
+                            ->where('it2.transactionable_type', 'ExcelImport  ');
+                    });
+            });
 
         if (isset($filters['product_id'])) {
             $query->where('it.product_id', $filters['product_id']);
