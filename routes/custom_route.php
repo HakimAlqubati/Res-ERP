@@ -75,6 +75,7 @@ Route::get('/updateCreatedByInPurchaseInvoice', function () {;
 
 
 Route::get('/stockCostReport', [TestController5::class, 'stockCostReport']);
+Route::get('/getProductSummaryPerExcelImport', [TestController5::class, 'getProductSummaryPerExcelImport']);
 Route::get('/orderdData', [TestController5::class, 'orderdData']);
 
 Route::get('/orderdDataFromExcelImport', [TestController5::class, 'orderdDataFromExcelImport']);

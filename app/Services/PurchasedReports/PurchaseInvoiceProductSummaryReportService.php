@@ -93,6 +93,72 @@ class PurchaseInvoiceProductSummaryReportService
     }
 
 
+    public function getProductSummaryPerExcelImport(array $filters = [], bool $groupByInvoice = false, bool $groupByPrice = false)
+    {
+
+
+        $query = DB::table('inventory_transactions')
+            ->join('products', 'inventory_transactions.product_id', '=', 'products.id')
+            ->join('units', 'inventory_transactions.unit_id', '=', 'units.id')
+            ->select(
+                'products.id as product_id',
+                'products.name as product_name',
+                'products.code as product_code',
+                'units.name as unit_name',
+                'inventory_transactions.package_size',
+                DB::raw('SUM(inventory_transactions.quantity) as qty'),
+                DB::raw('SUM(inventory_transactions.price) as price')
+            )
+            ->whereNotIn('inventory_transactions.product_id', [116])
+            ->where('inventory_transactions.movement_type', 'in')
+            ->where('inventory_transactions.transactionable_type', 'ExcelImport');
+
+        // ✅ تطبيق فلتر واحد فقط (حسب الموجود)
+        if (isset($filters['product_id'])) {
+            $query->where('inventory_transactions.product_id', $filters['product_id']);
+        }
+
+        if (isset($filters['unit_id'])) {
+            $query->where('inventory_transactions.unit_id', $filters['unit_id']);
+        }
+
+        if (isset($filters['purchase_invoice_id'])) {
+            $query->where('inventory_transactions.transactionable_id', $filters['purchase_invoice_id']);
+        }
+
+        // ✅ التجميع
+        $groupBy = [
+            'inventory_transactions.product_id',
+            'inventory_transactions.unit_id',
+            'products.id',
+            'products.name',
+            'products.code',
+            'units.name',
+            'inventory_transactions.package_size',
+        ];
+
+        if ($groupByInvoice) {
+            $groupBy[] = 'inventory_transactions.transactionable_id';
+        }
+
+        if ($groupByPrice) {
+            $groupBy[] = 'inventory_transactions.price';
+        }
+
+        $query->groupBy(...$groupBy);
+
+        $result = $query
+            ->orderBy('inventory_transactions.transactionable_id', 'asc')
+            ->get();
+        if (isset($filters['details']) && $filters['details'] == true) {
+            return $result;
+        }
+        $grouped = collect($result)->groupBy('product_id')->toArray();
+        return $this->transformPurchasedGroupedResults($grouped);
+        return $grouped;
+    }
+
+
     public function getSmallestUnitPrice($productId)
     {
         return UnitPrice::where('product_id', $productId)->showInInvoices()
