@@ -128,7 +128,7 @@ class PurchaseInvoiceProductSummaryReportService
                 $multiplier = $entry->package_size / $smallestPackageSize;
                 $convertedQty = $entry->qty * $multiplier;
                 $totalQty += $convertedQty;
-                $totalCost = $entry->price;
+                $totalCost = $entry->price /$entry->package_size;
             }
 
             $final[] = [

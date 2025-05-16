@@ -46,7 +46,8 @@
                     @foreach ($reportData as $data)
                         <x-filament-tables::row>
                             <x-filament-tables::cell>{{ $data['product_code'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['product_name'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell
+                                title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
                             <x-filament-tables::cell>
                                 <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.purchase-details', ['product' => $data['product_id']]) }}"

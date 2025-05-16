@@ -6,6 +6,7 @@ use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
 use App\Http\Controllers\TestController5;
 use App\Models\Audit;
+use App\Models\Order;
 use App\Models\PurchaseInvoice;
 use Illuminate\Support\Facades\Route;
 
@@ -76,3 +77,16 @@ Route::get('/updateCreatedByInPurchaseInvoice', function () {;
 Route::get('/stockCostReport', [TestController5::class, 'stockCostReport']);
 Route::get('/orderdData', [TestController5::class, 'orderdData']);
 Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']);
+Route::get('/testAllocateFifo', function () {
+    $fifoService = new \App\Services\MultiProductsInventoryService(null, null, null, null);
+
+    dd($fifoService->getInventoryForProduct(158));
+    $order = Order::find(217);
+    $allocations = $fifoService->allocateFIFO(
+        158,
+        1,
+        10,
+        $order
+    );
+    return $allocations;
+});
