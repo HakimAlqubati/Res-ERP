@@ -311,7 +311,7 @@ class PurchaseInvoiceProductSummaryReportService
             $difference = round($purchase['qty'] - $orderedQty, 2);
             $purchasedQty = round($purchase['qty'], 2);
             $orderedQty = round($orderedQty, 2);
-            if ($orderedQty >= $purchasedQty) {
+            if ($orderedQty > $purchasedQty) {
                 $report[] = [
                     'product_id'     => $productId,
                     'product_name'   => $purchase['product_name'],
