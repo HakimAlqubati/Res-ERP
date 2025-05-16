@@ -76,11 +76,18 @@ Route::get('/updateCreatedByInPurchaseInvoice', function () {;
 
 Route::get('/stockCostReport', [TestController5::class, 'stockCostReport']);
 Route::get('/orderdData', [TestController5::class, 'orderdData']);
-Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']);
-Route::get('/testAllocateFifo', function () {
-    $fifoService = new \App\Services\MultiProductsInventoryService(null, null, null, null);
 
-    dd($fifoService->getInventoryForProduct(158));
+Route::get('/orderdDataFromExcelImport', [TestController5::class, 'orderdDataFromExcelImport']);
+
+
+Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']);
+
+
+
+
+Route::get('/testAllocateFifo', function () {
+    $fifoService = new \App\Services\MultiProductsInventoryService(null, 158, 1, 1);
+ 
     $order = Order::find(217);
     $allocations = $fifoService->allocateFIFO(
         158,

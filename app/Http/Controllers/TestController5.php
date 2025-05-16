@@ -48,6 +48,22 @@ class TestController5 extends Controller
         ];
     }
 
+
+    public function orderdDataFromExcelImport(Request $request)
+    {
+        $filters = $request->only([
+            'product_id',
+            'details',
+        ]);
+
+        $reportService = new PurchaseInvoiceProductSummaryReportService();
+        $orderdData = $reportService->getOrderedProductsFromExcelImport($filters);
+        return [
+            'count' => count($orderdData),
+            'data' => $orderdData,
+        ];
+    }
+
     public function purchasedVSordered(Request $request)
     {
         $filters = $request->only([
@@ -58,7 +74,7 @@ class TestController5 extends Controller
         $reportService = new PurchaseInvoiceProductSummaryReportService();
  
         $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
-        $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
+        $ordered = $reportService->getOrderedProductsFromExcelImport($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
 

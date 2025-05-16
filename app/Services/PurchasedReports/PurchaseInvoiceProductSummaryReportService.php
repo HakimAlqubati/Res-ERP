@@ -128,7 +128,7 @@ class PurchaseInvoiceProductSummaryReportService
                 $multiplier = $entry->package_size / $smallestPackageSize;
                 $convertedQty = $entry->qty * $multiplier;
                 $totalQty += $convertedQty;
-                $totalCost = $entry->price /$entry->package_size;
+                $totalCost = $entry->price / $entry->package_size;
             }
 
             $final[] = [
@@ -195,6 +195,8 @@ class PurchaseInvoiceProductSummaryReportService
         return $grouped;
     }
 
+
+
     public function transformOrderedGroupedResults(array $grouped)
     {
 
@@ -241,19 +243,59 @@ class PurchaseInvoiceProductSummaryReportService
             $productId = $purchase['product_id'];
             $orderedQty = isset($orderedMap[$productId]) ? $orderedMap[$productId]['qty'] : 0;
             $difference = round($purchase['qty'] - $orderedQty, 2);
-            $report[] = [
-                'product_id'     => $productId,
-                'product_name'   => $purchase['product_name'],
-                'product_code'   => $purchase['product_code'],
-                'unit_name'      => $purchase['unit_name'],
-                'purchased_qty'  => round($purchase['qty'], 2),
-                'ordered_qty'    => round($orderedQty, 2),
-                'difference'     => $difference,
-                'unit_price' => $purchase['price'],
-                'price' => $purchase['price'] * $difference,
-            ];
+            $purchasedQty = round($purchase['qty'], 2);
+            $orderedQty = round($orderedQty, 2);
+            if ($orderedQty >= $purchasedQty) {
+                $report[] = [
+                    'product_id'     => $productId,
+                    'product_name'   => $purchase['product_name'],
+                    'product_code'   => $purchase['product_code'],
+                    'unit_name'      => $purchase['unit_name'],
+                    'purchased_qty'  => $purchasedQty,
+                    'ordered_qty'    => $orderedQty,
+                    'difference'     => $difference,
+                    'unit_price' => $purchase['price'],
+                    'price' => $purchase['price'] * $difference,
+                ];
+            }
         }
 
         return $report;
+    }
+
+
+    public function getOrderedProductsFromExcelImport(array $filters = [])
+    {
+        $query = DB::table('inventory_transactions as it')
+            ->join('products as p', 'it.product_id', '=', 'p.id')
+            ->join('units as u', 'it.unit_id', '=', 'u.id')
+            ->select(
+                'it.product_id',
+                'p.name as p_name',
+                'u.name as unit',
+                DB::raw('SUM(it.quantity) as qty'),
+                'it.package_size'
+            )
+            ->whereNotIn('it.product_id', [116])
+            ->where('it.transactionable_type', 'ExcelImport');
+
+        if (isset($filters['product_id'])) {
+            $query->where('it.product_id', $filters['product_id']);
+        }
+
+        $result = $query->groupBy(
+            'it.product_id',
+            'it.unit_id',
+            'p.name',
+            'u.name',
+            'it.package_size'
+        )->get();
+
+        if (isset($filters['details']) && $filters['details'] == true) {
+            return $result;
+        }
+
+        $grouped = collect($result)->groupBy('product_id')->toArray();
+        return $this->transformOrderedGroupedResults($grouped);
     }
 }

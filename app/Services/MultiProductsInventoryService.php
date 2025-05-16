@@ -128,7 +128,7 @@ class MultiProductsInventoryService
     {
         $queryIn = DB::table('inventory_transactions')
             ->whereNull('deleted_at')
-            ->where('product_id', $productId) 
+            ->where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN);
 
         $queryOut = DB::table('inventory_transactions')
@@ -405,6 +405,7 @@ class MultiProductsInventoryService
             ->get();
         $qtyBasedOnUnit = 0;
         foreach ($entries as $entry) {
+
             $previousOrderedQtyBasedOnTargetUnit = InventoryTransaction::where('source_transaction_id', $entry->id)
                 ->where('product_id', $productId)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
@@ -412,14 +413,14 @@ class MultiProductsInventoryService
                 ->sum(DB::raw('quantity')) / $targetUnit->package_size;
 
             $entryQty = $entry->quantity;
-
+            dd($this->getProductUnitPrices($productId), $entryQty, $entry->package_size);
             foreach ($this->getProductUnitPrices($productId) as $key => $value) {
                 if ($value['unit_id'] == $unitId) {
-                    $qtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size) - $previousOrderedQtyBasedOnTargetUnit;
+                    $qtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
                 }
             }
             $deductQty = min($requestedQty, $qtyBasedOnUnit);
-
+            dd($deductQty, $requestedQty, $qtyBasedOnUnit, $previousOrderedQtyBasedOnTargetUnit);
             if ($qtyBasedOnUnit <= 0) {
                 continue;
             }
