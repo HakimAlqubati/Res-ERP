@@ -412,15 +412,13 @@ class MultiProductsInventoryService
                 ->whereNull('deleted_at')
                 ->sum(DB::raw('quantity')) / $targetUnit->package_size;
 
-            $entryQty = $entry->quantity;
-            dd($this->getProductUnitPrices($productId), $entryQty, $entry->package_size);
+            $entryQty = $entry->quantity; 
             foreach ($this->getProductUnitPrices($productId) as $key => $value) {
                 if ($value['unit_id'] == $unitId) {
                     $qtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
                 }
             }
-            $deductQty = min($requestedQty, $qtyBasedOnUnit);
-            dd($deductQty, $requestedQty, $qtyBasedOnUnit, $previousOrderedQtyBasedOnTargetUnit);
+            $deductQty = min($requestedQty, $qtyBasedOnUnit); 
             if ($qtyBasedOnUnit <= 0) {
                 continue;
             }
