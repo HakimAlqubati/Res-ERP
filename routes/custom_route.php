@@ -103,3 +103,5 @@ Route::get('/testAllocateFifo', function () {
 
 Route::get('/fixFifo', [FixFifoController::class, 'fix']);
 Route::get('/fixFifoWithSave', [FixFifoController::class, 'fixFifoWithSave']);
+
+Route::get('/allocateForOrders', [FixFifoController::class, 'allocateForOrders']);

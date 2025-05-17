@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FixFifo\FifoAllocationSaver;
 use App\Services\FixFifo\FifoAllocatorService;
 use Illuminate\Http\Request;
 
@@ -33,16 +34,24 @@ class FixFifoController extends Controller
             ->unique()       // إزالة التكرارات
             ->values()
             ->all();
-            
+
         foreach ($productIds as $productId) {
             $allocator = new FifoAllocatorService();
             $allocations = $allocator->allocate($productId);
-            FifoAllocatorService::saveAllocations($allocations, $productId);
+            FifoAllocationSaver::save($allocations, $productId);
         }
 
         return response()->json([
             'message' => 'FIFO allocation and saving completed.',
             'product_ids' => $productIds,
         ]);
+    }
+
+    public function allocateForOrders()
+    {
+
+        $service = new  FifoAllocatorService();
+        $response = $service->allocateForOrders();
+        return FifoAllocationSaver::save($response, 0);
     }
 }
