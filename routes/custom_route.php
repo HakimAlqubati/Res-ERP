@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\FcmController;
+use App\Http\Controllers\FixFifoController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
 use App\Http\Controllers\TestController5;
@@ -88,7 +89,7 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 
 Route::get('/testAllocateFifo', function () {
     $fifoService = new \App\Services\MultiProductsInventoryService(null, 158, 1, 1);
- 
+
     $order = Order::find(217);
     $allocations = $fifoService->allocateFIFO(
         158,
@@ -98,3 +99,7 @@ Route::get('/testAllocateFifo', function () {
     );
     return $allocations;
 });
+
+
+Route::get('/fixFifo', [FixFifoController::class, 'fix']);
+Route::get('/fixFifoWithSave', [FixFifoController::class, 'fixFifoWithSave']);

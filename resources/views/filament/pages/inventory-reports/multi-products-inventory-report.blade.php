@@ -46,10 +46,10 @@
                     @foreach ($reportData as $productReport)
                         @foreach ($productReport as $data)
                             <x-filament-tables::row>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2" title="{{$data['product_id']}}">
                                     <strong>{{ $data['product_code'] }}</strong>
                                 </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2" title="{{$data['product_id']}}">
                                     <strong>{{ $data['product_name'] }}</strong>
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell class="border border-gray-300 px-4 py-2">

@@ -25,8 +25,8 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
         $filters = ['product_id' => $productId, 'group_by_invoice' => 1];
-        $purchased = $reportService->getProductSummaryPerExcelImport($filters); // or with filters
-        $ordered = $reportService->getOrderedProductsFromExcelImport($filters);
+        $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
+        $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
         return ['reportData' => $diffReport, 'pagination' => null];

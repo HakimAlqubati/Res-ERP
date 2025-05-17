@@ -33,14 +33,15 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Columns\TextColumn::make('purchase_invoice_id'),
                 Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
                 Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
-                Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
+                Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true)
+                // ->summarize(Sum::make())
+                ,
                 Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('price')->label(__('lang.price'))->alignCenter(true)
                     ->formatStateUsing(fn($state) => formatMoney($state))
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');
-                    }))
-                    ,
+                    })),
                 Tables\Columns\TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
                     ->formatStateUsing(fn($state) => formatMoney($state)),
             ])

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Arr;
+
 use App\Models\InventoryTransaction;
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 use Illuminate\Http\Request;
@@ -93,12 +95,16 @@ class TestController5 extends Controller
         ]);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
- 
-        $purchased = $reportService->getProductSummaryPerExcelImport($filters); // or with filters
-        $ordered = $reportService->getOrderedProductsFromExcelImport($filters);
+
+        $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
+        $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
+        // $productIds = Arr::pluck($diffReport, 'product_id');
 
+        // $productIdsString = implode(',', $productIds);
+
+        // dd($productIds,$productIdsString);
         return [
             'count' => count($diffReport),
             'data' => $diffReport,

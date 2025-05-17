@@ -26,7 +26,9 @@ class PurchaseInvoiceProductSummaryReportService
                 DB::raw('SUM(inventory_transactions.quantity) as qty'),
                 DB::raw('SUM(inventory_transactions.price) as price')
             )
+            ->whereNull('inventory_transactions.deleted_at')
             ->whereNotIn('inventory_transactions.product_id', [116])
+
             ->where('inventory_transactions.movement_type', 'in')
             ->where('inventory_transactions.transactionable_type', 'App\\Models\\PurchaseInvoice');
 
@@ -110,6 +112,7 @@ class PurchaseInvoiceProductSummaryReportService
                 DB::raw('SUM(inventory_transactions.price) as price')
             )
             ->whereNotIn('inventory_transactions.product_id', [116])
+            ->whereNull('inventory_transactions.deleted_at')
             ->where('inventory_transactions.movement_type', 'in')
             ->where('inventory_transactions.transactionable_type', 'ExcelImport');
 
@@ -226,6 +229,7 @@ class PurchaseInvoiceProductSummaryReportService
                 // 'it.source_transaction_id as source_id',
                 // DB::raw('(SELECT transactionable_id FROM inventory_transactions WHERE id = it.source_transaction_id) as purchase_id')
             )
+            ->whereNull('it.deleted_at')
             ->whereNotIn('it.product_id', [116])
             ->whereIn('it.source_transaction_id', function ($subquery) {
                 $subquery->select('it1.source_transaction_id')
@@ -311,19 +315,19 @@ class PurchaseInvoiceProductSummaryReportService
             $difference = round($purchase['qty'] - $orderedQty, 2);
             $purchasedQty = round($purchase['qty'], 2);
             $orderedQty = round($orderedQty, 2);
-            if ($orderedQty > $purchasedQty) {
-                $report[] = [
-                    'product_id'     => $productId,
-                    'product_name'   => $purchase['product_name'],
-                    'product_code'   => $purchase['product_code'],
-                    'unit_name'      => $purchase['unit_name'],
-                    'purchased_qty'  => $purchasedQty,
-                    'ordered_qty'    => $orderedQty,
-                    'difference'     => $difference,
-                    'unit_price' => $purchase['price'],
-                    'price' => $purchase['price'] * $difference,
-                ];
-            }
+            // if ($orderedQty > $purchasedQty) {
+            $report[] = [
+                'product_id'     => $productId,
+                'product_name'   => $purchase['product_name'],
+                'product_code'   => $purchase['product_code'],
+                'unit_name'      => $purchase['unit_name'],
+                'purchased_qty'  => $purchasedQty,
+                'ordered_qty'    => $orderedQty,
+                'difference'     => $difference,
+                'unit_price' => round($purchase['price'], 2),
+                'price' => round($purchase['price'] * $difference, 2),
+            ];
+            // }
         }
 
         return $report;
@@ -346,6 +350,7 @@ class PurchaseInvoiceProductSummaryReportService
                 // DB::raw('(SELECT transactionable_id FROM inventory_transactions WHERE id = it.source_transaction_id) as purchase_id')
             )
             ->whereNotIn('it.product_id', [116])
+            ->whereNull('it.deleted_at')
             ->whereIn('it.source_transaction_id', function ($subquery) {
                 $subquery->select('it1.source_transaction_id')
                     ->distinct()

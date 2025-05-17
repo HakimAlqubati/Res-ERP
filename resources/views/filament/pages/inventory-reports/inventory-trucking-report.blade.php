@@ -2,10 +2,11 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (isset($product) && $product != null)
-        <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped">
-            <thead>
+        <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped" id="report-table">
+            <thead class="fixed-header">
                 <x-filament-tables::row class="header_report">
-                    <th colspan="2">{{ $product->name }}</th>
+
+                    <th colspan="2" title="{{ $product->id }}">{{ $product->name }}</th>
                     <th colspan="4" class="no_border_right_left" style="text-align: center;">
                         <h3>({{ 'Inventory Trucking' }})</h3>
                     </th>
@@ -35,7 +36,7 @@
                             {{ $data->formatted_transactionable_type }}
                         </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data->transactionable_id }} </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+                        <x-filament-tables::cell title="{{ $data->unit_id }}">
                             {{ $data->unit_id ? \App\Models\Unit::find($data->unit_id)->name : '' }}
                         </x-filament-tables::cell>
 

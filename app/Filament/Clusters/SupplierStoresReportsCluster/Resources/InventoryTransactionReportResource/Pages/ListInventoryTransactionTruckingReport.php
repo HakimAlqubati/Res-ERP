@@ -26,7 +26,7 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         $reportData = collect();
 
         if (!empty($productId)) {
-            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15, $movementType, $unitId);
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 50, $movementType, $unitId);
             $reportData = $rawData->through(function ($item) {
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 return $item;
