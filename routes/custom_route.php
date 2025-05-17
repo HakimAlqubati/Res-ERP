@@ -6,6 +6,7 @@ use App\Http\Controllers\FixFifoController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
 use App\Http\Controllers\TestController5;
+use App\Http\Controllers\TestController6;
 use App\Models\Audit;
 use App\Models\Order;
 use App\Models\PurchaseInvoice;
@@ -105,3 +106,9 @@ Route::get('/fixFifo', [FixFifoController::class, 'fix']);
 Route::get('/fixFifoWithSave', [FixFifoController::class, 'fixFifoWithSave']);
 
 Route::get('/allocateForOrders', [FixFifoController::class, 'allocateForOrders']);
+
+
+Route::get('/getInData', [TestController6::class, 'getInData']);
+Route::get('/getOutData', [TestController6::class, 'getOutData']);
+Route::get('/inVSoutReport', [TestController6::class, 'inVSoutReport']);
+Route::get('/getFinalComparison', [TestController6::class, 'getFinalComparison']);
