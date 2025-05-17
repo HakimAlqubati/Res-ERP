@@ -131,6 +131,7 @@ class FifoAllocatorService
                     'store_id'              => $allocation['store_id'],
                     'price'                 => $allocation['price'],
                     'transaction_date'      => $allocation['created_at'],
+                    'movement_date'      => $allocation['created_at'],
                     'notes'                 => $allocation['notes'],
                     'transactionable_id'    => $allocation['order_id'],
                     'transactionable_type'  => Order::class,
