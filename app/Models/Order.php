@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\OrderScopes;
 use App\Services\MultiProductsInventoryService;
 use App\Services\ProductCostingService;
 use Exception;
@@ -14,7 +15,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Order extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, OrderScopes;
 
     public const ORDERED = 'ordered';
     public const PROCESSING = 'processing';
@@ -77,11 +78,7 @@ class Order extends Model implements Auditable
         'store_names',
         'store_ids',
     ];
-
-    // protected $casts = [
-    //     'stores' => 'array',
-    // ];
-
+ 
 
     public function orderDetails()
     {
@@ -112,27 +109,13 @@ class Order extends Model implements Auditable
         return null;
     }
 
-    public function scopeReadyForDelivery($query)
-    {
-        return $query->where('status', self::READY_FOR_DELEVIRY);
-    }
-
-    public function scopeInTransfer($query)
-    {
-        return $query->select('orders.*')
-            ->join('orders_details', 'orders_details.order_id', '=', 'orders.id')
-            ->where('orders_details.available_in_store', 1)->distinct();
-    }
+  
 
     public function storeEmpResponsiple()
     {
         return $this->belongsTo(User::class, 'storeuser_id_update');
     }
-
-    public function customer_name()
-    {
-        return 'dddd';
-    }
+ 
 
     // attribute to get items count
     public function getItemCountAttribute()
@@ -392,31 +375,6 @@ class Order extends Model implements Auditable
         return $nextStatuses ? reset($nextStatuses) : null;
     }
 
-    /**
-     * Scope a query to only include normal orders.
-     */
-    public function scopeNormal($query)
-    {
-        return $query->where('type', self::TYPE_NORMAL);
-    }
-
-    /**
-     * Scope a query to only include manufacturing orders.
-     */
-    public function scopeManufacturing($query)
-    {
-        return $query->where('type', self::TYPE_MANUFACTURING);
-    }
-
-    public function scopeHasManufacturingProducts($query)
-    {
-        return $query->whereHas('orderDetails', function ($q) {
-            $q->whereHas('product.category', function ($q2) {
-                $q2->where('is_manafacturing', true);
-            });
-        });
-    }
-
     public function stores()
     {
         return $this->belongsToMany(Store::class, 'order_store');
@@ -434,8 +392,4 @@ class Order extends Model implements Auditable
         return $this->belongsTo(Supplier::class);
     }
 
-    public function scopeActive($query)
-    {
-        return $query->where('active', 1);
-    }
 }

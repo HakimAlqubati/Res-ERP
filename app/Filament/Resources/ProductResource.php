@@ -226,7 +226,7 @@ class ProductResource extends Resource
                                     // ->label(__('lang.package_size'))->readOnly(),
                                     TextInput::make('quantity')
                                         ->label(__('lang.quantity'))
-                                        ->type('text')
+                                        ->numeric()
                                         ->default(1)
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
@@ -240,24 +240,12 @@ class ProductResource extends Resource
                                             $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($state ?? 0, $get('qty_waste_percentage') ?? 0));
 
                                             static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required()->minValue(0),
+                                        })->required()->minValue(0.001),
                                     TextInput::make('price')
                                         ->label(__('lang.price'))
-                                        // ->numeric()
                                         ->numeric()
-                                        // ->minLength(1)
-                                        // ->maxLength(6)
                                         ->default(1)
-                                        // ->integer()
-                                        // ->disabledOn('edit')
-                                        // ->mask(
-                                        //     fn (TextInput\Mask $mask) => $mask
-                                        //         ->numeric()
-                                        //         ->decimalPlaces(2)
-                                        //         ->thousandsSeparator(',')
-                                        // )
                                         ->live(onBlur: true)
-
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('quantity'));
                                             $res = round($res, 1);
@@ -267,7 +255,7 @@ class ProductResource extends Resource
                                             $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($res, $get('qty_waste_percentage') ?? 0));
                                             $set('total_price', $res);
                                             static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->required()->minValue(0),
+                                        })->required()->minValue(0.001),
                                     TextInput::make('total_price')->default(0)
                                         ->type('text')
                                         ->extraInputAttributes(['readonly' => true]),
