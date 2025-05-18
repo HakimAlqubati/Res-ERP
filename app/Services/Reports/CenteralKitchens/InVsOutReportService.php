@@ -41,9 +41,7 @@ class InVsOutReportService
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
 
-        if (isset($filters['purchase_invoice_id'])) {
-            $query->where('inventory_transactions.transactionable_id', $filters['purchase_invoice_id']);
-        }
+       
 
 
 
@@ -64,15 +62,14 @@ class InVsOutReportService
             'units.name',
             'inventory_transactions.package_size',
             'inventory_transactions.movement_date',
-            'inventory_transactions.transaction_date',
+            'inventory_transactions.transaction_date', 
         ];
 
 
 
         $query->groupBy(...$groupBy);
 
-        $result = $query
-            ->orderBy('inventory_transactions.transactionable_id', 'asc')
+        $result = $query 
             ->get();
         if (isset($filters['details']) && $filters['details'] == true) {
             return $result;
@@ -161,9 +158,7 @@ class InVsOutReportService
         if (isset($filters['unit_id'])) {
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
-        if (isset($filters['order_id'])) {
-            $query->where('inventory_transactions.transactionable_id', $filters['order_id']);
-        }
+        
         if (isset($filters['to_date'])) {
             $query->whereDate('inventory_transactions.movement_date', '<=', $filters['to_date']);
         }
@@ -182,8 +177,7 @@ class InVsOutReportService
 
         $query->groupBy(...$groupBy);
 
-        $result = $query
-            ->orderBy('inventory_transactions.transactionable_id', 'asc')
+        $result = $query 
             ->get();
 
         if (isset($filters['details']) && $filters['details'] == true) {
