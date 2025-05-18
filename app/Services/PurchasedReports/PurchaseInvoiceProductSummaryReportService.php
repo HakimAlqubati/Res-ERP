@@ -295,7 +295,7 @@ class PurchaseInvoiceProductSummaryReportService
             $final[] = [
                 'product_id'   => $productId,
                 'product_name' => $productName,
-                'qty'          => round($totalQty, 2),
+                'qty'          => round($totalQty, 1),
                 'unit_name'    => $unitName,
             ];
         }
