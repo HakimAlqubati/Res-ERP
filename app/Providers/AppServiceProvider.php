@@ -7,6 +7,7 @@ use App\Models\Employee;
 
 use App\Models\InventoryTransaction;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\StockTransferOrder;
 use App\Models\Task;
 use App\Models\User;
 use App\Notifications\Notification as NotificationsNotification;
@@ -15,6 +16,7 @@ use App\Notifications\NotificationAttendanceCheck;
 use App\Observers\EmployeeObserver;
 use App\Observers\InventoryTransactionObserver;
 use App\Observers\PurchaseInvoiceDetailObserver;
+use App\Observers\StockTransferOrderObserver;
 use App\Observers\TaskObserver;
 use App\Observers\TenantObserver;
 use App\Observers\UserObserver;
@@ -52,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
         DatabaseNotifications::trigger('filament.notifications.database-notifications-trigger');
         CustomTenantModel::observe(TenantObserver::class);
         InventoryTransaction::observe(InventoryTransactionObserver::class);
+        StockTransferOrder::observe(StockTransferOrderObserver::class);
+
         // PurchaseInvoiceDetail::observe(PurchaseInvoiceDetailObserver::class);
 
         // Task::observe(TaskObserver::class);

@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\Inventory\InventoryAttributes;
+use App\Traits\Inventory\InventoryBootEvents;
+use App\Traits\Inventory\InventoryRelations;
+use App\Traits\Inventory\InventoryStaticMethods;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +15,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class InventoryTransaction extends Model implements Auditable
 {
-    use SoftDeletes, \OwenIt\Auditing\Auditable;
+    use SoftDeletes, \OwenIt\Auditing\Auditable, InventoryRelations, InventoryAttributes, InventoryStaticMethods,InventoryBootEvents;
     // Table name
     protected $table = 'inventory_transactions';
 
@@ -56,204 +60,10 @@ class InventoryTransaction extends Model implements Auditable
     // Constant movement types
     const MOVEMENT_OUT = 'out';
     const MOVEMENT_IN = 'in';
-
-    // Relationships
-    public function product()
-    {
-        return $this->belongsTo(Product::class, 'product_id');
-    }
-
-    public function unit()
-    {
-        return $this->belongsTo(Unit::class, 'unit_id');
-    }
-
-    public static function getInventoryTrackingDataPagination($productId, $perPage = 15, ?string $movementType = null, $unitId = null)
-    {
-        $query = self::query() // Using Eloquent query instead of DB::table()
-            ->whereNull('deleted_at')
-            ->where('product_id', $productId);
-        if (!empty($movementType)) {
-            $query->where('movement_type', $movementType);
-        }
-        if (!empty($unitId)) {
-            $query->where('unit_id', $unitId);
-        }
-        return  $query->orderBy('id', 'asc')
-            ->paginate($perPage);
-    }
-
-
-
-    public static function getInventoryTrackingData($productId)
-    {
-        $transactions = self::query() // Using Eloquent instead of DB::table()
-            ->whereNull('deleted_at')
-            ->where('product_id', $productId)
-            ->orderBy('movement_date', 'asc')
-            ->get();
-
-        $trackingData = [];
-        $remainingQty = 0;
-
-        foreach ($transactions as $transaction) {
-            $quantityImpact = $transaction->quantity * $transaction->package_size;
-            $remainingQty += ($transaction->movement_type === self::MOVEMENT_IN) ? $quantityImpact : -$quantityImpact;
-
-            $trackingData[] = [
-                'date' => $transaction->movement_date,
-                'type' => $transaction->formatted_transactionable_type, // Now it works!
-                'quantity' => $transaction->quantity,
-                'unit_id' => $transaction->unit_id,
-                'unit_name' => $transaction->unit?->name ?? '',
-                'package_size' => $transaction->package_size,
-                'quantity_impact' => $quantityImpact,
-                'remaining_qty' => $remainingQty,
-                'transactionable_id' => $transaction->transactionable_id,
-                'notes' => $transaction->notes,
-            ];
-        }
-
-        return $trackingData;
-    }
-
-
-    /**
-     * Get the remaining inventory for a given product and unit.
-     * Remaining quantity = (sum of incoming quantity * package_size) - (sum of outgoing quantity * package_size)
-     *
-     * @return float
-     */
-    public function getRemainingQtyAttribute()
-    {
-        $totalIn = DB::table('inventory_transactions')
-            ->where('product_id', $this->product_id)
-            ->where('unit_id', $this->unit_id)
-            ->where('movement_type', self::MOVEMENT_IN)
-            ->sum(DB::raw('quantity * package_size'));
-
-        $totalOut = DB::table('inventory_transactions')
-            ->where('product_id', $this->product_id)
-            ->where('unit_id', $this->unit_id)
-            ->where('movement_type', self::MOVEMENT_OUT)
-            ->sum(DB::raw('quantity * package_size'));
-
-        return $totalIn - $totalOut;
-    }
-
-    /**
-     * Get the remaining inventory for a given product and unit (static version).
-     *
-     * @param int $productId
-     * @param int $unitId
-     * @return float
-     */
-    public static function getInventoryRemaining($productId, $unitId)
-    {
-        $totalIn = DB::table('inventory_transactions')
-            ->where('product_id', $productId)
-            ->where('unit_id', $unitId)
-            ->where('movement_type', self::MOVEMENT_IN)
-            ->sum(DB::raw('quantity * package_size'));
-
-        $totalOut = DB::table('inventory_transactions')
-            ->where('product_id', $productId)
-            ->where('unit_id', $unitId)
-            ->where('movement_type', self::MOVEMENT_OUT)
-            ->sum(DB::raw('quantity * package_size'));
-
-        return $totalIn - $totalOut;
-    }
-
-    public function getMovementTypeTitleAttribute()
-    {
-        return $this->movement_type == static::MOVEMENT_IN ? 'In' : 'Out';
-    }
-
-    // Define Polymorphic Relation
-    public function transactionable(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
+ 
     protected static function boot()
     {
         parent::boot();
-
-        // When retrieving the model, modify the `transactionable_type`
-        static::retrieved(function ($transaction) {
-            if ($transaction->transactionable_type) {
-                $transaction->transactionable_type = class_basename($transaction->transactionable_type);
-            }
-        });
-        static::creating(function ($transaction) {
-            if (is_null($transaction->waste_stock_percentage)) {
-                $transaction->waste_stock_percentage = 0;
-            }
-        });
-        static::created(function ($transaction) {
-
-            // 👇 إضافة الهدر المتوقع مباشرة بعد الإدخال
-            $wastePercentage = $transaction->waste_stock_percentage ?? 0;
-
-            if ($wastePercentage > 0 && $transaction->movement_type === self::MOVEMENT_IN) {
-                $wasteQuantity = round(($transaction->quantity * $wastePercentage) / 100, 2);
-
-                if ($wasteQuantity > 0) {
-                    \App\Models\InventoryTransaction::create([
-                        'product_id' => $transaction->product_id,
-                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                        'quantity' => $wasteQuantity,
-                        'unit_id' => $transaction->unit_id,
-                        'movement_date' => $transaction->transaction_date ?? now(),
-                        'package_size' => $transaction->package_size,
-                        'store_id' => $transaction?->store_id,
-                        'price' => $transaction->price,
-                        'transaction_date' => $transaction->transaction_date ?? now(),
-                        'notes' => 'Auto waste recorded during supply (based on waste percentage: ' . $wastePercentage . '%)',
-                        'transactionable_id' => 0,
-                        'transactionable_type' => 'Waste', // رمزي فقط إذا ما عندك جدول
-                        'is_waste' => true, // إذا كنت أضفت هذا الحقل في المايجريشن
-                    ]);
-                }
-            }
-        });
-    }
-
-    // public function getFormattedTransactionableTypeAttribute()
-    // {
-    //     return $this->transactionable_type ? class_basename($this->transactionable_type) : null;
-    // }
-
-    public function getFormattedTransactionableTypeAttribute()
-    {
-        if (!$this->transactionable_type) {
-            return null;
-        }
-
-        // Convert "StockSupplyOrder" to "Stock Supply Order"
-        return preg_replace('/(?<!\ )[A-Z]/', ' $0', class_basename($this->transactionable_type));
-    }
-
-    public function store()
-    {
-        return $this->belongsTo(Store::class, 'store_id');
-    }
-    public static function moveToStore(array $data): self
-    {
-        return self::create([
-            'product_id'           => $data['product_id'],
-            'movement_type'        => $data['movement_type'], // use InventoryTransaction::MOVEMENT_IN / OUT
-            'quantity'             => $data['quantity'],
-            'unit_id'              => $data['unit_id'],
-            'package_size'         => $data['package_size'] ?? 1,
-            'store_id'             => $data['store_id'],
-            'price'                => $data['price'] ?? 0,
-            'transaction_date'     => $data['transaction_date'] ?? now(),
-            'movement_date'        => $data['movement_date'] ?? now(),
-            'notes'                => $data['notes'] ?? null,
-            'transactionable_id'   => $data['transactionable']?->id ?? null,
-            'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
-        ]);
+        static::bootInventoryBootEvents();
     }
 }
