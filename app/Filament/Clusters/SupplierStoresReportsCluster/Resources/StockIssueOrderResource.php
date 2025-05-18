@@ -173,7 +173,7 @@ class StockIssueOrderResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->striped()->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->sortable()->label('ID')->searchable(isIndividual: true),
+                TextColumn::make('id')->sortable()->label('ID')->searchable(isIndividual: true)->alignCenter(true),
                 TextColumn::make('order_date')->sortable()->label('Order Date'),
                 TextColumn::make('store.name')->label('Store'),
                 TextColumn::make('createdBy.name')->label('Created By'),
