@@ -74,23 +74,29 @@ class FifoAllocatorService
 
                 // تحديد الكمية التي يمكن تخصيصها من هذا التوريد لهذا الطلب
                 $allocatedQty = min($remainingQty, $supplyAvailable);
-
+                $orderedPrice = ($supply->price * $order->package_size) / $supply->package_size;
                 // حفظ سجل التخصيص كـ حركة مخزون OUT (جاهزة للحفظ في جدول inventory_transactions)
+
+                $quantity = round($allocatedQty / $targetUnit->package_size, 2);
+                if ($quantity <= 0) {
+                    continue;
+                }
                 $allocations[] = [
                     'order_id'              => $order->order_id,                    // الطلب الذي تم تخصيص الكمية له
                     'product_id'            => $productId,                           // معرف المنتج
                     'unit_id'               => $targetUnit->unit_id,                    // وحدة المنتج
                     'unit' =>               $targetUnit->unit->name,
-                    'quantity'              => round($allocatedQty / $targetUnit->package_size, 2), // عدد العبوات المخصصة
+                    'quantity'              => $quantity,
                     'package_size'          => $order->package_size,              // حجم العبوة للتوريد المستخدم
+                    'package_size_supply' => $supply->package_size,
                     'store_id'              => $supply->store_id,                  // المخزن الذي خرجت منه الكمية
-                    'price'                 => $supply->price,                     // السعر المستخدم من التوريد
+                    'price'                 => $orderedPrice,                     // السعر المستخدم من التوريد
                     'notes'                 => sprintf(                             // ملاحظات مفصلة توضح المصدر والسعر
                         'Stock deducted for Order #%s from %s #%s with price %s',
                         $order->order_id,
                         class_basename($supply->transactionable_type ?? 'Unknown'),
                         $supply->transactionable_id ?? 'N/A',
-                        number_format($supply->price, 2)
+                        number_format($orderedPrice, 2)
                     ),
                     'movement_type'         => 'out',                              // نوع الحركة: إخراج من المخزون
                     'created_at'      => $order->created_at,                              // تاريخ تنفيذ الحركة

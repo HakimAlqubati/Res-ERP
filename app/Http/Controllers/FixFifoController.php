@@ -33,7 +33,7 @@ class FixFifoController extends Controller
             ->filter()       // إزالة القيم الفارغة أو الصفرية
             ->unique()       // إزالة التكرارات
             ->values()
-            ->all();
+            ->all(); 
 
         foreach ($productIds as $productId) {
             $allocator = new FifoAllocatorService();

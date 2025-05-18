@@ -304,6 +304,9 @@ class BranchResource extends Resource
                 TextColumn::make('orders_count')
                     ->formatStateUsing(fn($record): string => $record?->orders()?->count() ?? 0)
                     ->label(__('lang.orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('store.name')
+
+                    ->label(__('lang.store'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([

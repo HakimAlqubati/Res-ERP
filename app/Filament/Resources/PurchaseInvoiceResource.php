@@ -277,9 +277,9 @@ class PurchaseInvoiceResource extends Resource
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')
-                    ->color('primary')  
+                    ->color('primary')
                     ->weight(FontWeight::Bold)->alignCenter(true)
-                    ->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                    ->searchable(isIndividual: true)->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('invoice_no')
                     ->color('primary')->copyable()
                     ->weight(FontWeight::Bold)->alignCenter(true)

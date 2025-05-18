@@ -30,7 +30,7 @@ class PurchaseInvoiceProductSummaryReportService
             ->whereNotIn('inventory_transactions.product_id', [116])
 
             ->where('inventory_transactions.movement_type', 'in')
-            ->where('inventory_transactions.transactionable_type', 'App\\Models\\PurchaseInvoice');
+            ->whereIn('inventory_transactions.transactionable_type', ['App\\Models\\PurchaseInvoice', 'App\\Models\\GoodsReceivedNote']);
 
         // ✅ تطبيق فلتر واحد فقط (حسب الموجود)
         if (isset($filters['product_id'])) {
@@ -240,7 +240,7 @@ class PurchaseInvoiceProductSummaryReportService
                         $existsQuery->select(DB::raw(1))
                             ->from('inventory_transactions as it2')
                             ->whereRaw('it2.id = it1.source_transaction_id')
-                            ->where('it2.transactionable_type', 'App\\Models\\PurchaseInvoice');
+                            ->whereIn('it2.transactionable_type', ['App\\Models\\PurchaseInvoice', 'App\\Models\\GoodsReceivedNote']);
                     });
             });
 
