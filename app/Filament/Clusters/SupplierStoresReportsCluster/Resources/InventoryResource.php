@@ -279,4 +279,12 @@ class InventoryResource extends Resource
         }
         return false;
     }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+        return $query;
+    }
 }
