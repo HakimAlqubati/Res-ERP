@@ -301,7 +301,7 @@ class GoodsReceivedNoteResource extends Resource
                                 DB::rollBack();
                                 showWarningNotifiMessage($e->getMessage());
                             }
-                        })
+                        })->hidden()
                 ]),
                 Tables\Actions\Action::make('Approve')
                     ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
