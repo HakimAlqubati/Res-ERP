@@ -198,7 +198,8 @@ class InventoryResource extends Resource
                     ->pluck('name', 'id')
 
                     ->toArray())
-                    ->label(__('lang.store'))
+                    ->label(__('lang.store')),
+                Tables\Filters\TrashedFilter::make(),
 
             ])
             ->actions([
