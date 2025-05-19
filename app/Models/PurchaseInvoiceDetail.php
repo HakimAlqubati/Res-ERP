@@ -70,9 +70,13 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         parent::boot();
         static::created(function ($purchaseInvoiceDetail) {
 
-            // if (settingWithDefault('affect_inventory_from_grn_only', false) && settingWithDefault('purchase_invoice_from_grn_only', false)) {
-            //     return;
-            // }
+            $invoice = $purchaseInvoiceDetail->purchaseInvoice;
+
+            $grn = $invoice->grn;
+             
+            if ($grn && $grn->has_inventory_transaction) {
+                return;
+            }
 
             $notes = 'Purchase invoice with id ' . $purchaseInvoiceDetail->purchase_invoice_id;
             if (isset($purchaseInvoiceDetail->purchaseInvoice->store_id)) {

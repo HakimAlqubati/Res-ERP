@@ -143,17 +143,17 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                     'grn_id' => $this->record->id,
                     'payment_method_id' => $data['payment_method_id']
                 ]);
+                $this->record->update([
+                    'is_purchase_invoice_created' => true,
+                    'purchase_invoice_id' => $invoice->id,
+                    'approved_by' => auth()->id()
+                ]);
 
                 foreach ($data['units'] as $item) {
                     $item['total_price'] = (float) $item['quantity'] * (float) $item['price'];
                     $invoice->purchaseInvoiceDetails()->create($item);
                 }
 
-                $this->record->update([
-                    'is_purchase_invoice_created' => true,
-                    'purchase_invoice_id' => $invoice->id,
-                    'approved_by' => auth()->id()
-                ]);
             });
 
             Notification::make()
