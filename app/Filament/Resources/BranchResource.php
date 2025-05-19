@@ -359,10 +359,10 @@ class BranchResource extends Resource
                     ->modalWidth('lg')
                     ->form([
                         TextInput::make('name')->required()->label(__('lang.name')),
-                        Select::make('manager_id')
-                            ->label(__('lang.branch_manager'))
-                            ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
-                                ->pluck('name', 'id')),
+                        // Select::make('manager_id')
+                        //     ->label(__('lang.branch_manager'))
+                        //     ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
+                        //         ->pluck('name', 'id')),
                         Select::make('store_id')
                             ->label(__('stock.store_id'))
                             ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
