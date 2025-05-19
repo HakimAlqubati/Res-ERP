@@ -32,6 +32,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class GoodsReceivedNoteResource extends Resource
 {
@@ -266,6 +267,42 @@ class GoodsReceivedNoteResource extends Resource
                 //         ]);
                 //     })
                 //     ->requiresConfirmation(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('create_inventory')
+                        ->label('Create Inventory')
+                        ->icon('heroicon-o-plus-circle')->button()
+                        ->color('success')
+                        ->visible(fn($record) => !$record->has_inventory_transaction)
+                        ->action(function ($record) {
+                            DB::beginTransaction();
+                            try {
+                                $notes = 'GRN with id ' . $record->id;
+                                if ($record->store?->name) {
+                                    $notes .= ' in (' . $record->store->name . ')';
+                                }
+                                foreach ($record->grnDetails as $detail) {
+                                    \App\Models\InventoryTransaction::moveToStore([
+                                        'product_id' => $detail->product_id,
+                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'quantity' => $detail->quantity,
+                                        'unit_id' => $detail->unit_id,
+                                        'package_size' => $detail->package_size,
+                                        'store_id' => $record->store_id,
+                                        'price' => getUnitPrice($detail->product_id, $detail->unit_id),
+                                        'transaction_date' => $record->date,
+                                        'movement_date' => $record->date,
+                                        'notes' => $notes,
+                                        'transactionable' => $record,
+                                    ]);
+                                }
+                                DB::commit();
+                                showSuccessNotifiMessage('Done');
+                            } catch (\Exception $e) {
+                                DB::rollBack();
+                                showWarningNotifiMessage($e->getMessage());
+                            }
+                        })
+                ]),
                 Tables\Actions\Action::make('Approve')
                     ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
                     ->disabled(fn($record): bool =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)

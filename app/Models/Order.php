@@ -78,7 +78,7 @@ class Order extends Model implements Auditable
         'store_names',
         'store_ids',
     ];
- 
+
 
     public function orderDetails()
     {
@@ -109,13 +109,13 @@ class Order extends Model implements Auditable
         return null;
     }
 
-  
+
 
     public function storeEmpResponsiple()
     {
         return $this->belongsTo(User::class, 'storeuser_id_update');
     }
- 
+
 
     // attribute to get items count
     public function getItemCountAttribute()
@@ -391,5 +391,4 @@ class Order extends Model implements Auditable
     {
         return $this->belongsTo(Supplier::class);
     }
-
 }

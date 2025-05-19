@@ -129,39 +129,39 @@ class GoodsReceivedNote extends Model implements Auditable
         return self::getStatusOptions()[$this->status] ?? ucfirst($this->status);
     }
 
-    // protected static function booted()
-    // {
-    //     static::updated(function ($grn) {
-    //         if (
-    //             $grn->isDirty('status') &&
-    //             $grn->status === self::STATUS_APPROVED
-    //             &&
-    //             settingWithDefault('affect_inventory_from_grn_only', false)
-    //         ) {
-    //             foreach ($grn->grnDetails as $detail) {
-    //                 $notes = 'GRN with id ' . $grn->id;
-    //                 if ($grn->store?->name) {
-    //                     $notes .= ' in (' . $grn->store->name . ')';
-    //                 }
+    protected static function booted()
+    {
+        static::updated(function ($grn) {
+            if (
+                $grn->isDirty('status') &&
+                $grn->status === self::STATUS_APPROVED
+                &&
+                settingWithDefault('affect_inventory_from_grn_only', false)
+            ) {
+                foreach ($grn->grnDetails as $detail) {
+                    $notes = 'GRN with id ' . $grn->id;
+                    if ($grn->store?->name) {
+                        $notes .= ' in (' . $grn->store->name . ')';
+                    }
 
-    //                 \App\Models\InventoryTransaction::create([
-    //                     'product_id' => $detail->product_id,
-    //                     'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
-    //                     'quantity' => $detail->quantity,
-    //                     'package_size' => $detail->package_size,
-    //                     'price' => getUnitPrice($detail->product_id, $detail->unit_id),
-    //                     'movement_date' => $grn->grn_date ?? now(),
-    //                     'unit_id' => $detail->unit_id,
-    //                     'store_id' => $grn->store_id,
-    //                     'notes' => $notes,
-    //                     'transaction_date' => $grn->grn_date ?? now(),
-    //                     'transactionable_id' => $grn->id,
-    //                     'transactionable_type' => self::class,
-    //                 ]);
-    //             }
-    //         }
-    //     });
-    // }
+                    \App\Models\InventoryTransaction::create([
+                        'product_id' => $detail->product_id,
+                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                        'quantity' => $detail->quantity,
+                        'package_size' => $detail->package_size,
+                        'price' => getUnitPrice($detail->product_id, $detail->unit_id),
+                        'movement_date' => $grn->grn_date ?? now(),
+                        'unit_id' => $detail->unit_id,
+                        'store_id' => $grn->store_id,
+                        'notes' => $notes,
+                        'transaction_date' => $grn->grn_date ?? now(),
+                        'transactionable_id' => $grn->id,
+                        'transactionable_type' => self::class,
+                    ]);
+                }
+            }
+        });
+    }
 
     public function getHasInventoryTransactionAttribute(): bool
     {
