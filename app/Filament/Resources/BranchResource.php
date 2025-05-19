@@ -352,6 +352,32 @@ class BranchResource extends Resource
                                 }
                             }),
                     ]),
+                Action::make('quick_edit')
+                    ->label(__('Quick Edit'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->modalHeading(__('Quick Edit Branch'))
+                    ->modalWidth('lg')
+                    ->form([
+                        TextInput::make('name')->required()->label(__('lang.name')),
+                        Select::make('manager_id')
+                            ->label(__('lang.branch_manager'))
+                            ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
+                                ->pluck('name', 'id')),
+                        Select::make('store_id')
+                            ->label(__('stock.store_id'))
+                            ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
+                            ->searchable()
+                            ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
+                        Toggle::make('active')->inline(false),
+                        Textarea::make('address')->label(__('lang.address')),
+                    ])
+                    ->action(function (Model $record, array $data) {
+                        $record->update($data);
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Updated successfully'))
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
