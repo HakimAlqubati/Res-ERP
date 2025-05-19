@@ -243,13 +243,12 @@ class Order extends Model implements Auditable
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
                 foreach ($order->orderDetails as $detail) {
-                    $fifoService = new \App\Services\MultiProductsInventoryService(null, null, $detail->unit_id, null);
+                    $fifoService = new \App\Services\FifoMethodService();
 
                     $allocations = $fifoService->allocateFIFO(
                         $detail->product_id,
                         $detail->unit_id,
-                        $detail->available_quantity // الكمية المطلوبة للصرف
-                        ,
+                        $detail->available_quantity,
                         $order
                     );
                     $branchStoreId = $order->branch?->store_id;
