@@ -92,13 +92,7 @@ class StockTransferOrderResource extends Resource
                                             ])
                                             ->toArray();
                                     })
-                                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($set, $state) {
-                                        $set('unit_id', null);
-                                        $product = Product::find($state);
-                                        $set('waste_stock_percentage', $product?->waste_stock_percentage);
-                                    }),
+                                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name),
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {
@@ -130,23 +124,13 @@ class StockTransferOrderResource extends Resource
                                     ->required()
                                     ->minValue(0.1)
                                     ->label('Quantity'),
-                                TextInput::make('waste_stock_percentage')
-                                    ->label('Waste %')
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->maxValue(100)
-                                    ->suffix('%')
-                                    ->default(function (callable $get) {
-                                        $productId = $get('product_id');
-                                        return \App\Models\Product::find($productId)?->waste_stock_percentage ?? 0;
-                                    })
-                                    ->columnSpan(1),
+                              
                                 Textarea::make('notes')->label('Notes')->columnSpanFull(),
 
                             ])
                             ->minItems(1)
                             ->defaultItems(1)
-                            ->columns(7)
+                            ->columns(6)
                             ->columnSpanFull(),
                     ])->columns(4),
                 ])
