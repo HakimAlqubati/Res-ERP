@@ -8,6 +8,7 @@ use App\Filament\Resources\ReturnedOrderResource\RelationManagers;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\ReturnedOrder;
+use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -83,7 +84,7 @@ class ReturnedOrderResource extends Resource
                         Select::make('store_id')
                             ->label('Store')
                             ->required()
-                            ->relationship('store', 'name'),
+                            ->options(Store::active()->get(['id', 'name'])->pluck('name', 'id')),
                         DatePicker::make('returned_date')
                             ->label('Returned Date')->default(now())
                             ->required(),
@@ -281,6 +282,7 @@ class ReturnedOrderResource extends Resource
             'index' => Pages\ListReturnedOrders::route('/'),
             'create' => Pages\CreateReturnedOrder::route('/create'),
             'edit' => Pages\EditReturnedOrder::route('/{record}/edit'),
+            'view' => Pages\ViewReturnedOrder::route('/{record}'),
         ];
     }
     public static function getNavigationBadge(): ?string
@@ -302,6 +304,4 @@ class ReturnedOrderResource extends Resource
         }
         return false;
     }
-
-    
 }

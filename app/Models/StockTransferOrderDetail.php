@@ -2,11 +2,22 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-class StockTransferOrderDetail extends Model
+use OwenIt\Auditing\Contracts\Auditable;
+
+class StockTransferOrderDetail extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory,\OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'stock_transfer_order_id',
+        'product_id',
+        'unit_id',
+        'quantity',
+        'price',
+        'package_size',
+        'note',
+    ];
+    protected $auditInclude = [
         'stock_transfer_order_id',
         'product_id',
         'unit_id',

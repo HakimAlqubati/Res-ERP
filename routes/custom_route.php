@@ -112,3 +112,4 @@ Route::get('/getInData', [TestController6::class, 'getInData']);
 Route::get('/getOutData', [TestController6::class, 'getOutData']);
 Route::get('/inVSoutReport', [TestController6::class, 'inVSoutReport']);
 Route::get('/getFinalComparison', [TestController6::class, 'getFinalComparison']);
+Route::get('/storeInventoryTransctionInForBranchStoresFromOrders', [TestController6::class, 'storeInventoryTransctionInForBranchStoresFromOrders']);

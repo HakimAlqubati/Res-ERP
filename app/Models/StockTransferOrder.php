@@ -7,12 +7,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class StockTransferOrder extends Model
+class StockTransferOrder extends Model  implements Auditable
 {
-    use HasFactory, SoftDeletes, HasStockTransferInventoryTransactions;
+    use HasFactory, SoftDeletes, HasStockTransferInventoryTransactions, \OwenIt\Auditing\Auditable;
 
     protected $fillable = [
+        'from_store_id',
+        'to_store_id',
+        'date',
+        'status',
+        'created_by',
+        'rejected_by',
+        'rejected_reason',
+        'notes',
+    ];
+    protected $auditInclude = [
         'from_store_id',
         'to_store_id',
         'date',

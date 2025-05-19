@@ -120,10 +120,11 @@ class BranchResource extends Resource
 
                                         Select::make('store_id')
                                             ->label(__('stock.store_id'))
-                                            ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
+                                            ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
                                             ->searchable()
                                             ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
-                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
+                                        ,
                                         Select::make('categories')
                                             ->label(__('stock.customized_manufacturing_categories'))
                                             // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
@@ -306,7 +307,7 @@ class BranchResource extends Resource
                     ->label(__('lang.orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('store.name')
 
-                    ->label(__('lang.store'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                    ->label(__('lang.store'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: false),
 
             ])
             ->filters([
