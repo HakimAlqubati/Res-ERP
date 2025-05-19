@@ -357,20 +357,21 @@ class BranchResource extends Resource
                     ->icon('heroicon-o-pencil-square')
                     ->modalHeading(__('Quick Edit Branch'))
                     ->modalWidth('lg')
-                    ->form([
-                        TextInput::make('name')->required()->label(__('lang.name')),
-                        // Select::make('manager_id')
-                        //     ->label(__('lang.branch_manager'))
-                        //     ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
-                        //         ->pluck('name', 'id')),
-                        Select::make('store_id')
-                            ->label(__('stock.store_id'))
-                            ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
-                            ->searchable()
-                            ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
-                        Toggle::make('active')->inline(false),
-                        Textarea::make('address')->label(__('lang.address')),
-                    ])
+                    ->form(function ($record) {
+                        return [
+                            TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
+                            Select::make('manager_id')
+                                ->label(__('lang.branch_manager'))->default($record->manager_id)
+                                ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
+                                    ->pluck('name', 'id')),
+                            Select::make('store_id')
+                                ->label(__('stock.store_id'))->default($record->store_id)
+                                ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
+                                ->searchable()
+                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
+
+                        ];
+                    })
                     ->action(function (Model $record, array $data) {
                         $record->update($data);
                         \Filament\Notifications\Notification::make()
