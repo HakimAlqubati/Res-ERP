@@ -30,42 +30,11 @@ class ListGeneralReportOfProducts extends ListRecords
         return $attributes['category_id'];
         return $attributes['product'] . '-' . $attributes['branch'] . '-' . $attributes['unit'];
     }
-
-    // protected function getTableFilters(): array
-    // {
-    //     return [
-
-    //         SelectFilter::make("branch_id")
-    //             ->label(__('lang.branch'))
-    //             ->query(function (Builder $q, $data) {
-    //                 return $q;
-    //             })->options(Branch::where('active', 1)
-    //                 ->get()->pluck('name', 'id')),
-    //         Filter::make('date')
-    //             ->form([
-    //                 DatePicker::make('start_date')
-    //                     ->label(__('lang.start_date')),
-    //                 DatePicker::make('end_date')
-    //                     ->label(__('lang.end_date')),
-    //             ])
-    //             ->query(function (Builder $query, array $data): Builder {
-    //                 return $query;
-    //             }),
-    //     ];
-    // }
+ 
 
 
     protected function getViewData(): array
-    {
-
-
-        // $branch_id = __filament_request_select('branch_id', 'choose');
-        // $start_date =  __filament_request_key("date.start_date", null);
-        // $end_date = __filament_request_key("date.end_date", null);
-
-
-        $updates = request()->input('components.0.updates', []);
-        
+    {  
         $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
         
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];

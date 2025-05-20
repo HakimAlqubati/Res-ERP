@@ -70,6 +70,9 @@ class TestController6 extends Controller
             foreach ($outTransactions as $out) {
                 $order = Order::find($out->transactionable_id);
 
+                if ($order->branch_id != 12) {
+                    continue;
+                }
                 if (!$order || !$order->branch || !$order->branch->store || !$order->branch->store->active) {
                     $invalidOrders++;
                     continue;

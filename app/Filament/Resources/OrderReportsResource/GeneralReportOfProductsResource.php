@@ -64,7 +64,7 @@ class GeneralReportOfProductsResource extends Resource
                 TextColumn::make('total_price'),
             ])
             ->filters([
-                SelectFilter::make("branch_id")
+                SelectFilter::make("branch_id")->placeholder('Select')
                     ->label(__('lang.branch'))
                     ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN,Branch::TYPE_POPUP])->active()
                         ->get()->pluck('name', 'id')),

@@ -312,13 +312,12 @@ class BranchResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
-
-                // Tables\Filters\SelectFilter::make('category')
-                //     ->label(__('stock.customized_manufacturing_categories'))
-                //     ->options(\App\Models\Category::pluck('name', 'id'))
-                // ->query(function (Builder $query, $value) {
-                //     $query->whereHas('categories', fn($q) => $q->where('id', $value));
-                // }),
+                Tables\Filters\SelectFilter::make('active')
+                ->options([
+                    1 => __('lang.active'),
+                    0 => __('lang.status_unactive'),
+                ])->default(1),
+                
             ])
             ->actions([
                 Action::make('add_area')

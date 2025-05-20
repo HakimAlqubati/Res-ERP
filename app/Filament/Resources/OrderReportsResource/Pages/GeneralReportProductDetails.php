@@ -31,7 +31,7 @@ class GeneralReportProductDetails extends Page
         $total_price = 0;
         $total_quantity = 0;
         $report_data = $this->getReportDetails($this->start_date, $this->end_date, $this->branch_id, $this->category_id);
-
+        
         if (isset($report_data['total_price'])) {
             $total_price = $report_data['total_price'];
         }
@@ -86,8 +86,8 @@ class GeneralReportProductDetails extends Page
             // ->when($year && $month, function ($query) use ($year, $month) {
             //     return $query->whereRaw('YEAR(orders.created_at) = ? AND MONTH(orders.created_at) = ?', [$year, $month]);
             // })
-            // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            // ->where('orders.active', 1)
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
             ->where('products.category_id', $category_id)
             ->groupBy(
@@ -129,7 +129,7 @@ class GeneralReportProductDetails extends Page
         }
         $final_result['total_price'] = number_format($total_price, 2) . ' ' . getDefaultCurrency();
         $final_result['total_quantity'] = number_format($total_quantity, 2);
-        
+
         return $final_result;
     }
 
