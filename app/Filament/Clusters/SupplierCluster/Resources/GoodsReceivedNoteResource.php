@@ -176,7 +176,8 @@ class GoodsReceivedNoteResource extends Resource
                                         ->default(1)
 
                                         ->live(onBlur: true)
-                                        ->columnSpan(1)->required(),
+                                        ->columnSpan(1)->required()
+                                        ->formatStateUsing(fn($state) => round((float) $state, 2)),
 
 
                                 ])
