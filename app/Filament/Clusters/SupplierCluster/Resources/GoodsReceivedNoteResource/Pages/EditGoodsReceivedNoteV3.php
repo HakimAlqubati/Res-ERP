@@ -180,7 +180,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
     protected function validatePrice(array $data)
     {
         foreach ($data['units'] as $item) {
-            if ((float) $item['price'] < 1) {
+            if ((float) $item['price'] <= 0) {
                 throw new \Exception("Price Cannot be Zero");
             }
         }

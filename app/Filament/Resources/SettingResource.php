@@ -147,7 +147,7 @@ class SettingResource extends Resource
                                             ->label('Use Standard End of Month')
                                             ->inline(false)
                                             ->live()
-                                            ->helperText('Enable this to use the normal end of month (1st - 30th)')
+                                            ->helperText('Enable this to use the normal end of month (i.e. 1st - 30th)')
                                             ->default(true),
 
                                         Select::make('end_of_month_day')
@@ -370,18 +370,18 @@ class SettingResource extends Resource
                                 Fieldset::make('')->label('Purchase Settings')->columns(3)->schema([
                                     Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
                                         ->inline(false)
-                                        ->label('Purchase Invoice Number Required and Disabled on Edit')
+                                        ->label('Up: Purchase Invoice Number')
                                         ->offIcon('heroicon-s-user')
                                         ->onColor('success')
                                         ->offColor('danger')
-                                        ->helperText('Enable this to require and disable editing of the purchase invoice number.')
+                                        ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
                                         ->default(false),
                                 ]),
                                 Fieldset::make('GRN Workflow Settings')->columns(2)->schema([
                                     Toggle::make('purchase_invoice_from_grn_only')
                                         ->inline(false)->columnSpanFull()
                                         ->label('Use GRN to Create Purchase Invoices Only')
-                                        ->helperText('If enabled, purchase invoices can only be created through GRN.')
+                                        ->helperText('If enabled, purchase invoices can be created through GRN.')
                                         ->default(false),
                                     Select::make('grn_entry_role_id')->multiple()
                                         ->label('Role Allowed to Create GRN')
