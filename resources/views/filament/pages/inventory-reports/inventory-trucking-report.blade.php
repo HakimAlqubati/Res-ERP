@@ -22,6 +22,7 @@
                     <th>{{ 'Unit' }}</th>
                     <th>{{ 'Qty per Pack' }}</th>
                     <th>{{ 'Qty' }}</th>
+                    <th>{{ 'Store' }}</th>
                     <th colspan="2">{{ 'Notes' }}</th>
                 </x-filament-tables::row>
             </thead>
@@ -42,6 +43,7 @@
 
                         <x-filament-tables::cell> {{ $data->package_size }} </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data->quantity }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ $data->store->name ?? '' }} </x-filament-tables::cell>
                         <x-filament-tables::cell colspan="2"> {{ $data->notes }} </x-filament-tables::cell>
                     </x-filament-tables::row>
                     @php

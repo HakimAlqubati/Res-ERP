@@ -67,6 +67,16 @@
                         </x-filament-tables::row>
                     @endforeach
                 </tbody>
+                <tfoot>
+                    <x-filament-tables::row class="font-bold bg-gray-100">
+                        <x-filament-tables::cell colspan="7" class="text-right">Total:</x-filament-tables::cell>
+                        
+                        <x-filament-tables::cell>
+                            {{ number_format(array_sum(array_column($reportData, 'price')), 2) }}
+                        </x-filament-tables::cell>
+                    </x-filament-tables::row>
+                </tfoot>
+
             </x-filament-tables::table>
         </div>
     @else

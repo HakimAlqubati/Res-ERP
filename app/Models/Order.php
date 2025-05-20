@@ -242,46 +242,19 @@ class Order extends Model implements Auditable
                 $order->status === self::READY_FOR_DELEVIRY &&
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
-                // (new \App\Services\Orders\OrderInventoryAllocator($order))
-                //     ->allocateFromManagedStores(auth()->user()?->managed_stores_ids ?? []);
                 foreach ($order->orderDetails as $detail) {
-                    $fifoService = new \App\Services\MultiProductsInventoryService(null, null, $detail->unit_id, null);
+                    $fifoService = new \App\Services\FifoMethodService($order);
 
                     $allocations = $fifoService->allocateFIFO(
                         $detail->product_id,
                         $detail->unit_id,
-                        $detail->available_quantity // الكمية المطلوبة للصرف
-                        ,
-                        $order
+                        $detail->available_quantity
                     );
-
-
-                    foreach ($allocations as $alloc) {
-                        \App\Models\InventoryTransaction::create([
-                            'product_id'           => $detail->product_id,
-                            'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                            'quantity'             => $alloc['deducted_qty'],
-                            'unit_id'              => $alloc['target_unit_id'],
-                            'package_size'         => $alloc['target_unit_package_size'],
-                            'price'                => $alloc['price_based_on_unit'],
-                            'movement_date'        => $order->order_date ?? now(),
-                            'transaction_date'     => $order->order_date ?? now(),
-                            'store_id'             => $alloc['store_id'],
-                            'notes' => "Stock deducted for Order #{$order->id} from " .
-                                match ($alloc['transactionable_type'] ?? null) {
-                                    'PurchaseInvoice'     => 'Purchase Invoice',
-                                    'StockSupplyOrder'    => 'Stock Supply',
-                                    default               => 'Unknown Source',
-                                } .
-                                " #" . ($alloc['transactionable_id'] ?? 'N/A') .
-                                " with price " . number_format($alloc['price_based_on_unit'], 2),
-                            ($alloc['transaction_id'] ?? 'N/A') .
-                                " with price " . number_format($alloc['price_based_on_unit'], 2),
-                            'transactionable_id'   => $order->id,
-                            'transactionable_type' => \App\Models\Order::class,
-                            'source_transaction_id' => $alloc['transaction_id'],
-
-                        ]);
+                    $branchStoreId = $order->branch?->store_id;
+                    if (!$branchStoreId || !$order->branch->store->active) {
+                        self::moveFromInventory($allocations, $detail);
+                    } else if ($branchStoreId && $order->branch->store->active) {
+                        self::createStockTransferOrder($allocations, $detail);
                     }
                 }
 
@@ -319,6 +292,69 @@ class Order extends Model implements Auditable
         });
     }
 
+
+    public static function moveFromInventory($allocations, $detail)
+    {
+
+        $order = $detail->order; // لضمان توفره
+        $branchStoreId = $order->branch?->store_id;
+
+        // إذا لا يوجد مخزن للفرع، فقط قم بإنشاء حركات OUT
+        if (!$branchStoreId) {
+            foreach ($allocations as $alloc) {
+                \App\Models\InventoryTransaction::create([
+                    'product_id'           => $detail->product_id,
+                    'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                    'quantity'             => $alloc['deducted_qty'],
+                    'unit_id'              => $alloc['target_unit_id'],
+                    'package_size'         => $alloc['target_unit_package_size'],
+                    'price'                => $alloc['price_based_on_unit'],
+                    'movement_date'        => $order->order_date ?? now(),
+                    'transaction_date'     => $order->order_date ?? now(),
+                    'store_id'             => $alloc['store_id'],
+                    'notes' => $alloc['notes'],
+
+                    'transactionable_id'   => $detail->order_id,
+                    'transactionable_type' => \App\Models\Order::class,
+                    'source_transaction_id' => $alloc['transaction_id'],
+
+                ]);
+            }
+            return;
+        }
+    }
+
+    public static function createStockTransferOrder($allocations, $detail)
+    {
+        $order = $detail->order; // لضمان توفره
+        $branchStoreId = $order->branch?->store_id;
+        if ($branchStoreId) {
+            // ✅ إذا يوجد مخزن للفرع، نقوم بإنشاء أمر تحويل مخزني معتمد
+            $transferOrder = \App\Models\StockTransferOrder::create([
+                'from_store_id' => $allocations[0]['store_id'], // نفترض الكل من نفس المخزن
+                'to_store_id'   => $branchStoreId,
+                'date'          => $order->order_date ?? now(),
+                'status'        => \App\Models\StockTransferOrder::STATUS_APPROVED,
+                'notes'         => "Auto transfer for Order #{$order->id}",
+            ]);
+
+            foreach ($allocations as $alloc) {
+                // تفاصيل التحويل
+                \App\Models\StockTransferOrderDetail::create([
+                    'stock_transfer_order_id' => $transferOrder->id,
+                    'product_id'              => $detail->product_id,
+                    'unit_id'                 => $alloc['target_unit_id'],
+                    'quantity'                => $alloc['deducted_qty'],
+                    'price'                   => $alloc['price_based_on_unit'],
+                    'package_size'            => $alloc['target_unit_package_size'],
+                    'note'                    => $alloc['notes'],
+                ]);
+            }
+
+
+            $transferOrder->createInventoryTransactionsFromTransfer();
+        }
+    }
     /**
      * Get possible next statuses based on the current status
      *

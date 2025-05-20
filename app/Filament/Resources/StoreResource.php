@@ -85,11 +85,7 @@ class StoreResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('active')
-                    ->options([
-                        1 => __('lang.active'),
-                        0 => __('lang.status_unactive'),
-                    ])->default(1),
+                
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

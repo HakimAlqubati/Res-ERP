@@ -120,10 +120,11 @@ class BranchResource extends Resource
 
                                         Select::make('store_id')
                                             ->label(__('stock.store_id'))
-                                            ->options(\App\Models\Store::centralKitchen()->pluck('name', 'id'))
+                                            ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
                                             ->searchable()
                                             ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
-                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
+                                        ,
                                         Select::make('categories')
                                             ->label(__('stock.customized_manufacturing_categories'))
                                             // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
@@ -306,18 +307,17 @@ class BranchResource extends Resource
                     ->label(__('lang.orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('store.name')
 
-                    ->label(__('lang.store'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                    ->label(__('lang.store'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: false),
 
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
-
-                // Tables\Filters\SelectFilter::make('category')
-                //     ->label(__('stock.customized_manufacturing_categories'))
-                //     ->options(\App\Models\Category::pluck('name', 'id'))
-                // ->query(function (Builder $query, $value) {
-                //     $query->whereHas('categories', fn($q) => $q->where('id', $value));
-                // }),
+                Tables\Filters\SelectFilter::make('active')
+                ->options([
+                    1 => __('lang.active'),
+                    0 => __('lang.status_unactive'),
+                ])->default(1),
+                
             ])
             ->actions([
                 Action::make('add_area')
@@ -351,6 +351,33 @@ class BranchResource extends Resource
                                 }
                             }),
                     ]),
+                Action::make('quick_edit')
+                    ->label(__('Quick Edit'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->modalHeading(__('Quick Edit Branch'))
+                    ->modalWidth('lg')
+                    ->form(function ($record) {
+                        return [
+                            TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
+                            Select::make('manager_id')
+                                ->label(__('lang.branch_manager'))->default($record->manager_id)
+                                ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
+                                    ->pluck('name', 'id')),
+                            Select::make('store_id')
+                                ->label(__('stock.store_id'))->default($record->store_id)
+                                ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
+                                ->searchable()
+                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
+
+                        ];
+                    })
+                    ->action(function (Model $record, array $data) {
+                        $record->update($data);
+                        \Filament\Notifications\Notification::make()
+                            ->title(__('Updated successfully'))
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),

@@ -11,8 +11,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User;
-use App\Services\FifoInventoryService;
+use App\Models\User; 
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
@@ -162,15 +161,7 @@ class OrderResource extends Resource
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
                                 })
-                                ->rules([
-                                    fn($get): Closure => function (string $attribute, $value, Closure $fail) use ($get) {
-                                        $fifoService = new FifoInventoryService($get('product_id'), $get('unit_id'), $value);
-                                        $result = $fifoService->allocateOrder();
-                                        if (!$result['success']) {
-                                            $fail($result['message']);
-                                        }
-                                    },
-                                ])
+                       
                                 ->required()->default(1),
 
                             TextInput::make('price')
@@ -182,44 +173,7 @@ class OrderResource extends Resource
                                 ->numeric()
                                 ->readOnly()->columnSpan(1),
                         ])
-                        ->saveRelationshipsUsing(function ($state, $get, $livewire) {
-                            $record = $livewire->form->getRecord();
-
-                            if (setting('calculating_orders_price_method') == 'fifo') {
-
-                                $allocatedRows = [];
-                                foreach ($state as $key => $allocation) {
-
-
-                                    $fifoService = new FifoInventoryService($allocation['product_id'], $allocation['unit_id'], $allocation['quantity']);
-                                    $result = $fifoService->allocateOrder();
-
-                                    if ($result['success']) {
-
-                                        foreach ($result['result'] as $value) {
-
-                                            $allocatedRows = [
-                                                'purchase_invoice_id' => $value['purchase_invoice_id'],
-                                                'quantity' => $value['allocated_qty'],
-                                                'available_quantity' => $value['allocated_qty'],
-                                                'price' => $value['unit_price'],
-                                                'package_size' => $value['package_size'],
-                                                'unit_id' => $value['unit_id'],
-                                                'product_id' =>  $allocation['product_id'],
-
-                                            ];
-                                            if (isset($allocatedRows['product_id'])) {
-                                                $record->orderDetails()->create($allocatedRows);
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                foreach ($state as $item) {
-                                    $record->orderDetails()->create($item);
-                                }
-                            }
-                        })
+                        
                         ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
                         ->required(),
 

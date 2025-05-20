@@ -7,7 +7,7 @@ use App\Models\Employee;
 use App\Models\Equipment;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\FifoInventoryService;
+
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use Carbon\Carbon;
@@ -30,15 +30,7 @@ class TestController3 extends Controller
     }
 
 
-    public function testFifo()
-    {
-        $productId = $_GET['p'];
-        $unitId = $_GET['u'];
-        $requestedQuantity = $_GET['q'];
-        $fifoService = new FifoInventoryService($productId, $unitId, $requestedQuantity);
-        $response = $fifoService->allocateOrder();
-        return $response;
-    }
+    
 
     public function testQRCode($id)
     {

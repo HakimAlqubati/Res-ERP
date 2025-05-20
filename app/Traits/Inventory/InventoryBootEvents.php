@@ -3,6 +3,7 @@
 namespace App\Traits\Inventory;
 
 use App\Models\InventoryTransaction;
+use App\Services\UnitPriceFifoUpdater;
 
 trait InventoryBootEvents
 {
@@ -44,6 +45,13 @@ trait InventoryBootEvents
                         'is_waste' => true, // إذا كنت أضفت هذا الحقل في المايجريشن
                     ]);
                 }
+            }
+            // update unit prices
+            if ($transaction->movement_type === InventoryTransaction::MOVEMENT_OUT) {
+                UnitPriceFifoUpdater::updatePriceUsingFifo(
+                    $transaction->product_id,
+                    $transaction
+                );
             }
         });
     }

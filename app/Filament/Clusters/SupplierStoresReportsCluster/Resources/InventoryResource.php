@@ -198,7 +198,8 @@ class InventoryResource extends Resource
                     ->pluck('name', 'id')
 
                     ->toArray())
-                    ->label(__('lang.store'))
+                    ->label(__('lang.store')),
+                Tables\Filters\TrashedFilter::make(),
 
             ])
             ->actions([
@@ -230,6 +231,7 @@ class InventoryResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -276,5 +278,13 @@ class InventoryResource extends Resource
             return true;
         }
         return false;
+    }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+        return $query;
     }
 }

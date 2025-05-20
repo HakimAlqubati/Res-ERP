@@ -50,6 +50,7 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
                 // Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),
                 Tables\Columns\TextColumn::make('unit_id')->label(__('lang.unit_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
                 Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch'))->alignCenter(true),
                 // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
@@ -62,7 +63,6 @@ class OrderDetailsRelationManager extends RelationManager
 
                         return $remainingQty;
                     }),
-                Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
                 Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');

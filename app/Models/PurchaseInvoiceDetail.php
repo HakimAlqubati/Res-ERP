@@ -73,7 +73,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
             $invoice = $purchaseInvoiceDetail->purchaseInvoice;
 
             $grn = $invoice->grn;
-             
+
             if ($grn && $grn->has_inventory_transaction) {
                 return;
             }
@@ -98,6 +98,11 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 'transactionable_type' => PurchaseInvoice::class,
                 'waste_stock_percentage' => $purchaseInvoiceDetail->waste_stock_percentage,
             ]);
+            // ✅ تحديث السعر بعد إضافة الحركة
+            \App\Services\UnitPriceFifoUpdater::updatePriceUsingFifo(
+                $purchaseInvoiceDetail->product_id,
+                $purchaseInvoiceDetail->purchaseInvoice
+            );
         });
     }
 }
