@@ -216,8 +216,9 @@ class PurchaseInvoiceResource extends Resource
                                         ->showInInvoices()
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price ?? 0);
-
-                                    $set('total_price', ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')));
+                                    $total = round(((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
+                                    
+                                    $set('total_price', $total ?? 0);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -232,8 +233,8 @@ class PurchaseInvoiceResource extends Resource
                                 ->disabledOn('edit')
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-
-                                    $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
+                                    $total = round(((float) $state) * ((float)$get('price') ?? 0), 2);
+                                    $set('total_price', $total);
                                 })->columnSpan(1)->required(),
                             TextInput::make('price')
                                 ->label(__('lang.price'))
@@ -244,10 +245,11 @@ class PurchaseInvoiceResource extends Resource
                                 ->live(onBlur: true)
 
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                    $set('total_price', ((float) $state) * ((float)$get('quantity')));
+                                    $total = round(((float) $state) * ((float)$get('quantity')), 2);
+                                    $set('total_price', $total);
                                 })->columnSpan(1)->required(),
                             TextInput::make('total_price')->minValue(1)->label('Total Price')
-                                ->type('text')
+                                ->numeric()
                                 ->extraInputAttributes(['readonly' => true])->columnSpan(1),
                             TextInput::make('waste_stock_percentage')
                                 ->label(__('lang.waste_stock_percentage'))

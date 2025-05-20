@@ -70,7 +70,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
 
             Tables\Columns\TextColumn::make('note')
                 ->label('Note')
-                ->limit(40)
+                ->limit(100)
                 ->toggleable(),
 
             Tables\Columns\TextColumn::make('created_at')

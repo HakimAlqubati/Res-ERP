@@ -243,13 +243,12 @@ class Order extends Model implements Auditable
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
                 foreach ($order->orderDetails as $detail) {
-                    $fifoService = new \App\Services\FifoMethodService();
+                    $fifoService = new \App\Services\FifoMethodService($order);
 
                     $allocations = $fifoService->allocateFIFO(
                         $detail->product_id,
                         $detail->unit_id,
-                        $detail->available_quantity,
-                        $order
+                        $detail->available_quantity
                     );
                     $branchStoreId = $order->branch?->store_id;
                     if (!$branchStoreId || !$order->branch->store->active) {
@@ -313,16 +312,8 @@ class Order extends Model implements Auditable
                     'movement_date'        => $order->order_date ?? now(),
                     'transaction_date'     => $order->order_date ?? now(),
                     'store_id'             => $alloc['store_id'],
-                    'notes' => "Stock deducted for Order #{$detail->order_id} from " .
-                        match ($alloc['transactionable_type'] ?? null) {
-                            'PurchaseInvoice'     => 'Purchase Invoice',
-                            'StockSupplyOrder'    => 'Stock Supply',
-                            default               => 'Unknown Source',
-                        } .
-                        " #" . ($alloc['transactionable_id'] ?? 'N/A') .
-                        " with price " . number_format($alloc['price_based_on_unit'], 2),
-                    ($alloc['transaction_id'] ?? 'N/A') .
-                        " with price " . number_format($alloc['price_based_on_unit'], 2),
+                    'notes' => $alloc['notes'],
+
                     'transactionable_id'   => $detail->order_id,
                     'transactionable_type' => \App\Models\Order::class,
                     'source_transaction_id' => $alloc['transaction_id'],
@@ -356,7 +347,7 @@ class Order extends Model implements Auditable
                     'quantity'                => $alloc['deducted_qty'],
                     'price'                   => $alloc['price_based_on_unit'],
                     'package_size'            => $alloc['target_unit_package_size'],
-                    'note'                    => "تحويل بناءً على الطلب #{$order->id}",
+                    'note'                    => $alloc['notes'],
                 ]);
             }
 

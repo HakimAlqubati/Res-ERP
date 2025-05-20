@@ -10,6 +10,7 @@ use App\Http\Controllers\TestController6;
 use App\Models\Audit;
 use App\Models\Order;
 use App\Models\PurchaseInvoice;
+use App\Services\UnitPriceFifoUpdater;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/custom-route', function () {
@@ -89,16 +90,19 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 
 
 Route::get('/testAllocateFifo', function () {
-    $fifoService = new \App\Services\MultiProductsInventoryService(null, 158, 1, 1);
+    $order = Order::find(258);
+    $fifoService = new \App\Services\FifoMethodService();
 
-    $order = Order::find(217);
-    $allocations = $fifoService->allocateFIFO(
+    $allocations = $fifoService->getAllocateFifo(
         158,
         1,
-        10,
-        $order
+        280
     );
     return $allocations;
+});
+Route::get('/testUpdateUnitPrice', function () {
+    $serevice = UnitPriceFifoUpdater::updatePriceUsingFifo(158);
+    return $serevice;
 });
 
 

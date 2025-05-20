@@ -11,6 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 class FifoMethodService
 {
+
+    protected $sourceModel;
+
+    public function __construct($sourceModel = null)
+    {
+        $this->sourceModel = $sourceModel;
+    }
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {
         $inventoryService = new MultiProductsInventoryService();
@@ -25,7 +32,7 @@ class FifoMethodService
         }
 
         // dd($requestedQty);
-        $existingDetail = $sourceModel->orderDetails()
+        $existingDetail = $sourceModel?->orderDetails()
             ->where('product_id', $productId)
             ->where('unit_id', $unitId)->first();
         if (
@@ -94,11 +101,16 @@ class FifoMethodService
                 $productName = $targetUnit->product->name ?? 'Unknown Product';
                 $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
                 Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-                throw new \Exception("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+                throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
             }
         }
-
-
+        return $this->getAllocateFifo($productId, $unitId, $requestedQty);
+    }
+    public function getAllocateFifo($productId, $unitId, $requestedQty)
+    {
+        $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
+            ->where('unit_id', $unitId)->with('unit')
+            ->first();
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
@@ -108,19 +120,22 @@ class FifoMethodService
         $qtyBasedOnUnit = 0;
         foreach ($entries as $entry) {
 
-            $previousOrderedQtyBasedOnTargetUnit = InventoryTransaction::where('source_transaction_id', $entry->id)
+            $previousOrderedQtyBasedOnTargetUnit = (InventoryTransaction::where('source_transaction_id', $entry->id)
                 ->where('product_id', $productId)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->whereNull('deleted_at')
-                ->sum(DB::raw('quantity')) / $targetUnit->package_size;
+                ->sum(DB::raw('quantity'))
+                * $entry->package_size) / $targetUnit->package_size;
 
             $entryQty = $entry->quantity;
-            foreach ($inventoryService->getProductUnitPrices($productId) as $key => $value) {
-                if ($value['unit_id'] == $unitId) {
-                    $qtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
-                }
-            }
-            $deductQty = min($requestedQty, $qtyBasedOnUnit);
+            $qtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
+
+            $remaining = $qtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
+
+            if ($remaining <= 0) continue;
+
+            $deductQty = min($requestedQty, $remaining);
+
             if ($qtyBasedOnUnit <= 0) {
                 continue;
             }
@@ -128,8 +143,17 @@ class FifoMethodService
                 break;
             }
 
-            $price = ($entry->price / $entry->package_size) * $targetUnit->package_size;
-            $allocations[] = [
+            $price = ($entry->price * $targetUnit->package_size) / $entry->package_size;
+            $price = round($price, 2);
+
+            $notes = "Price is " . $price;
+            if (isset($this->sourceModel)) {
+                $notes = "Stock deducted for Order #{$this->sourceModel->id} from " .
+                    $entry->transactionable_type .
+                    " #" . $entry->transactionable_id .
+                    " with price " . $price;
+            }
+            $allocation = [
                 'transaction_id' => $entry->id,
                 'store_id' => $entry->store_id,
                 'unit_id' => $entry->unit_id,
@@ -143,9 +167,16 @@ class FifoMethodService
                 'transactionable_type' => $entry->transactionable_type,
                 'entry_qty' => $entryQty,
                 'entry_qty_based_on_unit' => $qtyBasedOnUnit,
-                'deducted_qty' => $deductQty,
-                'previous_ordered_qty_based_on_unit' => $previousOrderedQtyBasedOnTargetUnit,
+                'remaining_qty_based_on_unit' => $remaining,
+                'notes' => $notes
             ];
+            if (isset($this->sourceModel)) {
+                $allocation['deducted_qty'] = $deductQty;
+                $allocation['previous_ordered_qty_based_on_unit'] = $previousOrderedQtyBasedOnTargetUnit;
+                $allocation['source_order_id'] = $this->sourceModel->id;
+            }
+            $allocations[] = $allocation;
+
 
             $requestedQty -= $deductQty;
         }
