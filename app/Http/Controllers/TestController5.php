@@ -103,8 +103,8 @@ class TestController5 extends Controller
         // $productIds = Arr::pluck($diffReport, 'product_id');
 
         // $productIdsString = implode(',', $productIds);
-
-        // dd($productIds,$productIdsString);
+        // $pids = [109, 171, 266, 22, 100, 21, 178, 192, 316, 169, 246, 388, 12, 166, 110, 104, 267, 156, 23, 13, 4, 36, 107, 317, 170, 207, 33, 111, 92, 24, 5, 158, 20, 167, 118, 117, 315, 245, 385, 164, 102, 1071, 318, 121, 264, 94, 165, 88, 258];
+        // dd($productIds, $pids);
         return [
             'count' => count($diffReport),
             'data' => $diffReport,
