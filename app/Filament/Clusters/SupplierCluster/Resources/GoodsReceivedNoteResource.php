@@ -202,7 +202,7 @@ class GoodsReceivedNoteResource extends Resource
     {
         return $table
             ->striped()
-            ->defaultSort('updated_at', 'desc')
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('id')
                     ->sortable()->alignCenter(true)
@@ -226,7 +226,11 @@ class GoodsReceivedNoteResource extends Resource
                 IconColumn::make('has_inventory_transaction')
                     ->label('Inventory Updated')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
-                    ->alignCenter()
+                    ->alignCenter(),
+                IconColumn::make('belongs_to_purchase_invoice')
+                    ->label('Belongs to Invoice')
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(),
             ])
             ->filters([
                 //

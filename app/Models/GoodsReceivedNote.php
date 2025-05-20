@@ -42,7 +42,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'status',
         'is_purchase_invoice_created',
     ];
-    protected $appends = ['details_count', 'has_inventory_transaction'];
+    protected $appends = ['details_count', 'has_inventory_transaction', 'belongs_to_purchase_invoice'];
     const STATUS_CREATED   = 'created';
     const STATUS_APPROVED  = 'approved';
     const STATUS_CANCELLED = 'cancelled';
@@ -64,6 +64,10 @@ class GoodsReceivedNote extends Model implements Auditable
         return $this->grnDetails()->count();
     }
 
+    public function getBelongsToPurchaseInvoiceAttribute(): bool
+    {
+        return !is_null($this->purchase_invoice_id);
+    }
     public function store()
     {
         return $this->belongsTo(Store::class);
