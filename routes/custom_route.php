@@ -7,9 +7,12 @@ use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
 use App\Http\Controllers\TestController5;
 use App\Http\Controllers\TestController6;
+use App\Http\Controllers\TestController7;
 use App\Models\Audit;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\PurchaseInvoice;
+use App\Services\FifoMethodService;
 use App\Services\UnitPriceFifoUpdater;
 use Illuminate\Support\Facades\Route;
 
@@ -92,7 +95,23 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 Route::get('/testAllocateFifo', function () {
     $order = Order::find(258);
     $fifoService = new \App\Services\FifoMethodService();
+    $updated = [];
+    $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
+    foreach ($products as  $product) {
+        $unitPrices = $product->allUnitPrices;
 
+        foreach ($unitPrices as $unitPrice) {
+            $fifoService = new FifoMethodService();
+
+            $allocations[$unitPrice->unit_id] = $fifoService->getAllocateFifo(
+                $unitPrice->product_id,
+                $unitPrice->unit_id,
+                0.0000001
+            );
+        }
+        $updated[$product->id] = $allocations;
+    }
+    return $updated;
     $allocations = $fifoService->getAllocateFifo(
         158,
         1,
@@ -117,3 +136,4 @@ Route::get('/getOutData', [TestController6::class, 'getOutData']);
 Route::get('/inVSoutReport', [TestController6::class, 'inVSoutReport']);
 Route::get('/getFinalComparison', [TestController6::class, 'getFinalComparison']);
 Route::get('/storeInventoryTransctionInForBranchStoresFromOrders', [TestController6::class, 'storeInventoryTransctionInForBranchStoresFromOrders']);
+Route::get('/updatePriceUsingFifo', [TestController7::class, 'updatePriceUsingFifo']);
