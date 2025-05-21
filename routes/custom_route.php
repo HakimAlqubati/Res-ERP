@@ -137,3 +137,5 @@ Route::get('/inVSoutReport', [TestController6::class, 'inVSoutReport']);
 Route::get('/getFinalComparison', [TestController6::class, 'getFinalComparison']);
 Route::get('/storeInventoryTransctionInForBranchStoresFromOrders', [TestController6::class, 'storeInventoryTransctionInForBranchStoresFromOrders']);
 Route::get('/updatePriceUsingFifo', [TestController7::class, 'updatePriceUsingFifo']);
+Route::get('/getOrderOutTransactions', [TestController7::class, 'getOrderOutTransactions']);
+Route::get('/fixOrderPrices', [TestController7::class, 'fixOrderPrices']);
