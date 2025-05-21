@@ -1,5 +1,13 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+    </style>
     {{-- Print Button --}}
     <div class="flex justify-end mb-4">
         <button id="printReport"
@@ -15,18 +23,20 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
-                <thead>
+            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border"
+                id="report-table">
+                <thead class="fixed-header">
                     <x-filament-tables::row class="header_report">
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                            <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
-                                class="logo-left circle-image">
+
+
                         </th>
                         <th colspan="6" class="no_border_right_left text-center">
                             <h3>Inventory Difference Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
                         </th>
                         <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
-                            <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
+                            <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
+                                class="logo-left circle-image">
                         </th>
                     </x-filament-tables::row>
 
@@ -67,15 +77,15 @@
                         </x-filament-tables::row>
                     @endforeach
                 </tbody>
-                <tfoot>
+                <tbody>
                     <x-filament-tables::row class="font-bold bg-gray-100">
-                        <x-filament-tables::cell colspan="7" class="text-right">Total:</x-filament-tables::cell>
-                        
+                        <x-filament-tables::cell colspan="7" class="text-right">Total </x-filament-tables::cell>
+
                         <x-filament-tables::cell>
                             {{ number_format(array_sum(array_column($reportData, 'price')), 2) }}
                         </x-filament-tables::cell>
                     </x-filament-tables::row>
-                </tfoot>
+                </tbody>
 
             </x-filament-tables::table>
         </div>

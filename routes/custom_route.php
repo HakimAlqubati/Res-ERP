@@ -139,3 +139,4 @@ Route::get('/storeInventoryTransctionInForBranchStoresFromOrders', [TestControll
 Route::get('/updatePriceUsingFifo', [TestController7::class, 'updatePriceUsingFifo']);
 Route::get('/getOrderOutTransactions', [TestController7::class, 'getOrderOutTransactions']);
 Route::get('/fixOrderPrices', [TestController7::class, 'fixOrderPrices']);
+Route::get('/getOverConsumedSuppliesReport', [TestController7::class, 'getOverConsumedSuppliesReport']);
