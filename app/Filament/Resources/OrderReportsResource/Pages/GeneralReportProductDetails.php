@@ -87,7 +87,7 @@ class GeneralReportProductDetails extends Page
             //     return $query->whereRaw('YEAR(orders.created_at) = ? AND MONTH(orders.created_at) = ?', [$year, $month]);
             // })
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            ->where('orders.active', 1)
+            // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
             ->where('products.category_id', $category_id)
             ->groupBy(
