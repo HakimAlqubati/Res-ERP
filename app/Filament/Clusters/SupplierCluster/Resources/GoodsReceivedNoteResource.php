@@ -22,6 +22,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -33,6 +34,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rules\Unique;
 
 class GoodsReceivedNoteResource extends Resource
 {
@@ -113,6 +115,7 @@ class GoodsReceivedNoteResource extends Resource
                                 ->schema([
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
+                                        ->distinct()
                                         ->searchable()
                                         ->options(function () {
                                             return Product::where('active', 1)
@@ -145,8 +148,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->searchable()->columnSpan(2)
                                         ->required(),
                                     Select::make('unit_id')
-                                        ->label(__('lang.unit'))
-
+                                        ->label(__('lang.unit')) 
                                         ->options(function (callable $get) {
                                             $product = \App\Models\Product::find($get('product_id'));
                                             if (!$product)

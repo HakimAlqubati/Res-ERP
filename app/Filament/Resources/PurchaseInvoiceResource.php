@@ -166,6 +166,7 @@ class PurchaseInvoiceResource extends Resource
                             Select::make('product_id')
                                 ->label(__('lang.product'))
                                 ->searchable()
+                                ->distinct()
                                 ->disabledOn('edit')
                                 ->options(function () {
                                     return Product::where('active', 1)
