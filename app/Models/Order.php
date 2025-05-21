@@ -251,11 +251,12 @@ class Order extends Model implements Auditable
                         $detail->available_quantity
                     );
                     $branchStoreId = $order->branch?->store_id;
-                    if (!$branchStoreId || !$order->branch->store->active) {
-                        self::moveFromInventory($allocations, $detail);
-                    } else if ($branchStoreId && $order->branch->store->active) {
-                        self::createStockTransferOrder($allocations, $detail);
-                    }
+                    self::moveFromInventory($allocations, $detail);
+                    // if (!$branchStoreId || !$order->branch->store->active) {
+                    //     self::moveFromInventory($allocations, $detail);
+                    // } else if ($branchStoreId && $order->branch->store->active) {
+                    //     self::createStockTransferOrder($allocations, $detail);
+                    // }
                 }
 
                 // ✅ New logic: Update costing for composite (manufacturing) product when a component product is affected
@@ -295,7 +296,6 @@ class Order extends Model implements Auditable
 
     public static function moveFromInventory($allocations, $detail)
     {
-
         $order = $detail->order; // لضمان توفره
         $branchStoreId = $order->branch?->store_id;
 
@@ -325,7 +325,7 @@ class Order extends Model implements Auditable
     }
 
     public static function createStockTransferOrder($allocations, $detail)
-    {
+    { 
         $order = $detail->order; // لضمان توفره
         $branchStoreId = $order->branch?->store_id;
         if ($branchStoreId) {
