@@ -77,6 +77,7 @@ class Order extends Model implements Auditable
         'status_log_creator_name',
         'store_names',
         'store_ids',
+        'has_inventory_impact',
     ];
 
 
@@ -296,11 +297,7 @@ class Order extends Model implements Auditable
 
     public static function moveFromInventory($allocations, $detail)
     {
-        $order = $detail->order; // لضمان توفره
-        $branchStoreId = $order->branch?->store_id;
-
-        // إذا لا يوجد مخزن للفرع، فقط قم بإنشاء حركات OUT
-        // if (!$branchStoreId) {
+        $order = $detail->order;
         foreach ($allocations as $alloc) {
             \App\Models\InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
@@ -321,7 +318,6 @@ class Order extends Model implements Auditable
             ]);
         }
         return;
-        // }
     }
 
     public static function createStockTransferOrder($allocations, $detail)
@@ -426,5 +422,13 @@ class Order extends Model implements Auditable
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function getHasInventoryImpactAttribute(): bool
+    {
+        return \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $this->id)
+            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
+            ->exists();
     }
 }

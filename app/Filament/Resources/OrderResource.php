@@ -11,7 +11,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\UnitPrice;
-use App\Models\User; 
+use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
@@ -31,6 +31,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -161,7 +162,7 @@ class OrderResource extends Resource
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
                                 })
-                       
+
                                 ->required()->default(1),
 
                             TextInput::make('price')
@@ -173,7 +174,7 @@ class OrderResource extends Resource
                                 ->numeric()
                                 ->readOnly()->columnSpan(1),
                         ])
-                        
+
                         ->createItemButtonLabel(__('lang.add_detail')) // Customize button label
                         ->required(),
 
@@ -228,6 +229,10 @@ class OrderResource extends Resource
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
+                IconColumn::make('has_inventory_impact')
+                    ->label('')
+                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(),
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
             ])
