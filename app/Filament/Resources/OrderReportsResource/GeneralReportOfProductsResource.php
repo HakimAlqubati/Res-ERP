@@ -11,6 +11,7 @@ use App\Filament\Resources\OrderReportsResource\Pages\ListGeneralReportOfProduct
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\FakeModelReports\GeneralReportOfProducts;
+use App\Models\Order;
 use App\Models\OrderDetails;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\SubNavigationPosition;
@@ -97,6 +98,7 @@ class GeneralReportOfProductsResource extends Resource
                 'orders_details.price as price',
                 DB::raw('SUM(orders_details.available_quantity) * orders_details.price as total_price')
             )
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->when($branch_id, function ($q) use ($branch_id) {
             //     return $q->where('orders.branch_id', $branch_id);
             // })
