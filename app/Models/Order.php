@@ -300,32 +300,32 @@ class Order extends Model implements Auditable
         $branchStoreId = $order->branch?->store_id;
 
         // إذا لا يوجد مخزن للفرع، فقط قم بإنشاء حركات OUT
-        if (!$branchStoreId) {
-            foreach ($allocations as $alloc) {
-                \App\Models\InventoryTransaction::create([
-                    'product_id'           => $detail->product_id,
-                    'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                    'quantity'             => $alloc['deducted_qty'],
-                    'unit_id'              => $alloc['target_unit_id'],
-                    'package_size'         => $alloc['target_unit_package_size'],
-                    'price'                => $alloc['price_based_on_unit'],
-                    'movement_date'        => $order->order_date ?? now(),
-                    'transaction_date'     => $order->order_date ?? now(),
-                    'store_id'             => $alloc['store_id'],
-                    'notes' => $alloc['notes'],
+        // if (!$branchStoreId) {
+        foreach ($allocations as $alloc) {
+            \App\Models\InventoryTransaction::create([
+                'product_id'           => $detail->product_id,
+                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'quantity'             => $alloc['deducted_qty'],
+                'unit_id'              => $alloc['target_unit_id'],
+                'package_size'         => $alloc['target_unit_package_size'],
+                'price'                => $alloc['price_based_on_unit'],
+                'movement_date'        => $order->order_date ?? now(),
+                'transaction_date'     => $order->order_date ?? now(),
+                'store_id'             => $alloc['store_id'],
+                'notes' => $alloc['notes'],
 
-                    'transactionable_id'   => $detail->order_id,
-                    'transactionable_type' => \App\Models\Order::class,
-                    'source_transaction_id' => $alloc['transaction_id'],
+                'transactionable_id'   => $detail->order_id,
+                'transactionable_type' => \App\Models\Order::class,
+                'source_transaction_id' => $alloc['transaction_id'],
 
-                ]);
-            }
-            return;
+            ]);
         }
+        return;
+        // }
     }
 
     public static function createStockTransferOrder($allocations, $detail)
-    { 
+    {
         $order = $detail->order; // لضمان توفره
         $branchStoreId = $order->branch?->store_id;
         if ($branchStoreId) {
