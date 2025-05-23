@@ -5,7 +5,7 @@
         <thead style="top:64px;" class="fixed-header">
 
             <x-filament-tables::row>
-                <th colspan="3">
+                <th colspan="4">
                     {{ __('lang.store') }}: ({{ $purchase_invoice_data['store_name'] }})
                 </th>
                 <th colspan="{{ $show_invoice_no == true ? '5' : '4' }}">
@@ -20,6 +20,7 @@
                 @if ($show_invoice_no == true)
                     <th>{{ __('lang.invoice_no') }}</th>
                 @endif
+                <th>{{ __('lang.supplier') }}</th>
                 <th> {{ __('lang.date') }} </th>
                 @if (!isStoreManager())
                     <th>{{ __('lang.unit_price') }}</th>
@@ -48,6 +49,9 @@
                     @if ($show_invoice_no == true)
                         <x-filament-tables::cell>
                             {{ '(' . $invoice_item->purchase_invoice_id . ') ' . $invoice_item->invoice_no }}
+                        </x-filament-tables::cell>
+                        <x-filament-tables::cell>
+                            {{ $invoice_item->supplier_name }}
                         </x-filament-tables::cell>
                     @endif
                     <x-filament-tables::cell>
