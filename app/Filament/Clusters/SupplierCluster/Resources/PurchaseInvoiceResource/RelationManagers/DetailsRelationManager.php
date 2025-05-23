@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierCluster\Resources\PurchaseInvoiceResource\RelationManagers;
 
+use App\Models\PurchaseInvoice;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -43,8 +44,9 @@ class DetailsRelationManager extends RelationManager
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');
                     })),
-                Tables\Columns\TextColumn::make('total_amount')->label(__('lang.total_amount'))->alignCenter(true)
+                Tables\Columns\TextColumn::make('unit_total_price')->label(__('lang.total_amount'))->alignCenter(true)
                     ->hidden(fn(): bool => isStoreManager())
+                    ->summarize(Sum::make())
                     ->formatStateUsing(fn($state) => formatMoney($state)),
             ])
             ->filters([
@@ -56,6 +58,7 @@ class DetailsRelationManager extends RelationManager
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
