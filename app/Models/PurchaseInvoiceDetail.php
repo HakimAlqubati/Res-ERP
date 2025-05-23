@@ -20,6 +20,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
         'price',
         'package_size',
         'waste_stock_percentage',
+        'unit_total_price',
     ];
     protected $auditInclude = [
         'purchase_invoice_id',
@@ -104,5 +105,13 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 $purchaseInvoiceDetail->purchaseInvoice
             );
         });
+    }
+    public function inventoryTransactions()
+    {
+        return \App\Models\InventoryTransaction::query()
+            ->where('product_id', $this->product_id)
+            ->where('unit_id', $this->unit_id)
+            ->where('transactionable_id', $this->purchase_invoice_id)
+            ->where('transactionable_type', \App\Models\PurchaseInvoice::class);
     }
 }
