@@ -56,6 +56,9 @@ class ProductPriceHistoriesRelationManager extends RelationManager
         ->striped()
         ->columns([ 
 
+            Tables\Columns\TextColumn::make('product.name')
+                ->label('Product')
+                ,
             Tables\Columns\TextColumn::make('old_price')
                 ->label('Old Price')
                 ,
