@@ -65,4 +65,8 @@ class StockSupplyOrder extends Model implements Auditable
     {
         return $this->morphTo();
     }
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
 }

@@ -164,6 +164,8 @@ class StockSupplyOrderResource extends Resource
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('creator.name')
+                    ->label('Created By')->toggleable(isToggledHiddenByDefault: false)->sortable(),
             ])
             ->filters([
                 //
