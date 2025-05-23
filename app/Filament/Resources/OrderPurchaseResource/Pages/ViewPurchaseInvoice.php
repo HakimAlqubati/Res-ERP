@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PurchaseInvoiceResource\Pages;
 
 use App\Filament\Resources\PurchaseInvoiceResource;
+use App\Models\PurchaseInvoice;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Resources\Pages\ViewRecord;
@@ -19,8 +20,14 @@ class ViewPurchaseInvoice extends ViewRecord
     }
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // $data['customer_id'] = $this?->record?->customer?->name;
-        // $data['branch_id'] = $this?->record?->branch?->name;
+        $purchaseInvoice = PurchaseInvoice::with('details')->find($this->record->id);
+        if ($purchaseInvoice) {
+            foreach ($purchaseInvoice->details as $detail) {
+                $detail->update([
+                    'unit_total_price' => $detail->quantity * $detail->price,
+                ]);
+            }
+        }
         return $data;
     }
 }
