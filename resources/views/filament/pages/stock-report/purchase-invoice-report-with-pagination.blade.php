@@ -50,10 +50,10 @@
                         <x-filament-tables::cell>
                             {{ '(' . $invoice_item->purchase_invoice_id . ') ' . $invoice_item->invoice_no }}
                         </x-filament-tables::cell>
-                        <x-filament-tables::cell>
-                            {{ $invoice_item->supplier_name }}
-                        </x-filament-tables::cell>
                     @endif
+                    <x-filament-tables::cell>
+                        {{ $invoice_item->supplier_name }}
+                    </x-filament-tables::cell>
                     <x-filament-tables::cell>
                         {{ $invoice_item->purchase_date }}
                     </x-filament-tables::cell>
