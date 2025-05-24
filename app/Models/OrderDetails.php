@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class OrderDetails extends Model implements Auditable
@@ -145,6 +146,9 @@ class OrderDetails extends Model implements Auditable
             }
 
             foreach ($dirty as $field => $newValue) {
+                if ($field == 'total_unit_price') {
+                    continue;
+                }
                 $oldValue = $orderDetail->getOriginal($field);
                 $messageParts[] = "$field: $oldValue -> $newValue";
             }
