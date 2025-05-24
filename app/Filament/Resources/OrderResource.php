@@ -185,7 +185,7 @@ class OrderResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-
+            ->paginated([10, 25, 50, 100])
             ->deferLoading()
             ->striped()
             ->extremePaginationLinks()
@@ -229,10 +229,7 @@ class OrderResource extends Resource
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
-                IconColumn::make('has_inventory_impact')
-                    ->label('')
-                    ->boolean()->toggleable(isToggledHiddenByDefault: true)
-                    ->alignCenter(),
+
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
             ])
@@ -386,6 +383,7 @@ class OrderResource extends Resource
     {
         return [
             RelationManagers\OrderDetailsRelationManager::class,
+            RelationManagers\LogsRelationManager::class,
         ];
     }
 
