@@ -174,9 +174,9 @@ class MultiProductsInventoryService
         $result = [];
 
         foreach ($unitPrices as $unitPrice) {
-            $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
+            if ($unitPrice['package_size'] <= 0) continue;
+            $packageSize = $unitPrice['package_size']; // يضمن عدم القسمة على صفر
             $remainingQty = round($remQty / $packageSize, 2);
-
             // نحاول نجيب السعر من المخزون حسب الوحدة
             $unitId = $unitPrice['unit_id'];
 
@@ -310,7 +310,7 @@ class MultiProductsInventoryService
 
 
 
- 
+
 
     public function getLastUnitByPackageSize($productId)
     {

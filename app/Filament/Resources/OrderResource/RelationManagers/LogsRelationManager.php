@@ -57,4 +57,14 @@ class LogsRelationManager extends RelationManager
             ->actions([])
             ->bulkActions([]);
     }
+    public static function modifyQueryUsing(Builder $query): Builder
+    {
+        return $query->where(function ($query) {
+            $query->where('log_type', '!=', OrderLog::TYPE_UPDATED)
+                ->orWhere(function ($query) {
+                    $query->where('log_type', OrderLog::TYPE_UPDATED)
+                        ->whereRaw("message NOT LIKE '%Updated fields%'");
+                });
+        });
+    }
 }

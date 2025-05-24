@@ -152,4 +152,9 @@ class OrderDetailsRelationManager extends RelationManager
     {
         return false;
     }
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        return $ownerRecord->orderDetails->count();
+    }
 }
