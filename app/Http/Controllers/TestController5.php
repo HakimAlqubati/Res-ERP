@@ -33,27 +33,7 @@ class TestController5 extends Controller
             'data' => $purchasedData
         ];
     }
-    public  function getProductSummaryPerExcelImport(Request $request)
-    {
-        $filters = $request->only([
-            'product_id',
-            'unit_id',
-            'purchase_invoice_id',
-            'date_from',
-            'date_to',
-            'details'
-        ]);
-
-        $groupByInvoice = $request->boolean('group_by_invoice', false);
-        $groupByPrice = $request->boolean('group_by_price', false);
-
-        $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $purchasedData = $reportService->getProductSummaryPerExcelImport($filters, $groupByInvoice, $groupByPrice);
-        return [
-            'count' => count($purchasedData),
-            'data' => $purchasedData
-        ];
-    }
+   
 
 
     public function orderdData(Request $request)
@@ -72,20 +52,7 @@ class TestController5 extends Controller
     }
 
 
-    public function orderdDataFromExcelImport(Request $request)
-    {
-        $filters = $request->only([
-            'product_id',
-            'details',
-        ]);
-
-        $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $orderdData = $reportService->getOrderedProductsFromExcelImport($filters);
-        return [
-            'count' => count($orderdData),
-            'data' => $orderdData,
-        ];
-    }
+     
 
     public function purchasedVSordered(Request $request)
     {

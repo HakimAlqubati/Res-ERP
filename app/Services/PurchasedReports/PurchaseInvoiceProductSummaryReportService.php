@@ -16,7 +16,7 @@ class PurchaseInvoiceProductSummaryReportService
         $query = DB::table('inventory_transactions')
             ->join('products', 'inventory_transactions.product_id', '=', 'products.id')
             ->join('units', 'inventory_transactions.unit_id', '=', 'units.id')
-            
+
             ->select(
                 'products.id as product_id',
                 'products.name as product_name',
@@ -45,7 +45,7 @@ class PurchaseInvoiceProductSummaryReportService
             $query->where('inventory_transactions.transactionable_id', $filters['purchase_invoice_id']);
         }
 
-       
+
 
         // ✅ الأعمدة الإضافية حسب خيارات التجميع
         if ($groupByInvoice) {
@@ -123,7 +123,6 @@ class PurchaseInvoiceProductSummaryReportService
 
             // نحول كل الكميات للوحدة الصغيرة
             foreach ($entries as $entry) {
-
                 $multiplier = $entry->package_size / $smallestPackageSize;
                 $convertedQty = $entry->qty * $multiplier;
                 $totalQty += $convertedQty;
@@ -232,6 +231,7 @@ class PurchaseInvoiceProductSummaryReportService
 
     public function calculatePurchaseVsOrderedDifference(array $purchased, array $ordered)
     {
+
         $orderedMap = collect($ordered)->keyBy('product_id');
         $report = [];
 
@@ -242,6 +242,11 @@ class PurchaseInvoiceProductSummaryReportService
             $purchasedQty = round($purchase['qty'], 2);
             $orderedQty = round($orderedQty, 2);
             // if ($orderedQty > $purchasedQty) {
+            $latestPrice = $this->getLatestPurchasePrice($productId);
+
+            $lastPrice = ($latestPrice && $latestPrice->package_size > 0)
+                ? ($latestPrice->price / $latestPrice->package_size)
+                : $purchase['price'];
             $report[] = [
                 'product_id'     => $productId,
                 'product_name'   => $purchase['product_name'],
@@ -250,12 +255,24 @@ class PurchaseInvoiceProductSummaryReportService
                 'purchased_qty'  => $purchasedQty,
                 'ordered_qty'    => $orderedQty,
                 'difference'     => $difference,
-                'unit_price' => round($purchase['price'], 2),
-                'price' => round($purchase['price'] * $difference, 2),
+                'unit_price'     => round($lastPrice, 2),
+                'price'          => round($lastPrice * $difference, 2),
             ];
             // }
         }
 
         return $report;
+    }
+
+    public function getLatestPurchasePrice(int $productId)
+    {
+        return DB::table('inventory_transactions')
+            ->select('price', 'unit_id', 'package_size')
+            ->where('product_id', $productId)
+            ->where('movement_type', 'in')
+            ->where('transactionable_type', 'App\\Models\\PurchaseInvoice')
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->first();;
     }
 }
