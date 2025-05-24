@@ -22,6 +22,7 @@ use App\Models\Employee;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
+use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\Supplier;
 use App\Models\Task;
@@ -672,8 +673,15 @@ Route::get('/testMail/{name}/{email}', function ($name, $email) {
 });
 
 Route::get('/testLog', function () {
-    $r = [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3020, 3021, 3022, 3023, 3024, 3025, 3026, 3028, 3033, 3035, 3036, 3039, 3054, 3056, 3057, 3058, 3065, 3072, 3805, 3806, 3813, 3814, 3815, 3816, 3817, 3818, 3819, 3820, 3821, 3822, 3823, 3824, 3825, 3826, 3827, 3828, 3829, 3839, 4359, 4393, 4394, 4401, 4406, 4410, 4417, 4421, 4431, 4928, 4933, 4936, 4937, 4938, 4942, 4948, 4951, 4952, 4953, 4954, 4998, 5000, 5005, 5006, 5009, 5010, 5011, 5674, 5675, 5677, 5678, 5680, 5681, 5682, 5684, 5689, 5695, 5701, 5702, 6421, 6550, 6554, 6856];
-    dd(count($r));
+    $invoices = PurchaseInvoice::with(['details', 'store'])
+        ->leftJoin('goods_received_notes as grns', 'purchase_invoices.id', '=', 'grns.purchase_invoice_id')
+        ->whereNull('grns.purchase_invoice_id')
+        ->select('purchase_invoices.*') // هام: نختار فقط أعمدة الفواتير
+        ->count();
+    return $invoices;
+
+    // $r = [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3020, 3021, 3022, 3023, 3024, 3025, 3026, 3028, 3033, 3035, 3036, 3039, 3054, 3056, 3057, 3058, 3065, 3072, 3805, 3806, 3813, 3814, 3815, 3816, 3817, 3818, 3819, 3820, 3821, 3822, 3823, 3824, 3825, 3826, 3827, 3828, 3829, 3839, 4359, 4393, 4394, 4401, 4406, 4410, 4417, 4421, 4431, 4928, 4933, 4936, 4937, 4938, 4942, 4948, 4951, 4952, 4953, 4954, 4998, 5000, 5005, 5006, 5009, 5010, 5011, 5674, 5675, 5677, 5678, 5680, 5681, 5682, 5684, 5689, 5695, 5701, 5702, 6421, 6550, 6554, 6856];
+    // dd(count($r));
     // \Illuminate\Support\Facades\Log::error('Testing log error');
     // dd('Logged');
 });

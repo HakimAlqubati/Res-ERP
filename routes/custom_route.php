@@ -3,11 +3,13 @@
 use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FixFifoController;
+use App\Http\Controllers\FixOrderWithFifoController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
 use App\Http\Controllers\TestController5;
 use App\Http\Controllers\TestController6;
 use App\Http\Controllers\TestController7;
+use App\Http\Controllers\TestController8;
 use App\Models\Audit;
 use App\Models\Order;
 use App\Models\Product;
@@ -93,29 +95,30 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 
 
 Route::get('/testAllocateFifo', function () {
-    $order = Order::find(258);
-    $fifoService = new \App\Services\FifoMethodService();
-    $updated = [];
-    $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
-    foreach ($products as  $product) {
-        $unitPrices = $product->allUnitPrices;
+    
+    $order = Order::find(255);
+    $fifoService = new \App\Services\FifoMethodService($order);
+    // $updated = [];
+    // $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
+    // foreach ($products as  $product) {
+    //     $unitPrices = $product->allUnitPrices;
 
-        foreach ($unitPrices as $unitPrice) {
-            $fifoService = new FifoMethodService();
+    //     foreach ($unitPrices as $unitPrice) {
+    //         $fifoService = new FifoMethodService();
 
-            $allocations[$unitPrice->unit_id] = $fifoService->getAllocateFifo(
-                $unitPrice->product_id,
-                $unitPrice->unit_id,
-                0.0000001
-            );
-        }
-        $updated[$product->id] = $allocations;
-    }
-    return $updated;
+    //         $allocations[$unitPrice->unit_id] = $fifoService->getAllocateFifo(
+    //             $unitPrice->product_id,
+    //             $unitPrice->unit_id,
+    //             0.0000001
+    //         );
+    //     }
+    //     $updated[$product->id] = $allocations;
+    // }
+    // return $updated;
     $allocations = $fifoService->getAllocateFifo(
-        158,
-        1,
-        280
+        115,
+        3,
+        100
     );
     return $allocations;
 });
@@ -140,3 +143,15 @@ Route::get('/updatePriceUsingFifo', [TestController7::class, 'updatePriceUsingFi
 Route::get('/getOrderOutTransactions', [TestController7::class, 'getOrderOutTransactions']);
 Route::get('/fixOrderPrices', [TestController7::class, 'fixOrderPrices']);
 Route::get('/getOverConsumedSuppliesReport', [TestController7::class, 'getOverConsumedSuppliesReport']);
+
+Route::get('/updateUnitPrices', [TestController7::class, 'updateUnitPrices']);
+
+Route::get('/getComponentsData', [TestController7::class, 'getComponentsData']);
+Route::get('/fixInventoryForReadyOrder/{orderId}', [FixOrderWithFifoController::class, 'fixInventoryForReadyOrder']);
+Route::get('/getAllocationsPreview/{orderId}', [FixOrderWithFifoController::class, 'getAllocationsPreview']);
+
+
+Route::get('/testJobAllocationOut', [TestController8::class, 'testJobAllocationOut']);
+
+
+

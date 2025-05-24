@@ -6,8 +6,10 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\UnitPrice;
 use App\Services\OrderDetailsPriceUpdaterByFifo;
+use App\Services\ProductItemCalculatorService;
 use App\Services\UnitPriceFifoUpdater;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TestController7 extends Controller
 {
@@ -116,5 +118,138 @@ class TestController7 extends Controller
         }
 
         return $overConsumed;
+    }
+
+
+    public function updateUnitPrices(Request $request)
+    {
+        // التحقق من صحة البيانات المدخلة
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+            'from_unit_id' => 'required|integer|exists:units,id',
+            'to_unit_id' => 'required|integer|exists:units,id',
+            'from_package_size' => 'required|numeric|min:0',
+            'to_package_size' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            $this->updateUnitIdAndPackageSizeForProduct(
+                $validated['product_id'],
+                $validated['from_unit_id'],
+                $validated['to_unit_id'],
+                $validated['from_package_size'],
+                $validated['to_package_size']
+            );
+
+            return response()->json([
+                'status' => 'success',
+                'message' => '✅ تم تحديث unit_id و package_size بنجاح لجميع الجداول.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '❌ حدث خطأ أثناء التحديث: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+    public function updateUnitIdAndPackageSizeForProduct(
+        $productId,
+        $fromUnitId,
+        $toUnitId,
+        $fromPackageSize,
+        $toPackageSize
+    ): void {
+        DB::transaction(function () use ($productId, $fromUnitId, $toUnitId, $fromPackageSize, $toPackageSize) {
+            // unit_prices
+            DB::table('unit_prices')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            // purchase_invoice_details
+            DB::table('purchase_invoice_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            // orders_details
+            DB::table('orders_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            // goods_received_note_details
+            DB::table('goods_received_note_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            // stock_supply_order_details
+            DB::table('stock_supply_order_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            // stock_issue_order_details
+            DB::table('stock_issue_order_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            // inventory_transactions
+            DB::table('inventory_transactions')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
+
+            logger("✅ Updated unit_id and package_size for product #$productId from unit $fromUnitId (pkg $fromPackageSize) to unit $toUnitId (pkg $toPackageSize)");
+        });
+    }
+
+    public function getComponentsData(Request $request)
+    {
+        $parentProductId = $request->input('parent_product_id');
+        $quantity = $request->input('quantity', 1); // default to 1 if not provided
+
+        if (!$parentProductId) {
+            return response()->json(['error' => 'parent_product_id is required'], 400);
+        }
+
+        $components = ProductItemCalculatorService::calculateComponents((int)$parentProductId, (float)$quantity);
+
+        return response()->json([
+            'success' => true,
+            'parent_product_id' => $parentProductId,
+            'quantity_requested' => $quantity,
+            'components' => $components,
+        ]);
     }
 }

@@ -11,7 +11,7 @@ use App\Http\Controllers\TestController3;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderDetails;
-use App\Models\User; 
+use App\Models\User;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -108,24 +108,22 @@ Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportControl
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
 Route::get('/testInventoryPurchasedReport', [App\Http\Controllers\Api\InventoryReportController::class, 'testInventoryPurchasedReport']);
 Route::get('/testInventoryReport2', function (Request $request) {
-    $productIds = OrderDetails::where('order_id', $request->order_id)->pluck('product_id')->toArray();
-    $report = [];
-    foreach ($productIds as $value) {
-        $service = new MultiProductsInventoryService();
-        $productInventory = $service->getInventoryForProduct($value);
-
-
-        // ✅ فلترة العناصر التي تحتوي على remaining_qty > 0 فقط
-        $filteredInventory = collect($productInventory)->filter(function ($item) {
-            return $item['remaining_qty'] <= 0;
-        })->values()->all();
-
-        if (!empty($filteredInventory)) {
-            $report[] = $filteredInventory;
-        }
-    }
-    return response()->json($report);
-}); 
+    $productId = $request->input('product_id');
+    $unitId = $request->input('unit_id');
+    $storeId = $request->input('store_id');
+    $inventoryService = new MultiProductsInventoryService(
+        null,
+        $productId,
+        $unitId,
+        $storeId
+    );
+    $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
+        ->where('unit_id', $unitId)->with('unit')
+        ->first();
+    $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
+    $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+    return response()->json($inventoryRemainingQty);
+});
 
 Route::get('/branches', function () {
     return Branch::get(['id', 'name']);

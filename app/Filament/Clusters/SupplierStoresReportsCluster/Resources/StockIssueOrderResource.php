@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\StockIssueOrder;
 use App\Models\Store;
 use App\Models\UnitPrice;
+use App\Models\User;
 use App\Services\MultiProductsInventoryService;
 use Closure;
 use Filament\Forms;
@@ -46,7 +47,8 @@ class StockIssueOrderResource extends Resource
     {
         return $form
             ->schema([
-                Fieldset::make()->label('')->schema([
+                Fieldset::make()->label('')
+                ->schema([
                     DatePicker::make('order_date')
                         ->required()->default(now())
                         ->label('Order Date'),
@@ -60,7 +62,7 @@ class StockIssueOrderResource extends Resource
                         )
                         ->default(getDefaultStore())
                         ->required()
-                        ->label('Store'),
+                        ->label('Store'), 
 
 
 
@@ -153,7 +155,7 @@ class StockIssueOrderResource extends Resource
                                 ]),
                             TextInput::make('remaining_quantity')
                                 ->numeric()
-                                ->readOnly()
+                                ->readOnly()->visibleOn('create')
                                 ->label('Remaining Qty')
 
 

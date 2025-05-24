@@ -174,4 +174,9 @@ class GoodsReceivedNote extends Model implements Auditable
             ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
             ->exists();;
     }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
 }

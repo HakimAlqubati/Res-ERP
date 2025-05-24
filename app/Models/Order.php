@@ -76,8 +76,7 @@ class Order extends Model implements Auditable
         'status_log_date_time',
         'status_log_creator_name',
         'store_names',
-        'store_ids',
-        'has_inventory_impact',
+        'store_ids', 
     ];
 
 
@@ -423,12 +422,5 @@ class Order extends Model implements Auditable
     {
         return $this->belongsTo(Supplier::class);
     }
-
-    public function getHasInventoryImpactAttribute(): bool
-    {
-        return \App\Models\InventoryTransaction::where('transactionable_type', self::class)
-            ->where('transactionable_id', $this->id)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
-            ->exists();
-    }
+    
 }

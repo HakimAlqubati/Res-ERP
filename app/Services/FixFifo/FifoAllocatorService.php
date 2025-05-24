@@ -24,7 +24,7 @@ class FifoAllocatorService
         $supplies = DB::table('inventory_transactions')
             ->where('movement_type', 'in')
             ->where('product_id', $productId)
-            ->orderBy('transaction_date')
+            ->orderBy('id')
             ->whereNull('deleted_at')
             ->get([
                 'id',
@@ -54,10 +54,28 @@ class FifoAllocatorService
                 'o.created_at',
             ]);
 
+        $issueOrders = DB::table('stock_issue_order_details as sid')
+            ->join('stock_issue_orders as si', 'sid.stock_issue_order_id', '=', 'si.id')
+            ->where('sid.product_id', $productId)
+
+            ->whereNull('si.deleted_at')
+            ->orderBy('si.id')
+            ->get([
+                'sid.unit_id',
+                'sid.package_size',
+                'sid.quantity as available_quantity',
+                'sid.stock_issue_order_id as order_id',
+                'si.created_at',
+                DB::raw("'stock_issue' as source_type")
+            ]);
         $allocations = [];
-
-        foreach ($orders as $order) {
-
+        $allOrders = $orders->merge($issueOrders);
+        $allOrders = $allOrders->sortBy('created_at')->values();
+        foreach ($allOrders as $order) {
+            // $transactionableType = isset($order->stock_issue_order_id) ? \App\Models\StockIssueOrder::class : \App\Models\Order::class;
+            $transactionableType = isset($order->source_type) && $order->source_type === 'stock_issue'
+                ? \App\Models\StockIssueOrder::class
+                : \App\Models\Order::class;
             $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
                 ->where('unit_id', $order->unit_id)->with('unit')
                 ->first();
@@ -75,8 +93,10 @@ class FifoAllocatorService
                 // تحديد الكمية التي يمكن تخصيصها من هذا التوريد لهذا الطلب
                 $allocatedQty = min($remainingQty, $supplyAvailable);
                 $orderedPrice = ($supply->price * $order->package_size) / $supply->package_size;
+                if (!$targetUnit) {
+                    continue;
+                }
                 // حفظ سجل التخصيص كـ حركة مخزون OUT (جاهزة للحفظ في جدول inventory_transactions)
-
                 $quantity = round($allocatedQty / $targetUnit->package_size, 2);
                 if ($quantity <= 0) {
                     continue;
@@ -91,17 +111,18 @@ class FifoAllocatorService
                     'package_size_supply' => $supply->package_size,
                     'store_id'              => $supply->store_id,                  // المخزن الذي خرجت منه الكمية
                     'price'                 => $orderedPrice,                     // السعر المستخدم من التوريد
-                    'notes'                 => sprintf(                             // ملاحظات مفصلة توضح المصدر والسعر
+                    'notes' => sprintf(
                         'Stock deducted for Order #%s from %s #%s with price %s',
                         $order->order_id,
-                        class_basename($supply->transactionable_type ?? 'Unknown'),
+                        \Illuminate\Support\Str::headline(class_basename($supply->transactionable_type ?? 'Unknown')),
                         $supply->transactionable_id ?? 'N/A',
                         number_format($orderedPrice, 2)
                     ),
                     'movement_type'         => 'out',                              // نوع الحركة: إخراج من المخزون
                     'created_at'      => $order->created_at,                              // تاريخ تنفيذ الحركة
                     'transactionable_id'    => $supply->transactionable_id,       // معرف مصدر التوريد (مثل PurchaseInvoice)
-                    'transactionable_type'  => $supply->transactionable_type,     // نوع المصدر (مثل PurchaseInvoice, ExcelImport...)
+                    'transactionable_type' => $transactionableType,
+
                     'source_transaction_id' => $supply->id,                        // السطر الأصلي الذي خرجت منه الكمية (FIFO)
                 ];
 
@@ -141,55 +162,9 @@ class FifoAllocatorService
                 $unitPrice = UnitPrice::where('product_id', $productId)
                     ->where('unit_id', $unitId)
                     ->first();
-
-                if (!$unitPrice) continue;
-
-                $packageSize = $unitPrice->package_size;
-                $requiredQty = $detail->available_quantity * $packageSize;
-
-                // جلب التوريدات المرتبة حسب التاريخ
-                $supplies = DB::table('inventory_transactions')
-                    ->where('movement_type', 'in')
-                    ->where('product_id', $productId)
-                    ->whereNull('deleted_at')
-                    ->orderBy('transaction_date')
-                    ->get();
-
-                foreach ($supplies as $key => $supply) {
-                    $availableInSupply = $supply->quantity * $supply->package_size;
-
-                    if ($availableInSupply <= 0) continue;
-
-                    $allocatedQty = min($requiredQty, $availableInSupply);
-
-                    $allocations[] = [
-                        'order_id'              => $order->id,
-                        'product_id'            => $productId,
-                        'unit_id'               => $unitId,
-                        'unit'                  => $detail->unit->name,
-                        'quantity'              => round($allocatedQty / $packageSize, 2),
-                        'package_size'          => $packageSize,
-                        'store_id'              => $supply->store_id,
-                        'price'                 => $supply->price,
-                        'notes'                 => sprintf(
-                            'Stock deducted for Order #%s from %s #%s with price %s',
-                            $order->id,
-                            class_basename($supply->transactionable_type ?? 'Unknown'),
-                            $supply->transactionable_id ?? 'N/A',
-                            number_format($supply->price, 2)
-                        ),
-                        'movement_type'         => 'out',
-                        'created_at'            => $order->order_date ?? now(),
-                        'transactionable_id'    => $supply->transactionable_id,
-                        'transactionable_type'  => $supply->transactionable_type,
-                        'source_transaction_id' => $supply->id,
-                    ];
-
-                    $supplies[$key]->quantity -= $allocatedQty / $supply->package_size;
-                    $requiredQty -= $allocatedQty;
-
-                    if ($requiredQty <= 0) break;
-                }
+                $allocations[] = [
+                    $unitPrice
+                ];
             }
         }
 

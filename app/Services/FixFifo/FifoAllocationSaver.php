@@ -32,7 +32,7 @@ class FifoAllocationSaver
                     'movement_date'      => $allocation['created_at'],
                     'notes'                 => $allocation['notes'],
                     'transactionable_id'    => $allocation['order_id'],
-                    'transactionable_type'  => Order::class,
+                    'transactionable_type' => $allocation['transactionable_type'],
                     'source_transaction_id' => $allocation['source_transaction_id'],
                 ]);
             }
