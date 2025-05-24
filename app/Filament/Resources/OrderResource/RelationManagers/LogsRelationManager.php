@@ -21,6 +21,7 @@ class LogsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'asc')
             ->columns([
                 Tables\Columns\TextColumn::make('log_type')
                     ->label('Type')
