@@ -35,7 +35,7 @@ class LogsRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('message')
                     ->label('Notes')
-                    ->limit(50),
+                    ->wrap(),
 
                 Tables\Columns\TextColumn::make('new_status')
                     ->label('New Status')
