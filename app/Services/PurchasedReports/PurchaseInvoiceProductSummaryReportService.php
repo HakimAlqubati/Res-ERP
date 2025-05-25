@@ -71,7 +71,7 @@ class PurchaseInvoiceProductSummaryReportService
         $query->groupBy(...$groupBy);
 
         $result = $query
-            // ->orderBy('inventory_transactions.transactionable_id', 'asc')
+            ->orderBy('inventory_transactions.transactionable_id', 'asc')
             ->get();
         if (isset($filters['details']) && $filters['details'] == true) {
             return $result;
