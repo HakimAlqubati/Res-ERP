@@ -32,23 +32,25 @@ class PurchaseInvoiceProductSummaryReportService
             // ->whereIn('inventory_transactions.transactionable_type', ['App\\Models\\PurchaseInvoice', 'App\\Models\\GoodsReceivedNote'])
         ;
 
-        if (isset($filters['category_id'])) {
-
-            $query
-                ->join('categories', 'products.category_id', '=', 'categories.id')
-                ->where('categories.id', $filters['category_id']);
+        if (
+            isset($filters['category_id']) ||
+            isset($filters['only_manufacturing']) ||
+            isset($filters['only_unmanufacturing'])
+        ) {
+            $query->join('categories', 'products.category_id', '=', 'categories.id');
         }
-        // ✅ تطبيق الفلاتر الخاصة بالتصنيع
+
+        // ✅ الفلاتر بعد التأكد من وجود join
+        if (isset($filters['category_id'])) {
+            $query->where('categories.id', $filters['category_id']);
+        }
+
         if (isset($filters['only_manufacturing']) && $filters['only_manufacturing'] == 1) {
-            $query
-                ->join('categories', 'products.category_id', '=', 'categories.id')
-                ->where('categories.is_manafacturing', true);
+            $query->where('categories.is_manafacturing', true);
         }
 
         if (isset($filters['only_unmanufacturing']) && $filters['only_unmanufacturing'] == 1) {
-            $query
-                ->join('categories', 'products.category_id', '=', 'categories.id')
-                ->where('categories.is_manafacturing', false);
+            $query->where('categories.is_manafacturing', false);
         }
         // ✅ تطبيق فلتر واحد فقط (حسب الموجود)
         if (isset($filters['product_id'])) {
