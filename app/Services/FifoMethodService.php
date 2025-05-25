@@ -114,36 +114,36 @@ class FifoMethodService
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
-        if (isset($this->sourceModel)) {
-            $isManufacturingProduct = Product::find($productId)->is_manufacturing;
-            $managedStores = auth()->user()->managed_stores_ids ?? [];
-            if (count($managedStores) == 0) {
-                Log::info("Your are not a keeper for any Store");
-                throw new \Exception("Your are not a keeper for any Store");
-            }
-            foreach ($managedStores as $index => $storeId) {
+        // if (isset($this->sourceModel)) {
+        // $isManufacturingProduct = Product::find($productId)->is_manufacturing;
+        // $managedStores = auth()->user()->managed_stores_ids ?? [];
+        // if (count($managedStores) == 0) {
+        //     Log::info("Your are not a keeper for any Store");
+        //     throw new \Exception("Your are not a keeper for any Store");
+        // }
+        // foreach ($managedStores as $index => $storeId) {
 
-                $productName = $targetUnit->product->name;
-                $unitName = $targetUnit->unit->name;
+        // $productName = $targetUnit->product->name;
+        // $unitName = $targetUnit->unit->name;
 
-                $inventoryService = new MultiProductsInventoryService(
-                    null,
-                    $productId,
-                    $unitId,
-                    $storeId
-                );
-                $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
-                $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
-                // if ($index === array_key_last($managedStores)) {
+        // $inventoryService = new MultiProductsInventoryService(
+        //     null,
+        //     $productId,
+        //     $unitId,
+        //     null
+        // );
+        // $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
+        // $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+        // if ($index === array_key_last($managedStores)) {
 
-                if ($requestedQty > $inventoryRemainingQty) {
+        // if ($requestedQty > $inventoryRemainingQty) {
 
-                    Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-                    throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName" . " in storeID " . $storeId);
-                }
-                // }
-            }
-        }
+        //     Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
+        //     throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName" . " in storeID " . $storeId);
+        // }
+        // }
+        // }
+        // }
 
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
@@ -156,15 +156,15 @@ class FifoMethodService
         $entryQtyBasedOnUnit = 0;
 
         foreach ($entries as $entry) {
-            if (isset($this->sourceModel)) {
-                $store = Store::find($entry->store_id);
-                $branchManagersRelatedStore = $store->branches->pluck('manager_id')->toArray() ?? [];
+            // if (isset($this->sourceModel)) {
+            //     $store = Store::find($entry->store_id);
+            //     $branchManagersRelatedStore = $store->branches->pluck('manager_id')->toArray() ?? [];
 
-                $isStoreCentralKitchen = $store->is_central_kitchen;
-                if ($isStoreCentralKitchen && !$isManufacturingProduct && !in_array(auth()->id(), $branchManagersRelatedStore)) {
-                    throw new \Exception($productName  . " is not manufacturing product");
-                }
-            }
+            //     $isStoreCentralKitchen = $store->is_central_kitchen;
+            //     if ($isStoreCentralKitchen && !$isManufacturingProduct && !in_array(auth()->id(), $branchManagersRelatedStore)) {
+            //         throw new \Exception($productName  . " is not manufacturing product");
+            //     }
+            // }
 
             if (!$targetUnit) {
                 continue;
