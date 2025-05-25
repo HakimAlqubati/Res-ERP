@@ -121,7 +121,7 @@ class FifoMethodService
                 Log::info("Your are not a keeper for any Store");
                 throw new \Exception("Your are not a keeper for any Store");
             }
-
+dd($managedStores);
             foreach ($managedStores as $index => $storeId) {
 
                 $productName = $targetUnit->product->name;
