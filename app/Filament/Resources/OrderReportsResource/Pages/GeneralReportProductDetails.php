@@ -31,7 +31,7 @@ class GeneralReportProductDetails extends Page
         $total_price = 0;
         $total_quantity = 0;
         $report_data = $this->getReportDetails($this->start_date, $this->end_date, $this->branch_id, $this->category_id);
-        
+
         if (isset($report_data['total_price'])) {
             $total_price = $report_data['total_price'];
         }
@@ -127,7 +127,7 @@ class GeneralReportProductDetails extends Page
             $obj->symbol = getDefaultCurrency();
             $final_result['data'][] = $obj;
         }
-        $final_result['total_price'] = number_format($total_price, 2) . ' ' . getDefaultCurrency();
+        $final_result['total_price'] =  getDefaultCurrency() . ' ' . number_format($total_price, 2);
         $final_result['total_quantity'] = number_format($total_quantity, 2);
 
         return $final_result;

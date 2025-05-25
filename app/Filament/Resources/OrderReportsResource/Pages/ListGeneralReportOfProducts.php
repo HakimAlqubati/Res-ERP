@@ -30,16 +30,16 @@ class ListGeneralReportOfProducts extends ListRecords
         return $attributes['category_id'];
         return $attributes['product'] . '-' . $attributes['branch'] . '-' . $attributes['unit'];
     }
- 
+
 
 
     protected function getViewData(): array
-    {  
+    {
         $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
-        
+
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
-        
+
         $report_data['data'] = [];
         $total_quantity = 0;
         $total_price = 0;
@@ -141,14 +141,14 @@ class ListGeneralReportOfProducts extends ListRecords
             $obj->category = $cat_name;
             $obj->quantity =  round(isset($data[$cat_id]) ? $data[$cat_id]['available_quantity'] : 0, 0);
             $price = (isset($data[$cat_id]) ? $data[$cat_id]['price'] : '0.00');
-            $obj->price =  formatMoney($price, getDefaultCurrency());
+            $obj->price = $price;
             $obj->amount = number_format($price, 2);
             $obj->symbol = getDefaultCurrency();
             $total_price += $price;
             $total_quantity += $obj->quantity;
             $final_result['data'][] = $obj;
         }
-        $final_result['total_price'] = number_format($total_price, 2) . ' ' . getDefaultCurrency();
+        $final_result['total_price'] =     $total_price ;
         $final_result['total_quantity'] = number_format($total_quantity, 2);
 
         return $final_result;

@@ -51,8 +51,8 @@ if (!function_exists('getName')) {
 if (!function_exists('formatMoney')) {
     function formatMoney($amount)
     {
-        $currency = settingWithDefault('currency_symbol', 'MYR');
-        return $currency . ' ' . number_format($amount, 2);
+        $currency = settingWithDefault('currency_symbol', 'RM');
+        return $currency .' '.  number_format($amount, 2) ;
     }
 }
 
@@ -276,7 +276,7 @@ if (!function_exists('getDefaultStore')) {
 if (!function_exists('getDefaultCurrency')) {
     function getDefaultCurrency()
     {
-        return setting('currency_symbol');
+        return settingWithDefault('currency_symbol', 'RM');
     }
 }
 

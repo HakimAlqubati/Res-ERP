@@ -43,7 +43,7 @@
                         </x-filament-tables::cell>
                         <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
                         @if (!isStoreManager())
-                            <x-filament-tables::cell> {{ $data?->amount . ' ' . $data?->symbol }}
+                            <x-filament-tables::cell> {{ $data?->symbol . ' ' . $data?->amount }}
                             </x-filament-tables::cell>
                         @endif
                     </x-filament-tables::row>

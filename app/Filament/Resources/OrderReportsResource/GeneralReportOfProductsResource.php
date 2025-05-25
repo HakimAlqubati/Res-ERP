@@ -67,7 +67,7 @@ class GeneralReportOfProductsResource extends Resource
             ->filters([
                 SelectFilter::make("branch_id")->placeholder('Select')
                     ->label(__('lang.branch'))
-                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN,Branch::TYPE_POPUP])->active()
+                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP])->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->form([
@@ -176,7 +176,7 @@ class GeneralReportOfProductsResource extends Resource
         }
 
         // Step 5: Set total price and quantity
-        $final_result['total_price'] = number_format($total_price, 2) . ' ' . getDefaultCurrency();
+        $final_result['total_price'] = getDefaultCurrency() . ' ' . number_format($total_price, 2);
         $final_result['total_quantity'] = number_format($total_quantity, 2);
 
         return $final_result;

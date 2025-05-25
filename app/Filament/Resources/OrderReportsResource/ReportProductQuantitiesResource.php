@@ -69,7 +69,8 @@ class ReportProductQuantitiesResource extends Resource
                 TextColumn::make('unit'),
                 TextColumn::make('quantity')->alignCenter(true),
                 TextColumn::make('price')
-                    ->hidden(fn(): bool => isStoreManager()),
+                    ->hidden(fn(): bool => isStoreManager())
+                    ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state),
             ])
             ->filters([
                 // SelectFilter::make('product_id')

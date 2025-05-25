@@ -296,7 +296,10 @@ class PurchaseInvoiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
-                    ->alignCenter(true)->money('MYR')
+                    ->alignCenter(true)
+                    ->formatStateUsing(function($state){
+return 'RM '. $state;
+                    })
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()

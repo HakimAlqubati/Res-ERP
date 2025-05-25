@@ -72,8 +72,8 @@
                                 </a>
                             </x-filament-tables::cell>
                             <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['unit_price'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['price'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ getDefaultCurrency().' ' . $data['unit_price'] }}</x-filament-tables::cell>
+                            <x-filament-tables::cell>{{ getDefaultCurrency().' ' . $data['price'] }}</x-filament-tables::cell>
                         </x-filament-tables::row>
                     @endforeach
                 </tbody>
@@ -82,7 +82,7 @@
                         <x-filament-tables::cell colspan="7" class="text-right">Total </x-filament-tables::cell>
 
                         <x-filament-tables::cell>
-                            {{ number_format(array_sum(array_column($reportData, 'price')), 2) }}
+                            {{getDefaultCurrency() .' '. number_format(array_sum(array_column($reportData, 'price')), 2) }}
                         </x-filament-tables::cell>
                     </x-filament-tables::row>
                 </tbody>
