@@ -41,6 +41,7 @@ use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -218,7 +219,7 @@ class PurchaseInvoiceResource extends Resource
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price ?? 0);
                                     $total = round(((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
-                                    
+
                                     $set('total_price', $total ?? 0);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
                                 })->columnSpan(2)->required(),
@@ -297,8 +298,8 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
                     ->alignCenter(true)
-                    ->formatStateUsing(function($state){
-return 'RM '. $state;
+                    ->formatStateUsing(function ($state) {
+                        return 'RM ' . $state;
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
@@ -334,14 +335,38 @@ return 'RM '. $state;
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                // Tables\Filters\TrashedFilter::make(),
                 SelectFilter::make('payment_method_id')
                     ->label('Payment Method')
                     ->options(PaymentMethod::active()->get()->pluck('name', 'id')),
                 SelectFilter::make('supplier_id')
                     ->label('Supplier')
-                    ->options(Supplier::get()->pluck('name', 'id'))
-            ])
+                    ->options(Supplier::get()->pluck('name', 'id')),
+                Tables\Filters\Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('from')->label('From Date'),
+                        DatePicker::make('to')->label('To Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from'], fn($q, $date) => $q->whereDate('date', '>=', $date))
+                            ->when($data['to'], fn($q, $date) => $q->whereDate('date', '<=', $date));
+                    })
+                    ->label('Date Between')
+                    ->indicateUsing(function (array $data): ?string {
+                        if ($data['from'] && $data['to']) {
+                            return "From {$data['from']} to {$data['to']}";
+                        }
+                        if ($data['from']) {
+                            return "From {$data['from']}";
+                        }
+                        if ($data['to']) {
+                            return "Until {$data['to']}";
+                        }
+                        return null;
+                    }),
+
+            ], FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\Action::make('cancel')
                     ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
