@@ -120,7 +120,7 @@ class FifoMethodService
             if (count($managedStores) == 0) {
                 Log::info("Your are not a keeper for any Store");
                 throw new \Exception("Your are not a keeper for any Store");
-            } 
+            }
             foreach ($managedStores as $index => $storeId) {
 
                 $productName = $targetUnit->product->name;
@@ -134,14 +134,14 @@ class FifoMethodService
                 );
                 $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
                 $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
-                if ($index === array_key_last($managedStores)) {
+                // if ($index === array_key_last($managedStores)) {
 
-                    if ($requestedQty > $inventoryRemainingQty) {
+                if ($requestedQty > $inventoryRemainingQty) {
 
-                        Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-                        throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName" . " in storeID " . $storeId);
-                    }
+                    Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
+                    throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName" . " in storeID " . $storeId);
                 }
+                // }
             }
         }
 
