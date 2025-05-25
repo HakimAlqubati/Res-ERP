@@ -13,7 +13,7 @@ class PurchaseInvoiceProductSummaryReportService
         $query = DB::table('inventory_transactions')
             ->join('products', 'inventory_transactions.product_id', '=', 'products.id')
             ->join('units', 'inventory_transactions.unit_id', '=', 'units.id')
-            ->join('categories', 'products.category_id', '=', 'categories.id')
+
 
             ->select(
                 'products.id as product_id',
@@ -23,7 +23,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'inventory_transactions.package_size',
                 DB::raw('SUM(inventory_transactions.quantity) as qty'),
                 DB::raw('SUM(inventory_transactions.price) as price'),
-                DB::raw('MIN(inventory_transactions.transactionable_id) as transactionable_id')
+                // DB::raw('MIN(inventory_transactions.transactionable_id) as transactionable_id')
 
             )
             ->whereNull('inventory_transactions.deleted_at')
@@ -33,15 +33,22 @@ class PurchaseInvoiceProductSummaryReportService
         ;
 
         if (isset($filters['category_id'])) {
-            $query->where('categories.id', $filters['category_id']);
+
+            $query
+                ->join('categories', 'products.category_id', '=', 'categories.id')
+                ->where('categories.id', $filters['category_id']);
         }
         // ✅ تطبيق الفلاتر الخاصة بالتصنيع
         if (isset($filters['only_manufacturing']) && $filters['only_manufacturing'] == 1) {
-            $query->where('categories.is_manafacturing', true);
+            $query
+                ->join('categories', 'products.category_id', '=', 'categories.id')
+                ->where('categories.is_manafacturing', true);
         }
 
         if (isset($filters['only_unmanufacturing']) && $filters['only_unmanufacturing'] == 1) {
-            $query->where('categories.is_manafacturing', false);
+            $query
+                ->join('categories', 'products.category_id', '=', 'categories.id')
+                ->where('categories.is_manafacturing', false);
         }
         // ✅ تطبيق فلتر واحد فقط (حسب الموجود)
         if (isset($filters['product_id'])) {
@@ -73,7 +80,7 @@ class PurchaseInvoiceProductSummaryReportService
         $query->groupBy(...$groupBy);
 
         $result = $query
-            ->orderBy('transactionable_id', 'asc')
+            ->orderBy('inventory_transactions.transactionable_id', 'asc')
             ->get();
         if (isset($filters['details']) && $filters['details'] == true) {
             return $result;
