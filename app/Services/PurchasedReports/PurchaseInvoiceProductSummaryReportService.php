@@ -50,10 +50,7 @@ class PurchaseInvoiceProductSummaryReportService
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
 
-        if (isset($filters['purchase_invoice_id'])) {
-            $query->where('inventory_transactions.transactionable_id', $filters['purchase_invoice_id']);
-        }
-
+ 
 
 
 
@@ -74,7 +71,7 @@ class PurchaseInvoiceProductSummaryReportService
         $query->groupBy(...$groupBy);
 
         $result = $query
-            ->orderBy('inventory_transactions.transactionable_id', 'asc')
+            // ->orderBy('inventory_transactions.transactionable_id', 'asc')
             ->get();
         if (isset($filters['details']) && $filters['details'] == true) {
             return $result;
