@@ -95,8 +95,8 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 
 
 Route::get('/testAllocateFifo', function () {
-    
-    $order = Order::find(255);
+
+    $order = Order::find(305);
     $fifoService = new \App\Services\FifoMethodService($order);
     // $updated = [];
     // $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
@@ -116,9 +116,9 @@ Route::get('/testAllocateFifo', function () {
     // }
     // return $updated;
     $allocations = $fifoService->getAllocateFifo(
-        115,
+        139,
         3,
-        100
+        150
     );
     return $allocations;
 });
@@ -153,5 +153,13 @@ Route::get('/getAllocationsPreview/{orderId}', [FixOrderWithFifoController::clas
 
 Route::get('/testJobAllocationOut', [TestController8::class, 'testJobAllocationOut']);
 
+Route::get('/phpinfo', function () {
+    return phpinfo();
+});
 
 
+// لتحديث GRN واحد
+Route::get('syncSingleGrnPrices/{grnId}', [TestController8::class, 'syncSingleGrnPrices']);
+
+// لتحديث جميع GRNs
+Route::get('/syncAllGrns', [TestController8::class, 'syncAllGrns']);

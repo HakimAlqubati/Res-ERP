@@ -224,7 +224,7 @@ class OrderResource extends Resource
                     ->hidden(fn(): bool => isStoreManager()),
                 TextColumn::make('created_at')
                     ->formatStateUsing(function ($state) {
-                        return date('Y-m-d', strtotime($state)) . ' __ ' . date('H:i:s', strtotime($state));
+                        return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
                     })
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)

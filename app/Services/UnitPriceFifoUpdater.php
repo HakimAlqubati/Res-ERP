@@ -19,6 +19,7 @@ class UnitPriceFifoUpdater
 
         $unitPrices = $product->allUnitPrices;
         $updated = [];
+        
 
         foreach ($unitPrices as $unitPrice) {
             $fifoService = new FifoMethodService();
@@ -37,30 +38,31 @@ class UnitPriceFifoUpdater
                 $newPrice = (float) $rawNewPrice;
                 $oldPrice = (float) $unitPrice->price;
 
-                if (abs($newPrice - $oldPrice) > 0.0001) {
-                    DB::transaction(function () use ($unitPrice, $newPrice, $oldPrice, $firstAllocation, $sourceModel, &$updated) {
-                        // Update price
-                        $unitPrice->price = number_format($newPrice, 2, '.', '');
-                        $unitPrice->save();
+                // if (abs($newPrice - $oldPrice) > 0.0001) {
+                DB::transaction(function () use ($unitPrice, $newPrice, $oldPrice, $firstAllocation, $sourceModel, &$updated) {
+                    // Update price
+                    $unitPrice->price = number_format($newPrice, 2, '.', '');
+                    $unitPrice->save();
 
-                        // Save history
-                        ProductPriceHistory::create([
-                            'product_id'     => $unitPrice->product_id,
-                            'unit_id'        => $unitPrice->unit_id,
-                            'old_price'      => $oldPrice,
-                            'new_price'      => $newPrice,
-                            'source_type'    => $sourceModel ? get_class($sourceModel) : null,
-                            'source_id'      => $sourceModel?->id,
-                            'note'           => 'Updated based on FIFO from Invoice #' . ($firstAllocation['transactionable_id'] ?? 'N/A'),
-                        ]);
+                    // Save history
+                    ProductPriceHistory::create([
+                        'product_id'     => $unitPrice->product_id,
+                        'unit_id'        => $unitPrice->unit_id,
+                        'old_price'      => $oldPrice,
+                        'new_price'      => $newPrice,
+                        'source_type'    => $sourceModel ? get_class($sourceModel) : null,
+                        'source_id'      => $sourceModel?->id,
+                        'note'           => 'Updated based on FIFO from ' . $firstAllocation['transactionable_type']
+                            . ' #' . ($firstAllocation['transactionable_id'] ?? 'N/A'),
+                    ]);
 
-                        $updated[] = [
-                            'unit_id' => $unitPrice->unit_id,
-                            'old_price' => $oldPrice,
-                            'new_price' => $newPrice,
-                        ];
-                    });
-                }
+                    $updated[] = [
+                        'unit_id' => $unitPrice->unit_id,
+                        'old_price' => $oldPrice,
+                        'new_price' => $newPrice,
+                    ];
+                });
+                // }
             }
         }
 

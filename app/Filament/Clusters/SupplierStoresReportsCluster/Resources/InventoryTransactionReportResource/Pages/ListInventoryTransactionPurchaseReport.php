@@ -22,9 +22,23 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
     protected function getViewData(): array
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
+        $productType = $this->getTable()->getFilters()['manufacturing_filter']->getState()['value'] ?? null;
+        $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $filters = ['product_id' => $productId, 'group_by_invoice' => 1];
+        $filters = [
+            'product_id' => $productId,
+            'group_by_invoice' => 1,
+
+        ];
+        if ($productType === 'only_mana') {
+            $filters['only_manufacturing'] = 1;
+        } elseif ($productType === 'only_unmana') {
+            $filters['only_unmanufacturing'] = 1;
+        }
+        if ($categoryId) {
+            $filters['category_id'] = $categoryId;
+        }
         $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
         $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 

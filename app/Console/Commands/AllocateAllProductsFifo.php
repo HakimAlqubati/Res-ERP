@@ -9,15 +9,33 @@ use App\Services\FixFifo\FifoAllocatorService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Spatie\Multitenancy\Models\Tenant;
 
 class AllocateAllProductsFifo extends Command
 {
-    protected $signature = 'fifo:allocate-all-products';
+    protected $signature = 'fifo:allocate-all-products  {--tenant=}';
 
     protected $description = 'Apply FIFO allocation for all products in ready or delivered orders';
 
     public function handle()
     {
+        $tenantId = $this->option('tenant');
+
+        if (! $tenantId) {
+            $this->error('❌ Please provide --tenant={id}');
+            return;
+        }
+
+        $tenant = Tenant::find($tenantId);
+
+        Log::infO('hi - this is tenant :', [$tenant->name]);
+        if (! $tenant) {
+            $this->error("❌ Tenant with ID {$tenantId} not found.");
+            return;
+        }
+
+        $tenant->makeCurrent(); // ✅ تشغيل التينانت
+        $this->info("🏢 Tenant [{$tenant->id}] activated.");
         $this->info('🚀 Starting FIFO allocation for all products in orders...');
 
         $productIds = DB::table('orders_details as od')

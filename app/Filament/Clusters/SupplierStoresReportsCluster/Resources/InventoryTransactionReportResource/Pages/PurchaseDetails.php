@@ -19,6 +19,6 @@ class PurchaseDetails extends Page
     {
         $filters = ['product_id' => $product, 'details' => 1];
         $service = new PurchaseInvoiceProductSummaryReportService();
-        $this->reportData = $service->getProductSummaryPerInvoice($filters, true);
+        $this->reportData = $service->getProductSummaryPerInvoice($filters);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\PurchaseInvoiceDetail;
+use App\Models\Store;
 use App\Models\Unit;
 use App\Services\InventoryService;
 use Illuminate\Support\Facades\DB;
@@ -107,32 +108,46 @@ class FifoMethodService
         }
         return $this->getAllocateFifo($productId, $unitId, $requestedQty);
     }
-    public function getAllocateFifo($productId, $unitId, $requestedQty, $sourceModel = null)
+    public function getAllocateFifo($productId, $unitId, $requestedQty)
     {
-        // $isManufacturingProduct = Product::find($productId)->is_manufacturing;
-        $storeId = 0;
-        // if (!$isManufacturingProduct) {
-        //     $storeId = 1;
-        // }
-        // $inventoryService = new MultiProductsInventoryService(
-        //     null,
-        //     $productId,
-        //     $unitId,
-        //     $storeId
-        // );
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
-        // $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
-        // $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+        if (isset($this->sourceModel)) {
 
-        // if ($requestedQty > $inventoryRemainingQty && !is_null($sourceModel)) {
 
-        //     $productName = $targetUnit->product->name;
-        //     $unitName = $targetUnit->unit->name;
-        //     Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-        //     throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
-        // }
+            $isManufacturingProduct = Product::find($productId)->is_manufacturing;
+
+            $managedStores = auth()->user()->managed_stores_ids ?? [];
+            if (count($managedStores) == 0) {
+                Log::info("Your are not a keeper for any Store");
+                throw new \Exception("Your are not a keeper for any Store");
+            }
+            if (!$isManufacturingProduct) {
+            }
+            foreach ($managedStores as $index => $storeId) {
+
+                $productName = $targetUnit->product->name;
+                $unitName = $targetUnit->unit->name;
+
+                $inventoryService = new MultiProductsInventoryService(
+                    null,
+                    $productId,
+                    $unitId,
+                    $storeId
+                );
+                $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
+                $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+                if ($index === array_key_last($managedStores)) {
+
+                    if ($requestedQty > $inventoryRemainingQty) {
+
+                        Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
+                        throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+                    }
+                }
+            }
+        }
 
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
@@ -140,15 +155,24 @@ class FifoMethodService
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->get();
-            
-        $qtyBasedOnUnit = 0;
+
+        $entryQtyBasedOnUnit = 0;
 
         foreach ($entries as $entry) {
+            if (isset($this->sourceModel)) {
+                $store = Store::find($entry->store_id);
+                $branchManagersRelatedStore = $store->branches->pluck('manager_id')->toArray() ?? [];
+
+                $isStoreCentralKitchen = $store->is_central_kitchen;
+                if ($isStoreCentralKitchen && !$isManufacturingProduct && !in_array(auth()->id(), $branchManagersRelatedStore)) {
+                    throw new \Exception($productName  . " is not manufacturing product");
+                }
+            }
+
             if (!$targetUnit) {
                 continue;
-                // throw new \Exception("❌ Missing UnitPrice for product_id={$productId}, unit_id={$unitId}");
             }
-            
+
 
 
             $previousOrderedQtyBasedOnTargetUnit = (InventoryTransaction::where('source_transaction_id', $entry->id)
@@ -156,18 +180,19 @@ class FifoMethodService
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->whereNull('deleted_at')
                 ->sum(DB::raw('quantity'))
-                * $entry->package_size) / $targetUnit->package_size;
+                / $targetUnit->package_size);
 
             $entryQty = $entry->quantity;
-            $qtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
+            $entryQtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
 
-            $remaining = $qtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
+            $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
+
 
             if ($remaining <= 0) continue;
 
             $deductQty = min($requestedQty, $remaining);
 
-            if ($qtyBasedOnUnit <= 0) {
+            if ($entryQtyBasedOnUnit <= 0) {
                 continue;
             }
             if ($requestedQty <= 0) {
@@ -196,7 +221,7 @@ class FifoMethodService
                 'transactionable_id' => $entry->transactionable_id,
                 'transactionable_type' => $entry->transactionable_type,
                 'entry_qty' => $entryQty,
-                'entry_qty_based_on_unit' => $qtyBasedOnUnit,
+                'entry_qty_based_on_unit' => $entryQtyBasedOnUnit,
                 'remaining_qty_based_on_unit' => $remaining,
                 'notes' => $notes
             ];

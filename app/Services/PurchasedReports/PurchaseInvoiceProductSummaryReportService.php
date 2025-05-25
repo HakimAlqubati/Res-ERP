@@ -7,15 +7,13 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoiceProductSummaryReportService
 {
-    public function getProductSummaryPerInvoice(array $filters = [], bool $groupByInvoice = false, bool $groupByPrice = false)
+    public function getProductSummaryPerInvoice(array $filters = [])
     {
-        if (isset($filters['group_by_invoice']) && $filters['group_by_invoice'] == 1) {
-            $groupByInvoice = 1;
-        }
 
         $query = DB::table('inventory_transactions')
             ->join('products', 'inventory_transactions.product_id', '=', 'products.id')
             ->join('units', 'inventory_transactions.unit_id', '=', 'units.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
 
             ->select(
                 'products.id as product_id',
@@ -32,6 +30,17 @@ class PurchaseInvoiceProductSummaryReportService
             // ->whereIn('inventory_transactions.transactionable_type', ['App\\Models\\PurchaseInvoice', 'App\\Models\\GoodsReceivedNote'])
         ;
 
+        if (isset($filters['category_id'])) {
+            $query->where('categories.id', $filters['category_id']);
+        }
+        // ✅ تطبيق الفلاتر الخاصة بالتصنيع
+        if (isset($filters['only_manufacturing']) && $filters['only_manufacturing'] == 1) {
+            $query->where('categories.is_manafacturing', true);
+        }
+
+        if (isset($filters['only_unmanufacturing']) && $filters['only_unmanufacturing'] == 1) {
+            $query->where('categories.is_manafacturing', false);
+        }
         // ✅ تطبيق فلتر واحد فقط (حسب الموجود)
         if (isset($filters['product_id'])) {
             $query->where('inventory_transactions.product_id', $filters['product_id']);
@@ -47,14 +56,6 @@ class PurchaseInvoiceProductSummaryReportService
 
 
 
-        // ✅ الأعمدة الإضافية حسب خيارات التجميع
-        if ($groupByInvoice) {
-            $query->addSelect('inventory_transactions.transactionable_id as purchase_invoice_id');
-        }
-
-        if ($groupByPrice) {
-            $query->addSelect('inventory_transactions.price as unit_price');
-        }
 
         // ✅ التجميع
         $groupBy = [
@@ -67,13 +68,8 @@ class PurchaseInvoiceProductSummaryReportService
             'inventory_transactions.package_size',
         ];
 
-        if ($groupByInvoice) {
-            $groupBy[] = 'inventory_transactions.transactionable_id';
-        }
 
-        if ($groupByPrice) {
-            $groupBy[] = 'inventory_transactions.price';
-        }
+
 
         $query->groupBy(...$groupBy);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
+use App\Services\GrnPriceSyncService;
 use Illuminate\Http\Request;
 
 class TestController8 extends Controller
@@ -80,5 +81,41 @@ class TestController8 extends Controller
         }
 
         return $merged->sortBy('date')->values();
+    }
+
+    // ✅ تحديث GRN واحد فقط بناءً على ID
+    public function syncSingleGrnPrices($grnId, GrnPriceSyncService $service)
+    {
+        try {
+            $service->syncPricesFromInvoice($grnId);
+            return response()->json([
+                'status' => 'success',
+                'message' => "✅ GRN #$grnId prices synced successfully.",
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '❌ Error syncing GRN prices.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // ✅ تحديث كل GRNs دفعة واحدة
+    public function syncAllGrns(GrnPriceSyncService $service)
+    {
+        try {
+            $service->syncAllGrnPrices();
+            return response()->json([
+                'status' => 'success',
+                'message' => '✅ All GRNs synced successfully.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '❌ Error syncing all GRNs.',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

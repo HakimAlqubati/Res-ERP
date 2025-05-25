@@ -31,6 +31,7 @@ class UserResource extends JsonResource
                 ->activePopups()
                 ->select('id', 'name', 'type', 'start_date', 'end_date')
                 ->get(),
+            'managed_stores_ids' => $this->managed_stores_ids,
         ];
     }
 }

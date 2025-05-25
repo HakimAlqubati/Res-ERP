@@ -27,7 +27,7 @@ class TestController5 extends Controller
         $groupByPrice = $request->boolean('group_by_price', false);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $purchasedData = $reportService->getProductSummaryPerInvoice($filters, $groupByInvoice, $groupByPrice);
+        $purchasedData = $reportService->getProductSummaryPerInvoice($filters);
         return [
             'count' => count($purchasedData),
             'data' => $purchasedData

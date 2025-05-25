@@ -18,6 +18,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Actions\Action as ActionsAction;
 use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
@@ -84,6 +85,18 @@ class ProductResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+            Fieldset::make()->columns(2)->schema([
+                \Filament\Forms\Components\Placeholder::make('name_above')
+                    ->label(__('lang.name'))
+                    ->content(fn($record) => $record?->name ?? '-')
+                    ->visibleOn('edit')
+                    ,
+                \Filament\Forms\Components\Placeholder::make('code_above')
+                    ->label(__('lang.code'))
+                    ->content(fn($record) => $record?->code ?? '-')
+                    ->visibleOn('edit')
+                    ,
+            ]),
             Wizard::make()->skippable()
                 ->columnSpanFull()
                 ->schema([
@@ -880,30 +893,8 @@ class ProductResource extends Resource
                     ->color('success'),
                 // ForceDeleteAction::make(),
                 ForceDeleteBulkAction::make(),
-                Tables\Actions\BulkAction::make('updateUnirPricePackageSize')->label('Update Package Unit')->button()
-                    ->action(function (Collection $records) {
-                        $productIds = $records->pluck('id')->toArray();
-                        $allUpdated = true;
-                        foreach ($productIds as $productId) {
-                            $update = ProductMigrationService::updatePackageSizeForProduct($productId);
-                            if (!$update) {
-                                $allUpdated = false;
-                            }
-                        }
-                        if ($allUpdated) {
-                            showSuccessNotifiMessage('done');
-                        } else {
-                            showWarningNotifiMessage('faild');
-                        }
-                    })->hidden(),
-                Tables\Actions\BulkAction::make('updateUnirPriceOrder')->label('Update Order Unit')->button()
-                    ->action(function (Collection $records) {
-                        $productIds = $records->pluck('id')->toArray();
 
-                        foreach ($productIds as $productId) {
-                            ProductMigrationService::updateOrderBasedOnPackageSize($productId);
-                        }
-                    }),
+
                 Tables\Actions\DeleteBulkAction::make(),
                 // ExportBulkAction::make(),
                 // Tables\Actions\ForceDeleteBulkAction::make(),

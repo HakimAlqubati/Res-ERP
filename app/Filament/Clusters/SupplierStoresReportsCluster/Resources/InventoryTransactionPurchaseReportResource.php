@@ -77,6 +77,17 @@ class InventoryTransactionPurchaseReportResource extends Resource
                                 $product->id => "{$product->code} - {$product->name}"
                             ]);
                     }),
+                SelectFilter::make('manufacturing_filter')
+                    ->label('Product Type')
+                    ->options([
+                        'only_mana' => 'Manufacturing',
+                        'only_unmana' => 'Unmanufacturing',
+                    ])
+                    ->default('all'),
+                SelectFilter::make('category_id')
+                    ->label('Category')
+                    ->options(Category::active()->pluck('name', 'id')->toArray())
+                    ->searchable()
                 // SelectFilter::make("store_id")
                 //     ->label(__('lang.store'))->searchable()
                 //     ->query(function (Builder $q, $data) {

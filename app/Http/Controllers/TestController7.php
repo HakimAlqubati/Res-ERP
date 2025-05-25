@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\ProductPriceHistory;
 use App\Models\UnitPrice;
 use App\Services\OrderDetailsPriceUpdaterByFifo;
 use App\Services\ProductItemCalculatorService;
@@ -17,9 +18,10 @@ class TestController7 extends Controller
     {
         $results = [];
         $products = Product::active()->unmanufacturingCategory()->select('id', 'name')->get();
-
+        ProductPriceHistory::truncate();
         foreach ($products as $product) {
             $updates = UnitPriceFifoUpdater::updatePriceUsingFifo($product->id);
+
             if (!empty($updates)) {
                 $results[] = [
                     'product_id' => $product->id,
