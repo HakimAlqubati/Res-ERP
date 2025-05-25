@@ -23,7 +23,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'inventory_transactions.package_size',
                 DB::raw('SUM(inventory_transactions.quantity) as qty'),
                 DB::raw('SUM(inventory_transactions.price) as price'),
-                // DB::raw('MIN(inventory_transactions.transactionable_id) as transactionable_id')
+                DB::raw('MIN(inventory_transactions.transactionable_id) as transactionable_id')
 
             )
             ->whereNull('inventory_transactions.deleted_at')
@@ -80,7 +80,7 @@ class PurchaseInvoiceProductSummaryReportService
         $query->groupBy(...$groupBy);
 
         $result = $query
-            ->orderBy('inventory_transactions.transactionable_id', 'asc')
+            ->orderBy('transactionable_id', 'asc')
             ->get();
         if (isset($filters['details']) && $filters['details'] == true) {
             return $result;
