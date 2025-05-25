@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InventoryTransaction;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\PurchaseInvoiceDetail;
 use App\Models\Store;
@@ -114,17 +115,13 @@ class FifoMethodService
             ->where('unit_id', $unitId)->with('unit')
             ->first();
         if (isset($this->sourceModel)) {
-
-
             $isManufacturingProduct = Product::find($productId)->is_manufacturing;
-
             $managedStores = auth()->user()->managed_stores_ids ?? [];
             if (count($managedStores) == 0) {
                 Log::info("Your are not a keeper for any Store");
                 throw new \Exception("Your are not a keeper for any Store");
             }
-            if (!$isManufacturingProduct) {
-            }
+
             foreach ($managedStores as $index => $storeId) {
 
                 $productName = $targetUnit->product->name;
@@ -143,7 +140,7 @@ class FifoMethodService
                     if ($requestedQty > $inventoryRemainingQty) {
 
                         Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-                        throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+                        throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName" . " in storeID " . $storeId);
                     }
                 }
             }
@@ -152,6 +149,7 @@ class FifoMethodService
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->where('transactionable_type', '!=', Order::class)
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->get();
