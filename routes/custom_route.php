@@ -166,3 +166,4 @@ Route::get('syncSingleGrnPrices/{grnId}', [TestController8::class, 'syncSingleGr
 // لتحديث جميع GRNs
 Route::get('/syncAllGrns', [TestController8::class, 'syncAllGrns']);
 Route::get('/productPriceHistory', [ProductPriceHistoryController::class, 'index']);
+Route::get('/manufacturingProductPriceHistory', [ProductPriceHistoryController::class, 'manufacturingProductPriceHistory']);

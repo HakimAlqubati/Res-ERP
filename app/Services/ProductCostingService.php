@@ -22,7 +22,7 @@ class ProductCostingService
             ->where('unit_id', $unitId)
             ->first();
 
-        $targetPackageSize = $targetUnitPrice?->package_size ?? 1;
+        $targetPackageSize = $targetUnitPrice?->package_size;
 
         $entriesIn = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
