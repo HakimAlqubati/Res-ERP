@@ -89,13 +89,11 @@ class ProductResource extends Resource
                 \Filament\Forms\Components\Placeholder::make('name_above')
                     ->label(__('lang.name'))
                     ->content(fn($record) => $record?->name ?? '-')
-                    ->visibleOn('edit')
-                    ,
+                    ->visibleOn('edit'),
                 \Filament\Forms\Components\Placeholder::make('code_above')
                     ->label(__('lang.code'))
                     ->content(fn($record) => $record?->code ?? '-')
-                    ->visibleOn('edit')
-                    ,
+                    ->visibleOn('edit'),
             ]),
             Wizard::make()->skippable()
                 ->columnSpanFull()
@@ -908,6 +906,7 @@ class ProductResource extends Resource
             'index' => Pages\ManageProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'view' => Pages\ViewProduct::route('/{record}'),
         ];
     }
 
@@ -917,6 +916,7 @@ class ProductResource extends Resource
             Pages\ManageProducts::class,
             Pages\CreateProduct::class,
             Pages\EditProduct::class,
+            Pages\ViewProduct::class,
             // Pages\ViewEmployee::class,
         ]);
     }
@@ -926,7 +926,7 @@ class ProductResource extends Resource
     {
         return [
             // RelationManagers\UnitPricesRelationManager::class,
-            RelationManagers\ProductPriceHistoriesRelationManager::class, 
+            RelationManagers\ProductPriceHistoriesRelationManager::class,
             // RelationManagers\FinalProductCostingHistoriesRelationManager::class, 
 
         ];
@@ -1146,5 +1146,12 @@ class ProductResource extends Resource
             || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists()
             || \App\Models\InventoryTransaction::where('product_id', $productId)->exists()
             || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+    }
+    public static function canEdit(Model $record): bool
+    {
+        if (isSuperAdmin() || isSystemManager() || isFinanceManager()) {
+            return true;
+        }
+        return false;
     }
 }
