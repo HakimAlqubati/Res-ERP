@@ -18,7 +18,8 @@ class ProductPriceHistoryService
         $query = InventoryTransaction::with(['product', 'unit'])
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where(function ($q) {
-                $q->where('transactionable_type', GoodsReceivedNote::class)
+                $q
+                    // ->where('transactionable_type', GoodsReceivedNote::class)
                     ->orWhere('transactionable_type', PurchaseInvoice::class)
                     ->orWhere('transactionable_type', 'ExcelImport');
             })
