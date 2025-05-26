@@ -29,6 +29,12 @@ class ProductPriceHistoryController extends Controller
             'data' => $history,
         ]);
     }
+    public function updateAllManufacturedPrices()
+    {
+        $service = new ManufacturedProductPriceUpdaterService();
+        $history = $service->updateAll();
+        return $history;
+    }
     public function manufacturingProductPriceHistory(Request $request)
     {
         $productId = $request->get('product_id'); // اختياري

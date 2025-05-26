@@ -72,7 +72,7 @@ class ProductPriceHistoryService
             $baseUnitPrice = $tx->package_size > 0 ? $actualPrice / $tx->package_size : null;
 
             // 🧾 أسعار كل الوحدات الأخرى المحفوظة
-            $unitPrices = UnitPrice::with('unit')->showInInvoices()
+            $unitPrices = UnitPrice::with('unit')
                 ->where('product_id', $tx->product_id)
                 ->get()
                 ->map(function ($up) use ($baseUnitPrice) {
