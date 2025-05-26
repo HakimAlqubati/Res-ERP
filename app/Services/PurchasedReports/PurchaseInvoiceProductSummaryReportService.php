@@ -270,7 +270,8 @@ class PurchaseInvoiceProductSummaryReportService
 
     public function getLatestPurchasePrice(int $productId)
     {
-        return DB::table('purchase_invoice_details as pid')
+
+        $latestPrice = DB::table('purchase_invoice_details as pid')
             ->join('purchase_invoices as pi', 'pid.purchase_invoice_id', '=', 'pi.id')
             ->select('pid.price', 'pid.unit_id', 'pid.package_size')
             ->where('pid.product_id', $productId)
@@ -278,13 +279,26 @@ class PurchaseInvoiceProductSummaryReportService
             ->whereNull('pi.deleted_at')
             ->orderByDesc('pid.id')
             ->first();
-        return DB::table('inventory_transactions')
+
+        if ($latestPrice) {
+            return $latestPrice;
+        }
+
+        // ⛔️ لم نجد سعر في الفواتير، نبحث في unit_prices
+        return DB::table('unit_prices')
             ->select('price', 'unit_id', 'package_size')
             ->where('product_id', $productId)
-            ->where('movement_type', 'in')
-            ->where('transactionable_type', 'App\\Models\\PurchaseInvoice')
             ->whereNull('deleted_at')
-            ->orderByDesc('id')
-            ->first();;
+            ->orderByDesc('id') // آخر وحدة
+            ->first();
+
+        // return DB::table('inventory_transactions')
+        //     ->select('price', 'unit_id', 'package_size')
+        //     ->where('product_id', $productId)
+        //     ->where('movement_type', 'in')
+        //     ->where('transactionable_type', 'App\\Models\\PurchaseInvoice')
+        //     ->whereNull('deleted_at')
+        //     ->orderByDesc('id')
+        //     ->first();;
     }
 }
