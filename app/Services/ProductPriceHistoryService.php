@@ -29,7 +29,7 @@ class ProductPriceHistoryService
             $query->where('product_id', $productId);
         }
         $result = $query->get();
-        
+
         return $result->map(function ($tx) {
             $sourceType = class_basename($tx->transactionable_type);
             $hasPurchaseInvoice = false;
@@ -41,6 +41,17 @@ class ProductPriceHistoryService
                 $hasPurchaseInvoice = $grn?->purchase_invoice_id !== null;
                 if ($hasPurchaseInvoice) {
                     $purchaseInvoiceId = $grn->purchase_invoice_id;
+
+                    // 🔁 جلب السعر من الفاتورة المرتبطة
+                    $detail = \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $purchaseInvoiceId)
+                        ->where('product_id', $tx->product_id)
+                        ->where('unit_id', $tx->unit_id)
+                        ->where('package_size', $tx->package_size)
+                        ->first();
+
+                    if ($detail) {
+                        $actualPrice = $detail->price;
+                    }
                 }
             }
 
