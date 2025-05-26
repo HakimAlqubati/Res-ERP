@@ -17,6 +17,7 @@ class ProductPriceHistory extends Model
         'source_type',
         'source_id',
         'note',
+        'date',
     ];
 
     public function product()

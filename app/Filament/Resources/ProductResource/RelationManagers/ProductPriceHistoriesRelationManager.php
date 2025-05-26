@@ -53,47 +53,44 @@ class ProductPriceHistoriesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-        ->striped()
-        ->columns([ 
+            ->striped()
+            ->columns([
 
-            Tables\Columns\TextColumn::make('product.name')
-                ->label('Product')
-                ,
-            Tables\Columns\TextColumn::make('old_price')
-                ->label('Old Price')
-                ,
+                Tables\Columns\TextColumn::make('old_price')
+                    ->label('Old Price')
+                    ->formatStateUsing(fn($state) => number_format($state, 2)),
 
-            Tables\Columns\TextColumn::make('new_price')
-                ->label('New Price')
-                ,
+                Tables\Columns\TextColumn::make('new_price')
+                    ->label('New Price')
+                    ->formatStateUsing(fn($state) => number_format($state, 2)),
+                // Tables\Columns\TextColumn::make('source_id')
+                //     ->label('source_id'),
 
-            Tables\Columns\TextColumn::make('unit.name')
-                ->label('Unit')
-                ->sortable(),
+                Tables\Columns\TextColumn::make('unit.name')
+                    ->label('Unit')
+                    ->sortable(),
 
-            Tables\Columns\TextColumn::make('note')
-                ->label('Note')
-                ->limit(100)
-                ->toggleable(),
+                Tables\Columns\TextColumn::make('note')
+                    ->label('Note')
+                    ->limit(100)
+                    ->toggleable(),
 
-            Tables\Columns\TextColumn::make('created_at')
-                ->label('Date')
-                ->dateTime()
-                ->sortable(),
-        ])
-        ->filters([ 
-        ])
-        ->headerActions([ 
-        ])
-        ->actions([
-            // Tables\Actions\EditAction::make(),
-            // Tables\Actions\DeleteAction::make(),
-            // Tables\Actions\RestoreAction::make(),
-        ])
-        ->bulkActions([
-            // Tables\Actions\DeleteBulkAction::make(),
-            // Tables\Actions\RestoreBulkAction::make(),
-        ]);
+                Tables\Columns\TextColumn::make('date')
+                    ->label('Date')
+                    ->date()
+                    ->sortable(),
+            ])
+            ->filters([])
+            ->headerActions([])
+            ->actions([
+                // Tables\Actions\EditAction::make(),
+                // Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\RestoreAction::make(),
+            ])
+            ->bulkActions([
+                // Tables\Actions\DeleteBulkAction::make(),
+                // Tables\Actions\RestoreBulkAction::make(),
+            ]);
     }
 
     public static function getEloquentQuery(): Builder

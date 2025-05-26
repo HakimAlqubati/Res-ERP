@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
+use App\Http\Controllers\Api\ProductPriceHistoryController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FixFifoController;
 use App\Http\Controllers\FixOrderWithFifoController;
@@ -123,7 +124,8 @@ Route::get('/testAllocateFifo', function () {
     return $allocations;
 });
 Route::get('/testUpdateUnitPrice', function () {
-    $serevice = UnitPriceFifoUpdater::updatePriceUsingFifo(158);
+    $productId = $_GET['product_id'];
+    $serevice = UnitPriceFifoUpdater::updatePriceUsingFifo($productId);
     return $serevice;
 });
 
@@ -163,3 +165,4 @@ Route::get('syncSingleGrnPrices/{grnId}', [TestController8::class, 'syncSingleGr
 
 // لتحديث جميع GRNs
 Route::get('/syncAllGrns', [TestController8::class, 'syncAllGrns']);
+Route::get('/productPriceHistory', [ProductPriceHistoryController::class, 'index']);
