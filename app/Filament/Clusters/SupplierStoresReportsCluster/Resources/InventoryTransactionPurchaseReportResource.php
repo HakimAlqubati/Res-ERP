@@ -80,8 +80,8 @@ class InventoryTransactionPurchaseReportResource extends Resource
                 SelectFilter::make('manufacturing_filter')
                     ->label('Product Type')
                     ->options([
-                        'only_mana' => 'Manufacturing',
-                        'only_unmana' => 'Unmanufacturing',
+                        'only_mana' => 'Manufactured',
+                        'only_unmana' => 'Unmanufactured',
                     ])
                     ->default('all'),
                 SelectFilter::make('category_id')
