@@ -19,7 +19,7 @@ class ProductPriceHistoryService
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where(function ($q) {
                 $q
-                    // ->where('transactionable_type', GoodsReceivedNote::class)
+                    ->where('transactionable_type', GoodsReceivedNote::class)
                     ->orWhere('transactionable_type', PurchaseInvoice::class)
                     ->orWhere('transactionable_type', 'ExcelImport');
             })
