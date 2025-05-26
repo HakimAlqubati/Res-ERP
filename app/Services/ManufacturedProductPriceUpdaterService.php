@@ -15,7 +15,7 @@ class ManufacturedProductPriceUpdaterService
      */
     public function updateAll(): void
     {
-        $products = Product::with('productItems', 'unitPrices')->unmanufacturingCategory()->get();
+        $products = Product::with('productItems', 'unitPrices')->manufacturingCategory()->get();
 
         foreach ($products as $product) {
             $this->updateSingle($product);
