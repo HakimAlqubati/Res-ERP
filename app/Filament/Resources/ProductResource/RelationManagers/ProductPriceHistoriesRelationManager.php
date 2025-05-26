@@ -2,18 +2,12 @@
 
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
+
 use App\Models\ProductPriceHistory;
-use App\Models\Unit;
-use Filament\Forms;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductPriceHistoriesRelationManager extends RelationManager
@@ -24,31 +18,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
     protected static ?string $title = 'Product Price History';
     protected static ?string $recordTitleAttribute = 'id';
 
-    public function form(Form $form): Form
-    {
-        return $form->schema([
-            TextInput::make('old_price')
-                ->label('Old Price')
-                ->numeric()
-                ->required(),
 
-            TextInput::make('new_price')
-                ->label('New Price')
-                ->numeric()
-                ->required(),
-
-            Select::make('unit_id')
-                ->label('Unit')
-                ->options(Unit::pluck('name', 'id'))
-                ->searchable()
-                ->required(),
-
-            Textarea::make('note')
-                ->label('Note')
-                ->rows(2)
-                ->maxLength(255),
-        ]);
-    }
 
     public function table(Table $table): Table
     {
@@ -56,6 +26,14 @@ class ProductPriceHistoriesRelationManager extends RelationManager
             ->striped()
             ->columns([
 
+                Tables\Columns\TextColumn::make('productItem.product.name')
+                    ->label('Component Product')
+                    ->formatStateUsing(
+                        fn($state, $record) =>
+                        optional($record->productItem?->product)->name ?? '-'
+                    )
+                    ->sortable()
+                    ->limit(30)->visible(fn($livewire) => $livewire->getOwnerRecord()?->is_manufacturing),
                 Tables\Columns\TextColumn::make('old_price')
                     ->label('Old Price')
                     ->formatStateUsing(fn($state) => number_format($state, 2)),
