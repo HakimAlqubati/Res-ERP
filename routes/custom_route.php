@@ -117,9 +117,9 @@ Route::get('/testAllocateFifo', function () {
     // }
     // return $updated;
     $allocations = $fifoService->getAllocateFifo(
-        139,
-        3,
-        150
+        $_GET['product_id'] ,
+        $_GET['unit_id'],
+        $_GET['qty']
     );
     return $allocations;
 });

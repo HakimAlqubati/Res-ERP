@@ -244,12 +244,12 @@ class Order extends Model implements Auditable
                 foreach ($order->orderDetails as $detail) {
                     $fifoService = new \App\Services\FifoMethodService($order);
 
-                    $allocations = $fifoService->allocateFIFO(
+                    $allocations = $fifoService->getAllocateFifo(
                         $detail->product_id,
                         $detail->unit_id,
                         $detail->available_quantity
                     );
-                    $branchStoreId = $order->branch?->store_id;
+                    
                     self::moveFromInventory($allocations, $detail);
                     // if (!$branchStoreId || !$order->branch->store->active) {
                     //     self::moveFromInventory($allocations, $detail);

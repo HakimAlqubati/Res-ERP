@@ -14,7 +14,6 @@ use App\Models\UnitPrice;
 use App\Services\BatchProductCostingService;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
-use Dom\Text;
 use Filament\Actions\Action;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Actions\Action as ActionsAction;
@@ -701,12 +700,6 @@ class ProductResource extends Resource
 
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->tooltip(fn(Model $record): string => "By {$record->name}"),
-
-                TextColumn::make('default_store')
-                    ->label('Default Store')
-                    ->getStateUsing(function ($record) {
-                        return defaultManufacturingStore($record)->name;
-                    }),
 
                 Tables\Columns\TextColumn::make('waste_stock_percentage')
                     ->label('Waste %')
