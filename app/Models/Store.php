@@ -47,7 +47,7 @@ class Store extends Model implements Auditable
      */
     public function scopeDefaultStore($query)
     {
-        return $query->where('default_store', true)->first();
+        return $query->where('default_store', true)->active()->first();
     }
     public function scopeCentralKitchen($query)
     {
@@ -73,7 +73,7 @@ class Store extends Model implements Auditable
 
     public function scopeWithManagedStores($query)
     {
-        if(isFinanceManager()){
+        if (isFinanceManager()) {
             return $query;
         }
         if (isStoreManager()) {
