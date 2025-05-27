@@ -10,8 +10,7 @@
     {{ $this->getTableFiltersForm() }}
     @if (isset($storeId) || $storeId != null)
 
-
-        @if (!empty($reportData))
+        @if (count($reportData) > 0)
             <div id="reportContent">
 
                 <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
