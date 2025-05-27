@@ -8,6 +8,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransa
 
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\Unit;
 use Filament\Forms\Components\Select;
 use Filament\Pages\SubNavigationPosition;
@@ -71,7 +72,14 @@ class InventoryTransactionTruckingReportResource extends Resource
                     InventoryTransaction::MOVEMENT_IN => 'In',
                     InventoryTransaction::MOVEMENT_OUT => 'Out',
                 ]),
-                SelectFilter::make('unit_id')->label('Unit')->options(Unit::active()->get(['name', 'id'])->pluck('name', 'id'))
+                SelectFilter::make('unit_id')->label('Unit')->options(Unit::active()->get(['name', 'id'])->pluck('name', 'id')),
+                SelectFilter::make("store_id")->placeholder('Select Store')
+                    ->label(__('lang.store'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
             ], FiltersLayout::AboveContent);
     }
 
