@@ -19,8 +19,13 @@ class MultiProductsInventoryService
     public $categoryId;
     public $filterOnlyAvailable;
 
-    public function __construct($categoryId = null, $productId = null, $unitId = 'all', $storeId = null, $filterOnlyAvailable = false)
-    {
+    public function __construct(
+        $categoryId = null,
+        $productId = null,
+        $unitId = 'all',
+        $storeId,
+        $filterOnlyAvailable = false
+    ) {
         $this->categoryId = $categoryId;
         $this->productId = $productId;
         $this->unitId = $unitId;
@@ -159,12 +164,11 @@ class MultiProductsInventoryService
                 ];
             }
         }
-
-        if (!is_null($this->storeId)) {
-            $queryIn->where('store_id', $this->storeId);
-            $queryOut->where('store_id', $this->storeId);
-        }
-
+        // إذا كان هناك storeId محدد، نضيف شرط للـ store_id
+        // if (!is_null($this->storeId)) {
+        $queryIn->where('store_id', $this->storeId);
+        $queryOut->where('store_id', $this->storeId);
+        // }
         $totalIn = $queryIn->sum(DB::raw('quantity * package_size'));
         $totalOut = $queryOut->sum(DB::raw('quantity * package_size'));
 

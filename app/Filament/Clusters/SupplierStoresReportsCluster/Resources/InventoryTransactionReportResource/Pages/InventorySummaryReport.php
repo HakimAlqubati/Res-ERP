@@ -51,7 +51,8 @@ class InventorySummaryReport extends Page
                 : $query->paginate($this->perPage)
             )
             : $query->get();
-        $service = new MultiProductsInventoryService();
+        $storeId = 0;
+        $service = new MultiProductsInventoryService(storeId: $storeId);
         foreach ($products as $product) {
             $inventory = $service->getInventoryForProduct($product->id);
             $inventoryOpeningBalance = $service->getInventoryIn($product->id);

@@ -4,8 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\Inventory
 
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionTruckingReportResource;
 use App\Models\Category;
-use App\Models\Product;
-use App\Services\MultiProductsInventoryService;
+use App\Models\Product; 
 use Filament\Resources\Pages\Page;
 
 class CategoryInventoryTrackingReport extends Page
@@ -30,9 +29,7 @@ class CategoryInventoryTrackingReport extends Page
                 ->get();
         }
 
-        // $service = new MultiProductsInventoryService();
-        // $productInventory = $service->getInventoryForProduct(1);
-        // dd($productInventory);
+  
         return [
             'categories' => Category::all(),
             'selectedCategory' => $this->selectedCategory,

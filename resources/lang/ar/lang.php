@@ -185,4 +185,5 @@ return [
     'has_grn' => 'مرتبط بـ GRN',
     'not_specified' => 'غير محدد',
     'date' => 'التاريخ',
+    'please_select_store' => 'الرجاء اختيار مخزن',
 ];

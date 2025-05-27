@@ -8,99 +8,109 @@
     </div>
 
     {{ $this->getTableFiltersForm() }}
+    @if (isset($storeId) || $storeId != null)
 
-    @if (!empty($reportData))
-        <div id="reportContent">
 
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
-                <thead>
-                    <x-filament-tables::row class="header_report">
-                        <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+        @if (!empty($reportData))
+            <div id="reportContent">
 
-                            <div style="width: 100%;">
+                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+                    <thead>
+                        <x-filament-tables::row class="header_report">
+                            <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
 
-                                <img style="display: inline-block;"
-                                    src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
-                                    class="logo-left circle-image">
-                            </div>
-                        </th>
-                        <th colspan="2" class="no_border_right_left text-center">
-                            <h3>Inventory Report</h3>
-                        </th>
-                        <th colspan="3"
-                            class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
-                            style="text-align: center;">
-                            <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
-                        </th>
-                    </x-filament-tables::row>
-                    <x-filament-tables::row>
-                        <th>Product Code</th>
-                        <th>Product Name</th>
-                        <th>Unit ID</th>
-                        <th>Unit Name</th>
-                        <th>Package Size</th>
-                        <th>Quantity in Stock</th>
-                    </x-filament-tables::row>
-                </thead>
-                <tbody>
-                    @foreach ($reportData as $productReport)
-                        @foreach ($productReport as $data)
-                            <x-filament-tables::row>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2" title="{{$data['product_id']}}">
-                                    <strong>{{ $data['product_code'] }}</strong>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2" title="{{$data['product_id']}}">
-                                    <strong>{{ $data['product_name'] }}</strong>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    {{ $data['unit_id'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    {{ $data['unit_name'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                    {{ $data['package_size'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
-                                    {{ $data['remaining_qty'] }}
-                                </x-filament-tables::cell>
-                            </x-filament-tables::row>
+                                <div style="width: 100%;">
+
+                                    <img style="display: inline-block;"
+                                        src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
+                                        class="logo-left circle-image">
+                                </div>
+                            </th>
+                            <th colspan="2" class="no_border_right_left text-center">
+                                <h3>Inventory Report</h3>
+                            </th>
+                            <th colspan="3"
+                                class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
+                                style="text-align: center;">
+                                <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}"
+                                    alt="">
+                            </th>
+                        </x-filament-tables::row>
+                        <x-filament-tables::row>
+                            <th>Product Code</th>
+                            <th>Product Name</th>
+                            <th>Unit ID</th>
+                            <th>Unit Name</th>
+                            <th>Package Size</th>
+                            <th>Quantity in Stock</th>
+                        </x-filament-tables::row>
+                    </thead>
+                    <tbody>
+                        @foreach ($reportData as $productReport)
+                            @foreach ($productReport as $data)
+                                <x-filament-tables::row>
+                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2"
+                                        title="{{ $data['product_id'] }}">
+                                        <strong>{{ $data['product_code'] }}</strong>
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2"
+                                        title="{{ $data['product_id'] }}">
+                                        <strong>{{ $data['product_name'] }}</strong>
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                        {{ $data['unit_id'] }}
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                        {{ $data['unit_name'] }}
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                        {{ $data['package_size'] }}
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
+                                        {{ $data['remaining_qty'] }}
+                                    </x-filament-tables::cell>
+                                </x-filament-tables::row>
+                            @endforeach
                         @endforeach
-                    @endforeach
-                </tbody>
-            </x-filament-tables::table>
+                    </tbody>
+                </x-filament-tables::table>
 
 
-        </div>
-
-        {{-- Pagination Controls --}}
-        {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
-        <div class="mt-4">
-            @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                {{ $pagination->links() }}
-            @endif
-            <div class="flex justify-end mb-2">
-                <form method="GET">
-                    <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-                    <select name="perPage" id="perPage" onchange="this.form.submit()"
-                        class="border border-gray-300 px-3 py-1 rounded-md text-sm">
-                        @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                            <option value="{{ $option }}"
-                                {{ request('perPage', 15) == $option ? 'selected' : '' }}>
-                                {{ is_numeric($option) ? $option : 'All' }}
-                            </option>
-                        @endforeach
-                    </select>
-                </form>
             </div>
-        </div>
-        {{-- @endif --}}
+
+            {{-- Pagination Controls --}}
+            {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
+            <div class="mt-4">
+                @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    {{ $pagination->links() }}
+                @endif
+                <div class="flex justify-end mb-2">
+                    <form method="GET">
+                        <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
+                        <select name="perPage" id="perPage" onchange="this.form.submit()"
+                            class="border border-gray-300 px-3 py-1 rounded-md text-sm">
+                            @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
+                                <option value="{{ $option }}"
+                                    {{ request('perPage', 15) == $option ? 'selected' : '' }}>
+                                    {{ is_numeric($option) ? $option : 'All' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+            </div>
+            {{-- @endif --}}
+        @else
+            <div class="please_select_message_div text-center">
+                <h1 class="please_select_message_text">No inventory data available.</h1>
+            </div>
+        @endif
     @else
-        <div class="please_select_message_div text-center">
-            <h1 class="please_select_message_text">No inventory data available.</h1>
+        <div class="please_select_message_div" style="text-align: center;">
+
+            <h1 class="please_select_message_text">{{ __('lang.please_select_store') }}</h1>
         </div>
     @endif
-
     {{-- JavaScript to Handle Printing --}}
     <script>
         document.getElementById("printReport").addEventListener("click", function() {

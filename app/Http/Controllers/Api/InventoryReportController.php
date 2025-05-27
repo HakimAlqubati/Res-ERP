@@ -15,7 +15,7 @@ class InventoryReportController extends Controller
 {
     public function minimumStockReport()
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $inventoryService = new \App\Services\MultiProductsInventoryService(storeId: getDefaultStore());
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
 
         return response()->json([
@@ -27,7 +27,7 @@ class InventoryReportController extends Controller
 
     public function minimumStockReportToSupply()
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $inventoryService = new \App\Services\MultiProductsInventoryService(storeId: getDefaultStore());
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination(1000);
         return $lowStockProducts;
         foreach ($lowStockProducts as $product) {

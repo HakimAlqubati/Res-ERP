@@ -18,7 +18,7 @@ class ListInventoryTransactionReport extends ListRecords
     protected function getViewData(): array
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
-        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'];
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
         $unitId = 'all';
@@ -32,11 +32,15 @@ class ListInventoryTransactionReport extends ListRecords
 
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination($perPage);
-        
+
         $reportData = $report['reportData'] ?? $report;
         $pagination = $report['pagination'] ?? $report;
 
 
-        return ['reportData' => $reportData, 'pagination' => $pagination];
+        return [
+            'reportData' => $reportData,
+            'storeId' => $storeId,
+            'pagination' => $pagination
+        ];
     }
 }

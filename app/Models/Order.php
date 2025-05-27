@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\Scopes\OrderScopes;
-use App\Services\MultiProductsInventoryService;
 use App\Services\ProductCostingService;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,7 +75,7 @@ class Order extends Model implements Auditable
         'status_log_date_time',
         'status_log_creator_name',
         'store_names',
-        'store_ids', 
+        'store_ids',
     ];
 
 
@@ -422,5 +421,4 @@ class Order extends Model implements Auditable
     {
         return $this->belongsTo(Supplier::class);
     }
-    
 }

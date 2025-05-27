@@ -58,7 +58,7 @@ class OrderDetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('remaining_quantity')->label(__('stock.remaining_quantity'))
                     ->alignCenter(true)
                     ->getStateUsing(function ($record) {
-                        $service = new  MultiProductsInventoryService(null, $record->product_id, $record->unit_id);
+                        $service = new  MultiProductsInventoryService(null, $record->product_id, $record->unit_id, getDefaultStore());
                         $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
 
                         return $remainingQty;

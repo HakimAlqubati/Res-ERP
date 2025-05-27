@@ -23,7 +23,7 @@ class FifoMethodService
     }
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {
-        $inventoryService = new MultiProductsInventoryService();
+        $inventoryService = new MultiProductsInventoryService(storeId: getDefaultStore());
         $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
         $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)

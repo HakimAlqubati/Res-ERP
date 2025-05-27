@@ -48,123 +48,128 @@ class StockIssueOrderResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->label('')
-                ->schema([
-                    DatePicker::make('order_date')
-                        ->required()->default(now())
-                        ->label('Order Date'),
+                    ->schema([
+                        DatePicker::make('order_date')
+                            ->required()->default(now())
+                            ->label('Order Date'),
 
-                    Select::make('store_id')
-                        // ->relationship('store', 'name')
-                        ->options(
-                            Store::active()
-                                ->withManagedStores()
-                                ->get(['name', 'id'])->pluck('name', 'id')
-                        )
-                        ->default(getDefaultStore())
-                        ->required()
-                        ->label('Store'), 
-
-
-
-                    Textarea::make('notes')
-                        ->label('Notes')
-                        ->columnSpanFull(),
-
-                    Textarea::make('cancel_reason')
-                        ->label('Cancel Reason')
-                        ->hidden(fn($get) => $get('cancelled') == 0),
-
-                    Repeater::make('details')
-                        ->relationship('details')->columnSpanFull()
-                        ->schema([
-                            Select::make('product_id')
-                                ->required()->columnSpan(2)
-                                ->label('Product')->searchable()
-                                ->options(function () {
-                                    return Product::where('active', 1)
-                                        ->get()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}"
-                                        ]);
-                                })
-                                ->searchable()
-                                ->getSearchResultsUsing(function (string $search): array {
-                                    return Product::where('active', 1)
-                                        ->where(function ($query) use ($search) {
-                                            $query->where('name', 'like', "%{$search}%")
-                                                ->orWhere('code', 'like', "%{$search}%");
-                                        })
-                                        ->limit(50)
-                                        ->get()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}"
-                                        ])
-                                        ->toArray();
-                                })
-                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-                                ->reactive()
-                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
-
-                            Select::make('unit_id')->label('Unit')
-                                ->options(function (callable $get) {
-                                    $product = \App\Models\Product::find($get('product_id'));
-                                    if (! $product) return [];
-
-                                    return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
-                                })
-                                ->searchable()
-                                ->reactive()
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                    $unitPrice = UnitPrice::where(
-                                        'product_id',
-                                        $get('product_id')
-                                    )
-                                        ->showInInvoices()
-                                        ->where('unit_id', $state)->first();
-                                    $set('price', $unitPrice->price);
-
-                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
-                                    $set('package_size',  $unitPrice->package_size ?? 0);
-
-                                    $service = new  MultiProductsInventoryService(null, $get('product_id'), $state);
-                                    $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
-                                    $set('remaining_quantity', $remainingQty);
-                                })->columnSpan(2)->required(),
-                            TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
-                                ->label(__('lang.package_size')),
-                            TextInput::make('quantity')
-                                ->numeric()
-                                ->required()
-                                ->minValue(0.1)
-                                ->label('Quantity')
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(function ($get, $set, $state) {
-                                    $service = new  MultiProductsInventoryService(null, $get('product_id'), $get('unit_id'));
-                                    $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
-                                    $set('remaining_quantity', $remainingQty);
-                                })
-                                ->rules([
-                                    function ($get) {
-                                        return function (string $attribute, $value, Closure $fail) use ($get) {
-                                            $remainingQty = (float) $get('remaining_quantity');
-                                            if ($value > $remainingQty) {
-                                                $fail("Quantity cannot exceed remaining stock ({$remainingQty}).");
-                                            }
-                                        };
-                                    },
-                                ]),
-                            TextInput::make('remaining_quantity')
-                                ->numeric()
-                                ->readOnly()->visibleOn('create')
-                                ->label('Remaining Qty')
+                        Select::make('store_id')
+                            // ->relationship('store', 'name')
+                            ->options(
+                                Store::active()
+                                    ->withManagedStores()
+                                    ->get(['name', 'id'])->pluck('name', 'id')
+                            )
+                            ->default(getDefaultStore())
+                            ->required()
+                            ->label('Store'),
 
 
 
-                        ])
-                        ->minItems(1)
-                        ->label('Issued Items')
-                        ->columns(7),
-                ])
+                        Textarea::make('notes')
+                            ->label('Notes')
+                            ->columnSpanFull(),
+
+                        Textarea::make('cancel_reason')
+                            ->label('Cancel Reason')
+                            ->hidden(fn($get) => $get('cancelled') == 0),
+
+                        Repeater::make('details')
+                            ->relationship('details')->columnSpanFull()
+                            ->schema([
+                                Select::make('product_id')
+                                    ->required()->columnSpan(2)
+                                    ->label('Product')->searchable()
+                                    ->options(function () {
+                                        return Product::where('active', 1)
+                                            ->get()
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}"
+                                            ]);
+                                    })
+                                    ->searchable()
+                                    ->getSearchResultsUsing(function (string $search): array {
+                                        return Product::where('active', 1)
+                                            ->where(function ($query) use ($search) {
+                                                $query->where('name', 'like', "%{$search}%")
+                                                    ->orWhere('code', 'like', "%{$search}%");
+                                            })
+                                            ->limit(50)
+                                            ->get()
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}"
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                                    ->reactive()
+                                    ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
+
+                                Select::make('unit_id')->label('Unit')
+                                    ->options(function (callable $get) {
+                                        $product = \App\Models\Product::find($get('product_id'));
+                                        if (! $product) return [];
+
+                                        return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                    })
+                                    ->searchable()
+                                    ->reactive()
+                                    ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        $unitPrice = UnitPrice::where(
+                                            'product_id',
+                                            $get('product_id')
+                                        )
+                                            ->showInInvoices()
+                                            ->where('unit_id', $state)->first();
+                                        $set('price', $unitPrice->price);
+
+                                        $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+                                        $set('package_size',  $unitPrice->package_size ?? 0);
+
+                                        $service = new  MultiProductsInventoryService(null, $get('product_id'), $state);
+                                        $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
+                                        $set('remaining_quantity', $remainingQty);
+                                    })->columnSpan(2)->required(),
+                                TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
+                                    ->label(__('lang.package_size')),
+                                TextInput::make('quantity')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0.1)
+                                    ->label('Quantity')
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($get, $set, $state) {
+                                        $service = new  MultiProductsInventoryService(
+                                            null,
+                                            $get('product_id'),
+                                            $get('unit_id'),
+                                            $get('store_id')
+                                        );
+                                        $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
+                                        $set('remaining_quantity', $remainingQty);
+                                    })
+                                    ->rules([
+                                        function ($get) {
+                                            return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                $remainingQty = (float) $get('remaining_quantity');
+                                                if ($value > $remainingQty) {
+                                                    $fail("Quantity cannot exceed remaining stock ({$remainingQty}).");
+                                                }
+                                            };
+                                        },
+                                    ]),
+                                TextInput::make('remaining_quantity')
+                                    ->numeric()
+                                    ->readOnly()->visibleOn('create')
+                                    ->label('Remaining Qty')
+
+
+
+                            ])
+                            ->minItems(1)
+                            ->label('Issued Items')
+                            ->columns(7),
+                    ])
             ]);
     }
 
