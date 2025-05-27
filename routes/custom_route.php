@@ -98,7 +98,7 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 Route::get('/testAllocateFifo', function () {
 
     $order = Order::find(305);
-    $fifoService = new \App\Services\FifoMethodService($order);
+    $fifoService = new \App\Services\FifoMethodService();
     // $updated = [];
     // $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
     // foreach ($products as  $product) {
@@ -117,9 +117,9 @@ Route::get('/testAllocateFifo', function () {
     // }
     // return $updated;
     $allocations = $fifoService->getAllocateFifo(
-        139,
-        3,
-        150
+        $_GET['product_id'],
+        $_GET['unit_id'],
+        $_GET['qty']
     );
     return $allocations;
 });
