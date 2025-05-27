@@ -25,6 +25,7 @@ use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -168,7 +169,13 @@ class StockSupplyOrderResource extends Resource
                     ->label('Created By')->toggleable(isToggledHiddenByDefault: false)->sortable(),
             ])
             ->filters([
-                //
+                SelectFilter::make("store_id")->placeholder('Select Store')
+                    ->label(__('lang.store'))->searchable()
+                    ->query(function (Builder $q, $data) {
+                        return $q;
+                    })->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
