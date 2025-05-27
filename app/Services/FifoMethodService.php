@@ -199,12 +199,12 @@ class FifoMethodService
             $price = ($entry->price * $targetUnit->package_size) / $entry->package_size;
             $price = round($price, 2);
             $notes = "Price is " . $price;
-            if (isset($this->sourceModel)) {
+            // if (isset($this->sourceModel)) {
                 $notes = "Stock deducted for Order #{$this->sourceModel->id} from " .
                     $entry->transactionable_type .
                     " #" . $entry->transactionable_id .
                     " with price " . $price;
-            }
+            // }
             $allocation = [
                 'transaction_id' => $entry->id,
                 'store_id' => $entry->store_id,
@@ -223,11 +223,11 @@ class FifoMethodService
                 'notes' => $notes
             ];
 
-            if (isset($this->sourceModel)) {
+            // if (isset($this->sourceModel)) {
                 $allocation['deducted_qty'] = $deductQty;
                 $allocation['previous_ordered_qty_based_on_unit'] = $previousOrderedQtyBasedOnTargetUnit;
                 $allocation['source_order_id'] = $this->sourceModel->id;
-            }
+            // }
             $allocations[] = $allocation;
 
 
