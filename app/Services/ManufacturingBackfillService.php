@@ -22,7 +22,7 @@ class ManufacturingBackfillService
      * and create corresponding OUT transactions for raw materials.
      */
     public function handleFromSimulation(?int $storeId): void
-    { 
+    {
         DB::transaction(function () use ($storeId) {
             // تحقق من صلاحية معرف المخزن
             if ($storeId && !Store::whereKey($storeId)->exists()) {
@@ -31,7 +31,7 @@ class ManufacturingBackfillService
 
             // نفذ المحاكاة للحصول على الحركات التي سيتم إنشاؤها
             $simulatedTransactions = $this->simulateBackfill($storeId);
-            
+
             // احفظ كل سجل كـ InventoryTransaction فعلي
             foreach ($simulatedTransactions as $data) {
                 InventoryTransaction::create([
@@ -76,7 +76,9 @@ class ManufacturingBackfillService
             $notes = "Auto OUT for manufacturing of '{$compositeProductName}' from Supply Order #{$transaction->transactionable_id}";
 
             return collect($components)->map(function ($component) use ($transaction, $notes) {
-
+                $packageSize = \App\Models\UnitPrice::where('product_id', $component['product_id'])
+                    ->where('unit_id', $component['unit_id'])
+                    ->value('package_size');
                 return [
                     'movement_type' => InventoryTransaction::MOVEMENT_OUT,
                     'product_id' => $component['product_id'],
@@ -88,6 +90,7 @@ class ManufacturingBackfillService
                     'movement_date' => $transaction->movement_date,
                     'transaction_date' => $transaction->transaction_date,
                     'notes' => $notes,
+                    'package_size' => $packageSize,
                     'source_transaction_id' => InventoryTransaction::query()
                         ->where('product_id', $component['product_id'])
                         ->where('movement_type', InventoryTransaction::MOVEMENT_IN)

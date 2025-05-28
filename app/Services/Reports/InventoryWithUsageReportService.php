@@ -64,7 +64,9 @@ class InventoryWithUsageReportService
                 continue;
             }
             $productUnits = [$smallestUnit];
-            $usedQty = $this->getUsedQuantity($product->id);
+            $usedQty = $this->getUsedQuantity($product->id)['total_quantity'];
+            $ps = $this->getUsedQuantity($product->id)['package_sizes'];
+
             $orderedQty = $this->getOrderedQuantity($product->id);
             $totalUsedQty += $usedQty;
             $totalOrderedQty += $orderedQty;
@@ -72,12 +74,13 @@ class InventoryWithUsageReportService
             $formattedUnits = collect($productUnits)->map(function ($unitData) use (
                 $usedQty,
                 $orderedQty,
+                $ps,
                 &$finalTotalPrice,
                 &$finalPrice
             ) {
                 $packageSize = $unitData['package_size'];
                 $price = getUnitPrice($unitData['product_id'], $unitData['unit_id']);
-                dd($unitData['package_size']);
+
                 $usedQtyPerUnit = $usedQty / $packageSize;
                 $remQty = $unitData['remaining_qty'];
                 $totalPrice = $price * $remQty;
@@ -86,6 +89,9 @@ class InventoryWithUsageReportService
                 $finalPrice += $price;
                 $orderedQtyPerUnit = $orderedQty / $packageSize;
 
+                if ($unitData['unit_id'] == 10) {
+                    $usedQtyPerUnit *= 2;
+                }
                 return array_merge($unitData, [
                     'used_quantity'     => formatQunantity($usedQtyPerUnit),
                     'ordered_quantity'  => formatQunantity($orderedQtyPerUnit),
@@ -110,15 +116,22 @@ class InventoryWithUsageReportService
 
 
 
-    protected function getUsedQuantity(int $productId): float
+    protected function getUsedQuantity(int $productId)
     {
-        $usedQty = DB::table('inventory_transactions')
+        $rows = DB::table('inventory_transactions')
             ->where('product_id', $productId)
             ->where('store_id', $this->storeId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->where('transactionable_type', StockSupplyOrder::class)
-            ->sum(DB::raw('quantity * package_size'));
-        return round($usedQty, 2);
+            ->select('quantity', 'package_size')
+            ->get();
+
+        $totalQty = $rows->sum('quantity');
+        $packageSizes = $rows->pluck('package_size')->unique()->first();
+        return [
+            'total_quantity' => $totalQty,
+            'package_sizes' => $packageSizes,
+        ];
     }
 
     protected function getOrderedQuantity(int $productId): float
