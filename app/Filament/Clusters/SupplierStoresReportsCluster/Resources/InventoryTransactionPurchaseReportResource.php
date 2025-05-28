@@ -27,15 +27,15 @@ class InventoryTransactionPurchaseReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
     {
-        return 'Inventory by Purchase';
+        return 'Store Position Report';
     }
     public static function getNavigationLabel(): string
     {
-        return 'Inventory by Purchase';
+        return 'Store Position Report';
     }
     public static function getPluralLabel(): ?string
     {
-        return 'Inventory by Purchase';
+        return 'Store Position Report';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;

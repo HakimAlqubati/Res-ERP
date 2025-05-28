@@ -26,17 +26,17 @@ class InventoryWithUsageReportResource extends Resource
 
     public static function getLabel(): ?string
     {
-        return 'Inventory With Usage';
+        return 'Manufacturing Store Position Report';
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Inventory Usage';
+        return 'Manufacturing Store Position Report';
     }
 
     public static function getPluralLabel(): ?string
     {
-        return 'Inventory Usage';
+        return 'Manufacturing Store Position Report';
     }
 
     protected static ?string $cluster = InventoryReportCluster::class;
