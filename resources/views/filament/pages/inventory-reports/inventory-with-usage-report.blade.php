@@ -76,7 +76,7 @@
                             @endforeach
                         @endforeach
                     </tbody>
-                    {{-- <tbody>
+                    <tbody>
                         <x-filament-tables::row>
                             <x-filament-tables::cell colspan="7">
                                 <strong>Total </strong>
@@ -88,7 +88,7 @@
                                 {{ $final_total_price }}
                             </x-filament-tables::cell>
                         </x-filament-tables::row>
-                    </tbody> --}}
+                    </tbody>
                 </x-filament-tables::table>
             </div>
 

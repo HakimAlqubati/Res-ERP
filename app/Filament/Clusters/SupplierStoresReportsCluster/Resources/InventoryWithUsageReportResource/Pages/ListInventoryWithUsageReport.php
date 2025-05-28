@@ -33,6 +33,7 @@ class ListInventoryWithUsageReport extends ListRecords
         }
 
         $report = $reportService->getReport();
+        
         $reportData = $report['reportData'] ?? $report;
         $pagination = $report['pagination'] ?? $report;
 

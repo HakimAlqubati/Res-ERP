@@ -58,6 +58,12 @@ class InventoryWithUsageReportService
                 continue;
             }
 
+            $smallestUnit = collect($productUnits)->sortBy('package_size')->first();
+
+            if (!$smallestUnit) {
+                continue;
+            }
+            $productUnits = [$smallestUnit];
             $usedQty = $this->getUsedQuantity($product->id);
             $orderedQty = $this->getOrderedQuantity($product->id);
             $totalUsedQty += $usedQty;
