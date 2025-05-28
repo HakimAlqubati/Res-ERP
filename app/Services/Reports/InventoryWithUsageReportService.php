@@ -77,7 +77,7 @@ class InventoryWithUsageReportService
             ) {
                 $packageSize = $unitData['package_size'];
                 $price = getUnitPrice($unitData['product_id'], $unitData['unit_id']);
-                $usedQtyPerUnit = $usedQty;
+                $usedQtyPerUnit = $usedQty * $packageSize;
                 $remQty = $unitData['remaining_qty'];
                 $totalPrice = $price * $remQty;
 
