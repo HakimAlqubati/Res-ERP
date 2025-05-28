@@ -48,10 +48,10 @@ trait InventoryBootEvents
             }
             // update unit prices
             if ($transaction->movement_type === InventoryTransaction::MOVEMENT_OUT) {
-                UnitPriceFifoUpdater::updatePriceUsingFifo(
-                    $transaction->product_id,
-                    $transaction
-                );
+                // UnitPriceFifoUpdater::updatePriceUsingFifo(
+                //     $transaction->product_id,
+                //     $transaction
+                // );
             }
         });
     }

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Unit;
 use App\Models\Store;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use App\Models\StockSupplyOrder;
 
 trait InventoryRelations
 {

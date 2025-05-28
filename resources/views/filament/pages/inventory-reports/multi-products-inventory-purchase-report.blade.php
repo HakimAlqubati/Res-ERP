@@ -21,77 +21,84 @@
         </button>
     </div>
 
-    @if (!empty($reportData))
-        <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border"
-                id="report-table">
-                <thead class="fixed-header">
-                    <x-filament-tables::row class="header_report">
-                        <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+    @if (isset($storeId) || $storeId != null)
+
+        @if (!empty($reportData))
+            <div id="reportContent">
+                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border"
+                    id="report-table">
+                    <thead class="fixed-header">
+                        <x-filament-tables::row class="header_report">
+                            <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
 
 
-                        </th>
-                        <th colspan="6" class="no_border_right_left text-center">
-                            <h3>Inventory Difference Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
-                        </th>
-                        <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
-                            <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
-                                class="logo-left circle-image">
-                        </th>
-                    </x-filament-tables::row>
-
-                    <x-filament-tables::row>
-                        <th>Product Code</th>
-                        <th>Product Name</th>
-                        <th>Unit</th>
-                        <th>Purchased Qty</th>
-                        <th>Ordered Qty</th>
-                        <th>Qty in Stock</th>
-                        <th>Unit Price</th>
-                        <th>Total Price</th>
-                    </x-filament-tables::row>
-                </thead>
-
-                <tbody>
-                    @foreach ($reportData as $data)
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell>{{ $data['product_code'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell
-                                title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>
-                                <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.purchase-details', ['product' => $data['product_id']]) }}"
-                                    class="text-blue-600 underline hover:text-blue-800">
-                                    {{ $data['purchased_qty'] }}
-                                </a>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell>
-                                <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.order-details', ['product' => $data['product_id']]) }}"
-                                    class="text-green-600 underline hover:text-green-800">
-                                    {{ $data['ordered_qty'] }}
-                                </a>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ getDefaultCurrency().' ' . $data['unit_price'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ getDefaultCurrency().' ' . $data['price'] }}</x-filament-tables::cell>
+                            </th>
+                            <th colspan="6" class="no_border_right_left text-center">
+                                <h3>Inventory Difference Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
+                            </th>
+                            <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
+                                <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
+                                    class="logo-left circle-image">
+                            </th>
                         </x-filament-tables::row>
-                    @endforeach
-                </tbody>
-                <tbody>
-                    <x-filament-tables::row class="font-bold bg-gray-100">
-                        <x-filament-tables::cell colspan="7" class="text-right">Total </x-filament-tables::cell>
 
-                        <x-filament-tables::cell>
-                            {{getDefaultCurrency() .' '. number_format(array_sum(array_column($reportData, 'price')), 2) }}
-                        </x-filament-tables::cell>
-                    </x-filament-tables::row>
-                </tbody>
+                        <x-filament-tables::row>
+                            <th>Product Code</th>
+                            <th>Product Name</th>
+                            <th>Unit</th>
+                            <th>Purchased Qty</th>
+                            <th>Ordered Qty</th>
+                            <th>Qty in Stock</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </x-filament-tables::row>
+                    </thead>
 
-            </x-filament-tables::table>
-        </div>
+                    <tbody>
+                        @foreach ($reportData as $data)
+                            <x-filament-tables::row>
+                                <x-filament-tables::cell>{{ $data['product_code'] }}</x-filament-tables::cell>
+                                <x-filament-tables::cell
+                                    title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>
+                                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.purchase-details', ['product' => $data['product_id']]) }}"
+                                        class="text-blue-600 underline hover:text-blue-800">
+                                        {{ $data['purchased_qty'] }}
+                                    </a>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell>
+                                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.order-details', ['product' => $data['product_id']]) }}"
+                                        class="text-green-600 underline hover:text-green-800">
+                                        {{ $data['ordered_qty'] }}
+                                    </a>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['unit_price'] }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['price'] }}</x-filament-tables::cell>
+                            </x-filament-tables::row>
+                        @endforeach
+                    </tbody>
+                    <tbody>
+                        <x-filament-tables::row class="font-bold bg-gray-100">
+                            <x-filament-tables::cell colspan="7" class="text-right">Total </x-filament-tables::cell>
+
+                            <x-filament-tables::cell>
+                                {{ getDefaultCurrency() . ' ' . number_format(array_sum(array_column($reportData, 'price')), 2) }}
+                            </x-filament-tables::cell>
+                        </x-filament-tables::row>
+                    </tbody>
+
+                </x-filament-tables::table>
+            </div>
+        @else
+            <div class="please_select_message_div text-center">
+                <h1 class="please_select_message_text">No data available.</h1>
+            </div>
+        @endif
     @else
         <div class="please_select_message_div text-center">
-            <h1 class="please_select_message_text">No data available.</h1>
+            <h1 class="please_select_message_text">Please select a store to view the report.</h1>
         </div>
     @endif
 

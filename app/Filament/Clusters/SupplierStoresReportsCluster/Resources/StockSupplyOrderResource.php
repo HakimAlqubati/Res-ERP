@@ -22,6 +22,7 @@ use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -156,7 +157,9 @@ class StockSupplyOrderResource extends Resource
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->label('id')
-                    ->toggleable()->searchable(),
+                    ->toggleable()->searchable(isIndividual: true)->alignCenter(true)
+                    ->color('primary')
+                    ->weight(FontWeight::Bold),
                 TextColumn::make('order_date')->sortable()->label('Order Date')
                     ->toggleable(),
                 TextColumn::make('store.name')->label('Store')->toggleable()->searchable(),

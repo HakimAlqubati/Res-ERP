@@ -1,4 +1,12 @@
 <x-filament::page>
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+    </style>
     {{ $this->getTableFiltersForm() }}
 
     @if (isset($product) && $product != null)
@@ -6,11 +14,15 @@
             <thead class="fixed-header">
                 <x-filament-tables::row class="header_report">
 
-                    <th colspan="2" title="{{ $product->id }}">{{ $product->name }}</th>
+                    <th colspan="2" title="{{ $product->id }}"
+                        class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+                        {{ $product->name }}</th>
                     <th colspan="4" class="no_border_right_left" style="text-align: center;">
                         <h3>({{ 'Inventory Trucking' }})</h3>
                     </th>
-                    <th colspan="2" style="text-align: center;">
+                    <th colspan="2" style="text-align: center;"
+                    class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
+                    >
                         <img class="circle-image" src="{{ asset('/storage/' . setting('company_logo') . '') }}"
                             alt="">
                     </th>

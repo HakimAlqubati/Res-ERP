@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
 use App\Services\GrnPriceSyncService;
+use App\Services\ManufacturingBackfillService;
+use App\Services\Reports\InventoryWithUsageReportService;
 use Illuminate\Http\Request;
 
 class TestController8 extends Controller
@@ -117,5 +120,33 @@ class TestController8 extends Controller
                 'details' => $e->getMessage(),
             ], 500);
         }
+    }
+    public function getSuppliesManufacturedProducts(Request $request)
+    {
+        $service =  new ManufacturingBackfillService();
+        $transactions = $service->simulateBackfill($request->get('store_id'));
+
+        return $transactions;
+    }
+    public function storeSuppliesManufacturedProducts(Request $request)
+    {
+        if (!$request->has('store_id')) {
+            return response()->json([
+                'status' => 'error',
+                'message' => '❌ Store ID is required.',
+            ], 400);
+        }
+        $service =  new ManufacturingBackfillService();
+        $transactions = $service->handleFromSimulation($request->get('store_id'));
+        return $transactions;
+    }
+    public function getNewReport(Request $request)
+    {
+        $storeId = $request->get('store_id');
+        $service = new InventoryWithUsageReportService($storeId);
+        $reportData = $service->getReport();
+        return response()->json(
+            $reportData,
+        );
     }
 }

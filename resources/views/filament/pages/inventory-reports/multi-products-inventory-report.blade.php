@@ -20,9 +20,7 @@
 
                                 <div style="width: 100%;">
 
-                                    <img style="display: inline-block;"
-                                        src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
-                                        class="logo-left circle-image">
+
                                 </div>
                             </th>
                             <th colspan="2" class="no_border_right_left text-center">
@@ -31,8 +29,9 @@
                             <th colspan="3"
                                 class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
                                 style="text-align: center;">
-                                <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}"
-                                    alt="">
+                                <img style="display: inline-block;"
+                                    src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
+                                    class="logo-left circle-image">
                             </th>
                         </x-filament-tables::row>
                         <x-filament-tables::row>

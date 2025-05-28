@@ -168,3 +168,6 @@ Route::get('/syncAllGrns', [TestController8::class, 'syncAllGrns']);
 Route::get('/productPriceHistory', [ProductPriceHistoryController::class, 'index']);
 Route::get('/manufacturingProductPriceHistory', [ProductPriceHistoryController::class, 'manufacturingProductPriceHistory']);
 Route::get('/updateAllManufacturedPrices', [ProductPriceHistoryController::class, 'updateAllManufacturedPrices']);
+Route::get('/getSuppliesManufacturedProducts', [TestController8::class, 'getSuppliesManufacturedProducts']);
+Route::get('/storeSuppliesManufacturedProducts', [TestController8::class, 'storeSuppliesManufacturedProducts']);
+Route::get('/getNewReport', [TestController8::class, 'getNewReport']);

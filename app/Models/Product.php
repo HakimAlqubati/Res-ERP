@@ -226,4 +226,12 @@ class Product extends Model implements Auditable
     {
         return "{$this->name} ({$this->code})";
     }
+    public function inventoryTransactions()
+    {
+        return $this->hasMany(InventoryTransaction::class);
+    }
+    public function usedInProducts()
+    {
+        return $this->hasMany(ProductItem::class, 'product_id');
+    }
 }
