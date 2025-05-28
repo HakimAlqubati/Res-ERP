@@ -63,7 +63,7 @@ class InventoryWithUsageReportService
             if (!$smallestUnit) {
                 continue;
             }
-            $productUnits = [$smallestUnit];
+            // $productUnits = [$smallestUnit];
             $usedQty = $this->getUsedQuantity($product->id);
             $orderedQty = $this->getOrderedQuantity($product->id);
             $totalUsedQty += $usedQty;
