@@ -18,7 +18,7 @@
                         class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         {{ $product->name }}</th>
                     <th colspan="4" class="no_border_right_left" style="text-align: center;">
-                        <h3>({{ 'Inventory Trucking' }})</h3>
+                        <h3>({{ 'Inventory Tracking' }})</h3>
                     </th>
                     <th colspan="2" style="text-align: center;"
                     class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
