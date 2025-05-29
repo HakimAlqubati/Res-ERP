@@ -62,16 +62,16 @@
                                     title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>
-                                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.purchase-details', ['product' => $data['product_id']]) }}"
-                                        class="text-blue-600 underline hover:text-blue-800">
-                                        {{ $data['purchased_qty'] }}
-                                    </a>
+                                    {{-- <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.purchase-details', ['product' => $data['product_id']]) }}"
+                                        class="text-blue-600 underline hover:text-blue-800"> --}}
+                                    {{ $data['purchased_qty'] }}
+                                    {{-- </a> --}}
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell>
-                                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.order-details', ['product' => $data['product_id']]) }}"
-                                        class="text-green-600 underline hover:text-green-800">
-                                        {{ $data['ordered_qty'] }}
-                                    </a>
+                                    {{-- <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.order-details', ['product' => $data['product_id']]) }}"
+                                        class="text-green-600 underline hover:text-green-800"> --}}
+                                    {{ $data['ordered_qty'] }}
+                                    {{-- </a> --}}
                                 </x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['unit_price'] }}</x-filament-tables::cell>

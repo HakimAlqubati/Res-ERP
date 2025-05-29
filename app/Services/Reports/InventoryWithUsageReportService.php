@@ -17,6 +17,7 @@ class InventoryWithUsageReportService
         public int $storeId,
         public ?int $categoryId = null,
         public ?int $productId = null,
+        public $showSmallestUnit = false
     ) {
         $this->inventoryService = new MultiProductsInventoryService(
             $this->categoryId,
@@ -63,7 +64,10 @@ class InventoryWithUsageReportService
             if (!$smallestUnit) {
                 continue;
             }
-            $productUnits = [$smallestUnit];
+            if ($this->showSmallestUnit) {
+                $productUnits = [$smallestUnit];
+            }
+
             $usedQty = $this->getUsedQuantity($product->id)['total_quantity'];
             $ps = $this->getUsedQuantity($product->id)['package_sizes'];
 
@@ -81,7 +85,7 @@ class InventoryWithUsageReportService
                 $packageSize = $unitData['package_size'];
                 $price = getUnitPrice($unitData['product_id'], $unitData['unit_id']);
 
-                $usedQtyPerUnit = $usedQty / $packageSize;
+                $usedQtyPerUnit = ($usedQty / $packageSize)  * $ps;
                 $remQty = $unitData['remaining_qty'];
                 $totalPrice = $price * $remQty;
 
@@ -89,15 +93,13 @@ class InventoryWithUsageReportService
                 $finalPrice += $price;
                 $orderedQtyPerUnit = $orderedQty / $packageSize;
 
-                if ($unitData['unit_id'] == 10) {
-                    $usedQtyPerUnit *= 2;
-                }
                 return array_merge($unitData, [
                     'used_quantity'     => formatQunantity($usedQtyPerUnit),
                     'ordered_quantity'  => formatQunantity($orderedQtyPerUnit),
                     'remaining_qty'     => formatQunantity($remQty),
                     'price'             => formatMoneyWithCurrency($price),
                     'total_price'       => formatMoneyWithCurrency($totalPrice),
+                    'package_size' => $unitData['package_size'],
                 ]);
             });
 

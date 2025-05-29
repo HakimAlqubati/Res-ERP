@@ -39,7 +39,7 @@ class ManufacturingBackfillService
                     'product_id'           => $data['product_id'],
                     'quantity'             => $data['quantity'],
                     'unit_id'              => $data['unit_id'],
-                    'package_size'         => 1,
+                    'package_size'         => $data['package_size'],
                     'store_id'             => $data['store_id'],
                     'movement_date'        => $data['movement_date'],
                     'transaction_date'     => $data['transaction_date'],
@@ -58,9 +58,12 @@ class ManufacturingBackfillService
         if ($storeId && !Store::whereKey($storeId)->exists()) {
             throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
         }
+        $productId = 23;
         $transactions = InventoryTransaction::query()
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where('transactionable_type', StockSupplyOrder::class)
+            // ->when($productId, fn($q) => $q->where('product_id', $productId))
+
             ->whereHas('product', function ($query) {
                 $query->has('productItems');
             });

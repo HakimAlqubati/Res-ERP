@@ -16,15 +16,16 @@ class ListInventoryWithUsageReport extends ListRecords
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
- 
+        $showSmallestUnit = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_smallest_unit'];
         if (!$storeId) {
-            return [ 'storeId' => null, 'reportData' => [], 'pagination' => null ];
+            return ['storeId' => null, 'reportData' => [], 'pagination' => null];
         }
 
         $reportService = new InventoryWithUsageReportService(
             storeId: $storeId,
             categoryId: $categoryId,
             productId: $productId,
+            showSmallestUnit: $showSmallestUnit
         );
 
         $perPage = request()->get('perPage', 15);
@@ -33,7 +34,7 @@ class ListInventoryWithUsageReport extends ListRecords
         }
 
         $report = $reportService->getReport();
-        
+
         $reportData = $report['reportData'] ?? $report;
         $pagination = $report['pagination'] ?? $report;
 
@@ -43,6 +44,7 @@ class ListInventoryWithUsageReport extends ListRecords
             'pagination' => $pagination,
             'final_total_price' => $report['final_total_price'] ?? 0,
             'final_price' => $report['final_price'] ?? 0,
+            'showSmallestUnit' => $showSmallestUnit,
         ];
     }
 }

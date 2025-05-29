@@ -77,8 +77,14 @@ class InventoryWithUsageReportResource extends Resource
 
                 SelectFilter::make("store_id")->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
-                    ->options(Store::active()->where('is_central_kitchen',1)->get()->pluck('name', 'id')->toArray()),
- 
+                    ->options(Store::active()->where('is_central_kitchen', 1)->get()->pluck('name', 'id')->toArray()),
+                Filter::make('show_extra_fields')
+                    ->label('Show Smallest Unit')
+                    ->form([
+                        Toggle::make('only_smallest_unit')
+                            ->inline(false)
+                            ->label('Show Only Smallest Unit and Show Total')
+                    ]),
             ], FiltersLayout::AboveContent);
     }
 

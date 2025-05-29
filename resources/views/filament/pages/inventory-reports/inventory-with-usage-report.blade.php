@@ -76,27 +76,29 @@
                             @endforeach
                         @endforeach
                     </tbody>
-                    <tbody>
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell colspan="7">
-                                <strong>Total </strong>
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border px-4 py-2 font-bold">
-                                {{ $final_price }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border px-4 py-2 font-bold">
-                                {{ $final_total_price }}
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
-                    </tbody>
+                    @if (isset($showSmallestUnit) && $showSmallestUnit)
+                        <tbody>
+                            <x-filament-tables::row>
+                                <x-filament-tables::cell colspan="7">
+                                    <strong>Total </strong>
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="border px-4 py-2 font-bold">
+                                    {{ $final_price }}
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="border px-4 py-2 font-bold">
+                                    {{ $final_total_price }}
+                                </x-filament-tables::cell>
+                            </x-filament-tables::row>
+                        </tbody>
+                    @endif
                 </x-filament-tables::table>
             </div>
 
             <div class="mt-4">
                 @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    {{ $pagination->links() }}
+                    {{-- {{ $pagination->links() }} --}}
                 @endif
-                <div class="flex justify-end mb-2">
+                {{-- <div class="flex justify-end mb-2">
                     <form method="GET">
                         <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
                         <select name="perPage" id="perPage" onchange="this.form.submit()"
@@ -109,7 +111,7 @@
                             @endforeach
                         </select>
                     </form>
-                </div>
+                </div> --}}
             </div>
         @else
             <div class="text-center">
