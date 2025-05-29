@@ -167,12 +167,11 @@ class FifoMethodService
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->whereNull('deleted_at')
                 ->sum(DB::raw('quantity'))
-                / $targetUnit->package_size);
-
+                / $targetUnit->package_size) * $entry->package_size;
             $entryQty = $entry->quantity;
             $entryQtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
 
-            $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
+            $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit; 
 
 
             if ($remaining <= 0) continue;
