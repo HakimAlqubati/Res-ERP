@@ -14,6 +14,11 @@
             class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
             🖨️ Print
         </button>
+
+        <button id="exportExcel"
+            class="px-6 py-2 font-semibold rounded-md border border-green-600 bg-green-500 hover:bg-green-700 transition duration-300 shadow-md">
+            📁 Export to Excel
+        </button>
     </div>
 
     @if ($storeId)
@@ -133,6 +138,20 @@
             window.print();
             document.body.innerHTML = originalContent;
             location.reload();
+        });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        document.getElementById("exportExcel").addEventListener("click", function() {
+            const table = document.querySelector("table");
+            const workbook = XLSX.utils.table_to_book(table, {
+                sheet: "Inventory Report"
+            });
+
+            // حفظ الملف
+            XLSX.writeFile(workbook, "Inventory_Report.xlsx");
         });
     </script>
 
