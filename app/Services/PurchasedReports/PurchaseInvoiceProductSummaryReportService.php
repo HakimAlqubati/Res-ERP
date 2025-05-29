@@ -28,6 +28,7 @@ class PurchaseInvoiceProductSummaryReportService
             )
             ->whereNull('inventory_transactions.deleted_at')
 
+            ->where('products.active',1)
             ->where('inventory_transactions.movement_type', 'in')
             ->where('inventory_transactions.store_id', $filters['store_id'])
             // ->whereIn('inventory_transactions.transactionable_type', ['App\\Models\\PurchaseInvoice', 'App\\Models\\GoodsReceivedNote'])

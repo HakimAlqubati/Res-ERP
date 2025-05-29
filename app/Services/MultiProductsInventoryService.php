@@ -174,7 +174,7 @@ class MultiProductsInventoryService
 
         $remQty = $totalIn - $totalOut;
         $unitPrices = $this->getProductUnitPrices($productId);
-        $product = Product::find($productId);
+        $product = Product::active()->find($productId);
         $result = [];
 
         foreach ($unitPrices as $unitPrice) {
@@ -204,23 +204,26 @@ class MultiProductsInventoryService
                 $priceSource = 'unit_price';
                 $priceStoreId = null; // ما في مصدر مخزن في هذه الحالة
             }
-            $result[] = [
-                'product_id' => $productId,
-                'product_code' => $product->code,
-                'product_name' => $product->name,
-                'unit_id' => $unitPrice['unit_id'],
-                'order' => $unitPrice['order'],
-                'package_size' => $unitPrice['package_size'],
-                'unit_name' => $unitPrice['unit_name'],
-                'remaining_qty' => $remainingQty,
-                'minimum_quantity' => $unitPrice['minimum_quantity'],
-                'is_last_unit' => $unitPrice['is_last_unit'],
-                'is_largest_unit' => $unitPrice['is_largest_unit'],
-                'price' => $priceFromInventory,
-                'price_source' => $priceSource,
-                'price_store_id' => $priceStoreId,
+            if ($product && $product->active) {
+                $result[] = [
+                    'product_id' => $productId,
+                    'product_active' => $product->active,
+                    'product_code' => $product->code,
+                    'product_name' => $product->name,
+                    'unit_id' => $unitPrice['unit_id'],
+                    'order' => $unitPrice['order'],
+                    'package_size' => $unitPrice['package_size'],
+                    'unit_name' => $unitPrice['unit_name'],
+                    'remaining_qty' => $remainingQty,
+                    'minimum_quantity' => $unitPrice['minimum_quantity'],
+                    'is_last_unit' => $unitPrice['is_last_unit'],
+                    'is_largest_unit' => $unitPrice['is_largest_unit'],
+                    'price' => $priceFromInventory,
+                    'price_source' => $priceSource,
+                    'price_store_id' => $priceStoreId,
 
-            ];
+                ];
+            }
         }
 
         return $result;
