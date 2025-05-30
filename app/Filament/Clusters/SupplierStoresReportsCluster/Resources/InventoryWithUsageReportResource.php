@@ -83,7 +83,7 @@ class InventoryWithUsageReportResource extends Resource
                     ->form([
                         Toggle::make('only_smallest_unit')
                             ->inline(false)
-                            ->label('Show Only Smallest Unit and Show Total')
+                            ->label('Show Only Smallest Unit Show Total')
                     ]),
             ], FiltersLayout::AboveContent);
     }
