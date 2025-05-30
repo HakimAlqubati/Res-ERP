@@ -39,7 +39,8 @@ class ManufacturingBackfillService
             InventoryTransaction::where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->where('transactionable_type', StockSupplyOrder::class)
                 ->whereIn('transactionable_id', $transactionableIds)
-                ->delete();
+                ->withTrashed()
+                ->forceDelete();
 
             // احفظ كل سجل كـ InventoryTransaction فعلي
             foreach ($simulatedTransactions as $data) {

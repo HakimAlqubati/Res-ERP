@@ -29,7 +29,8 @@ class CopyOrderOutToBranchStoreService
                     ->where('transactionable_id', $order->id)
                     ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                     ->where('store_id', $store->id)
-                    ->delete();
+                    ->withTrashed()
+                    ->forceDelete();
                 $outTransactions = InventoryTransaction::where('transactionable_type', Order::class)
                     ->where('transactionable_id', $order->id)
                     ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
