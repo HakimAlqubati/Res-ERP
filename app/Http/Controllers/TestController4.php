@@ -7,7 +7,7 @@ use App\Models\Employee;
 use App\Models\Equipment;
 use App\Models\Order;
 use App\Models\OrderDetails;
-use App\Models\Product; 
+use App\Models\Product;
 use App\Services\Firebase\FcmClient;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
@@ -339,8 +339,9 @@ AND (
                 'id',
                 'name'
             ])->keyBy('id');
-        $service = new MultiProductsInventoryService();
+        $service = new MultiProductsInventoryService(null, null, null, 0);
         $details = collect($details)->map(function ($detail) use ($products, $units, $service) {
+
             return [
                 'id' => $detail->id,
                 'order_id' => $detail->order_id,
@@ -449,9 +450,9 @@ AND (
     public function returnOrders(Request $request)
     {
         $reportService = new ReturnedOrdersReportService();
-        
+
         $filters = $request->only(['branch_id', 'store_id', 'status', 'date_from', 'date_to']);
-        
+
         $report = $reportService->generate($filters);
         return response()->json($report);
     }
