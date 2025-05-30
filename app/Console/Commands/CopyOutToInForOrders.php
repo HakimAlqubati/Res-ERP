@@ -19,6 +19,7 @@ class CopyOutToInForOrders extends Command
 
         if (! $tenantId) {
             $this->error('❌ Please provide --tenant={id}');
+            return;
         }
 
 
