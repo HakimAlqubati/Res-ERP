@@ -121,14 +121,17 @@ class StockIssueOrderResource extends Resource
                                         )
                                             ->showInInvoices()
                                             ->where('unit_id', $state)->first();
-                                        $set('price', $unitPrice->price);
+                                        if ($unitPrice) {
 
-                                        $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
-                                        $set('package_size',  $unitPrice->package_size ?? 0);
+                                            $set('price', $unitPrice->price);
 
-                                        $service = new  MultiProductsInventoryService(null, $get('product_id'), $state);
-                                        $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
-                                        $set('remaining_quantity', $remainingQty);
+                                            $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+                                            $set('package_size',  $unitPrice->package_size ?? 0);
+
+                                            $service = new  MultiProductsInventoryService(null, $get('product_id'), $state, $get('../../store_id'));
+                                            $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
+                                            $set('remaining_quantity', $remainingQty);
+                                        }
                                     })->columnSpan(2)->required(),
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                     ->label(__('lang.package_size')),
@@ -143,7 +146,7 @@ class StockIssueOrderResource extends Resource
                                             null,
                                             $get('product_id'),
                                             $get('unit_id'),
-                                            $get('store_id')
+                                            $get('../../store_id')
                                         );
                                         $remainingQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
                                         $set('remaining_quantity', $remainingQty);
