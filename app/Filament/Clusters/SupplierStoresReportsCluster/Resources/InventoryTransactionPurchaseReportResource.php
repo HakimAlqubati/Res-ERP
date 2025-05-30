@@ -27,15 +27,15 @@ class InventoryTransactionPurchaseReportResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
     {
-        return 'Inventory by Purchase';
+        return 'Store Position Report';
     }
     public static function getNavigationLabel(): string
     {
-        return 'Inventory by Purchase';
+        return 'Store Position Report';
     }
     public static function getPluralLabel(): ?string
     {
-        return 'Inventory by Purchase';
+        return 'Store Position Report';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -87,14 +87,11 @@ class InventoryTransactionPurchaseReportResource extends Resource
                 SelectFilter::make('category_id')
                     ->label('Category')
                     ->options(Category::active()->pluck('name', 'id')->toArray())
-                    ->searchable()
-                // SelectFilter::make("store_id")
-                //     ->label(__('lang.store'))->searchable()
-                //     ->query(function (Builder $q, $data) {
-                //         return $q;
-                //     })->options(
-                //         Store::active()->get()->pluck('name', 'id')->toArray()
-                //     ),
+                    ->searchable(),
+                SelectFilter::make("store_id")
+                    ->label(__('lang.store'))->searchable()->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    )->placeholder('Select Store'),
                 // Filter::make('show_extra_fields')
                 //     ->label('Show Extra')
                 //     ->form([

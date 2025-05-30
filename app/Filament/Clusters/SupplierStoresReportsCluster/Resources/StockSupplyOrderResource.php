@@ -22,9 +22,12 @@ use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -154,7 +157,9 @@ class StockSupplyOrderResource extends Resource
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->label('id')
-                    ->toggleable()->searchable(),
+                    ->toggleable()->searchable(isIndividual: true)->alignCenter(true)
+                    ->color('primary')
+                    ->weight(FontWeight::Bold),
                 TextColumn::make('order_date')->sortable()->label('Order Date')
                     ->toggleable(),
                 TextColumn::make('store.name')->label('Store')->toggleable()->searchable(),
@@ -168,8 +173,12 @@ class StockSupplyOrderResource extends Resource
                     ->label('Created By')->toggleable(isToggledHiddenByDefault: false)->sortable(),
             ])
             ->filters([
-                //
-            ])
+                SelectFilter::make("store_id")->placeholder('Select Store')
+                    ->label(__('lang.store'))->searchable()
+                    ->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
+            ], FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),

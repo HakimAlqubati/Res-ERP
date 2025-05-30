@@ -75,7 +75,7 @@
 
                     {{-- Inventory Summary (getInventoryForProduct) --}}
                     @php
-                        $inventoryService = new \App\Services\MultiProductsInventoryService();
+                        $inventoryService = new \App\Services\MultiProductsInventoryService(storeId: getDefaultStore());
                         $inventorySummary = $inventoryService->getInventoryForProduct($product->id);
                     @endphp
 
@@ -85,7 +85,7 @@
                             <thead class="bg-gray-100 text-center">
                                 <tr>
                                     <th class="px-4 py-2">Unit</th>
-                                    <th class="px-4 py-2">Remaining Qty</th> 
+                                    <th class="px-4 py-2">Remaining Qty</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -93,7 +93,7 @@
                                     <tr class="text-center border-t even:bg-gray-50">
 
                                         <td class="px-4 py-2">{{ $row['unit_name'] }}</td>
-                                        <td class="px-4 py-2">{{ $row['remaining_qty'] }}</td> 
+                                        <td class="px-4 py-2">{{ $row['remaining_qty'] }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

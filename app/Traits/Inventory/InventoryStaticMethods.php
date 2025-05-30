@@ -8,8 +8,13 @@ use Illuminate\Support\Facades\DB;
 trait InventoryStaticMethods
 {
 
-    public static function getInventoryTrackingDataPagination($productId, $perPage = 15, ?string $movementType = null, $unitId = null)
-    {
+    public static function getInventoryTrackingDataPagination(
+        $productId,
+        $perPage = 15,
+        ?string $movementType = null,
+        $unitId = null,
+        $storeId = null
+    ) {
         $query = InventoryTransaction::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
             ->where('product_id', $productId);
@@ -18,6 +23,10 @@ trait InventoryStaticMethods
         }
         if (!empty($unitId)) {
             $query->where('unit_id', $unitId);
+        }
+
+        if (!empty($storeId)) {
+            $query->where('store_id', $storeId);
         }
         return  $query->orderBy('id', 'asc')
             ->paginate($perPage);

@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\Scopes\OrderScopes;
-use App\Services\MultiProductsInventoryService;
 use App\Services\ProductCostingService;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,7 +75,7 @@ class Order extends Model implements Auditable
         'status_log_date_time',
         'status_log_creator_name',
         'store_names',
-        'store_ids', 
+        'store_ids',
     ];
 
 
@@ -245,12 +244,12 @@ class Order extends Model implements Auditable
                 foreach ($order->orderDetails as $detail) {
                     $fifoService = new \App\Services\FifoMethodService($order);
 
-                    $allocations = $fifoService->allocateFIFO(
+                    $allocations = $fifoService->getAllocateFifo(
                         $detail->product_id,
                         $detail->unit_id,
                         $detail->available_quantity
                     );
-                    $branchStoreId = $order->branch?->store_id;
+                    
                     self::moveFromInventory($allocations, $detail);
                     // if (!$branchStoreId || !$order->branch->store->active) {
                     //     self::moveFromInventory($allocations, $detail);
@@ -422,5 +421,4 @@ class Order extends Model implements Auditable
     {
         return $this->belongsTo(Supplier::class);
     }
-    
 }

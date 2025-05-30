@@ -44,6 +44,7 @@ class InventoryTransactionReportResource extends Resource
 
     public static function table(Table $table): Table
     {
+
         return $table
             ->filters([
 
@@ -56,7 +57,7 @@ class InventoryTransactionReportResource extends Resource
                     ->label(__('lang.product'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    }) ->getSearchResultsUsing(function (string $search): array {
+                    })->getSearchResultsUsing(function (string $search): array {
                         return Product::where('active', 1)
                             ->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
@@ -77,7 +78,7 @@ class InventoryTransactionReportResource extends Resource
                                 $product->id => "{$product->code} - {$product->name}"
                             ]);
                     }),
-                SelectFilter::make("store_id")
+                SelectFilter::make("store_id")->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
                     ->query(function (Builder $q, $data) {
                         return $q;
@@ -105,5 +106,4 @@ class InventoryTransactionReportResource extends Resource
     {
         return 'Report';
     }
-
 }

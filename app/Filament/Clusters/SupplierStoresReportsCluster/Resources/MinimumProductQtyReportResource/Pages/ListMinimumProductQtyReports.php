@@ -15,7 +15,7 @@ class ListMinimumProductQtyReports extends ListRecords
     }
     protected function getViewData(): array
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $inventoryService = new \App\Services\MultiProductsInventoryService(storeId: 0);
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
         // dd(
         //     $lowStockProducts

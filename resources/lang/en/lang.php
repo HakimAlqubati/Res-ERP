@@ -203,4 +203,5 @@ return [
     'has_grn' => 'Has GRN',
     'not_specified' => 'Not specified',
     'date' => 'Date',
+    'please_select_store' => 'Please select a store',
 ];

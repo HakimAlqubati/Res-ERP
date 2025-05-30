@@ -8,7 +8,7 @@ use App\Http\Controllers\TestController5;
 use App\Models\Product;
 use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryPurchasedService;
-use App\Services\MultiProductsInventoryService;
+
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -22,6 +22,7 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
     protected function getViewData(): array
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
         $productType = $this->getTable()->getFilters()['manufacturing_filter']->getState()['value'] ?? null;
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
 
@@ -29,6 +30,7 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
         $filters = [
             'product_id' => $productId,
             'group_by_invoice' => 1,
+            'store_id' => $storeId,
 
         ];
         if ($productType === 'only_mana') {
@@ -43,6 +45,6 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
         $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
-        return ['reportData' => $diffReport, 'pagination' => null];
+        return ['reportData' => $diffReport, 'storeId' => $storeId, 'pagination' => null];
     }
 }

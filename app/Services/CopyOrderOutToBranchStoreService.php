@@ -23,6 +23,11 @@ class CopyOrderOutToBranchStoreService
                     continue; // لا يوجد مخزن للفرع
                 }
 
+                InventoryTransaction::where('transactionable_type', Order::class)
+                    ->where('transactionable_id', $order->id)
+                    ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                    ->where('store_id', $store->id)
+                    ->delete();
                 $outTransactions = InventoryTransaction::where('transactionable_type', Order::class)
                     ->where('transactionable_id', $order->id)
                     ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
@@ -34,8 +39,8 @@ class CopyOrderOutToBranchStoreService
                         'movement_type' => InventoryTransaction::MOVEMENT_IN,
                         'quantity' => $out->quantity,
                         'unit_id' => $out->unit_id,
-                        'movement_date' => now(),
-                        'transaction_date' => now(),
+                        'movement_date' => $order->created_at,
+                        'transaction_date' => $order->created_at,
                         'package_size' => $out->package_size,
                         'price' => $out->price,
                         'notes' => 'Supplied from Order #' . $order->id,

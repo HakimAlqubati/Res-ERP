@@ -4,46 +4,52 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
-
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryWithUsageReportResource\Pages;
+use App\Models\Category;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Store;
-use App\Models\Unit;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
-class InventoryTransactionTruckingReportResource extends Resource
+class InventoryWithUsageReportResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
+    protected static ?string $slug = 'inventory-with-usage-report';
+    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
     {
-        return 'Inventory Tracking';
+        return 'Manufacturing Store Position Report';
     }
+
     public static function getNavigationLabel(): string
     {
-        return 'Inventory Tracking';
+        return 'Manufacturing Store Position Report';
     }
+
     public static function getPluralLabel(): ?string
     {
-        return 'Inventory Tracking';
+        return 'Manufacturing Store Position Report';
     }
+
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
-
+    protected static ?int $navigationSort = 6;
 
     public static function table(Table $table): Table
     {
         return $table
             ->filters([
+                SelectFilter::make("category_id")
+                    ->label(__('lang.category'))->searchable()
+                    ->options(Category::active()->get()->pluck('name', 'id')),
 
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))->searchable()
@@ -68,28 +74,24 @@ class InventoryTransactionTruckingReportResource extends Resource
                                 $product->id => "{$product->code} - {$product->name}"
                             ]);
                     }),
-                SelectFilter::make('movement_type')->label('Type')->options([
-                    InventoryTransaction::MOVEMENT_IN => 'In',
-                    InventoryTransaction::MOVEMENT_OUT => 'Out',
-                ]),
-                SelectFilter::make('unit_id')->label('Unit')->options(Unit::active()->get(['name', 'id'])->pluck('name', 'id')),
+
                 SelectFilter::make("store_id")->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
-                    ->query(function (Builder $q, $data) {
-                        return $q;
-                    })->options(
-                        Store::active()->get()->pluck('name', 'id')->toArray()
-                    ),
+                    ->options(Store::active()->where('is_central_kitchen', 1)->get()->pluck('name', 'id')->toArray()),
+                Filter::make('show_extra_fields')
+                    ->label('Show Smallest Unit')
+                    ->form([
+                        Toggle::make('only_smallest_unit')
+                            ->inline(false)
+                            ->label('Show Only Smallest Unit and Show Total')
+                    ]),
             ], FiltersLayout::AboveContent);
     }
-
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventoryTransactionTruckingReport::route('/'),
-            'tracking_cat' => Pages\CategoryInventoryTrackingReport::route('/tracking_cat'),
-            'summary_report' => Pages\InventorySummaryReport::route('/summary_report'),
+            'index' => Pages\ListInventoryWithUsageReport::route('/'),
         ];
     }
 

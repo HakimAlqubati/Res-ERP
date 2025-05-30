@@ -42,7 +42,7 @@ Route::get('/to_try_order', function (Request $request) {
     $allOrderDetails = $request->all()['order_details'];
     $fdata = [];
 
-    $fifoService = new MultiProductsInventoryService();
+    $fifoService = new MultiProductsInventoryService(storeId: getDefaultStore());
 
     foreach ($allOrderDetails as $orderDetail) {
         $requiredQty = $orderDetail['quantity'];

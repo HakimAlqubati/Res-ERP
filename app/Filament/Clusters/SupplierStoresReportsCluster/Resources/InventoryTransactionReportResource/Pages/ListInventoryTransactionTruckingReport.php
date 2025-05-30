@@ -20,13 +20,14 @@ class ListInventoryTransactionTruckingReport extends ListRecords
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
         $movementType = $this->getTable()->getFilters()['movement_type']->getState()['value'] ?? null;
         $unitId = $this->getTable()->getFilters()['unit_id']->getState()['value'] ?? null;
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
 
         $product = Product::find($productId);
 
         $reportData = collect();
 
         if (!empty($productId)) {
-            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 50, $movementType, $unitId);
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 50, $movementType, $unitId, $storeId);
             $reportData = $rawData->through(function ($item) {
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 return $item;

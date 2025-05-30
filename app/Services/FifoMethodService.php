@@ -23,9 +23,14 @@ class FifoMethodService
     }
     public function allocateFIFO($productId, $unitId, $requestedQty, $sourceModel = null)
     {
-        $inventoryService = new MultiProductsInventoryService();
+        $product = Product::find($productId);
+        $storeId = defaultManufacturingStore($product)->id ?? null;
+
+        $inventoryService = new MultiProductsInventoryService(null, $productId, $unitId,  $storeId);
         $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
+
         $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
@@ -114,36 +119,21 @@ class FifoMethodService
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
-        // if (isset($this->sourceModel)) {
-        // $isManufacturingProduct = Product::find($productId)->is_manufacturing;
-        // $managedStores = auth()->user()->managed_stores_ids ?? [];
-        // if (count($managedStores) == 0) {
-        //     Log::info("Your are not a keeper for any Store");
-        //     throw new \Exception("Your are not a keeper for any Store");
-        // }
-        // foreach ($managedStores as $index => $storeId) {
+        $product = Product::find($productId);
+        $storeId = defaultManufacturingStore($product)->id ?? null;
 
-        // $productName = $targetUnit->product->name;
-        // $unitName = $targetUnit->unit->name;
+        $inventoryService = new MultiProductsInventoryService(null, $productId, $unitId,  $storeId);
+        $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
 
-        // $inventoryService = new MultiProductsInventoryService(
-        //     null,
-        //     $productId,
-        //     $unitId,
-        //     null
-        // );
-        // $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
-        // $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
-        // if ($index === array_key_last($managedStores)) {
+        $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
 
-        // if ($requestedQty > $inventoryRemainingQty) {
+        if ($requestedQty > $inventoryRemainingQty) {
 
-        //     Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-        //     throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName" . " in storeID " . $storeId);
-        // }
-        // }
-        // }
-        // }
+            $productName = $targetUnit->product->name ?? 'Unknown Product';
+            $unitName = $targetUnit->unit->name ?? 'Unknown Unit';
+            Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
+            throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+        }
 
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
@@ -155,35 +145,38 @@ class FifoMethodService
 
         $entryQtyBasedOnUnit = 0;
 
-        foreach ($entries as $entry) {
-            // if (isset($this->sourceModel)) {
-            //     $store = Store::find($entry->store_id);
-            //     $branchManagersRelatedStore = $store->branches->pluck('manager_id')->toArray() ?? [];
 
-            //     $isStoreCentralKitchen = $store->is_central_kitchen;
-            //     if ($isStoreCentralKitchen && !$isManufacturingProduct && !in_array(auth()->id(), $branchManagersRelatedStore)) {
-            //         throw new \Exception($productName  . " is not manufacturing product");
-            //     }
-            // }
+        foreach ($entries as $entry) {
 
             if (!$targetUnit) {
                 continue;
             }
 
 
-
-            $previousOrderedQtyBasedOnTargetUnit = (InventoryTransaction::where('source_transaction_id', $entry->id)
+            $groupedOutQuantities = InventoryTransaction::where('source_transaction_id', $entry->id)
                 ->where('product_id', $productId)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->whereNull('deleted_at')
-                ->sum(DB::raw('quantity'))
-                / $targetUnit->package_size);
+                ->select('unit_id', 'package_size', DB::raw('SUM(quantity) as total_qty'))
+                ->groupBy('unit_id', 'package_size')
+                ->get();
+            $previousOrderedQtyBasedOnTargetUnit = 0;
+
+            foreach ($groupedOutQuantities as $group) {
+                $groupQty = $group->total_qty;
+                $groupPackageSize = $group->package_size;
+
+                // تحويل الكمية إلى target unit
+                $convertedQty = ($groupQty * $groupPackageSize) / $targetUnit->package_size;
+
+                $previousOrderedQtyBasedOnTargetUnit += $convertedQty;
+            }
+
 
             $entryQty = $entry->quantity;
             $entryQtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
-
             $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
-
+ 
 
             if ($remaining <= 0) continue;
 

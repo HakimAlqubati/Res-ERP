@@ -9,6 +9,7 @@ use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\MonthSalaryDetail;
 use App\Models\Order;
+use App\Models\Product;
 use Spatie\Permission\Models\Role;
 use App\Models\Store;
 use App\Models\SystemSetting;
@@ -17,6 +18,7 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
+use App\Services\DefaultManufacturingStoreService;
 use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
@@ -52,7 +54,7 @@ if (!function_exists('formatMoney')) {
     function formatMoney($amount)
     {
         $currency = settingWithDefault('currency_symbol', 'RM');
-        return $currency .' '.  number_format($amount, 2) ;
+        return $currency . ' ' .  number_format($amount, 2);
     }
 }
 
@@ -856,5 +858,27 @@ if (!function_exists('formUserForExistingEmployee')) {
             ]),
 
         ];
+    }
+}
+
+
+if (!function_exists('defaultManufacturingStore')) {
+    function defaultManufacturingStore(Product $product)
+    {
+        return app(DefaultManufacturingStoreService::class)->getDefaultStoreForProduct($product) ?? null;
+    }
+}
+
+if (!function_exists('formatMoneyWithCurrency')) {
+    function formatMoneyWithCurrency($amount, $currency = 'RM')
+    {
+        $currencySymbol = $currency ?? settingWithDefault('currency_symbol', 'RM');
+        return $currencySymbol . ' ' . number_format((float) $amount, 2, '.', '');
+    }
+}
+if (!function_exists('formatQunantity')) {
+    function formatQunantity($qty)
+    {
+        return  number_format((float) $qty, 2, '.', '');
     }
 }
