@@ -2,6 +2,7 @@
 
 namespace App\Services\PurchasedReports;
 
+use App\Models\InventoryTransaction;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
 
@@ -27,9 +28,9 @@ class PurchaseInvoiceProductSummaryReportService
 
             )
             ->whereNull('inventory_transactions.deleted_at')
- 
+
             ->where('inventory_transactions.movement_type', 'in')
-            ->where('inventory_transactions.store_id', $filters['store_id'])
+            // ->where('inventory_transactions.store_id', $filters['store_id'])
             // ->whereIn('inventory_transactions.transactionable_type', ['App\\Models\\PurchaseInvoice', 'App\\Models\\GoodsReceivedNote'])
         ;
 
@@ -173,6 +174,7 @@ class PurchaseInvoiceProductSummaryReportService
                         'App\\Models\\StockIssueOrder'
                     ]);
             })
+            ->where('it.movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->where('it.store_id', $filters['store_id']);
 
         if (isset($filters['product_id'])) {
