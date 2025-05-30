@@ -56,4 +56,47 @@ class CopyOrderOutToBranchStoreService
             }
         });
     }
+
+    public function handleForOrder(Order $order): void
+    {
+        Log::info('Copying transactions for Order #' . $order->id, ['timestamp' => now()]);
+
+        $store = $order->branch?->store;
+
+        if (! $store) {
+            Log::warning('No store found for Branch of Order #' . $order->id);
+            return;
+        }
+
+        DB::transaction(function () use ($order, $store) {
+            InventoryTransaction::where('transactionable_type', Order::class)
+                ->where('transactionable_id', $order->id)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                ->where('store_id', $store->id)
+                ->delete();
+
+            $outTransactions = InventoryTransaction::where('transactionable_type', Order::class)
+                ->where('transactionable_id', $order->id)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+                ->get();
+
+            foreach ($outTransactions as $out) {
+                InventoryTransaction::create([
+                    'product_id' => $out->product_id,
+                    'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                    'quantity' => $out->quantity,
+                    'unit_id' => $out->unit_id,
+                    'movement_date' => $order->created_at,
+                    'transaction_date' => $order->created_at,
+                    'package_size' => $out->package_size,
+                    'price' => $out->price,
+                    'notes' => 'Supplied from Order #' . $order->id,
+                    'store_id' => $store->id,
+                    'transactionable_type' => Order::class,
+                    'transactionable_id' => $order->id,
+                    'source_transaction_id' => $out->id,
+                ]);
+            }
+        });
+    }
 }

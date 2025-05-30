@@ -13,6 +13,7 @@ use App\Models\Store;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use App\Services\InventoryService;
+use App\Services\MultiProductsInventoryService;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -71,6 +72,7 @@ class StockInventoryResource extends Resource
                         Select::make('store_id')->label(__('lang.store'))
                             ->default(getDefaultStore())
                             ->disabledOn('edit')
+                            ->live()
                             ->options(
                                 Store::active()
                                     ->withManagedStores()
@@ -132,10 +134,16 @@ class StockInventoryResource extends Resource
                                         ->showInInvoices()
                                         ->where('unit_id', $state)->first();
 
-                                    $inventoryService = new InventoryService($get('product_id'), $state, $get('store_id'));
-                                    $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
+
+                                    $service = new  MultiProductsInventoryService(
+                                        null,
+                                        $get('product_id'),
+                                        $state,
+                                        $get('../../store_id'),
+                                    );
+                                    $remaningQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
                                     $set('system_quantity', $remaningQty);
-                                    $difference =  static::getDifference($inventoryService, $get('physical_quantity'));
+                                    $difference =  static::getDifference($remaningQty, $get('physical_quantity'));
                                     $set('difference', $difference);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
                                 })->columnSpan(2)->required(),
@@ -147,8 +155,8 @@ class StockInventoryResource extends Resource
                                 ->numeric()
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function ($set, $state, $get) {
-                                    $inventoryService = new InventoryService($get('product_id'), $get('unit_id'), $get('store_id'));
-                                    $difference =  static::getDifference($inventoryService, $state);
+                                    
+                                    $difference =  static::getDifference($get('system_quantity'), $state);
                                     $set('difference', $difference);
                                 })
                                 ->label('Physical Qty')
@@ -246,9 +254,8 @@ class StockInventoryResource extends Resource
         return static::getModel()::count();
     }
 
-    public static function getDifference($inventoryService, $physicalQty)
-    {
-        $remaningQty = $inventoryService->getInventoryReport()[0]['remaining_qty'] ?? 0;
+    public static function getDifference($remaningQty, $physicalQty)
+    { 
         $difference = round($physicalQty - $remaningQty, 2);
         return $difference;
     }

@@ -249,7 +249,7 @@ class Order extends Model implements Auditable
                         $detail->unit_id,
                         $detail->available_quantity
                     );
-                    
+
                     self::moveFromInventory($allocations, $detail);
                     // if (!$branchStoreId || !$order->branch->store->active) {
                     //     self::moveFromInventory($allocations, $detail);
@@ -288,6 +288,12 @@ class Order extends Model implements Auditable
                         ' to ' . $order->status,
                     'new_status' => $order->status,
                 ]);
+            }
+        });
+
+        static::saved(function (Order $order) {
+            if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
+                app(\App\Services\CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
             }
         });
     }
