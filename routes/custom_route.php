@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\Api\ProductPriceHistoryController;
+use App\Http\Controllers\CopyOrderOutToBranchStoreController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FixFifoController;
 use App\Http\Controllers\FixOrderWithFifoController;
@@ -117,7 +118,7 @@ Route::get('/testAllocateFifo', function () {
     // }
     // return $updated;
     $allocations = $fifoService->getAllocateFifo(
-        $_GET['product_id'] ,
+        $_GET['product_id'],
         $_GET['unit_id'],
         $_GET['qty']
     );
@@ -171,3 +172,5 @@ Route::get('/updateAllManufacturedPrices', [ProductPriceHistoryController::class
 Route::get('/getSuppliesManufacturedProducts', [TestController8::class, 'getSuppliesManufacturedProducts']);
 Route::get('/storeSuppliesManufacturedProducts', [TestController8::class, 'storeSuppliesManufacturedProducts']);
 Route::get('/getNewReport', [TestController8::class, 'getNewReport']);
+
+Route::get('/handleCopy', [CopyOrderOutToBranchStoreController::class, 'handle']);
