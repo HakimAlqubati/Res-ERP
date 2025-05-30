@@ -23,6 +23,7 @@ class ManufacturingBackfillService
      */
     public function handleFromSimulation(?int $storeId): void
     {
+        Log::info('Starting_ManufacturingBackfillService...', ['timestamp' => now()]);
         DB::transaction(function () use ($storeId) {
             // تحقق من صلاحية معرف المخزن
             if ($storeId && !Store::whereKey($storeId)->exists()) {
@@ -31,6 +32,14 @@ class ManufacturingBackfillService
 
             // نفذ المحاكاة للحصول على الحركات التي سيتم إنشاؤها
             $simulatedTransactions = $this->simulateBackfill($storeId);
+
+            // 🟡 قبل إضافة الحركات، احذف الحركات OUT الحالية التي ستكون بديلة
+            $transactionableIds = collect($simulatedTransactions)->pluck('source_transaction_id')->unique();
+
+            InventoryTransaction::where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+                ->where('transactionable_type', StockSupplyOrder::class)
+                ->whereIn('transactionable_id', $transactionableIds)
+                ->delete();
 
             // احفظ كل سجل كـ InventoryTransaction فعلي
             foreach ($simulatedTransactions as $data) {
@@ -58,11 +67,9 @@ class ManufacturingBackfillService
         if ($storeId && !Store::whereKey($storeId)->exists()) {
             throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
         }
-        $productId = 23;
         $transactions = InventoryTransaction::query()
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where('transactionable_type', StockSupplyOrder::class)
-            // ->when($productId, fn($q) => $q->where('product_id', $productId))
 
             ->whereHas('product', function ($query) {
                 $query->has('productItems');

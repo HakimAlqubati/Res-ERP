@@ -11,6 +11,7 @@ class CopyOrderOutToBranchStoreService
 {
     public function handle(): void
     {
+        Log::info('Starting_CopyOrderOutToBranchStoreService...', ['timestamp' => now()]);
         DB::transaction(function () {
             $orders = Order::with(['branch.store'])
                 ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
