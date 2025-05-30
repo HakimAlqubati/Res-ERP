@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CopyOrderOutToBranchStoreService
 {
     public function handle(): void
     {
+        Log::info('done',['hi']);
         DB::transaction(function () {
             $orders = Order::with(['branch.store'])
                 ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
