@@ -145,34 +145,38 @@ class FifoMethodService
 
         $entryQtyBasedOnUnit = 0;
 
-        foreach ($entries as $entry) {
-            // if (isset($this->sourceModel)) {
-            //     $store = Store::find($entry->store_id);
-            //     $branchManagersRelatedStore = $store->branches->pluck('manager_id')->toArray() ?? [];
 
-            //     $isStoreCentralKitchen = $store->is_central_kitchen;
-            //     if ($isStoreCentralKitchen && !$isManufacturingProduct && !in_array(auth()->id(), $branchManagersRelatedStore)) {
-            //         throw new \Exception($productName  . " is not manufacturing product");
-            //     }
-            // }
+        foreach ($entries as $entry) {
 
             if (!$targetUnit) {
                 continue;
             }
 
 
-
-            $previousOrderedQtyBasedOnTargetUnit = (InventoryTransaction::where('source_transaction_id', $entry->id)
+            $groupedOutQuantities = InventoryTransaction::where('source_transaction_id', $entry->id)
                 ->where('product_id', $productId)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->whereNull('deleted_at')
-                ->sum(DB::raw('quantity'))
-                / $targetUnit->package_size) * $entry->package_size;
+                ->select('unit_id', 'package_size', DB::raw('SUM(quantity) as total_qty'))
+                ->groupBy('unit_id', 'package_size')
+                ->get();
+            $previousOrderedQtyBasedOnTargetUnit = 0;
+
+            foreach ($groupedOutQuantities as $group) {
+                $groupQty = $group->total_qty;
+                $groupPackageSize = $group->package_size;
+
+                // تحويل الكمية إلى target unit
+                $convertedQty = ($groupQty * $groupPackageSize) / $targetUnit->package_size;
+
+                $previousOrderedQtyBasedOnTargetUnit += $convertedQty;
+            }
+
+
             $entryQty = $entry->quantity;
             $entryQtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
-
-            $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit; 
-
+            $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
+ 
 
             if ($remaining <= 0) continue;
 
