@@ -339,7 +339,7 @@ AND (
                 'id',
                 'name'
             ])->keyBy('id');
-        $service = new MultiProductsInventoryService(null, null, null, 0);
+        $service = new MultiProductsInventoryService(null, null, 'all', 0);
         $details = collect($details)->map(function ($detail) use ($products, $units, $service) {
 
             return [
