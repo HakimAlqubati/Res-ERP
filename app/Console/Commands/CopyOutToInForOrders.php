@@ -16,22 +16,19 @@ class CopyOutToInForOrders extends Command
     public function handle()
     {
         $tenantId = $this->option('tenant');
+        if ($tenantId) {
+            $tenant = Tenant::find($tenantId);
 
-        if (! $tenantId) {
-            $this->error('❌ Please provide --tenant={id}');
-            return;
+            if (! $tenant) {
+                $this->error("❌ Tenant with ID {$tenantId} not found.");
+                return;
+            }
+
+            $tenant->makeCurrent(); // ✅ تشغيل التينانت
+            $this->info("🏢 Tenant [{$tenant->id}] activated.");
+        } else {
+            $this->warn('⚠️ No tenant ID provided. Proceeding without tenant context.');
         }
-
-
-        $tenant = Tenant::find($tenantId);
-
-        if (! $tenant) {
-            $this->error("❌ Tenant with ID {$tenantId} not found.");
-            return;
-        }
-
-        $tenant->makeCurrent(); // ✅ تشغيل التينانت
-        $this->info("🏢 Tenant [{$tenant->id}] activated.");
         $this->info('🚀 Starting to copy OUT transactions to IN for orders...');
 
         try {

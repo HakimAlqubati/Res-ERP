@@ -19,6 +19,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class ReportProductQuantitiesResource extends Resource
@@ -63,10 +64,12 @@ class ReportProductQuantitiesResource extends Resource
             ->emptyStateDescription('Please choose a product or maybe there is no data')
             ->emptyStateIcon('heroicon-o-plus')
             ->columns([
+                TextColumn::make('code')->alignCenter(true),
                 TextColumn::make('product')->limit(25)
                     ->default('You should to select a product'),
                 TextColumn::make('branch'),
                 TextColumn::make('unit'),
+                TextColumn::make('package_size')->alignCenter(true),
                 TextColumn::make('quantity')->alignCenter(true),
                 TextColumn::make('price')
                     ->hidden(fn(): bool => isStoreManager())
@@ -77,14 +80,30 @@ class ReportProductQuantitiesResource extends Resource
                 //     ->label('Product')->searchable()
                 //     ->selectablePlaceholder('Should to select product')
                 //     ->options(Product::pluck('name', 'id')),
-                SelectFilter::make('product_id')
-                    ->label('Product')
-                    ->searchable()
+                SelectFilter::make("product_id")
                     ->multiple()
-                    ->placeholder('All products')  // Custom placeholder option
-                    ->options(
-                        Product::pluck('name', 'id')->toArray()
-                    ),
+                    ->label(__('lang.product'))->searchable()
+                    ->getSearchResultsUsing(function (string $search): array {
+                        return Product::query()
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('code', 'like', "%{$search}%");
+                            })
+                            ->limit(50)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ])
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
+                    ->options(function () {
+                        return Product::where('active', 1)
+                            ->get()
+                            ->mapWithKeys(fn($product) => [
+                                $product->id => "{$product->code} - {$product->name}"
+                            ]);
+                    }),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()
                     ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])
@@ -119,9 +138,11 @@ class ReportProductQuantitiesResource extends Resource
         $query = OrderDetails::query()
             ->select(
                 'products.name AS product',
+                'products.code AS code',
                 'products.id AS product_id',
                 'branches.name AS branch',
                 'units.name AS unit',
+                'orders_details.package_size AS package_size',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
                 DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS price')
             )
@@ -134,7 +155,16 @@ class ReportProductQuantitiesResource extends Resource
                 $query->whereBetween('orders.created_at', [$start_date, $end_date]);
             })
             // ->where('products.id', $product_id)
-            ->groupBy('orders.branch_id', 'products.name', 'products.id', 'branches.name', 'units.name', 'orders_details.price')
+            ->groupBy(
+                'orders.branch_id',
+                'products.name',
+                'products.code',
+                'products.id',
+                'branches.name',
+                'units.name',
+                'orders_details.package_size',
+                'orders_details.price'
+            )
             ->orderByRaw('NULL');
         return $query;
     }

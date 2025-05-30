@@ -10,12 +10,12 @@
                     <p>({{ $branch }})
                     </p>
                 </th>
-                <th class="no_border_right_left">
+                <th class="no_border_right_left" colspan="2">
                     <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                     <br>
                     <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
                 </th>
-                <th class="no_border_right_left">
+                <th class="no_border_right_left" colspan="2">
                     <p>{{ __('lang.category') . ': (' . $category . ')' }}</p>
 
                 </th>
@@ -27,8 +27,10 @@
                 </th>
             </x-filament-tables::row>
             <x-filament-tables::row>
+                <th>{{ __('lang.product_code') }}</th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
+                <th>{{ __('lang.package_size') }}</th>
                 <th>{{ __('lang.quantity') }}</th>
                 <th>{{ __('lang.price') }}</th>
             </x-filament-tables::row>
@@ -36,14 +38,16 @@
         <tbody>
             @foreach ($report_data as $data)
                 <x-filament-tables::row>
+                    <x-filament-tables::cell> {{ $data?->product_code }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->product_name }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->unit_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $data?->package_size }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->price }} </x-filament-tables::cell>
                 </x-filament-tables::row>
             @endforeach
             <x-filament-tables::row>
-                <x-filament-tables::cell colspan="2"> {{ __('lang.total') }} </x-filament-tables::cell>
+                <x-filament-tables::cell colspan="4"> {{ __('lang.total') }} </x-filament-tables::cell>
                 <x-filament-tables::cell> {{ $total_quantity }} </x-filament-tables::cell>
                 <x-filament-tables::cell> {{ $total_price }} </x-filament-tables::cell>
             </x-filament-tables::row>

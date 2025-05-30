@@ -95,18 +95,22 @@ class GeneralReportProductDetails extends Page
                 'products.category_id',
                 'orders_details.unit_id',
                 'products.name',
+                'products.code',
                 'units.name',
                 'orders_details.price',
+                'orders_details.package_size',
             )
             ->get([
                 'products.category_id',
                 'orders_details.product_id',
                 DB::raw("IF(JSON_VALID(products.name), REPLACE(JSON_EXTRACT(products.name, '$." . app()->getLocale() . "'), '\"', ''), products.name) as product_name"),
                 'units.name as unit_name',
+                'products.code as product_code',
                 'orders_details.unit_id as unit_id',
                 DB::raw('ROUND(SUM(orders_details.available_quantity), 0) as available_quantity'),
                 // DB::raw('(SUM(orders_details.price)) as price'),
                 'orders_details.price as price',
+                'orders_details.package_size as package_size',
             ]);
 
         $final_result['data'] = [];
@@ -117,6 +121,8 @@ class GeneralReportProductDetails extends Page
             $obj->category_id = $val_data->category_id;
             $obj->product_id = $val_data->product_id;
             $obj->product_name = $val_data->product_name;
+            $obj->product_code = $val_data->product_code;
+            $obj->package_size = $val_data->package_size;
             $obj->unit_name = $val_data->unit_name;
             $obj->unit_id = $val_data->unit_id;
             $obj->quantity = $val_data->available_quantity;
