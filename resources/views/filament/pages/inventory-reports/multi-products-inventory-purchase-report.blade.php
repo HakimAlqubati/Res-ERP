@@ -34,7 +34,7 @@
 
                             </th>
                             <th colspan="6" class="no_border_right_left text-center">
-                                <h3>Inventory Difference Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
+                                <h3>Store Position Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
                             </th>
                             <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
@@ -50,7 +50,9 @@
                             <th>Ordered Qty</th>
                             <th>Qty in Stock</th>
                             <th>Unit Price</th>
-                            <th>Total Price</th>
+                            <th id="totalPriceHeader" class="cursor-pointer select-none">
+                                Total Price <span id="sortIcon">⇅</span>
+                            </th>
                         </x-filament-tables::row>
                     </thead>
 
@@ -134,6 +136,35 @@
             window.print();
             document.body.innerHTML = originalContent;
             location.reload();
+        });
+    </script>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const table = document.querySelector("#report-table");
+            const header = document.querySelector("#totalPriceHeader");
+            const icon = document.querySelector("#sortIcon");
+            let ascending = true;
+
+            header.addEventListener("click", function() {
+                const rows = Array.from(table.querySelectorAll("tbody tr"))
+                    .filter(row => !row.classList.contains("font-bold")); // Ignore total row
+
+                rows.sort((a, b) => {
+                    const aValue = parseFloat(a.cells[7].innerText.replace(/[^\d.-]/g, "")) || 0;
+                    const bValue = parseFloat(b.cells[7].innerText.replace(/[^\d.-]/g, "")) || 0;
+
+                    return ascending ? aValue - bValue : bValue - aValue;
+                });
+
+                const tbody = table.querySelector("tbody");
+                rows.forEach(row => tbody.appendChild(row));
+
+                // تحديث الأيقونة
+                icon.textContent = ascending ? "🔼" : "🔽";
+                ascending = !ascending;
+            });
         });
     </script>
 
