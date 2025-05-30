@@ -11,7 +11,6 @@ class CopyOrderOutToBranchStoreService
 {
     public function handle(): void
     {
-        Log::info('done', ['hi']);
         DB::transaction(function () {
             $orders = Order::with(['branch.store'])
                 ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])

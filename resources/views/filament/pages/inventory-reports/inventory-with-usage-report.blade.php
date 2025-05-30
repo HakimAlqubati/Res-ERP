@@ -24,7 +24,8 @@
     @if ($storeId)
         @if (count($reportData) > 0)
             <div id="reportContent">
-                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border"
+                    id="report-table">
                     <thead class="fixed-header">
                         <x-filament-tables::row class="header_report">
                             <th colspan="3"
@@ -52,7 +53,9 @@
                             <th>Used Qty</th>
                             <th>Remaining Qty</th>
                             <th>Price</th>
-                            <th>Total Price</th>
+                            <th id="totalPriceHeader" class="cursor-pointer select-none">
+                                Total Price <span id="sortIcon">⇅</span>
+                            </th>
                         </x-filament-tables::row>
                     </thead>
                     <tbody>
@@ -155,6 +158,33 @@
         });
     </script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const table = document.querySelector("#report-table");
+            const header = document.querySelector("#totalPriceHeader");
+            const icon = document.querySelector("#sortIcon");
+            let ascending = true;
+
+            header.addEventListener("click", function() {
+                const rows = Array.from(table.querySelectorAll("tbody tr"))
+                    .filter(row => !row.classList.contains("font-bold")); // Ignore total row
+
+                rows.sort((a, b) => {
+                    const aValue = parseFloat(a.cells[7].innerText.replace(/[^\d.-]/g, "")) || 0;
+                    const bValue = parseFloat(b.cells[7].innerText.replace(/[^\d.-]/g, "")) || 0;
+
+                    return ascending ? aValue - bValue : bValue - aValue;
+                });
+
+                const tbody = table.querySelector("tbody");
+                rows.forEach(row => tbody.appendChild(row));
+
+                // تحديث الأيقونة
+                icon.textContent = ascending ? "🔼" : "🔽";
+                ascending = !ascending;
+            });
+        });
+    </script>
     <style>
         @media print {
             #printReport {

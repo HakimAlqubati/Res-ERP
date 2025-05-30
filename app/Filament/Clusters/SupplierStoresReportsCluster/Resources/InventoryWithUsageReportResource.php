@@ -17,6 +17,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 
 class InventoryWithUsageReportResource extends Resource
 {
@@ -83,7 +84,7 @@ class InventoryWithUsageReportResource extends Resource
                     ->form([
                         Toggle::make('only_smallest_unit')
                             ->inline(false)
-                            ->label('Show Only Smallest Unit Show Total')
+                            ->label(new HtmlString('Show Only Smallest Unit<br>Show Total'))
                     ]),
             ], FiltersLayout::AboveContent);
     }
