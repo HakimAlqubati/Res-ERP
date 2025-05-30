@@ -174,7 +174,7 @@ class MultiProductsInventoryService
 
         $remQty = $totalIn - $totalOut;
         $unitPrices = $this->getProductUnitPrices($productId);
-        $product = Product::active()->find($productId);
+        $product = Product::find($productId);
         $result = [];
 
         foreach ($unitPrices as $unitPrice) {
@@ -204,7 +204,7 @@ class MultiProductsInventoryService
                 $priceSource = 'unit_price';
                 $priceStoreId = null; // ما في مصدر مخزن في هذه الحالة
             }
-            if ($product && $product->active) {
+             
                 $result[] = [
                     'product_id' => $productId,
                     'product_active' => $product->active,
@@ -223,7 +223,7 @@ class MultiProductsInventoryService
                     'price_store_id' => $priceStoreId,
 
                 ];
-            }
+            
         }
 
         return $result;

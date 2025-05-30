@@ -34,7 +34,7 @@
 
                             </th>
                             <th colspan="6" class="no_border_right_left text-center">
-                                <h3>Store Position Report (Purchased vs Ordered) - Displayed in Smallest Unit</h3>
+                                <h3>Store Position Report - Displayed in Smallest Unit</h3>
                             </th>
                             <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
@@ -46,8 +46,8 @@
                             <th>Product Code</th>
                             <th>Product Name</th>
                             <th>Unit</th>
-                            <th>Purchased Qty</th>
-                            <th>Ordered Qty</th>
+                            <th>In Qty</th>
+                            <th>Out Qty</th>
                             <th>Qty in Stock</th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" class="cursor-pointer select-none">
