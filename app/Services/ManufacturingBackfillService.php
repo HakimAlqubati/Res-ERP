@@ -94,13 +94,14 @@ class ManufacturingBackfillService
                     'transaction_date' => $transaction->transaction_date,
                     'notes' => $notes,
                     'package_size' => $packageSize,
-                    'source_transaction_id' => InventoryTransaction::query()
-                        ->where('product_id', $component['product_id'])
-                        ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-                        ->where('store_id', $transaction->store_id)
-                        ->orderByDesc('movement_date')
-                        ->orderByDesc('id')
-                        ->value('id'),
+                    // 'source_transaction_id' => InventoryTransaction::query()
+                    //     ->where('product_id', $component['product_id'])
+                    //     ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                    //     ->where('store_id', $transaction->store_id)
+                    //     ->orderByDesc('movement_date')
+                    //     ->orderByDesc('id')
+                    //     ->value('id'),
+                    'source_transaction_id' => $transaction->transactionable_id,
                     'price' => $component['price_per_unit'],
                     'total_price' => $component['total_price'],
                 ];
