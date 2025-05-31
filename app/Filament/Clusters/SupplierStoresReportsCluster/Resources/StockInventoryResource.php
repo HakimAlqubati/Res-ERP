@@ -88,7 +88,7 @@ class StockInventoryResource extends Resource
 
                     Repeater::make('details')
                         ->hidden(function ($record) use ($operaion) {
-                            return $record->finalized && $operaion === 'edit';
+                            return $record?->finalized && $operaion === 'edit';
                         })
                         ->relationship('details')
                         ->label('Inventory Details')->columnSpanFull()
