@@ -160,7 +160,7 @@ class StockInventoryResource extends Resource
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function ($set, $state, $get) {
 
-                                    $difference =  static::getDifference($state, $get('system_quantity'));
+                                    $difference =  static::getDifference($get('system_quantity'), $state);
                                     $set('difference', $difference);
                                 })
                                 ->label('Physical Qty')
@@ -262,6 +262,9 @@ class StockInventoryResource extends Resource
     {
         $remaningQty = (float) $remaningQty;
         $physicalQty = (float) $physicalQty;
+        if ($physicalQty === 0) {
+            return 0;
+        }
         // dd($remaningQty,$physicalQty);
         $difference = round($physicalQty - $remaningQty, 2);
         return $difference;
