@@ -31,7 +31,7 @@ class EditStockInventory extends EditRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getSaveFormAction()->hidden(),
+            $this->getSaveFormAction(),
             $this->getCancelFormAction()->hidden(),
         ];
     }
