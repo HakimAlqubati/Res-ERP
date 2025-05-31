@@ -260,6 +260,8 @@ class StockInventoryResource extends Resource
 
     public static function getDifference($remaningQty, $physicalQty)
     {
+        $remaningQty = (float) $remaningQty;
+        $physicalQty = (float) $physicalQty;
         $difference = round($physicalQty - $remaningQty, 2);
         return $difference;
     }
