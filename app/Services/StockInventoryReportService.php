@@ -22,7 +22,51 @@ class StockInventoryReportService
             ->pluck('product_id')
             ->unique();
 
-        // Return products NOT in inventory details
-        return Product::whereNotIn('id', $productIdsInInventories)->paginate($perPage);
+        // Get products NOT in inventory details
+        $productsQuery = Product::whereNotIn('id', $productIdsInInventories);
+
+        // Use pagination
+        $products = $productsQuery->paginate($perPage);
+
+        // Add remaining_qty and smallest unit qty+name to each product
+        $products->getCollection()->transform(function ($product) {
+            $storeId = defaultManufacturingStore($product)->id ?? null;
+
+            if (!$storeId) {
+                $product->remaining_qty = 0;
+                $product->remaining_qty_in_smallest_unit = 0;
+                $product->smallest_unit_name = '';
+            } else {
+                $smallestUnit =    \App\Models\UnitPrice::where('product_id', $product->id)
+                    ->with('unit')
+                    ->orderBy('package_size', 'asc')
+                    ->first();
+                $service = new MultiProductsInventoryService(
+                    null,
+                    $product->id,
+                    $smallestUnit->unit_id,
+                    $storeId
+                );
+
+                $inventoryData = $service->getInventoryForProduct($product->id);
+
+                // Using first unit data for remaining_qty
+                $remainingQty = $inventoryData[0]['remaining_qty'] ?? 0;
+
+                // Find the smallest unit data from inventoryData
+                $smallestUnitData = collect($inventoryData)
+                    ->sortBy('package_size')
+                    ->first();
+
+
+                // Assign to product
+                $product->remaining_qty = $remainingQty;
+                $product->smallest_unit_name = $smallestUnit->unit->name;;
+            }
+
+            return $product;
+        });
+
+        return $products;
     }
 }

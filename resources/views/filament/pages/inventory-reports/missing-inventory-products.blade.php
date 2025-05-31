@@ -43,7 +43,7 @@
         <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
             <thead>
                 <x-filament-tables::row class="header_report">
-                    <th colspan="3">
+                    <th colspan="4">
                         <h3>Products Not Inventoried Between {{ $startDate }} - {{ $endDate }}
                             - {{ '      ' }}
                             In ({{ $store }})
@@ -56,6 +56,8 @@
                     <th>Product Code</th>
                     <th>Name</th>
                     <th>Category</th>
+                    <th>{{ 'Remaining Qty' }}</th>
+
                 </x-filament-tables::row>
             </thead>
             <tbody>
@@ -64,6 +66,8 @@
                         <x-filament-tables::cell>{{ $product->code ?? '-' }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $product->name }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $product->category->name ?? '—' }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $product->remaining_qty . ' ' . $product->smallest_unit_name }}</x-filament-tables::cell>
+
                     </x-filament-tables::row>
                 @endforeach
             </tbody>
