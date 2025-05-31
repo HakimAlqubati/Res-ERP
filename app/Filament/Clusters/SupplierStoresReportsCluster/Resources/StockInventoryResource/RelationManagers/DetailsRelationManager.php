@@ -11,6 +11,7 @@ use App\Models\StockIssueOrderDetail;
 use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
 use App\Models\Store;
+use App\Services\MultiProductsInventoryService;
 use Filament\Forms;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -49,6 +50,24 @@ class DetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
                 IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented'))
                     ->toggleable()->sortable(),
+                Tables\Columns\TextColumn::make('remaining_quantity')->label('Real Qty in Stock')
+                    ->alignCenter(true)
+                    ->getStateUsing(function ($record) {
+                        $product = $record->product;
+                        $storeId = defaultManufacturingStore($product)->id ?? null;
+                        if (!$storeId) {
+                            return 0;
+                        }
+                        $service = new  MultiProductsInventoryService(
+                            null,
+                            $record->product_id,
+                            $record->unit_id,
+                            $storeId
+                        );
+                        $remainingQty = $service->getInventoryForProduct($record->product_id)[0]['remaining_qty'] ?? 0;
+
+                        return $remainingQty;
+                    }),
             ])
             ->filters([
                 //
