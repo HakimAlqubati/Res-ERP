@@ -39,7 +39,7 @@ class DetailsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('unit.name')->searchable()->toggleable(),
