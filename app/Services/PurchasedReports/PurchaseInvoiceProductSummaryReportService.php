@@ -4,6 +4,7 @@ namespace App\Services\PurchasedReports;
 
 use App\Models\InventoryTransaction;
 use App\Models\UnitPrice;
+use App\Services\MultiProductsInventoryService;
 use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoiceProductSummaryReportService
@@ -142,6 +143,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'product_name' => $productName,
                 'qty'          => round($totalQty, 2),
                 'unit_name'    => $unitName,
+                'unit_id' => $smallestUnit->unit_id,
                 'price' => round($totalCost, 2),
             ];
         }
@@ -238,7 +240,7 @@ class PurchaseInvoiceProductSummaryReportService
     }
 
 
-    public function calculatePurchaseVsOrderedDifference(array $purchased, array $ordered)
+    public function calculatePurchaseVsOrderedDifference(array $purchased, array $ordered, $storeId = null)
     {
 
         $orderedMap = collect($ordered)->keyBy('product_id');
@@ -252,7 +254,14 @@ class PurchaseInvoiceProductSummaryReportService
             $orderedQty = round($orderedQty, 2);
             // if ($orderedQty > $purchasedQty) {
             $latestPrice = $this->getLatestPurchasePrice($productId);
-            // dd($purchase['unit_id']);
+            $service = new  MultiProductsInventoryService(
+                null,
+                $productId,
+                $purchase['unit_id'],
+                $storeId,
+            );
+            $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+            
             $lastPrice = ($latestPrice && $latestPrice->package_size > 0)
                 ? ($latestPrice->price / $latestPrice->package_size)
                 : $purchase['price'];
@@ -263,7 +272,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'unit_name'      => $purchase['unit_name'],
                 'purchased_qty'  => $purchasedQty,
                 'ordered_qty'    => $orderedQty,
-                'difference'     => $difference,
+                'difference'     => $remainingQty,
                 'unit_price'     => round($lastPrice, 2),
                 'price'          => round($lastPrice * $difference, 2),
             ];

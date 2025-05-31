@@ -44,7 +44,7 @@ class ListInventoryTransactionPurchaseReport extends ListRecords
         $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
         $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
-        $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
+        $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered, $storeId);
         return ['reportData' => $diffReport, 'storeId' => $storeId, 'pagination' => null];
     }
 }
