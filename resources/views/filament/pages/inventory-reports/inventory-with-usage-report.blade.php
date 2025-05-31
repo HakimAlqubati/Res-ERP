@@ -88,9 +88,9 @@
                                     <x-filament-tables::cell
                                         class="border px-4 py-2 font-bold">{{ $data['remaining_qty'] }}</x-filament-tables::cell>
                                     <x-filament-tables::cell
-                                        class="border px-4 py-2 font-bold">{{ $data['price'] }}</x-filament-tables::cell>
+                                        class="border px-4 py-2 font-bold">{{  $data['price'] }}</x-filament-tables::cell>
                                     <x-filament-tables::cell
-                                        class="border px-4 py-2 font-bold">{{ $data['total_price'] }}</x-filament-tables::cell>
+                                        class="border px-4 py-2 font-bold">{{  $data['total_price'] }}</x-filament-tables::cell>
                                 </x-filament-tables::row>
                             @endforeach
                         @endforeach

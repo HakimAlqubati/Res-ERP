@@ -9,7 +9,7 @@
         }
 
         /* اجعل الترو الأخير sticky في الأسفل */
-        tbody:last-of-type  .fixed_footer {
+        tbody:last-of-type .fixed_footer {
             position: sticky;
             bottom: 0;
             background: white !important;
@@ -74,8 +74,8 @@
                                 <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
 
                                 <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['unit_price'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['price'] }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($data['unit_price']) }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($data['price']) }}</x-filament-tables::cell>
                             </x-filament-tables::row>
                         @endforeach
                     </tbody>
@@ -84,7 +84,7 @@
                             <x-filament-tables::cell colspan="5" class="text-right">Total </x-filament-tables::cell>
 
                             <x-filament-tables::cell>
-                                {{ getDefaultCurrency() . ' ' . number_format(array_sum(array_column($reportData, 'price')), 2) }}
+                                {{ formatMoneyWithCurrency(array_sum(array_column($reportData, 'price'))) }}
                             </x-filament-tables::cell>
                         </x-filament-tables::row>
                     </tbody>

@@ -221,7 +221,11 @@ class OrderResource extends Resource
                     'total_amount'
                 )->label(__('lang.total_amount'))->alignCenter(true)
                     ->numeric()
-                    ->hidden(fn(): bool => isStoreManager()),
+                    ->hidden(fn(): bool => isStoreManager())
+                    ->formatStateUsing(function($state){
+                        return formatMoneyWithCurrency($state);
+                    })
+                    ,
                 TextColumn::make('created_at')
                     ->formatStateUsing(function ($state) {
                         return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));
