@@ -165,16 +165,16 @@ class PurchaseInvoiceProductSummaryReportService
                 // DB::raw('(SELECT transactionable_id FROM inventory_transactions WHERE id = it.source_transaction_id) as purchase_id')
             )
             ->whereNull('it.deleted_at')
-            ->whereIn('it.source_transaction_id', function ($subquery) {
-                $subquery->select('it1.source_transaction_id')
-                    ->distinct()
-                    ->from('inventory_transactions as it1')
-                    ->whereIn('it1.transactionable_type', [
-                        'App\\Models\\Order',
-                        'App\\Models\\StockIssueOrder',
-                        'App\\Models\\StockSupplyOrder',
-                    ]);
-            })
+            // ->whereIn('it.source_transaction_id', function ($subquery) {
+            //     $subquery->select('it1.source_transaction_id')
+            //         ->distinct()
+            //         ->from('inventory_transactions as it1')
+            //         ->whereIn('it1.transactionable_type', [
+            //             'App\\Models\\Order',
+            //             'App\\Models\\StockIssueOrder',
+            //             'App\\Models\\StockSupplyOrder',
+            //         ]);
+            // })
             ->where('it.movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->where('it.store_id', $filters['store_id']);
 
@@ -252,7 +252,7 @@ class PurchaseInvoiceProductSummaryReportService
             $orderedQty = round($orderedQty, 2);
             // if ($orderedQty > $purchasedQty) {
             $latestPrice = $this->getLatestPurchasePrice($productId);
-
+            // dd($purchase['unit_id']);
             $lastPrice = ($latestPrice && $latestPrice->package_size > 0)
                 ? ($latestPrice->price / $latestPrice->package_size)
                 : $purchase['price'];
