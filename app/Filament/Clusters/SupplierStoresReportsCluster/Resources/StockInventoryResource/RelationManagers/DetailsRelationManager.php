@@ -184,6 +184,8 @@ class DetailsRelationManager extends RelationManager
                                     'adjustment_type' => $defaultAdjustmentType,
                                     'created_by' => auth()->id(),
                                     'adjustment_date' => now(),
+                                    'source_id' => $records->first()->stock_inventory_id ?? null,
+                                    'source_type' => \App\Models\StockInventory::class,
                                 ]);
 
 
@@ -252,6 +254,7 @@ class DetailsRelationManager extends RelationManager
                             showWarningNotifiMessage('Faild', $th->getMessage());
                         }
                     })
+                    ->color('success')->icon('heroicon-o-plus')
                     ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),

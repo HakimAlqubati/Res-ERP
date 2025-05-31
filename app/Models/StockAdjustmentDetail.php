@@ -23,6 +23,8 @@ class StockAdjustmentDetail extends Model implements Auditable
         'adjustment_date',
         'store_id',
         'reason_id',
+        'source_id',
+        'source_type'
     ];
     protected $auditInclude = [
         'stock_adjustment_id',
