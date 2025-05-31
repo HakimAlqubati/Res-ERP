@@ -20,8 +20,8 @@ class TestController5 extends Controller
             'purchase_invoice_id',
             'date_from',
             'date_to',
-            'details'
-            'store_id',
+            'details',
+            'store'
         ]);
 
         $groupByInvoice = $request->boolean('group_by_invoice', false);
