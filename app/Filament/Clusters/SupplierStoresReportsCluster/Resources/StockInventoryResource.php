@@ -62,6 +62,7 @@ class StockInventoryResource extends Resource
     }
     public static function form(Form $form): Form
     {
+        $operaion = $form->getOperation();
         return $form
             ->schema([
                 Fieldset::make()->label('')->schema([
@@ -85,7 +86,10 @@ class StockInventoryResource extends Resource
                             ->label('Responsible'),
                     ]),
 
-                    Repeater::make('details')->hiddenOn('edit')
+                    Repeater::make('details')
+                        ->hidden(function ($record) use ($operaion) {
+                            return $record->finalized && $operaion === 'edit';
+                        })
                         ->relationship('details')
                         ->label('Inventory Details')->columnSpanFull()
                         ->schema([
@@ -155,7 +159,7 @@ class StockInventoryResource extends Resource
                                 ->numeric()
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function ($set, $state, $get) {
-                                    
+
                                     $difference =  static::getDifference($get('system_quantity'), $state);
                                     $set('difference', $difference);
                                 })
@@ -255,7 +259,7 @@ class StockInventoryResource extends Resource
     }
 
     public static function getDifference($remaningQty, $physicalQty)
-    { 
+    {
         $difference = round($physicalQty - $remaningQty, 2);
         return $difference;
     }
