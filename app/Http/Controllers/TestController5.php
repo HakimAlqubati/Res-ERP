@@ -40,6 +40,7 @@ class TestController5 extends Controller
     {
         $filters = $request->only([
             'product_id',
+            'store_id',
             'details',
         ]);
 
