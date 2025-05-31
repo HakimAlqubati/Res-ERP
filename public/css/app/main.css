@@ -406,3 +406,14 @@ for scrollbar
     color: black !important;
     margin: 10px !important;
 }
+
+
+/* اجعل الترو الأخير sticky في الأسفل */
+tbody:last-of-type tr .fixed_footer {
+    position: sticky;
+    bottom: 0;
+    background: white !important;
+    color: #0d7c66;
+    /* لون الخلفية للتأكيد */
+    z-index: 10;
+}

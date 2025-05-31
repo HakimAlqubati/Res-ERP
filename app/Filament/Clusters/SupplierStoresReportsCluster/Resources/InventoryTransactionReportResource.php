@@ -58,7 +58,7 @@ class InventoryTransactionReportResource extends Resource
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->getSearchResultsUsing(function (string $search): array {
-                        return Product::where('active', 1)
+                        return Product::query()
                             ->where(function ($query) use ($search) {
                                 $query->where('name', 'like', "%{$search}%")
                                     ->orWhere('code', 'like', "%{$search}%");

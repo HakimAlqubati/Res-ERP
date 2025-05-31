@@ -8,6 +8,17 @@
             border-collapse: inherit;
             border-spacing: initial;
         }
+
+
+        /* اجعل الترو الأخير sticky في الأسفل */
+        tbody:last-of-type .fixed_footer {
+            position: sticky;
+            bottom: 0;
+            background: white !important;
+            color: #0d7c66;
+            /* لون الخلفية للتأكيد */
+            z-index: 10;
+        }
     </style>
     <div class="flex justify-end mb-4">
         <button id="printReport"
@@ -86,7 +97,7 @@
                     </tbody>
                     @if (isset($showSmallestUnit) && $showSmallestUnit)
                         <tbody>
-                            <x-filament-tables::row>
+                            <x-filament-tables::row class="fixed_footer">
                                 <x-filament-tables::cell colspan="7">
                                     <strong>Total </strong>
                                 </x-filament-tables::cell>

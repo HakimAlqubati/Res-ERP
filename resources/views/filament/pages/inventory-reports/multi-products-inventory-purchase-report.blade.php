@@ -7,6 +7,16 @@
             border-collapse: inherit;
             border-spacing: initial;
         }
+
+        /* اجعل الترو الأخير sticky في الأسفل */
+        tbody:last-of-type  .fixed_footer {
+            position: sticky;
+            bottom: 0;
+            background: white !important;
+            color: #0d7c66;
+            /* لون الخلفية للتأكيد */
+            z-index: 10;
+        }
     </style>
     {{-- Print Button --}}
     <div class="flex justify-end mb-4">
@@ -46,7 +56,7 @@
                             <th>Product Code</th>
                             <th>Product Name</th>
                             <th>Unit</th>
-                            
+
                             <th>Qty in Stock</th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" class="cursor-pointer select-none">
@@ -62,7 +72,7 @@
                                 <x-filament-tables::cell
                                     title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
-                              
+
                                 <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['unit_price'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['price'] }}</x-filament-tables::cell>
@@ -70,7 +80,7 @@
                         @endforeach
                     </tbody>
                     <tbody>
-                        <x-filament-tables::row class="font-bold bg-gray-100">
+                        <x-filament-tables::row class="font-bold bg-gray-100 fixed_footer">
                             <x-filament-tables::cell colspan="5" class="text-right">Total </x-filament-tables::cell>
 
                             <x-filament-tables::cell>
@@ -140,8 +150,8 @@
                     .filter(row => !row.classList.contains("font-bold")); // Ignore total row
 
                 rows.sort((a, b) => {
-                    const aValue = parseFloat(a.cells[7].innerText.replace(/[^\d.-]/g, "")) || 0;
-                    const bValue = parseFloat(b.cells[7].innerText.replace(/[^\d.-]/g, "")) || 0;
+                    const aValue = parseFloat(a.cells[5].innerText.replace(/[^\d.-]/g, "")) || 0;
+                    const bValue = parseFloat(b.cells[5].innerText.replace(/[^\d.-]/g, "")) || 0;
 
                     return ascending ? aValue - bValue : bValue - aValue;
                 });
