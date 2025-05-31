@@ -171,7 +171,8 @@ class PurchaseInvoiceProductSummaryReportService
                     ->from('inventory_transactions as it1')
                     ->whereIn('it1.transactionable_type', [
                         'App\\Models\\Order',
-                        'App\\Models\\StockIssueOrder'
+                        'App\\Models\\StockIssueOrder',
+                        'App\\Models\\StockSupplyOrder',
                     ]);
             })
             ->where('it.movement_type', InventoryTransaction::MOVEMENT_OUT)
