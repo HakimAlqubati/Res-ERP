@@ -26,6 +26,7 @@ class ListInventoryTransactionReport extends ListRecords
 
         // ⬅️ احصل على القيمة من الاستعلام أو استخدم 15 كقيمة افتراضية
         $perPage = request()->get('perPage', 15);
+        
         if ($perPage === 'all') {
             $perPage = 9999; // سيتم إرجاع كل النتائج
         }

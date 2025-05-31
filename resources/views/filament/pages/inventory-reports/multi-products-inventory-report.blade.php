@@ -1,5 +1,13 @@
 <x-filament::page>
     {{-- Print Button --}}
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+    </style>
     <div class="flex justify-end mb-4">
         <button id="printReport"
             class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
@@ -14,7 +22,7 @@
             <div id="reportContent">
 
                 <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
-                    <thead>
+                    <thead class="fixed-header">
                         <x-filament-tables::row class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
 

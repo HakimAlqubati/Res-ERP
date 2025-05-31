@@ -249,7 +249,7 @@ class PurchaseInvoiceProductSummaryReportService
         foreach ($purchased as $purchase) {
             $productId = $purchase['product_id'];
             $orderedQty = isset($orderedMap[$productId]) ? $orderedMap[$productId]['qty'] : 0;
-            $difference = round($purchase['qty'] - $orderedQty, 2);
+            
             $purchasedQty = round($purchase['qty'], 2);
             $orderedQty = round($orderedQty, 2);
             // if ($orderedQty > $purchasedQty) {
@@ -274,7 +274,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'ordered_qty'    => $orderedQty,
                 'difference'     => $remainingQty,
                 'unit_price'     => round($lastPrice, 2),
-                'price'          => round($lastPrice * $difference, 2),
+                'price'          => round($lastPrice * $remainingQty, 2),
             ];
             // }
         }

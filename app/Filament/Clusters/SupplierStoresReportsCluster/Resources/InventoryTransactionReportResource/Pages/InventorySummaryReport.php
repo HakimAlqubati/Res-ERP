@@ -18,7 +18,7 @@ class InventorySummaryReport extends Page
     public  $showWithoutZero = 0;
     public int|string $perPage = 15;
     public ?int $selectedProduct = null;
-
+    public ?int $selectedStore = null;
 
     public function mount(): void
     {
@@ -27,6 +27,7 @@ class InventorySummaryReport extends Page
         $perPageRequest = request('per_page');
         $this->selectedProduct = is_numeric(request('product_id')) ? (int) request('product_id') : null;
 
+        $this->selectedStore = is_numeric(request('store_id')) ? (int) request('store_id') : null;
 
 
         $this->perPage = $perPageRequest === 'all' ? 'all' : (int) ($perPageRequest ?? 15);
@@ -51,8 +52,9 @@ class InventorySummaryReport extends Page
                 : $query->paginate($this->perPage)
             )
             : $query->get();
-        $storeId = 0;
-        $service = new MultiProductsInventoryService(storeId: $storeId);
+        $storeId = $this->selectedStore ?? 0; // If no store selected, use 0
+
+        $service = new MultiProductsInventoryService(null, null, 'all', storeId: $storeId);
         foreach ($products as $product) {
             $inventory = $service->getInventoryForProduct($product->id);
             $inventoryOpeningBalance = $service->getInventoryIn($product->id);

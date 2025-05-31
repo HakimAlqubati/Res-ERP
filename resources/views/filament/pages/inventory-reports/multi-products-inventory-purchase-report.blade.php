@@ -33,7 +33,7 @@
 
 
                             </th>
-                            <th colspan="6" class="no_border_right_left text-center">
+                            <th colspan="4" class="no_border_right_left text-center">
                                 <h3>Store Position Report - Displayed in Smallest Unit</h3>
                             </th>
                             <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
@@ -46,8 +46,7 @@
                             <th>Product Code</th>
                             <th>Product Name</th>
                             <th>Unit</th>
-                            <th>In Qty</th>
-                            <th>Out Qty</th>
+                            
                             <th>Qty in Stock</th>
                             <th>Unit Price</th>
                             <th id="totalPriceHeader" class="cursor-pointer select-none">
@@ -63,18 +62,7 @@
                                 <x-filament-tables::cell
                                     title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>
-                                    {{-- <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.purchase-details', ['product' => $data['product_id']]) }}"
-                                        class="text-blue-600 underline hover:text-blue-800"> --}}
-                                    {{ $data['purchased_qty'] }}
-                                    {{-- </a> --}}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell>
-                                    {{-- <a href="{{ route('filament.admin.inventory-report.resources.inventory-p-report.order-details', ['product' => $data['product_id']]) }}"
-                                        class="text-green-600 underline hover:text-green-800"> --}}
-                                    {{ $data['ordered_qty'] }}
-                                    {{-- </a> --}}
-                                </x-filament-tables::cell>
+                              
                                 <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['unit_price'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ getDefaultCurrency() . ' ' . $data['price'] }}</x-filament-tables::cell>
@@ -83,7 +71,7 @@
                     </tbody>
                     <tbody>
                         <x-filament-tables::row class="font-bold bg-gray-100">
-                            <x-filament-tables::cell colspan="7" class="text-right">Total </x-filament-tables::cell>
+                            <x-filament-tables::cell colspan="5" class="text-right">Total </x-filament-tables::cell>
 
                             <x-filament-tables::cell>
                                 {{ getDefaultCurrency() . ' ' . number_format(array_sum(array_column($reportData, 'price')), 2) }}

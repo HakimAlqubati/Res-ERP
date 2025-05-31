@@ -23,6 +23,18 @@
             </select>
         </div>
 
+        <div class="flex flex-col">
+            <label class="block mb-1 font-bold text-lg">Select Store:</label>
+            <select name="store_id" onchange="this.form.submit()" class="flex flex-col w-1/3">
+                <option value="">-- All Stores --</option>
+                @foreach (\App\Models\Store::active()->get(['id','name']) as $store)
+                    <option value="{{ $store->id }}" @selected(request('store_id') == $store->id)>
+                        {{ $store->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
         {{-- ✅ Show Without Zero Checkbox --}}
         <div {{-- class="flex items-center mt-6" --}}>
             <label {{-- class="inline-flex items-center space-x-3 text-lg font-medium" --}}>
