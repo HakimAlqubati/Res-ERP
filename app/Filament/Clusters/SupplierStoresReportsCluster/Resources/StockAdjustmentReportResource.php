@@ -16,6 +16,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -57,13 +58,18 @@ class StockAdjustmentReportResource extends Resource
                 TextColumn::make('package_size')->alignCenter(true)->toggleable(),
                 TextColumn::make('quantity')->alignCenter(true),
                 TextColumn::make('adjustment_type')->alignCenter(true),
+                TextColumn::make('store.name')->toggleable(),
                 TextColumn::make('notes'),
                 TextColumn::make('createdBy.name')->label('Responsible')->searchable()->toggleable(),
                 TextColumn::make('adjustment_date')->label('Date')->searchable()->toggleable()->sortable(),
 
             ])
             ->filters([
-                //
+                SelectFilter::make('proudct_id')
+                    ->label('Product')
+                    ->relationship('product', 'name')
+                    ->searchable()
+                    ->multiple(),
             ])
             ->actions([])
             ->bulkActions([
@@ -87,6 +93,7 @@ class StockAdjustmentReportResource extends Resource
                 'notes',
                 'created_by',
                 'adjustment_date',
+                'store_id',
             )->orderBy('id', 'desc');
         return $query;
     }

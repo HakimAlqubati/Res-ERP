@@ -57,6 +57,10 @@ class StockAdjustmentDetail extends Model implements Auditable
     {
         return $this->belongsTo(Product::class);
     }
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
 
     public function unit()
     {
