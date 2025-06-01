@@ -67,8 +67,10 @@ class StockAdjustmentReportResource extends Resource
             ->filters([
                 SelectFilter::make('proudct_id')
                     ->label('Product')
-                    ->relationship('product', 'name')
-                    ->searchable()
+                    ->relationship('product', 'name', fn($query) => $query->select('id', 'name', 'code')->limit(10))
+                    ->searchable(['name', 'code'])
+                    ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
+
                     ->multiple(),
             ])
             ->actions([])
