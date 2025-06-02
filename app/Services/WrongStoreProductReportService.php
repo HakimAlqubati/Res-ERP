@@ -5,19 +5,32 @@ namespace App\Services;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 
-class WrongStoreProductReportService    
+class WrongStoreProductReportService
 {
     /**
      * ترجع تقرير المنتجات التي دخلت مخازن غير خاصة بها.
      *
      * @return array
      */
-    public function getReport(): array
+    public function getReport($movementType): array
     {
-        $transactions = InventoryTransaction::with(['product', 'store'])
-            ->where('movement_type', 'in')
-            ->whereNotIn('transactionable_type', ['App\\Models\\Order'])
-            ->get();
+
+        if(is_null($movementType)){
+            $movementType = 'in';
+        }
+        // بداية الاستعلام
+        $query = InventoryTransaction::with(['product', 'store'])
+            ->where('movement_type', $movementType);
+
+        // إضافة الشروط الإضافية حسب نوع الحركة
+        if ($movementType === 'in') {
+            $query->whereNotIn('transactionable_type', ['App\\Models\\Order']);
+        } elseif ($movementType === 'out') {
+            $query->whereNotIn('transactionable_type', ['App\\Models\\StockSupplyOrder']);
+        }
+
+        // تنفيذ الاستعلام
+        $transactions = $query->get();
 
         $report = [];
 

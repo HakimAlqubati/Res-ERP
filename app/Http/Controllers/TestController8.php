@@ -152,7 +152,8 @@ class TestController8 extends Controller
 
     public function wrongStoreReport(\App\Services\WrongStoreProductReportService $reportService)
     {
-        $report = $reportService->getReport();
+        $movementType = request()->get('movement_type', 'in'); // 'in' or 'out'
+        $report = $reportService->getReport($movementType);
         return view('reports.wrong-store-products', compact('report'));
         return $report;
     }
