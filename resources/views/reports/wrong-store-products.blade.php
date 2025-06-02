@@ -12,14 +12,14 @@
 
 <body class="bg-gray-50 text-gray-800">
     <div class="container mx-auto px-4 py-6">
-        <h1 class="text-3xl font-bold text-center text-gray-700 mb-6">📦 تقرير المنتجات في مخازن غير خاصة بها</h1>
+        {{-- <h1 class="text-3xl font-bold text-center text-gray-700 mb-6">📦 تقرير المنتجات في مخازن غير خاصة بها</h1> --}}
 
         @if (count($report) > 0)
             <div class="overflow-x-auto rounded shadow bg-white p-4">
                 <table class="min-w-full border text-sm text-center">
                     <thead class="bg-gray-200 text-gray-700">
                         <tr>
-                            <th class="py-2 px-4 border">#</th>
+                            {{-- <th class="py-2 px-4 border">#</th> --}}
                             <th class="py-2 px-4 border">كود المنتج</th>
                             <th class="py-2 px-4 border">اسم المنتج</th>
                             <th class="py-2 px-4 border">المخزن الفعلي</th>
@@ -34,7 +34,7 @@
                     <tbody class="text-gray-600">
                         @foreach ($report as $index => $item)
                             <tr class="{{ $index % 2 == 0 ? 'bg-white' : 'bg-gray-50' }} hover:bg-gray-100 transition">
-                                <td class="py-1 px-2 border">{{ $index + 1 }}</td>
+                                {{-- <td class="py-1 px-2 border">{{ $index + 1 }}</td> --}}
                                 <td class="py-1 px-2 border font-mono">{{ $item['product_code'] }}</td>
                                 <td class="py-1 px-2 border">{{ $item['product_name'] }}</td>
                                 <td class="py-1 px-2 border text-red-600 font-semibold">{{ $item['actual_store'] }}</td>
