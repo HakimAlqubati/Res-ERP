@@ -4,10 +4,10 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
-use App\Models\Product; 
+use App\Models\Product;
 use Filament\Pages\SubNavigationPosition;
-use Filament\Resources\Resource; 
-use Filament\Tables\Table; 
+use Filament\Resources\Resource;
+use Filament\Tables\Table;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource\Pages;
 
 class MinimumProductQtyReportResource extends Resource
@@ -19,7 +19,7 @@ class MinimumProductQtyReportResource extends Resource
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 10;
-
+    protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
     {
         return 'Minimum Product Qty';
