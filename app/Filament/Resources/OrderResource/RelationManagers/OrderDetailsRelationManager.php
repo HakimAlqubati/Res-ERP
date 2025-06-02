@@ -103,7 +103,7 @@ class OrderDetailsRelationManager extends RelationManager
                             ->numeric()->minValue(0)
                             ->default(fn($record) => $record->available_quantity),
                     ])
-                ])
+                ])->hidden()
                     ->action(function ($record, $data) {
                         try {
                             $record->update($data);
