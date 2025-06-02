@@ -12,8 +12,7 @@
 
 <body class="bg-gray-50 text-gray-800">
     <div class="container mx-auto px-4 py-6">
-        <h1 class="text-3xl font-bold text-center text-gray-700 mb-6">📦 تقرير المنتجات في مخازن غير خاصة بها</h1>
-
+ 
         @if (count($report) > 0)
             <div class="overflow-x-auto rounded shadow bg-white p-4">
                 <table class="min-w-full border text-sm text-center">
@@ -26,8 +25,8 @@
                             <th class="py-2 px-4 border">المخزن المتوقع</th>
                             <th class="py-2 px-4 border">تاريخ الحركة</th>
                             <th class="py-2 px-4 border">الكمية</th>
-                            <th class="py-2 px-4 border">ملاحظات</th>
-                            <th class="py-2 px-4 border">معرّف الحركة</th>
+                            <th class="py-2 px-4 border">البيان</th>
+                            <th class="py-2 px-4 border">رقم الحركة</th>
                             <th class="py-2 px-4 border">نوع الحركة</th>
                         </tr>
                     </thead>
