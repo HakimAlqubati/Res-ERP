@@ -149,4 +149,11 @@ class TestController8 extends Controller
             $reportData,
         );
     }
+
+    public function wrongStoreReport(\App\Services\WrongStoreProductReportService $reportService)
+    {
+        $report = $reportService->getReport();
+        return view('reports.wrong-store-products', compact('report'));
+        return $report;
+    }
 }

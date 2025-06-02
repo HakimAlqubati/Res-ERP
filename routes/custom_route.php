@@ -174,3 +174,5 @@ Route::get('/storeSuppliesManufacturedProducts', [TestController8::class, 'store
 Route::get('/getNewReport', [TestController8::class, 'getNewReport']);
 
 Route::get('/handleCopy', [CopyOrderOutToBranchStoreController::class, 'handle']);
+
+Route::get('/wrongStoreReport', [TestController8::class, 'wrongStoreReport']);
