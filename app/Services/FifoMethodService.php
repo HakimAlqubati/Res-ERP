@@ -139,6 +139,7 @@ class FifoMethodService
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where('transactionable_type', '!=', Order::class)
+            ->where('store_id', $storeId)
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->get();
