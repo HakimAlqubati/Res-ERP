@@ -74,9 +74,11 @@ class ReportProductQuantitiesResource extends Resource
                 TextColumn::make('unit_price')
                     ->hidden(fn(): bool => isStoreManager())
                     ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state),
-                TextColumn::make('total_price')
-                    ->hidden(fn(): bool => isStoreManager())
-                    ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state),
+                // TextColumn::make('total')->label(__('lang.total_price'))
+                //     ->hidden(fn(): bool => isStoreManager())
+                // ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state)
+
+                // ,
             ])
             ->filters([
                 // SelectFilter::make('product_id')
@@ -148,7 +150,9 @@ class ReportProductQuantitiesResource extends Resource
                 'orders_details.package_size AS package_size',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
                 'orders_details.price as unit_price',
-                DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS total_price')
+                // DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS total_price_'),
+                // DB::raw('SUM(orders_details.available_quantity * orders_details.price) AS total_price_')
+
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
