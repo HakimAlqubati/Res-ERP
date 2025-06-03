@@ -71,7 +71,10 @@ class ReportProductQuantitiesResource extends Resource
                 TextColumn::make('unit'),
                 TextColumn::make('package_size')->alignCenter(true),
                 TextColumn::make('quantity')->alignCenter(true),
-                TextColumn::make('price')
+                TextColumn::make('unit_price')
+                    ->hidden(fn(): bool => isStoreManager())
+                    ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state),
+                TextColumn::make('total_price')
                     ->hidden(fn(): bool => isStoreManager())
                     ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state),
             ])
@@ -144,7 +147,8 @@ class ReportProductQuantitiesResource extends Resource
                 'units.name AS unit',
                 'orders_details.package_size AS package_size',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-                DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS price')
+                'orders_details.price as unit_price',
+                DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS total_price')
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
