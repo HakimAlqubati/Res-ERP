@@ -166,6 +166,12 @@ class InventoryResource extends Resource
                     })
                     ->getOptionLabelUsing(fn($value) => "ID: $value"),
 
+                SelectFilter::make('movement_type')
+                    ->label('Movement Type')
+                    ->options([
+                        InventoryTransaction::MOVEMENT_IN => 'In',
+                        InventoryTransaction::MOVEMENT_OUT => 'Out',
+                    ]),
 
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))
@@ -202,7 +208,7 @@ class InventoryResource extends Resource
                     ->label(__('lang.store')),
                 Tables\Filters\TrashedFilter::make(),
 
-                ],FiltersLayout::AboveContent)
+            ], FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
 

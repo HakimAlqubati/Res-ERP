@@ -8,6 +8,7 @@ use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
 use App\Services\GrnPriceSyncService;
 use App\Services\ManufacturingBackfillService;
+use App\Services\ProductSupplyPriceUpdaterService;
 use App\Services\Reports\InventoryWithUsageReportService;
 use Illuminate\Http\Request;
 
@@ -156,5 +157,22 @@ class TestController8 extends Controller
         $report = $reportService->getReport($movementType);
         return view('reports.wrong-store-products', compact('report'));
         return $report;
+    }
+
+    public function updatePricesOfSuppliesManufacturingProducts(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+        ]);
+
+        $productId = $validated['product_id'];
+
+        // استدعاء خدمة التحديث
+        $result = ProductSupplyPriceUpdaterService::updateSupplyPrice($productId);
+
+        return response()->json([
+            'status' => $result['status'],
+            'message' => $result['message'],
+        ]);
     }
 }

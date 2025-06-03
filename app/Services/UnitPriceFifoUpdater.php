@@ -19,7 +19,7 @@ class UnitPriceFifoUpdater
 
         $unitPrices = $product->allUnitPrices;
         $updated = [];
-        
+
 
         foreach ($unitPrices as $unitPrice) {
             $fifoService = new FifoMethodService();
@@ -44,16 +44,20 @@ class UnitPriceFifoUpdater
                     $unitPrice->price = number_format($newPrice, 2, '.', '');
                     $unitPrice->save();
 
+                    ProductPriceHistory::where('product_id', $unitPrice->product_id)
+                        ->where('unit_id', $unitPrice->unit_id)
+                        ->delete();
                     // Save history
                     ProductPriceHistory::create([
                         'product_id'     => $unitPrice->product_id,
                         'unit_id'        => $unitPrice->unit_id,
                         'old_price'      => $oldPrice,
                         'new_price'      => $newPrice,
-                        'source_type'    => $sourceModel ? get_class($sourceModel) : null,
-                        'source_id'      => $sourceModel?->id,
+                        'source_type'    => $sourceType ?? $firstAllocation['transactionable_type'] ?? null,
+                        'source_id'      => $sourceId ?? $firstAllocation['transactionable_id'] ?? null,
                         'note'           => 'Updated based on FIFO from ' . $firstAllocation['transactionable_type']
                             . ' #' . ($firstAllocation['transactionable_id'] ?? 'N/A'),
+                        'date'           => $firstAllocation['movement_date'],
                     ]);
 
                     $updated[] = [
