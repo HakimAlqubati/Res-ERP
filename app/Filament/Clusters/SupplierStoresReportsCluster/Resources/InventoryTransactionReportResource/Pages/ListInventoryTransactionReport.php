@@ -17,16 +17,23 @@ class ListInventoryTransactionReport extends ListRecords
 
     protected function getViewData(): array
     {
-        $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
+        $productIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
+        
+        if (!is_array($productIds)) {
+            $productIds = [$productIds]; // يحولها لمصفوفة لو كانت قيمة واحدة
+        }
+        $productId = $productIds[0] ?? null; // احصل على أول منتج من المصفوفة
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'];
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
         $unitId = 'all';
+      
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
+        $inventoryService->setProductIds($productIds);
 
         // ⬅️ احصل على القيمة من الاستعلام أو استخدم 15 كقيمة افتراضية
         $perPage = request()->get('perPage', 15);
-        
+
         if ($perPage === 'all') {
             $perPage = 9999; // سيتم إرجاع كل النتائج
         }

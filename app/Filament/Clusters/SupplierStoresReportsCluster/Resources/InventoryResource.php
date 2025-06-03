@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Actions\Action as HeaderAction;
+use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -201,7 +202,7 @@ class InventoryResource extends Resource
                     ->label(__('lang.store')),
                 Tables\Filters\TrashedFilter::make(),
 
-            ])
+                ],FiltersLayout::AboveContent)
             ->actions([
                 // Tables\Actions\EditAction::make(),
 

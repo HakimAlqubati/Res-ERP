@@ -71,6 +71,21 @@ class InventoryReportController extends Controller
         }
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
 
+        // ✅ دعم productIds لو كان موجود في الـ request
+        if ($request->has('product_ids')) {
+            $productIdsRaw = $request->product_ids;
+            if (is_string($productIdsRaw)) {
+                // يحول "1,2,3" إلى [1, 2, 3]
+                $productIds = array_map('trim', explode(',', $productIdsRaw));
+            } elseif (is_array($productIdsRaw)) {
+                $productIds = $productIdsRaw;
+            } else {
+                $productIds = [];
+            }
+
+            $inventoryService->setProductIds($productIds);
+        }
+
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination(15);
 

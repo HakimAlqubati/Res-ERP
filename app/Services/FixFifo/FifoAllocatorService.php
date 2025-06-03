@@ -20,10 +20,14 @@ class FifoAllocatorService
             ->where('show_in_invoices', 1)
             ->get(['unit_id', 'package_size'])
             ->keyBy('package_size');
+
+        $product = \App\Models\Product::find($productId);
+        $storeId = defaultManufacturingStore($product)->id;
         // Step 1: Get supply (movement_type = 'in') ordered by transaction_date
         $supplies = DB::table('inventory_transactions')
             ->where('movement_type', 'in')
             ->where('product_id', $productId)
+            ->where('store_id', $storeId)
             ->orderBy('id')
             ->whereNull('deleted_at')
             ->get([

@@ -18,6 +18,7 @@ class MultiProductsInventoryService
     public $storeId;
     public $categoryId;
     public $filterOnlyAvailable;
+    public $productIds = [];
 
     public function __construct(
         $categoryId = null,
@@ -35,9 +36,21 @@ class MultiProductsInventoryService
 
     public function getInventoryReport()
     {
+
+        if (!empty($this->productIds)) {
+            $reportArr = [];
+            foreach ($this->productIds as $productId) {
+                $reportArr[] = $this->getInventoryForProduct($productId);
+            }
+            return [
+                'report' => $reportArr,
+                'pagination' => null, // ما في pagination هنا
+            ];
+        }
         if ($this->productId) {
             return [$this->getInventoryForProduct($this->productId)];
         }
+
 
         // Fetch all products or filter by category if provided
         $query = Product::query();
@@ -72,6 +85,21 @@ class MultiProductsInventoryService
             $query->where('category_id', $this->categoryId);
         }
 
+
+        // ✅ أولوية للـ productIds:
+        if (!empty($this->productIds)) {
+            $reportArr = [];
+            foreach ($this->productIds as $productId) {
+                $reportArr[] = $this->getInventoryForProduct($productId);
+            }
+
+            // تقدر ترجعهم بدون pagination، أو تطبق pagination يدوي إذا تحب
+            return [
+                'reportData' => $reportArr,
+                'pagination' => null,
+                'totalPages' => 1,
+            ];
+        }
         // الحالة الأولى: عندك منتج محدد
         if ($this->productId) {
             return [
@@ -129,8 +157,16 @@ class MultiProductsInventoryService
     }
 
 
-    public function getInventoryForProduct($productId)
+    public function getInventoryForProduct($productId, $productIds = [])
     {
+
+        if (!empty($productIds)) {
+            $result = [];
+            foreach ($productIds as $id) {
+                $result = array_merge($result, $this->getInventoryForProduct($id));
+            }
+            return $result;
+        }
         $queryIn = DB::table('inventory_transactions')
             ->whereNull('deleted_at')
             ->where('product_id', $productId)
@@ -177,10 +213,32 @@ class MultiProductsInventoryService
         $product = Product::find($productId);
         $result = [];
 
+        $smallestUnit = \App\Models\UnitPrice::where('product_id', $productId)
+            ->with('unit')
+            ->orderBy('package_size', 'asc')
+            ->first();
+
+        $hasFractionalMovement = false;
+
+        if ($smallestUnit) {
+            $hasFractionalMovement = DB::table('inventory_transactions')
+                ->whereNull('deleted_at')
+                ->where('product_id', $productId)
+                ->where('store_id', $this->storeId)
+                ->where('unit_id', $smallestUnit->unit_id)
+                ->whereRaw('MOD(quantity * package_size, 1) != 0')
+                ->exists();
+        }
+
         foreach ($unitPrices as $unitPrice) {
             if ($unitPrice['package_size'] <= 0) continue;
             $packageSize = $unitPrice['package_size']; // يضمن عدم القسمة على صفر
             $remainingQty = round($remQty / $packageSize, 2);
+            // إذا الوحدة الحالية هي أصغر وحدة ولا توجد حركات كسرية لها، نقرب الكمية للأقرب عدد صحيح
+            if ($smallestUnit && $smallestUnit->unit_id == $unitPrice['unit_id'] && !$hasFractionalMovement) {
+                $remainingQty = round($remainingQty);
+            }
+
             // نحاول نجيب السعر من المخزون حسب الوحدة
             $unitId = $unitPrice['unit_id'];
 
@@ -204,28 +262,26 @@ class MultiProductsInventoryService
                 $priceSource = 'unit_price';
                 $priceStoreId = null; // ما في مصدر مخزن في هذه الحالة
             }
-             
-                $result[] = [
-                    'product_id' => $productId,
-                    'product_active' => $product->active,
-                    'product_code' => $product->code,
-                    'product_name' => $product->name,
-                    'unit_id' => $unitPrice['unit_id'],
-                    'order' => $unitPrice['order'],
-                    'package_size' => $unitPrice['package_size'],
-                    'unit_name' => $unitPrice['unit_name'],
-                    'remaining_qty' => $remainingQty,
-                    'minimum_quantity' => $unitPrice['minimum_quantity'],
-                    'is_last_unit' => $unitPrice['is_last_unit'],
-                    'is_largest_unit' => $unitPrice['is_largest_unit'],
-                    'price' => $priceFromInventory,
-                    'price_source' => $priceSource,
-                    'price_store_id' => $priceStoreId,
 
-                ];
-            
+            $result[] = [
+                'product_id' => $productId,
+                'product_active' => $product->active,
+                'product_code' => $product->code,
+                'product_name' => $product->name,
+                'unit_id' => $unitPrice['unit_id'],
+                'order' => $unitPrice['order'],
+                'package_size' => $unitPrice['package_size'],
+                'unit_name' => $unitPrice['unit_name'],
+                'remaining_qty' => $remainingQty,
+                'minimum_quantity' => $unitPrice['minimum_quantity'],
+                'is_last_unit' => $unitPrice['is_last_unit'],
+                'is_largest_unit' => $unitPrice['is_largest_unit'],
+                'price' => $priceFromInventory,
+                'price_source' => $priceSource,
+                'price_store_id' => $priceStoreId,
+
+            ];
         }
-
         return $result;
     }
 
@@ -395,5 +451,10 @@ class MultiProductsInventoryService
         }
 
         return $result;
+    }
+
+    public function setProductIds(array $productIds)
+    {
+        $this->productIds = $productIds;
     }
 }
