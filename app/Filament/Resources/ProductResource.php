@@ -611,14 +611,24 @@ class ProductResource extends Resource
                                             $res = round($state * $finalPrice, 2);
                                             $set('price', $res);
                                         })
+                                        ->extraInputAttributes(function (callable $get, $livewire) {
+                                            return static::isProductLocked($livewire->form->getRecord())
+                                                ? ['readonly' => true]
+                                                : [];
+                                        })
                                         ->label(__('lang.package_size')),
                                     TextInput::make('price')
                                         ->numeric()
                                         ->default(function ($record, $livewire) {
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             return $finalPrice;
-                                        })->minValue(0)
+                                        })->minValue(0.0001)
                                         ->required()
+                                        ->extraInputAttributes(function (callable $get, $livewire) {
+                                            return static::isProductLocked($livewire->form->getRecord())
+                                                ? ['readonly' => true]
+                                                : [];
+                                        })
                                         ->label(__('lang.price')),
 
 
@@ -626,9 +636,9 @@ class ProductResource extends Resource
                                 ])->orderColumn('order')
                                 ->reorderable()
 
-                                ->disabled(function (callable $get, $livewire) {
-                                    return static::isProductLocked($livewire->form->getRecord());
-                                })
+                            // ->disabled(function (callable $get, $livewire) {
+                            //     return static::isProductLocked($livewire->form->getRecord());
+                            // })
 
 
 
@@ -995,7 +1005,7 @@ class ProductResource extends Resource
         // 🔄 Create a new array with updated prices to avoid modifying in place
         $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
             // dd($unit);
-            return array_merge($unit, ['price' => ($unit['package_size'] ?? 1) * $totalNetPrice]); // Set new price
+            return array_merge($unit, ['price' => round(($unit['package_size'] ?? 1) * $totalNetPrice, 2)]); // Set new price
         }, $units);
 
         // 🔄 Replace the `units` array completely

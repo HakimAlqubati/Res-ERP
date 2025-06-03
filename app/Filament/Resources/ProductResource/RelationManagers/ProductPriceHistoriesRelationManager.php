@@ -24,6 +24,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
     {
         return $table
             ->striped()
+            ->paginated([10, 25, 50, 100])
             ->columns([
 
                 Tables\Columns\TextColumn::make('productItem.product.name')

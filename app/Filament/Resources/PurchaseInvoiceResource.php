@@ -40,6 +40,8 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -278,6 +280,7 @@ class PurchaseInvoiceResource extends Resource
     {
         return $table
             ->striped()
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')
@@ -299,8 +302,18 @@ class PurchaseInvoiceResource extends Resource
                     ->label(__('lang.total_amount'))
                     ->alignCenter(true)
                     ->formatStateUsing(function ($state) {
-                        return 'RM ' . $state;
+                        return formatMoneyWithCurrency($state);
                     })
+                    ->summarize(
+                        Summarizer::make()
+                            ->using(function (\Filament\Tables\Table $table) {
+                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
+                                if (is_numeric($total)) {
+                                    return formatMoneyWithCurrency($total);
+                                }
+                                return $total;
+                            })
+                    )
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_attachment')->alignCenter(true)->label(__('lang.has_attachment'))
                     ->boolean()->toggleable()

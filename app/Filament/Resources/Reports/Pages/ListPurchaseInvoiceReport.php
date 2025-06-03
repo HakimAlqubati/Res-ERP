@@ -139,6 +139,14 @@ class ListPurchaseInvoiceReport extends ListRecords
             $query->whereIn('purchase_invoices.invoice_no', $invoiceNos);
         }
 
+        $dateFilter = $this->getTable()->getFilters()['date']->getState() ?? [];
+        if (!empty($dateFilter['from'])) {
+            $query->whereDate('purchase_invoices.date', '>=', $dateFilter['from']);
+        }
+        if (!empty($dateFilter['to'])) {
+            $query->whereDate('purchase_invoices.date', '<=', $dateFilter['to']);
+        }
+
         $query->whereNull('purchase_invoices.deleted_at');
 
         // 🔹 Apply pagination (change `10` to the number of records per page)

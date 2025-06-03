@@ -33,4 +33,27 @@ class EditProduct extends EditRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    public static function logPriceChange(
+        int $productId,
+        ?int $productItemId,
+        int $unitId,
+        float $oldPrice,
+        float $newPrice,
+        string $note = '',
+        string $sourceType = 'auto_update',
+        ?int $sourceId = null
+    ): void {
+        \App\Models\ProductPriceHistory::create([
+            'product_id' => $productId,
+            'product_item_id' => $productItemId,
+            'unit_id' => $unitId,
+            'old_price' => $oldPrice,
+            'new_price' => $newPrice,
+            'note' => $note,
+            'source_type' => $sourceType,
+            'source_id' => $sourceId,
+            'date' => \Carbon\Carbon::now(),
+        ]);
+    }
 }

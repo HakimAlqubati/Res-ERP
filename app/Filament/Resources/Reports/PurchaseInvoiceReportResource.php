@@ -105,8 +105,8 @@ class PurchaseInvoiceReportResource extends Resource
                         return $q;
                     })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
                 Filter::make('show_invoice_no')
-                ->toggle()
-                ->label(__('lang.show_invoice_no')),
+                    ->toggle()
+                    ->label(__('lang.show_invoice_no')),
                 // Toggle::make('show_invoice_no')
                 //     ->label(__('lang.show_invoice_no'))
                 //     ->default(false)
@@ -119,6 +119,23 @@ class PurchaseInvoiceReportResource extends Resource
                     ->searchable()
                     ->options(function () {
                         return \App\Models\Category::active()->pluck('name', 'id')->toArray();
+                    }),
+
+
+                Filter::make('date')
+                    ->form([
+                        \Filament\Forms\Components\DatePicker::make('from')
+                            ->label(__('lang.start_date')),
+                        \Filament\Forms\Components\DatePicker::make('to')
+                            ->label(__('lang.end_date')),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if (!empty($data['from'])) {
+                            $query->whereDate('date', '>=', $data['from']);
+                        }
+                        if (!empty($data['to'])) {
+                            $query->whereDate('date', '<=', $data['to']);
+                        }
                     }),
 
             ], FiltersLayout::AboveContent);

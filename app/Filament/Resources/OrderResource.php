@@ -33,6 +33,7 @@ use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\Summarizers\Summarizer;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -222,10 +223,19 @@ class OrderResource extends Resource
                 )->label(__('lang.total_amount'))->alignCenter(true)
                     ->numeric()
                     ->hidden(fn(): bool => isStoreManager())
-                    ->formatStateUsing(function($state){
+                    ->formatStateUsing(function ($state) {
                         return formatMoneyWithCurrency($state);
                     })
-                    ,
+                    ->summarize(
+                        Summarizer::make()
+                            ->using(function (\Filament\Tables\Table $table) {
+                                $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
+                                if (is_numeric($total)) {
+                                    return formatMoneyWithCurrency($total);
+                                }
+                                return $total;
+                            })
+                    ),
                 TextColumn::make('created_at')
                     ->formatStateUsing(function ($state) {
                         return date('Y-m-d', strtotime($state)) . ' ' . date('H:i:s', strtotime($state));

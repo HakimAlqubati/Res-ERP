@@ -44,6 +44,35 @@ class InventoryTransactionReportResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // $codes = [
+        //     '10002',
+        //     '10018',
+        //     '10007',
+        //     '10010',
+        //     '10029',
+        //     '6107',
+        //     '6104',
+        //     '6013',
+        //     '6109',
+        //     '6073',
+        //     '9035',
+        //     '9012',
+        //     '9005',
+        //     '9024',
+        //     '15006',
+        //     '15011',
+        //     '15010',
+        //     '15002',
+        //     '2006',
+        // ];
+        // $products = \App\Models\Product::query();
+        // $products->where(function ($query) use ($codes) {
+        //     foreach ($codes as $code) {
+        //         $query->orWhere('code', 'like', "%{$code}%");
+        //     }
+        // });
+        // $productIds = $products->pluck('id')->toArray();
+        
 
         return $table
             ->filters([
@@ -55,6 +84,7 @@ class InventoryTransactionReportResource extends Resource
                     })->options(Category::active()->get()->pluck('name', 'id')),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))->searchable()
+                    // ->default($productIds)
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->getSearchResultsUsing(function (string $search): array {
@@ -77,7 +107,7 @@ class InventoryTransactionReportResource extends Resource
                             ->mapWithKeys(fn($product) => [
                                 $product->id => "{$product->code} - {$product->name}"
                             ]);
-                    }),
+                    })->multiple(),
                 SelectFilter::make("store_id")->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
                     ->query(function (Builder $q, $data) {
