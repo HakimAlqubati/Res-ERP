@@ -88,9 +88,9 @@
         @if (!isStoreManager())
             <tbody>
                 <x-filament-tables::row class="fixed_footer">
-                    <x-filament-tables::cell colspan="{{ $show_invoice_no ? '7' : '6' }}"> {{ __('lang.total') }}
+                    <x-filament-tables::cell colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}
                     </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ formatMoneyWithCurrency($sum_unit_price) }} </x-filament-tables::cell>
+                    {{-- <x-filament-tables::cell> {{ formatMoneyWithCurrency($sum_unit_price) }} </x-filament-tables::cell> --}}
                     <x-filament-tables::cell> {{ formatMoneyWithCurrency($total_sub_total) }}
                     </x-filament-tables::cell>
                 </x-filament-tables::row>
