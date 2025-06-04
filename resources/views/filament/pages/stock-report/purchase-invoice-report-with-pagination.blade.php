@@ -1,4 +1,23 @@
 <x-filament-panels::page>
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+
+
+        /* اجعل الترو الأخير sticky في الأسفل */
+        tbody:last-of-type .fixed_footer {
+            position: sticky;
+            bottom: 0;
+            background: white !important;
+            color: #0d7c66;
+            /* لون الخلفية للتأكيد */
+            z-index: 10;
+        }
+    </style>
     {{ $this->getTableFiltersForm() }}
     {{-- @if (isset($branch_id)) --}}
     <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
@@ -63,20 +82,25 @@
                     @endif
                 </x-filament-tables::row>
             @endforeach
-            @if (!isStoreManager())
-                <x-filament-tables::row>
+
+        </tbody>
+
+        @if (!isStoreManager())
+            <tbody>
+                <x-filament-tables::row class="fixed_footer">
                     <x-filament-tables::cell colspan="{{ $show_invoice_no ? '7' : '6' }}"> {{ __('lang.total') }}
                     </x-filament-tables::cell>
-                    {{-- <x-filament-tables::cell> {{ $sum_unit_price }} </x-filament-tables::cell> --}}
-                    <x-filament-tables::cell> {{ $total_sub_total }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ formatMoneyWithCurrency($sum_unit_price) }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ formatMoneyWithCurrency($total_sub_total) }}
+                    </x-filament-tables::cell>
                 </x-filament-tables::row>
-            @endif
-        </tbody>
+            </tbody>
+        @endif
 
         {{-- 🔹 Add Pagination Links --}}
         <tr>
             <td colspan="100%">
-                {{ $purchase_invoice_data['results']->links() }}
+                {{-- {{ $purchase_invoice_data['results']->links() }} --}}
             </td>
         </tr>
 
@@ -85,18 +109,17 @@
 
 
     </x-filament-tables::table>
-    <div class="flex justify-end mb-2">
-        <form method="GET">
+    {{-- <div class="flex justify-end mb-2">
+        
             <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-            <select name="perPage" id="perPage" onchange="this.form.submit()"
-                class="border border-gray-300 px-3 py-1 rounded-md text-sm">
+            <select wire:model="perPage" class="border border-gray-300 px-3 py-1 rounded-md text-sm">
                 @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                    <option value="{{ $option }}" {{ request('perPage', 15) == $option ? 'selected' : '' }}>
+                    <option value="{{ $option }}">
                         {{ is_numeric($option) ? $option : 'All' }}
                     </option>
                 @endforeach
             </select>
-        </form>
-    </div>
+        
+    </div> --}}
 
 </x-filament-panels::page>

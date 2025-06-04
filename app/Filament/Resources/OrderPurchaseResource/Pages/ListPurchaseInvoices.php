@@ -19,20 +19,20 @@ class ListPurchaseInvoices extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
-    public function getTabs(): array
-    {
-        return [
-            'Active' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('cancelled', 0))
-                ->icon('heroicon-o-arrow-path-rounded-square')
-                ->badge(PurchaseInvoice::query()->where('cancelled', 0)->count())
-                ->badgeColor('warning'),
-            'Cancelled' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('cancelled',1))
-                ->icon('heroicon-o-backspace')
-                ->badge(PurchaseInvoice::query()->where('cancelled',1)->count())
-                ->badgeColor('warning'),
+    // public function getTabs(): array
+    // {
+    //     return [
+    //         'Active' => Tab::make()
+    //             ->modifyQueryUsing(fn(Builder $query) => $query->where('cancelled', 0))
+    //             ->icon('heroicon-o-arrow-path-rounded-square')
+    //             ->badge(PurchaseInvoice::query()->where('cancelled', 0)->count())
+    //             ->badgeColor('warning'),
+    //         'Cancelled' => Tab::make()
+    //             ->modifyQueryUsing(fn(Builder $query) => $query->where('cancelled',1))
+    //             ->icon('heroicon-o-backspace')
+    //             ->badge(PurchaseInvoice::query()->where('cancelled',1)->count())
+    //             ->badgeColor('warning'),
 
-        ];
-    }
+    //     ];
+    // }
 }

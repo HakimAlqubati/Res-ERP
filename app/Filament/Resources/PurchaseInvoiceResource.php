@@ -280,7 +280,7 @@ class PurchaseInvoiceResource extends Resource
     {
         return $table
             ->striped()
-            ->paginated([10, 25, 50, 100])
+            // ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')
@@ -499,6 +499,7 @@ class PurchaseInvoiceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery()
+            ->withoutTrashed()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

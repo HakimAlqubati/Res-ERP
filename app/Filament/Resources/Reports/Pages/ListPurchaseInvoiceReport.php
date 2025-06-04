@@ -21,21 +21,23 @@ class ListPurchaseInvoiceReport extends ListRecords
 {
     protected static string $resource = PurchaseInvoiceReportResource::class;
     protected static string $view = 'filament.pages.stock-report.purchase-invoice-report-with-pagination';
+    public int|string $perPage = 20;
+    protected $updatesQueryString = ['perPage'];
 
 
 
 
     protected function getViewData(): array
     {
-        $perPage = request()->get('perPage', 20);
-        if ($perPage === 'all') {
-            $perPage = 9999; // سيتم إرجاع كل النتائج
-        }
+        // $perPage = request()->get('perPage', 20);
+        // if ($perPage === 'all') {
+        //     $perPage = 9999; // سيتم إرجاع كل النتائج
+        // }
         $productsIds = [];
         $invoiceNos = [];
 
         $showInvoiceNo = $this->getTable()->getFilters()['show_invoice_no']->getState()['isActive'];
-
+        
         $productsIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
         $invoiceNos = $this->getTable()->getFilters()['invoice_no']->getState()['values'] ?? [];
         $supplierId = $this->getTable()->getFilters()['supplier_id']->getState()['value'] ?? 'all';
@@ -47,7 +49,7 @@ class ListPurchaseInvoiceReport extends ListRecords
             $storeId,
             $supplierId,
             $invoiceNos,
-            $perPage,
+            // $perPage,
             $categoryIds
         );
 
@@ -88,7 +90,7 @@ class ListPurchaseInvoiceReport extends ListRecords
         $storeId,
         $supplierId,
         $invoiceNos,
-        $perPage = 20,
+        // $perPage = 20,
         $categoryIds = []
     ) {
         $store_name = 'All';
@@ -149,9 +151,11 @@ class ListPurchaseInvoiceReport extends ListRecords
 
         $query->whereNull('purchase_invoices.deleted_at');
 
+        // dd($this->perPage);
         // 🔹 Apply pagination (change `10` to the number of records per page)
-        $results = $query->paginate($perPage);
-
+        // $results = $query->paginate($perPage);
+        // $results = $query->paginate($this->perPage);
+        $results = $query->get();
         return [
             'results' => $results,
             'supplier_name' => $supplier_name,
