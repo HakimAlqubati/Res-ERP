@@ -72,4 +72,84 @@ class UnitPriceFifoUpdater
 
         return $updated;
     }
+
+
+    public static function importPricesFromInventoryTransactions($productId): int
+    {
+        $product = Product::find($productId);
+        if (!$product) {
+            return 0;
+        }
+
+        $count = 0;
+
+        // 🔵 أولًا: جلب الحركات ExcelImport فقط
+        $excelImports = \App\Models\InventoryTransaction::where('product_id', $productId)
+            ->where('movement_type', 'in')
+            ->where('transactionable_type', 'ExcelImport')
+            ->orderBy('movement_date', 'ASC')
+            ->get();
+
+        foreach ($excelImports as $transaction) {
+            foreach ($product->allUnitPrices as $unitPrice) {
+                $note = 'Imported from ExcelImport (ID: ' . $transaction->transactionable_id . ')'
+                    . ' on ' . $transaction->movement_date;
+
+
+                $newPrice = ($transaction->price * $unitPrice->package_size) / $transaction->package_size;
+                $newPrice = round($newPrice, 2);
+
+                ProductPriceHistory::create([
+                    'product_id'  => $productId,
+                    'unit_id'     => $unitPrice->unit_id,
+                    'old_price'   => null,
+                    'new_price'   => $newPrice,
+                    'source_type' => $transaction->transactionable_type,
+                    'source_id'   => $transaction->transactionable_id,
+                    'note'        => $note,
+                    'date'        => $transaction->movement_date,
+                ]);
+
+                $count++;
+            }
+        }
+
+        // 🔵 ثم: جلب باقي الحركات (PurchaseInvoice, StockSupplyOrder, GoodsReceivedNote)
+        $otherTransactions = \App\Models\InventoryTransaction::where('product_id', $productId)
+            ->where('movement_type', 'in')
+            ->whereIn('transactionable_type', [
+                'App\Models\PurchaseInvoice',
+                'App\Models\StockSupplyOrder',
+                'App\Models\GoodsReceivedNote',
+            ])
+            ->orderBy('movement_date', 'ASC')
+            ->get();
+
+        foreach ($otherTransactions as $transaction) {
+            foreach ($product->allUnitPrices as $unitPrice) {
+                $note = 'Imported from ' . class_basename($transaction->transactionable_type)
+                    . ' (ID: ' . $transaction->transactionable_id . ')'
+                    . ' on ' . $transaction->movement_date;
+
+                $oldPrice = (float) $unitPrice->price;
+                $newPrice = ($transaction->price * $unitPrice->package_size) / $transaction->package_size;
+                $newPrice = round($newPrice, 2);
+
+                ProductPriceHistory::create([
+                    'product_id'  => $productId,
+                    'unit_id'     => $unitPrice->unit_id,
+                    'old_price'   => $oldPrice,
+                    'new_price'   => $newPrice,
+                    'source_type' => $transaction->transactionable_type,
+                    'source_id'   => $transaction->transactionable_id,
+                    'note'        => $note,
+                    'date'        => $transaction->movement_date,
+                ]);
+
+                $count++;
+            }
+        }
+
+        return $count;
+    }
 }

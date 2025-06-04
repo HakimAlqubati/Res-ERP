@@ -29,6 +29,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('productItem.product.name')
                     ->label('Component Product')
+                    ->tooltip(fn($record)=>$record?->productItem?->id)
                     ->formatStateUsing(
                         fn($state, $record) =>
                         optional($record->productItem?->product)->name ?? '-'
@@ -47,6 +48,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('unit.name')
                     ->label('Unit')
+                
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('note')
