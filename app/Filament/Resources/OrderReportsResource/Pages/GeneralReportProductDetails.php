@@ -107,7 +107,7 @@ class GeneralReportProductDetails extends Page
                 'units.name as unit_name',
                 'products.code as product_code',
                 'orders_details.unit_id as unit_id',
-                DB::raw('ROUND(SUM(orders_details.available_quantity), 0) as available_quantity'),
+                DB::raw('ROUND(SUM(orders_details.available_quantity), 2) as available_quantity'),
                 // DB::raw('(SUM(orders_details.price)) as price'),
                 'orders_details.price as price',
                 'orders_details.package_size as package_size',
