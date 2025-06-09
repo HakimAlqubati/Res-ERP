@@ -146,14 +146,19 @@ class OrderDetails extends Model implements Auditable
             }
 
             foreach ($dirty as $field => $newValue) {
-                if ($field == 'total_unit_price') {
+                if (
+                    $field == 'total_unit_price' ||
+                    $field == 'updated_at' ||
+                    $field == 'updated_by'
+                ) {
                     continue;
                 }
                 $oldValue = $orderDetail->getOriginal($field);
                 $messageParts[] = "$field: $oldValue -> $newValue";
             }
             $message = "Updated fields: " . implode(', ', $messageParts);
-            if ($order) {
+            if (!empty($messageParts) && $order) {
+
                 OrderLog::create([
                     'order_id'   => $order->id,
                     'created_by' => auth()->id() ?? null,
