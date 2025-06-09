@@ -72,6 +72,14 @@ class Product extends Model implements Auditable
         return $this->hasMany(UnitPrice::class);
     }
 
+    public function unitsForOrders()
+    {
+        return $this->hasMany(UnitPrice::class)->where(
+            'use_in_orders',
+            1
+        );
+    }
+
 
     public function category()
     {

@@ -21,7 +21,7 @@ class ProductResource extends JsonResource
             // 'is_manufacturing' => $this->is_manufacturing,
             'cat_id' => $this->category->id,
             'cat_name' => $this->category->name,
-            'unitPrices' => $this->unitPrices,
+            'unitPrices' => $this->unitsForOrders,
             'productItems' => $this->productItems,
             // 'name' => $this->name,
             // 'description' => $this->description,

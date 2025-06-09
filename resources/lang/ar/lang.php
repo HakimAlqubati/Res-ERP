@@ -186,4 +186,5 @@ return [
     'not_specified' => 'غير محدد',
     'date' => 'التاريخ',
     'please_select_store' => 'الرجاء اختيار مخزن',
+    'use_in_orders' => 'تستخدم في الطلبات',
 ];

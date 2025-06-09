@@ -41,9 +41,9 @@ class OrderDetails extends Model implements Auditable
         'price',
         'available_in_store',
         'created_by',
-        'updated_at',
+        // 'updated_at',
         'created_at',
-        'updated_by',
+        // 'updated_by',
         'purchase_invoice_id',
         'negative_inventory_quantity',
         'orderd_product_id',
@@ -51,7 +51,7 @@ class OrderDetails extends Model implements Auditable
         'package_size',
         'is_created_due_to_qty_preivous_order',
         'previous_order_id',
-        'total_unit_price',
+        // 'total_unit_price',
     ];
 
     protected $appends = ['total_price'];

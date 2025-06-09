@@ -318,7 +318,7 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(4)
+                                ->columns(5)
                                 // ->hiddenOn(Pages\EditProduct::class)
 
                                 ->columnSpanFull()->minItems(1)
@@ -493,6 +493,11 @@ class ProductResource extends Resource
                                             return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
                                         })
                                         ->dehydrated(),
+                                    Toggle::make('use_in_orders')
+                                        ->inline(false)
+                                        ->label(__('lang.use_in_orders'))
+                                        ->default(true)
+                                        ,
 
                                 ])
                                 ->orderColumn('order')
