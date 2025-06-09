@@ -8,6 +8,7 @@ use App\Models\ProductPriceHistory;
 use App\Models\UnitPrice;
 use App\Services\OrderDetailsPriceUpdaterByFifo;
 use App\Services\ProductItemCalculatorService;
+use App\Services\ProductUnitConversionService;
 use App\Services\UnitPriceFifoUpdater;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -135,7 +136,8 @@ class TestController7 extends Controller
         ]);
 
         try {
-            $this->updateUnitIdAndPackageSizeForProduct(
+            $service = new ProductUnitConversionService();
+            $service->migrateProductUnitAndPackageSize(
                 $validated['product_id'],
                 $validated['from_unit_id'],
                 $validated['to_unit_id'],
@@ -231,7 +233,25 @@ class TestController7 extends Controller
                     'unit_id' => $toUnitId,
                     'package_size' => $toPackageSize,
                 ]);
+            DB::table('stock_inventory_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
 
+
+            // 9. Update stock_adjustment_details (Stock Adjustment Records)
+            DB::table('stock_adjustment_details')
+                ->where('product_id', $productId)
+                ->where('unit_id', $fromUnitId)
+                ->where('package_size', $fromPackageSize)
+                ->update([
+                    'unit_id' => $toUnitId,
+                    'package_size' => $toPackageSize,
+                ]);
             logger("✅ Updated unit_id and package_size for product #$productId from unit $fromUnitId (pkg $fromPackageSize) to unit $toUnitId (pkg $toPackageSize)");
         });
     }
