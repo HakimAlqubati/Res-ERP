@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\StockIssueOrder;
+use App\Models\UnitPrice;
+use App\Services\BulkPricingAdjustmentService;
 use App\Services\FifoMethodService;
 use App\Services\GrnPriceSyncService;
 use App\Services\ManufacturingBackfillService;
 use App\Services\ProductSupplyPriceUpdaterService;
 use App\Services\Reports\InventoryWithUsageReportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TestController8 extends Controller
 {
@@ -174,5 +178,18 @@ class TestController8 extends Controller
             'status' => $result['status'],
             'message' => $result['message'],
         ]);
+    }
+
+    // داخل ProductController.php
+
+    /**
+     * هذه الدالة تستقبل المتغيرات من الـ Route
+     * وتستدعي دالة التحديث الرئيسية.
+     */
+    public function handleUpdateFromRoute(int $categoryId, int $unitId, float $oldPrice, float $newPrice)
+    {
+        $service = new BulkPricingAdjustmentService();
+
+        return $service->updateAllHistoricalPrices($categoryId, $unitId, $oldPrice, $newPrice);
     }
 }
