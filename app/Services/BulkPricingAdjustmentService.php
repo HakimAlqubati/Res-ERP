@@ -22,7 +22,7 @@ class BulkPricingAdjustmentService
                         $q->where('category_id', $categoryId);
                     })
                     ->where('unit_id', $unitId)
-                    ->where('price', $oldPrice)
+                    // ->where('price', $oldPrice)
                     ->pluck('product_id')
                     ->unique();
 
@@ -38,44 +38,44 @@ class BulkPricingAdjustmentService
                 // 1. تحديث جدول الأسعار الرئيسي (Master Price Table)
                 $report['unit_prices'] = UnitPrice::whereIn('product_id', $productIdsToUpdate)
                     ->where('unit_id', $unitId)
-                    ->where('price', $oldPrice)
+                    // ->where('price', $oldPrice)
                     ->update(['price' => $newPrice]);
 
                 // 2. تحديث جدول حركات المخزون
                 $report['inventory_transactions'] = DB::table('inventory_transactions')
                     ->whereIn('product_id', $productIdsToUpdate)
                     ->where('unit_id', $unitId) // -> تم إضافة شرط الوحدة
-                    ->where('price', $oldPrice)
+                    // ->where('price', $oldPrice)
                     ->update(['price' => $newPrice]);
 
                 // 3. تحديث جدول تفاصيل الطلبات
                 $report['orders_details'] = DB::table('orders_details')
                     ->whereIn('product_id', $productIdsToUpdate)
                     ->where('unit_id', $unitId) // -> تم إضافة شرط الوحدة
-                    ->where('price', $oldPrice)
+                    // ->where('price', $oldPrice)
                     ->update(['price' => $newPrice]);
 
                 // 4. تحديث جدول تفاصيل مذكرات استلام البضاعة
                 $report['goods_received_note_details'] = DB::table('goods_received_note_details')
                     ->whereIn('product_id', $productIdsToUpdate)
-                    ->where('unit_id', $unitId) // -> تم إضافة شرط الوحدة
-                    ->where('price', $oldPrice)
+                    // ->where('unit_id', $unitId) // -> تم إضافة شرط الوحدة
+                    // ->where('price', $oldPrice)
                     ->update(['price' => $newPrice]);
 
                 // 5. تحديث جدول تفاصيل فواتير الشراء
                 $report['purchase_invoice_details'] = DB::table('purchase_invoice_details')
                     ->whereIn('product_id', $productIdsToUpdate)
                     ->where('unit_id', $unitId) // -> تم إضافة شرط الوحدة
-                    ->where('price', '>=', $oldPrice - 0.001) // استخدام مقارنة مرنة للتعامل مع الفروقات العشرية
-                    ->where('price', '<=', $oldPrice + 0.001)
+                    // ->where('price', '>=', $oldPrice - 0.001) // استخدام مقارنة مرنة للتعامل مع الفروقات العشرية
+                    // ->where('price', '<=', $oldPrice + 0.001)
                     ->update(['price' => $newPrice]);
 
                 // 6. تحديث جدول تفاصيل طلبات التوريد المخزني
                 $report['stock_supply_order_details'] = DB::table('stock_supply_order_details')
                     ->whereIn('product_id', $productIdsToUpdate)
                     ->where('unit_id', $unitId) // -> تم إضافة شرط الوحدة
-                    ->where('price', '>=', $oldPrice - 0.001)
-                    ->where('price', '<=', $oldPrice + 0.001)
+                    // ->where('price', '>=', $oldPrice - 0.001)
+                    // ->where('price', '<=', $oldPrice + 0.001)
                     ->update(['price' => $newPrice]);
 
 
