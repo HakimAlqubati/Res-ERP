@@ -47,7 +47,7 @@ class BulkPriceUpdate extends Page implements HasForms
             ->schema([
                 Fieldset::make('Update Criteria')->columns(3)->schema([
                     Select::make('category_id')
-                        ->label('Select Category (Optional)')
+                        ->label('Select Category')
                         ->options(Category::pluck('name', 'id'))
                         ->searchable()
                         ->live() // يجعل هذا الحقل تفاعليًا
@@ -62,7 +62,7 @@ class BulkPriceUpdate extends Page implements HasForms
                             $productIds = Product::where('category_id', $state)->pluck('id')->all();
                             // تعيين حقل المنتجات ليحتوي على كل المعرفات التي تم جلبها، مما يؤدي إلى تحديدها
                             $set('product_ids', $productIds);
-                        })
+                        })->required()
                         ->placeholder('Select a category to filter and select products'),
 
                     Select::make('unit_id')
@@ -77,11 +77,11 @@ class BulkPriceUpdate extends Page implements HasForms
                         ->numeric()
                         ->required()
                         ->minValue(0.01)
-                        ->prefix('USD')
+                        ->prefix(getDefaultCurrency())
                         ->helperText('Enter the new price to be applied to all historical records.'),
 
                     Select::make('product_ids')
-                        ->label('Products (Optional)')
+                        ->label('Products')
                         ->multiple()
                         ->options(function (Get $get) {
                             $categoryId = $get('category_id');
@@ -91,7 +91,7 @@ class BulkPriceUpdate extends Page implements HasForms
                             return Product::where('category_id', $categoryId)->pluck('name', 'id');
                         })
                         ->searchable()
-                        ->columnSpanFull()
+                        ->columnSpanFull()->required()
                         ->helperText('If you select specific products, only they will be updated. If left empty, all products in the selected category will be updated.'),
                 ])
             ])
