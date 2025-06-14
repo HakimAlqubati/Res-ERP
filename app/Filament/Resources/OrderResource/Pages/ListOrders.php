@@ -87,7 +87,9 @@ class ListOrders extends ListRecords
             $tabs[$status] = Tab::make($label)
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', $status))
                 ->icon(Order::getStatusIcon($status))
-                ->badge(Order::query()->where('status', $status)->count())
+                ->badge(Order::query()->where('status', $status)
+                ->whereHas('orderDetails')
+                ->count())
                 ->badgeColor(Order::getBadgeColor($status));
         }
 

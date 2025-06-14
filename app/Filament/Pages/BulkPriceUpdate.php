@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Unit;
 use App\Services\BulkPricingAdjustmentService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -80,19 +81,23 @@ class BulkPriceUpdate extends Page implements HasForms
                         ->prefix(getDefaultCurrency())
                         ->helperText('Enter the new price to be applied to all historical records.'),
 
-                    Select::make('product_ids')
-                        ->label('Products')
-                        ->multiple()
-                        ->options(function (Get $get) {
-                            $categoryId = $get('category_id');
-                            if (!$categoryId) {
-                                return Product::pluck('name', 'id');
-                            }
-                            return Product::where('category_id', $categoryId)->pluck('name', 'id');
-                        })
-                        ->searchable()
-                        ->columnSpanFull()->required()
-                        ->helperText('If you select specific products, only they will be updated. If left empty, all products in the selected category will be updated.'),
+                    Fieldset::make()->columnSpanFull()
+                        ->schema([
+                            CheckboxList::make('product_ids')
+                                ->bulkToggleable()
+                                ->label('Products')
+                                ->columns(3)
+                                ->options(function (Get $get) {
+                                    $categoryId = $get('category_id');
+                                    // if (!$categoryId) {
+                                    //     return Product::pluck('name', 'id');
+                                    // }
+                                    return Product::where('category_id', $categoryId)->pluck('name', 'id');
+                                })
+                                ->searchable()
+                                ->columnSpanFull()->required()
+                                ->helperText('If you select specific products, only they will be updated. If left empty, all products in the selected category will be updated.'),
+                        ])
                 ])
             ])
             ->statePath('data');
