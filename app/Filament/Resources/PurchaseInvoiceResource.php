@@ -349,6 +349,23 @@ class PurchaseInvoiceResource extends Resource
             ])
             ->filters([
                 // Tables\Filters\TrashedFilter::make(),
+
+                SelectFilter::make('id')
+                    ->label('ID')
+                    ->multiple() // 2. تمت إضافة إمكانية الاختيار المتعدد
+                    ->searchable() // 3. تمت إضافة إمكانية البحث
+                    ->getSearchResultsUsing(function (string $search): array {
+                        // هذه الدالة تبحث برقم الفاتورة أو بال ID الرقمي
+                        return PurchaseInvoice::where('invoice_no', 'like', "%{$search}%")
+                            ->orWhere('id', $search)
+                            ->limit(50)
+                            ->pluck('id', 'id')
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(function ($value): ?string {
+                        // هذه الدالة تعرض رقم الفاتورة بعد اختيارها
+                        return PurchaseInvoice::find($value)?->id;
+                    }),
                 SelectFilter::make('payment_method_id')
                     ->label('Payment Method')
                     ->options(PaymentMethod::active()->get()->pluck('name', 'id')),

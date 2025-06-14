@@ -80,6 +80,14 @@ class InventoryTransactionTruckingReportResource extends Resource
                     })->options(
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
+                SelectFilter::make('transactionable_type')
+                    ->label('Transaction Type')
+                    ->options([
+                        'App\Models\PurchaseInvoice'   => 'Purchase Invoice',
+                        'App\Models\GoodsReceivedNote' => 'Goods Received Note',
+                        'App\Models\StockSupplyOrder' => 'Stock Supply',
+                        // أضف أي أنواع عمليات أخرى هنا بنفس الطريقة
+                    ]),
             ], FiltersLayout::AboveContent);
     }
 

@@ -16,6 +16,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -72,7 +73,7 @@ class StockAdjustmentReportResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
 
                     ->multiple(),
-            ])
+            ],FiltersLayout::AboveContent)
             ->actions([])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

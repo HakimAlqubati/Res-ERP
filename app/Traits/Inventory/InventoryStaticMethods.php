@@ -13,7 +13,8 @@ trait InventoryStaticMethods
         $perPage = 15,
         ?string $movementType = null,
         $unitId = null,
-        $storeId = null
+        $storeId = null,
+        ?string $transactionableType = null
     ) {
         $query = InventoryTransaction::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
@@ -27,6 +28,9 @@ trait InventoryStaticMethods
 
         if (!empty($storeId)) {
             $query->where('store_id', $storeId);
+        }
+        if (!empty($transactionableType)) {
+            $query->where('transactionable_type', $transactionableType);
         }
         return  $query->orderBy('id', 'asc')
             ->paginate($perPage);
