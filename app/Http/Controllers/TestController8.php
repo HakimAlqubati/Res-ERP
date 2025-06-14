@@ -186,10 +186,10 @@ class TestController8 extends Controller
      * هذه الدالة تستقبل المتغيرات من الـ Route
      * وتستدعي دالة التحديث الرئيسية.
      */
-    public function handleUpdateFromRoute(int $categoryId, int $unitId, float $oldPrice, float $newPrice)
+    public function handleUpdateFromRoute(int $categoryId, int $unitId, float $newPrice)
     {
         $service = new BulkPricingAdjustmentService();
 
-        return $service->updateAllHistoricalPrices($categoryId, $unitId, $oldPrice, $newPrice);
+        return $service->updateAllHistoricalPrices($categoryId, $unitId, $newPrice);
     }
 }
