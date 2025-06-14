@@ -95,8 +95,7 @@ class BulkPriceUpdate extends Page implements HasForms
                                     return Product::where('category_id', $categoryId)->pluck('name', 'id');
                                 })
                                 ->searchable()
-                                ->columnSpanFull()->required()
-                                ->helperText('If you select specific products, only they will be updated. If left empty, all products in the selected category will be updated.'),
+                                ->columnSpanFull()->required(),
                         ])
                 ])
             ])
