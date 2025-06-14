@@ -39,7 +39,7 @@ class InventoryTransactionPurchaseReportResource extends Resource
     }
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = -1;
+    protected static ?int $navigationSort = 7;
 
 
     public static function table(Table $table): Table
@@ -117,13 +117,13 @@ class InventoryTransactionPurchaseReportResource extends Resource
     }
     public static function canViewAny(): bool
     {
-        if (isSuperAdmin()) {
+        if (isSuperAdmin() || isSystemManager()) {
             return true;
         }
         return false;
     }
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return true;
     }
 }
