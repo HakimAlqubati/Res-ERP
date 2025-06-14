@@ -9,6 +9,7 @@ use App\Filament\Clusters\ReportOrdersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
 use App\Models\Branch;
 use App\Models\FakeModelReports\ReportProductQuantities;
+use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
 use Filament\Forms\Components\DatePicker;
@@ -162,6 +163,7 @@ class ReportProductQuantitiesResource extends Resource
             ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
                 $query->whereBetween('orders.created_at', [$start_date, $end_date]);
             })
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->where('products.id', $product_id)
             ->groupBy(
                 'orders.branch_id',

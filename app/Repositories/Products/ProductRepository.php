@@ -199,7 +199,7 @@ class ProductRepository implements ProductRepositoryInterface
         //     })
         //     ->all();
         // $categories = DB::table('categories')->where('active', 1)->get(['id', 'name'])->pluck('name', 'id');
-        
+
         // foreach ($categories as $cat_id => $cat_name) {
         //     $obj = new \stdClass();
         //     $obj->category_id = $cat_id;
@@ -310,9 +310,13 @@ class ProductRepository implements ProductRepositoryInterface
         $data = DB::table('orders_details')
             ->select(
                 'products.name AS product',
+                'products.code AS code',
+                'products.id AS product_id',
                 'branches.name AS branch',
                 'units.name AS unit',
-                DB::raw('SUM(orders_details.available_quantity) AS quantity')
+                'orders_details.package_size AS package_size',
+                DB::raw('SUM(orders_details.available_quantity) AS quantity'),
+                'orders_details.price as unit_price',
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
@@ -325,18 +329,28 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
                 return $query->whereIn('orders.branch_id', $branch_id);
             })
-            // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            ->where('orders.active', 1)
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
-            ->groupBy('orders.branch_id', 'products.name', 'branches.name', 'units.name')
+            ->groupBy(
+                'orders.branch_id',
+                'products.name',
+                'products.code',
+                'products.id',
+                'branches.name',
+                'units.name',
+                'orders_details.package_size',
+                'orders_details.price'
+            )
             ->get();
         $final = [];
         foreach ($data as   $val) {
             $obj = new \stdClass();
             $obj->product = $val->product;
+            $obj->package_size = $val->package_size;
             $obj->branch = $val->branch;
             $obj->unit = $val->unit;
-            $obj->quantity =   number_format($val->quantity, 2);
+            $obj->quantity =   formatQunantity($val->quantity);
             $final[] = $obj;
         }
         return $final;
@@ -351,21 +365,31 @@ class ProductRepository implements ProductRepositoryInterface
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
+            ->join('branches', 'orders.branch_id', '=', 'branches.id')
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->where('orders_details.product_id', '=', $request->input('product_id'))
             ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
                 return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
             })
-            ->when(getCurrentRole() == 7, function ($query) {
-                return $query->where('orders.branch_id', getBranchId());
-            })
-            ->when(getCurrentRole() == 3 && $branch_id && is_array($branch_id), function ($query) use ($branch_id) {
-                return $query->whereIn('orders.branch_id', $branch_id);
-            })
-            // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            ->where('orders.active', 1)
+
+            ->where('orders.branch_id', $branch_id)
+            // ->when(getCurrentRole() == 3 && $branch_id && is_array($branch_id), function ($query) use ($branch_id) {
+            //     dd($branch_id);
+            //     return $query->whereIn('orders.branch_id', $branch_id);
+            // })
+            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
+            // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
-            ->groupBy('products.name',   'units.name')
+            ->groupBy(
+                'orders.branch_id',
+                'products.name',
+                'products.code',
+                'products.id',
+                'branches.name',
+                'units.name',
+                'orders_details.package_size',
+                'orders_details.price'
+            )
             // ->groupBy('orders.branch_id')
             ->get();
         // Apply number_format() to the quantity value

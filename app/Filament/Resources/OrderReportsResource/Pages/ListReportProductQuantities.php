@@ -59,47 +59,9 @@ class ListReportProductQuantities extends ListRecords
         ];
     }
 
-    protected function getViewData(): array
-    {
-        $branch_ids = [];
-        $total_quantity = 0;
-        $total_price = 0;
-        $report_data['data'] = [];
-        $product_id = __filament_request_select('product_id', 'choose');
-        $branch_ids = __filament_request_select_multiple('branch_id', [], true);
 
-        $start_date = __filament_request_key("date.start_date", null);
 
-        $end_date = __filament_request_key("date.end_date", null);
-        // dd($product_id,$start_date,$end_date);
-        $report_data = $this->getReportData($product_id, $start_date, $end_date, $branch_ids);
 
-        if (isset($report_data['total_price'])) {
-            $total_price = $report_data['total_price'];
-        }
-        if (isset($report_data['total_quantity'])) {
-            $total_quantity = $report_data['total_quantity'];
-        }
-
-        // dd($report_data);
-
-        $start_date = (!is_null($start_date) ? date('Y-m-d', strtotime($start_date)) : __('lang.date_is_unspecified'));
-        $end_date = (!is_null($end_date) ? date('Y-m-d', strtotime($end_date)) : __('lang.date_is_unspecified'));
-
-        return [
-            'report_data' => $report_data['data'],
-            'product_id' => $product_id,
-            'start_date' => $start_date,
-            'end_date' => $end_date,
-            'total_quantity' => $total_quantity,
-            'total_price' => $total_price,
-        ];
-    }
-
-    // protected function getTableFiltersLayout(): ?string
-    // {
-    //     return \Filament\Tables\Enums\FiltersLayout::AboveContent;
-    // }
 
     public function getReportData($product_id, $start_date, $end_date, $branch_ids)
     {
@@ -160,7 +122,7 @@ class ListReportProductQuantities extends ListRecords
 
         $final['total_price'] = number_format($total_price, 2);
         $final['total_quantity'] = number_format($total_quantity, 2);
-
+        return [];
         return $final;
     }
 
