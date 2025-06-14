@@ -9,22 +9,34 @@ use Illuminate\Support\Facades\Log;
 class BulkPricingAdjustmentService
 {
 
-    public function updateAllHistoricalPrices(int $categoryId, int $unitId, float $newPrice)
+
+    public function updateAllHistoricalPrices(?int $categoryId, ?array $productIds, int $unitId, float $newPrice)
+
     {
         try {
-            $updateReport = DB::transaction(function () use ($categoryId, $unitId, $newPrice) {
+
+            $updateReport = DB::transaction(function () use ($categoryId, $productIds, $unitId, $newPrice) {
+                $productIdsToUpdate = collect($productIds)->unique()->filter();
 
                 // ------------------
                 // الخطوة 1: تحديد قائمة المنتجات المستهدفة بدقة
                 // ------------------
-                $productIdsToUpdate = UnitPrice::query()
-                    ->whereHas('product', function ($q) use ($categoryId) {
-                        $q->where('category_id', $categoryId);
-                    })
-                    ->where('unit_id', $unitId)
+                $productIdsToUpdate = collect($productIds)->unique()->filter();
 
-                    ->pluck('product_id')
-                    ->unique();
+                // إذا لم يتم توفير قائمة منتجات، اعتمد على الفئة
+                if ($productIdsToUpdate->isEmpty()) {
+                    if (is_null($categoryId)) {
+                        return ['message' => 'يجب تحديد فئة أو قائمة منتجات على الأقل.'];
+                    }
+
+                    $productIdsToUpdate = UnitPrice::query()
+                        ->whereHas('product', function ($q) use ($categoryId) {
+                            $q->where('category_id', $categoryId);
+                        })
+                        ->where('unit_id', $unitId)
+                        ->pluck('product_id')
+                        ->unique();
+                }
 
                 if ($productIdsToUpdate->isEmpty()) {
                     return ['message' => 'لم يتم العثور على منتجات مطابقة للشروط. لم يتم تحديث أي شيء.'];

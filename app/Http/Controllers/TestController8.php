@@ -190,6 +190,8 @@ class TestController8 extends Controller
     {
         $service = new BulkPricingAdjustmentService();
 
-        return $service->updateAllHistoricalPrices($categoryId, $unitId, $newPrice);
+        $productIds = explode(',', $_GET['products']);
+
+        return $service->updateAllHistoricalPrices($categoryId, $productIds, $unitId, $newPrice);
     }
 }
