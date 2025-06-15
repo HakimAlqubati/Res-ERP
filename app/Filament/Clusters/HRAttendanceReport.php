@@ -12,8 +12,7 @@ class HRAttendanceReport extends Cluster
     {
         if(isStuff()){
             return 'My Records';
-        }
-        return 'Reports';
+        } 
         return __('lang.attednance_reports');
     }
 }

@@ -25,6 +25,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'supplier_id',
         'status',
         'is_purchase_invoice_created',
+        'approve_date',
     ];
 
     protected $auditInclude = [
@@ -41,6 +42,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'supplier_id',
         'status',
         'is_purchase_invoice_created',
+        'approve_date',
     ];
     protected $appends = ['details_count', 'has_inventory_transaction', 'belongs_to_purchase_invoice'];
     const STATUS_CREATED   = 'created';
@@ -50,6 +52,7 @@ class GoodsReceivedNote extends Model implements Auditable
 
     protected $casts = [
         'grn_date' => 'date',
+        'approve_date' => 'datetime',
     ];
 
     // ✅ العلاقات

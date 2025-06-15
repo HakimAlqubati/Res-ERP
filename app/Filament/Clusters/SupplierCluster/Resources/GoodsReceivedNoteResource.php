@@ -320,6 +320,7 @@ class GoodsReceivedNoteResource extends Resource
                         $record->update([
                             'status' => GoodsReceivedNote::STATUS_APPROVED,
                             'approved_by' => auth()->id(),
+                            'approve_date' => now(),
                         ]);
                     })
                     ->requiresConfirmation(),

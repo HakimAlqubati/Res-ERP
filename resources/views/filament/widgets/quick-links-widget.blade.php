@@ -1,15 +1,32 @@
 <x-filament::widget>
     <style>
         .link {
-            transition: all 0.3s ease-in-out;
+            transition: all 0.2s ease-in-out;
             border-radius: 1rem;
         }
 
         .link:hover {
-            background-color: #f1f5f9 !important;
-            /* خلفية رمادية فاتحة */
+            /* هذا للوضع الفاتح فقط */
+            background-color: #e2e8f0;
             transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        /* === إصلاح الوضع الليلي (النسخة النهائية) === */
+
+        .dark .link {
+            /* الخطوة 1: إزالة الظل/الإطار الافتراضي لـ Filament بالقوة */
+            box-shadow: none !important;
+
+            /* الخطوة 2: فرض إطار أبيض وواضح وصريح */
+            border: 1px solid white !important;
+        }
+
+        .dark .link:hover {
+            /* الحفاظ على تأثير المرور للخلفية */
+            background-color: rgba(255, 255, 255, 0.1) !important;
+
+            /* يمكنك جعل الإطار أكثر سماكة عند الـ hover إذا أردت */
+            /* border-width: 2px !important; */
         }
     </style>
     <x-filament::card>
@@ -17,27 +34,36 @@
         <x-filament::fieldset label="{{ __('General') }}">
             <x-filament::grid style="--cols-lg: repeat(3, minmax(0, 1fr));" class="lg:grid-cols-[--cols-lg]">
                 {{-- Users --}}
-                <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="purple" color="primary" icon="heroicon-o-user"
+                <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="warning" color="primary" icon="heroicon-o-user"
                     icon-position="before" class="link" tooltip="Go to Users Page">
                     {{ __('Users') }}
                     <x-slot name="badge">
                         {{ \App\Models\User::count() }}
                     </x-slot>
                 </x-filament::link>
-                <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary" icon="heroicon-o-building-office-2"
-                    icon-position="before" class="link" tooltip="Go to Branches Page">
+                <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary"
+                    icon="heroicon-o-building-office-2" icon-position="before" class="link"
+                    tooltip="Go to Branches Page">
                     {{ __('Branches') }}
                     <x-slot name="badge">
                         {{ \App\Models\Branch::count() }}
                     </x-slot>
                 </x-filament::link>
-                <x-filament::link :href="route('filament.admin.area-management.resources.countries.index')" badge-color="primary" color="purple" icon="heroicon-o-globe-alt"
-                    icon-position="before" class="link" tooltip="Go to Area Management Page">
+                <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary"
+                    icon="heroicon-o-building-office-2" icon-position="before" class="link"
+                    tooltip="Go to Branches Page">
                     {{ __('Area Management') }}
                     <x-slot name="badge">
                         {{ \App\Models\Country::count() }}
                     </x-slot>
                 </x-filament::link>
+                {{-- <x-filament::link :href="route('filament.admin.area-management.resources.countries.index')" badge-color="purple" color="purple" icon="heroicon-o-globe-alt"
+                    icon-position="before" class="link" tooltip="Go to Area Management Page">
+                    {{ __('Area Management') }}
+                    <x-slot name="badge">
+                        {{ \App\Models\Country::count() }}
+                    </x-slot>
+                </x-filament::link> --}}
             </x-filament::grid>
         </x-filament::fieldset>
         <x-filament::fieldset label="{{ __('Inventory Management') }}">
@@ -93,7 +119,7 @@
                 </x-filament::link>
 
                 {{-- Inventory Reports --}}
-                <x-filament::link :href="route('filament.admin.inventory-report.resources.inventory-report.index')" badge-color="purple" color="primary" icon="heroicon-o-newspaper"
+                <x-filament::link :href="route('filament.admin.inventory-report.resources.inventory-report.index')" badge-color="warning" color="primary" icon="heroicon-o-newspaper"
                     icon-position="before" class="link" tooltip="Go to Inventory Reports">
                     {{ __('Inventory') }}
                     <x-slot name="badge">
@@ -152,8 +178,8 @@
                     </x-slot>
                 </x-filament::link>
                 {{-- Payroll --}}
-                <x-filament::link :href="route('filament.admin.h-r-salary.resources.month-salaries.index')" badge-color="success" color="primary" icon="heroicon-o-banknotes"
-                    icon-position="before" tooltip="Go to Payroll" class="link">
+                <x-filament::link :href="route('filament.admin.h-r-salary.resources.month-salaries.index')" badge-color="success" color="primary"
+                    icon="heroicon-o-banknotes" icon-position="before" tooltip="Go to Payroll" class="link">
                     {{ __('Payroll') }}
                     <x-slot name="badge">
                         {{ \App\Models\MonthSalary::count() }}

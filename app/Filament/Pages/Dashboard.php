@@ -34,7 +34,7 @@ class Dashboard extends \Filament\Pages\Dashboard
         $widgets = [];
         // $widgets[] = BranchConsumptionChart::class;
         $widgets[] = QuickLinksWidget::class;
-        $widgets[] = TopProductsChart::class;
+        // $widgets[] = TopProductsChart::class;
         $modules = json_decode($currentTenant?->modules, true);
         if (
             is_null($currentTenant) ||
