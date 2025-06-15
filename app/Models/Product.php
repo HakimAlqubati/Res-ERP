@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -241,5 +242,53 @@ class Product extends Model implements Auditable
     public function usedInProducts()
     {
         return $this->hasMany(ProductItem::class, 'product_id');
+    }
+
+    protected static function booted()
+    {
+        static::updating(function (Product $product) {
+            // التحقق فقط إذا كان حقل 'active' هو الذي يتم تعديله إلى 'false'
+            if ($product->isDirty('active') && $product->active === false) {
+
+                // 1. جلب أصغر وحدة للمنتج (حسب package_size)
+                // نستخدم allUnitPrices للتأكد من جلب كل الوحدات وليس فقط وحدات الفواتير
+                $smallestUnit = $product->unitPrices()->orderBy('package_size', 'asc')->first();
+
+                // إذا لم يكن للمنتج وحدات، لا يمكننا التحقق من المخزون، لذلك نتجاوز
+                if (!$smallestUnit) {
+                    return;
+                }
+
+                // 2. جلب المخزن الافتراضي للمنتجات المصنعة
+                // نفترض أن لديك دالة مساعدة باسم defaultManufacturingStore()
+                $storeId = defaultManufacturingStore($product)->id ?? null;
+
+                if (!$storeId) {
+                    // إذا لم يوجد مخزن افتراضي، لا يمكن المتابعة
+                    throw new Exception('لا يمكن إلغاء تفعيل المنتج. لم يتم تحديد المخزن الافتراضي للمخزون.');
+                }
+
+                // 3. التحقق من الكمية المتبقية في المخزون
+                // نفترض أن لديك كلاس MultiProductsInventoryService
+                $inventoryService = new \App\Services\MultiProductsInventoryService(
+                    null,
+                    $product->id,
+                    $smallestUnit->unit_id,
+                    $storeId
+                );
+
+                $inventoryData = $inventoryService->getInventoryForProduct($product->id);
+                $remainingQty = $inventoryData[0]['remaining_qty'] ?? 0;
+
+                // 4. إذا كانت الكمية أكبر من صفر، أوقف العملية وأرجع رسالة خطأ
+                if ($remainingQty > 0) {
+                    // هذا الاستثناء (Exception) سيوقف عملية الحفظ
+                    // وسيظهر الخطأ في واجهة المستخدم إذا تم التعامل معه بشكل صحيح
+                    throw new Exception(
+                        "لا يمكن إلغاء تفعيل المنتج '{$product->name}'. لا تزال هناك كمية في المخزون ({$remainingQty} {$smallestUnit->unit->name})."
+                    );
+                }
+            }
+        });
     }
 }

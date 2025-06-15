@@ -226,6 +226,9 @@ class GoodsReceivedNoteResource extends Resource
                 TextColumn::make('updated_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
+                TextColumn::make('approve_date')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    ->sortable(),
                 IconColumn::make('has_inventory_transaction')
                     ->label('Inventory Updated')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)

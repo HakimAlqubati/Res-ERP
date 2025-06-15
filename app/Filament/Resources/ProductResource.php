@@ -14,6 +14,7 @@ use App\Models\UnitPrice;
 use App\Services\BatchProductCostingService;
 use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
+use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Actions\Action as ActionsAction;
@@ -496,8 +497,7 @@ class ProductResource extends Resource
                                     Toggle::make('use_in_orders')
                                         ->inline(false)
                                         ->label(__('lang.use_in_orders'))
-                                        ->default(true)
-                                        ,
+                                        ->default(true),
 
                                 ])
                                 ->orderColumn('order')
@@ -737,7 +737,16 @@ class ProductResource extends Resource
                     ->label(__('lang.is_manufacturing')),
                 Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
                     ->searchable(isIndividual: false, isGlobal: true)->toggleable(),
-                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true),
+                Tables\Columns\CheckboxColumn::make('active')->label('Active?')
+                    ->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true)
+                    ->updateStateUsing(function (Product $record, $state) {
+                        try { 
+                            $record->update(['active' => $state]);
+                        } catch (Exception $e) { 
+                            showWarningNotifiMessage('Faild', $e->getMessage());
+ 
+                        }
+                    }),
                 TextColumn::make('product_items_count')->label('Items No')
                     ->toggleable(isToggledHiddenByDefault: false)->default('-')->alignCenter(true)
             ])
