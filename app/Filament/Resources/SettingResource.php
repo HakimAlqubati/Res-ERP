@@ -380,8 +380,8 @@ class SettingResource extends Resource
                                 Fieldset::make('GRN Workflow Settings')->columns(2)->schema([
                                     Toggle::make('purchase_invoice_from_grn_only')
                                         ->inline(false)->columnSpanFull()
-                                        ->label('Use GRN to Create Purchase Invoices Only')
-                                        ->helperText('If enabled, purchase invoices can be created through GRN.')
+                                        ->label('Enable GRNPurchase Invoice Number is mandatory and becomes non-editable once entered')
+                                        // ->helperText('If enabled, purchase invoices can be created through GRN.')
                                         ->default(false),
                                     Select::make('grn_entry_role_id')->multiple()
                                         ->label('Role Allowed to Create GRN')
