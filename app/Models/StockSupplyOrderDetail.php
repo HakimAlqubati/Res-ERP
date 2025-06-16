@@ -90,7 +90,7 @@ class StockSupplyOrderDetail extends Model implements Auditable
             'product_name' => $this->product->name,
             'unit_id' => $this->unit_id,
             'unit_name' => $this->unit->name,
-            'quantity' => $this->quantity,
+            'quantity' => (float) $this->quantity,
             'package_size' => $this->unitPrice->package_size ?? null,
         ];
     }
