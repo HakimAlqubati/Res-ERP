@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class StockAdjustmentDetail extends Model implements Auditable
 {
-    use HasFactory, \OwenIt\Auditing\Auditable;
+    use HasFactory, \OwenIt\Auditing\Auditable, SoftDeletes;
 
     protected $fillable = [
         'stock_adjustment_id',

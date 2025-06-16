@@ -8,20 +8,25 @@ use App\Models\Unit;
 use App\Models\UnitPrice;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FifoAllocatorService
 {
     public function allocate(int $productId): array
     {
-        $units  = Unit::active()->get(['id', 'name'])->keyBy('id');
-        $unitPrices = DB::table('unit_prices')
-            ->where('product_id', $productId)
-            ->whereNull('deleted_at')
-            ->where('show_in_invoices', 1)
-            ->get(['unit_id', 'package_size'])
-            ->keyBy('package_size');
+
 
         $product = \App\Models\Product::find($productId);
+
+        if (! $product) {
+            // خيار 1: تجاهل المنتج
+            // return [];
+
+            // خيار 2: لو تحب تسجل رسالة خطأ:
+            Log::warning("⛔ Product not found for product_id: {$productId}");
+            return [];
+        }
+
         $storeId = defaultManufacturingStore($product)->id;
         // Step 1: Get supply (movement_type = 'in') ordered by transaction_date
         $supplies = DB::table('inventory_transactions')
@@ -72,14 +77,38 @@ class FifoAllocatorService
                 'si.created_at',
                 DB::raw("'stock_issue' as source_type")
             ]);
+
+
+        $adjustmentDetails = DB::table('stock_adjustment_details as sad')
+            ->where('sad.product_id', $productId)
+            ->where('sad.adjustment_type', 'decrease')
+            ->whereNull('sad.deleted_at')
+            ->orderBy('sad.id')
+            ->get([
+                'sad.unit_id',
+                'sad.package_size',
+                'sad.quantity as available_quantity',
+                'sad.id as order_id',
+                'sad.adjustment_date as created_at',
+                DB::raw("'adjustment_decrease' as source_type")
+            ]);
+
         $allocations = [];
         $allOrders = $orders->merge($issueOrders);
         $allOrders = $allOrders->sortBy('created_at')->values();
+        $allOrders = $orders
+            ->merge($issueOrders)
+            ->merge($adjustmentDetails)
+            ->sortBy('created_at')
+            ->values();
+
         foreach ($allOrders as $order) {
             // $transactionableType = isset($order->stock_issue_order_id) ? \App\Models\StockIssueOrder::class : \App\Models\Order::class;
-            $transactionableType = isset($order->source_type) && $order->source_type === 'stock_issue'
-                ? \App\Models\StockIssueOrder::class
-                : \App\Models\Order::class;
+            $transactionableType = match ($order->source_type ?? null) {
+                'stock_issue' => \App\Models\StockIssueOrder::class,
+                'adjustment_decrease' => \App\Models\StockAdjustmentDetail::class,
+                default => \App\Models\Order::class,
+            };
             $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
                 ->where('unit_id', $order->unit_id)->with('unit')
                 ->first();

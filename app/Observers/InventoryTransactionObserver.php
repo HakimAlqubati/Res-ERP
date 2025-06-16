@@ -26,10 +26,10 @@ class InventoryTransactionObserver
 
             foreach ($parentProducts as $parentProductId) {
                 try {
-                    $count = \App\Services\ProductCostingService::updateComponentPricesForProduct($parentProductId);
-                    Log::info("✅ [InventoryTxn→PurchaseInvoice #{$inventoryTransaction->transactionable_id}] Updated {$count} components for composite product ID {$parentProductId}");
+                    // $count = \App\Services\ProductCostingService::updateComponentPricesForProduct($parentProductId);
+                    // Log::info("✅ [InventoryTxn→PurchaseInvoice #{$inventoryTransaction->transactionable_id}] Updated {$count} components for composite product ID {$parentProductId}");
                 } catch (\Throwable $e) {
-                    Log::error("❌ Error updating costing for composite product ID {$parentProductId}: {$e->getMessage()}");
+                    // Log::error("❌ Error updating costing for composite product ID {$parentProductId}: {$e->getMessage()}");
                 }
             }
         }

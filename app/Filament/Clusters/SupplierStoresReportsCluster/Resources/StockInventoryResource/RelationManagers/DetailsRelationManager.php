@@ -187,50 +187,69 @@ class DetailsRelationManager extends RelationManager
                                     'source_id' => $records->first()->stock_inventory_id ?? null,
                                     'source_type' => \App\Models\StockInventory::class,
                                 ]);
+                                $notes = "Stock adjustment for product ({$stockAdjustment->product->name}) "
+                                    . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
+                                    . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
+
+                                \App\Models\InventoryTransaction::create([
+                                    'product_id' => $detail['product_id'],
+                                    'movement_type' => $detail['quantity'] > 0
+                                        ? \App\Models\InventoryTransaction::MOVEMENT_IN
+                                        : \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                                    'quantity' => abs((float) $detail['quantity']),
+                                    'unit_id' => $detail['unit_id'],
+                                    'movement_date' => now(),
+                                    'transaction_date' => now(),
+                                    'package_size' => $detail['package_size'],
+                                    'store_id' => $data['store_id'],
+                                    'price' => getUnitPrice($detail['product_id'], $detail['unit_id']), // إن أحببت
+                                    'notes' => $notes,
+                                    'transactionable_id' => $stockAdjustment->id,
+                                    'transactionable_type' => \App\Models\StockAdjustmentDetail::class,
+                                ]);
+
+                                // if ($detail['quantity'] > 0) {
+                                //     // Create a StockSupplyOrder
+                                //     $order = StockSupplyOrder::create([
+                                //         'order_date' => now(),
+                                //         'store_id' => $data['store_id'],
+                                //         'notes' => $stockAdjustment->notes,
+                                //         'cancelled' => false,
+                                //         'created_by' => $stockAdjustment->created_by,
+                                //         'created_using_model_id' => $stockAdjustment->id,
+                                //         'created_using_model_type' => StockAdjustmentDetail::class,
+                                //     ]);
 
 
-                                if ($detail['quantity'] > 0) {
-                                    // Create a StockSupplyOrder
-                                    $order = StockSupplyOrder::create([
-                                        'order_date' => now(),
-                                        'store_id' => $data['store_id'],
-                                        'notes' => $stockAdjustment->notes,
-                                        'cancelled' => false,
-                                        'created_by' => $stockAdjustment->created_by,
-                                        'created_using_model_id' => $stockAdjustment->id,
-                                        'created_using_model_type' => StockAdjustmentDetail::class,
-                                    ]);
+                                //     // Create StockSupplyOrderDetail for each detail
+                                //     StockSupplyOrderDetail::create([
+                                //         'stock_supply_order_id' => $order->id,
+                                //         'product_id' => $detail['product_id'],
+                                //         'unit_id' => $detail['unit_id'],
+                                //         'quantity' => abs($detail['quantity']), // Convert to positive if negative
+                                //         'package_size' => $detail['package_size'],
+                                //     ]);
+                                // } elseif ($detail['quantity'] < 0) {
+                                //     // Create a StockIssueOrder
+                                //     $order = StockIssueOrder::create([
+                                //         'order_date' => now(),
+                                //         'store_id' => $data['store_id'],
+                                //         'notes' => $stockAdjustment->notes,
+                                //         'cancelled' => false,
+                                //         'created_by' => $stockAdjustment->created_by,
+                                //         'created_using_model_id' => $stockAdjustment->id,
+                                //         'created_using_model_type' => StockAdjustmentDetail::class,
+                                //     ]);
 
-
-                                    // Create StockSupplyOrderDetail for each detail
-                                    StockSupplyOrderDetail::create([
-                                        'stock_supply_order_id' => $order->id,
-                                        'product_id' => $detail['product_id'],
-                                        'unit_id' => $detail['unit_id'],
-                                        'quantity' => abs($detail['quantity']), // Convert to positive if negative
-                                        'package_size' => $detail['package_size'],
-                                    ]);
-                                } elseif ($detail['quantity'] < 0) {
-                                    // Create a StockIssueOrder
-                                    $order = StockIssueOrder::create([
-                                        'order_date' => now(),
-                                        'store_id' => $data['store_id'],
-                                        'notes' => $stockAdjustment->notes,
-                                        'cancelled' => false,
-                                        'created_by' => $stockAdjustment->created_by,
-                                        'created_using_model_id' => $stockAdjustment->id,
-                                        'created_using_model_type' => StockAdjustmentDetail::class,
-                                    ]);
-
-                                    // Create StockIssueOrderDetail for each detail
-                                    StockIssueOrderDetail::create([
-                                        'stock_issue_order_id' => $order->id,
-                                        'product_id' => $detail['product_id'],
-                                        'unit_id' => $detail['unit_id'],
-                                        'quantity' => abs($detail['quantity']), // Assuming quantity is used
-                                        'package_size' => $detail['package_size'],
-                                    ]);
-                                }
+                                //     // Create StockIssueOrderDetail for each detail
+                                //     StockIssueOrderDetail::create([
+                                //         'stock_issue_order_id' => $order->id,
+                                //         'product_id' => $detail['product_id'],
+                                //         'unit_id' => $detail['unit_id'],
+                                //         'quantity' => abs($detail['quantity']), // Assuming quantity is used
+                                //         'package_size' => $detail['package_size'],
+                                //     ]);
+                                // }
                             }
                             // Update is_adjustmented field for selected records
                             $records->each(function ($record) {
