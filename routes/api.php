@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\PurchaseReportController;
 use App\Http\Controllers\Api\Reports\BranchConsumptionController;
+use App\Http\Controllers\Api\ReturnedOrderController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FcmController;
@@ -101,6 +103,12 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/filters', [App\Http\Controllers\Api\InventoryReportController::class, 'filters']);
         Route::get('/productTracking', [App\Http\Controllers\Api\InventoryReportController::class, 'productTracking']);
     });
+});
+
+Route::get('purchaseReports', [PurchaseReportController::class, 'index']);
+Route::prefix('returnedOrders')->group(function () {
+    Route::get('/', [ReturnedOrderController::class, 'index']);     // all with filters
+    Route::get('/{id}', [ReturnedOrderController::class, 'show']); // single order
 });
 
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);

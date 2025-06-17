@@ -47,6 +47,7 @@ class TestController4 extends Controller
             $where[] = 'o.id = ' . (int) $request->id;
         }
 
+
         // ✅ Role-based filters
         $user = auth()->user();
 
@@ -138,7 +139,11 @@ class TestController4 extends Controller
                 }
             }
         }
-
+        if ($request->has('status')) {
+            $status = addslashes($request->status); // حماية من حقن SQL
+            $where[] = "o.status = '$status'";
+        }
+ 
         // 🧠 Assemble WHERE clause
         $whereSql = implode(' AND ', $where);
         // dd($whereSql,$user->branch?->is_central_kitchen);
