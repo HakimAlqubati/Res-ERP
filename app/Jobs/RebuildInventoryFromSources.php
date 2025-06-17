@@ -148,13 +148,24 @@ class RebuildInventoryFromSources
                 $notes .= ' in (' . $grn->store->name . ')';
             }
 
+            $priceInfo = $this->getLastPurchasePrice(
+                $detail->product_id,
+                $grn->store_id,
+                $grn->grn_date
+            );
+
+            $price = $priceInfo
+                ? $priceInfo['unit_price'] * $detail->package_size
+                : 0;
+
             InventoryTransaction::create([
                 'product_id' => $detail->product_id,
                 'movement_type' => InventoryTransaction::MOVEMENT_IN,
                 'quantity' => $detail->quantity,
                 'unit_id' => $detail->unit_id,
                 'package_size' => $detail->package_size,
-                'price' => getUnitPrice($detail->product_id, $detail->unit_id) ?? 0,
+                // 'price' => getUnitPrice($detail->product_id, $detail->unit_id) ?? 0,
+                'price' => $price,
                 'movement_date' => $grn->grn_date,
                 'transaction_date' => $grn->grn_date,
                 'store_id' => $grn->store_id,
@@ -174,13 +185,24 @@ class RebuildInventoryFromSources
             $notes = 'Stock supply with ID ' . $detail->stock_supply_order_id
                 . ' in (' . $order->store?->name . ')';
 
+            $priceInfo = $this->getLastPurchasePrice(
+                $detail->product_id,
+                1,
+                $order->order_date
+            );
+
+            $price = $priceInfo
+                ? $priceInfo['unit_price'] * $detail->package_size
+                : 0;
+
             InventoryTransaction::create([
                 'product_id' => $detail->product_id,
                 'movement_type' => InventoryTransaction::MOVEMENT_IN,
                 'quantity' => $detail->quantity,
                 'unit_id' => $detail->unit_id,
                 'package_size' => $detail->package_size,
-                'price' => $detail->price,
+                // 'price' => $detail->price,
+                'price' => $price,
                 'movement_date' => $order->order_date,
                 'transaction_date' => $order->order_date,
                 'store_id' => $order->store_id,
@@ -202,14 +224,23 @@ class RebuildInventoryFromSources
         if ($detail->store?->name) {
             $notes .= ' in (' . $detail->store->name . ')';
         }
+        $priceInfo = $this->getLastPurchasePrice(
+            $detail->product_id,
+            $detail->store_id,
+            $detail->adjustment_date
+        );
 
+        $price = $priceInfo
+            ? $priceInfo['unit_price'] * $detail->package_size
+            : 0;
         InventoryTransaction::create([
             'product_id' => $detail->product_id,
             'movement_type' => InventoryTransaction::MOVEMENT_IN,
             'quantity' => $detail->quantity,
             'unit_id' => $detail->unit_id,
             'package_size' => $detail->package_size,
-            'price' => getUnitPrice($detail->product_id, $detail->unit_id) ?? 0,
+            'price' => $price,
+            // 'price' => getUnitPrice($detail->product_id, $detail->unit_id) ?? 0,
             'movement_date' => $detail->adjustment_date,
             'transaction_date' => $detail->adjustment_date,
             'store_id' => $detail->store_id,
@@ -276,5 +307,32 @@ class RebuildInventoryFromSources
         foreach ($productIds as $productId) {
             $this->updateUnitPricesFromExcelImport($productId);
         }
+    }
+
+    function getLastPurchasePrice(int $productId, int $storeId, string|\DateTimeInterface $date): ?array
+    {
+        $invoice = \App\Models\PurchaseInvoice::query()
+            ->where('store_id', $storeId)
+            ->whereDate('date', '<=', $date)
+            ->whereHas('details', function ($q) use ($productId) {
+                $q->where('product_id', $productId);
+            })
+            ->with(['details' => function ($q) use ($productId) {
+                $q->where('product_id', $productId)
+                    ->orderByDesc('id'); // الأحدث أولاً
+            }])
+            ->orderByDesc('date')
+            ->first();
+
+        $detail = $invoice?->details->first();
+
+        if (!$detail || $detail->package_size == 0) {
+            return null;
+        }
+
+        return [
+            'unit_price' => $detail->price / $detail->package_size, // ← سعر القطعة الواحدة
+            'source_invoice_id' => $invoice->id ?? null,
+        ];
     }
 }
