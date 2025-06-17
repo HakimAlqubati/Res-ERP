@@ -85,7 +85,7 @@ class InventoryResource extends Resource
             ])
             ->columns([
 
-                Tables\Columns\TextColumn::make('id')
+                Tables\Columns\TextColumn::make('id')->sortable()
                     ->label('ID')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('product.code')
                     ->label('Product Code'),
