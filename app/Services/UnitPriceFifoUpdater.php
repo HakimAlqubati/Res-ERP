@@ -7,6 +7,7 @@ use App\Models\UnitPrice;
 use App\Models\ProductPriceHistory;
 use App\Services\FifoMethodService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UnitPriceFifoUpdater
 {
@@ -151,5 +152,43 @@ class UnitPriceFifoUpdater
         }
 
         return $count;
+    }
+
+    public static function updateIfInventoryIsZero(
+        $productId,
+        $unitId,
+        $newPurchasePrice,
+        $purchasePackageSize,
+        $storeId,
+        $date,
+        $notes
+    ): void {
+        $service = new MultiProductsInventoryService(
+            null,
+            $productId,
+            $unitId,
+            $storeId
+        );
+
+        $inventory = $service->getInventoryForProduct($productId);
+        $unitInventory = collect($inventory)->firstWhere('unit_id', $unitId);
+        $remainingQty = $unitInventory['remaining_qty'] ?? 0;
+
+        Log::alert('inventory', [$inventory]);
+        Log::alert('unitInventory', [$unitInventory]);
+        if ($remainingQty <= 0) {
+            $pricePerPiece = $newPurchasePrice / $purchasePackageSize;
+
+            $unitPrices = UnitPrice::where('product_id', $productId)->get();
+
+            foreach ($unitPrices as $unitPrice) {
+                $newPrice = round($pricePerPiece * $unitPrice->package_size, 2);
+                $unitPrice->update([
+                    'price' => $newPrice,
+                    'date' => $date,
+                    'notes' => $notes,
+                ]);
+            }
+        }
     }
 }

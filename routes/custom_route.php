@@ -94,7 +94,7 @@ Route::get('/orderdDataFromExcelImport', [TestController5::class, 'orderdDataFro
 
 Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']);
 
-
+    
 
 
 Route::get('/testAllocateFifo', function () {
