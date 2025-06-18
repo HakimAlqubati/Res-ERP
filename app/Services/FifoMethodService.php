@@ -177,12 +177,13 @@ class FifoMethodService
             $entryQty = $entry->quantity;
             $entryQtyBasedOnUnit = (($entryQty * $entry->package_size) / $targetUnit->package_size);
             $remaining = $entryQtyBasedOnUnit - $previousOrderedQtyBasedOnTargetUnit;
- 
 
+            $remaining = round($remaining, 2);
             if ($remaining <= 0) continue;
 
             $deductQty = min($requestedQty, $remaining);
 
+            $deductQty = round($deductQty, 2);
             if ($entryQtyBasedOnUnit <= 0) {
                 continue;
             }
@@ -194,10 +195,12 @@ class FifoMethodService
             $price = round($price, 2);
             $notes = "Price is " . $price;
             // if (isset($this->sourceModel)) {
-                $notes = "Stock deducted for Order #{$this->sourceModel?->id} from " .
-                    $entry->transactionable_type .
-                    " #" . $entry->transactionable_id .
-                    " with price " . $price;
+            $forModelName = str_replace(' ', '', class_basename($this->sourceModel));
+
+            $notes = "Stock deducted for {$forModelName} #{$this->sourceModel?->id} from " .
+                $entry->transactionable_type .
+                " #" . $entry->transactionable_id .
+                " with price " . $price;
             // }
             $allocation = [
                 'transaction_id' => $entry->id,
@@ -218,9 +221,9 @@ class FifoMethodService
             ];
 
             // if (isset($this->sourceModel)) {
-                $allocation['deducted_qty'] = $deductQty;
-                $allocation['previous_ordered_qty_based_on_unit'] = $previousOrderedQtyBasedOnTargetUnit;
-                $allocation['source_order_id'] = $this->sourceModel?->id;
+            $allocation['deducted_qty'] = $deductQty;
+            $allocation['previous_ordered_qty_based_on_unit'] = $previousOrderedQtyBasedOnTargetUnit;
+            $allocation['source_order_id'] = $this->sourceModel?->id;
             // }
             $allocations[] = $allocation;
 

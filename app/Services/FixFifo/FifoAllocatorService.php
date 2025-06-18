@@ -4,6 +4,7 @@ namespace App\Services\FixFifo;
 
 use App\Models\InventoryTransaction;
 use App\Models\Order;
+use App\Models\ProductPriceHistory;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use Illuminate\Support\Collection;
@@ -159,6 +160,29 @@ class FifoAllocatorService
                     'source_transaction_id' => $supply->id,                        // السطر الأصلي الذي خرجت منه الكمية (FIFO)
                 ];
 
+                $sourceTransaction = \App\Models\InventoryTransaction::find($supply->id);
+
+                $sourceTransaction = \App\Models\InventoryTransaction::find($supply->id);
+
+                if (! $sourceTransaction) {
+                    throw new \Exception("⛔ InventoryTransaction not found for supply ID: {$supply->id}");
+                }
+
+                $notes = sprintf(
+                    'Updated by FIFO from %s #%s',
+                    \Illuminate\Support\Str::headline(class_basename($sourceTransaction->transactionable_type)),
+                    $sourceTransaction->transactionable_id
+                );
+
+
+                $this->updateUnitPricesFromSupply(
+                    $productId,
+                    $orderedPrice,
+                    $supply->package_size,
+                    $supply->transaction_date,
+                    $notes
+                );
+
                 // تحديث الكمية المتبقية في التوريد المستخدم
                 $supplies[$key]->quantity -= $allocatedQty / $supply->package_size;
 
@@ -175,32 +199,29 @@ class FifoAllocatorService
     }
 
 
-    public function allocateForOrders(): array
-    {
-        $allocations = [];
+    public function updateUnitPricesFromSupply(
+        int $productId,
+        float $orderedPrice,
+        float $supplyPackageSize,
+        $date,
+        $notes
 
-        // 1. جلب الطلبات الجاهزة أو المسلمة
-        $orders = Order::with(['orderDetails.product', 'orderDetails.unit'])
-            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
-            ->whereNull('deleted_at')
-            ->orderBy('id') // FIFO logic
-            ->get();
+    ): void {
+        $unitPrices = UnitPrice::where('product_id', $productId)
+            ->get()
+            ->keyBy('unit_id');
 
-        // 2. المرور على كل طلب وتفاصيله
-        foreach ($orders as $order) {
-            foreach ($order->orderDetails as $detail) {
-                $productId = $detail->product_id;
-                $unitId = $detail->unit_id;
+        // $pricePerPiece = $orderedPrice / $supplyPackageSize;
 
-                $unitPrice = UnitPrice::where('product_id', $productId)
-                    ->where('unit_id', $unitId)
-                    ->first();
-                $allocations[] = [
-                    $unitPrice
-                ];
-            }
+        foreach ($unitPrices as $unitId => $unitPrice) {
+            // $newPrice = $pricePerPiece * $unitPrice->package_size;
+
+            $newPrice = $orderedPrice * $unitPrice->package_size;
+            $unitPrice->update([
+                'price' => $newPrice,
+                'date' => $date,
+                'notes' => $notes
+            ]);
         }
-
-        return $allocations;
     }
 }

@@ -16,6 +16,7 @@ use App\Models\Audit;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
+use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
 use App\Services\UnitPriceFifoUpdater;
 use Illuminate\Support\Facades\Route;
@@ -99,7 +100,8 @@ Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']
 Route::get('/testAllocateFifo', function () {
 
     $order = Order::find(305);
-    $fifoService = new \App\Services\FifoMethodService();
+    $stockIssue = StockIssueOrder::find(1);
+    $fifoService = new \App\Services\FifoMethodService($stockIssue);
     // $updated = [];
     // $products = Product::whereIn('id', [1, 2, 3, 4, 5])->select('id', 'name')->with('allUnitPrices')->get();
     // foreach ($products as  $product) {

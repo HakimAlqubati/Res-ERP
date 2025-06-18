@@ -66,4 +66,5 @@ class InventoryTransaction extends Model implements Auditable
         parent::boot();
         static::bootInventoryBootEvents();
     }
+    
 }

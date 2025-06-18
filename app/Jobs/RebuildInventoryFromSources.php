@@ -36,6 +36,11 @@ class RebuildInventoryFromSources
 
         try {
             ProductPriceHistory::truncate();
+            InventoryTransaction::where('movement_type', 'in')
+                ->where('transactionable_type', '!=', 'ExcelImport')
+                ->delete();
+            InventoryTransaction::where('movement_type', 'out')->delete();
+
             $this->updateAllUnitPricesFromExcelImports(); // ← سنبني هذه الدالة أدناه
 
             $records = collect();
@@ -158,6 +163,10 @@ class RebuildInventoryFromSources
                 ? $priceInfo['unit_price'] * $detail->package_size
                 : 0;
 
+            if ($price == 0) {
+                $price = getUnitPrice($detail->product_id, $grn->unit_id);
+            }
+
             InventoryTransaction::create([
                 'product_id' => $detail->product_id,
                 'movement_type' => InventoryTransaction::MOVEMENT_IN,
@@ -194,6 +203,11 @@ class RebuildInventoryFromSources
             $price = $priceInfo
                 ? $priceInfo['unit_price'] * $detail->package_size
                 : 0;
+
+            if ($price == 0) {
+                $price = getUnitPrice($detail->product_id, $detail->unit_id);
+            }
+
 
             InventoryTransaction::create([
                 'product_id' => $detail->product_id,
@@ -277,21 +291,23 @@ class RebuildInventoryFromSources
                 // }
 
                 // تخزين سجل السعر
-                ProductPriceHistory::create([
-                    'product_id'       => $productId,
-                    'product_item_id'  => null, // عدله لو عندك
-                    'unit_id'          => $unitId,
-                    'old_price'        => 0,
-                    'new_price'        => $newPrice,
-                    'source_type'      => 'ExcelImport',
-                    'source_id'        => $transaction->transactionable_id,
-                    'note'             => 'Imported from ExcelImport transaction',
-                    'date'             => $transaction->transaction_date,
-                ]);
+                // ProductPriceHistory::create([
+                //     'product_id'       => $productId,
+                //     'product_item_id'  => null, // عدله لو عندك
+                //     'unit_id'          => $unitId,
+                //     'old_price'        => 0,
+                //     'new_price'        => $newPrice,
+                //     'source_type'      => 'ExcelImport',
+                //     'source_id'        => $transaction->transactionable_id,
+                //     'note'             => 'Imported from ExcelImport transaction',
+                //     'date'             => $transaction->transaction_date,
+                // ]);
 
                 // تحديث السعر الفعلي في وحدة المنتج
                 $unitPrice->update([
                     'price' => $newPrice,
+                    'notes'             => 'Imported from ExcelImport transaction',
+                    'date'             => $transaction->transaction_date,
                 ]);
             }
         }

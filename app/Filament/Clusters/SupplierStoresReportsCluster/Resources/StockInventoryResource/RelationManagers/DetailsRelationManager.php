@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DetailsRelationManager extends RelationManager
 {
@@ -191,22 +192,38 @@ class DetailsRelationManager extends RelationManager
                                     . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
                                     . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
 
-                                \App\Models\InventoryTransaction::create([
-                                    'product_id' => $detail['product_id'],
-                                    'movement_type' => $detail['quantity'] > 0
-                                        ? \App\Models\InventoryTransaction::MOVEMENT_IN
-                                        : \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                                    'quantity' => abs((float) $detail['quantity']),
-                                    'unit_id' => $detail['unit_id'],
-                                    'movement_date' => now(),
-                                    'transaction_date' => now(),
-                                    'package_size' => $detail['package_size'],
-                                    'store_id' => $data['store_id'],
-                                    'price' => getUnitPrice($detail['product_id'], $detail['unit_id']), // إن أحببت
-                                    'notes' => $notes,
-                                    'transactionable_id' => $stockAdjustment->id,
-                                    'transactionable_type' => \App\Models\StockAdjustmentDetail::class,
-                                ]);
+                                $type = $detail['quantity'] > 0
+                                    ? \App\Models\InventoryTransaction::MOVEMENT_IN
+                                    : \App\Models\InventoryTransaction::MOVEMENT_OUT;
+
+                                if ($type == 'in') {
+
+                                    \App\Models\InventoryTransaction::create([
+                                        'product_id' => $detail['product_id'],
+                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'quantity' => abs((float) $detail['quantity']),
+                                        'unit_id' => $detail['unit_id'],
+                                        'movement_date' => now(),
+                                        'transaction_date' => now(),
+                                        'package_size' => $detail['package_size'],
+                                        'store_id' => $data['store_id'],
+                                        'price' => getUnitPrice($detail['product_id'], $detail['unit_id']), // إن أحببت
+                                        'notes' => $notes,
+                                        'transactionable_id' => $stockAdjustment->id,
+                                        'transactionable_type' => \App\Models\StockAdjustmentDetail::class,
+                                    ]);
+                                } else {
+                                    $fifoService = new \App\Services\FifoMethodService($stockAdjustment);
+                                    $allocations = $fifoService->getAllocateFifo(
+                                        $detail['product_id'],
+                                        $detail['unit_id'],
+                                        abs($detail['quantity'])
+                                    );
+                                    Log::alert('details', [$detail]);
+                                    Log::alert('stockAdjustment', [$stockAdjustment]);
+                                    Log::alert('allocations', [$allocations]);
+                                    self::moveFromInventory($allocations, $stockAdjustment);
+                                }
 
                                 // if ($detail['quantity'] > 0) {
                                 //     // Create a StockSupplyOrder
@@ -279,5 +296,29 @@ class DetailsRelationManager extends RelationManager
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function moveFromInventory($allocations, $detail)
+    {
+        foreach ($allocations as $alloc) {
+            \App\Models\InventoryTransaction::create([
+                'product_id'           => $detail->product_id,
+                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'quantity'             => $alloc['deducted_qty'],
+                'unit_id'              => $alloc['target_unit_id'],
+                'package_size'         => $alloc['target_unit_package_size'],
+                'price'                => $alloc['price_based_on_unit'],
+                'movement_date'        => $order->order_date ?? now(),
+                'transaction_date'     => $order->order_date ?? now(),
+                'store_id'             => $alloc['store_id'],
+                'notes' => $alloc['notes'],
+
+                'transactionable_id'   => $detail->id,
+                'transactionable_type' => StockAdjustmentDetail::class,
+                'source_transaction_id' => $alloc['transaction_id'],
+
+            ]);
+        }
+        return;
     }
 }
