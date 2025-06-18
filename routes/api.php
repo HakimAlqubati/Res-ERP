@@ -41,26 +41,7 @@ Route::get('/compare', function (Request $request) {
 
     return $fdata;
 });
-Route::get('/to_try_order', function (Request $request) {
-    $allOrderDetails = $request->all()['order_details'];
-    $fdata = [];
-
-    $fifoService = new MultiProductsInventoryService(storeId: getDefaultStore());
-
-    foreach ($allOrderDetails as $orderDetail) {
-        $requiredQty = $orderDetail['quantity'];
-        $productId = $orderDetail['product_id'];
-        $unitId = $orderDetail['unit_id'];
-
-        // تنفيذ الصرف باستخدام FIFO
-        $fdata = $fifoService->allocateFIFO(
-            $productId,
-            $unitId,
-            $requiredQty,
-        );
-    }
-    return $fdata;
-});
+ 
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);

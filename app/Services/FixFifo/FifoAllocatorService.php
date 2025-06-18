@@ -160,8 +160,7 @@ class FifoAllocatorService
                     'source_transaction_id' => $supply->id,                        // السطر الأصلي الذي خرجت منه الكمية (FIFO)
                 ];
 
-                $sourceTransaction = \App\Models\InventoryTransaction::find($supply->id);
-
+ 
                 $sourceTransaction = \App\Models\InventoryTransaction::find($supply->id);
 
                 if (! $sourceTransaction) {

@@ -11,21 +11,7 @@ use Illuminate\Support\Facades\DB;
 class FixOrderWithFifoController extends Controller
 {
 
-    public function fixInventoryForReadyOrder($orderId)
-    {
-        $order = Order::with(['orderDetails', 'branch.store'])->findOrFail($orderId);
-        $service = new OrderInventoryFixService();
+    public function fixInventoryForReadyOrder($orderId) {}
 
-        $result = $service->fixInventoryForOrder($order);
-        return response()->json($result, $result['status'] === 'error' ? 400 : 200);
-    }
-
-    public function getAllocationsPreview($orderId)
-    {
-        $order = Order::with('orderDetails')->findOrFail($orderId);
-        $service = new OrderInventoryFixService();
-
-        $result = $service->previewAllocations($order);
-        return response()->json($result, $result['status'] === 'error' ? 400 : 200);
-    }
+    public function getAllocationsPreview($orderId) {}
 }
