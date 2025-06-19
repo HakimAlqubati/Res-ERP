@@ -658,6 +658,29 @@ class ProductResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->headerActions([
+                ActionTable::make('import_items_quantities')
+                    ->label('Import Quantities')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('info')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Upload Excel file')
+                            ->required()
+                            ->disk('public')
+                            ->directory('product_items_imports'),
+                    ])
+                    ->action(function (array $data) {
+                        $filePath = 'public/' . $data['file'];
+                        $import = new \App\Imports\ProductItemsQuantityImport();
+
+                        try {
+                            Excel::import($import, $filePath);
+                            showSuccessNotifiMessage("✅ تم تعديل كميات المكونات بنجاح.");
+                        } catch (\Throwable $e) {
+                            showWarningNotifiMessage("❌ فشل الاستيراد: " . $e->getMessage());
+                        }
+                    })
+                    ->requiresConfirmation(),
                 ActionTable::make('import_products')
                     ->label('Import Products')
                     ->icon('heroicon-o-arrow-up-tray')
@@ -740,11 +763,10 @@ class ProductResource extends Resource
                 Tables\Columns\CheckboxColumn::make('active')->label('Active?')
                     ->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true)
                     ->updateStateUsing(function (Product $record, $state) {
-                        try { 
+                        try {
                             $record->update(['active' => $state]);
-                        } catch (Exception $e) { 
+                        } catch (Exception $e) {
                             showWarningNotifiMessage('Faild', $e->getMessage());
- 
                         }
                     }),
                 TextColumn::make('product_items_count')->label('Items No')

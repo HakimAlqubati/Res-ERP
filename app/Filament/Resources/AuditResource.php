@@ -63,7 +63,9 @@ class AuditResource extends Resource
                 TextColumn::make('auditable_id')->label('Model ID')->sortable()->searchable()->alignCenter(true),
                 IconColumn::make('has_parent')->label('Has Parent')->boolean()->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('parent_id')->label('Parent ID')->sortable()->toggleable(isToggledHiddenByDefault: true),
-                // TextColumn::make('parent_name')->label('Parent Name'),
+                // TextColumn::make('field')->label('Field'),
+                TextColumn::make('old_values')->label('Old Value'),
+                TextColumn::make('new_values')->label('New Value'),
 
                 TextColumn::make('created_at')
                     ->label('When')

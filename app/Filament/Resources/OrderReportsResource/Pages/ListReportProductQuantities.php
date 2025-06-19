@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderReportsResource\Pages;
 
 use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesResource;
 use App\Models\Branch;
+use App\Models\Order;
 use App\Models\Product;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DatePicker;
@@ -62,70 +63,7 @@ class ListReportProductQuantities extends ListRecords
 
 
 
-
-    public function getReportData($product_id, $start_date, $end_date, $branch_ids)
-    {
-        // $currnetRole = getCurrentRole();
-        // if ($currnetRole == 7)
-        //     $branch_id = [getBranchId()];
-        // else
-        //     $branch_id = explode(',', $request->input('branch_id'));
-
-        $subquery = DB::table('orders_details')
-            ->select(
-                'products.name AS product',
-                'products.id AS product_id',
-                'branches.name AS branch',
-                'units.name AS unit',
-                DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-                DB::raw('SUM(orders_details.available_quantity * orders_details.price) AS price'),
-                DB::raw('MIN(orders_details.id) AS order_id') // Get the lowest order_details.id
-            )
-            ->join('products', 'orders_details.product_id', '=', 'products.id')
-            ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-            ->join('branches', 'orders.branch_id', '=', 'branches.id')
-            ->join('units', 'orders_details.unit_id', '=', 'units.id')
-            ->whereNull('orders.deleted_at')
-            ->groupBy(
-                'products.id',
-                'products.name',
-                'orders.branch_id',
-                'branches.name',
-                'units.id',
-                'units.name',
-                'orders_details.price'
-            );
-
-        // Wrap in an outer query to enforce ordering
-        $data = DB::table(DB::raw("({$subquery->toSql()}) as grouped_data"))
-            ->mergeBindings($subquery) // Ensure bindings are passed correctly
-            // ->orderBy('order_id', 'asc') // Now order by order_id (MIN(orders_details.id))
-            ->limit(10)
-            ->offset(0)
-            ->get();
-
-
-        $final['data'] = [];
-        $total_price = 0;
-        $total_quantity = 0;
-        foreach ($data as $val) {
-            $obj = new \stdClass();
-            $obj->product = $val->product;
-            $obj->branch = $val->branch;
-            $obj->unit = $val->unit;
-            $obj->quantity = number_format($val->quantity, 2);
-            $obj->price = number_format($val->price, 2);
-            $total_price += $val->price;
-            $total_quantity += $val->quantity;
-            $final['data'][] = $obj;
-        }
-
-        $final['total_price'] = number_format($total_price, 2);
-        $final['total_quantity'] = number_format($total_quantity, 2);
-        return [];
-        return $final;
-    }
-
+ 
     protected function getActions(): array
     {
         return [Action::make('Export to PDF')->label(__('lang.export_pdf'))
