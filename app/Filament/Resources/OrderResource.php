@@ -370,12 +370,41 @@ class OrderResource extends Resource
                     })
                     // ->visible(fn(): bool => isSuperAdmin())
                     ->hidden(),
+
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
 
+                    Tables\Actions\Action::make('print_delivery_order')
+                        ->label(__('Print Delivery Order'))
+                        ->icon('heroicon-o-printer')
+                        ->color('gray')
+                        ->visible(fn($record) => $record->status === Order::DELEVIRED)
+                        ->action(function (Order $record) {
+                            $record->load(['orderDetails.product', 'branch', 'logs.creator']);
+
+                            $deliveryInfo = $record->getDeliveryInfo();
+
+                            if (!$deliveryInfo) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Cannot generate PDF')
+                                    ->body('Order must be delivered first.')
+                                    ->danger()
+                                    ->send();
+                                return null;
+                            }
+
+                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('export.delivery_order', compact('deliveryInfo'));
+
+                            return response()->streamDownload(
+                                fn() => print($pdf->output()),
+                                "DeliveryOrder_{$deliveryInfo['do_number']}.pdf"
+                            );
+                        }),
                 ]),
+
+              
                 // Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([

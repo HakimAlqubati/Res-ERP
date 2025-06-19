@@ -427,4 +427,31 @@ class Order extends Model implements Auditable
     {
         return $this->belongsTo(Supplier::class);
     }
+
+    public function getDeliveryInfo(): ?array
+    {
+        $log = $this->logs()
+            ->where('new_status', self::DELEVIRED)
+            ->latest('created_at')
+            ->with('creator') // تأكد أن العلاقة موجودة في OrderLog
+            ->first();
+
+        if (!$log) {
+            return null; // لم يتم تسليم الطلب بعد
+        }
+
+        return [
+            'do_number'     => now()->format('Ymd') . str_pad($this->id, 4, '0', STR_PAD_LEFT),
+            'do_date'       => $log->created_at->format('Y-m-d'),
+            'delivered_by'  => $log->creator?->name ?? 'N/A',
+            'customer_name' => $this->customer?->name ?? $this->branch?->name ?? 'N/A',
+            'address'       => $this->branch?->address ?? 'N/A',
+            'items'         => $this->orderDetails->map(fn($item, $i) => [
+                'index'     => $i + 1,
+                'name'      => $item->product?->name,
+                'quantity'  => $item->available_quantity,
+            ]),
+            'total_qty'     => $this->orderDetails->sum('available_quantity'),
+        ];
+    }
 }

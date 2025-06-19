@@ -116,4 +116,16 @@ class OrderController extends Controller
 
         return $pdf->download("order_{$order->id}.pdf");
     }
+
+    public function printDeliveryOrder($orderId)
+    {
+        $order = Order::with(['orderDetails.product', 'branch', 'logs.creator'])->findOrFail($orderId);
+        $deliveryInfo = $order->getDeliveryInfo();
+
+        if (!$deliveryInfo) {
+            abort(404, 'Order has not been marked as delivered yet.');
+        }
+
+        return view('pdf.delivery-order', compact('deliveryInfo'));
+    }
 }

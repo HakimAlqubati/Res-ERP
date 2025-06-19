@@ -51,19 +51,21 @@ class Branch extends Model implements HasMedia, Auditable
         'end_date',
         'more_description',
     ];
-    protected $appends = ['customized_categories','orders_count'];
+    protected $appends = ['customized_categories', 'orders_count'];
 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
     public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
     public const TYPE_HQ = 'hq';
     public const TYPE_POPUP = 'popup';
+    public const TYPE_RESELLER = 'reseller';
     // ✅ Optional: Array of allowed types
     public const TYPES = [
         self::TYPE_BRANCH,
         self::TYPE_CENTRAL_KITCHEN,
         self::TYPE_HQ,
         self::TYPE_POPUP,
+        self::TYPE_RESELLER
     ];
     // protected $casts = [
 
@@ -245,6 +247,7 @@ class Branch extends Model implements HasMedia, Auditable
             self::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
             self::TYPE_HQ => __('lang.hq'),
             self::TYPE_POPUP => __('lang.popup_branch'),
+            self::TYPE_RESELLER => __('lang.reseller'),
             default => __('lang.unknown'),
         };
     }

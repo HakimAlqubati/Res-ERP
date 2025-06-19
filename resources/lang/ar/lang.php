@@ -187,4 +187,5 @@ return [
     'date' => 'التاريخ',
     'please_select_store' => 'الرجاء اختيار مخزن',
     'use_in_orders' => 'تستخدم في الطلبات',
+    'reseller' => 'موزّع',
 ];

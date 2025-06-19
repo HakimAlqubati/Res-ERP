@@ -38,6 +38,11 @@ class ManageBranches extends ManageRecords
                 ->icon('heroicon-o-sparkles')
                 ->badge(Branch::popups()->count())
                 ->badgeColor('info'),
+            Branch::TYPE_RESELLER => Tab::make(__('Reseller Branches'))
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('type', Branch::TYPE_RESELLER))
+                ->icon('heroicon-o-user-group')
+                ->badge(Branch::where('type', Branch::TYPE_RESELLER)->count())
+                ->badgeColor('gray'),
 
         ];
     }
