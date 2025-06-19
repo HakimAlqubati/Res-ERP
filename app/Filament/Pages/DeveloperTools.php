@@ -33,7 +33,7 @@ class DeveloperTools extends Page
                 ->form([
                     \Filament\Forms\Components\Select::make('store_id')
                         ->label('Store')
-                        ->options(\App\Models\Store::all()->pluck('name', 'id'))
+                        ->options(\App\Models\Store::active()->get(['id', 'name'])->pluck('name', 'id'))
                         ->required(),
                 ])
                 ->action(function (array $data) {
@@ -44,7 +44,7 @@ class DeveloperTools extends Page
             Action::make('Update Product Unit Prices')
                 ->label('💰 Update Product Unit Prices')
                 ->color('success')
-                
+
                 ->requiresConfirmation()
                 ->action(function (array $data) {
                     $tenantId = $data['tenant_id'] ?? null;

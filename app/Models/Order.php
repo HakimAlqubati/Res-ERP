@@ -251,6 +251,10 @@ class Order extends Model implements Auditable
                     );
 
                     self::moveFromInventory($allocations, $detail);
+
+                    if ($order->branch && $order->branch->store && $order->branch->store->active) {
+                        self::receiveIntoBranchStore($allocations, $detail);
+                    }
                     // if (!$branchStoreId || !$order->branch->store->active) {
                     //     self::moveFromInventory($allocations, $detail);
                     // } else if ($branchStoreId && $order->branch->store->active) {
@@ -323,6 +327,32 @@ class Order extends Model implements Auditable
         }
         return;
     }
+
+
+    public static function receiveIntoBranchStore($allocations, $detail)
+    {
+        $order = $detail->order;
+        $targetStoreId = $order->branch->store->id;
+
+        foreach ($allocations as $alloc) {
+            \App\Models\InventoryTransaction::create([
+                'product_id'           => $detail->product_id,
+                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                'quantity'             => $alloc['deducted_qty'],
+                'unit_id'              => $alloc['target_unit_id'],
+                'package_size'         => $alloc['target_unit_package_size'],
+                'price'                => $alloc['price_based_on_unit'],
+                'movement_date'        => $order->order_date ?? now(),
+                'transaction_date'     => $order->order_date ?? now(),
+                'store_id'             => $targetStoreId,
+                'notes'                => $alloc['notes'],
+                'transactionable_id'   => $detail->order_id,
+                'transactionable_type' => \App\Models\Order::class,
+                'source_transaction_id' => $alloc['transaction_id'],
+            ]);
+        }
+    }
+
 
     public static function createStockTransferOrder($allocations, $detail)
     {
