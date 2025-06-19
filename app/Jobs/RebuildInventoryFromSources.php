@@ -276,6 +276,15 @@ class RebuildInventoryFromSources
             ->get()
             ->keyBy('unit_id');
 
+        foreach ($unitPrices as $unitPrice) {
+            $unitPrice->update([
+                'price' => 0,
+                'notes' => '✅ Price reset before ExcelImport',
+                'date' => now(),
+            ]);
+        }
+
+
         foreach ($transactions as $transaction) {
             if ($transaction->package_size == 0) {
                 // لتجنب القسمة على صفر

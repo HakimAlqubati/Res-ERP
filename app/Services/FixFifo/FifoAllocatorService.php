@@ -135,6 +135,13 @@ class FifoAllocatorService
                 if ($quantity <= 0) {
                     continue;
                 }
+                $transactionNotes = sprintf(
+                    'Stock deducted for Order #%s from %s #%s with price %s',
+                    $order->order_id,
+                    \Illuminate\Support\Str::headline(class_basename($supply->transactionable_type ?? 'Unknown')),
+                    $supply->transactionable_id ?? 'N/A',
+                    number_format($orderedPrice, 2)
+                );
                 $allocations[] = [
                     'order_id'              => $order->order_id,                    // الطلب الذي تم تخصيص الكمية له
                     'product_id'            => $productId,                           // معرف المنتج
@@ -145,13 +152,7 @@ class FifoAllocatorService
                     'package_size_supply' => $supply->package_size,
                     'store_id'              => $supply->store_id,                  // المخزن الذي خرجت منه الكمية
                     'price'                 => $orderedPrice,                     // السعر المستخدم من التوريد
-                    'notes' => sprintf(
-                        'Stock deducted for Order #%s from %s #%s with price %s',
-                        $order->order_id,
-                        \Illuminate\Support\Str::headline(class_basename($supply->transactionable_type ?? 'Unknown')),
-                        $supply->transactionable_id ?? 'N/A',
-                        number_format($orderedPrice, 2)
-                    ),
+                    'notes' => $transactionNotes,
                     'movement_type'         => 'out',                              // نوع الحركة: إخراج من المخزون
                     'created_at'      => $order->created_at,                              // تاريخ تنفيذ الحركة
                     'transactionable_id'    => $supply->transactionable_id,       // معرف مصدر التوريد (مثل PurchaseInvoice)
@@ -160,7 +161,7 @@ class FifoAllocatorService
                     'source_transaction_id' => $supply->id,                        // السطر الأصلي الذي خرجت منه الكمية (FIFO)
                 ];
 
- 
+
                 $sourceTransaction = \App\Models\InventoryTransaction::find($supply->id);
 
                 if (! $sourceTransaction) {
@@ -176,7 +177,7 @@ class FifoAllocatorService
 
                 $this->updateUnitPricesFromSupply(
                     $productId,
-                    $orderedPrice,
+                    $supply->price,
                     $supply->package_size,
                     $supply->transaction_date,
                     $notes
@@ -200,27 +201,37 @@ class FifoAllocatorService
 
     public function updateUnitPricesFromSupply(
         int $productId,
-        float $orderedPrice,
+        float $supplyPrice,
         float $supplyPackageSize,
         $date,
         $notes
 
-    ): void {
+
+    ) {
         $unitPrices = UnitPrice::where('product_id', $productId)
             ->get()
             ->keyBy('unit_id');
 
-        // $pricePerPiece = $orderedPrice / $supplyPackageSize;
 
         foreach ($unitPrices as $unitId => $unitPrice) {
-            // $newPrice = $pricePerPiece * $unitPrice->package_size;
 
-            $newPrice = $orderedPrice * $unitPrice->package_size;
+            $newPrice = ($supplyPrice / $supplyPackageSize) * $unitPrice->package_size;
+            // Log::info('newprice', [$newPrice]);
+            // Log::info('unitid', [$unitId]);
             $unitPrice->update([
                 'price' => $newPrice,
                 'date' => $date,
                 'notes' => $notes
             ]);
+            // $res[] = [ 
+            //     'newprice' => $newPrice,
+            //     'date' => $date,
+            //     'notes' => $notes,
+            //     'unit' => $unitPrice->unit->name,
+            //     'supplypackageSize' => $supplyPackageSize,
+
+            // ];
         }
+        // return $res;
     }
 }

@@ -39,12 +39,12 @@ class AllocateAllProductsFifo extends Command
         // $this->info("🏢 Tenant [{$tenant->id}] activated.");
         $this->info('🚀 Starting FIFO allocation for all products in orders...');
 
-        // $productIds = DB::table('orders_details as od')
-        //     ->join('orders as o', 'od.order_id', '=', 'o.id')
-        //     ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
-        //     ->whereNull('o.deleted_at')
-        //     ->distinct()
-        //     ->pluck('od.product_id');
+        $productIds = DB::table('orders_details as od')
+            ->join('orders as o', 'od.order_id', '=', 'o.id')
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereNull('o.deleted_at')
+            ->distinct()
+            ->pluck('od.product_id');
 
         $productIdsFromOrders = DB::table('orders_details as od')
             ->join('orders as o', 'od.order_id', '=', 'o.id')
@@ -67,6 +67,7 @@ class AllocateAllProductsFifo extends Command
             ->unique()
             ->sort()
             ->values();
+        // $productIds = collect([ 5]);
 
 
         $fifoService = new FifoAllocatorService();
