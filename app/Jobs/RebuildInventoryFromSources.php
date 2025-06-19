@@ -38,8 +38,8 @@ class RebuildInventoryFromSources
             ProductPriceHistory::truncate();
             InventoryTransaction::where('movement_type', 'in')
                 ->where('transactionable_type', '!=', 'ExcelImport')
-                ->delete();
-            InventoryTransaction::where('movement_type', 'out')->delete();
+                ->forceDelete();
+            InventoryTransaction::where('movement_type', 'out')->forceDelete();
 
             $this->updateAllUnitPricesFromExcelImports(); // ← سنبني هذه الدالة أدناه
 
