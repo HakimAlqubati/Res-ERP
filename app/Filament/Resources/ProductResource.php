@@ -770,7 +770,7 @@ class ProductResource extends Resource
                         }
                     }),
                 TextColumn::make('product_items_count')->label('Items No')
-                    ->toggleable(isToggledHiddenByDefault: false)->default('-')->alignCenter(true)
+                    ->toggleable(isToggledHiddenByDefault: true)->default('-')->alignCenter(true)
             ])
             ->filters([
                 Tables\Filters\Filter::make('active')->label(__('lang.active'))

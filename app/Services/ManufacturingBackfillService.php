@@ -54,7 +54,7 @@ class ManufacturingBackfillService
                     'movement_date'        => $data['movement_date'],
                     'transaction_date'     => $data['transaction_date'],
                     'notes'                => $data['notes'],
-                    'source_transaction_id' => $data['source_transaction_id'],
+                    // 'source_transaction_id' => $data['source_transaction_id'],
                     'price'                => $data['price'],
                     'transactionable_type' => StockSupplyOrder::class,
                     'transactionable_id'   => $data['source_transaction_id'], // أو التعديل إذا لزم
