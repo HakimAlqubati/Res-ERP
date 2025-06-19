@@ -175,13 +175,16 @@ class FifoAllocatorService
                 );
 
 
-                $this->updateUnitPricesFromSupply(
-                    $productId,
-                    $supply->price,
-                    $supply->package_size,
-                    $supply->transaction_date,
-                    $notes
-                );
+                if (isset($supply->price) && is_numeric($supply->price) && $supply->price > 0) {
+
+                    $this->updateUnitPricesFromSupply(
+                        $productId,
+                        $supply->price,
+                        $supply->package_size,
+                        $supply->transaction_date,
+                        $notes
+                    );
+                }
 
                 // تحديث الكمية المتبقية في التوريد المستخدم
                 $supplies[$key]->quantity -= $allocatedQty / $supply->package_size;
