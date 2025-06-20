@@ -873,12 +873,12 @@ if (!function_exists('formatMoneyWithCurrency')) {
     function formatMoneyWithCurrency($amount, $currency = 'RM')
     {
         $currencySymbol = $currency ?? settingWithDefault('currency_symbol', 'RM');
-        return $currencySymbol . ' ' . number_format((float) $amount, 2, '.', '');
+        return $currencySymbol . ' ' . number_format((float) $amount, 2, '.', ',');
     }
 }
 if (!function_exists('formatQunantity')) {
     function formatQunantity($qty)
     {
-        return  number_format((float) $qty, 2, '.', '');
+        return  number_format((float) $qty, 2, '.', ',');
     }
 }

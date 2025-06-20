@@ -15,6 +15,7 @@ class ListFifoInventoryReport extends ListRecords
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $onlySmallestUnit = $this->getTable()->getFilters()['options']->getState()['only_smallest_unit'];
 
         if (!$productId || !$storeId) {
             return [
@@ -24,10 +25,16 @@ class ListFifoInventoryReport extends ListRecords
         }
 
         $reportService = new FifoInventoryDetailReportService();
-        $reportData = $reportService->getDetailedRemainingStock((int)$productId, (int)$storeId);
+        $reportData = $reportService->getDetailedRemainingStock(
+            (int)$productId,
+            (int)$storeId,
+            $onlySmallestUnit
+        );
 
         return [
-            'reportData' => $reportData,
+            'reportData' => $reportData['batches'],
+            'finalTotalValue' => $reportData['finalTotalValue'],
+            'onlySmallestUnit' => $onlySmallestUnit,
             'storeId' => $storeId,
         ];
     }

@@ -15,7 +15,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class InventoryTransaction extends Model implements Auditable
 {
-    use SoftDeletes, \OwenIt\Auditing\Auditable, InventoryRelations, InventoryAttributes, InventoryStaticMethods,InventoryBootEvents;
+    use SoftDeletes, \OwenIt\Auditing\Auditable, InventoryRelations, InventoryAttributes, InventoryStaticMethods, InventoryBootEvents;
     // Table name
     protected $table = 'inventory_transactions';
 
@@ -55,16 +55,25 @@ class InventoryTransaction extends Model implements Auditable
         'waste_stock_percentage',
         'source_transaction_id',
     ];
-    protected $appends = [ 'movement_type_title', 'formatted_transactionable_type'];
+    protected $appends = ['movement_type_title', 'formatted_transactionable_type'];
 
     // Constant movement types
     const MOVEMENT_OUT = 'out';
     const MOVEMENT_IN = 'in';
- 
+
     protected static function boot()
     {
         parent::boot();
         static::bootInventoryBootEvents();
     }
-    
+
+    public function sourceTransaction()
+    {
+        return $this->belongsTo(InventoryTransaction::class, 'source_transaction_id');
+    }
+
+    public function getFormattedTransactionableTypeAttribute(): ?string
+    {
+        return class_basename($this->transactionable_type);
+    }
 }

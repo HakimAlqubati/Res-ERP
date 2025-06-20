@@ -174,7 +174,9 @@ class PurchaseInvoiceResource extends Resource
                                 ->options(function () {
                                     return Product::where('active', 1)
                                         ->unmanufacturingCategory()
-                                        ->get()
+                                        ->orderBy('id','asc')
+                                        ->get(['id', 'code', 'name', 'active'])
+
                                         ->mapWithKeys(fn($product) => [
                                             $product->id => "{$product->code} - {$product->name}"
                                         ]);

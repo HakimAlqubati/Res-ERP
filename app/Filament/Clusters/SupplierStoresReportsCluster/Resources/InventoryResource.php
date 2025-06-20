@@ -48,7 +48,7 @@ class InventoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->striped()
-            ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 150])
             ->defaultSort('id', 'desc')
             ->headerActions([
                 HeaderAction::make('import_inventory')->hidden()
@@ -126,6 +126,16 @@ class InventoryResource extends Resource
                     ->label('Transaction Type')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+
+                Tables\Columns\TextColumn::make('sourceTransaction.formatted_transactionable_type')
+                    ->label('Source Transaction Type')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('sourceTransaction.transactionable_id')
+                    ->label('Source ID')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(),
 
             ])
             ->filters([
@@ -291,7 +301,7 @@ class InventoryResource extends Resource
         $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])->with(['sourceTransaction']);
         return $query;
     }
 }

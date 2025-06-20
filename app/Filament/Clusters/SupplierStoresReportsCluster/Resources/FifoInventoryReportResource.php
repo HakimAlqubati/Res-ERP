@@ -43,7 +43,7 @@ class FifoInventoryReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->filters([
-          
+
 
             SelectFilter::make('product_id')
                 ->label('Product')
@@ -60,9 +60,9 @@ class FifoInventoryReportResource extends Resource
             Filter::make('options')
                 ->label('Extra')
                 ->form([
-                    Toggle::make('show_financials')
-                        ->label('Show Prices')
-                        ->default(true),
+                    Toggle::make('only_smallest_unit')
+                        ->label('Only Smallest Unit')
+                        ->default(false),
                 ]),
         ], FiltersLayout::AboveContent);
     }

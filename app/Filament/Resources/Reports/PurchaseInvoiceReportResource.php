@@ -103,7 +103,12 @@ class PurchaseInvoiceReportResource extends Resource
                     ->label(__('lang.invoice_no'))
                     ->query(function (Builder $q, $data) {
                         return $q;
-                    })->options(PurchaseInvoice::get()->pluck('invoice_no', 'invoice_no')),
+                    })->options(
+                        PurchaseInvoice::whereNotNull('invoice_no')
+                            ->where('invoice_no', '!=', '')
+                            ->orderBy('invoice_no')
+                            ->pluck('invoice_no', 'invoice_no')
+                    ),
                 Filter::make('show_invoice_no')
                     ->toggle()
                     ->label(__('lang.show_invoice_no')),

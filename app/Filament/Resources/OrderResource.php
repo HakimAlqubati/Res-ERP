@@ -84,6 +84,8 @@ class OrderResource extends Resource
                         Select::make('status')->required()
                             ->label(__('lang.order_status'))
                             ->options(Order::getStatusLabels())->default(Order::ORDERED),
+                        Forms\Components\DateTimePicker::make('created_at')
+                            ->label(__('lang.created_at')),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
                             // ->disabledOn('edit')
@@ -404,7 +406,7 @@ class OrderResource extends Resource
                         }),
                 ]),
 
-              
+
                 // Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([

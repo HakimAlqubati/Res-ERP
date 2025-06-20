@@ -22,9 +22,12 @@ class FifoInventoryReportController extends Controller
             'store_id' => 'required|integer|exists:stores,id',
         ]);
 
+        $showSmallestUnit = $request->input('smallest_unit', false);
+
         $report = $this->reportService->getDetailedRemainingStock(
             $validated['product_id'],
-            $validated['store_id']
+            $validated['store_id'],
+            $showSmallestUnit
         );
 
         return response()->json([

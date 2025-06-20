@@ -39,7 +39,7 @@
                             <th>Source Type</th>
                             <th>Source ID</th>
                             <th>Date</th>
-                            
+
                             <th>Unit</th>
                             <th>Qty</th>
                             <th>Price</th>
@@ -60,7 +60,7 @@
                                     <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                         {{ $batch['transaction_date'] }}
                                     </x-filament-tables::cell>
-                                    
+
 
                                     <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                         {{ $unit['unit_name'] }}
@@ -69,37 +69,26 @@
                                         {{ $unit['remaining_quantity'] }}
                                     </x-filament-tables::cell>
                                     <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
-                                        {{ number_format($unit['price'], 2) }}
+                                        {{ $unit['price'] }}
                                     </x-filament-tables::cell>
                                     <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
-                                        {{ number_format($unit['total_value'], 2) }}
+                                        {{ $unit['total_value'] }}
                                     </x-filament-tables::cell>
                                 </x-filament-tables::row>
                             @endforeach
                         @endforeach
+                        @if ($onlySmallestUnit)
+                            <x-filament-tables::row>
+                                <x-filament-tables::cell colspan="6" class="border border-gray-300 px-4 py-2">
+                                    Total
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                    {{ $finalTotalValue }}
+                                </x-filament-tables::cell>
+                            </x-filament-tables::row>
+                        @endif
                     </tbody>
                 </x-filament-tables::table>
-            </div>
-
-            {{-- Pagination --}}
-            <div class="mt-4">
-                @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    {{ $pagination->links() }}
-                @endif
-                <div class="flex justify-end mb-2">
-                    <form method="GET">
-                        <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-                        <select name="perPage" id="perPage" onchange="this.form.submit()"
-                            class="border border-gray-300 px-3 py-1 rounded-md text-sm">
-                            @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                                <option value="{{ $option }}"
-                                    {{ request('perPage', 15) == $option ? 'selected' : '' }}>
-                                    {{ is_numeric($option) ? $option : 'All' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </form>
-                </div>
             </div>
         @else
             <div class="text-center mt-10">
