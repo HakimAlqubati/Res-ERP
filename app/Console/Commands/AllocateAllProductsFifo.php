@@ -67,7 +67,7 @@ class AllocateAllProductsFifo extends Command
             ->unique()
             ->sort()
             ->values();
-        // $productIds = collect([ 5]);
+        // $productIds = collect([1]);
 
 
         $fifoService = new FifoAllocatorService();

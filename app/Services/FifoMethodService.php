@@ -137,13 +137,13 @@ class FifoMethodService
             $allocations[] = $allocation;
 
 
-            $this->updateUnitPricesFromSupply(
-                $productId,
-                $price,
-                $targetUnit->package_size,
-                $entry->movement_date,
-                $notes
-            );
+            // $this->updateUnitPricesFromSupply(
+            //     $productId,
+            //     $price,
+            //     $targetUnit->package_size,
+            //     $entry->movement_date,
+            //     $notes
+            // );
 
             $requestedQty -= $deductQty;
         }

@@ -18,6 +18,7 @@ use App\Models\Product;
 use App\Models\PurchaseInvoice;
 use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
+use App\Services\FixFifo\FifoAllocatorService;
 use App\Services\UnitPriceFifoUpdater;
 use Illuminate\Support\Facades\Route;
 
@@ -94,7 +95,7 @@ Route::get('/orderdDataFromExcelImport', [TestController5::class, 'orderdDataFro
 
 Route::get('/purchasedVSordered', [TestController5::class, 'purchasedVSordered']);
 
-    
+
 
 
 Route::get('/testAllocateFifo', function () {
@@ -119,6 +120,7 @@ Route::get('/testAllocateFifo', function () {
     //     $updated[$product->id] = $allocations;
     // }
     // return $updated;
+    return (new FifoAllocatorService())->allocate($_GET['product_id']);
     $allocations = $fifoService->getAllocateFifo(
         $_GET['product_id'],
         $_GET['unit_id'],

@@ -34,6 +34,12 @@ class FifoAllocatorService
             ->where('movement_type', 'in')
             ->where('product_id', $productId)
             ->where('store_id', $storeId)
+            // ->whereIn('id', [
+            //     159980,
+            //     // 159979
+            //     // , 
+            //     // 159978, 159934
+            // ])
             ->orderBy('id')
             ->whereNull('deleted_at')
             ->get([
@@ -119,13 +125,14 @@ class FifoAllocatorService
             // المرور على كل توريد (supply) بالترتيب لتطبيق تخصيص FIFO
             foreach ($supplies as $key => $supply) {
                 // حساب الكمية المتبقية فعليًا في هذا التوريد
-                $supplyAvailable = $supply->quantity * $supply->package_size;
+                $supplyAvailable = round($supply->quantity * $supply->package_size,2);
 
                 // إذا كانت الكمية صفر أو أقل، تجاهل هذا التوريد
                 if ($supplyAvailable <= 0) continue;
 
                 // تحديد الكمية التي يمكن تخصيصها من هذا التوريد لهذا الطلب
-                $allocatedQty = min($remainingQty, $supplyAvailable);
+                $allocatedQty = round(min($remainingQty, $supplyAvailable),2);
+                
                 $orderedPrice = ($supply->price * $order->package_size) / $supply->package_size;
                 if (!$targetUnit) {
                     continue;
@@ -136,7 +143,8 @@ class FifoAllocatorService
                     continue;
                 }
                 $transactionNotes = sprintf(
-                    'Stock deducted for Order #%s from %s #%s with price %s',
+                    'Stock deducted for ' . class_basename($transactionableType)
+                        . ' #%s from %s #%s with price %s',
                     $order->order_id,
                     \Illuminate\Support\Str::headline(class_basename($supply->transactionable_type ?? 'Unknown')),
                     $supply->transactionable_id ?? 'N/A',
@@ -162,7 +170,8 @@ class FifoAllocatorService
                 ];
 
 
-                $sourceTransaction = \App\Models\InventoryTransaction::find($supply->id);
+                $sourceTransaction =
+                    \App\Models\InventoryTransaction::find($supply->id);
 
                 if (! $sourceTransaction) {
                     throw new \Exception("⛔ InventoryTransaction not found for supply ID: {$supply->id}");
@@ -177,13 +186,13 @@ class FifoAllocatorService
 
                 if (isset($supply->price) && is_numeric($supply->price) && $supply->price > 0) {
 
-                    $this->updateUnitPricesFromSupply(
-                        $productId,
-                        $supply->price,
-                        $supply->package_size,
-                        $supply->transaction_date,
-                        $notes
-                    );
+                    // $this->updateUnitPricesFromSupply(
+                    //     $productId,
+                    //     $supply->price,
+                    //     $supply->package_size,
+                    //     $supply->transaction_date,
+                    //     $notes
+                    // );
                 }
 
                 // تحديث الكمية المتبقية في التوريد المستخدم

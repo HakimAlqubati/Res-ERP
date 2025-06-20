@@ -53,6 +53,7 @@ class StockAdjustmentReportResource extends Resource
     {
         return $table->striped()
             ->columns([
+                TextColumn::make('id')->searchable()->label('ID')->toggleable()->sortable(),
                 TextColumn::make('product.code')->searchable()->label('Code')->toggleable()->sortable(),
                 TextColumn::make('product.name')->searchable()->toggleable(),
                 TextColumn::make('unit.name')->searchable()->toggleable(),
@@ -88,6 +89,7 @@ class StockAdjustmentReportResource extends Resource
     {
         $query = StockAdjustmentDetail::query()
             ->select(
+                'id',
                 'product_id',
                 'unit_id',
                 'package_size',
