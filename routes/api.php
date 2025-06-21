@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PurchaseInvoiceController;
 use App\Http\Controllers\Api\PurchaseReportController;
 use App\Http\Controllers\Api\Reports\BranchConsumptionController;
 use App\Http\Controllers\Api\ReturnedOrderController;
+use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FcmController;
@@ -97,7 +98,7 @@ Route::prefix('returnedOrders')->group(function () {
 Route::get('/fifoInventoryReport', [FifoInventoryReportController::class, 'show']);
 Route::get('/inboundOutflowReport', [FifoInventoryReportController::class, 'inboundOutflowReport']);
 Route::get('/purchaseInvoices', [PurchaseInvoiceController::class, 'index']);
-
+Route::get('/suppliers', [SupplierController::class, 'index']);
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
