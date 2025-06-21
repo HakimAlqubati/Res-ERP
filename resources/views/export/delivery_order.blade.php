@@ -17,6 +17,11 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            /* --- Style updates below --- */
+            border-bottom: 1px solid #000;
+            /* This adds the line */
+            padding-bottom: 10px;
+            /* This adds some space before the line */
         }
 
         .company-details {
@@ -186,16 +191,19 @@
         </tbody>
     </table>
 
-    <div class="signature-section">
-        <div class="signature-box">
-            <div class="signature-label">Receiver's Signature:</div>
-            <div class="signature-line"></div>
-        </div>
-        <div class="signature-box">
-            <div class="signature-label">Company Chop:</div>
-            <div class="signature-line"></div>
-        </div>
-    </div>
+    <table style="width: 100%; margin-top: 60px;">
+        <tr>
+            <td style="width: 50%; text-align: center;">
+                <strong>Receiver's Signature:</strong>
+                <div style="border-top: 1px solid #000; width: 80%; margin: 40px auto 0;"></div>
+            </td>
+            <td style="width: 50%; text-align: center;">
+                <strong>Company Chop:</strong>
+                <div style="border-top: 1px solid #000; width: 80%; margin: 40px auto 0;"></div>
+            </td>
+        </tr>
+    </table>
+
 
 </body>
 
