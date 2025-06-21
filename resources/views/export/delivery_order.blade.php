@@ -119,18 +119,33 @@
 <body>
 
     <div class="header">
-        <div class="company-details">
-            <div class="logo">
-                <img src="{{ asset('/storage/' . setting('company_logo')) }}" height="60">
-            </div>
-            <div class="company-text">
-                <div class="company-name">{{ settingWithDefault('company_name', 'Company Name') }}</div>
-                {!! nl2br(e(settingWithDefault('address'))) !!}<br>
-                Tel. No.: {{ settingWithDefault('phone_number', '0000000000') }}<br>
-                Website: {{ settingWithDefault('website', 'www.example.com') }}
-            </div>
-        </div>
-        <div class="do-title">Delivery Order</div>
+        <table style="width: 100%; margin-bottom: 10px;">
+            <tr>
+                <td style="width: 70%;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td style="width: 70px;">
+                                <img src="{{ asset('/storage/' . setting('company_logo')) }}" height="60">
+                            </td>
+                            <td style="font-size: 11px; line-height: 1.4;">
+                                <div style="font-weight: bold; color: #b91c1c; font-size: 13px;">
+                                    {{ settingWithDefault('company_name', 'Company Name') }}
+                                </div>
+                                {!! nl2br(e(settingWithDefault('address'))) !!}<br>
+                                Tel. No.: {{ settingWithDefault('phone_number', '0000000000') }}<br>
+                                Website: {{ settingWithDefault('website', 'www.example.com') }}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="text-align: right; vertical-align: top;">
+                    <div style="font-size: 20px; font-weight: bold; color: #103f66;">
+                        Delivery Order
+                    </div>
+                </td>
+            </tr>
+        </table>
+
     </div>
 
     <div class="section">

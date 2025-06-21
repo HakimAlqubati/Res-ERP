@@ -37,7 +37,7 @@ class FifoInventoryReportResource extends Resource
 
     public static function getPluralLabel(): ?string
     {
-        return 'FIFO Inventorys';
+        return 'FIFO Inventory';
     }
 
     public static function table(Table $table): Table

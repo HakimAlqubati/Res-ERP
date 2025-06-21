@@ -397,11 +397,11 @@ class OrderResource extends Resource
                                 return null;
                             }
 
-                            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('export.delivery_order', compact('deliveryInfo'));
+                            $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('export.delivery_order', compact('deliveryInfo'));
 
                             return response()->streamDownload(
                                 fn() => print($pdf->output()),
-                                "DeliveryOrder_{$deliveryInfo['do_number']}.pdf"
+                                "Delivery Order ({$deliveryInfo['id']}).pdf"
                             );
                         }),
                 ]),

@@ -471,6 +471,7 @@ class Order extends Model implements Auditable
         }
 
         return [
+            'id'     => $this->id,
             'do_number'     => now()->format('Ymd') . str_pad($this->id, 4, '0', STR_PAD_LEFT),
             'do_date'       => $log->created_at->format('Y-m-d'),
             'delivered_by'  => $log->creator?->name ?? 'N/A',

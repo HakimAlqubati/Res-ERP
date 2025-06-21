@@ -45,15 +45,15 @@ class InboundOutflowReportResource extends Resource
             Filter::make('transactionable_id')
                 ->form([
                     TextInput::make('transactionable_id')
-                        ->label('Transactionable ID')
+                        ->label('Transaction ID')
                         ->required(),
                     Select::make('transactionable_type')
                         ->label('Transaction Type')
                         ->options([
                             'App\Models\PurchaseInvoice' => 'Purchase Invoice',
-                            'App\Models\GRN' => 'GRN',
+                            'App\Models\GoodsReceivedNote' => 'GRN',
                             'App\Models\StockSupplyOrder' => 'Stock Supply Order',
-                            'App\Models\StockAdjustment' => 'Stock Adjustment (Increase)',
+                            'App\Models\StockAdjustmentDetail' => 'Stock Adjustment (Increase)',
                         ])
                         ->searchable(),
                 ]),
