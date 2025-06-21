@@ -94,6 +94,7 @@ Route::prefix('returnedOrders')->group(function () {
 });
 
 Route::get('/fifoInventoryReport', [FifoInventoryReportController::class, 'show']);
+Route::get('/inboundOutflowReport', [FifoInventoryReportController::class, 'inboundOutflowReport']);
 
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);

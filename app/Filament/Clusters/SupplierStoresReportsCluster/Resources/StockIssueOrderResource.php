@@ -16,6 +16,7 @@ use App\Services\MultiProductsInventoryService;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -48,6 +49,7 @@ class StockIssueOrderResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->label('')
+                    ->columns(3)
                     ->schema([
                         DatePicker::make('order_date')
                             ->required()->default(now())
@@ -63,6 +65,11 @@ class StockIssueOrderResource extends Resource
                             ->default(getDefaultStore())
                             ->required()
                             ->label('Store'),
+
+                        DateTimePicker::make('created_at')
+                            ->label('Created At')
+                            
+                            ->visibleOn('view'),
 
 
 

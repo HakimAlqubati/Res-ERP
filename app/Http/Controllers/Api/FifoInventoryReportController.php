@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\Inventory\FifoInventoryDetailReportService;
+use App\Services\Inventory\InboundOutflowReportService;
 
 class FifoInventoryReportController extends Controller
 {
@@ -33,6 +34,24 @@ class FifoInventoryReportController extends Controller
         return response()->json([
             'data' => $report,
             'status' => 'success',
+        ]);
+    }
+
+    public function inboundOutflowReport(Request $request)
+    {
+        $validated = $request->validate([
+            'transactionable_id' => 'required|integer',
+            'transactionable_type' => 'nullable|string',
+        ]);
+
+        $transactionableId = $validated['transactionable_id'];
+        $transactionableType = $validated['transactionable_type'] ?? null;
+        $reportService = new InboundOutflowReportService();
+        $report = $reportService->generate($transactionableId, $transactionableType);
+
+        return response()->json([
+            'success' => true,
+            'data' => $report,
         ]);
     }
 }

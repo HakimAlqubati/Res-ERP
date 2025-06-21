@@ -16,7 +16,6 @@ class FifoAllocatorService
     public function allocate(int $productId): array
     {
 
-
         $product = \App\Models\Product::find($productId);
 
         if (! $product) {
@@ -33,13 +32,7 @@ class FifoAllocatorService
         $supplies = DB::table('inventory_transactions')
             ->where('movement_type', 'in')
             ->where('product_id', $productId)
-            ->where('store_id', $storeId)
-            // ->whereIn('id', [
-            //     159980,
-            //     // 159979
-            //     // , 
-            //     // 159978, 159934
-            // ])
+            ->where('store_id', $storeId) 
             ->orderBy('id')
             ->whereNull('deleted_at')
             ->get([
@@ -120,25 +113,27 @@ class FifoAllocatorService
                 ->where('unit_id', $order->unit_id)->with('unit')
                 ->first();
             // حساب الكمية المطلوبة فعليًا من الطلب بناءً على المتاح × حجم العبوة
-            $remainingQty = $order->available_quantity * $order->package_size;
+            $remainingQty = round($order->available_quantity * $order->package_size, 4);
 
             // المرور على كل توريد (supply) بالترتيب لتطبيق تخصيص FIFO
             foreach ($supplies as $key => $supply) {
+
                 // حساب الكمية المتبقية فعليًا في هذا التوريد
-                $supplyAvailable = round($supply->quantity * $supply->package_size,2);
+                $supplyAvailable = round($supply->quantity * $supply->package_size, 4);
 
                 // إذا كانت الكمية صفر أو أقل، تجاهل هذا التوريد
                 if ($supplyAvailable <= 0) continue;
 
                 // تحديد الكمية التي يمكن تخصيصها من هذا التوريد لهذا الطلب
-                $allocatedQty = round(min($remainingQty, $supplyAvailable),2);
-                
+                $allocatedQty = min($remainingQty, $supplyAvailable);
+                $allocatedQty = round($allocatedQty,4);
+                // dd($supplyAvailable,$allocatedQty);
                 $orderedPrice = ($supply->price * $order->package_size) / $supply->package_size;
                 if (!$targetUnit) {
                     continue;
                 }
                 // حفظ سجل التخصيص كـ حركة مخزون OUT (جاهزة للحفظ في جدول inventory_transactions)
-                $quantity = round($allocatedQty / $targetUnit->package_size, 2);
+                $quantity = round($allocatedQty / $targetUnit->package_size, 4);
                 if ($quantity <= 0) {
                     continue;
                 }
@@ -186,13 +181,13 @@ class FifoAllocatorService
 
                 if (isset($supply->price) && is_numeric($supply->price) && $supply->price > 0) {
 
-                    // $this->updateUnitPricesFromSupply(
-                    //     $productId,
-                    //     $supply->price,
-                    //     $supply->package_size,
-                    //     $supply->transaction_date,
-                    //     $notes
-                    // );
+                    $this->updateUnitPricesFromSupply(
+                        $productId,
+                        $supply->price,
+                        $supply->package_size,
+                        $supply->transaction_date,
+                        $notes
+                    );
                 }
 
                 // تحديث الكمية المتبقية في التوريد المستخدم
