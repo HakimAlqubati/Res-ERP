@@ -9,75 +9,108 @@
             font-family: DejaVu Sans, sans-serif;
             font-size: 12px;
             color: #000;
-        }
-
-        h2 {
-            color: #103f66;
-            margin-bottom: 0;
+            margin: 0;
+            padding: 20px;
         }
 
         .header {
-            text-align: left;
-            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
-        .company-info {
-            font-weight: bold;
-            color: #b91c1c;
+        .company-details {
+            display: flex;
+            align-items: flex-start;
         }
 
-        .contact-info {
-            font-size: 10px;
+        .logo {
+            width: 70px;
+            margin-right: 10px;
+        }
+
+        .company-text {
+            font-size: 11px;
             line-height: 1.4;
         }
 
-        .delivery-label {
-            color: #103f66;
+        .company-name {
+            font-weight: bold;
+            color: #b91c1c;
+            font-size: 13px;
+        }
+
+        .do-title {
             font-size: 20px;
             font-weight: bold;
-            text-align: right;
+            color: #103f66;
+            margin-top: 0;
         }
 
         .section {
-            margin: 15px 0;
+            margin: 20px 0 10px;
         }
 
-        table {
+        .section strong {
+            font-size: 13px;
+        }
+
+        .meta-box {
+            border: 1px solid black;
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .meta-box td {
+            padding: 8px 12px;
+            font-size: 12px;
+            border: 1px solid black;
+        }
+
+        table.items {
             width: 100%;
             border-collapse: collapse;
-            font-size: 11px;
+            margin-top: 20px;
         }
 
-        table th,
-        table td {
-            border: 1px solid #000;
-            padding: 6px;
+        table.items th {
+            background-color: #103f66;
+            color: #fff;
+            padding: 8px;
+            font-size: 12px;
+            border: 1px solid black;
             text-align: left;
         }
 
-        table th {
-            background-color: #103f66;
-            color: white;
+        table.items td {
+            border: 1px solid black;
+            padding: 8px;
+            font-size: 12px;
         }
 
         .total-row td {
             font-weight: bold;
-            text-align: right;
         }
 
         .signature-section {
-            margin-top: 50px;
+            margin-top: 60px;
+            display: flex;
+            justify-content: space-between;
         }
 
         .signature-box {
-            width: 45%;
-            display: inline-block;
-            vertical-align: top;
+            width: 40%;
+            text-align: center;
         }
 
-        .signature-box p {
-            margin-top: 50px;
+        .signature-label {
+            font-weight: bold;
+            margin-bottom: 40px;
+        }
+
+        .signature-line {
             border-top: 1px solid #000;
+            margin: 40px auto 0;
             width: 80%;
         }
     </style>
@@ -86,66 +119,66 @@
 <body>
 
     <div class="header">
-        <img src="{{ public_path('images/logo.png') }}" height="50" style="float: left;">
-        <div class="company-info">Al-Sultan Restaurant</div>
-        <div class="contact-info">
-            35, Jalan Penguasa U1/53A, Kawasan Perindustrian Temasya,<br>
-            Hicom Glenmarie Industrial Park, 40150 Shah Alam, Selangor<br>
-            Tel: +603-5567 0110 &nbsp;&nbsp; Mobile: +6011-6514 0110<br>
-            Website: www.alsultanglenmarie.com
+        <div class="company-details">
+            <div class="logo">
+                <img src="{{ asset('/storage/' . setting('company_logo')) }}" height="60">
+            </div>
+            <div class="company-text">
+                <div class="company-name">{{ settingWithDefault('company_name', 'Company Name') }}</div>
+                {!! nl2br(e(settingWithDefault('address'))) !!}<br>
+                Tel. No.: {{ settingWithDefault('phone_number', '0000000000') }}<br>
+                Website: {{ settingWithDefault('website', 'www.example.com') }}
+            </div>
         </div>
-        <div class="delivery-label">Delivery Order</div>
-        <div style="clear: both;"></div>
+        <div class="do-title">Delivery Order</div>
     </div>
 
     <div class="section">
         <strong>To:</strong><br>
-        <strong>{{ $deliveryInfo['customer_name'] }}</strong><br>
-        {{ $deliveryInfo['address'] }}
+        <div><strong>{{ $deliveryInfo['customer_name'] }}</strong></div>
+        <div>{{ $deliveryInfo['branch_address'] }}</div>
     </div>
 
-    <div class="section">
-        <table>
+    <table class="meta-box">
+        <tr>
+            <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] }}</td>
+            <td><strong>DO No.:</strong> {{ $deliveryInfo['do_number'] }}</td>
+        </tr>
+    </table>
+
+    <table class="items">
+        <thead>
             <tr>
-                <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] }}</td>
-                <td><strong>DO No.:</strong> {{ $deliveryInfo['do_number'] }}</td>
+                <th style="width: 5%">#</th>
+                <th style="width: 55%">DESCRIPTION</th>
+                <th style="width: 20%">UNIT</th>
+                <th style="width: 20%">QTY</th>
             </tr>
-        </table>
-    </div>
-
-    <div class="section">
-        <table>
-            <thead>
+        </thead>
+        <tbody>
+            @foreach ($deliveryInfo['items'] as $item)
                 <tr>
-                    <th style="width: 5%">#</th>
-                    <th style="width: 70%">DESCRIPTION</th>
-                    <th style="width: 25%">QTY</th>
+                    <td>{{ $item['index'] }}</td>
+                    <td>{{ $item['name'] }}</td>
+                    <td>{{ $item['unit'] ?? '-' }}</td>
+                    <td>{{ number_format($item['quantity'], 2) }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach ($deliveryInfo['items'] as $item)
-                    <tr>
-                        <td>{{ $item['index'] }}</td>
-                        <td>{{ $item['name'] }}</td>
-                        <td>{{ $item['quantity'] }}</td>
-                    </tr>
-                @endforeach
-                <tr class="total-row">
-                    <td colspan="2">Total QTY</td>
-                    <td>{{ $deliveryInfo['total_qty'] }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+            @endforeach
+            <tr class="total-row">
+                <td colspan="3" style="text-align: right;">Total QTY</td>
+                <td>{{ number_format($deliveryInfo['total_qty'], 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
 
     <div class="signature-section">
         <div class="signature-box">
-            <strong>Receiver's Signature:</strong>
-            <p></p>
+            <div class="signature-label">Receiver's Signature:</div>
+            <div class="signature-line"></div>
         </div>
-        <div class="signature-box" style="float: right; text-align: right;">
-            <strong>Company Chop:</strong>
-            <p></p>
+        <div class="signature-box">
+            <div class="signature-label">Company Chop:</div>
+            <div class="signature-line"></div>
         </div>
     </div>
 

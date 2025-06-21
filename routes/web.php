@@ -688,3 +688,14 @@ Route::get('/testLog', function () {
 
 Route::get('admin/branchConsumptionReport', [TestController4::class, 'branchConsumptionReport']);
 require __DIR__ . '/landing.php';
+Route::get('/test-delivery-order/{order}', function (Order $order) {
+    $order->load(['orderDetails.product', 'branch', 'logs.creator']);
+
+    $deliveryInfo = $order->getDeliveryInfo();
+
+    if (!$deliveryInfo) {
+        return '❌ Order has not been delivered yet.';
+    }
+
+    return view('export.delivery_order', compact('deliveryInfo'));
+});

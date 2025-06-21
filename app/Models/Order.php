@@ -475,10 +475,12 @@ class Order extends Model implements Auditable
             'do_date'       => $log->created_at->format('Y-m-d'),
             'delivered_by'  => $log->creator?->name ?? 'N/A',
             'customer_name' => $this->customer?->name ?? $this->branch?->name ?? 'N/A',
-            'address'       => $this->branch?->address ?? 'N/A',
-            'items'         => $this->orderDetails->map(fn($item, $i) => [
+            'branch_address' => $this->branch?->address ?? 'N/A',
+
+            'items' => $this->orderDetails->map(fn($item, $i) => [
                 'index'     => $i + 1,
                 'name'      => $item->product?->name,
+                'unit'      => $item->unit?->name ?? '-',  // ✅ أضف هذه السطر
                 'quantity'  => $item->available_quantity,
             ]),
             'total_qty'     => $this->orderDetails->sum('available_quantity'),

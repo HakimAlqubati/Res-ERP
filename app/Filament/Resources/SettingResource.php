@@ -55,13 +55,19 @@ class SettingResource extends Resource
                                         ->label('Name'),
                                     TextInput::make("company_phone")
                                         ->label('Phone Number')
-
                                         ->required(),
 
                                     Select::make('default_nationality')
                                         ->label('Locale')
                                         ->searchable()
                                         ->options(getNationalitiesAsCountries()),
+
+                                    TextInput::make("website")
+                                        ->label('Website')
+                                        ->url()
+                                        ->placeholder('https://example.com')
+                                        ->columnSpan(3),
+
                                     FileUpload::make('company_logo')
                                         ->label('Logo')
                                         ->required(false)
@@ -72,6 +78,7 @@ class SettingResource extends Resource
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                             return  Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
+
                                     Fieldset::make()->columnSpanFull()->label('Address')->schema([
                                         Textarea::make('address')->label('')->columnSpanFull()->required(),
                                     ]),
