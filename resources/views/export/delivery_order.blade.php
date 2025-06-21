@@ -195,11 +195,11 @@
         <tr>
             <td style="width: 50%; text-align: center;">
                 <strong>Receiver's Signature:</strong>
-                <div style="border-top: 1px solid #000; width: 80%; margin: 40px auto 0;"></div>
+                <hr style="border: none; border-top: 1px solid #000; width: 80%; margin-top: 40px;">
             </td>
             <td style="width: 50%; text-align: center;">
                 <strong>Company Chop:</strong>
-                <div style="border-top: 1px solid #000; width: 80%; margin: 40px auto 0;"></div>
+                <hr style="border: none; border-top: 1px solid #000; width: 80%; margin-top: 40px;">
             </td>
         </tr>
     </table>
