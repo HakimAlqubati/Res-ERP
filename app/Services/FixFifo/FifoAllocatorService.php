@@ -20,7 +20,7 @@ class FifoAllocatorService
 
         if (! $product) {
             // خيار 1: تجاهل المنتج
-            // return [];
+            return [];
 
             // خيار 2: لو تحب تسجل رسالة خطأ:
             Log::warning("⛔ Product not found for product_id: {$productId}");
@@ -32,7 +32,7 @@ class FifoAllocatorService
         $supplies = DB::table('inventory_transactions')
             ->where('movement_type', 'in')
             ->where('product_id', $productId)
-            ->where('store_id', $storeId) 
+            ->where('store_id', $storeId)
             ->orderBy('id')
             ->whereNull('deleted_at')
             ->get([
@@ -126,7 +126,7 @@ class FifoAllocatorService
 
                 // تحديد الكمية التي يمكن تخصيصها من هذا التوريد لهذا الطلب
                 $allocatedQty = min($remainingQty, $supplyAvailable);
-                $allocatedQty = round($allocatedQty,4);
+                $allocatedQty = round($allocatedQty, 4);
                 // dd($supplyAvailable,$allocatedQty);
                 $orderedPrice = ($supply->price * $order->package_size) / $supply->package_size;
                 if (!$targetUnit) {
