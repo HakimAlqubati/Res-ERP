@@ -170,7 +170,7 @@
         <thead>
             <tr>
                 <th style="width: 5%">#</th>
-                <th style="width: 55%">DESCRIPTION</th>
+                <th style="width: 55%">Product</th>
                 <th style="width: 20%">UNIT</th>
                 <th style="width: 20%">QTY</th>
             </tr>
