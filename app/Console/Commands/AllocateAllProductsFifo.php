@@ -20,22 +20,23 @@ class AllocateAllProductsFifo extends Command
 
     public function handle()
     {
-        // $tenantId = $this->option('tenant');
+        $tenantId = $this->option('tenant');
 
         // if (! $tenantId) {
         //     $this->error('❌ Please provide --tenant={id}');
         //     return;
         // }
 
-        // $tenant = Tenant::find($tenantId);
+        $tenant = Tenant::find($tenantId);
 
-        // Log::infO('hi - this is tenant :', [$tenant->name]);
-        // if (! $tenant) {
-        //     $this->error("❌ Tenant with ID {$tenantId} not found.");
-        //     return;
-        // }
+        if (isset($tenantId) && !$tenant) {
+            $this->error("❌ Tenant with ID {$tenantId} not found.");
+        }
+        if ($tenant) {
+            Log::infO('hi - this is tenant :', [$tenant->name]);
+            $tenant->makeCurrent(); // ✅ تشغيل التينانت
 
-        // $tenant->makeCurrent(); // ✅ تشغيل التينانت
+        }
         // $this->info("🏢 Tenant [{$tenant->id}] activated.");
         $this->info('🚀 Starting FIFO allocation for all products in orders...');
 
