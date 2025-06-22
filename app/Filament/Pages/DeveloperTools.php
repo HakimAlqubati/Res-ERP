@@ -16,6 +16,20 @@ class DeveloperTools extends Page
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('Rebuild Inventory')
+                ->label('♻️ Rebuild Inventory From Sources')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->action(function () {
+                    try {
+                        dispatch(new \App\Jobs\RebuildInventoryFromSources());
+                        showSuccessNotifiMessage('✅ Inventory rebuild job dispatched.');
+                    } catch (\Throwable $th) {
+                        
+                        showWarningNotifiMessage($th->getMessage());
+                    }
+                }),
+
             Action::make('Copy Order OUT to IN')
                 ->label('🔄 Copy Order OUT to IN')
                 ->color('success')
