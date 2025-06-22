@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Jobs\RebuildInventoryFromSources;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Spatie\Multitenancy\Models\Tenant;
 
 class RunRebuildInventory extends Command
 {
@@ -13,8 +14,9 @@ class RunRebuildInventory extends Command
      *
      * @var string
      */
-    protected $signature = 'inventory:rebuild-from-sources';
+    // protected $signature = 'inventory:rebuild-from-sources {--tenant= : Tenant ID to run the job under}';
     // protected $signature = 'inventory:rebuild-from-sources {--products=* : List of product IDs to rebuild}';
+    protected $signature = 'inventory:rebuild-from-sources {--tenant= : Tenant ID (optional) to run the job under}';
 
     protected $description = 'Dispatch job to rebuild inventory from invoices, GRNs, and supply orders.';
 
@@ -24,11 +26,23 @@ class RunRebuildInventory extends Command
     public function handle()
     {
 
-        // $productIds = $this->option('products');
-        // Log::info('✅ start run of rebuild for product IDs: ' . implode(', ', $productIds));
+        $tenantId = $this->option('tenant');
 
-        // $this->info('📦 Dispatching job to rebuild inventory...');
-        // (new RebuildInventoryFromSources($productIds))->handle();
+        if ($tenantId) {
+            $tenant = Tenant::find($tenantId);
+
+            if (! $tenant) {
+                $this->error("❌ Tenant with ID {$tenantId} not found.");
+                return;
+            }
+
+            $tenant->makeCurrent();
+            $this->info("🏢 Tenant [{$tenant->id}] activated.");
+            Log::info("🔁 RebuildInventory: Running under tenant {$tenant->id}");
+        } else {
+            $this->info("🌐 Running rebuild job without tenant context.");
+            Log::info("🔁 RebuildInventory: Running without tenant");
+        }
 
         Log::info('✅ start run of rebuild.');
         $this->info('📦 Dispatching job to rebuild inventory...');
