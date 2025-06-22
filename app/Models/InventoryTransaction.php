@@ -76,4 +76,9 @@ class InventoryTransaction extends Model implements Auditable
     {
         return class_basename($this->transactionable_type);
     }
+
+    public function scopeByModelType($query, $modelClass)
+    {
+        return $query->where('transactionable_type', $modelClass);
+    }
 }

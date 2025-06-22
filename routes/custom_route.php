@@ -174,7 +174,12 @@ Route::get('/productPriceHistory', [ProductPriceHistoryController::class, 'index
 Route::get('/manufacturingProductPriceHistory', [ProductPriceHistoryController::class, 'manufacturingProductPriceHistory']);
 Route::get('/updateAllManufacturedPrices', [ProductPriceHistoryController::class, 'updateAllManufacturedPrices']);
 Route::get('/getSuppliesManufacturedProducts', [TestController8::class, 'getSuppliesManufacturedProducts']);
-Route::get('/storeSuppliesManufacturedProducts', [TestController8::class, 'storeSuppliesManufacturedProducts']);
+
+Route::get('/getSuppliesManufacturedProducts2', [TestController8::class, 'getSuppliesManufacturedProducts2']);
+
+Route::get('/getAllRawMaterialInTransactionsByStore', [TestController8::class, 'getAllRawMaterialInTransactionsByStore']);
+
+Route::get('/runBackfill', [TestController8::class, 'runBackfill']);
 Route::get('/getNewReport', [TestController8::class, 'getNewReport']);
 
 Route::get('/handleCopy', [CopyOrderOutToBranchStoreController::class, 'handle']);

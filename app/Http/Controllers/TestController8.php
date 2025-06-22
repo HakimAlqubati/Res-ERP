@@ -133,6 +133,8 @@ class TestController8 extends Controller
 
         return $transactions;
     }
+
+
     public function storeSuppliesManufacturedProducts(Request $request)
     {
         if (!$request->has('store_id')) {
@@ -193,5 +195,55 @@ class TestController8 extends Controller
         $productIds = explode(',', $_GET['products']);
 
         return $service->updateAllHistoricalPrices($categoryId, $productIds, $unitId, $newPrice);
+    }
+    public function getAllRawMaterialInTransactionsByStore(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required|integer|exists:stores,id',
+        ]);
+
+        $storeId = $request->input('store_id');
+
+        $data = (new ManufacturingBackfillService())->getAllRawMaterialInTransactionsByStore($storeId);
+
+        return response()->json([
+            'status' => true,
+            'store_id' => $storeId,
+            'data' => $data,
+        ]);
+    }
+    public function getSuppliesManufacturedProducts2(Request $request)
+    {
+
+        $request->validate([
+            'store_id' => 'required|exists:stores,id',
+        ]);
+
+        $data = (new ManufacturingBackfillService())
+            ->simulateBackfill($request->store_id);
+
+        return response()->json($data);
+    }
+
+    public function runBackfill(Request $request)
+    {
+        $request->validate([
+            'store_id' => 'required|integer|exists:stores,id',
+        ]);
+
+        try {
+             (new ManufacturingBackfillService())
+                ->handleFromSimulation($request->store_id);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'تم حفظ الحركات بنجاح.',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
