@@ -137,7 +137,7 @@
                                     {{ settingWithDefault('company_name', 'Company Name') }}
                                 </div>
                                 {!! nl2br(e(settingWithDefault('address'))) !!}<br>
-                                Tel. No.: {{ settingWithDefault('phone_number', '0000000000') }}<br>
+                                Tel. No.: {{ settingWithDefault('company_phone', '0000000000') }}<br>
                                 Website: {{ settingWithDefault('website', 'www.example.com') }}
                             </td>
                         </tr>
@@ -162,7 +162,7 @@
     <table class="meta-box">
         <tr>
             <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] }}</td>
-            <td><strong>DO No.:</strong> {{ $deliveryInfo['do_number'] }}</td>
+            <td><strong>Order #.:</strong> {{ $deliveryInfo['id'] }}</td>
         </tr>
     </table>
 
