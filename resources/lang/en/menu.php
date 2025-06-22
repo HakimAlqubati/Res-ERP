@@ -14,4 +14,5 @@ return [
     'task_reports' => 'Task Reports',
     'order_reports' => 'Order Reports',
     'branch_orders' => 'Branch Orders',
+    'resellers' => 'Resellers',
 ];

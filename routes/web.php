@@ -9,6 +9,8 @@ use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Reports\OrderDeliveryReportController;
+use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController;
@@ -699,3 +701,9 @@ Route::get('/test-delivery-order/{order}', function (Order $order) {
 
     return view('export.delivery_order', compact('deliveryInfo'));
 });
+
+Route::get('/reports/order-delivery', [OrderDeliveryReportController::class, 'index'])
+    ->name('reports.order-delivery');
+
+Route::get('/reports/sales-payments', [OrderSalesPaymentsReportController::class, 'index'])
+    ->name('reports.sales-payments');

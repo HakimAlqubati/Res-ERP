@@ -487,4 +487,21 @@ class Order extends Model implements Auditable
             'total_qty'     => $this->orderDetails->sum('available_quantity'),
         ];
     }
+
+    // داخل Order.php
+
+    public function paidAmounts()
+    {
+        return $this->hasMany(OrderPaidAmount::class);
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        return $this->paidAmounts()->sum('amount');
+    }
+
+    public function getBalanceDueAttribute(): float
+    {
+        return ($this->total ?? 0) - $this->total_paid;
+    }
 }

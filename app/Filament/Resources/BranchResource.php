@@ -108,7 +108,7 @@ class BranchResource extends Resource
                                             Branch::TYPE_CENTRAL_KITCHEN => 'info',
                                             Branch::TYPE_HQ => 'success',
                                             Branch::TYPE_POPUP => 'danger',
-                                            Branch::TYPE_RESELLER => 'gray',
+                                            Branch::TYPE_RESELLER => 'info',
                                         ])
                                         ->inline()
                                         ->reactive()->columnSpan(3),

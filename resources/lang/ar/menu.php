@@ -13,4 +13,5 @@ return [
     'inventory_reports' => 'تقارير المخزون',
     'task_reports' => 'تقارير المهام',
     'order_reports' => 'تقارير الطلبات',
+    'resellers' => 'نقاط البيع',
 ];

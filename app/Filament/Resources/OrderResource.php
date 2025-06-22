@@ -15,6 +15,7 @@ use App\Models\User;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
@@ -245,6 +246,7 @@ class OrderResource extends Resource
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
+            
 
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
@@ -373,37 +375,14 @@ class OrderResource extends Resource
                     // ->visible(fn(): bool => isSuperAdmin())
                     ->hidden(),
 
+ 
+
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
 
-                    Tables\Actions\Action::make('print_delivery_order')
-                        ->label(__('Print Delivery Order'))
-                        ->icon('heroicon-o-printer')
-                        ->color('gray')
-                        ->visible(fn($record) => $record->status === Order::DELEVIRED)
-                        ->action(function (Order $record) {
-                            $record->load(['orderDetails.product', 'branch', 'logs.creator']);
 
-                            $deliveryInfo = $record->getDeliveryInfo();
-
-                            if (!$deliveryInfo) {
-                                \Filament\Notifications\Notification::make()
-                                    ->title('Cannot generate PDF')
-                                    ->body('Order must be delivered first.')
-                                    ->danger()
-                                    ->send();
-                                return null;
-                            }
-
-                            $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('export.delivery_order', compact('deliveryInfo'));
-
-                            return response()->streamDownload(
-                                fn() => print($pdf->output()),
-                                "Delivery Order ({$deliveryInfo['id']}).pdf"
-                            );
-                        }),
                 ]),
 
 

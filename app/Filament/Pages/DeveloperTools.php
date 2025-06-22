@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Jobs\CopyOrderOutToBranchStoreJob;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Artisan;
 
 class DeveloperTools extends Page
 {
@@ -25,10 +26,25 @@ class DeveloperTools extends Page
                         dispatch(new \App\Jobs\RebuildInventoryFromSources());
                         showSuccessNotifiMessage('✅ Inventory rebuild job dispatched.');
                     } catch (\Throwable $th) {
-                        
+
                         showWarningNotifiMessage($th->getMessage());
                     }
                 }),
+
+            Action::make('FIFO Allocation')
+                ->label('📦 FIFO Allocation for All Products')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->action(function () {
+                    try {
+                        dispatch(new \App\Jobs\AllocateAllProductsFifoJob());
+
+                        showSuccessNotifiMessage('✅ FIFO Allocation command executed successfully.');
+                    } catch (\Throwable $th) {
+                        showWarningNotifiMessage("❌ Error: " . $th->getMessage());
+                    }
+                }),
+
 
             Action::make('Copy Order OUT to IN')
                 ->label('🔄 Copy Order OUT to IN')
