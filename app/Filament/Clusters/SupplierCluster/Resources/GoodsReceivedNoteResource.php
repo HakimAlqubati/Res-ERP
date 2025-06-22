@@ -32,6 +32,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Unique;
@@ -148,7 +149,7 @@ class GoodsReceivedNoteResource extends Resource
                                         ->searchable()->columnSpan(2)
                                         ->required(),
                                     Select::make('unit_id')
-                                        ->label(__('lang.unit')) 
+                                        ->label(__('lang.unit'))
                                         ->options(function (callable $get) {
                                             $product = \App\Models\Product::find($get('product_id'));
                                             if (!$product)
@@ -221,7 +222,7 @@ class GoodsReceivedNoteResource extends Resource
                 TextColumn::make('grn_date')->label('Date')->date()->toggleable(),
                 TextColumn::make('store.name')->label('Store')->searchable()->toggleable(),
                 // TextColumn::make('status')->label('Status')->badge()->toggleable(),
-                TextColumn::make('details_count')->searchable()->alignCenter(true)
+                TextColumn::make('details_count')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('updated_at')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false)
@@ -387,5 +388,23 @@ class GoodsReceivedNoteResource extends Resource
         $userRoles = auth()->user()?->roles->pluck('id')->toArray() ?? [];
 
         return count(array_intersect($userRoles, $allowedRoles)) > 0;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+            return true;
+        }
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+        if (isSystemManager() || isBranchManager() || isSuperAdmin()) {
+            return true;
+        }
+        return false;
     }
 }
