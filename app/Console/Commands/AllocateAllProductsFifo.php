@@ -40,35 +40,35 @@ class AllocateAllProductsFifo extends Command
         // $this->info("🏢 Tenant [{$tenant->id}] activated.");
         $this->info('🚀 Starting FIFO allocation for all products in orders...');
 
-        // $productIds = DB::table('orders_details as od')
-        //     ->join('orders as o', 'od.order_id', '=', 'o.id')
-        //     ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
-        //     ->whereNull('o.deleted_at')
-        //     ->distinct()
-        //     ->pluck('od.product_id');
+        $productIds = DB::table('orders_details as od')
+            ->join('orders as o', 'od.order_id', '=', 'o.id')
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereNull('o.deleted_at')
+            ->distinct()
+            ->pluck('od.product_id');
 
-        // $productIdsFromOrders = DB::table('orders_details as od')
-        //     ->join('orders as o', 'od.order_id', '=', 'o.id')
-        //     ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
-        //     ->whereNull('o.deleted_at')
-        //     ->pluck('od.product_id');
+        $productIdsFromOrders = DB::table('orders_details as od')
+            ->join('orders as o', 'od.order_id', '=', 'o.id')
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereNull('o.deleted_at')
+            ->pluck('od.product_id');
 
-        // $productIdsFromIssues = DB::table('stock_issue_order_details as sid')
-        //     ->join('stock_issue_orders as si', 'sid.stock_issue_order_id', '=', 'si.id')
-        //     ->whereNull('si.deleted_at')
-        //     ->pluck('sid.product_id');
+        $productIdsFromIssues = DB::table('stock_issue_order_details as sid')
+            ->join('stock_issue_orders as si', 'sid.stock_issue_order_id', '=', 'si.id')
+            ->whereNull('si.deleted_at')
+            ->pluck('sid.product_id');
 
-        // $productIdsFromAdjustments = DB::table('stock_adjustment_details')
-        //     ->where('adjustment_type', 'decrease')
-        //     ->pluck('product_id');
+        $productIdsFromAdjustments = DB::table('stock_adjustment_details')
+            ->where('adjustment_type', 'decrease')
+            ->pluck('product_id');
 
-        // $productIds = $productIdsFromOrders
-        //     ->merge($productIdsFromIssues)
-        //     ->merge($productIdsFromAdjustments)
-        //     ->unique()
-        //     ->sort()
-        //     ->values();
-        $productIds = collect([196]);
+        $productIds = $productIdsFromOrders
+            ->merge($productIdsFromIssues)
+            ->merge($productIdsFromAdjustments)
+            ->unique()
+            ->sort()
+            ->values();
+        // $productIds = collect([1]);
 
 
         $fifoService = new FifoAllocatorService();
