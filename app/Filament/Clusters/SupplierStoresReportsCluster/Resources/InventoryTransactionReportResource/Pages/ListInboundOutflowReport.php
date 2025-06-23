@@ -8,6 +8,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInboundOutflowReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InboundOutflowReportResource::class;
     protected static string $view = 'filament.pages.inventory-reports.inbound-outflow-report';
 

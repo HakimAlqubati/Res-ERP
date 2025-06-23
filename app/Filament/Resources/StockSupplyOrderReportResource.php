@@ -26,7 +26,7 @@ class StockSupplyOrderReportResource extends Resource
     protected static ?string $model = StockSupplyOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
+    protected static bool $shouldRegisterNavigation = false;
     public static function getNavigationLabel(): string
     {
         return 'Stock Supply';
@@ -35,7 +35,7 @@ class StockSupplyOrderReportResource extends Resource
     {
         return 'Stock Supply';
     }
- 
+
 
     public static function getLabel(): ?string
     {

@@ -38,10 +38,11 @@ class InventoryTransactionReportResource extends Resource
         return 'Inventory';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
     protected static ?int $navigationSort = 1;
+    protected static bool $shouldRegisterNavigation = false;
 
-
+ 
     public static function table(Table $table): Table
     {
         // $codes = [
@@ -72,7 +73,7 @@ class InventoryTransactionReportResource extends Resource
         //     }
         // });
         // $productIds = $products->pluck('id')->toArray();
-        
+
 
         return $table
             ->filters([

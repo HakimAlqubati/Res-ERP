@@ -25,7 +25,7 @@ class InVSReportResource extends Resource
     protected static ?string $model = StockSupplyOrder::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-
+    protected static bool $shouldRegisterNavigation = false;
     public static function getNavigationLabel(): string
     {
         return 'In VS Out';

@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Services\Reports;
+
+use App\Models\GoodsReceivedNote;
+use App\Models\PurchaseInvoice;
+use App\Models\Order;
+use Illuminate\Support\Carbon;
+
+class InventoryDashboardService
+{
+    public function getSummary(): array
+    {
+        $today = Carbon::today();
+        $yesterday = Carbon::yesterday();
+        $startOfMonth = Carbon::now()->startOfMonth();
+
+        // ✅ PROCUREMENT
+        $grnsCount = GoodsReceivedNote::approved()
+            ->whereDate('created_at', '>=', $startOfMonth)
+            ->count();
+
+        $invoicesQuery = PurchaseInvoice::whereDate('created_at', '>=', $startOfMonth);
+        $invoicesCount = $invoicesQuery->count();
+        $invoicesTotal = $invoicesQuery->with('details')->get()
+            ->sum(fn($invoice) => $invoice->total_amount);
+
+        // ✅ BRANCH ORDERS
+        $branchOrders = Order::with('branch')
+            ->where('type', Order::TYPE_NORMAL)
+            ->whereDate('created_at', '>=', $startOfMonth)
+            ->get()
+            ->groupBy(fn($order) => $order->branch?->name ?? 'Unknown Branch')
+            ->map(function ($orders, $branchName) {
+                return [
+                    'branch' => $branchName,
+                    'items' => $orders->sum(fn($order) => $order->item_count),
+                    'month_to_date' => $orders->sum(fn($order) => $order->total_amount),
+                ];
+            })->values();
+
+        // ✅ MANUFACTURING (Chocolate)
+        $manufacturingOrders = Order::with('orderDetails')
+            ->where('type', Order::TYPE_MANUFACTURING);
+
+        $itemsMade = (clone $manufacturingOrders)
+            ->whereDate('created_at', '>=', $startOfMonth)
+            ->get()
+            ->sum(fn($order) => $order->item_count);
+
+        $todayValue = (clone $manufacturingOrders)
+            ->whereDate('created_at', $today)
+            ->get()
+            ->sum(fn($order) => $order->total_amount);
+
+        $yesterdayValue = (clone $manufacturingOrders)
+            ->whereDate('created_at', $yesterday)
+            ->get()
+            ->sum(fn($order) => $order->total_amount);
+
+        $monthToDateValue = (clone $manufacturingOrders)
+            ->whereDate('created_at', '>=', $startOfMonth)
+            ->get()
+            ->sum(fn($order) => $order->total_amount);
+
+        return [
+            'procurement' => [
+                'grns_entered' => [
+                    'count' => $grnsCount,
+                    'month_to_date' => null,
+                ],
+                'invoices_entered' => [
+                    'count' => $invoicesCount,
+                    'month_to_date' => $invoicesTotal,
+                ],
+            ],
+            'branch_orders' => $branchOrders->all(),
+            'manufacturing' => [
+                'chocolate' => [
+                    'items_made' => $itemsMade,
+                    'value' => [
+                        'today' => $todayValue,
+                        'yesterday' => $yesterdayValue,
+                        'month_to_date' => $monthToDateValue,
+                    ],
+                ],
+            ],
+        ];
+    }
+}

@@ -23,6 +23,7 @@ class InventoryTransactionTruckingReportResource extends Resource
     protected static ?string $model = InventoryTransaction::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
     {
         return 'Inventory Tracking';

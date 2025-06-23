@@ -13,6 +13,7 @@ class PurchaseInvoiceController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 15);
         $query = PurchaseInvoice::query()
             ->with(['supplier:id,name', 'store:id,name', 'paymentMethod:id,name'])
             ->select('id', 'invoice_no', 'supplier_id', 'store_id', 'date', 'payment_method_id', 'attachment');
@@ -34,10 +35,11 @@ class PurchaseInvoiceController extends Controller
             $query->whereDate('date', '<=', $request->to_date);
         }
 
-        $invoices = $query->latest()->get();
-
+        // $invoices = $query->latest()->get();
+        $paginator = $query->latest()->paginate($perPage);
         // 🧾 Format output
-        $data = $invoices->map(function ($invoice) {
+        $data = $paginator->getCollection()->map(function ($invoice) {
+
             return [
                 'invoice_no' => $invoice->invoice_no,
                 'supplier' => $invoice->supplier?->name,
@@ -47,7 +49,7 @@ class PurchaseInvoiceController extends Controller
                 'has_attachment' => $invoice->has_attachment ? 'Yes' : 'No',
             ];
         });
-
+        $paginator->setCollection($data);
         return response()->json([
             'success' => true,
             'data' => $data,

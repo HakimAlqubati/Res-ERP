@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ListStockAdjustmentReports extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = StockAdjustmentReportResource::class;
 
 
@@ -17,10 +18,10 @@ class ListStockAdjustmentReports extends ListRecords
         $attributes = $record->getAttributes();
         return $attributes['product_id'];
     }
-    protected function getHeaderActions(): array
-    {
-        return [
-            // Actions\CreateAction::make(),
-        ];
-    }
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         // Actions\CreateAction::make(),
+    //     ];
+    // }
 }

@@ -15,6 +15,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryTransactionPurchaseReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InventoryTransactionPurchaseReportResource::class;
     // protected static string $view = 'filament.pages.inventory-reports.inventory-report';
     protected static string $view = 'filament.pages.inventory-reports.multi-products-inventory-purchase-report';

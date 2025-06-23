@@ -35,6 +35,7 @@ use App\Filament\Pages\CustomLogin;
 use App\Filament\Pages\Auth\CustomLogin as CustomLogin2;
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
+use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\ProductResource;
@@ -128,7 +129,8 @@ class AdminPanelProvider extends PanelProvider
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager() || isSuperVisor()) ?  SupplierCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  SupplierStoresReportsCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager()) ?  InventoryManagementCluster::getNavigationItems() : [],
-                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager() || isBranchManager() || isStoreManager()) ?  InventoryReportLinks::getNavigationItems() : [],
+                            // InventoryReportLinks::getNavigationItems(),
 
                         ));
                 }

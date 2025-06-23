@@ -11,14 +11,16 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryTransactionReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InventoryTransactionReportResource::class;
     // protected static string $view = 'filament.pages.inventory-reports.inventory-report';
     protected static string $view = 'filament.pages.inventory-reports.multi-products-inventory-report';
 
+
     protected function getViewData(): array
     {
         $productIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
-        
+
         if (!is_array($productIds)) {
             $productIds = [$productIds]; // يحولها لمصفوفة لو كانت قيمة واحدة
         }
@@ -27,7 +29,7 @@ class ListInventoryTransactionReport extends ListRecords
         $categoryId = $this->getTable()->getFilters()['category_id']->getState()['value'] ?? null;
         $showAvailableInStock = $this->getTable()->getFilters()['show_extra_fields']->getState()['only_available'];
         $unitId = 'all';
-      
+
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
         $inventoryService->setProductIds($productIds);
 

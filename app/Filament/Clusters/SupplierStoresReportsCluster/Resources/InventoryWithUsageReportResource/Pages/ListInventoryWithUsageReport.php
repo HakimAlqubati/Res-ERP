@@ -8,6 +8,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryWithUsageReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InventoryWithUsageReportResource::class;
     protected static string $view = 'filament.pages.inventory-reports.inventory-with-usage-report';
 

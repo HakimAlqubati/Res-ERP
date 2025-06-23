@@ -25,6 +25,7 @@ class FifoInventoryReportResource extends Resource
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
+    protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
     {
         return 'FIFO Inventory';

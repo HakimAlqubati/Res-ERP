@@ -25,6 +25,11 @@ class InventoryTransactionPurchaseReportResource extends Resource
     protected static ?string $model = InventoryTransaction::class;
     protected static ?string $slug = 'inventory-p-report';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static bool $shouldRegisterNavigation = false;
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
     public static function getLabel(): ?string
     {
         return 'Store Position Report';
@@ -122,8 +127,5 @@ class InventoryTransactionPurchaseReportResource extends Resource
         }
         return false;
     }
-    public static function shouldRegisterNavigation(): bool
-    {
-        return true;
-    }
+    
 }

@@ -21,7 +21,7 @@ class InboundOutflowReportResource extends Resource
     protected static ?string $cluster = \App\Filament\Clusters\InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
-
+protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
     {
         return 'Inbound → Outflows';

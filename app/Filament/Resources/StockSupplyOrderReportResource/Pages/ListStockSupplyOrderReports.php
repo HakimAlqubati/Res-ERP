@@ -10,6 +10,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListStockSupplyOrderReports extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = StockSupplyOrderReportResource::class;
     protected static string $view = 'filament.pages.stock-supply-order-reports.stock-supply-order-report';
 

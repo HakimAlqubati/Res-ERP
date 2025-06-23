@@ -11,6 +11,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInVSReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InVSReportResource::class;
     protected static string $view = 'filament.pages.stock-report.in-vs-out-report';
 

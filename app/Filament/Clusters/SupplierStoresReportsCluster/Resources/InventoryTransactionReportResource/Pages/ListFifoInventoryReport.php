@@ -8,6 +8,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListFifoInventoryReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = FifoInventoryReportResource::class;
     protected static string $view = 'filament.pages.inventory-reports.fifo-inventory-report';
 

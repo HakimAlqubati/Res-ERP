@@ -12,6 +12,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryTransactionTruckingReport extends ListRecords
 {
+    use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InventoryTransactionTruckingReportResource::class;
     protected static string $view = 'filament.pages.inventory-reports.inventory-trucking-report';
 

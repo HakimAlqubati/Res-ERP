@@ -24,7 +24,7 @@ class InventoryWithUsageReportResource extends Resource
     protected static ?string $model = InventoryTransaction::class;
     protected static ?string $slug = 'inventory-with-usage-report';
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
-
+protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
     {
         return 'Manufacturing Store Position Report';

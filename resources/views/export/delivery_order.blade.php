@@ -156,7 +156,9 @@
     <div class="section">
         <strong>To:</strong><br>
         <div><strong>{{ $deliveryInfo['customer_name'] }}</strong></div>
-        <div>{{ $deliveryInfo['branch_address'] }}</div>
+        <div style="max-width: 300px;">
+            {{ $deliveryInfo['branch_address'] }}
+        </div>
     </div>
 
     <table class="meta-box">

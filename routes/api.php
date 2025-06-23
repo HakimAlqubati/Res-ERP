@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\API\FifoInventoryReportController;
+use App\Http\Controllers\Api\InventoryDashboardController;
 use App\Http\Controllers\Api\ManufacturingInventoryReportController;
 use App\Http\Controllers\Api\ManufacturingReportController;
 use App\Http\Controllers\Api\PurchaseInvoiceController;
@@ -103,6 +104,7 @@ Route::get('/purchaseInvoices', [PurchaseInvoiceController::class, 'index']);
 Route::get('/manufacturingReport', [ManufacturingReportController::class, 'index']);
 Route::get('/manufacturingInventoryReport', [ManufacturingInventoryReportController::class, 'show']);
 
+Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary']);
 
 
 Route::get('/suppliers', [SupplierController::class, 'index']);
