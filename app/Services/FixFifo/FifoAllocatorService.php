@@ -18,6 +18,9 @@ class FifoAllocatorService
 
         $product = \App\Models\Product::find($productId);
 
+        if ($productId == 196) {
+            return [];
+        }
         if (! $product) {
             // خيار 1: تجاهل المنتج
             return [];
@@ -26,6 +29,7 @@ class FifoAllocatorService
             Log::warning("⛔ Product not found for product_id: {$productId}");
             return [];
         }
+
 
         $storeId = defaultManufacturingStore($product)->id;
 
