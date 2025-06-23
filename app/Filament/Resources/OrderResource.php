@@ -442,7 +442,11 @@ class OrderResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('is_purchased', 0)
-            ->whereHas('orderDetails')->count();
+            ->whereHas('orderDetails')
+            ->whereHas('branch', function ($query) {
+                $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+            })
+            ->count();
     }
 
     public function isTableSearchable(): bool
@@ -471,6 +475,9 @@ class OrderResource extends Resource
         return parent::getEloquentQuery()
             ->where('is_purchased', 0)
             ->whereHas('orderDetails')
+            ->whereHas('branch', function ($query) {
+                $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+            })
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

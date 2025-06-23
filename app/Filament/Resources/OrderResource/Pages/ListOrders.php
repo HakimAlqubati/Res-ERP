@@ -4,6 +4,7 @@ namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
 use App\Imports\OrdersImport;
+use App\Models\Branch;
 use App\Models\Order;
 use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Actions;
@@ -78,7 +79,11 @@ class ListOrders extends ListRecords
             'all' => Tab::make(__('All Orders'))
                 ->modifyQueryUsing(fn(Builder $query) => $query) // No filtering
                 ->icon('heroicon-o-circle-stack')
-                ->badge(Order::query()->count())
+                ->badge(Order::query()
+                    ->whereHas('branch', function ($query) {
+                        $query->where('type','!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+                    })
+                    ->count())
                 ->badgeColor('gray'),
         ];
 
@@ -87,9 +92,13 @@ class ListOrders extends ListRecords
             $tabs[$status] = Tab::make($label)
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('status', $status))
                 ->icon(Order::getStatusIcon($status))
-                ->badge(Order::query()->where('status', $status)
-                ->whereHas('orderDetails')
-                ->count())
+                ->badge(Order::query()
+                    ->whereHas('branch', function ($query) {
+                        $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+                    })
+                    ->where('status', $status)
+                    ->whereHas('orderDetails')
+                    ->count())
                 ->badgeColor(Order::getBadgeColor($status));
         }
 

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
+use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderTransfer;
 use Closure;
@@ -160,14 +161,7 @@ class TransferOrderResource extends Resource
         return true;
     }
 
-    protected function applySearchToTableQuery(Builder $query): Builder
-    {
-        if (filled($searchQuery = $this->getTableSearchQuery())) {
-            $query->whereIn('id', OrderTransfer::search($searchQuery)->keys());
-        }
 
-        return $query;
-    }
     public static function canCreate(): bool
     {
         return false;
@@ -179,11 +173,19 @@ class TransferOrderResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return static::getModel()::query()->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
+        return static::getModel()::query()
+            ->whereHas('branch', function ($query) {
+                $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+            })
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED]);
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])->count();
+        return static::getModel()::whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereHas('branch', function ($query) {
+                $query->where('type', '!=', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
+            })
+            ->count();
     }
 }
