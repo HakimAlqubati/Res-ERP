@@ -28,7 +28,7 @@
                     <thead>
                         <x-filament-tables::row>
                             <th>#</th>
-                            <th>Branch</th>
+                            <th>Reseller</th>
                             <th>Delivery Total</th>
                             <th>Invoiced Total</th>
                             <th>Balance</th>

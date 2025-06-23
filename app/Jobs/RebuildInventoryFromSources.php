@@ -66,6 +66,14 @@ class RebuildInventoryFromSources
                     'model' => $grn,
                 ]);
             }
+            $returnedOrders = \App\Models\ReturnedOrder::with(['details', 'store'])->approved()->get();
+            foreach ($returnedOrders as $order) {
+                $records->push([
+                    'date' => $order->returned_date,
+                    'type' => 'returned_order',
+                    'model' => $order,
+                ]);
+            }
 
             // 🟦 جمع فواتير الشراء
             $invoices = PurchaseInvoice::with(['details', 'store'])->get();
@@ -101,6 +109,7 @@ class RebuildInventoryFromSources
                     'purchase_invoice' => $this->createFromInvoice($item['model']),
                     'stock_supply' => $this->createFromSupplyOrder($item['model']),
                     'stock_adjustment_detail' => $this->createFromStockAdjustmentDetail($item['model']),
+                    'returned_order' => $this->createFromReturnedOrder($item['model']),
                 };
             }
 
@@ -359,5 +368,49 @@ class RebuildInventoryFromSources
             'unit_price' => $detail->price / $detail->package_size, // ← سعر القطعة الواحدة
             'source_invoice_id' => $invoice->id ?? null,
         ];
+    }
+
+    protected function createFromReturnedOrder(\App\Models\ReturnedOrder $order): void
+    {
+        foreach ($order->details as $detail) {
+            // if (!empty($this->productIds) && !in_array($detail->product_id, $this->productIds)) {
+            //     continue;
+            // }
+
+            $notes = 'Returned order for Order #' . $order->original_order_id;
+
+            if ($order->store?->name) {
+                $notes .= ' in (' . $order->store->name . ')';
+            }
+
+            $priceInfo = $this->getLastPurchasePrice(
+                $detail->product_id,
+                $order->store_id,
+                $order->returned_date
+            );
+
+            $price = $priceInfo
+                ? $priceInfo['unit_price'] * $detail->package_size
+                : 0;
+
+            if ($price == 0) {
+                $price = getUnitPrice($detail->product_id, $detail->unit_id);
+            }
+
+            InventoryTransaction::create([
+                'product_id' => $detail->product_id,
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                'quantity' => $detail->quantity,
+                'unit_id' => $detail->unit_id,
+                'package_size' => $detail->package_size,
+                'price' => $price,
+                'movement_date' => $order->returned_date,
+                'transaction_date' => $order->returned_date,
+                'store_id' => $order->store_id,
+                'notes' => $notes,
+                'transactionable_id' => $order->original_order_id,
+                'transactionable_type' => \App\Models\ReturnedOrder::class,
+            ]);
+        }
     }
 }

@@ -24,7 +24,7 @@
                     <thead style="top:64px;">
                         <x-filament-tables::row>
                             <th>#</th>
-                            <th>Branch</th>
+                            <th>Reseller</th>
                             <th>Total Sales</th>
                             <th>Total Payments</th>
                             <th>Balance</th>

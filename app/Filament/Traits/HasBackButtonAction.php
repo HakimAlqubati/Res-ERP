@@ -11,7 +11,7 @@ trait HasBackButtonAction
     protected function getHeaderActions(): array
     {
         return [Action::make('back_to_dashboard')
-            ->label(__('Back to Reports'))
+            ->label(__('Back'))
             ->url(InventoryReportLinks::getUrl())
             ->color('gray')
             ->icon('heroicon-o-arrow-left')];
@@ -19,7 +19,7 @@ trait HasBackButtonAction
     protected function getBackToDashboardAction(): Action
     {
         return Action::make('back_to_dashboard')
-            ->label(__('Back to Reports'))
+            ->label(__('Back'))
             ->url(InventoryReportLinks::getUrl())
             ->color('gray')
             ->icon('heroicon-o-arrow-left');

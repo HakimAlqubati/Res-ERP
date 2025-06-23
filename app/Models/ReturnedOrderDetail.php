@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -47,5 +48,9 @@ class ReturnedOrderDetail extends Model
     public function getTotalPriceWithCurrencyAttribute(): string
     {
         return formatMoney($this->getTotalPriceAttribute());
+    }
+    public function returnedOrderStore()
+    {
+        return $this->returnedOrder?->store;
     }
 }
