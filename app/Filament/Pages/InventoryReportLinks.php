@@ -31,8 +31,8 @@ class InventoryReportLinks extends Page
 
     public function getTitle(): string | Htmlable
     {
-        return __('Inventory Reports');
         return '';
+        return __('Inventory Reports');
     }
 
     public function getReportLinks(): array
@@ -74,7 +74,7 @@ class InventoryReportLinks extends Page
             [
                 'title' => 'Store Position Report',
                 'description' => 'Detailed report on store stock positions.',
-                'icon' => 'heroicon-o-map-pin',
+                'icon' => 'heroicon-o-archive-box',
                 'url' => InventoryTransactionPurchaseReportResource::getUrl(),
             ],
             [
@@ -92,7 +92,7 @@ class InventoryReportLinks extends Page
             [
                 'title' => 'Stock Supply Orders',
                 'description' => 'Report on stock supply orders.',
-                'icon' => 'heroicon-o-truck',
+                'icon' => 'heroicon-o-adjustments-horizontal',
                 'url' => StockSupplyOrderReportResource::getUrl(),
             ],
         ];
