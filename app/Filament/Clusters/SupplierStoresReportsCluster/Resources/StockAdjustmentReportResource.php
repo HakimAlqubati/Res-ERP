@@ -10,6 +10,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustment
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
 use App\Models\StockAdjustmentReport;
+use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
@@ -31,7 +32,7 @@ class StockAdjustmentReportResource extends Resource
     protected static ?string $cluster = InventoryReportCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 9;
-protected static bool $shouldRegisterNavigation = false;
+    protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
     {
         return 'Stock Adjustment';
@@ -74,7 +75,12 @@ protected static bool $shouldRegisterNavigation = false;
                     ->getOptionLabelFromRecordUsing(fn($record) => "{$record->code} - {$record->name}")
 
                     ->multiple(),
-            ],FiltersLayout::AboveContent)
+                SelectFilter::make("store_id")->placeholder('Select Store')
+                    ->label(__('lang.store'))->searchable()
+                    ->options(
+                        Store::active()->get()->pluck('name', 'id')->toArray()
+                    ),
+            ], FiltersLayout::AboveContent)
             ->actions([])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
