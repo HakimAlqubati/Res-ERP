@@ -18,9 +18,7 @@ class FifoAllocatorService
 
         $product = \App\Models\Product::find($productId);
 
-        if ($productId == 196) {
-            return [];
-        }
+        
         if (! $product) {
             // خيار 1: تجاهل المنتج
             return [];
