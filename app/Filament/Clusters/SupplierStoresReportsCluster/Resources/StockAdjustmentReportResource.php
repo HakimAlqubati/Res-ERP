@@ -68,6 +68,11 @@ class StockAdjustmentReportResource extends Resource
 
             ])
             ->filters([
+                SelectFilter::make('product.category_id')
+                    ->label('Category')
+                    ->relationship('product.category', 'name')
+                    ->searchable()->preload()
+                    ->multiple(),
                 SelectFilter::make('proudct_id')
                     ->label('Product')
                     ->relationship('product', 'name', fn($query) => $query->select('id', 'name', 'code')->limit(10))
