@@ -16,6 +16,7 @@ use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -59,7 +60,9 @@ class StockAdjustmentReportResource extends Resource
                 TextColumn::make('product.name')->searchable()->toggleable(),
                 TextColumn::make('unit.name')->searchable()->toggleable(),
                 TextColumn::make('package_size')->alignCenter(true)->toggleable(),
-                TextColumn::make('quantity')->alignCenter(true),
+                TextColumn::make('quantity')->alignCenter(true)
+                ->summarize(Sum::make())
+                ,
                 TextColumn::make('adjustment_type')->alignCenter(true),
                 TextColumn::make('store.name')->toggleable(),
                 TextColumn::make('notes'),
