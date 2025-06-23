@@ -9,9 +9,12 @@ use App\Filament\Resources\DeliveredResellerOrdersResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\DeliveredResellerOrders;
 use App\Models\Order;
+use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -39,7 +42,26 @@ class DeliveredResellerOrdersResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columns(3)->schema([
+                        Select::make('branch_id')->required()
+                            ->label(__('lang.reseller'))
+                            ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),
+                        DatePicker::make('delivered_at')
+                            ->label(__('lang.delivered_at'))
+                            ->visibleOn('view'),
+                        Forms\Components\DateTimePicker::make('created_at')
+                            ->label(__('lang.created_at')),
+                        Select::make('stores')->multiple()->required()
+                            ->label(__('lang.store'))
+                            // ->disabledOn('edit')
+                            ->options([
+                                Store::active()
+                                    // ->withManagedStores()
+                                    ->get()->pluck('name', 'id')->toArray()
+                            ])->hidden(),
+                    ]),
+                ])
             ]);
     }
 
@@ -57,11 +79,11 @@ class DeliveredResellerOrdersResource extends Resource
                     ->weight(FontWeight::Bold),
 
                 TextColumn::make('branch.name')
-                    ->label('Branch')
+                    ->label('Reseller')
                     ->sortable(),
 
                 TextColumn::make('customer.name')
-                    ->label('Branch Manager')
+                    ->label('Manager')
                     ->sortable(),
 
                 TextColumn::make('total_amount')
@@ -195,8 +217,7 @@ class DeliveredResellerOrdersResource extends Resource
     {
         return [
             'index' => Pages\ListDeliveredResellerOrders::route('/'),
-            'create' => Pages\CreateDeliveredResellerOrders::route('/create'),
-            'edit' => Pages\EditDeliveredResellerOrders::route('/{record}/edit'),
+            'view' => Pages\ViewDeliveredResellerOrders::route('/{record}'),
         ];
     }
 

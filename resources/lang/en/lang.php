@@ -206,4 +206,5 @@ return [
     'please_select_store' => 'Please select a store',
     'use_in_orders' => 'Used in Orders',
     'reseller' => 'Reseller',
+    'delivered_at' => 'Deliverd At',
 ];

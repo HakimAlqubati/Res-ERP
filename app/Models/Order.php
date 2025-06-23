@@ -481,6 +481,7 @@ class Order extends Model implements Auditable
             'items' => $this->orderDetails->map(fn($item, $i) => [
                 'index'     => $i + 1,
                 'name'      => $item->product?->name,
+                'product_code'      => $item->product?->code,
                 'unit'      => $item->unit?->name ?? '-',  // ✅ أضف هذه السطر
                 'quantity'  => $item->available_quantity,
             ]),

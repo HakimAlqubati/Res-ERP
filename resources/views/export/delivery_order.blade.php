@@ -156,9 +156,13 @@
     <div class="section">
         <strong>To:</strong><br>
         <div><strong>{{ $deliveryInfo['customer_name'] }}</strong></div>
-        <div style="max-width: 300px;">
-            {{ $deliveryInfo['branch_address'] }}
-        </div>
+        <table>
+            <tr>
+                <td style="width: 300px;">
+                    {{ $deliveryInfo['branch_address'] }}
+                </td>
+            </tr>
+        </table>
     </div>
 
     <table class="meta-box">
@@ -172,6 +176,7 @@
         <thead>
             <tr>
                 <th style="width: 5%">#</th>
+                <th style="width: 55%">Code</th>
                 <th style="width: 55%">Product</th>
                 <th style="width: 20%">UNIT</th>
                 <th style="width: 20%">QTY</th>
@@ -181,15 +186,16 @@
             @foreach ($deliveryInfo['items'] as $item)
                 <tr>
                     <td>{{ $item['index'] }}</td>
+                    <td>{{ $item['product_code'] }}</td>
                     <td>{{ $item['name'] }}</td>
                     <td>{{ $item['unit'] ?? '-' }}</td>
                     <td>{{ number_format($item['quantity'], 2) }}</td>
                 </tr>
             @endforeach
-            <tr class="total-row">
+            {{-- <tr class="total-row">
                 <td colspan="3" style="text-align: right;">Total QTY</td>
                 <td>{{ number_format($deliveryInfo['total_qty'], 2) }}</td>
-            </tr>
+            </tr> --}}
         </tbody>
     </table>
 

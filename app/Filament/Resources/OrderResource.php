@@ -94,12 +94,7 @@ class OrderResource extends Resource
                                 Store::active()
                                     // ->withManagedStores()
                                     ->get()->pluck('name', 'id')->toArray()
-                            ])->hidden()
-                        // ->default(fn($record) => $record?->stores?->pluck('store_id')->toArray() ?? [])
-                        // ->default(function ($record) {
-                        //     dd($record);
-                        // })
-                        ,
+                            ])->hidden(),
                     ]),
                     // Repeater for Order Details
                     Repeater::make('orderDetails')->columnSpanFull()->hiddenOn(['view', 'edit'])
@@ -246,7 +241,7 @@ class OrderResource extends Resource
                     ->label(__('lang.created_at'))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
-            
+
 
                 // TextColumn::make('recorded'),
                 // TextColumn::make('orderDetails'),
@@ -375,7 +370,7 @@ class OrderResource extends Resource
                     // ->visible(fn(): bool => isSuperAdmin())
                     ->hidden(),
 
- 
+
 
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
