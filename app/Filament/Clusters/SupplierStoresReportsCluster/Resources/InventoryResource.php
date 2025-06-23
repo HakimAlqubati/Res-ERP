@@ -174,7 +174,9 @@ class InventoryResource extends Resource
                             ->pluck('id', 'id')
                             ->toArray();
                     })
-                    ->getOptionLabelUsing(fn($value) => "ID: $value"),
+                    ->getOptionLabelUsing(fn($value) => "ID: $value")
+                    ->hidden()
+                    ,
 
                 SelectFilter::make('movement_type')
                     ->label('Movement Type')
@@ -182,7 +184,12 @@ class InventoryResource extends Resource
                         InventoryTransaction::MOVEMENT_IN => 'In',
                         InventoryTransaction::MOVEMENT_OUT => 'Out',
                     ]),
-
+                SelectFilter::make('product.category_id')
+                    ->label('Category')
+                    ->relationship('product.category', 'name')
+                    ->searchable()
+                    ->preload() 
+                    ->multiple(),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))
                     ->multiple()
