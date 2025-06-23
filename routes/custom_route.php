@@ -20,6 +20,7 @@ use App\Models\StockIssueOrder;
 use App\Services\FifoMethodService;
 use App\Services\FixFifo\FifoAllocatorService;
 use App\Services\UnitPriceFifoUpdater;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/custom-route', function () {
@@ -188,3 +189,54 @@ Route::get('/wrongStoreReport', [TestController8::class, 'wrongStoreReport']);
 Route::get('/updatePricesOfSuppliesManufacturingProducts', [TestController8::class, 'updatePricesOfSuppliesManufacturingProducts']);;
 
 Route::get('/runFullUpdate/{categoryId}/{unitId}/{newPrice}', [TestController8::class, 'handleUpdateFromRoute']);
+
+Route::get('/updateCorrectStore',function(){
+
+    DB::statement("
+        UPDATE stock_supply_orders sso
+        JOIN stock_supply_order_details ssod ON ssod.stock_supply_order_id = sso.id
+        JOIN products p ON p.id = ssod.product_id
+        SET sso.store_id = 8
+        WHERE p.category_id = 31
+    ");
+
+    DB::statement("
+        UPDATE stock_issue_orders sio
+        JOIN stock_issue_order_details siod ON siod.stock_issue_order_id = sio.id
+        JOIN products p ON p.id = siod.product_id
+        SET sio.store_id = 8
+        WHERE p.category_id = 31
+    ");
+
+    DB::statement("
+        UPDATE stock_adjustment_details sad
+        JOIN products p ON p.id = sad.product_id
+        SET sad.store_id = 8
+        WHERE p.category_id = 31
+    ");
+
+    // ----------------------------
+    
+    DB::statement("
+        UPDATE stock_supply_orders sso
+        JOIN stock_supply_order_details ssod ON ssod.stock_supply_order_id = sso.id
+        JOIN products p ON p.id = ssod.product_id
+        SET sso.store_id = 9
+        WHERE p.category_id = 36
+    ");
+
+    DB::statement("
+        UPDATE stock_issue_orders sio
+        JOIN stock_issue_order_details siod ON siod.stock_issue_order_id = sio.id
+        JOIN products p ON p.id = siod.product_id
+        SET sio.store_id = 9
+        WHERE p.category_id = 36
+    ");
+
+    DB::statement("
+        UPDATE stock_adjustment_details sad
+        JOIN products p ON p.id = sad.product_id
+        SET sad.store_id = 9
+        WHERE p.category_id = 36
+    ");;
+});

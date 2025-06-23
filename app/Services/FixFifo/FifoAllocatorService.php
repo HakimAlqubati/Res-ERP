@@ -27,14 +27,14 @@ class FifoAllocatorService
             return [];
         }
 
-        $store = defaultManufacturingStore($product);
+        $storeId = defaultManufacturingStore($product)->id;
 
-        if (! $store) {
-            Log::warning("⛔ Default manufacturing store not found for product_id: {$productId}");
-            return [];
-        }
+        // if (! $store) {
+        //     Log::warning("⛔ Default manufacturing store not found for product_id: {$productId}");
+        //     return [];
+        // }
 
-        $storeId = $store->id;
+        // $storeId = $store->id;
         // Step 1: Get supply (movement_type = 'in') ordered by transaction_date
         $supplies = DB::table('inventory_transactions')
             ->where('movement_type', 'in')
