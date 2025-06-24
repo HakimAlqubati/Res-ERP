@@ -217,10 +217,14 @@ class TestController8 extends Controller
 
         $request->validate([
             'store_id' => 'required|exists:stores,id',
+            'product_id' => 'nullable|exists:products,id',
         ]);
 
         $data = (new ManufacturingBackfillService())
-            ->simulateBackfill($request->store_id);
+            ->simulateBackfill(
+                $request->store_id,
+                $request->product_id
+            );
 
         return response()->json($data);
     }
@@ -231,12 +235,12 @@ class TestController8 extends Controller
             'store_id' => 'required|integer|exists:stores,id',
         ]);
 
-        try {
-             (new ManufacturingBackfillService())
+            try {
+            (new ManufacturingBackfillService())
                 ->handleFromSimulation($request->store_id);
 
             return response()->json([
-                'status' => true,
+                   'status' => true,
                 'message' => 'تم حفظ الحركات بنجاح.',
             ]);
         } catch (\Throwable $e) {

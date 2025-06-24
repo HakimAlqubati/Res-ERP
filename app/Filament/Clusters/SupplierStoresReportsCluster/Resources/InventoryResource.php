@@ -99,6 +99,7 @@ class InventoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Qty')->alignCenter(true)
+                    ->formatStateUsing(fn($state) => formatQunantity($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('unit.name')
@@ -175,8 +176,7 @@ class InventoryResource extends Resource
                             ->toArray();
                     })
                     ->getOptionLabelUsing(fn($value) => "ID: $value")
-                    ->hidden()
-                    ,
+                    ->hidden(),
 
                 SelectFilter::make('movement_type')
                     ->label('Movement Type')
@@ -188,7 +188,7 @@ class InventoryResource extends Resource
                     ->label('Category')
                     ->relationship('product.category', 'name')
                     ->searchable()
-                    ->preload() 
+                    ->preload()
                     ->multiple(),
                 SelectFilter::make("product_id")
                     ->label(__('lang.product'))

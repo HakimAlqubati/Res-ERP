@@ -33,6 +33,19 @@ class InboundOutflowReportService
 
         foreach ($inboundTransactions as $inTxn) {
             $outflows = InventoryTransaction::query()
+                ->with('unit')
+                ->where('source_transaction_id', $inTxn->id)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+                ->whereNull('deleted_at')
+                ->orderBy('transaction_date')
+                ->get();
+
+            $totalOutQty = $outflows->sum('quantity');
+
+            $remainingQtyFromThisIN = max(0, $inTxn->quantity - $totalOutQty);
+
+
+            $outflows = InventoryTransaction::query()
                 ->with('unit') // تحميل الوحدة للحركات OUT
                 ->where('source_transaction_id', $inTxn->id)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
@@ -70,7 +83,9 @@ class InboundOutflowReportService
                 'unit_name' => optional($inTxn->unit)->name,
                 'price' => formatMoneyWithCurrency($inTxn->price),
                 'total_value' => formatMoneyWithCurrency($inTxn->quantity * $inTxn->price),
+                'real_time_remaining_qty' => formatQunantity($remainingQtyFromThisIN),
                 'outflows' => $outDetails,
+
             ];
         }
 

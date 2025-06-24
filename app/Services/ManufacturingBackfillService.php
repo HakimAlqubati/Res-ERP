@@ -26,25 +26,20 @@ class ManufacturingBackfillService
         Log::info('Starting handleFromSimulation...', ['timestamp' => now()]);
 
         DB::transaction(function () use ($storeId) {
-            // تحقق من صحة المخزن
             if ($storeId && !Store::whereKey($storeId)->exists()) {
                 throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
             }
 
-            // نفذ المحاكاة
             $simulatedTransactions = $this->simulateBackfill($storeId);
 
-            // اجمع كل transactionable_id المرتبطة لتفادي تكرار أو تداخل في الحركات القديمة
             $stockSupplyOrderIds = collect($simulatedTransactions)->pluck('transactionable_id')->unique();
 
-            // حذف أي حركات OUT سابقة من نوع StockSupplyOrder مرتبطة بنفس الأوامر
             InventoryTransaction::where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->where('transactionable_type', StockSupplyOrder::class)
                 ->whereIn('transactionable_id', $stockSupplyOrderIds)
                 ->withTrashed()
                 ->forceDelete();
 
-            // إنشاء الحركات الجديدة
             foreach ($simulatedTransactions as $data) {
                 InventoryTransaction::create($data);
             }
@@ -57,22 +52,31 @@ class ManufacturingBackfillService
     }
 
 
-    public function simulateBackfill(?int $storeId)
-    {
+
+    public function simulateBackfill(
+        ?int $storeId,
+        $productId = null
+    ) {
         if ($storeId && !Store::whereKey($storeId)->exists()) {
             throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
         }
 
+        $globalAllocatedPerSource = [];
+
         $transactions = InventoryTransaction::query()
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where('transactionable_type', StockSupplyOrder::class)
-            ->whereHas('product', function ($query) {
+            ->whereHas('product', function ($query) use ($productId) {
                 $query->has('productItems');
+                if ($productId) {
+                    $query->where('product_id', $productId);
+                }
             })
             ->when($storeId, fn($q) => $q->where('store_id', $storeId))
             ->get();
 
-        return $transactions->flatMap(function ($transaction) use ($storeId) {
+
+        return $transactions->flatMap(function ($transaction) use ($storeId, &$globalAllocatedPerSource) {
             $components = ProductItemCalculatorService::calculateComponents(
                 $transaction->product_id,
                 $transaction->quantity
@@ -81,17 +85,22 @@ class ManufacturingBackfillService
             $supplyOrderId = $transaction->transactionable_id;
             $movementDate = $transaction->transaction_date;
             $result = [];
-
+            $componentCostSummary = [];
             foreach ($components as $component) {
+                $productKey = $component['product_id'];
+
+                if (!isset($globalAllocatedPerSource[$productKey])) {
+                    $globalAllocatedPerSource[$productKey] = [];
+                }
+
                 $packageSize = \App\Models\UnitPrice::where('product_id', $component['product_id'])
                     ->where('unit_id', $component['unit_id'])
                     ->value('package_size');
 
                 if (!$packageSize || $packageSize == 0) {
-                    continue; // تفادي القسمة على صفر
+                    continue;
                 }
 
-                // تحضير الداتا
                 $component['package_size'] = $packageSize;
 
                 try {
@@ -99,15 +108,37 @@ class ManufacturingBackfillService
                         $component,
                         $storeId,
                         $movementDate,
-                        $supplyOrderId
+                        $supplyOrderId,
+                        $globalAllocatedPerSource[$productKey],
+                        $transaction->product->name
                     );
 
                     $result = array_merge($result, $fifoAllocations);
+                    foreach ($fifoAllocations as $allocation) {
+                        $key = $allocation['product_id'];
+
+                        if (!isset($componentCostSummary[$key])) {
+                            $componentCostSummary[$key] = [
+                                'total_cost' => 0,
+                                'total_qty' => 0,
+                                'latest_date' => null,
+                            ];
+                        }
+
+                        $cost = $allocation['quantity'] * $allocation['price'];
+                        $componentCostSummary[$key]['total_cost'] += $cost;
+                        $componentCostSummary[$key]['total_qty'] += $allocation['quantity'];
+                        $componentCostSummary[$key]['latest_date'] = $allocation['transaction_date'];
+                    }
                 } catch (\RuntimeException $e) {
-                    // لو ما في كمية كافية، تجاهل أو احفظ الخطأ لو حبيت
                     Log::warning("FIFO Allocation failed for product {$component['product_id']}: " . $e->getMessage());
                 }
             }
+            $this->updateCompositeProductPriceBasedOnAllocations(
+                $transaction->product_id,
+                $transaction->store_id,
+                $componentCostSummary
+            );
 
             return $result;
         });
@@ -169,32 +200,35 @@ class ManufacturingBackfillService
         array $component,
         int $storeId,
         string $movementDate,
-        int $stockSupplyOrderId
+        int $stockSupplyOrderId,
+        array &$allocatedPerSource,
+        string $compositeProductName
     ): array {
         $requiredQty = $component['quantity_after_waste'];
         $productId = $component['product_id'];
         $unitId = $component['unit_id'];
-
         $pricePerUnit = $component['price_per_unit'];
-        $unitName = $component['unit_name'];
 
         $inTransactions = $this->getRawMaterialInTransactions($productId, $storeId);
-
+        $totalBatches = count($inTransactions);
         $allocated = [];
-        foreach ($inTransactions as $in) {
+        foreach ($inTransactions as $index => $in) {
+            $isLastBatch = ($index === $totalBatches - 1);
             $totalInQty = $in->quantity * $in->package_size;
 
-            $consumed = InventoryTransaction::where('source_transaction_id', $in->id)
+            $alreadyConsumed = InventoryTransaction::where('source_transaction_id', $in->id)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->sum(DB::raw('quantity * package_size'));
 
+            $tempConsumed = $allocatedPerSource[$in->id] ?? 0;
+            $consumed = $alreadyConsumed + $tempConsumed;
             $remaining = round($totalInQty - $consumed, 4);
 
-            if ($remaining <= 0) {
+            if ($remaining <= 0 && !$isLastBatch) {
                 continue;
             }
-
-            $take = min($requiredQty, $remaining); // ❗️لا تأخذ أكثر من المتبقي
+            $take = min($requiredQty, $remaining > 0 ? $remaining : $requiredQty);
+            $allocatedPerSource[$in->id] = $tempConsumed + $take;
 
             if ($take <= 0) {
                 continue;
@@ -215,21 +249,70 @@ class ManufacturingBackfillService
                 'transactionable_type' => StockSupplyOrder::class,
                 'transactionable_id' => $stockSupplyOrderId,
                 'source_transaction_id' => $in->id,
-                'notes' => "FIFO OUT for '{$component['product_name']}' - SupplyOrder #$stockSupplyOrderId",
+                'notes' => "FIFO OUT for raw '{$component['product_name']}' used in '{$compositeProductName}' - SupplyOrder #$stockSupplyOrderId",
+
             ];
 
-            $requiredQty = round($requiredQty - $take, 4); // ❗️حدث الكمية المتبقية بدقة
+            $requiredQty = round($requiredQty - $take, 4);
 
             if ($requiredQty <= 0) {
                 break;
             }
         }
 
-
         if ($requiredQty > 0) {
             throw new \RuntimeException("Insufficient stock for product ID: $productId. Needed: $component[quantity_after_waste], Remaining: $requiredQty");
         }
 
         return $allocated;
+    }
+
+    protected function updateCompositeProductPriceBasedOnAllocations(int $productId, int $storeId, array $componentCostSummary): void
+    {
+        $product = Product::with('productItems')->findOrFail($productId);
+
+        $total = 0;
+
+        foreach ($product->productItems as $item) {
+            $componentId = $item->component_product_id;
+            $unitId = $item->unit_id;
+
+            if (!isset($componentCostSummary[$componentId])) {
+                continue;
+            }
+
+            $summary = $componentCostSummary[$componentId];
+
+            if ($summary['total_qty'] <= 0) {
+                continue;
+            }
+
+            $avgPrice = round($summary['total_cost'] / $summary['total_qty'], 4);
+
+            // تحديث السعر في product_items
+            $item->update([
+                'price_per_unit' => $avgPrice,
+            ]);
+
+            // تحديث السعر في unit_prices
+            $unitPrice = \App\Models\UnitPrice::where('product_id', $componentId)
+                ->where('unit_id', $unitId)
+                ->first();
+
+            if ($unitPrice) {
+                $unitPrice->update([
+                    'price' => $avgPrice,
+                    'date' => $summary['latest_date'],
+                    'notes' => 'Updated from actual used IN transactions during manufacturing',
+                ]);
+            }
+
+            $total += $item->quantity * $avgPrice;
+        }
+
+        // تحديث سعر المنتج المركب
+        $product->update([
+            'unit_price' => round($total, 4),
+        ]);
     }
 }

@@ -54,7 +54,7 @@ class OrderDetails extends Model implements Auditable
         // 'total_unit_price',
     ];
 
-    protected $appends = ['total_price'];
+    protected $appends = ['total_price', 'returned_quantity', 'remaining_after_return'];
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -241,5 +241,30 @@ class OrderDetails extends Model implements Auditable
     {
         $res = $this->available_quantity * $this->price;
         return formatMoney($res);
+    }
+
+    public function getReturnedQuantityAttribute(): float
+    {
+        if (!$this->order) {
+            return 0;
+        }
+
+        $returnedQty =  \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function ($query) {
+            $query->where('original_order_id', $this->order_id)
+                ->approved();
+        })
+            ->where('product_id', $this->product_id)
+            ->where('unit_id', $this->unit_id)
+            ->get()
+            ->sum('quantity');
+
+        // ⚠️ لا تسمح بإرجاع كمية أكثر من المتاحة
+        return min($this->available_quantity, $returnedQty);
+    }
+
+
+    public function getRemainingAfterReturnAttribute(): float
+    {
+        return max(0, $this->available_quantity - $this->returned_quantity);
     }
 }

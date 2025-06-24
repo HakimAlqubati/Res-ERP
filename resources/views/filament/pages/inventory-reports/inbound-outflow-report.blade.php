@@ -33,8 +33,8 @@
         }
 
         .teal-striped-table tbody tr:nth-child(even) {
-            background-color: #d1e9e6;
-            /* Teal-tinted light background */
+            background-color: #1f685f;
+            color: #ffffff;
         }
 
         .teal-striped-table th,
@@ -42,14 +42,9 @@
             border: 1px solid #ccc;
             padding: 8px;
             color: #000;
-            /* لتوحيد لون النص */
         }
 
-        .teal-striped-table tbody tr:nth-child(even) {
-            background-color: #1f685f;
-            color: #ffffff;
-        }
-        .white_clr{
+        .white_clr {
             color: #ffffff !important;
         }
     </style>
@@ -69,7 +64,7 @@
                 <thead class="fixed-header">
                     <x-filament-tables::row class="header_report">
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
-                        <th colspan="5" class="no_border_right_left text-center">
+                        <th colspan="6" class="no_border_right_left text-center">
                             <h3 class="text-lg font-bold">Inbound → Outflow Report</h3>
                         </th>
                         <th colspan="2"
@@ -83,6 +78,7 @@
                         <th>IN ID</th>
                         <th>Product</th>
                         <th>Qty</th>
+                        <th>Remaining Qty</th> {{-- ✅ جديد --}}
                         <th>Unit</th>
                         <th>Qty Per Pack</th>
                         <th>Price</th>
@@ -103,6 +99,9 @@
                                 {{ $record['quantity'] }}
                             </x-filament-tables::cell>
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                {{ $record['real_time_remaining_qty'] ?? 'N/A' }}
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                 {{ $record['unit_name'] }}
                             </x-filament-tables::cell>
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
@@ -116,7 +115,6 @@
                             </x-filament-tables::cell>
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                 <table class="teal-striped-table w-full text-sm border mt-2">
-
                                     <thead>
                                         <tr>
                                             <th class="white_clr">Quantity</th>
@@ -141,7 +139,6 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-
                             </x-filament-tables::cell>
                         </x-filament-tables::row>
                     @endforeach

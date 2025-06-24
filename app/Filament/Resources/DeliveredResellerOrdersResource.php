@@ -99,7 +99,13 @@ class DeliveredResellerOrdersResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->sortable(),
 
-
+                TextColumn::make('balance_due')
+                    ->label(__('Remaining'))
+                    ->alignCenter()
+                    ->sortable()
+                    ->formatStateUsing(function ($state) {
+                        return formatMoneyWithCurrency($state);
+                    }),
                 TextColumn::make('created_at')
                     ->label('Created At')
                     ->dateTime()
@@ -171,9 +177,9 @@ class DeliveredResellerOrdersResource extends Resource
                                 ->label('Amount')
                                 ->required()
                                 ->maxValue(function ($record) {
-                                    return $record->total_amount;
+                                    return $record->balance_due;
                                 })->placeholder(function ($record) {
-                                    return $record->total_amount;
+                                    return $record->balance_due;
                                 })
                                 ->numeric()
                                 ->minValue(0.01)

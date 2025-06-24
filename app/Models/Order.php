@@ -503,6 +503,12 @@ class Order extends Model implements Auditable
 
     public function getBalanceDueAttribute(): float
     {
-        return ($this->total ?? 0) - $this->total_paid;
+        return ($this->total_amount ?? 0) - $this->total_paid;
     }
+
+    public function returns()
+    {
+        return $this->hasMany(ReturnedOrder::class, 'original_order_id');
+    }
+    
 }

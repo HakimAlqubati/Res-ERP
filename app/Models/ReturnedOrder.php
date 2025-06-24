@@ -105,4 +105,18 @@ class ReturnedOrder extends Model implements Auditable
     {
         return $query->where('status', self::STATUS_APPROVED);
     }
+
+    public function getTotalReturnedAmountAttribute(): float
+    {
+        return $this->returns()
+            ->approved() // نأخذ فقط المرتجعات المعتمدة
+            ->with('details') // eager load لتفاصيل المرتجع
+            ->get()
+            ->flatMap(function ($returnedOrder) {
+                return $returnedOrder->details;
+            })
+            ->sum(function ($detail) {
+                return $detail->quantity * $detail->price;
+            });
+    }
 }
