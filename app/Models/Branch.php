@@ -58,6 +58,7 @@ class Branch extends Model implements HasMedia, Auditable
         'total_paid',
         'total_sales',
         'total_orders_amount',
+        'is_kitchen'
     ];
 
     // ✅ Constants

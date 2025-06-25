@@ -37,10 +37,13 @@ class PurchaseReportController extends Controller
             $categoryIds,
             $perPage
         );
-
+        $totalPages = $data['results'] instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $data['results']->lastPage()
+            : 1;
         return response()->json([
             'status' => true,
-            'data' => $data
+            'totalPages' => $totalPages,
+            'data' => $data,
         ]);
     }
 }

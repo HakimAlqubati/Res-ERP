@@ -36,6 +36,7 @@ class ReturnedOrder extends Model implements Auditable
         'store_id',
     ];
 
+    protected $appends = ['total_amount'];
     protected $casts = [
         'returned_date' => 'date',
     ];
@@ -118,5 +119,18 @@ class ReturnedOrder extends Model implements Auditable
             ->sum(function ($detail) {
                 return $detail->quantity * $detail->price;
             });
+    }
+
+    public function toArray()
+    {
+        
+        $array = parent::toArray(); // Get the default array representation
+        
+        // You can customize the response here
+        // For example, you might want to format dates or add additional fields
+        $array['total_amount'] = formatMoneyWithCurrency($this->total_amount);
+        $array['formatted_returned_date'] = \Carbon\Carbon::parse($this->returned_date)->format('Y-m-d'); // Format the returned_date
+
+        return $array;
     }
 }

@@ -61,7 +61,7 @@ class Store extends Model implements Auditable
 
     public function scopeCentralKitchenStores($query)
     {
-        if (auth()->user()->branch->is_kitchen) {
+        if (auth()->user()?->branch?->is_kitchen) {
             return $query->where('id', auth()->user()->branch->store_id);
         };
     }

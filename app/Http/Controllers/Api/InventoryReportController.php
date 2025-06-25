@@ -100,6 +100,7 @@ class InventoryReportController extends Controller
 
         $reportData = collect();
 
+        $rawData = null;
         if (!empty($productId)) {
             $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
             $reportData = $rawData->through(function ($item) {
@@ -107,12 +108,13 @@ class InventoryReportController extends Controller
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 $item->unit->name;
                 $item->movement_date = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
-                $item->transaction_date = \Carbon\Carbon::parse($item->transaction_date)->format('Y-m-d'); // force it here
+                $item->transaction_date = \Carbon\Carbon::parse($item->transaction_date)->format('Y-m-d');
+                $item->quantity =  formatQunantity($item->quantity );
                 return $item;
             });
         }
 
-        return ['reportData' => $reportData, 'product' => $product, 'totalPages' => $rawData->lastPage()];
+        return ['reportData' => $reportData, 'product' => $product, 'totalPages' =>  $rawData ? $rawData->lastPage() : 0];
     }
     public function filters()
     {

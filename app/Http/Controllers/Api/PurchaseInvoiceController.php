@@ -16,7 +16,16 @@ class PurchaseInvoiceController extends Controller
         $perPage = $request->input('per_page', 15);
         $query = PurchaseInvoice::query()
             ->with(['supplier:id,name', 'store:id,name', 'paymentMethod:id,name'])
-            ->select('id', 'invoice_no', 'supplier_id', 'store_id', 'date', 'payment_method_id', 'attachment');
+            ->select(
+                'id',
+                'invoice_no',
+                'supplier_id',
+                'store_id',
+                'date',
+                'payment_method_id',
+                'attachment',
+                'date'
+            );
 
         // 🔍 Filters
         if ($request->filled('supplier_id')) {
@@ -45,8 +54,9 @@ class PurchaseInvoiceController extends Controller
                 'supplier' => $invoice->supplier?->name,
                 'store' => $invoice->store?->name,
                 'details_count' => $invoice->details_count,
-                'total_amount' => number_format($invoice->total_amount, 2),
+                'total_amount' => formatMoneyWithCurrency($invoice->total_amount),
                 'has_attachment' => $invoice->has_attachment ? 'Yes' : 'No',
+                'date'=>$invoice->date,
             ];
         });
         $paginator->setCollection($data);

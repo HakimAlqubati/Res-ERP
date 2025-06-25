@@ -10,7 +10,15 @@ class ReturnedOrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ReturnedOrder::with(['details.product', 'details.unit', 'order', 'branch', 'store', 'creator', 'approver']);
+        $query = ReturnedOrder::with([
+            'details.product',
+            'details.unit',
+            'order',
+            'branch',
+            'store',
+            'creator',
+            'approver'
+        ]);
 
         if ($request->has('status')) {
             $query->where('status', $request->input('status'));
@@ -43,7 +51,15 @@ class ReturnedOrderController extends Controller
 
     public function show($id)
     {
-        $order = ReturnedOrder::with(['details.product', 'details.unit', 'order', 'branch', 'store', 'creator', 'approver'])->findOrFail($id);
+        $order = ReturnedOrder::with([
+            'details.product',
+            'details.unit',
+            'order',
+            'branch',
+            'store',
+            'creator',
+            'approver'
+        ])->findOrFail($id);
 
         return response()->json([
             'status' => true,

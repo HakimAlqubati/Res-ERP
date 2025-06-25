@@ -35,7 +35,7 @@ class InventoryDashboardService
                 return [
                     'branch' => $branchName,
                     'items' => $orders->sum(fn($order) => $order->item_count),
-                    'month_to_date' => $orders->sum(fn($order) => $order->total_amount),
+                    'month_to_date' => formatMoneyWithCurrency($orders->sum(fn($order) => $order->total_amount)),
                 ];
             })->values();
 
@@ -71,7 +71,7 @@ class InventoryDashboardService
                 ],
                 'invoices_entered' => [
                     'count' => $invoicesCount,
-                    'month_to_date' => $invoicesTotal,
+                    'month_to_date' => formatMoneyWithCurrency($invoicesTotal),
                 ],
             ],
             'branch_orders' => $branchOrders->all(),
@@ -79,9 +79,9 @@ class InventoryDashboardService
                 'chocolate' => [
                     'items_made' => $itemsMade,
                     'value' => [
-                        'today' => $todayValue,
-                        'yesterday' => $yesterdayValue,
-                        'month_to_date' => $monthToDateValue,
+                        'today' => formatMoneyWithCurrency($todayValue),
+                        'yesterday' => formatMoneyWithCurrency($yesterdayValue),
+                        'month_to_date' => formatMoneyWithCurrency($monthToDateValue),
                     ],
                 ],
             ],
