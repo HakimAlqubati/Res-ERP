@@ -218,8 +218,10 @@ class ManufacturingBackfillService
 
             $alreadyConsumed = InventoryTransaction::where('source_transaction_id', $in->id)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
-                ->sum(DB::raw('quantity * package_size'));
-
+                ->get()
+                ->sum(function ($txn) {
+                    return $txn->quantity * getUnitPricePackageSize($txn->product_id, $txn->unit_id);
+                });
             $tempConsumed = $allocatedPerSource[$in->id] ?? 0;
             $consumed = $alreadyConsumed + $tempConsumed;
             $remaining = round($totalInQty - $consumed, 4);
@@ -234,14 +236,16 @@ class ManufacturingBackfillService
                 continue;
             }
 
-            $quantityInUnits = $take / $in->package_size;
+            $outPackageSize = getUnitPricePackageSize($productId, $unitId);
+
+            $quantityInUnits = $take / $outPackageSize;
 
             $allocated[] = [
                 'movement_type' => InventoryTransaction::MOVEMENT_OUT,
                 'product_id' => $productId,
                 'unit_id' => $unitId,
                 'quantity' => round($quantityInUnits, 4),
-                'package_size' => getUnitPricePackageSize($productId,$unitId),
+                'package_size' => getUnitPricePackageSize($productId, $unitId),
                 'price' => $pricePerUnit,
                 'transaction_date' => $movementDate,
                 'movement_date' => $movementDate,
