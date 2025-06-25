@@ -241,7 +241,7 @@ class ManufacturingBackfillService
                 'product_id' => $productId,
                 'unit_id' => $unitId,
                 'quantity' => round($quantityInUnits, 4),
-                'package_size' => $in->package_size,
+                'package_size' => getUnitPricePackageSize($productId,$unitId),
                 'price' => $pricePerUnit,
                 'transaction_date' => $movementDate,
                 'movement_date' => $movementDate,
