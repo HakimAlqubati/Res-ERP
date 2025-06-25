@@ -57,8 +57,8 @@
                     $unit_price = $invoice_item->unit_price;
                     $sub_total = (float) $invoice_item->unit_price * (float) $invoice_item->quantity;
 
-                    $total_sub_total += $sub_total;
-                    $sum_unit_price += $unit_price;
+                    $total_sub_total += (float) $sub_total;
+                    $sum_unit_price += (float) $unit_price;
                 @endphp
                 <x-filament-tables::row>
                     <x-filament-tables::cell> {{ $invoice_item->product_code }} </x-filament-tables::cell>
