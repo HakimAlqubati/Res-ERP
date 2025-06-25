@@ -324,6 +324,10 @@ class BranchResource extends Resource
 
             ])
             ->actions([
+
+
+
+
                 Action::make('add_area')
                     ->modalHeading('')
                     ->modalWidth('lg') // Adjust modal size

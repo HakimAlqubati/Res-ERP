@@ -26,28 +26,23 @@ class OrderDeliveryReportService
             ])
             ->get();
 
-        // Group orders by branch_id
+ 
+        // Build the report data
         $grouped = $orders->groupBy('branch_id');
 
-        // Build the report data
         return $grouped->map(function ($orders, $branchId) {
-            $branchName = $orders->first()?->branch?->name ?? 'Unknown Branch';
+            $branch = $orders->first()?->branch;
+            $branchName = $branch?->name ?? 'Unknown Branch';
 
-            $doTotal = $orders
-                ->where('status', Order::DELEVIRED)
-                ->sum('total_amount');
-
-            $invoicedTotal = $orders->sum(function ($order) {
-                return $order->paidAmounts->sum('amount');
-            });
-
+            $doTotal = $orders->sum('total_amount');
+            $invoicedTotal = $branch?->paidAmounts->sum('amount') ?? 0;
             $balance = $doTotal - $invoicedTotal;
 
             return [
-                'branch'          => $branchName,
-                'do_total'        => $doTotal,
-                'invoiced_total'  => $invoicedTotal,
-                'balance'         => $balance,
+                'branch'         => $branchName,
+                'do_total'       => $doTotal,
+                'invoiced_total' => $invoicedTotal,
+                'balance'        => $balance,
             ];
         })->values();
     }

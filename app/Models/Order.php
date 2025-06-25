@@ -510,5 +510,19 @@ class Order extends Model implements Auditable
     {
         return $this->hasMany(ReturnedOrder::class, 'original_order_id');
     }
-    
+
+    public function salesAmounts()
+    {
+        return $this->hasMany(OrderSalesAmount::class);
+    }
+
+    public function getTotalSalesAttribute(): float
+    {
+        return $this->salesAmounts()->sum('amount');
+    }
+
+    public function getSalesBalanceAttribute(): float
+    {
+        return $this->total_sales - $this->total_paid;
+    }
 }

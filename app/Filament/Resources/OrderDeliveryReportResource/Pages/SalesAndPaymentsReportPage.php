@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\OrderDeliveryReportResource\Pages;
 
 use App\Filament\Resources\OrderDeliveryReportResource;
+use App\Services\Reports\ResellerBranches\BranchSalesBalanceReportService;
 use App\Services\Reports\ResellerBranches\OrderSalesPaymentsReportService;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Collection;
@@ -17,7 +18,9 @@ class SalesAndPaymentsReportPage extends Page
 
     public function mount(): void
     {
-        $this->report = (new OrderSalesPaymentsReportService())->generate();
+        $reportData = (new BranchSalesBalanceReportService())->generate();
+        
+        $this->report = $reportData;
     }
 
     public function getTitle(): string

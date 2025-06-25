@@ -51,7 +51,14 @@ class Branch extends Model implements HasMedia, Auditable
         'end_date',
         'more_description',
     ];
-    protected $appends = ['customized_categories', 'orders_count'];
+    protected $appends = [
+        'customized_categories',
+        'orders_count',
+        'reseller_balance',
+        'total_paid',
+        'total_sales',
+        'total_orders_amount',
+    ];
 
     // ✅ Constants
     public const TYPE_BRANCH = 'branch';
@@ -276,5 +283,40 @@ class Branch extends Model implements HasMedia, Auditable
     public function getOrdersCountAttribute(): int
     {
         return $this->orders()->count();
+    }
+
+    public function paidAmounts()
+    {
+        return $this->hasMany(BranchPaidAmount::class);
+    }
+
+    public function salesAmounts()
+    {
+        return $this->hasMany(BranchSalesAmount::class);
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        return $this->paidAmounts->sum('amount');
+    }
+
+    public function getTotalSalesAttribute(): float
+    {
+        return $this->salesAmounts->sum('amount');
+    }
+
+    public function getResellerBalanceAttribute(): float
+    {
+        return $this->total_sales - $this->total_paid;
+    }
+
+    public function getTotalOrdersAmountAttribute(): float
+    {
+        return $this->orders()
+            ->with('orderDetails') // مهم لتفادي N+1
+            ->get()
+            ->sum(function ($order) {
+                return $order->total_amount; // accessor في Order
+            });
     }
 }

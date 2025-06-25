@@ -36,6 +36,10 @@ class DeliveredResellerOrdersResource extends Resource
     protected static ?string $cluster = ResellersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
+    public static function getNavigationBadge(): ?string
+    {
+        return self::getEloquentQuery()->count();
+    }
 
 
     public static function form(Form $form): Form

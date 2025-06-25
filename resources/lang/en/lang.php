@@ -207,4 +207,5 @@ return [
     'use_in_orders' => 'Used in Orders',
     'reseller' => 'Reseller',
     'delivered_at' => 'Deliverd At',
+    'manager' => 'Manager',
 ];

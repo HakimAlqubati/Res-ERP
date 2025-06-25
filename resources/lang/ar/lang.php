@@ -189,4 +189,5 @@ return [
     'use_in_orders' => 'تستخدم في الطلبات',
     'reseller' => 'موزّع',
     'delivered_at' => 'تم التسليم في',
+    'manager'=>'المدير',
 ];
