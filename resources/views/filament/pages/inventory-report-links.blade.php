@@ -9,7 +9,7 @@
                 background-color: #ffffff;
                 border: 1.5px solid #0f766e;
                 border-radius: 1.5rem;
-                padding: 1.25rem 1.5rem;
+                padding: 4.25rem 4.25rem;
                 display: flex;
                 align-items: center;
                 gap: 0.75rem;
