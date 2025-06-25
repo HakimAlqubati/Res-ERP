@@ -6,6 +6,7 @@ use App\Jobs\CopyOrderOutToBranchStoreJob;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
 class DeveloperTools extends Page
 {
@@ -22,11 +23,15 @@ class DeveloperTools extends Page
                 ->color('gray')
                 ->requiresConfirmation()
                 ->action(function () {
+                    DB::beginTransaction(); // بدء المعاملة
+
                     try {
-                        dispatch(new \App\Jobs\RebuildInventoryFromSources());
+                        // تنفيذ الـ Job مباشرة
+                        (new \App\Jobs\RebuildInventoryFromSources())->handle();
+                        DB::commit(); // تأكيد المعاملة
                         showSuccessNotifiMessage('✅ Inventory rebuild job dispatched.');
                     } catch (\Throwable $th) {
-
+                        DB::rollBack(); // التراجع عن المعاملة في حال حدوث خطأ
                         showWarningNotifiMessage($th->getMessage());
                     }
                 }),
@@ -36,11 +41,16 @@ class DeveloperTools extends Page
                 ->color('warning')
                 ->requiresConfirmation()
                 ->action(function () {
+                    DB::beginTransaction(); // بدء المعاملة
+
                     try {
-                        dispatch(new \App\Jobs\AllocateAllProductsFifoJob());
+                        // تنفيذ الـ Job بشكل متزامن
+                        (new \App\Jobs\AllocateAllProductsFifoJob())->handle();
+                        DB::commit(); // تأكيد المعاملة
 
                         showSuccessNotifiMessage('✅ FIFO Allocation command executed successfully.');
                     } catch (\Throwable $th) {
+                        DB::rollBack(); // التراجع عن المعاملة في حال حدوث خطأ
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
                 }),
@@ -51,8 +61,15 @@ class DeveloperTools extends Page
                 ->color('success')
                 ->requiresConfirmation()
                 ->action(function () {
-                    dispatch(new CopyOrderOutToBranchStoreJob());
-                    showSuccessNotifiMessage('done');
+
+                    try {
+                        // تنفيذ الـ Job بشكل متزامن
+                        (new \App\Jobs\CopyOrderOutToBranchStoreJob())->handle();
+
+                        showSuccessNotifiMessage('✅ Order copied from OUT to IN successfully.');
+                    } catch (\Throwable $th) {
+                        showWarningNotifiMessage("❌ Error: " . $th->getMessage());
+                    }
                 }),
 
 
@@ -68,19 +85,24 @@ class DeveloperTools extends Page
                 ])
                 ->action(function (array $data) {
                     $storeId = $data['store_id'];
-                    dispatch(new \App\Jobs\ManufacturingBackfillJob($storeId));
-                    showSuccessNotifiMessage('done');
+                    try {
+                        // تنفيذ الـ Job بشكل متزامن
+                        (new \App\Jobs\ManufacturingBackfillJob($storeId))->handle();
+                        showSuccessNotifiMessage('✅ Manufacturing Backfill command executed successfully.');
+                    } catch (\Throwable $th) {
+                        showWarningNotifiMessage("❌ Error: " . $th->getMessage());
+                    }
                 }),
-            Action::make('Update Product Unit Prices')
-                ->label('💰 Update Product Unit Prices')
-                ->color('success')
+            // Action::make('Update Product Unit Prices')
+            //     ->label('💰 Update Product Unit Prices')
+            //     ->color('success')
 
-                ->requiresConfirmation()
-                ->action(function (array $data) {
-                    $tenantId = $data['tenant_id'] ?? null;
-                    dispatch(new \App\Jobs\UpdateProductUnitPricesJob($tenantId));
-                    showSuccessNotifiMessage('✅ Job dispatched to update product unit prices.');
-                }),
+            //     ->requiresConfirmation()
+            //     ->action(function (array $data) {
+            //         $tenantId = $data['tenant_id'] ?? null;
+            //         dispatch(new \App\Jobs\UpdateProductUnitPricesJob($tenantId));
+            //         showSuccessNotifiMessage('✅ Job dispatched to update product unit prices.');
+            //     }),
         ];
     }
     public static function shouldRegisterNavigation(): bool

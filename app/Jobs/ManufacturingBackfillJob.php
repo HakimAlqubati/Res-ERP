@@ -8,6 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ManufacturingBackfillJob implements ShouldQueue
 {
@@ -22,6 +23,7 @@ class ManufacturingBackfillJob implements ShouldQueue
 
     public function handle(): void
     {
+        Log::info('sdf',['sdf']);
         app(ManufacturingBackfillService::class)->handleFromSimulation($this->storeId);
     }
 }
