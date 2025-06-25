@@ -254,7 +254,7 @@ class ManufacturingBackfillService
             );
             $this->syncUnitPriceForManufacturedProduct(
                 $component['parent_id'],
-                "Auto update from raw '{$compositeProductName}' - SO #{$stockSupplyOrderId}"
+                "Auto update from raw '{$compositeProductName}' - stock order #{$stockSupplyOrderId}"
 
             );
             $requiredQty = round($requiredQty - $take, 4);
