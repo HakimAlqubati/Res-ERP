@@ -304,7 +304,7 @@ class ProductRepository implements ProductRepositoryInterface
         // Apply number_format() to the quantity value
         foreach ($data as &$item) {
 
-            $item->quantity  = number_format($item->quantity, 2);
+            $item->quantity  = formatQunantity($item->quantity);
         }
         return $data;
     }
