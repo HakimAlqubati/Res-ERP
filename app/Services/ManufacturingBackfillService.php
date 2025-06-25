@@ -69,10 +69,11 @@ class ManufacturingBackfillService
             ->whereHas('product', function ($query) use ($productId) {
                 $query->has('productItems');
                 if ($productId) {
-                    $query->where('product_id', $productId);
+                    $query->where('id', $productId);
                 }
             })
             ->when($storeId, fn($q) => $q->where('store_id', $storeId))
+            ->with('product')
             ->get();
 
 
@@ -114,31 +115,11 @@ class ManufacturingBackfillService
                     );
 
                     $result = array_merge($result, $fifoAllocations);
-                    foreach ($fifoAllocations as $allocation) {
-                        $key = $allocation['product_id'];
-
-                        if (!isset($componentCostSummary[$key])) {
-                            $componentCostSummary[$key] = [
-                                'total_cost' => 0,
-                                'total_qty' => 0,
-                                'latest_date' => null,
-                            ];
-                        }
-
-                        $cost = $allocation['quantity'] * $allocation['price'];
-                        $componentCostSummary[$key]['total_cost'] += $cost;
-                        $componentCostSummary[$key]['total_qty'] += $allocation['quantity'];
-                        $componentCostSummary[$key]['latest_date'] = $allocation['transaction_date'];
-                    }
                 } catch (\RuntimeException $e) {
                     Log::warning("FIFO Allocation failed for product {$component['product_id']}: " . $e->getMessage());
                 }
             }
-            $this->updateCompositeProductPriceBasedOnAllocations(
-                $transaction->product_id,
-                $transaction->store_id,
-                $componentCostSummary
-            );
+
 
             return $result;
         });
@@ -210,9 +191,13 @@ class ManufacturingBackfillService
         $pricePerUnit = $component['price_per_unit'];
 
         $inTransactions = $this->getRawMaterialInTransactions($productId, $storeId);
+        // if ($productId == 4) {
+        //     dd($inTransactions, $productId);
+        // }
         $totalBatches = count($inTransactions);
         $allocated = [];
         foreach ($inTransactions as $index => $in) {
+            $priceFromIn = $in->price;
             $isLastBatch = ($index === $totalBatches - 1);
             $totalInQty = $in->quantity * $in->package_size;
 
@@ -240,13 +225,14 @@ class ManufacturingBackfillService
 
             $quantityInUnits = $take / $outPackageSize;
 
+            $newPrice = ($priceFromIn * $outPackageSize) / $in->package_size;
             $allocated[] = [
                 'movement_type' => InventoryTransaction::MOVEMENT_OUT,
                 'product_id' => $productId,
                 'unit_id' => $unitId,
                 'quantity' => round($quantityInUnits, 4),
                 'package_size' => getUnitPricePackageSize($productId, $unitId),
-                'price' => $pricePerUnit,
+                'price' => $newPrice,
                 'transaction_date' => $movementDate,
                 'movement_date' => $movementDate,
                 'store_id' => $storeId,
@@ -257,6 +243,20 @@ class ManufacturingBackfillService
 
             ];
 
+            $this->syncComponentPriceToProductItem(
+                $productId,
+                $unitId,
+                $component['parent_id'],
+                $newPrice,
+                $compositeProductName,
+                $stockSupplyOrderId
+
+            );
+            $this->syncUnitPriceForManufacturedProduct(
+                $component['parent_id'],
+                "Auto update from raw '{$compositeProductName}' - SO #{$stockSupplyOrderId}"
+
+            );
             $requiredQty = round($requiredQty - $take, 4);
 
             if ($requiredQty <= 0) {
@@ -271,52 +271,52 @@ class ManufacturingBackfillService
         return $allocated;
     }
 
-    protected function updateCompositeProductPriceBasedOnAllocations(int $productId, int $storeId, array $componentCostSummary): void
-    {
-        $product = Product::with('productItems')->findOrFail($productId);
+    protected function syncComponentPriceToProductItem(
+        int $productId,         // ID الخاص بالمكون (المادة الخام)
+        int $unitId,            // الوحدة المرتبطة بالمكون
+        int $parentProductId,   // المنتج المركب الذي يحتوي هذا المكون
+        float $newPrice
+    ): void {
+        $item = \App\Models\ProductItem::where('product_id', $productId)
+            ->where('unit_id', $unitId)
+            ->where('parent_product_id', $parentProductId)
+            ->first();
 
-        $total = 0;
+        if ($item) {
+            $item->price = $newPrice;
+            $item->total_price = round($item->quantity * $newPrice, 4);
+            $item->total_price_after_waste = \App\Models\ProductItem::calculateTotalPriceAfterWaste(
+                $item->total_price,
+                $item->qty_waste_percentage
+            );
+            $item->save();
+        }
+    }
 
-        foreach ($product->productItems as $item) {
-            $componentId = $item->component_product_id;
-            $unitId = $item->unit_id;
+    protected function syncUnitPriceForManufacturedProduct(
+        int $parentProductId,
+        string $note = null
+    ): void {
+        $unitPrices = \App\Models\UnitPrice::where('product_id', $parentProductId)
+            ->orderBy('package_size', 'asc')
+            ->get();
 
-            if (!isset($componentCostSummary[$componentId])) {
-                continue;
-            }
+        $sumNetPrice = ProductItem::where('parent_product_id', $parentProductId)->sum('total_price_after_waste');
 
-            $summary = $componentCostSummary[$componentId];
-
-            if ($summary['total_qty'] <= 0) {
-                continue;
-            }
-
-            $avgPrice = round($summary['total_cost'] / $summary['total_qty'], 4);
-
-            // تحديث السعر في product_items
-            $item->update([
-                'price_per_unit' => $avgPrice,
-            ]);
-
-            // تحديث السعر في unit_prices
-            $unitPrice = \App\Models\UnitPrice::where('product_id', $componentId)
-                ->where('unit_id', $unitId)
-                ->first();
-
-            if ($unitPrice) {
-                $unitPrice->update([
-                    'price' => $avgPrice,
-                    'date' => $summary['latest_date'],
-                    'notes' => 'Updated from actual used IN transactions during manufacturing',
-                ]);
-            }
-
-            $total += $item->quantity * $avgPrice;
+        if ($unitPrices->isEmpty()) {
+            return;
         }
 
-        // تحديث سعر المنتج المركب
-        $product->update([
-            'unit_price' => round($total, 4),
-        ]);
+        foreach ($unitPrices as $unitPrice) {
+            // ✅ السعر الأساسي هو سعر الوحدة التي package_size = 1
+            // أي يتم اعتبار newPrice كسعر الوحدة الصغرى
+
+            $adjustedPrice = round($unitPrice->package_size * $sumNetPrice, 4);
+
+            $unitPrice->price = $adjustedPrice;
+            $unitPrice->date = now();
+            $unitPrice->notes = $note ?? 'تحديث تلقائي من عملية تصنيع';
+            $unitPrice->save();
+        }
     }
 }

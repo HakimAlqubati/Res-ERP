@@ -1004,27 +1004,7 @@ class ProductResource extends Resource
      * @param int $mainUnitId
      * @return array
      */
-    public static function recalculateUnitPrices(float $basicPrice, int $mainUnitId): array
-    {
-        $units = Unit::find($mainUnitId)->getParentAndChildrenWithNested();
-
-        return array_map(function ($unit) use ($basicPrice) {
-            $operation = $unit['operation'];
-            $conversion_factor = $unit['conversion_factor'];
-
-            $price = $basicPrice;
-            if ($operation === '*') {
-                $price = $basicPrice * $conversion_factor;
-            } elseif ($operation === '/') {
-                $price = $conversion_factor != 0 ? $basicPrice / $conversion_factor : 0;
-            }
-
-            return [
-                'unit_id' => $unit['id'],
-                'price' => round($price, 2),
-            ];
-        }, $units);
-    }
+   
 
     public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
     {

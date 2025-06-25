@@ -27,15 +27,15 @@ class ProductPriceHistoriesRelationManager extends RelationManager
             ->paginated([10, 25, 50, 100])
             ->columns([
 
-                Tables\Columns\TextColumn::make('productItem.product.name')
-                    ->label('Component Product')
-                    ->tooltip(fn($record)=>$record?->productItem?->id)
-                    ->formatStateUsing(
-                        fn($state, $record) =>
-                        optional($record->productItem?->product)->name ?? '-'
-                    )
-                    ->sortable()
-                    ->limit(30)->visible(fn($livewire) => $livewire->getOwnerRecord()?->is_manufacturing),
+                // Tables\Columns\TextColumn::make('productItem.product.name')
+                //     ->label('Component Product')
+                //     ->tooltip(fn($record)=>$record?->productItem?->id)
+                //     ->formatStateUsing(
+                //         fn($state, $record) =>
+                //         optional($record->productItem?->product)->name ?? '-'
+                //     )
+                //     ->sortable()
+                //     ->limit(30)->visible(fn($livewire) => $livewire->getOwnerRecord()?->is_manufacturing),
                 Tables\Columns\TextColumn::make('old_price')
                     ->label('Old Price')
                     ->formatStateUsing(fn($state) => number_format($state, 2)),
@@ -48,7 +48,7 @@ class ProductPriceHistoriesRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('unit.name')
                     ->label('Unit')
-                
+
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('note')

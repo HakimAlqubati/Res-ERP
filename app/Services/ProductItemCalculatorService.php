@@ -33,7 +33,8 @@ class ProductItemCalculatorService
                 'quantity_after_waste' => $qtyAfterWaste,
                 'price_per_unit' => $item->price,
                 'total_price' => round($qtyAfterWaste * $item->price, 2),
-                
+                'parent_id' => $parentProductId,
+
             ];
         }
 
