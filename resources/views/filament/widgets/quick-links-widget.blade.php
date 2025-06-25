@@ -3,32 +3,84 @@
         .link {
             transition: all 0.2s ease-in-out;
             border-radius: 1rem;
+            background-color: #0d7c66;
+            /* خلفية خضراء */
+            color: #ffffff;
+            /* النص والأيقونة بيضاء */
+            display: flex;
+            flex-direction: column;
+            /* ترتيب الأيقونة والنص عمودياً */
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            text-align: center;
         }
 
         .link:hover {
-            /* هذا للوضع الفاتح فقط */
-            background-color: #e2e8f0;
+            /* عند التمرير، تغيير الألوان */
+            /* background-color: #ffffff; */
+            /* الخلفية بيضاء */
+            color: #0d7c66;
+            /* النص والأيقونة خضراء */
             transform: translateY(-4px);
+            font-weight: 700;
+            /* جعل النص عريض */
+            border: 1px solid #0d7c66;
+            /* تغيير الحدود للأخضر عند التمرير */
         }
 
-        /* === إصلاح الوضع الليلي (النسخة النهائية) === */
-
+        /* === إصلاح الوضع الليلي === */
         .dark .link {
-            /* الخطوة 1: إزالة الظل/الإطار الافتراضي لـ Filament بالقوة */
             box-shadow: none !important;
-
-            /* الخطوة 2: فرض إطار أبيض وواضح وصريح */
             border: 1px solid white !important;
         }
 
         .dark .link:hover {
-            /* الحفاظ على تأثير المرور للخلفية */
             background-color: rgba(255, 255, 255, 0.1) !important;
+            color: #0d7c66;
+            /* تغيير النص إلى اللون الأخضر */
+            border-color: #0d7c66;
+            /* تغيير الحدود عند التمرير */
+        }
 
-            /* يمكنك جعل الإطار أكثر سماكة عند الـ hover إذا أردت */
-            /* border-width: 2px !important; */
+        .link svg {
+            width: 5.5rem;
+            /* حجم الأيقونة */
+            height: 5.5rem;
+            /* حجم الأيقونة */
+            color: #ffffff;
+            /* الأيقونة بيضاء */
+            margin-bottom: 0.5rem;
+            /* المسافة بين الأيقونة والنص */
+        }
+
+        .link:hover svg {
+            color: #ffffff;
+            /* الأيقونة خضراء عند التمرير */
+        }
+
+        .link_span {
+            color: #fff !important;
+            /* النص باللون الأبيض */
+            font-size: 1.125rem; /* حجم النص */
+        }
+
+        /* تصميم للـ badge داخل الرابط */
+        .badge {
+            
+            /* خلفية الـ badge بيضاء */
+            color: #ffffff;
+
+        }
+
+        /* تنسيق لجعل العدد بجانب النص */
+        .link-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* المسافة بين النص والعدد */
         }
     </style>
+
     <x-filament::card>
         {{-- First row --}}
         <x-filament::fieldset label="{{ __('General') }}">
@@ -36,154 +88,187 @@
                 {{-- Users --}}
                 <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="warning" color="primary" icon="heroicon-o-user"
                     icon-position="before" class="link" tooltip="Go to Users Page">
-                    {{ __('Users') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\User::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span">
+                            {{ __('Users') }}
+                        </span>
+                        <span class="badge">
+                            {{ \App\Models\User::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
+                
+                {{-- Branches --}}
                 <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary"
                     icon="heroicon-o-building-office-2" icon-position="before" class="link"
                     tooltip="Go to Branches Page">
-                    {{ __('Branches') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Branch::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span">
+                            {{ __('Branches') }}
+                        </span>
+                        <span class="badge">
+                            {{ \App\Models\Branch::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
+
+                {{-- Area Management --}}
                 <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary"
                     icon="heroicon-o-building-office-2" icon-position="before" class="link"
-                    tooltip="Go to Branches Page">
-                    {{ __('Area Management') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Country::count() }}
-                    </x-slot>
+                    tooltip="Go to Area Management Page">
+                    <div class="link-text">
+                        <span class="link_span">
+                            {{ __('Area Management') }}
+                        </span>
+                        <span class="badge">
+                            {{ \App\Models\Country::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
-                {{-- <x-filament::link :href="route('filament.admin.area-management.resources.countries.index')" badge-color="purple" color="purple" icon="heroicon-o-globe-alt"
-                    icon-position="before" class="link" tooltip="Go to Area Management Page">
-                    {{ __('Area Management') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Country::count() }}
-                    </x-slot>
-                </x-filament::link> --}}
             </x-filament::grid>
         </x-filament::fieldset>
+
+        {{-- Inventory Management Section --}}
         <x-filament::fieldset label="{{ __('Inventory Management') }}">
             <x-filament::grid style="--cols-lg: repeat(6, minmax(0, 1fr));" class="lg:grid-cols-[--cols-lg]">
                 {{-- Orders --}}
                 <x-filament::link :href="route('filament.admin.main-orders')" class="link" badge-color="danger" color="primary"
                     icon="heroicon-m-sparkles" icon-position="before" tooltip="Go to Orders Page">
-
-
-                    {{ __('Orders') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Order::count() }}
-                    </x-slot>
-
+                    <div class="link-text">
+                        <span class="link_span">
+                            {{ __('Orders') }}
+                        </span>
+                        <span class="badge">
+                            {{ \App\Models\Order::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
 
                 {{-- Products --}}
                 <x-filament::link :href="route('filament.admin.product-unit.resources.products.index')" badge-color="info" color="primary" icon="heroicon-o-cube"
                     icon-position="before" tooltip="Go to Products Page" class="link">
-                    {{ __('Products') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Product::active()->count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Products') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Product::active()->count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
 
                 {{-- Suppliers --}}
                 <x-filament::link :href="route('filament.admin.supplier')" class="link" badge-color="success" color="primary"
                     icon="heroicon-o-building-storefront" icon-position="before" tooltip="Go to Suppliers Page">
-                    {{ __('Suppliers') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Supplier::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Suppliers') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Supplier::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
 
                 {{-- Stores --}}
                 <x-filament::link :href="route('filament.admin.supplier-stores-reports.resources.stores.index')" badge-color="warning" color="primary" icon="heroicon-o-home-modern"
                     icon-position="before" tooltip="Go to Stores Page" class="link">
-                    {{ __('Stores') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Store::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Stores') }}</span>
+                        <span class="badge">
+                            {{ \App\Models\Store::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
-
-
 
                 {{-- Purchase Invoices --}}
                 <x-filament::link :href="route('filament.admin.supplier.resources.purchase-invoices.index')" badge-color="gray" color="primary" icon="heroicon-o-receipt-percent"
                     icon-position="before" tooltip="Go to Purchase Invoices" class="link">
-                    {{ __('Purchases') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\PurchaseInvoice::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Purchases') }}</span>
+                        <span class="badge">
+                            {{ \App\Models\PurchaseInvoice::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
 
                 {{-- Inventory Reports --}}
                 <x-filament::link :href="route('filament.admin.inventory-report.resources.inventory-report.index')" badge-color="warning" color="primary" icon="heroicon-o-newspaper"
                     icon-position="before" class="link" tooltip="Go to Inventory Reports">
-                    {{ __('Inventory') }}
-                    <x-slot name="badge">
-                        {{ 'Reports' }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Inventory') }} </span>
+                        
+                    </div>
                 </x-filament::link>
-
             </x-filament::grid>
         </x-filament::fieldset>
 
-        {{-- HR section --}}
+        {{-- Human Resources Section --}}
         <x-filament::fieldset label="{{ __('Human Resources') }}">
             <x-filament::grid style="--cols-lg: repeat(6, minmax(0, 1fr));" class="lg:grid-cols-[--cols-lg]">
                 {{-- Employees --}}
                 <x-filament::link :href="route('filament.admin.h-r.resources.employees.index')" badge-color="danger" color="primary" icon="heroicon-o-user-group"
                     icon-position="before" tooltip="Go to Employees Page" class="link">
-                    {{ __('Employees') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Employee::active()->count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Employees') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Employee::active()->count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
 
                 {{-- Attendance --}}
-                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary" icon="heroicon-o-calendar-days"
-                    icon-position="before" tooltip="Attendance Records" class="link">
-                    {{ __('Attendance') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Attendance::count() }}
-                    </x-slot>
+                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary"
+                    icon="heroicon-o-calendar-days" icon-position="before" tooltip="Attendance Records"
+                    class="link">
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Attendance') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Attendance::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
 
                 {{-- Departments --}}
                 <x-filament::link :href="route('filament.admin.resources.departments.index')" badge-color="success" color="primary"
                     icon="heroicon-o-building-office-2" icon-position="before" tooltip="Go to Departments"
                     class="link">
-                    {{ __('Departments') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Department::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Departments') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Department::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
+
                 {{-- Tasks --}}
                 <x-filament::link :href="route('filament.admin.h-r-tasks-system.resources.tasks.index')" badge-color="success" color="primary"
                     icon="heroicon-o-pencil-square" icon-position="before" tooltip="Go to Tasks" class="link">
-                    {{ __('Tasks') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Task::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Tasks') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Task::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
-                {{-- Circular --}}
+
+                {{-- Engagement --}}
                 <x-filament::link :href="route('filament.admin.h-r-circular.resources.circulars.index')" badge-color="success" color="primary"
                     icon="heroicon-o-building-office-2" icon-position="before" tooltip="Go to Engagement"
                     class="link">
-                    {{ __('Engagement') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\Circular::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Engagement') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\Circular::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
+
                 {{-- Payroll --}}
                 <x-filament::link :href="route('filament.admin.h-r-salary.resources.month-salaries.index')" badge-color="success" color="primary"
                     icon="heroicon-o-banknotes" icon-position="before" tooltip="Go to Payroll" class="link">
-                    {{ __('Payroll') }}
-                    <x-slot name="badge">
-                        {{ \App\Models\MonthSalary::count() }}
-                    </x-slot>
+                    <div class="link-text">
+                        <span class="link_span"> {{ __('Payroll') }} </span>
+                        <span class="badge">
+                            {{ \App\Models\MonthSalary::count() }}
+                        </span>
+                    </div>
                 </x-filament::link>
             </x-filament::grid>
         </x-filament::fieldset>
