@@ -76,8 +76,10 @@ class PurchaseInvoiceReportService
 
         $results = $perPage ? $query->paginate($perPage) : $query->get();
         foreach ($results as $item) {
-            $item->unit_price = formatMoneyWithCurrency($item->unit_price);
-            $item->quantity = formatQunantity($item->quantity);
+            $item->unit_price =   $item->unit_price;
+            $item->quantity =   $item->quantity;
+            $item->formatted_unit_price =  formatMoneyWithCurrency($item->unit_price);
+            $item->formatted_quantity =  formatQunantity($item->quantity);
         }
         return [
             'results' => $results,
