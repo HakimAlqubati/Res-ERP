@@ -165,53 +165,7 @@ class ProductRepository implements ProductRepositoryInterface
         $product_id = $request->input('product_id');
 
         $data =  GeneralReportOfProductsResource::processReportData($from_date, $to_date, $branch_id);
-        // $data = DB::table('orders_details')
-        //     ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-        //     ->join('products', 'orders_details.product_id', '=', 'products.id')
-        //     ->select(
-        //         'products.category_id',
-        //         DB::raw('SUM(orders_details.available_quantity) as available_quantity'),
-        //         DB::raw('SUM(orders_details.price) as price')
-        //     )
-        //     ->when($product_id, function ($query) use ($product_id) {
-        //         return $query->where('orders_details.product_id', $product_id);
-        //     })
-        //     ->when($branch_id, function ($query) use ($branch_id) {
-        //         return $query->where('orders.branch_id', $branch_id);
-        //     })
-        //     ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-        //         return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
-        //     })
-        //     ->when($year && $month, function ($query) use ($year, $month) {
-        //         return $query->whereRaw('YEAR(orders.created_at) = ? AND MONTH(orders.created_at) = ?', [$year, $month]);
-        //     })
-        //     // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-        //     ->where('orders.active', 1)
-        //     ->whereNull('orders.deleted_at')
-        //     ->groupBy('products.category_id')
-        //     ->get()
-        //     ->mapWithKeys(function ($item) {
-        //         if (is_object($item)) {
-        //             return [$item->category_id => [
-        //                 'available_quantity' => $item->available_quantity,
-        //                 'price' => $item->price
-        //             ]];
-        //         }
-        //     })
-        //     ->all();
-        // $categories = DB::table('categories')->where('active', 1)->get(['id', 'name'])->pluck('name', 'id');
 
-        // foreach ($categories as $cat_id => $cat_name) {
-        //     $obj = new \stdClass();
-        //     $obj->category_id = $cat_id;
-        //     $obj->category_name = $cat_name;
-        //     $obj->available_quantity =  round(isset($data[$cat_id]) ? $data[$cat_id]['available_quantity'] : 0, 0);
-        //     $price = (isset($data[$cat_id]) ? $data[$cat_id]['price'] : '0.00');
-        //     $obj->price =  formatMoney($price, $this->currency);
-        //     $obj->amount = number_format($price, 2);
-        //     $obj->symbol = $this->currency;
-        //     $final_result[] = $obj;
-        // }
 
         return [
             'branches' => Branch::where('active', 1)->pluck('name', 'id'),
@@ -237,77 +191,9 @@ class ProductRepository implements ProductRepositoryInterface
 
         $reportData = (new GeneralReportProductDetails())->getReportDetails($from_date, $to_date, $branch_id, $category_id);
         return $reportData;
-        // $data = DB::table('orders_details')
-        //     ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-        //     ->join('products', 'orders_details.product_id', '=', 'products.id')
-        //     ->join('units', 'orders_details.unit_id', '=', 'units.id')
-        //     // ->select('products.category_id', 'orders_details.product_id as p_id' )
-        //     ->when($branch_id, function ($query) use ($branch_id) {
-        //         return $query->where('orders.branch_id', $branch_id);
-        //     })
-        //     ->when($product_id, function ($query) use ($product_id) {
-        //         return $query->where('orders_details.product_id', $product_id);
-        //     })
-        //     ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-        //         return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
-        //     })->when($year && $month, function ($query) use ($year, $month) {
-        //         return $query->whereRaw('YEAR(orders.created_at) = ? AND MONTH(orders.created_at) = ?', [$year, $month]);
-        //     })
-        //     // ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-        //     ->where('orders.active', 1)
-        //     ->whereNull('orders.deleted_at')
-        //     ->where('products.category_id', $category_id)
-        //     ->groupBy(
-        //         'orders_details.product_id',
-        //         'products.category_id',
-        //         'orders_details.unit_id',
-        //         'products.name',
-        //         'units.name',
-        //     )
-        //     ->get([
-        //         'products.category_id',
-        //         'orders_details.product_id',
-        //         DB::raw("IF(JSON_VALID(products.name), REPLACE(JSON_EXTRACT(products.name, '$." . app()->getLocale() . "'), '\"', ''), products.name) as product_name"),
-        //         'units.name as unit_name',
-        //         'orders_details.unit_id as unit_id',
-        //         DB::raw('ROUND(SUM(orders_details.available_quantity), 0) as available_quantity'),
-        //         DB::raw('(SUM(orders_details.price)) as price'),
-        //     ]);
-        // $final_result = [];
-        // foreach ($data as   $val_data) {
-        //     $obj = new \stdClass();
-        //     $obj->category_id = $val_data->category_id;
-        //     $obj->product_id = $val_data->product_id;
-        //     $obj->product_name = $val_data->product_name;
-        //     $obj->unit_name = $val_data->unit_name;
-        //     $obj->unit_id = $val_data->unit_id;
-        //     $obj->available_quantity = $val_data->available_quantity;
-        //     $obj->price = formatMoney($val_data->price, $this->currency);
-        //     $obj->amount = number_format($val_data->price, 2);
-        //     $obj->symbol = $this->currency;
-        //     $final_result[] = $obj;
-        // }
-        // return $final_result;
     }
 
-    public function getProductsOrdersQuntities($request)
-    {
-        $currnetRole = getCurrentRole();
-        $from_date = $request->input('from_date');
-        $to_date = $request->input('to_date');
-        if ($currnetRole == 7)
-            $branch_id = [getBranchId()];
-        else
-            $branch_id = explode(',', $request->input('branch_id'));
 
-        // dd($branch_id);
-        $dataQuantity =  $this->getReportData($request, $from_date, $to_date, $branch_id);
-        // dd($dataQuantity);
-        return [
-            'dataQuantity' => $dataQuantity,
-            'dataTotal' => $this->getCount($request, $from_date, $to_date, $branch_id)
-        ];
-    }
 
     public function getReportData($request, $from_date, $to_date, $branch_id)
     {
@@ -359,6 +245,25 @@ class ProductRepository implements ProductRepositoryInterface
         }
         return $final;
     }
+    
+    public function getProductsOrdersQuntities($request)
+    {
+        $currnetRole = getCurrentRole();
+        $from_date = $request->input('from_date');
+        $to_date = $request->input('to_date');
+        if ($currnetRole == 7)
+            $branch_id = [getBranchId()];
+        else
+            $branch_id = explode(',', $request->input('branch_id'));
+
+        // dd($branch_id);
+        $dataQuantity =  $this->getReportData($request, $from_date, $to_date, $branch_id);
+        // dd($dataQuantity);
+        return [
+            'dataQuantity' => $dataQuantity,
+            'dataTotal' => $this->getCount($request, $from_date, $to_date, $branch_id)
+        ];
+    }
     public function getCount($request, $from_date, $to_date, $branch_id)
     {
         $data = DB::table('orders_details')
@@ -384,17 +289,17 @@ class ProductRepository implements ProductRepositoryInterface
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
-            ->groupBy(
-                'orders.branch_id',
-                'products.name',
-                'products.code',
-                'products.id',
-                'branches.name',
-                'units.name',
-                'orders_details.package_size',
-                'orders_details.price'
-            )
-            // ->groupBy('orders.branch_id')
+            // ->groupBy(
+            //     'orders.branch_id',
+            //     'products.name',
+            //     'products.code',
+            //     'products.id',
+            //     'branches.name',
+            //     'units.name',
+            //     'orders_details.package_size',
+            //     'orders_details.price'
+            // )
+            ->groupBy('orders.branch_id','products.name','units.name')
             ->get();
         // Apply number_format() to the quantity value
         foreach ($data as &$item) {
