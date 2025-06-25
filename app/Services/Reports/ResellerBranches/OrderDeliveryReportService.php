@@ -26,7 +26,7 @@ class OrderDeliveryReportService
             ])
             ->get();
 
- 
+
         // Build the report data
         $grouped = $orders->groupBy('branch_id');
 
@@ -36,12 +36,15 @@ class OrderDeliveryReportService
 
             $doTotal = $orders->sum('total_amount');
             $invoicedTotal = $branch?->paidAmounts->sum('amount') ?? 0;
-            $balance = $doTotal - $invoicedTotal;
+
+            $returnedTotal = $orders->sum('total_returned_amount');
+            $balance = $doTotal - $invoicedTotal - $returnedTotal;
 
             return [
                 'branch'         => $branchName,
                 'do_total'       => $doTotal,
                 'invoiced_total' => $invoicedTotal,
+                'returned_total' => $returnedTotal,
                 'balance'        => $balance,
             ];
         })->values();

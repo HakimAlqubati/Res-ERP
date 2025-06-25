@@ -525,4 +525,10 @@ class Order extends Model implements Auditable
     {
         return $this->total_sales - $this->total_paid;
     }
+
+    // داخل نموذج Order
+    public function getTotalReturnedAmountAttribute(): float
+    {
+        return $this->returns->sum(fn($returnedOrder) => $returnedOrder->total_amount);
+    }
 }

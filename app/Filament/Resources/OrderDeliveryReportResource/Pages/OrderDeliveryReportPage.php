@@ -17,5 +17,6 @@ class OrderDeliveryReportPage extends Page
     public function mount(): void
     {
         $this->report = (new OrderDeliveryReportService())->generate();
+        dd($this->report);
     }
 }

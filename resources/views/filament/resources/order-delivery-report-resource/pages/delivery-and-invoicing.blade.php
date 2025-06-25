@@ -30,6 +30,7 @@
                             <th>#</th>
                             <th>Reseller</th>
                             <th>Delivery Total</th>
+                            <th>Returned Total</th>
                             <th>Invoiced Total</th>
                             <th>Balance</th>
                         </x-filament-tables::row>
@@ -40,6 +41,7 @@
                                 <x-filament-tables::cell>{{ $index + 1 }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ $row['branch'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['do_total']) }}</x-filament-tables::cell>
+                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['returned_total']) }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['invoiced_total']) }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['balance']) }}</x-filament-tables::cell>
                             </x-filament-tables::row>

@@ -41,8 +41,8 @@ class Dashboard extends \Filament\Pages\Dashboard
             (is_array($modules) &&
                 in_array(CustomTenantModel::MODULE_HR, $modules))
         ) {
-            $widgets[] = CircularWidget::class;
-            $widgets[] = TaskWidget::class;
+            // $widgets[] = CircularWidget::class;
+            // $widgets[] = TaskWidget::class;
         }
         
         return $widgets;

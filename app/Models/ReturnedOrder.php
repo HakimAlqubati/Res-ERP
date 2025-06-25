@@ -121,11 +121,16 @@ class ReturnedOrder extends Model implements Auditable
             });
     }
 
+    public function getReturnedTotalAmountAttribute(): float
+    {
+        return $this->details->sum(fn($detail) => $detail->quantity * $detail->price);
+    }
+
     public function toArray()
     {
-        
+
         $array = parent::toArray(); // Get the default array representation
-        
+
         // You can customize the response here
         // For example, you might want to format dates or add additional fields
         $array['total_amount'] = formatMoneyWithCurrency($this->total_amount);

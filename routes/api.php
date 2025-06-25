@@ -109,6 +109,7 @@ Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSumm
 
 Route::prefix('reseller')->group(function () {
     Route::get('branchSalesBalanceReport', [ResellerReportController::class, 'branchSalesBalanceReport']);
+    Route::get('orderDeliveryReports', [ResellerReportController::class, 'orderDeliveryReports']);
 });
 
 

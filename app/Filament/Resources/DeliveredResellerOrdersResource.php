@@ -79,7 +79,7 @@ class DeliveredResellerOrdersResource extends Resource
                 TextColumn::make('id')
                     ->label('Order ID')
                     ->searchable()->alignCenter()
-                    ->sortable()
+                    ->sortable()->copyable()
                     ->weight(FontWeight::Bold),
 
                 TextColumn::make('branch.name')
@@ -92,6 +92,11 @@ class DeliveredResellerOrdersResource extends Resource
 
                 TextColumn::make('total_amount')
                     ->label('Total Amount')
+                    ->numeric()->alignCenter()
+                    ->sortable()
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                TextColumn::make('total_returned_amount')
+                    ->label('Total Returned')
                     ->numeric()->alignCenter()
                     ->sortable()
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
@@ -109,15 +114,15 @@ class DeliveredResellerOrdersResource extends Resource
                     ->sortable()
                     ->formatStateUsing(function ($state) {
                         return formatMoneyWithCurrency($state);
-                    }),
+                    })->hidden(),
                 TextColumn::make('created_at')
                     ->label('Created At')
                     ->dateTime()
                     ->sortable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('delivered_at')
-                    ->label('Delivered At')
-                    ->sortable()
+                    ->label(__('lang.delivered_at'))
+                    ->sortable()->toggleable(isToggledHiddenByDefault: true)
                     ->state(function ($record) {
                         return optional(
                             $record->logs()
