@@ -38,7 +38,7 @@ class InventoryReportLinks extends Page
 
     public function getReportLinks(): array
     {
-        return [
+        $links = [
             // --- الروابط الأصلية ---
             [
                 'title' => 'Inventory Report',
@@ -69,7 +69,7 @@ class InventoryReportLinks extends Page
             [
                 'title' => 'Manufacturing Store Position',
                 'description' => 'Report on stock position with usage data.',
-                'icon' => 'heroicon-o-chart-bar-square',
+                'icon' => 'heroicon-o-currency-dollar',
                 'url' => InventoryWithUsageReportResource::getUrl(),
             ],
             [
@@ -103,5 +103,10 @@ class InventoryReportLinks extends Page
                 'url' => ManufacturingInventoryReportResource::getUrl(),
             ],
         ];
+
+        usort($links, function ($a, $b) {
+            return strcmp($a['title'], $b['title']);
+        });
+        return $links;
     }
 }

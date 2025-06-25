@@ -14,6 +14,8 @@
             justify-content: center;
             padding: 1rem;
             text-align: center;
+            width: 160px;
+            height: 160px;
         }
 
         .link:hover {
@@ -101,8 +103,10 @@
 
     <x-filament::card>
         {{-- First row --}}
-        <x-filament::fieldset label="{{ __('General') }}">
-            <x-filament::grid style="--cols-lg: repeat(3, minmax(0, 1fr));" class="lg:grid-cols-[--cols-lg]">
+        <x-filament::fieldset style="    text-align: -webkit-center" label="{{ __('General') }}">
+            <x-filament::grid
+                style="--cols-lg: repeat(3, minmax(0, 1fr)); display: grid; justify-items: center; align-items: center; gap: 0.5rem;width:70%"
+                class="lg:grid-cols-[--cols-lg]">
                 {{-- Users --}}
                 <x-filament::link :href="route('filament.admin.resources.users.index')" badge-color="warning" color="primary" icon="heroicon-o-user"
                     icon-position="before" class="link" tooltip="Go to Users Page">
@@ -143,6 +147,7 @@
                     </div>
                 </x-filament::link>
             </x-filament::grid>
+
         </x-filament::fieldset>
 
         {{-- Inventory Management Section --}}
@@ -231,8 +236,9 @@
                 </x-filament::link>
 
                 {{-- Attendance --}}
-                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary" icon="heroicon-o-calendar-days"
-                    icon-position="before" tooltip="Attendance Records" class="link">
+                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary"
+                    icon="heroicon-o-calendar-days" icon-position="before" tooltip="Attendance Records"
+                    class="link">
                     <div class="link-text">
                         <span class="link_span"> {{ __('Attendance') }} </span>
                         <span class="badge">
