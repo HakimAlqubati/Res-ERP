@@ -18,6 +18,7 @@ class StockInventoryQuickLinkResource extends Resource
 
     public static function getLabel(): ?string
     {
+        return '';
         return 'Quick Links';
     }
 
@@ -27,6 +28,15 @@ class StockInventoryQuickLinkResource extends Resource
     }
 
 
+    public static function getPluralLabel(): ?string
+    {
+        return '';
+    }
+
+    // public static function getPluralModelLabel(): string
+    // {
+    //     return '';
+    // }
     public static function shouldRegisterNavigation(): bool
     {
         return true;
