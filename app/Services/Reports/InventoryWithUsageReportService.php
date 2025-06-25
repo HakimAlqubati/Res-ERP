@@ -143,6 +143,7 @@ class InventoryWithUsageReportService
             ->where('store_id', $this->storeId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where('transactionable_type', Order::class)
+            ->whereNull('deleted_at')
             ->sum(DB::raw('quantity * package_size'));
     }
 }
