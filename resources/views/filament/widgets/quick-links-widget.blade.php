@@ -21,6 +21,7 @@
             /* background-color: #ffffff; */
             /* الخلفية بيضاء */
             color: #0d7c66;
+            /* background-color: #ffffff; */
             /* النص والأيقونة خضراء */
             transform: translateY(-4px);
             font-weight: 700;
@@ -55,19 +56,29 @@
         }
 
         .link:hover svg {
-            color: #ffffff;
+            /* color: #ffffff; */
             /* الأيقونة خضراء عند التمرير */
         }
+
+        .link:hover {
+            /* عند التمرير، تغيير الألوان */
+            /* background-color: #ffffff; */
+            /* الخلفية بيضاء */
+            color: #0d7c66;
+            /* تغيير الحدود للأخضر عند التمرير */
+        }
+
 
         .link_span {
             color: #fff !important;
             /* النص باللون الأبيض */
-            font-size: 1.125rem; /* حجم النص */
+            font-size: 1.125rem;
+            /* حجم النص */
         }
 
         /* تصميم للـ badge داخل الرابط */
         .badge {
-            
+
             /* خلفية الـ badge بيضاء */
             color: #ffffff;
 
@@ -77,7 +88,14 @@
         .link-text {
             display: flex;
             align-items: center;
-            gap: 0.5rem; /* المسافة بين النص والعدد */
+            gap: 0.5rem;
+            /* المسافة بين النص والعدد */
+        }
+
+        /* Dark mode adjustments */
+        .dark .link svg {
+            color: #ffffff !important;
+            /* Change icon color to white in dark mode */
         }
     </style>
 
@@ -97,7 +115,7 @@
                         </span>
                     </div>
                 </x-filament::link>
-                
+
                 {{-- Branches --}}
                 <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary"
                     icon="heroicon-o-building-office-2" icon-position="before" class="link"
@@ -113,9 +131,8 @@
                 </x-filament::link>
 
                 {{-- Area Management --}}
-                <x-filament::link :href="route('filament.admin.resources.branches.index')" badge-color="warning" color="primary"
-                    icon="heroicon-o-building-office-2" icon-position="before" class="link"
-                    tooltip="Go to Area Management Page">
+                <x-filament::link :href="route('filament.admin.area-management.resources.countries.index')" badge-color="warning" color="primary" icon="heroicon-o-globe-alt"
+                    icon-position="before" class="link" tooltip="Go to Area Management Page">
                     <div class="link-text">
                         <span class="link_span">
                             {{ __('Area Management') }}
@@ -193,7 +210,7 @@
                     icon-position="before" class="link" tooltip="Go to Inventory Reports">
                     <div class="link-text">
                         <span class="link_span"> {{ __('Inventory') }} </span>
-                        
+
                     </div>
                 </x-filament::link>
             </x-filament::grid>
@@ -214,9 +231,8 @@
                 </x-filament::link>
 
                 {{-- Attendance --}}
-                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary"
-                    icon="heroicon-o-calendar-days" icon-position="before" tooltip="Attendance Records"
-                    class="link">
+                <x-filament::link :href="route('filament.admin.h-r-attenance.resources.attendnaces.index')" badge-color="info" color="primary" icon="heroicon-o-calendar-days"
+                    icon-position="before" tooltip="Attendance Records" class="link">
                     <div class="link-text">
                         <span class="link_span"> {{ __('Attendance') }} </span>
                         <span class="badge">
