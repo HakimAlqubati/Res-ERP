@@ -55,7 +55,7 @@
             @foreach ($purchase_invoice_data['results'] as $invoice_item)
                 @php
                     $unit_price = $invoice_item->unit_price;
-                    $sub_total = $invoice_item->unit_price * $invoice_item->quantity;
+                    $sub_total = (float) $invoice_item->unit_price * (float) $invoice_item->quantity;
 
                     $total_sub_total += $sub_total;
                     $sum_unit_price += $unit_price;
