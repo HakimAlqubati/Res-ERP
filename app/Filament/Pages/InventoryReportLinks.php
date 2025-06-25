@@ -17,6 +17,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransa
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InboundOutflowReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryWithUsageReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionPurchaseReportResource;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\ManufacturingInventoryReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource;
 use App\Filament\Resources\InVSReportResource;
 use App\Filament\Resources\StockSupplyOrderReportResource;
@@ -94,6 +95,12 @@ class InventoryReportLinks extends Page
                 'description' => 'Report on stock supply orders.',
                 'icon' => 'heroicon-o-adjustments-horizontal',
                 'url' => StockSupplyOrderReportResource::getUrl(),
+            ],
+            [
+                'title' => 'Manufacturing Fifo Report',
+                'description' => '.',
+                'icon' => 'heroicon-o-magnifying-glass-circle',
+                'url' => ManufacturingInventoryReportResource::getUrl(),
             ],
         ];
     }
