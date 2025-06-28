@@ -22,6 +22,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
@@ -84,7 +85,8 @@ class StockInventoryResource extends Resource
                             ->relationship('responsibleUser', 'name')->disabledOn('edit')
                             ->required()
                             ->label('Responsible'),
-                        Select::make('category_id')
+                        $operaion == 'create' ?
+                            Select::make('category_id')->visibleOn('create')
                             ->label('Category')
                             ->options(\App\Models\Category::pluck('name', 'id'))
                             ->live()
@@ -116,20 +118,30 @@ class StockInventoryResource extends Resource
                                         'unit_id' => $unitId,
                                         'package_size' => $packageSize,
                                         'system_quantity' => $remainingQty,
-                                        'physical_quantity' => 0,
-                                        'difference' => 0 - $remainingQty,
+                                        'physical_quantity' => $remainingQty,
+                                        'difference' => $remainingQty - $remainingQty,
                                     ];
                                 })->toArray();
 
                                 $set('details', $details);
-                            }),
+                            }) :
+                            Toggle::make('edit_enabled')
+                            ->label('Edit')
+                            ->inline(false)
+                            ->default(false)->live()
+                            ->helperText('Enable this option to allow editing inventory details')
+                            ->dehydrated()
+                            ->columnSpan(1)
 
                     ]),
 
                     Repeater::make('details')
-                        ->hidden(function ($record) use ($operaion) {
-                            return $record?->finalized && $operaion === 'edit';
-                        })->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
+                        // ->hidden(function ($record) use ($operaion) {
+                        //     return $record?->finalized && $operaion === 'edit';
+                        // })
+                        ->hidden(fn($get, $record) => $operaion === 'edit' && (!$get('edit_enabled') || $record?->finalized))
+
+                        ->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
                         ->relationship('details')
                         ->label('Inventory Details')->columnSpanFull()
                         ->schema([
@@ -187,6 +199,7 @@ class StockInventoryResource extends Resource
                                     );
                                     $remaningQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
                                     $set('system_quantity', $remaningQty);
+                                    $set('physical_quantity', $remaningQty);
                                     $difference =  static::getDifference($remaningQty, $get('physical_quantity'));
                                     $set('difference', $difference);
                                     $set('package_size',  $unitPrice->package_size ?? 0);
@@ -195,7 +208,8 @@ class StockInventoryResource extends Resource
                                 ->label(__('lang.package_size')),
 
 
-                            TextInput::make('physical_quantity')->default(0)
+                            TextInput::make('physical_quantity')
+                                // ->default(0)
                                 ->numeric()
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function ($set, $state, $get) {

@@ -1,6 +1,6 @@
 <?php
 return [
-    'is_adjustmented' => 'Is inventory adjusted?',
+    'is_adjustmented' => 'Adjusted?',
     'storekeeper' => 'Store keeper',
     'minimum_quantity' => 'Minimum Stock',
     'minimum_quantity_desc' => 'Minimum Quantity to Notify About Low Stock, This option will be applied on the largest unit.',

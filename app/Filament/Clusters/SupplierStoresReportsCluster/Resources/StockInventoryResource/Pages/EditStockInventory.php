@@ -17,12 +17,12 @@ class EditStockInventory extends EditRecord
             // Actions\DeleteAction::make(),
         ];
     }
- 
+
     public function getTitle(): string | Htmlable
     {
         return 'Finalize';
     }
-    
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
@@ -31,7 +31,9 @@ class EditStockInventory extends EditRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getSaveFormAction(),
+            $this->getSaveFormAction()
+                ->disabled(fn() => !($this->data['edit_enabled'] ?? false))
+                ->tooltip('Enable editing first to save changes.'),
             $this->getCancelFormAction()->hidden(),
         ];
     }

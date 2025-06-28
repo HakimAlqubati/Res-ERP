@@ -33,6 +33,7 @@ class DetailsRelationManager extends RelationManager
 {
     protected static string $relationship = 'details';
     protected static ?string $title = '';
+
     public function form(Form $form): Form
     {
         return $form
@@ -46,8 +47,11 @@ class DetailsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('unit.name')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size'))->toggleable(),
-                Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable(),
-                Tables\Columns\TextColumn::make('physical_quantity')->alignCenter(true)->toggleable()->sortable(),
+                Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable()
+                    ->label('System Qty'),
+                Tables\Columns\TextColumn::make('physical_quantity')
+                    ->label('Physical Qty')
+                    ->alignCenter(true)->toggleable()->sortable(),
                 Tables\Columns\TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
                 IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented'))
                     ->toggleable()->sortable(),
@@ -154,7 +158,13 @@ class DetailsRelationManager extends RelationManager
                                             ->required(),
 
                                     ]),
-                                    Textarea::make('notes')->columnSpanFull()->helperText('Type Reason ...')->required(),
+                                    Textarea::make('notes')->columnSpanFull()->helperText('Type Reason ...')
+                                        ->default(function ($get) {
+                                            $reason = optional(StockAdjustmentReason::find($get('../../reason_id')))->name;
+                                            $product = optional(Product::find($get('product_id')))->name;
+                                            return trim("{$reason} on product ({$product}") .  ') in stocktake #' . $this->ownerRecord->id;
+                                        })
+                                        ->required(),
                                 ])->addable(false)->minItems(1)
                                 ->defaultItems(1)->addActionLabel('Add Item')
                                 ->default($defaultValues)
