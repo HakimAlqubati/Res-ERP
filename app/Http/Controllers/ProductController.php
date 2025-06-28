@@ -108,4 +108,5 @@ class ProductController extends Controller
     {
         return $this->productRepository->getProductsOrdersQuntities($request);
     }
+    
 }

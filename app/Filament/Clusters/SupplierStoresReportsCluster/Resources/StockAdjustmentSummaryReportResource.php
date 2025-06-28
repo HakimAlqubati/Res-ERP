@@ -82,7 +82,8 @@ class StockAdjustmentSummaryReportResource extends Resource
                 Filter::make('to_date')
                     ->label('To Date')
                     ->form([
-                        DatePicker::make('to_date')->maxDate(now())
+                        DatePicker::make('to_date')
+                        // ->maxDate(now())
                         ->default(now()->endOfMonth())
                         ,
                     ])
