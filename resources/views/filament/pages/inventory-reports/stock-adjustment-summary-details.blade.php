@@ -1,8 +1,7 @@
 <x-filament::page>
     <div class="text-xl font-semibold mb-4">
         Showing details for: <span class="text-blue-600">{{ $category }}</span>
-    </div>
- 
+    </div> 
     @if (count($adjustments) > 0)
         <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
             <thead class="fixed-header">

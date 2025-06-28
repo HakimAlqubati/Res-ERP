@@ -26,18 +26,19 @@ class ViewStockAdjustmentSummaryReport extends Page
         $fromDate = null,
         $toDate = null
     ) {
-        
+
+        $categoryId = (int)$categoryId;
+
         $report = app(StockAdjustmentByCategoryReportService::class)->generate(
             adjustmentType: $adjustment_type,
-            categoryIds: [$categoryId],
-            storeId: $storeId,
             fromDate: $fromDate,
             toDate: $toDate,
+            storeId: $storeId,
+            categoryIds: [$categoryId],
             withDetails: true
         );
-
         $record = $report->first();
-
+        
         $this->category = $record['category'] ?? 'Unknown Category';
         $this->store = $record['store'] ?? 'Unknown Store';
         $this->adjustments = $record['adjustments']?->toArray() ?? [];

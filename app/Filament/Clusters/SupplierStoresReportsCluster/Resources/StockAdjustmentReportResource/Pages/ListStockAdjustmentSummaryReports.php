@@ -20,8 +20,8 @@ class ListStockAdjustmentSummaryReports extends ListRecords
         $adjustmentType = $this->getTable()->getFilters()['adjustment_type']->getState()['value'] ?? null;
 
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
-        $fromDate = $this->getTable()->getFilters()['from_date']->getState()['from_date'] ?? null;
-        $toDate = $this->getTable()->getFilters()['to_date']->getState()['to_date'] ?? null;
+        $fromDate = $this->getTable()->getFilters()['from_date']->getState()['from_date'] ?? now()->startOfMonth();
+        $toDate = $this->getTable()->getFilters()['to_date']->getState()['to_date'] ?? now()->endOfMonth();
  
         $reportData = app(StockAdjustmentByCategoryReportService::class)->generate(
             $adjustmentType,
