@@ -103,7 +103,10 @@ class DetailsRelationManager extends RelationManager
                                     ->required(),
                                 Forms\Components\Select::make('store_id')
                                     ->label(__('lang.store'))
-                                    ->default(getDefaultStore())
+                                    // ->default(getDefaultStore())
+                                    ->default(function () {
+                                        return $this->ownerRecord->store_id ?? null;
+                                    })
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()
