@@ -24,6 +24,7 @@ use App\Services\MultiProductsInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\Reports\ResellerReportController;
+use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -111,6 +112,8 @@ Route::prefix('reseller')->group(function () {
     Route::get('branchSalesBalanceReport', [ResellerReportController::class, 'branchSalesBalanceReport']);
     Route::get('orderDeliveryReports', [ResellerReportController::class, 'orderDeliveryReports']);
 });
+
+Route::get('stockAdjustmentsByCategory', [StockAdjustmentReportController::class, 'byCategory']);
 
 
 Route::get('/suppliers', [SupplierController::class, 'index']);

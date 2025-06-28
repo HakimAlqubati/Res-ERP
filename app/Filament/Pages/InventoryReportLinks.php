@@ -19,6 +19,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryWithUs
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionPurchaseReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\ManufacturingInventoryReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentSummaryReportResource;
 use App\Filament\Resources\InVSReportResource;
 use App\Filament\Resources\StockSupplyOrderReportResource;
 
@@ -101,6 +102,12 @@ class InventoryReportLinks extends Page
                 'description' => '.',
                 'icon' => 'heroicon-o-magnifying-glass-circle',
                 'url' => ManufacturingInventoryReportResource::getUrl(),
+            ],
+            [
+                'title' => 'Stock Adjustment Summary',
+                'description' => 'Summary of adjustments by category and store.',
+                'icon' => 'heroicon-o-presentation-chart-bar',
+                'url' => StockAdjustmentSummaryReportResource::getUrl(),
             ],
         ];
 
