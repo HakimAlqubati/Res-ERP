@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseInvoice;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PurchaseInvoiceController extends Controller
@@ -37,13 +38,22 @@ class PurchaseInvoiceController extends Controller
         }
 
         if ($request->filled('from_date')) {
-            $query->whereDate('date', '>=', $request->from_date);
+            try {
+                $fromDate = Carbon::createFromFormat('d-m-Y', $request->from_date)->format('Y-m-d');
+                $query->whereDate('date', '>=', $fromDate);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => 'Invalid from_date format. Use d-m-Y.']);
+            }
         }
 
         if ($request->filled('to_date')) {
-            $query->whereDate('date', '<=', $request->to_date);
+            try {
+                $toDate = Carbon::createFromFormat('d-m-Y', $request->to_date)->format('Y-m-d');
+                $query->whereDate('date', '<=', $toDate);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => 'Invalid to_date format. Use d-m-Y.']);
+            }
         }
-
         // $invoices = $query->latest()->get();
         $paginator = $query->latest()->paginate($perPage);
         // 🧾 Format output
@@ -56,7 +66,7 @@ class PurchaseInvoiceController extends Controller
                 'details_count' => $invoice->details_count,
                 'total_amount' => formatMoneyWithCurrency($invoice->total_amount),
                 'has_attachment' => $invoice->has_attachment ? 'Yes' : 'No',
-                'date'=>$invoice->date,
+                'date' => $invoice->date,
             ];
         });
         $paginator->setCollection($data);
