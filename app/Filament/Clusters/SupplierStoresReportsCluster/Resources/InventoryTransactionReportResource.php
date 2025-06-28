@@ -38,41 +38,14 @@ class InventoryTransactionReportResource extends Resource
         return 'Inventory';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
 
  
     public static function table(Table $table): Table
     {
-        // $codes = [
-        //     '10002',
-        //     '10018',
-        //     '10007',
-        //     '10010',
-        //     '10029',
-        //     '6107',
-        //     '6104',
-        //     '6013',
-        //     '6109',
-        //     '6073',
-        //     '9035',
-        //     '9012',
-        //     '9005',
-        //     '9024',
-        //     '15006',
-        //     '15011',
-        //     '15010',
-        //     '15002',
-        //     '2006',
-        // ];
-        // $products = \App\Models\Product::query();
-        // $products->where(function ($query) use ($codes) {
-        //     foreach ($codes as $code) {
-        //         $query->orWhere('code', 'like', "%{$code}%");
-        //     }
-        // });
-        // $productIds = $products->pluck('id')->toArray();
+       
 
 
         return $table

@@ -44,7 +44,12 @@ class DetailsRelationManager extends RelationManager
     {
         return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable()
+                ->getStateUsing(function($record){
+                    $product = $record->product;
+                    return $product ? "{$product->code}-{$product->name}" : 'N/A';
+                })
+                ,
                 Tables\Columns\TextColumn::make('unit.name')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size'))->toggleable(),
                 Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable()
@@ -127,6 +132,7 @@ class DetailsRelationManager extends RelationManager
                                     ->default(function () {
                                         return $this->ownerRecord->store_id ?? null;
                                     })
+                                    // ->disabled()->dehydrated()
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()
