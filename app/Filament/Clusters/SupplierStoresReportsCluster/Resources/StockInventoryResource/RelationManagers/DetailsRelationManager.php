@@ -145,6 +145,7 @@ class DetailsRelationManager extends RelationManager
                                             ->required()
                                             ->options($records->pluck('unit.name', 'unit_id')->toArray()),
                                         Forms\Components\TextInput::make('quantity')
+                                            ->minValue(0)
                                             ->required(),
                                         Forms\Components\TextInput::make('package_size')
                                             ->required(),

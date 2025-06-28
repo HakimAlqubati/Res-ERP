@@ -162,7 +162,7 @@ class StockInventoryResource extends Resource
 
                                     $difference =  static::getDifference($get('system_quantity'), $state);
                                     $set('difference', $difference);
-                                })
+                                })->minValue(0)
                                 ->label('Physical Qty')
                                 ->required(),
 
