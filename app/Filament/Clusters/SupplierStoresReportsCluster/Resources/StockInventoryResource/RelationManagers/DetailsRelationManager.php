@@ -104,7 +104,23 @@ class DetailsRelationManager extends RelationManager
                                 Forms\Components\Select::make('reason_id')
                                     ->label('Reason')->default(StockAdjustmentReason::getFirstId())
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
-                                    ->required(),
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                        $details = $get('stock_adjustment_details') ?? [];
+                                        $reason = is_numeric($state) ? StockAdjustmentReason::find((int) $state) : null;
+                                        $reasonName = $reason?->name ?? '';
+                                        // dd($details);
+                                        foreach ($details as $index => $item) {
+                                            $productId = $item['product_id'] ?? null;
+                                            $product = is_numeric($productId) ? Product::find((int) $productId) : null;
+                                            $productName = $product?->name ?? '';
+                                            
+                                            $note = trim("{$reasonName} on product ({$productName})") . ' in stocktake #' . $this->ownerRecord->id;
+                                            
+                                            $set("stock_adjustment_details.{$index}.notes", $note);
+                                        }
+                                    }),
                                 Forms\Components\Select::make('store_id')
                                     ->label(__('lang.store'))
                                     // ->default(getDefaultStore())
