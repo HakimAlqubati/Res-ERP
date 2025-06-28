@@ -134,7 +134,7 @@ class StockInventoryResource extends Resource
                         ->label('Inventory Details')->columnSpanFull()
                         ->schema([
                             Select::make('product_id')
-                                ->required()->columnSpan(2)
+                                ->required()->columnSpan(2)->distinct()
                                 ->label('Product')->searchable()
                                 ->options(function () {
                                     return Product::where('active', 1)
