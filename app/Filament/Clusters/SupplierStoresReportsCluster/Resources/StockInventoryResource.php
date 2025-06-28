@@ -66,7 +66,7 @@ class StockInventoryResource extends Resource
         return $form
             ->schema([
                 Fieldset::make()->label('')->schema([
-                    Grid::make()->columns(3)->schema([
+                    Grid::make()->columns(4)->schema([
                         DatePicker::make('inventory_date')
                             ->required()->default(now())
                             ->label('Inventory Date')->disabledOn('edit'),
@@ -84,6 +84,46 @@ class StockInventoryResource extends Resource
                             ->relationship('responsibleUser', 'name')->disabledOn('edit')
                             ->required()
                             ->label('Responsible'),
+                        Select::make('category_id')
+                            ->label('Category')
+                            ->options(\App\Models\Category::pluck('name', 'id'))
+                            ->live()
+                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                if (!$state) return;
+
+                                $products = \App\Models\Product::where('category_id', $state)
+                                    ->where('active', 1)
+                                    ->get();
+
+                                $storeId = $get('store_id');
+
+                                $details = $products->map(function ($product) use ($storeId) {
+                                    $unitPrice = $product->unitPrices()->showInInvoices()->first();
+                                    $unitId = $unitPrice?->unit_id;
+                                    $packageSize = $unitPrice?->package_size ?? 0;
+
+                                    $service = new MultiProductsInventoryService(
+                                        null,
+                                        $product->id,
+                                        $unitId,
+                                        $storeId
+                                    );
+
+                                    $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
+
+                                    return [
+                                        'product_id' => $product->id,
+                                        'unit_id' => $unitId,
+                                        'package_size' => $packageSize,
+                                        'system_quantity' => $remainingQty,
+                                        'physical_quantity' => 0,
+                                        'difference' => 0 - $remainingQty,
+                                    ];
+                                })->toArray();
+
+                                $set('details', $details);
+                            }),
+
                     ]),
 
                     Repeater::make('details')
