@@ -70,4 +70,8 @@ class StockAdjustmentDetail extends Model implements Auditable
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function inventoryTransaction()
+    {
+        return $this->morphOne(\App\Models\InventoryTransaction::class, 'transactionable');
+    }
 }

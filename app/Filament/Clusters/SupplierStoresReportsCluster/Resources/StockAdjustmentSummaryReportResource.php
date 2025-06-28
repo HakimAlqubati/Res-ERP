@@ -93,6 +93,9 @@ class StockAdjustmentSummaryReportResource extends Resource
     {
         return [
             'index' => Pages\ListStockAdjustmentSummaryReports::route('/'),
+            'view' => Pages\ViewStockAdjustmentSummaryReport::route('/view/{categoryId}/{adjustment_type}/{storeId}/{fromDate?}/{toDate?}'),
+
+
         ];
     }
 

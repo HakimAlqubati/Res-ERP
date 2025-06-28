@@ -12,17 +12,17 @@ class ListStockAdjustmentSummaryReports extends ListRecords
 
     protected static string $resource = StockAdjustmentSummaryReportResource::class;
     protected static string $view = 'filament.pages.inventory-reports.adjustment-summary-report';
- 
-     protected function getViewData(): array
+
+    protected function getViewData(): array
     {
         $categoryIds = $this->getTable()->getFilters()['product.category_id']->getState()['values'] ?? null;
 
         $adjustmentType = $this->getTable()->getFilters()['adjustment_type']->getState()['value'] ?? null;
-        
-        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
-        $fromDate = $this->getTable()->getFilters()['from_date']->getState()['value'] ?? null;
-        $toDate = $this->getTable()->getFilters()['to_date']->getState()['value'] ?? null;
 
+        $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
+        $fromDate = $this->getTable()->getFilters()['from_date']->getState()['from_date'] ?? null;
+        $toDate = $this->getTable()->getFilters()['to_date']->getState()['to_date'] ?? null;
+ 
         $reportData = app(StockAdjustmentByCategoryReportService::class)->generate(
             $adjustmentType,
             $fromDate,

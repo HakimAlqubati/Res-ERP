@@ -17,7 +17,7 @@
                         <th colspan="2" class="no_border_right_left text-center">
                             <h3 class="text-lg font-bold">Stock Adjustment Summary Report</h3>
                         </th>
-                        <th class="text-center">
+                        <th class="text-center" colspan="2">
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Logo"
                                 class="logo-left circle-image" style="display: inline-block;">
                         </th>
@@ -27,26 +27,48 @@
                         <th>Adjustment Type</th>
                         <th>Product Count</th>
                         <th>Store</th>
+                        <th>Total Price</th>
                     </x-filament-tables::row>
                 </thead>
                 <tbody>
                     @foreach ($reportData as $record)
-                        <x-filament-tables::row>
+                        @php 
+                            $url = route(
+                                'filament.admin.inventory-report.resources.stock-adjustment-summary-reports.view',
+                                [
+                                    'categoryId' => $record['category_id'],
+                                    'adjustment_type' => $record['adjustment_type'],
+                                    'storeId' => $record['store_id'],
+                                    'fromDate' => $fromDate,
+                                    'toDate' => $toDate,
+                                ],
+                            );
+                        @endphp
+
+                        <x-filament-tables::row x-on:click="window.open('{{ $url }}', '_blank', 'noopener,noreferrer')"
+                            class="cursor-pointer hover:bg-gray-100 transition">
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                 {{ $record['category'] }}
                             </x-filament-tables::cell>
+
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                 {{ ucfirst($record['adjustment_type']) }}
                             </x-filament-tables::cell>
+
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2 text-center">
                                 {{ $record['product_count'] }}
                             </x-filament-tables::cell>
+
                             <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
                                 {{ $record['store'] }}
+                            </x-filament-tables::cell>
+                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                {{ $record['total_price'] }}
                             </x-filament-tables::cell>
                         </x-filament-tables::row>
                     @endforeach
                 </tbody>
+
             </x-filament-tables::table>
         </div>
     @else
@@ -57,7 +79,7 @@
 
     {{-- Print JS --}}
     <script>
-        document.getElementById("printReport").addEventListener("click", function () {
+        document.getElementById("printReport").addEventListener("click", function() {
             const originalContent = document.body.innerHTML;
             const printContent = document.getElementById("reportContent").innerHTML;
 

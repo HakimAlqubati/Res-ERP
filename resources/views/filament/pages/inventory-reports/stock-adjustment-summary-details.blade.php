@@ -1,0 +1,34 @@
+<x-filament::page>
+    <div class="text-xl font-semibold mb-4">
+        Showing details for: <span class="text-blue-600">{{ $category }}</span>
+    </div>
+ 
+    @if (count($adjustments) > 0)
+        <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+            <thead class="fixed-header">
+                <tr>
+                    <th>Product</th>
+                    <th>Unit</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Notes</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($adjustments as $item)
+                    <x-filament-tables::row>
+                        <x-filament-tables::cell>{{ $item['product'] }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $item['unit'] }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $item['quantity'] }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $item['price'] }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $item['notes'] }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $item['date'] }}</x-filament-tables::cell>
+                    </x-filament-tables::row>
+                @endforeach
+            </tbody>
+        </x-filament-tables::table>
+    @else
+        <div class="text-center text-gray-500 mt-10">No details found.</div>
+    @endif
+</x-filament::page>
