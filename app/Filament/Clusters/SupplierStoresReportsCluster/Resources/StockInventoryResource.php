@@ -79,7 +79,37 @@ class StockInventoryResource extends Resource
                                 Store::active()
                                     ->withManagedStores()
                                     ->get(['name', 'id'])->pluck('name', 'id')
-                            )->required(),
+                            )->required()
+                            ->afterStateUpdated(function (callable $get, callable $set) {
+                                $details = $get('details');
+                                $storeId = $get('store_id');
+
+                                if (!is_array($details) || !$storeId) return;
+
+                                $updatedDetails = collect($details)->map(function ($item) use ($storeId) {
+                                    $productId = $item['product_id'] ?? null;
+                                    $unitId = $item['unit_id'] ?? null;
+
+                                    if (!$productId || !$unitId) return $item;
+
+                                    $service = new \App\Services\MultiProductsInventoryService(
+                                        null,
+                                        $productId,
+                                        $unitId,
+                                        $storeId
+                                    );
+
+                                    $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+
+                                    $item['system_quantity'] = $remainingQty;
+                                    $item['physical_quantity'] = $remainingQty;
+                                    $item['difference'] = 0;
+
+                                    return $item;
+                                })->toArray();
+
+                                $set('details', $updatedDetails);
+                            }),
 
                         Select::make('responsible_user_id')->searchable()->default(auth()->id())
                             ->relationship('responsibleUser', 'name')->disabledOn('edit')
