@@ -123,6 +123,7 @@
             <tr> 
                 <th>Product Code</th>
                 <th>Product Name</th>
+                <th>Category</th>
                 <th>Unit</th>
                 <th>Quantity</th>
             </tr>
@@ -134,6 +135,7 @@
                         <tr> 
                             <td>{{ $product->code }}</td>
                             <td>{{ $product->name }}</td>
+                            <td>{{ $product->category->name }}</td>
                             <td>{{ $unit->unit->name ?? 'N/A' }}</td> <!-- Display Unit Name -->
                             <td></td> <!-- Empty Quantity Field -->
                         </tr>
