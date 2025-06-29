@@ -62,7 +62,9 @@
             </thead>
             <tbody>
                 @foreach ($reportData as $product)
-                    <x-filament-tables::row>
+                    <x-filament-tables::row @class([
+                        'qty_zero' => $product->remaining_qty <= 0, // Tailwind class for light red background
+                    ])>
                         <x-filament-tables::cell>{{ $product->code ?? '-' }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $product->name }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $product->category->name ?? '—' }}</x-filament-tables::cell>

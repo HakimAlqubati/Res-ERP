@@ -12,6 +12,7 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQ
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MissingInventoryProductsReportResource\Pages\ListMissingInventoryProductsReport;
 use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Toggle;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -66,6 +67,13 @@ class MissingInventoryProductsReportResource extends Resource
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
+                Filter::make('options')
+                    ->label('Extra')
+                    ->form([
+                        Toggle::make('hide_zero')
+                            ->label('Hide Zero Qty')
+                            ->default(false),
+                    ]),
             ], FiltersLayout::AboveContent)
             ->actions([]);
     }

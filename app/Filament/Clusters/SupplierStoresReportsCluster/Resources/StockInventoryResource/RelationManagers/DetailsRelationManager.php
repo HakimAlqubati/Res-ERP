@@ -45,11 +45,10 @@ class DetailsRelationManager extends RelationManager
         return $table->striped()
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable()
-                ->getStateUsing(function($record){
-                    $product = $record->product;
-                    return $product ? "{$product->code}-{$product->name}" : 'N/A';
-                })
-                ,
+                    ->getStateUsing(function ($record) {
+                        $product = $record->product;
+                        return $product ? "{$product->code}-{$product->name}" : 'N/A';
+                    }),
                 Tables\Columns\TextColumn::make('unit.name')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size'))->toggleable(),
                 Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable()
@@ -120,19 +119,19 @@ class DetailsRelationManager extends RelationManager
                                             $productId = $item['product_id'] ?? null;
                                             $product = is_numeric($productId) ? Product::find((int) $productId) : null;
                                             $productName = $product?->name ?? '';
-                                            
+
                                             $note = trim("{$reasonName} on product ({$productName})") . ' in stocktake #' . $this->ownerRecord->id;
-                                            
+
                                             $set("stock_adjustment_details.{$index}.notes", $note);
                                         }
                                     }),
                                 Forms\Components\Select::make('store_id')
                                     ->label(__('lang.store'))
-                                    // ->default(getDefaultStore())
+                                   
                                     ->default(function () {
                                         return $this->ownerRecord->store_id ?? null;
                                     })
-                                    // ->disabled()->dehydrated()
+                                    ->disabled()->dehydrated()
                                     ->options(
                                         Store::active()
                                             ->withManagedStores()
@@ -329,7 +328,24 @@ class DetailsRelationManager extends RelationManager
                     ->color('success')->icon('heroicon-o-plus')
                     ->deselectRecordsAfterCompletion(),
                 Tables\Actions\BulkActionGroup::make([
-                    // Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->action(function (Collection $records, Tables\Actions\DeleteBulkAction $action) {
+                            $nonAdjustmented = $records->filter(fn($record) => !$record->is_adjustmented);
+                            $adjustmented = $records->filter(fn($record) => $record->is_adjustmented);
+
+                            // Delete only non-adjusted records
+                            $nonAdjustmented->each->delete();
+
+                            // Show warning if some records were not deleted
+                            if ($adjustmented->isNotEmpty()) {
+                                showWarningNotifiMessage('Partial Deletion', 'Only non-adjusted records were deleted. Some records were skipped because they have already been adjusted.');
+                            } else {
+                                showSuccessNotifiMessage('Deleted', 'All selected records have been deleted successfully.');
+                            }
+
+                            // Optional: deselect records after action
+                            $action->deselectRecordsAfterCompletion();
+                        }),
                 ]),
             ]);
     }

@@ -417,3 +417,9 @@ tbody:last-of-type tr .fixed_footer {
     /* لون الخلفية للتأكيد */
     z-index: 10;
 }
+
+
+.qty_zero {
+    background: #da5e03 !important;
+    color: #ffffff !important;
+}

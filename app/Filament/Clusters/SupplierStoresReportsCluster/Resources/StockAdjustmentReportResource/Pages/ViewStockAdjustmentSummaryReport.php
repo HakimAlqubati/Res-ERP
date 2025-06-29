@@ -16,6 +16,7 @@ class ViewStockAdjustmentSummaryReport extends Page
     public string $category;
     public string $adjustment_type;
     public string $store;
+    public string $totalPrice;
 
     public array $adjustments = [];
 
@@ -38,9 +39,10 @@ class ViewStockAdjustmentSummaryReport extends Page
             withDetails: true
         );
         $record = $report->first();
-        
+
         $this->category = $record['category'] ?? 'Unknown Category';
         $this->store = $record['store'] ?? 'Unknown Store';
+        $this->totalPrice = $record['total_price'] ?? '-';
         $this->adjustments = $record['adjustments']?->toArray() ?? [];
     }
 

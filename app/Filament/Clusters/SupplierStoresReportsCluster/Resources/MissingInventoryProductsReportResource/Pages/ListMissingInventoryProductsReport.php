@@ -20,14 +20,20 @@ class ListMissingInventoryProductsReport extends ListRecords
         $perPage = request()->get('perPage', 20);
         $start = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
         $end = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
-
+        $hideZero = $this->getTable()->getFilters()['options']->getState()['hide_zero'];
         if ($perPage === 'all') {
             $perPage = 9999; // سيتم إرجاع كل النتائج
         }
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? 'all';
+
         $products = StockInventoryReportService::getProductsNotInventoriedBetween($start, $end, $perPage, $storeId);
         $store = Store::find($storeId)?->name ?? 'All Stores';
-
+        // Apply filter on collection if toggle is on
+        if ($hideZero) {
+            $products->setCollection(
+                $products->getCollection()->filter(fn($product) => $product->remaining_qty != 0)
+            );
+        }
         return [
             'reportData' => $products,
             'startDate' => $start,

@@ -39,7 +39,7 @@ class StockAdjustmentByCategoryReportService
 
         $adjustments = $query->get();
 
-        return $adjustments
+        $result = $adjustments
             ->groupBy(fn($item) => $item->product->category_id ?? 0)
             ->flatMap(function ($categoryGroup, $categoryId) use ($withDetails) {
                 $categoryName = optional($categoryGroup->first()?->product?->category)->name ?? 'Without Category';
@@ -95,5 +95,18 @@ class StockAdjustmentByCategoryReportService
                             });
                     });
             })->values();
+
+        // ✅ Add final total price if adjustment_type is filtered
+        if ($adjustmentType) {
+            $finalTotalPrice = $adjustments
+                ->pluck('inventoryTransaction')
+                ->filter()
+                ->sum(fn($tx) => $tx?->price ?? 0);
+
+            $result->push([
+                'final_total_price' => formatMoneyWithCurrency($finalTotalPrice),
+            ]);
+        }
+        return $result;
     }
 }
