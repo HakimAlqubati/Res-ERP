@@ -21,7 +21,7 @@ class ListPurchaseInvoiceReport extends ListRecords
 {
     protected static string $resource = PurchaseInvoiceReportResource::class;
     protected static string $view = 'filament.pages.stock-report.purchase-invoice-report-with-pagination';
-    public int|string $perPage = 20;
+    public int|string $perPage = 50;
     protected $updatesQueryString = ['perPage'];
 
 
