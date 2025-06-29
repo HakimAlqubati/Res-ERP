@@ -57,7 +57,7 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->options([
                         'increase' => 'Increase',
                         'decrease' => 'Decrease',
-                        'equal' => 'Equal',
+                        // 'equal' => 'Equal',
                     ])
                     ->placeholder('All')
                     ->default(null),
