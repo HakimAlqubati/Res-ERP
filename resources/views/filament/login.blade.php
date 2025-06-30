@@ -1,30 +1,41 @@
 <x-filament-panels::page.simple>
-    <div class="flex min-h-screen items-center justify-center px-4 body_login">
-        <div class="flex w-full max-w-4xl rounded-lg overflow-hidden relative">
+    <div class="min-h-screen flex items-center justify-center px-4]">
+        <div class="w-full max-w-7xl flex flex-col md:flex-row items-center justify-center gap-12">
 
-            <!-- Left Section (Logo & Branding) -->
-            <div class="hidden md:flex flex-col justify-center items-center flex-1 p-8 relative">
-                <!-- Logo Positioned to the Left -->
-                <img src="{{ asset('storage/logo/default.png') }}" alt="Logo" id="logo" class="absolute left-4 top-4 w-28">
+            {{-- Left: Branding --}}
+            <div
+                class="text-white px-4 md:px-12 w-full md:w-1/2 flex flex-col items-center justify-center text-center space-y-4">
+                <img src="{{ asset('storage/logo/default-wb.png') }}" alt="NLT Logo" class="logo w-44 h-auto mb-2">
 
-                <h3 id="slogan">
-                    Empowering Growth with <br> 
-                    Enterprise-Level Solutions for All
-                </h3>
+                <div class="slugan">
+                    <p class="text-sm md:text-base leading-relaxed text-teal-100 tracking-wide">
+                        <span>
+                            Empowering Growth with
+                        </span>
+                        <br>
+                        <span class="text-teal-300 font-medium tracking-wider">Enterprise-Level Solutions for All</span>
+                    </p>
+                </div>
             </div>
 
-            <!-- Right Section (Login Form) -->
-            <div class="flex-1 p-8">
+            {{-- Right: Login Form --}}
+            <div class="login_container bg-white rounded-2xl shadow-2xl p-6 md:p-10 w-full max-w-sm">
+                <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Login</h2>
+
                 {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE, scopes: $this->getRenderHookScopes()) }}
 
-                <x-filament-panels::form id="form" wire:submit="authenticate" class="space-y-4">
+                <x-filament-panels::form id="form" wire:submit="authenticate">
                     {{ $this->form }}
 
-                    <x-filament-panels::form.actions 
-                        :actions="$this->getCachedFormActions()" 
-                        :full-width="$this->hasFullWidthFormActions()" 
-                        class="w-full"
-                    />
+                    <div class="flex items-center justify-between mt-4 mb-2 text-sm text-gray-600">
+                        {{-- <label class="flex items-center gap-2">
+                            <input type="checkbox" wire:model.defer="data.remember" class="rounded border-gray-300">
+                            Remember Me
+                        </label> --}}
+
+                    </div>
+
+                    <x-filament-panels::form.actions :actions="$this->getCachedFormActions()" :full-width="$this->hasFullWidthFormActions()" />
                 </x-filament-panels::form>
 
                 {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, scopes: $this->getRenderHookScopes()) }}
@@ -33,29 +44,106 @@
     </div>
 
     <style>
-        .body_login {
-            background: linear-gradient(0deg, rgba(34, 193, 195, 1) 0%, rgba(253, 187, 45, 1) 100%) !important;
-        }
-
         .fi-simple-header {
             display: none !important;
         }
 
-        #slogan {
-            margin-top: 100px;
-            color: bisque;
-            font-family: cursive;
-            font-size: 1.6em;
-            font-weight: bold;
-            text-shadow: #3f6212 2px 2px 5px;
-            text-align: left;
+        .fi-form-actions {
+            width: 100%;
         }
 
-        #logo {
-            max-width: 44%;
-            position: absolute;
-            left: 20px;  /* Moves the logo to the left inside the left section */
-            top: 20px;
+        input[type="email"],
+        input[type="password"],
+        .fi-input-wrp {
+            border-radius: 9999px !important;
+            /* padding-left: 1rem !important;
+            padding-right: 1rem !important; */
+            height: 2.75rem;
+            font-size: 0.95rem;
+        }
+
+        button[type="submit"],
+        .fi-button {
+            background-color: #00a67e !important;
+            color: #fff !important;
+            border-radius: 10px !important;
+            font-weight: 600;
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+
+        .min-h-screen {
+            background: #0A6150 !important;
+        }
+
+        .login_container {
+            border-radius: 19px;
+            max-width: 30rem;
+        }
+
+        .login_container h2 {
+            font-size: 2.9rem;
+            line-height: 4rem;
+            color:#07473B;
+
+        }
+
+        /* Style for placeholder text */
+        input::placeholder,
+        textarea::placeholder {
+            color: #00163c;
+            /* Tailwind's text-gray-400 */
+            font-size: 0.9rem;
+            opacity: 1;
+            /* Override browser default if faded */
+        }
+
+        /* Optional: dark background input field contrast */
+        input:focus::placeholder {
+            color: #000;
+            /* Slightly brighter gray on focus */
+        }
+
+        input::placeholder {
+            content: "Enter your email";
+            /* هذا لا يعمل */
+        }
+
+        .slugan p,
+        .slugan span {
+            letter-spacing: 0.19199rem;
+        }
+
+        .slugan p {
+            text-align: center;
+            color: #15d3ae;
+            font-size:1.08rem;
+        }
+
+        .slugan {
+            width: 100%;
+            padding-right: 25%;
+            padding-left: 25%;
+        }
+
+        .logo {
+            height: 260px;
+        }
+
+        .fi-input-wrp-suffix {
+            border: none;
+        }
+
+        body::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        body {
+            -ms-overflow-style: none;
+            /* IE & Edge */
+            scrollbar-width: none;
+            /* Firefox */
         }
     </style>
 </x-filament-panels::page.simple>

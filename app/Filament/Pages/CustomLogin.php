@@ -32,7 +32,7 @@ class CustomLogin extends SimplePage
 
     protected static string $view = 'filament.login';
     // protected static string $view = 'filament-panels::pages.auth.login';
-    protected static ?string $title = null;
+    protected static ?string $title = 'Login';
 
     protected ?string $heading = null;
 

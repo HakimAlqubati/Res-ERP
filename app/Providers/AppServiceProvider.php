@@ -80,10 +80,10 @@ class AppServiceProvider extends ServiceProvider
             Css::make('keypad', ''),
             Js::make('example-local-script', asset('js/tune.js')),
         ]);
-        FilamentView::registerRenderHook(
-            'panels::auth.login.form.after',
-            fn(): View => view('filament.login_extra')
-        );
+        // FilamentView::registerRenderHook(
+        //     'panels::auth.login.form.after',
+        //     fn(): View => view('filament.login_extra')
+        // );
 
         // Gate::policy(\Spatie\Permission\Models\Role::class, \App\Policies\RolePolicy::class);
         // Gate::policy(Task::class, \App\Policies\TaskPolicy::class);
