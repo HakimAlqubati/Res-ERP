@@ -143,7 +143,7 @@ class TestController4 extends Controller
             $status = addslashes($request->status); // حماية من حقن SQL
             $where[] = "o.status = '$status'";
         }
- 
+
         // 🧠 Assemble WHERE clause
         $whereSql = implode(' AND ', $where);
         // dd($whereSql,$user->branch?->is_central_kitchen);
@@ -382,14 +382,16 @@ AND (
     public function missingProducts(Request $request)
     {
 
+        $hideZero = $request->input('hide_zero', false);
 
         $products = StockInventoryReportService::getProductsNotInventoriedBetween(
             $request->start_date,
             $request->end_date,
             15,
-            'all'
+            'all',
+            $hideZero
         );
- 
+
         return response()->json([
             'status' => 'success',
             'data' => $products,
