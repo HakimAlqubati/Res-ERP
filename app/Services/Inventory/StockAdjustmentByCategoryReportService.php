@@ -63,7 +63,9 @@ class StockAdjustmentByCategoryReportService
 
                                 if ($withDetails) {
                                     $entry['adjustments'] = $storeGroup->map(function ($item) {
-                                        $price = formatMoneyWithCurrency($item->inventoryTransaction->price ?? 0);
+                                        $price = formatMoneyWithCurrency(
+                                            ($item->inventoryTransaction->price ?? 0) * ($item->quantity ?? 0)
+                                        );
 
                                         return [
                                             'product' => $item->product->name ?? 'Unknown Product',
@@ -84,10 +86,9 @@ class StockAdjustmentByCategoryReportService
                                     })->values();
                                 }
 
-                                $totalPrice = $storeGroup
-                                    ->pluck('inventoryTransaction')
-                                    ->filter()
-                                    ->sum(fn($tx) => $tx?->price ?? 0);
+                                $totalPrice = $storeGroup->sum(function ($item) {
+                                    return ($item->inventoryTransaction?->price ?? 0) * ($item->quantity ?? 0);
+                                });
 
                                 $entry['total_price'] = formatMoneyWithCurrency($totalPrice);
 
@@ -98,10 +99,9 @@ class StockAdjustmentByCategoryReportService
 
         // ✅ Add final total price if adjustment_type is filtered
         if ($adjustmentType) {
-            $finalTotalPrice = $adjustments
-                ->pluck('inventoryTransaction')
-                ->filter()
-                ->sum(fn($tx) => $tx?->price ?? 0);
+            $finalTotalPrice = $adjustments->sum(function ($item) {
+                return ($item->inventoryTransaction?->price ?? 0) * ($item->quantity ?? 0);
+            });
 
             $result->push([
                 'final_total_price' => formatMoneyWithCurrency($finalTotalPrice),
