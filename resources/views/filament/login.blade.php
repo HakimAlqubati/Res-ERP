@@ -14,7 +14,7 @@
                             Empowering Growth with
                         </span>
                         <br>
-                        <span class="text-teal-300 font-medium tracking-wider">Enterprise-Level Solutions for All</span>
+                        <span class="text-teal-300 font-medium tracking-wider">Enterprise Solutions. Simplified</span>
                     </p>
                 </div>
             </div>
