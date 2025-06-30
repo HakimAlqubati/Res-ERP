@@ -241,6 +241,7 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->package_size = $val->package_size;
             $obj->branch = $val->branch;
             $obj->unit = $val->unit;
+            $obj->unit_price = $val->unit_price;
             $obj->quantity =   formatQunantity($val->quantity);
             $final[] = $obj;
         }

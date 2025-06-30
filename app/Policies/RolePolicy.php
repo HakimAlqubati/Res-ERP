@@ -44,6 +44,7 @@ class RolePolicy
      */
     public function create(User $user)
     {
+        return  true;
         return $user->can('create_role');
     }
 

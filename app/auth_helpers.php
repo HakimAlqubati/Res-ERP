@@ -10,6 +10,13 @@ if (!function_exists('isAttendance')) {
         return auth()->user()->isAttendance();
     }
 }
+
+if (!function_exists('isOwner')) {
+    function isOwner()
+    {
+        return auth()->user()->isOwner();
+    }
+}
 if (!function_exists('isSuperAdmin')) {
     function isSuperAdmin()
     {
