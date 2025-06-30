@@ -73,6 +73,10 @@ class PurchaseInvoiceController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
+            'total_pages' => $paginator->lastPage(),
+            'current_page' => $paginator->currentPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
         ]);
     }
 }
