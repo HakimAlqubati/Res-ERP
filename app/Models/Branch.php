@@ -34,6 +34,7 @@ class Branch extends Model implements HasMedia, Auditable
         'start_date',
         'end_date',
         'more_description',
+        'is_hidden',
     ];
     protected $auditInclude = [
         'id',
@@ -50,6 +51,7 @@ class Branch extends Model implements HasMedia, Auditable
         'start_date',
         'end_date',
         'more_description',
+        'is_hidden',
     ];
     protected $appends = [
         'customized_categories',
@@ -319,5 +321,10 @@ class Branch extends Model implements HasMedia, Auditable
             ->sum(function ($order) {
                 return $order->total_amount; // accessor في Order
             });
+    }
+
+    public function scopeVisible($query)
+    {
+        return $query->where('is_hidden', false);
     }
 }

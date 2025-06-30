@@ -12,10 +12,10 @@ class InventoryDashboardService
     public function getSummary(): array
     {
 
-        $showGrns = true;
-        $showInvoices = false;
-        $showBranchOrders = false;
-        $showManufacturing = true;
+        $showGrns = settingWithDefault('show_dashboard_grns', false);
+        $showInvoices = settingWithDefault('show_dashboard_invoices', false);
+        $showBranchOrders = settingWithDefault('show_dashboard_branch_orders', false);
+        $showManufacturing = settingWithDefault('show_dashboard_manufacturing', false);
 
 
         $today = Carbon::today();

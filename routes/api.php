@@ -143,7 +143,21 @@ Route::get('/testInventoryReport2', function (Request $request) {
 });
 
 Route::get('/branches', function () {
-    return Branch::get(['id', 'name']);
+    return Branch::active()->visible()
+        ->activePopups()
+        ->get(['id', 'name', 'type'])
+
+        ->makeHidden([
+            'categories',
+            'salesAmounts',
+            'paidAmounts',
+            'total_orders_amount',
+            'customized_categories',
+            'orders_count',
+            'reseller_balance',
+            'total_paid',
+            'total_sales',
+        ]);
 });
 
 Route::get('/sendFCM', [TestController3::class, 'sendFCM']);

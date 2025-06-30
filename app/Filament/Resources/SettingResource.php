@@ -449,7 +449,15 @@ class SettingResource extends Resource
                                             ->label('Auto-create order if stock is unavailable')
                                             ->helperText('Automatically create a new order  if inventory is empty and update original quantity to zero.')
                                             ->default(false),
-                                    ])
+                                    ]),
+
+                                    Fieldset::make('Toggle Dashboard Sections')->columns(2)->schema([
+                                        Toggle::make('show_dashboard_grns')->label('Show GRNs Section')->default(true),
+                                        Toggle::make('show_dashboard_invoices')->label('Show Invoices Section')->default(false),
+                                        Toggle::make('show_dashboard_branch_orders')->label('Show Branch Orders Section')->default(false),
+                                        Toggle::make('show_dashboard_manufacturing')->label('Show Manufacturing Section')->default(true),
+                                    ]),
+
                                 ]),
                             ]),
                         Tabs\Tab::make('Users Settings')
