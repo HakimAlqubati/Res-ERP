@@ -73,7 +73,7 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->label('From Date')
                     ->form([
                         DatePicker::make('from_date')->maxDate(now())
-                            ->default(now()->startOfMonth()),
+                            ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {
                         return $data['from_date'] ? 'From: ' . $data['from_date'] : null;
@@ -84,7 +84,7 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->form([
                         DatePicker::make('to_date')
                         // ->maxDate(now())
-                        ->default(now()->endOfMonth())
+                        ->default(now())
                         ,
                     ])
                     ->indicateUsing(function (array $data): ?string {

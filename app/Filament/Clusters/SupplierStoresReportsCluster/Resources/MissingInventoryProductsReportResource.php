@@ -52,11 +52,11 @@ class MissingInventoryProductsReportResource extends Resource
                             //     $set('end_date', $endNextMonthData['end_month']);
                             // })
                             ->label('Start Date')
-                            ->default(now()->firstOfMonth()), // Use function for dynamic default value
+                            ->default(now()), // Use function for dynamic default value
 
                         DatePicker::make('end_date')
                             ->label('End Date')
-                            ->default(now()->endOfMonth()),
+                            ->default(now()),
                     ]),
                 SelectFilter::make('store_id')->label('Store')->options(
                     function () {
