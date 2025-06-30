@@ -5,8 +5,9 @@
             {{-- Left: Branding --}}
             <div
                 class="text-white px-4 md:px-12 w-full md:w-1/2 flex flex-col items-center justify-center text-center space-y-4">
-                <img src="{{ asset('storage/logo/default-wb.png') }}" alt="NLT Logo" class="logo w-44 h-auto mb-2">
-
+                <div class="logo-wrapper">
+                    <img src="{{ asset('storage/logo/default-wb.png') }}" alt="NLT Logo" class="logo w-44 h-auto mb-2">
+                </div>
                 <div class="slugan">
                     <p class="text-sm md:text-base leading-relaxed text-teal-100 tracking-wide">
                         <span>
@@ -84,7 +85,7 @@
         .login_container h2 {
             font-size: 2.9rem;
             line-height: 4rem;
-            color:#07473B;
+            color: #07473B;
 
         }
 
@@ -117,7 +118,7 @@
         .slugan p {
             text-align: center;
             color: #15d3ae;
-            font-size:1.08rem;
+            font-size: 1.08rem;
         }
 
         .slugan {
@@ -144,6 +145,37 @@
             /* IE & Edge */
             scrollbar-width: none;
             /* Firefox */
+        }
+
+        .logo-wrapper {
+            /* background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(6px);
+            padding: 1.5rem;
+            border-radius: 2rem; */
+            /* box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3); */
+            transition: all 0.3s ease;
+        }
+
+
+        @keyframes floatLogo {
+
+            0%,
+            100% {
+                transform: translateY(0) rotateX(2deg) rotateY(-2deg);
+            }
+
+            50% {
+                transform: translateY(-8px) rotateX(0deg) rotateY(0deg);
+            }
+        }
+
+        .logo {
+            animation: floatLogo 4s ease-in-out infinite;
+        }
+
+        .logo:hover {
+            transform: perspective(800px) rotateX(0deg) rotateY(0deg) scale(1.03);
+            filter: drop-shadow(0 20px 25px rgba(0, 0, 0, 0.5));
         }
     </style>
 </x-filament-panels::page.simple>
