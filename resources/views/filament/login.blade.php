@@ -10,9 +10,9 @@
                 </div>
                 <div class="slugan">
                     <p class="text-sm md:text-base leading-relaxed text-teal-100 tracking-wide">
-                        <span>
+                        {{-- <span>
                             Empowering Growth with
-                        </span>
+                        </span> --}}
                         <br>
                         <span class="text-teal-300 font-medium tracking-wider">Enterprise Solutions. Simplified</span>
                     </p>
