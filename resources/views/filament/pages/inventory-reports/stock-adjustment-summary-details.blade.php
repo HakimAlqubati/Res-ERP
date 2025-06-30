@@ -11,7 +11,7 @@
                     <th>Notes</th>
                     <th>Date</th>
                     <th>Quantity</th>
-                    <th>Unit Price</th>
+                    <th>Total Price</th>
                 </tr>
             </thead>
             <tbody>
