@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Api\Reports\ResellerReportController;
 use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
+use App\Http\Middleware\EnsureOwnerIfRequired;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -47,9 +48,11 @@ Route::get('/compare', function (Request $request) {
 
     return $fdata;
 });
- 
 
-Route::post('/login', [AuthController::class, 'login']);
+
+Route::post('/login', [AuthController::class, 'login'])
+    // ->middleware(EnsureOwnerIfRequired::class)
+;
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
 Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);

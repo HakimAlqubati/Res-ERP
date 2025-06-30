@@ -11,6 +11,13 @@ class InventoryDashboardService
 {
     public function getSummary(): array
     {
+
+        $showGrns = true;
+        $showInvoices = false;
+        $showBranchOrders = false;
+        $showManufacturing = true;
+
+
         $today = Carbon::today();
         $yesterday = Carbon::yesterday();
         $startOfMonth = Carbon::now()->startOfMonth();
@@ -64,18 +71,19 @@ class InventoryDashboardService
             ->sum(fn($order) => $order->total_amount);
 
         return [
-            'procurement' => [
-                'grns_entered' => [
+            'procurement' => array_filter([
+                'grns_entered' => $showGrns ? [
                     'count' => $grnsCount,
                     'month_to_date' => null,
-                ],
-                'invoices_entered' => [
+                ] : null,
+                'invoices_entered' => $showInvoices ? [
                     'count' => $invoicesCount,
                     'month_to_date' => formatMoneyWithCurrency($invoicesTotal),
-                ],
-            ],
-            'branch_orders' => $branchOrders->all(),
-            'manufacturing' => [
+                ] : null,
+            ]),
+            'branch_orders' => $showBranchOrders ? $branchOrders->all() : [],
+
+            'manufacturing' => $showManufacturing ?  [
                 'chocolate' => [
                     'items_made' => $itemsMade,
                     'value' => [
@@ -84,7 +92,7 @@ class InventoryDashboardService
                         'month_to_date' => formatMoneyWithCurrency($monthToDateValue),
                     ],
                 ],
-            ],
+            ] : [],
         ];
     }
 }

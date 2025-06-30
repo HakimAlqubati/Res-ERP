@@ -51,6 +51,12 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $user = $request->user();
+            if ($request->boolean('require_owner') && !isOwner()) {
+                Auth::logout();
+                return response()->json([
+                    'error' => 'Access denied. Owner only.'
+                ], 403);
+            }
             $token = $user->createToken('MyApp')->accessToken;
 
             return response()->json([
@@ -133,7 +139,7 @@ class AuthController extends Controller
         try {
             $user = auth()->user();
 
-            
+
             DB::transaction(function () use ($user, $request) {
                 $user->update([
                     'branch_id' => $request->branch_id,
