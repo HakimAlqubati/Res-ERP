@@ -207,7 +207,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'units.name AS unit',
                 'orders_details.package_size AS package_size',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-                'orders_details.price as unit_price',
+                // 'orders_details.price as unit_price',
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
@@ -231,7 +231,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'branches.name',
                 'units.name',
                 'orders_details.package_size',
-                'orders_details.price'
+                // 'orders_details.price'
             )
             ->get();
         $final = [];
@@ -241,7 +241,6 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->package_size = $val->package_size;
             $obj->branch = $val->branch;
             $obj->unit = $val->unit;
-            $obj->unit_price = $val->unit_price;
             $obj->quantity =   formatQunantity($val->quantity);
             $final[] = $obj;
         }
@@ -265,7 +264,7 @@ class ProductRepository implements ProductRepositoryInterface
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
         }
-        
+
         if ($currnetRole == 7)
             $branch_id = [getBranchId()];
         else

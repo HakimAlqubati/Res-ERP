@@ -59,7 +59,7 @@ class ReportProductQuantitiesResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->defaultSort(null)
             ->emptyStateHeading('Please choose a product')
             ->emptyStateDescription('Please choose a product or maybe there is no data')
@@ -71,10 +71,11 @@ class ReportProductQuantitiesResource extends Resource
                 TextColumn::make('branch'),
                 TextColumn::make('unit'),
                 TextColumn::make('package_size')->alignCenter(true),
-                TextColumn::make('quantity')->alignCenter(true),
+                TextColumn::make('quantity')->alignCenter(true)
+                    ->formatStateUsing(fn($state): string => formatQunantity($state)),
                 TextColumn::make('unit_price')
                     ->hidden(fn(): bool => isStoreManager())
-                    ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state),
+                    ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state)->alignCenter(),
                 // TextColumn::make('total')->label(__('lang.total_price'))
                 //     ->hidden(fn(): bool => isStoreManager())
                 // ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state)
