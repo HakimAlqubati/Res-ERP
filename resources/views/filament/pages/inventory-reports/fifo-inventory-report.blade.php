@@ -6,6 +6,10 @@
             border-collapse: inherit;
             border-spacing: initial;
         }
+
+        .fi-tabs {
+            display: none !important;
+        }
     </style>
 
     <div class="flex justify-end mb-4">
@@ -91,12 +95,12 @@
                 </x-filament-tables::table>
             </div>
         @else
-            <div class="text-center mt-10">
+            <div class="please_select_message_div text-center">
                 <h2 class="text-gray-500 text-lg">No inventory transaction data available.</h2>
             </div>
         @endif
     @else
-        <div class="text-center mt-10">
+        <div class="please_select_message_div text-center">
             <h2 class="text-gray-500 text-lg">{{ __('lang.please_select_store') }}</h2>
         </div>
     @endif

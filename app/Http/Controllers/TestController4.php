@@ -385,9 +385,11 @@ AND (
 
         $products = StockInventoryReportService::getProductsNotInventoriedBetween(
             $request->start_date,
-            $request->end_date
+            $request->end_date,
+            15,
+            'all'
         );
-
+ 
         return response()->json([
             'status' => 'success',
             'data' => $products,

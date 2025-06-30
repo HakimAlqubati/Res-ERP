@@ -70,7 +70,7 @@ class MissingInventoryProductsReportResource extends Resource
                 Filter::make('options')
                     ->label('Extra')
                     ->form([
-                        Toggle::make('hide_zero')
+                        Toggle::make('hide_zero')->inline(false)
                             ->label('Hide Zero Qty')
                             ->default(false),
                     ]),

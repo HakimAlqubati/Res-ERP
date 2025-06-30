@@ -182,14 +182,14 @@ html::-webkit-scrollbar {
     padding-bottom: 40px;
     background: #e1e1e1;
     border-radius: 25px;
-    border: 0.5px solid #c98108;
+    border: 0.5px solid #2E6E9E;
 }
 
 .please_select_message_text {
     font-family: Arial, sans-serif;
     font-size: 20px;
     font-weight: bold;
-    color: #c98108;
+    color: #2E6E9E;
     letter-spacing: 2.5px;
 }
 
@@ -422,4 +422,15 @@ tbody:last-of-type tr .fixed_footer {
 .qty_zero {
     background: #da5e03 !important;
     color: #ffffff !important;
+}
+
+.paginator_container {
+    display: flex;
+
+    /* قم بتوسيط المحتوى أفقيًا */
+    justify-content: center;
+
+    /* يمكنك إضافة بعض الهامش العلوي للفصل بينه وبين الجدول */
+    margin-top: 1.5rem;
+    /* 24px */
 }

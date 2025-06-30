@@ -62,7 +62,7 @@ class FifoInventoryReportResource extends Resource
                 ->label('Extra')
                 ->form([
                     Toggle::make('only_smallest_unit')
-                        ->label('Only Smallest Unit')
+                        ->label('Only Smallest Unit')->inline(false)
                         ->default(false),
                 ]),
         ], FiltersLayout::AboveContent);

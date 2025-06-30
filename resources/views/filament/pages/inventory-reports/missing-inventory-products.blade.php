@@ -41,23 +41,32 @@
             </button>
         </div>
         <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
-            <thead>
+            <thead class="fixed-header">
+                {{-- رأس احترافي --}}
                 <x-filament-tables::row class="header_report">
-                    <th colspan="4">
-                        <h3>Products Not Inventoried Between {{ $startDate }} - {{ $endDate }}
-                            - {{ '      ' }}
-                            In ({{ $store }})
-
+                    <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
+                    <th colspan="{{ $storeId == 'all' ? 3 : 2 }}" class="no_border_right_left text-center">
+                        <h3 class="text-lg font-bold">
+                            Products Not Inventoried ({{ $startDate }} - {{ $endDate }})
+                            <br>
+                            <span class="text-sm font-normal">Store: {{ $store }}</span>
                         </h3>
-
+                    </th>
+                    <th colspan="1" class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
+                        style="text-align: center;">
+                        <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo"
+                            class="logo-left circle-image" style="max-height: 60px;">
                     </th>
                 </x-filament-tables::row>
+
                 <x-filament-tables::row>
                     <th>Product Code</th>
                     <th>Name</th>
                     <th>Category</th>
-                    <th>{{ 'Remaining Qty' }}</th>
-
+                    <th>Remaining Qty</th>
+                    @if ($storeId === 'all')
+                        <th>In Store</th>
+                    @endif
                 </x-filament-tables::row>
             </thead>
             <tbody>
@@ -69,6 +78,9 @@
                         <x-filament-tables::cell>{{ $product->name }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $product->category->name ?? '—' }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $product->remaining_qty . ' ' . $product->smallest_unit_name }}</x-filament-tables::cell>
+                        @if ($storeId == 'all')
+                            <x-filament-tables::cell>{{ $product->store_name }}</x-filament-tables::cell>
+                        @endif
 
                     </x-filament-tables::row>
                 @endforeach
@@ -76,20 +88,14 @@
         </x-filament-tables::table>
         <!-- Pagination Links -->
         <div class="mt-4">
-            {{ $reportData->appends(request()->query())->links('vendor.pagination.tailwind') }}
-        </div>
-        <div class="flex justify-end mb-2">
-            <form method="GET">
-                <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-                <select name="perPage" id="perPage" onchange="this.form.submit()"
-                    class="border border-gray-300 px-3 py-1 rounded-md text-sm">
-                    @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                        <option value="{{ $option }}" {{ request('perPage', 15) == $option ? 'selected' : '' }}>
-                            {{ is_numeric($option) ? $option : 'All' }}
-                        </option>
-                    @endforeach
-                </select>
-            </form>
+            <div class="paginator_container">
+                @if (isset($reportData) && $reportData instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    {{ $reportData->links() }}
+                @endif
+            </div>
+
+
+            <x-per-page-selector />
         </div>
     @else
         <div class="text-center text-gray-500 mt-6">

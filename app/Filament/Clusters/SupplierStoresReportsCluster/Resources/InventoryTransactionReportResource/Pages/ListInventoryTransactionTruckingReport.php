@@ -15,7 +15,7 @@ class ListInventoryTransactionTruckingReport extends ListRecords
     use \App\Filament\Traits\HasBackButtonAction;
     protected static string $resource = InventoryTransactionTruckingReportResource::class;
     protected static string $view = 'filament.pages.inventory-reports.inventory-trucking-report';
-
+    public $perPage = 50;
     protected function getViewData(): array
     {
         $productId = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
@@ -28,10 +28,18 @@ class ListInventoryTransactionTruckingReport extends ListRecords
 
         $reportData = collect();
 
+
+        $perPage = $this->perPage;
+
+        if ($perPage === 'all') {
+            $perPage = 9999; // أو أي عدد كبير جدًا لضمان عرض الكل
+        }
+
+
         if (!empty($productId)) {
             $rawData = InventoryTransaction::getInventoryTrackingDataPagination(
                 $productId,
-                50,
+                $perPage,
                 $movementType,
                 $unitId,
                 $storeId,

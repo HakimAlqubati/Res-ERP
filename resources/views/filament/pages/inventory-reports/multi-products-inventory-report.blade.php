@@ -7,12 +7,21 @@
             border-collapse: inherit;
             border-spacing: initial;
         }
+
+        .fi-tabs {
+            display: none !important;
+        }
     </style>
-    <div class="flex justify-end mb-4">
+
+    <div class="flex justify-end gap-3 mb-4">
+
+
         <button id="printReport"
-            class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
+            class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700  transition duration-300 shadow-md">
             🖨️ Print
         </button>
+
+
     </div>
 
     {{ $this->getTableFiltersForm() }}
@@ -87,23 +96,14 @@
             {{-- Pagination Controls --}}
             {{-- @if ($reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
             <div class="mt-4">
-                @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    {{ $pagination->links() }}
-                @endif
-                <div class="flex justify-end mb-2">
-                    <form method="GET">
-                        <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-                        <select name="perPage" id="perPage" onchange="this.form.submit()"
-                            class="border border-gray-300 px-3 py-1 rounded-md text-sm">
-                            @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                                <option value="{{ $option }}"
-                                    {{ request('perPage', 15) == $option ? 'selected' : '' }}>
-                                    {{ is_numeric($option) ? $option : 'All' }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </form>
+                <div  class="paginator_container">
+                    @if (isset($pagination) && $pagination instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                        {{ $pagination->links() }}
+                    @endif
                 </div>
+
+
+                <x-per-page-selector />
             </div>
             {{-- @endif --}}
         @else

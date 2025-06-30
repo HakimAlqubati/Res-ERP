@@ -6,6 +6,10 @@
             border-collapse: inherit;
             border-spacing: initial;
         }
+
+        .fi-tabs {
+            display: none !important;
+        }
     </style>
     {{ $this->getTableFiltersForm() }}
 
@@ -21,8 +25,7 @@
                         <h3>({{ 'Inventory Tracking' }})</h3>
                     </th>
                     <th colspan="2" style="text-align: center;"
-                    class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}"
-                    >
+                        class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                         <img class="circle-image" src="{{ asset('/storage/' . setting('company_logo') . '') }}"
                             alt="">
                     </th>
@@ -76,10 +79,15 @@
         </x-filament-tables::table>
 
         {{-- Pagination Links --}}
-        <div class="mb-4 text-sm text-gray-700">
-            {{ $reportData->links() }}
+        <div class="mt-4">
+            <div class="paginator_container">
+                @if (isset($reportData) && $reportData instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                    {{ $reportData->links() }}
+                @endif
+            </div>
 
-            {{-- Showing {{ $reportData->firstItem() }} to {{ $reportData->lastItem() }} of {{ $reportData->total() }} results --}}
+
+            <x-per-page-selector />
         </div>
     @else
         <div class="please_select_message_div" style="text-align: center;">

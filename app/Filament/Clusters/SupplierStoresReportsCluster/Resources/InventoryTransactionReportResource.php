@@ -42,10 +42,10 @@ class InventoryTransactionReportResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
 
- 
+
     public static function table(Table $table): Table
     {
-       
+
 
 
         return $table
@@ -96,6 +96,7 @@ class InventoryTransactionReportResource extends Resource
                             ->inline(false)
                             ->label('Show Available in Stock')
                     ]),
+            
             ], FiltersLayout::AboveContent);
     }
 

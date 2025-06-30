@@ -6,6 +6,9 @@
             border-collapse: inherit;
             border-spacing: initial;
         }
+        .fi-tabs{
+            display: none !important;
+        }
     </style>
 
     <div class="flex justify-end mb-4">

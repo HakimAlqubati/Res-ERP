@@ -1,4 +1,16 @@
 <x-filament::page>
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
+
+        .fi-tabs {
+            display: none !important;
+        }
+    </style>
     {{-- Print Button --}}
     <div class="flex justify-end mb-4">
         <button id="printReport"

@@ -9,8 +9,13 @@ use Illuminate\Support\Carbon;
 
 class StockInventoryReportService
 {
-    public static function getProductsNotInventoriedBetween($startDate, $endDate, $perPage = 15, $storeId = 'all')
-    {
+    public static function getProductsNotInventoriedBetween(
+        $startDate,
+        $endDate,
+        $perPage = 15,
+        $storeId = 'all',
+        $hideZero = false
+    ) {
         $inventoryQuery = StockInventory::whereBetween('inventory_date', [$startDate, $endDate]);
 
         if (!empty($storeId) && $storeId !== 'all') {
@@ -29,8 +34,9 @@ class StockInventoryReportService
         $products = $productsQuery->paginate($perPage);
 
         // Add remaining_qty and smallest unit qty+name to each product
-        $products->getCollection()->transform(function ($product) {
-            $storeId = defaultManufacturingStore($product)->id ?? null;
+        $transformed = $products->getCollection()->transform(function ($product) {
+            $store = defaultManufacturingStore($product);
+            $storeId = $store?->id;
 
             if (!$storeId) {
                 $product->remaining_qty = 0;
@@ -61,12 +67,16 @@ class StockInventoryReportService
 
                 // Assign to product
                 $product->remaining_qty = $remainingQty;
+                $product->store_name = $store?->name ?? '—';
                 $product->smallest_unit_name = $smallestUnit->unit->name;;
             }
 
             return $product;
         });
-
+        if ($hideZero) {
+            $transformed = $transformed->filter(fn($product) => $product->remaining_qty != 0)->values();
+            $products->setCollection($transformed);
+        }
         return $products;
     }
 }

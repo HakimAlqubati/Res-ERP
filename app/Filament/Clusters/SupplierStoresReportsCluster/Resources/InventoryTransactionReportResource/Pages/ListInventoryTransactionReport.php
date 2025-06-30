@@ -17,6 +17,8 @@ class ListInventoryTransactionReport extends ListRecords
     protected static string $view = 'filament.pages.inventory-reports.multi-products-inventory-report';
 
 
+    public $perPage = 15;
+
     protected function getViewData(): array
     {
         $productIds = $this->getTable()->getFilters()['product_id']->getState()['values'] ?? [];
@@ -33,13 +35,13 @@ class ListInventoryTransactionReport extends ListRecords
         $inventoryService = new MultiProductsInventoryService($categoryId, $productId, $unitId, $storeId, $showAvailableInStock);
         $inventoryService->setProductIds($productIds);
 
-        // ⬅️ احصل على القيمة من الاستعلام أو استخدم 15 كقيمة افتراضية
-        $perPage = request()->get('perPage', 15);
+ 
+        $perPage = $this->perPage;
 
         if ($perPage === 'all') {
-            $perPage = 9999; // سيتم إرجاع كل النتائج
+            $perPage = 9999; // أو أي عدد كبير جدًا لضمان عرض الكل
         }
-
+ 
         // Get paginated report data
         $report = $inventoryService->getInventoryReportWithPagination($perPage);
 
