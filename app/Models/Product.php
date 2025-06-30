@@ -200,7 +200,11 @@ class Product extends Model implements Auditable
     public function getFormattedUnitPricesAttribute()
     {
         return $this->unitPrices->map(function ($unitPrice) {
-            return "{$unitPrice->unit->name} : {$unitPrice->price}";
+            $unitName = $unitPrice->unit->name ?? 'N/A';
+            $price = $unitPrice->price ?? 0;
+            $qtyPerPack = $unitPrice->package_size ?? '-';
+
+            return "{$unitName} : {$price} (Qty per Pack: {$qtyPerPack})";
         })->implode(', ');
     }
 
