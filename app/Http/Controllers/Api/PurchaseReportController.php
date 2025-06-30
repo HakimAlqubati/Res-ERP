@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\PurchasedReports\PurchaseInvoiceReportService;
+use Carbon\Carbon;
 
 class PurchaseReportController extends Controller
 {
@@ -23,9 +24,23 @@ class PurchaseReportController extends Controller
         $invoiceNos = $request->input('invoice_nos', []);
         $categoryIds = $request->input('category_ids', []);
         $perPage = $request->input('per_page', null);
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        try {
+            if ($dateFrom) {
+                $dateFrom = Carbon::createFromFormat('d-m-Y', $dateFrom)->format('Y-m-d');
+            }
+            if ($dateTo) {
+                $dateTo = Carbon::createFromFormat('d-m-Y', $dateTo)->format('Y-m-d');
+            }
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
+        }
+
         $dateFilter = [
-            'from' => $request->input('date_from'),
-            'to'   => $request->input('date_to'),
+            'from' => $dateFrom,
+            'to'   => $dateTo,
         ];
 
         $data = $this->service->getPurchasesInvoiceDataWithPagination(

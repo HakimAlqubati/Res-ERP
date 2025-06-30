@@ -9,6 +9,7 @@ use App\Interfaces\Products\ProductRepositoryInterface;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class ProductRepository implements ProductRepositoryInterface
@@ -245,12 +246,25 @@ class ProductRepository implements ProductRepositoryInterface
         }
         return $final;
     }
-    
+
     public function getProductsOrdersQuntities($request)
     {
         $currnetRole = getCurrentRole();
         $from_date = $request->input('from_date');
         $to_date = $request->input('to_date');
+
+        try {
+            if ($from_date) {
+                $from_date = Carbon::createFromFormat('d-m-Y', $from_date)->format('Y-d-m');
+            }
+
+            if ($to_date) {
+                $to_date = Carbon::createFromFormat('d-m-Y', $to_date)->format('Y-d-m');
+            }
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
+        }
+        // dd($from_date, $to_date);
         if ($currnetRole == 7)
             $branch_id = [getBranchId()];
         else
@@ -299,7 +313,7 @@ class ProductRepository implements ProductRepositoryInterface
             //     'orders_details.package_size',
             //     'orders_details.price'
             // )
-            ->groupBy('orders.branch_id','products.name','units.name')
+            ->groupBy('orders.branch_id', 'products.name', 'units.name')
             ->get();
         // Apply number_format() to the quantity value
         foreach ($data as &$item) {
