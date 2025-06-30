@@ -1,7 +1,7 @@
 <x-filament::page>
     <div class="text-xl font-semibold mb-4">
         Showing details for: <span class="text-blue-600">{{ $category }}</span>
-    </div> 
+    </div>
     @if (count($adjustments) > 0)
         <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
             <thead class="fixed-header">
@@ -11,6 +11,7 @@
                     <th>Notes</th>
                     <th>Date</th>
                     <th>Quantity</th>
+                    <th>Unit Price</th>
                     <th>Total Price</th>
                 </tr>
             </thead>
@@ -22,14 +23,17 @@
                         <x-filament-tables::cell>{{ $item['notes'] }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $item['date'] }}</x-filament-tables::cell>
                         <x-filament-tables::cell>{{ $item['quantity'] }}</x-filament-tables::cell>
+                        <x-filament-tables::cell>{{ $item['unit_price'] }}</x-filament-tables::cell>
+
                         <x-filament-tables::cell>{{ $item['price'] }}</x-filament-tables::cell>
                     </x-filament-tables::row>
                 @endforeach
             </tbody>
             <tbody>
                 <x-filament-tables::row>
-                    <x-filament-tables::cell colspan="5" class="text-right font-bold">Final Total Price</x-filament-tables::cell>
-                    
+                    <x-filament-tables::cell colspan="6" class="text-right font-bold">Final Total
+                        Price</x-filament-tables::cell>
+
                     <x-filament-tables::cell class="font-bold">{{ $totalPrice }}</x-filament-tables::cell>
                 </x-filament-tables::row>
             </tbody>

@@ -63,13 +63,14 @@ class StockAdjustmentByCategoryReportService
 
                                 if ($withDetails) {
                                     $entry['adjustments'] = $storeGroup->map(function ($item) {
+                                        $unitPrice = $item->inventoryTransaction->price;
                                         $price = formatMoneyWithCurrency(
-                                            ($item->inventoryTransaction->price ?? 0) * ($item->quantity ?? 0)
+                                            ($unitPrice ?? 0) * ($item->quantity ?? 0)
                                         );
-
                                         return [
                                             'product' => $item->product->name ?? 'Unknown Product',
                                             'quantity' => formatQunantity($item->quantity),
+                                            'unit_price' =>  formatMoneyWithCurrency($unitPrice),
                                             'unit' => $item->unit->name ?? null,
                                             'notes' => $item->notes,
                                             'date' => $item->adjustment_date,
@@ -80,7 +81,7 @@ class StockAdjustmentByCategoryReportService
                                                 'reference' => $item->inventoryTransaction->reference,
                                                 'quantity' => $item->inventoryTransaction->quantity,
                                                 'created_at' => $item->inventoryTransaction->created_at,
-                                                'price' => $item->inventoryTransaction->price,
+                                                'price' => formatMoneyWithCurrency($unitPrice),
                                             ] : null,
                                         ];
                                     })->values();
