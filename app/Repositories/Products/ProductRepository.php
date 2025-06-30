@@ -256,16 +256,16 @@ class ProductRepository implements ProductRepositoryInterface
 
         try {
             if ($from_date) {
-                $from_date = Carbon::createFromFormat('d-m-Y', $from_date)->format('Y-d-m');
+                $from_date = Carbon::createFromFormat('d-m-Y', $from_date)->format('Y-m-d');
             }
 
             if ($to_date) {
-                $to_date = Carbon::createFromFormat('d-m-Y', $to_date)->format('Y-d-m');
+                $to_date = Carbon::createFromFormat('d-m-Y', $to_date)->format('Y-m-d');
             }
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
         }
-        // dd($from_date, $to_date);
+        
         if ($currnetRole == 7)
             $branch_id = [getBranchId()];
         else
