@@ -810,6 +810,13 @@ class ProductResource extends Resource
 
 
                 ActionGroup::make([
+                    Tables\Actions\Action::make('exportItemsPdf')
+                        ->label('Export Items PDF')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('danger')
+                        // ->visible(fn($record) => $record->productItems()->exists())
+                        ->url(fn($record) => route('products.export-items-pdf', $record->id))
+                        ->openUrlInNewTab(),
                     Tables\Actions\Action::make('updateComponentPrices')
                         ->label('Update Price')
                         ->icon('heroicon-o-currency-dollar')->button()
@@ -1004,7 +1011,7 @@ class ProductResource extends Resource
      * @param int $mainUnitId
      * @return array
      */
-   
+
 
     public static function updateFinalPriceEachUnit($set, $get, $state, $withOut = false)
     {

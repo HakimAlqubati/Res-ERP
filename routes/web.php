@@ -722,3 +722,7 @@ Route::get('/routes-list', function () {
 
     return response()->json($routes);
 });
+
+Route::get('/products/{product}/export-items-pdf', function (\App\Models\Product $product) {
+    return $product->exportItemsPdf();
+})->name('products.export-items-pdf');

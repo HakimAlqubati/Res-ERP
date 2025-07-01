@@ -6,8 +6,10 @@ use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\Translatable\HasTranslations;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 
 class Product extends Model implements Auditable
 {
@@ -294,5 +296,33 @@ class Product extends Model implements Auditable
                 }
             }
         });
+    }
+
+
+
+    public function exportItemsPdf(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $items = DB::select("
+        SELECT 
+            parent.code as parent_code,
+            parent.name AS parent_product,
+            child.name AS item_product_name,
+            units.name AS item_unit_name,
+            pi.quantity AS item_quantity,
+            pi.qty_waste_percentage AS waste_percentage,
+            ROUND(pi.quantity * (1 + pi.qty_waste_percentage / 100), 2) AS item_quantity_after_waste
+        FROM product_items pi
+        JOIN products child ON pi.product_id = child.id
+        JOIN products parent ON pi.parent_product_id = parent.id
+        JOIN units ON pi.unit_id = units.id
+        WHERE pi.product_id = ?
+    ", [$this->id]);
+
+        $pdf = Pdf::loadView('pdfs.product_items', [
+            'items' => $items,
+            'product' => $this,
+        ]);
+
+        return $pdf->download("product_items_{$this->id}.pdf");
     }
 }
