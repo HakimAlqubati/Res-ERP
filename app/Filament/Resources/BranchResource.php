@@ -93,7 +93,7 @@ class BranchResource extends Resource
                                             Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
                                             Branch::TYPE_HQ => __('lang.hq'),
                                             Branch::TYPE_POPUP => __('lang.popup_branch'),
-                                            Branch::TYPE_RESELLER => __('lang.reseller'),
+                                            // Branch::TYPE_RESELLER => __('lang.reseller'),
                                         ])->columns(4)
                                         ->default(Branch::TYPE_BRANCH)
                                         ->icons([
@@ -101,14 +101,14 @@ class BranchResource extends Resource
                                             Branch::TYPE_CENTRAL_KITCHEN => 'heroicon-o-fire',
                                             Branch::TYPE_HQ => 'heroicon-o-building-storefront',
                                             Branch::TYPE_POPUP => 'heroicon-o-sparkles',
-                                            Branch::TYPE_RESELLER => 'heroicon-o-user-group',
+                                            // Branch::TYPE_RESELLER => 'heroicon-o-user-group',
                                         ])
                                         ->colors([
                                             Branch::TYPE_BRANCH => 'warning',
                                             Branch::TYPE_CENTRAL_KITCHEN => 'info',
                                             Branch::TYPE_HQ => 'success',
                                             Branch::TYPE_POPUP => 'danger',
-                                            Branch::TYPE_RESELLER => 'info',
+                                            // Branch::TYPE_RESELLER => 'info',
                                         ])
                                         ->inline()
                                         ->reactive()->columnSpan(3),

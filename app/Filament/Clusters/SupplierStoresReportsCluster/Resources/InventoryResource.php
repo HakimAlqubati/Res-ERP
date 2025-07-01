@@ -231,23 +231,47 @@ class InventoryResource extends Resource
 
                 ActionGroup::make([
 
-                    Tables\Actions\Action::make('editPackageSize')
-                        ->visible(fn(): bool => auth()->user()->email == 'admin@admin.com')
+                    Tables\Actions\Action::make('editQuantity')
+                        ->visible(fn(): bool => auth()->user()->email === 'admin@admin.com')
                         ->form([
-                            \Filament\Forms\Components\TextInput::make('package_size')->required(),
-                        ])->action(function ($record, $data) {
+                            \Filament\Forms\Components\TextInput::make('quantity')
+                                ->required()
+                                ->numeric()->default(fn($record): float => $record->quantity)
+                                ->minValue(0.1),
+                        ])
+                        ->action(function ($record, $data) {
                             $record->update([
-                                'package_size' => $data['package_size'],
+                                'quantity' => $data['quantity'],
                             ]);
+
                             \Filament\Notifications\Notification::make()
-                                ->title('Store Updated')
+                                ->title('Quantity Updated')
                                 ->success()
-                                ->body('Store updated successfully.')
+                                ->body('Quantity updated successfully.')
                                 ->send();
                         })
-                        ->label('Edit Package Size')
+                        ->label('Edit Quantity')
                         ->color('warning')
                         ->icon('heroicon-m-pencil-square'),
+
+
+                    // Tables\Actions\Action::make('editPackageSize')
+                    //     ->visible(fn(): bool => auth()->user()->email == 'admin@admin.com')
+                    //     ->form([
+                    //         \Filament\Forms\Components\TextInput::make('package_size')->required(),
+                    //     ])->action(function ($record, $data) {
+                    //         $record->update([
+                    //             'package_size' => $data['package_size'],
+                    //         ]);
+                    //         \Filament\Notifications\Notification::make()
+                    //             ->title('Store Updated')
+                    //             ->success()
+                    //             ->body('Store updated successfully.')
+                    //             ->send();
+                    //     })
+                    //     ->label('Edit Package Size')
+                    //     ->color('warning')
+                    //     ->icon('heroicon-m-pencil-square'),
 
                 ])
             ])

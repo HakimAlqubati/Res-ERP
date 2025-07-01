@@ -41,6 +41,28 @@ class DeliveredResellerOrdersResource extends Resource
         return self::getEloquentQuery()->count();
     }
 
+    public static function getPluralLabel(): ?string
+    {
+        return __('lang.delivery_orders');
+    }
+    public static function getPluralModelLabel(): string
+    {
+        return __('lang.delivery_orders');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.reseller');
+    }
+    public static function getModelLabel(): string
+    {
+        return __('lang.reseller');
+    }
+    public static function getNavigationLabel(): string
+    {
+        return __('lang.delivery_orders');
+    }
+
 
     public static function form(Form $form): Form
     {
@@ -77,7 +99,7 @@ class DeliveredResellerOrdersResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->columns([
                 TextColumn::make('id')
-                    ->label('Order ID')
+                    ->label('DO-ID')
                     ->searchable()->alignCenter()
                     ->sortable()->copyable()
                     ->weight(FontWeight::Bold),

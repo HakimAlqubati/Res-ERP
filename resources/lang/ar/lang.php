@@ -190,4 +190,7 @@ return [
     'reseller' => 'موزّع',
     'delivered_at' => 'تم التسليم في',
     'manager'=>'المدير',
+    'reseller' => 'نقطة بيع',
+    'account_manager' => 'مدير الحساب',
+    'delivery_orders' => 'اوامر التسليم',
 ];

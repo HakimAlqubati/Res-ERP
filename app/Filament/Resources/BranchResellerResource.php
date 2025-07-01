@@ -9,11 +9,23 @@ use App\Filament\Resources\BranchResellerResource\Pages;
 use App\Filament\Resources\BranchResellerResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\BranchReseller;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\District;
+use App\Models\User;
+use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
@@ -24,9 +36,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class BranchResellerResource extends Resource
 {
@@ -40,6 +54,19 @@ class BranchResellerResource extends Resource
     {
         return __('menu.resellers');
     }
+    public static function getPluralModelLabel(): string
+    {
+        return __('menu.resellers');
+    }
+    
+    public static function getLabel(): ?string
+    {
+        return __('lang.reseller');
+    }
+    public static function getModelLabel(): string
+    {
+        return __('lang.reseller');
+    }
     public static function getNavigationLabel(): string
     {
         return __('menu.resellers');
@@ -48,9 +75,157 @@ class BranchResellerResource extends Resource
     {
         return $form
             ->schema([
-                //
+
+                Wizard::make([
+                    Wizard\Step::make('Basic data')
+                        ->icon('heroicon-o-user-circle')
+                        ->schema([
+                            Fieldset::make()->columns(3)->schema([
+                                TextInput::make('name')->required()->label(__('lang.name')),
+                                Select::make('manager_id')
+                                    ->label(__('lang.account_manager'))
+                                    ->options(User::whereHas('roles', function ($q) {
+                                        $q->where('id', 7);
+                                    })
+                                        ->get(['name', 'id'])->pluck('name', 'id'))
+                                    ->searchable(),
+                                Toggle::make('active')
+                                    ->inline(false)->default(true),
+
+                                Fieldset::make()->columns(2)
+                                    ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                    ->label('Set Start and End Date for Popup Branch')
+                                    ->schema([
+                                        DateTimePicker::make('start_date')
+                                            ->default(now()->addDay())
+
+                                            ->label(__('lang.start_date'))
+                                            ->required(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->live()
+                                            ->afterStateUpdated(function ($state, callable $set) {
+                                                if ($state) {
+                                                    $newEndDate = \Illuminate\Support\Carbon::parse($state)->addDay();
+                                                    $set('end_date', $newEndDate);
+                                                }
+                                            }),
+
+                                        DateTimePicker::make('end_date')
+                                            ->label(__('lang.end_date'))
+                                            ->default(now()->addDays(2))
+
+                                            ->required(fn(callable $get) => $get('type') === Branch::TYPE_POPUP)
+                                            ->after('start_date')
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
+                                        Textarea::make('more_description')
+                                            ->label(__('lang.more_description'))
+                                            ->rows(3)->columnSpanFull()
+                                            ->nullable()
+                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
+                                    ]),
+                                Textarea::make('address')
+                                    ->columnSpanFull()
+                                    ->label(__('lang.address')),
+                            ]),
+
+                        ]),
+                    Wizard\Step::make('Location')
+                        ->icon('heroicon-o-map-pin')
+                        ->schema([
+                            Fieldset::make()
+                                ->relationship('location')
+                                ->columns(3)->schema([
+                                    Select::make('country_id')
+                                        ->label(__('Country'))->searchable()
+                                        // ->relationship('city', 'name')
+                                        ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
+                                        ->reactive()
+                                        ->required(false),
+                                    Select::make('city_id')
+                                        ->label(__('City'))->searchable()
+                                        // ->relationship('city', 'name')
+                                        ->options(function (callable $get) {
+                                            $countryId = $get('country_id');
+                                            return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
+                                        })
+                                        ->reactive()
+                                        ->required(false),
+
+                                    Select::make('district_id')
+                                        ->label(__('District'))
+                                        ->searchable()
+                                        ->options(function (callable $get) {
+                                            $cityId = $get('city_id');
+                                            return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
+                                        })
+                                        ->reactive()
+                                        ->required(false),
+                                    Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
+                                    LocationPickr::make('location')->label('')->columnSpanFull()
+                                        ->mapControls([
+                                            'mapTypeControl'    => true,
+                                            'scaleControl'      => true,
+                                            'streetViewControl' => true,
+                                            'rotateControl'     => true,
+                                            'fullscreenControl' => true,
+                                            'zoomControl'       => false,
+                                        ])
+                                        ->defaultZoom(5)
+                                        ->draggable()
+                                        ->clickable()
+                                        ->height('40vh')
+                                        // ->defaultLocation([41.32836109345274, 19.818383186960773])
+                                        ->myLocationButtonLabel('My location'),
+                                    // Add other location fields as needed (district_id, city_id, etc.)
+
+
+                                ]),
+
+                        ]),
+                    Wizard\Step::make('Images')
+                        ->icon('heroicon-o-user-circle')
+                        ->schema([
+                            Fieldset::make()->columns(1)->schema([
+                                SpatieMediaLibraryFileUpload::make('images')
+                                    ->disk('public')
+                                    ->label('')
+                                    ->directory('branches')
+                                    ->columnSpanFull()
+                                    ->image()
+                                    ->multiple()
+                                    ->downloadable()
+                                    ->moveFiles()
+                                    ->previewable()
+                                    ->imagePreviewHeight('250')
+                                    ->loadingIndicatorPosition('right')
+                                    ->panelLayout('integrated')
+                                    ->removeUploadedFileButtonPosition('right')
+                                    ->uploadButtonPosition('right')
+                                    ->uploadProgressIndicatorPosition('right')
+                                    ->panelLayout('grid')
+                                    ->reorderable()
+                                    ->openable()
+                                    ->downloadable(true)
+                                    ->previewable(true)
+                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                        return (string) str($file->getClientOriginalName())->prepend('branch-');
+                                    })
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])->maxSize(800)
+                                    ->imageEditorMode(2)
+                                    ->imageEditorEmptyFillColor('#fff000')
+                                    ->circleCropper()
+                            ])
+                        ]),
+                ])->columnSpanFull()->skippable(),
+
             ]);
     }
+
 
 
     public static function table(Table $table): Table
@@ -68,20 +243,20 @@ class BranchResellerResource extends Resource
                     // ->limit(100)
                     ->words(5)->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('user.name')->label(__('lang.manager')),
+                TextColumn::make('user.name')->label(__('lang.account_manager')),
 
                 TextColumn::make('user.email')->label('Email')->copyable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('orders_count')
                     ->formatStateUsing(fn($record): string => $record?->orders()?->count() ?? 0)
-                    ->label(__('lang.orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: false),
+                    ->label(__('lang.delivery_orders'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: false),
                 // TextColumn::make('reseller_balance')
                 //     ->label('Balance')
                 //     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                 //     ->sortable(),
 
                 TextColumn::make('total_orders_amount')
-                    ->label('Orders Total')
+                    ->label('DO Total')
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
 

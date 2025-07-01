@@ -208,4 +208,7 @@ return [
     'reseller' => 'Reseller',
     'delivered_at' => 'Deliverd',
     'manager' => 'Manager',
+    'reseller' => 'Reseller',
+    'account_manager' => 'Account Manager',
+    'delivery_orders' => 'Delivery Orders',
 ];
