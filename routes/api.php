@@ -143,8 +143,8 @@ Route::get('/testInventoryReport2', function (Request $request) {
 });
 
 Route::get('/branches', function () {
-    return Branch::active()->visible()
-        ->activePopups()
+    return Branch::active()
+        ->branches()
         ->get(['id', 'name', 'type'])
 
         ->makeHidden([
