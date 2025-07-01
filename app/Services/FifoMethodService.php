@@ -23,13 +23,19 @@ class FifoMethodService
         $this->sourceModel = $sourceModel;
     }
 
-    public function getAllocateFifo($productId, $unitId, $requestedQty)
-    {
+    public function getAllocateFifo(
+        $productId,
+        $unitId,
+        $requestedQty,
+        $storeId = null
+    ) {
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
         $product = Product::find($productId);
-        $storeId = defaultManufacturingStore($product)->id ?? null;
+        if (is_null($storeId)) {
+            $storeId = defaultManufacturingStore($product)->id ?? null;
+        }
 
         $inventoryService = new MultiProductsInventoryService(null, $productId, $unitId,  $storeId);
         $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);

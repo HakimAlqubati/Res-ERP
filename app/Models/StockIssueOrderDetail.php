@@ -45,11 +45,13 @@ class StockIssueOrderDetail extends Model implements Auditable
         parent::boot();
         static::created(function ($stockIssueDetail) {
             $order = $stockIssueDetail->order;
+            $storeId = $order->store_id;
             $fifoService = new \App\Services\FifoMethodService($order);
             $allocations = $fifoService->getAllocateFifo(
                 $stockIssueDetail->product_id,
                 $stockIssueDetail->unit_id,
-                $stockIssueDetail->quantity
+                $stockIssueDetail->quantity,
+                $storeId
             );
 
             self::moveFromInventory($allocations, $stockIssueDetail);
