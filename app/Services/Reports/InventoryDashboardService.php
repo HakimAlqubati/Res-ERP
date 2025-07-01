@@ -24,18 +24,20 @@ class InventoryDashboardService
 
         // ✅ PROCUREMENT
         $grnsCount = GoodsReceivedNote::approved()
-            ->whereDate('created_at', '>=', $startOfMonth)
+            // ->whereDate('created_at', '>=', $startOfMonth)
             ->count();
 
-        $invoicesQuery = PurchaseInvoice::whereDate('created_at', '>=', $startOfMonth);
+        $invoicesQuery = PurchaseInvoice::
+            // whereDate('created_at', '>=', $startOfMonth);
+            query();
         $invoicesCount = $invoicesQuery->count();
         $invoicesTotal = $invoicesQuery->with('details')->get()
             ->sum(fn($invoice) => $invoice->total_amount);
 
         // ✅ BRANCH ORDERS
         $branchOrders = Order::with('branch')
-            ->where('type', Order::TYPE_NORMAL)
-            ->whereDate('created_at', '>=', $startOfMonth)
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            // ->whereDate('created_at', '>=', $startOfMonth)
             ->get()
             ->groupBy(fn($order) => $order->branch?->name ?? 'Unknown Branch')
             ->map(function ($orders, $branchName) {
