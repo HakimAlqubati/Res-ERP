@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,7 +26,7 @@ class StockInventory extends Model implements Auditable
         'created_by',
     ];
 
-    protected $appends = ['details_count'];
+    protected $appends = ['details_count', 'categories_names'];
 
     public function store()
     {
@@ -54,4 +55,14 @@ class StockInventory extends Model implements Auditable
         return $this->details()->count();
     }
 
+    public function getCategoriesNamesAttribute()
+    {
+        return $this->details()
+            ->with('product.category')
+            ->get()
+            ->pluck('product.category.name')
+            ->filter() // يستبعد null
+            ->unique()
+            ->implode(', ');
+    }
 }

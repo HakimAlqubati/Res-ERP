@@ -32,6 +32,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class StockSupplyOrderResource extends Resource
 {
@@ -156,7 +157,7 @@ class StockSupplyOrderResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->striped()->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->sortable()->label('id')
+                TextColumn::make('id')->sortable()->label('id')->copyable()
                     ->toggleable()->searchable(isIndividual: true)->alignCenter(true)
                     ->color('primary')
                     ->weight(FontWeight::Bold),
@@ -166,11 +167,14 @@ class StockSupplyOrderResource extends Resource
                 TextColumn::make('item_count')->label('Products Count')->alignCenter(true)->toggleable(),
                 TextColumn::make('notes')->limit(50)->label('Notes'),
                 IconColumn::make('cancelled')
-                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
                 TextColumn::make('created_at')
                     ->label('Created at')->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('creator.name')
                     ->label('Created By')->toggleable(isToggledHiddenByDefault: false)->sortable(),
+                IconColumn::make('has_outbound_transactions')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Has Outbound')->boolean()->alignCenter(),
             ])
             ->filters([
                 SelectFilter::make("store_id")->placeholder('Select Store')
@@ -180,8 +184,43 @@ class StockSupplyOrderResource extends Resource
                     ),
             ], FiltersLayout::AboveContent)
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ActionGroup::make([
+
+
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('cancel')
+                        ->label('Cancel')->button()
+                        ->color('danger')
+                        ->icon('heroicon-o-x-circle')
+                        ->requiresConfirmation()
+                        ->form([
+                            Forms\Components\Textarea::make('reason')
+                                ->label('Cancellation Reason')
+                                ->required()
+                                ->rows(3)->columnSpanFull(),
+                        ])
+                        ->action(function (array $data, StockSupplyOrder $record) {
+                            try {
+                                DB::beginTransaction();
+
+                                $result = $record->handleCancellation($record, $data['reason']);
+
+                                DB::commit();
+
+                                if (! $result['status']) {
+                                    showWarningNotifiMessage('Failed', $result['message']);
+                                }
+                                if ($result['status'])
+                                    showSuccessNotifiMessage('Success', $result['message']);
+                            } catch (\Throwable $e) {
+                                DB::rollBack();
+                                showWarningNotifiMessage('Error', $e->getMessage());
+                                report($e);
+                            }
+                        })
+                        ->visible(fn(StockSupplyOrder $record) => ! $record->cancelled)
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

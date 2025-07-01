@@ -28,6 +28,7 @@ use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -271,11 +272,14 @@ class StockInventoryResource extends Resource
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->label('ID')->searchable(),
-                TextColumn::make('inventory_date')->sortable()->label('Date'),
-                TextColumn::make('store.name')->sortable()->label('Store'),
-                TextColumn::make('responsibleUser.name')->sortable()->label('Responsible'),
-                TextColumn::make('details_count')->label('Products No')->alignCenter(true),
-                IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true),
+                TextColumn::make('categories_names')->limit(40)
+                    ->weight(FontWeight::Medium)->tooltip(fn($record): string => $record->categories_names)
+                    ->wrap()->label('Categories')->toggleable(),
+                TextColumn::make('inventory_date')->sortable()->label('Date')->toggleable(),
+                TextColumn::make('store.name')->sortable()->label('Store')->toggleable(),
+                TextColumn::make('responsibleUser.name')->sortable()->label('Responsible')->toggleable(),
+                TextColumn::make('details_count')->label('Products No')->alignCenter(true)->toggleable(),
+                IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
 
             ])
             ->filters([
@@ -290,7 +294,7 @@ class StockInventoryResource extends Resource
                             ->when($data['from'], fn($q, $date) => $q->whereDate('inventory_date', '>=', $date))
                             ->when($data['to'], fn($q, $date) => $q->whereDate('inventory_date', '<=', $date));
                     }),
-                ],FiltersLayout::AboveContent)
+            ], FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->label('Finalize')
