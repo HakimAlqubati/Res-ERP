@@ -18,23 +18,13 @@ class LogUserActivity
             return $response;
         }
 
-        // تجاهل طلبات livewire إذا كانت غير جوهرية
+        // تجاهل طلبات livewire التلقائية التي لا تحتوي على أي calls أو updates
         if ($request->is('livewire/update')) {
             $components = $request->input('components', []);
-
-            // تجاهل Livewire التلقائي بدون calls أو updates
             if (
                 count($components) === 1 &&
                 empty($components[0]['updates']) &&
                 empty($components[0]['calls'])
-            ) {
-                return $response;
-            }
-
-            // تجاهل Livewire إذا كانت updates عبارة عن tableFilters فقط
-            if (
-                isset($components[0]['updates']) &&
-                $this->isOnlyFilterUpdate($components[0]['updates'])
             ) {
                 return $response;
             }
@@ -71,12 +61,5 @@ class LogUserActivity
             ->log("User visited/requested: {$request->method()} {$request->path()}");
 
         return $response;
-    }
-
-    protected function isOnlyFilterUpdate(array $updates): bool
-    {
-        return collect($updates)
-            ->keys()
-            ->every(fn($key) => str_starts_with($key, 'tableFilters.'));
     }
 }
