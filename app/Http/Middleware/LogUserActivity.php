@@ -58,6 +58,9 @@ class LogUserActivity
                 'user_agent' => $request->userAgent(),
                 'request_data' => $requestData,
             ])
+            ->tap(function (\Spatie\Activitylog\Models\Activity $activity) use ($user) {
+                $activity->user_name = $user?->name;
+            })
             ->log("User visited/requested: {$request->method()} {$request->path()}");
 
         return $response;
