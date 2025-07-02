@@ -1,4 +1,9 @@
 <x-filament::page>
+    <style>
+        .fi-tabs {
+            display: none !important;
+        }
+    </style>
     <div class="flex justify-end mb-4">
         <button id="printReport"
             class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
@@ -95,7 +100,7 @@
             </x-filament-tables::table>
         </div>
     @else
-        <div class="text-center mt-10">
+        <div class="please_select_message_div text-center">
             <h2 class="text-gray-500 text-lg">No summary report data available.</h2>
         </div>
     @endif

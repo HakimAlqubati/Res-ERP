@@ -47,6 +47,10 @@
         .white_clr {
             color: #ffffff !important;
         }
+
+        .fi-tabs {
+            display: none !important;
+        }
     </style>
 
     <div class="flex justify-end mb-4">
@@ -146,7 +150,7 @@
             </x-filament-tables::table>
         </div>
     @else
-        <div class="text-center mt-10">
+        <div class="please_select_message_div text-center">
             <h2 class="text-gray-500 text-lg">No inbound transactions found for selected ID.</h2>
         </div>
     @endif
