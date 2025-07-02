@@ -174,7 +174,7 @@ class StockSupplyOrderResource extends Resource
                     ->label('Created By')->toggleable(isToggledHiddenByDefault: false)->sortable(),
                 IconColumn::make('has_outbound_transactions')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Has Outbound')->boolean()->alignCenter(),
+                    ->label('Untouched')->boolean()->alignCenter(),
             ])
             ->filters([
                 SelectFilter::make("store_id")->placeholder('Select Store')

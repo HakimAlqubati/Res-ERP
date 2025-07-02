@@ -240,7 +240,7 @@ class GoodsReceivedNoteResource extends Resource
                     ->alignCenter(),
                 IconColumn::make('has_outbound_transactions')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Has Outbound')->boolean()->alignCenter(),
+                    ->label('Untouched')->boolean()->alignCenter(),
                 IconColumn::make('cancelled')
                     ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
             ])
