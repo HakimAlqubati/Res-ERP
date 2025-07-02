@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Traits\Inventory\CanCancelGoodsReceivedNote;
 
 class GoodsReceivedNote extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, CanCancelGoodsReceivedNote;
 
     protected $fillable = [
         'grn_date',
@@ -26,6 +27,7 @@ class GoodsReceivedNote extends Model implements Auditable
         'status',
         'is_purchase_invoice_created',
         'approve_date',
+        'cancelled',
     ];
 
     protected $auditInclude = [
@@ -44,7 +46,12 @@ class GoodsReceivedNote extends Model implements Auditable
         'is_purchase_invoice_created',
         'approve_date',
     ];
-    protected $appends = ['details_count', 'has_inventory_transaction', 'belongs_to_purchase_invoice'];
+    protected $appends = [
+        'details_count',
+        'has_inventory_transaction',
+        'belongs_to_purchase_invoice',
+        'has_outbound_transactions',
+    ];
     const STATUS_CREATED   = 'created';
     const STATUS_APPROVED  = 'approved';
     const STATUS_CANCELLED = 'cancelled';
@@ -181,5 +188,21 @@ class GoodsReceivedNote extends Model implements Auditable
     public function scopeApproved($query)
     {
         return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function getHasOutboundTransactionsAttribute(): bool
+    {
+        $inboundTransactionIds = $this->inventoryTransactions()
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->pluck('id');
+
+        return InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+            ->exists();
+    }
+
+    public function handleCancellation(GoodsReceivedNote $grn, string $reason): array
+    {
+        return $this->cancelGoodsReceivedNote($grn, $reason);
     }
 }

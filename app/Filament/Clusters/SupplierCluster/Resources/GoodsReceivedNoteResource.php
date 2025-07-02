@@ -238,6 +238,11 @@ class GoodsReceivedNoteResource extends Resource
                     ->label('Belongs to Invoice')
                     ->boolean()->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
+                IconColumn::make('has_outbound_transactions')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Has Outbound')->boolean()->alignCenter(),
+                IconColumn::make('cancelled')
+                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
             ])
             ->filters([
                 //
@@ -279,6 +284,39 @@ class GoodsReceivedNoteResource extends Resource
                 //     })
                 //     ->requiresConfirmation(),
                 Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('cancel')
+                        ->label('Cancel')->button()
+                        ->color('danger')
+                        ->icon('heroicon-o-x-circle')
+                        ->requiresConfirmation()
+                        ->form([
+                            Forms\Components\Textarea::make('reason')
+                                ->label('Cancellation Reason')
+                                ->required()
+                                ->rows(3)->columnSpanFull(),
+                        ])
+                        ->action(function (array $data, GoodsReceivedNote $record) {
+                            try {
+                                DB::beginTransaction();
+
+                                $result = $record->handleCancellation($record, $data['reason']);
+
+                                DB::commit();
+
+                                if (! $result['status']) {
+                                    showWarningNotifiMessage('Failed', $result['message']);
+                                    DB::rollBack();
+                                }
+                                if ($result['status'])
+                                    showSuccessNotifiMessage('Success', $result['message']);
+                            } catch (\Throwable $e) {
+                                DB::rollBack();
+                                showWarningNotifiMessage('Error', $e->getMessage());
+                                DB::rollBack();
+                                report($e);
+                            }
+                        })
+                        ->visible(fn(GoodsReceivedNote $record) => ! $record->cancelled),
                     Tables\Actions\Action::make('create_inventory')
                         ->label('Create Inventory')
                         ->icon('heroicon-o-plus-circle')->button()

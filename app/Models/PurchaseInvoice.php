@@ -10,10 +10,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Traits\Inventory\CanCancelPurchaseInvoice;
+
 
 class PurchaseInvoice extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, CanCancelPurchaseInvoice;
 
     protected $fillable = [
         'date',
@@ -36,9 +39,18 @@ class PurchaseInvoice extends Model implements Auditable
         'attachment',
         'cancelled',
         'cancel_reason',
+        'cancelled_by',
         'created_by',
     ];
-    protected $appends = ['has_attachment', 'has_description', 'details_count', 'has_grn', 'has_inventory_transaction', 'creator_name'];
+    protected $appends = [
+        'has_attachment',
+        'has_description',
+        'details_count',
+        'has_grn',
+        'has_inventory_transaction',
+        'creator_name',
+        'has_outbound_transactions',
+    ];
 
     /**
      * Get the count of purchase invoice details.
@@ -95,39 +107,7 @@ class PurchaseInvoice extends Model implements Auditable
         return !empty($this->description) ? 1 : 0;
     }
 
-    public function cancelInvoice(string $reason)
-    {
-        DB::beginTransaction();
 
-        try {
-
-            // Check if there is an inventory transaction of type order for this purchase invoice
-            $orderExists = \App\Models\InventoryTransaction::where('purchase_invoice_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
-                ->exists();
-
-            if ($orderExists) {
-                return ['status' => 'error', 'message' => 'Cannot cancel purchase invoice because there are related inventory transactions of type order.'];
-            }
-
-            $this->cancelled = true;
-            $this->cancel_reason = $reason;
-            $this->save();
-
-            // Delete related inventory transactions
-            \App\Models\InventoryTransaction::where('transactionable_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
-                ->delete();
-
-            DB::commit();
-
-            return ['status' => 'success', 'message' => 'Purchase invoice canceled successfully.'];
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            return ['status' => 'error', 'message' => 'Failed to cancel purchase invoice: ' . $e->getMessage()];
-        }
-    }
     public function grn()
     {
         return $this->hasOne(GoodsReceivedNote::class, 'purchase_invoice_id');
@@ -193,5 +173,43 @@ class PurchaseInvoice extends Model implements Auditable
     public function getCreatorNameAttribute()
     {
         return $this->creator?->name ?? null;
+    }
+
+    public function hasOutboundTransactionsFromInbound(): bool
+    {
+        $inboundTransactionIds = InventoryTransaction::where('transactionable_type', self::class)
+            ->where('transactionable_id', $this->id)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->pluck('id');
+
+        return InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+            ->exists();
+    }
+
+    public function getHasOutboundTransactionsAttribute(): bool
+    {
+        $inboundTransactionIds = $this->inventoryTransactions()
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->pluck('id');
+
+        return InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+            ->exists();
+    }
+
+
+    protected function hasOutboundTransactions(): Attribute
+    {
+        return Attribute::get(fn() => $this->hasOutboundTransactionsFromInbound());
+    }
+    public function handleCancellation($invoice, string $reason): array
+    {
+        return $this->cancelPurchaseInvoice($invoice, $reason);
+    }
+
+    public function inventoryTransactions()
+    {
+        return $this->morphMany(InventoryTransaction::class, 'transactionable');
     }
 }

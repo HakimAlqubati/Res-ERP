@@ -34,6 +34,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class StockIssueOrderResource extends Resource
 {
@@ -68,7 +69,7 @@ class StockIssueOrderResource extends Resource
 
                         DateTimePicker::make('created_at')
                             ->label('Created At')
-                            
+
                             ->visibleOn('view'),
 
 
@@ -205,8 +206,39 @@ class StockIssueOrderResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make()
+                Tables\Actions\ActionGroup::make([
+
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('cancelAndReverse')
+                        ->label('Cancel & Reverse')
+                        ->color('danger')
+                        ->icon('heroicon-o-x-circle')
+                        ->requiresConfirmation()
+                        ->visible(fn(StockIssueOrder $record) => !$record->cancelled)
+                        ->action(function (StockIssueOrder $record, array $data) {
+                            try {
+                                DB::transaction(function () use ($record, $data) {
+                                    $record->cancelAndReverse($data['reason'] ?? 'Cancelled via Filament action');
+                                });
+
+                                showSuccessNotifiMessage(
+                                    'Stock Issue Order cancelled and reversed successfully.'
+                                );
+                            } catch (\Throwable $e) {
+                                report($e);
+                                showWarningNotifiMessage(
+                                    'Failed to cancel and reverse the stock issue order: ' . $e->getMessage()
+                                );
+                            }
+                        })
+                        ->form([
+                            Forms\Components\Textarea::make('reason')
+                                ->label('Reason for cancellation')
+                                ->required()
+                                ->columnSpanFull(),
+                        ]),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

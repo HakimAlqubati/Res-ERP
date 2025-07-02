@@ -174,7 +174,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->options(function () {
                                     return Product::where('active', 1)
                                         ->unmanufacturingCategory()
-                                        ->orderBy('id','asc')
+                                        ->orderBy('id', 'asc')
                                         ->get(['id', 'code', 'name', 'active'])
 
                                         ->mapWithKeys(fn($product) => [
@@ -282,7 +282,7 @@ class PurchaseInvoiceResource extends Resource
     {
         return $table
             ->striped()
-            // ->paginated([10, 25, 50, 100])
+            ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')
@@ -347,6 +347,11 @@ class PurchaseInvoiceResource extends Resource
                 TextColumn::make('date')
                     ->label('Date')->date('Y-m-d')
                     ->toggleable(isToggledHiddenByDefault: true),
+                IconColumn::make('has_outbound_transactions')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->label('Has Outbound')->boolean()->alignCenter(),
+                IconColumn::make('cancelled')
+                    ->label('Cancelled')->toggleable(isToggledHiddenByDefault: true)->boolean()->alignCenter(),
 
             ])
             ->filters([
@@ -400,29 +405,6 @@ class PurchaseInvoiceResource extends Resource
 
             ], FiltersLayout::AboveContent)
             ->actions([
-                Tables\Actions\Action::make('cancel')
-                    ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
-                    ->icon('heroicon-o-backspace')->button()->color(Color::Red)
-                    ->form([
-                        Textarea::make('cancel_reason')->required()->label('Cancel Reason')
-                    ])
-                    ->action(function ($record, $data) {
-                        $result = $record->cancelInvoice($data['cancel_reason']);
-
-                        if ($result['status'] === 'success') {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Success')
-                                ->body($result['message'])
-                                ->success()
-                                ->send();
-                        } else {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Error')
-                                ->body($result['message'])
-                                ->danger()
-                                ->send();
-                        }
-                    })->hidden(fn(): bool => isSuperVisor())->hidden(),
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\Action::make('create_inventory')
                         ->label('Create Inventory')
@@ -469,7 +451,34 @@ class PurchaseInvoiceResource extends Resource
                             }
                         })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
                         // ->icon('heroicon-o-download')
-                        ->color('green')
+                        ->color('green'),
+                    Tables\Actions\Action::make('cancel')
+                        ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
+                        ->icon('heroicon-o-backspace')->button()->color(Color::Red)
+                        ->form([
+                            Textarea::make('cancel_reason')->required()->label('Cancel Reason')
+                        ])
+                        ->action(function ($record, $data) {
+                            try {
+                                $result = $record->handleCancellation($record, $data['cancel_reason']);
+
+                                if ($result['status'] === 'success') {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Success')
+                                        ->body($result['message'])
+                                        ->success()
+                                        ->send();
+                                } else {
+                                    \Filament\Notifications\Notification::make()
+                                        ->title('Error')
+                                        ->body($result['message'])
+                                        ->danger()
+                                        ->send();
+                                }
+                            } catch (\Throwable $th) {
+                                throw $th;
+                            }
+                        })->hidden(fn(): bool => isSuperVisor())
                 ]),
             ])
             ->bulkActions([

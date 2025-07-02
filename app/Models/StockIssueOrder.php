@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Inventory\HasStockOutReversal;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -10,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class StockIssueOrder extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable;
+    use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable,HasStockOutReversal;
 
     protected $fillable = [
         'order_date',
@@ -20,7 +21,9 @@ class StockIssueOrder extends Model implements Auditable
         'cancelled',
         'cancel_reason',
         'created_using_model_id', // Ensure it's fillable
-        'created_using_model_type', // Ensure it's fillable
+        'created_using_model_type', 
+        'cancelled_by',
+        'cancelled_at',
     ];
     protected $auditInclude = [
         'order_date',
@@ -71,4 +74,12 @@ class StockIssueOrder extends Model implements Auditable
     {
         return $this->morphTo();
     }
+    public function inventoryTransactions()
+    {
+        return $this->morphMany(InventoryTransaction::class, 'transactionable');
+    }
+    public function cancelledBy()
+{
+    return $this->belongsTo(User::class, 'cancelled_by');
+}
 }
