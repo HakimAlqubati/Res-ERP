@@ -249,7 +249,7 @@ class PurchaseInvoiceProductSummaryReportService
         foreach ($purchased as $purchase) {
             $productId = $purchase['product_id'];
             $orderedQty = isset($orderedMap[$productId]) ? $orderedMap[$productId]['qty'] : 0;
-            
+
             $purchasedQty = round($purchase['qty'], 2);
             $orderedQty = round($orderedQty, 2);
             // if ($orderedQty > $purchasedQty) {
@@ -261,7 +261,7 @@ class PurchaseInvoiceProductSummaryReportService
                 $storeId,
             );
             $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
-            
+
             $lastPrice = ($latestPrice && $latestPrice->package_size > 0)
                 ? ($latestPrice->price / $latestPrice->package_size)
                 : $purchase['price'];
@@ -272,7 +272,7 @@ class PurchaseInvoiceProductSummaryReportService
                 'unit_name'      => $purchase['unit_name'],
                 'purchased_qty'  => $purchasedQty,
                 'ordered_qty'    => $orderedQty,
-                'difference'     => $remainingQty,
+                'difference'     => formatQunantity($remainingQty),
                 'unit_price'     => round($lastPrice, 2),
                 'price'          => round($lastPrice * $remainingQty, 2),
             ];

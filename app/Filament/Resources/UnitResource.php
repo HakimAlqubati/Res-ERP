@@ -57,6 +57,11 @@ class UnitResource extends Resource
                         ->unique(ignoreRecord: true)
                         ->required(),
                     Toggle::make('active')->inline(false)->default(true),
+                    Toggle::make('is_fractional')
+                        ->label('Can be fractional?')
+                        ->helperText('Enable this if this unit allows decimal quantities.')
+                        ->default(true)
+                        ->inline(false),
                     Forms\Components\Textarea::make('description')->label('Description')->columnSpanFull(),
 
                 ])
@@ -73,8 +78,15 @@ class UnitResource extends Resource
                     ->searchable(isIndividual: false, isGlobal: false),
                 Tables\Columns\TextColumn::make('code')->alignCenter(true)
                     ->searchable(isIndividual: false, isGlobal: false),
+                Tables\Columns\IconColumn::make('is_fractional')
+                    ->label('Fractional?')
+                    ->boolean()
+                    ->alignCenter(true)
+                    ->sortable(),
 
-                Tables\Columns\CheckboxColumn::make('active')->label('Active?')->sortable()->alignCenter(true),
+                Tables\Columns\IconColumn::make('active')->label('Active?')
+                ->boolean()
+                ->sortable()->alignCenter(true),
             ])
             ->filters([
                 SelectFilter::make('active')

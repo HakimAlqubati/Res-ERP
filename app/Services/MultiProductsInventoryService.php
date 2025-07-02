@@ -231,14 +231,25 @@ class MultiProductsInventoryService
         }
 
         foreach ($unitPrices as $unitPrice) {
+
             if ($unitPrice['package_size'] <= 0) continue;
             $packageSize = $unitPrice['package_size']; // يضمن عدم القسمة على صفر
             $remainingQty = round($remQty / $packageSize, 2);
-            // إذا الوحدة الحالية هي أصغر وحدة ولا توجد حركات كسرية لها، نقرب الكمية للأقرب عدد صحيح
-            if ($smallestUnit && $smallestUnit->unit_id == $unitPrice['unit_id'] && !$hasFractionalMovement) {
-                $remainingQty = round($remainingQty);
-            }
+            $allowsFraction = $unitPrice['is_fractional'];
 
+            // إذا الوحدة الحالية هي أصغر وحدة ولا توجد حركات كسرية لها، نقرب الكمية للأقرب عدد صحيح
+            // if ($smallestUnit && $smallestUnit->unit_id == $unitPrice['unit_id'] && !$hasFractionalMovement) {
+
+
+            // }
+
+            if ($allowsFraction) {
+                $remainingQty = round($remainingQty,2);
+            } else {
+                
+                $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
+            }
+             
             // نحاول نجيب السعر من المخزون حسب الوحدة
             $unitId = $unitPrice['unit_id'];
 
@@ -318,6 +329,7 @@ class MultiProductsInventoryService
                 'is_last_unit' => $unitPrice->order == $maxOrder, // True if this is the last unit
                 'is_largest_unit' => $unitPrice->package_size == $maxPackageSize,
                 'price' => $unitPrice->price,
+                'is_fractional' => $unitPrice->unit->is_fractional ?? true, // Assuming is_fractional is a field in the unit model
             ];
         });
     }
