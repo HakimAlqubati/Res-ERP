@@ -16,8 +16,8 @@ class ListStockInventories extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-            ->icon('heroicon-o-plus-circle')
-            ->label('New Stocktake'),
+                ->icon('heroicon-o-plus-circle')
+                ->label('New Stocktake'),
             Actions\Action::make('print')
 
                 ->label('Print Stocktake Template')
@@ -28,7 +28,7 @@ class ListStockInventories extends ListRecords
                 ])
                 ->action(function ($data) {
 
-                    return redirect('/printStock?'.'category_id='.$data['category_id']);
+                    return redirect('/printStock?' . 'category_id=' . $data['category_id']);
                 })
                 // ->openUrlInNewTab()
                 // ->url(fn() => url('/printStock'))
@@ -36,5 +36,16 @@ class ListStockInventories extends ListRecords
                 ->icon('heroicon-o-printer'),
 
         ];
+    }
+    // Add this new function inside the ListStockInventories class
+    public function getRecordsWithDetails(): array
+    {
+        // Get the records currently displayed in the table
+        $records = $this->getFilteredTableQuery()->get();
+
+        // Return an array mapping the record ID to its details_count
+        return $records->mapWithKeys(function ($record) {
+            return [$record->id => $record->details_count];
+        })->toArray();
     }
 }
