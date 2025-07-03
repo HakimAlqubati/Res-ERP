@@ -283,6 +283,9 @@ class BranchResellerResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('branch_id')
+                    ->label('Branch')
+                    ->options(\App\Models\Branch::resellers()->active()->pluck('name', 'id')),
                 Tables\Filters\SelectFilter::make('active')
                     ->options([
                         1 => __('lang.active'),
@@ -303,7 +306,7 @@ class BranchResellerResource extends Resource
                         return [
                             TextInput::make('name')
                                 ->label('Store Name')
-                                ->default($existingStore?->name ?? $record->name. ' Store')
+                                ->default($existingStore?->name ?? $record->name . ' Store')
                                 ->required(),
 
                             Toggle::make('active')
@@ -340,9 +343,9 @@ class BranchResellerResource extends Resource
                     ->modalHeading('Manage Store')
                     ->color('gray')
                     ->button(),
-            
 
-            
+
+
 
 
 

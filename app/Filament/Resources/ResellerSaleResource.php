@@ -222,6 +222,7 @@ class ResellerSaleResource extends Resource
                     ->form(function (ResellerSale $record) {
                         $remaining = $record->remaining_amount;
 
+                        $remaining = round($remaining, 2);
                         return [
                             Fieldset::make()->columns(2)->schema([
                                 TextInput::make('amount')
@@ -248,16 +249,17 @@ class ResellerSaleResource extends Resource
                     })
                     ->action(function (array $data, ResellerSale $record): void {
                         try {
-                            $remaining = $record->remaining_amount;
+                            $remaining = round($record->remaining_amount, 2);
 
-                            if ($data['amount'] > $remaining || $data['amount'] <= 0) {
+                            $amount = round($data['amount'], 2);
+                            if ($amount > $remaining || $amount <= 0) {
                                 throw new \Exception("Invalid payment amount. Remaining is: {$remaining}");
                             }
 
-                            DB::transaction(function () use ($data, $record) {
+                            DB::transaction(function () use ($data, $record, $amount) {
                                 \App\Models\ResellerSalePaidAmount::create([
                                     'reseller_sale_id' => $record->id,
-                                    'amount' => $data['amount'],
+                                    'amount' => $amount,
                                     'paid_at' => $data['paid_at'],
                                     'notes' => $data['notes'] ?? null,
                                     'created_by' => auth()->id(),
