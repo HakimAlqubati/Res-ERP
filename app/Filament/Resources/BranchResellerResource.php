@@ -340,67 +340,9 @@ class BranchResellerResource extends Resource
                     ->modalHeading('Manage Store')
                     ->color('gray')
                     ->button(),
-                Action::make('addPayment')
-                    ->label('Add Payment')
-                    ->icon('heroicon-o-currency-dollar')
-                    ->form([
-                        TextInput::make('amount')
-                            ->label('Amount')
-                            ->numeric()
-                            ->required(),
-                        DateTimePicker::make('paid_at')
-                            ->label('Payment Date')
-                            ->default(now())
-                            ->required(),
-                        Textarea::make('note')
-                            ->label('Note')
-                            ->rows(2),
-                    ])
-                    ->visible(fn(Model $record) => $record->type === \App\Models\Branch::TYPE_RESELLER)
-                    ->action(function (Model $record, array $data) {
+            
 
-                        $record->paidAmounts()->create([
-                            'amount'   => $data['amount'],
-                            'paid_at'  => $data['paid_at'],
-                            'note'     => $data['note'],
-                        ]);
-
-                        \Filament\Notifications\Notification::make()
-                            ->title('Payment added successfully')
-                            ->success()
-                            ->send();
-                    })->button(),
-
-                Action::make('addSale')
-                    ->label('Add Sale')
-                    ->icon('heroicon-o-chart-bar')
-                    ->form([
-                        TextInput::make('amount')
-                            ->label('Amount')
-                            ->numeric()
-                            ->required(),
-                        DateTimePicker::make('sale_at')
-                            ->label('Sale Date')
-                            ->default(now())
-                            ->required(),
-                        Textarea::make('note')
-                            ->label('Note')
-                            ->rows(2),
-                    ])
-                    ->visible(fn(Model $record) => $record->type === \App\Models\Branch::TYPE_RESELLER)
-                    ->action(function (Model $record, array $data) {
-
-                        $record->salesAmounts()->create([
-                            'amount'   => $data['amount'],
-                            'sale_at'  => $data['sale_at'],
-                            'note'     => $data['note'],
-                        ]);
-
-                        \Filament\Notifications\Notification::make()
-                            ->title('Sale added successfully')
-                            ->success()
-                            ->send();
-                    })->button(),
+            
 
 
 

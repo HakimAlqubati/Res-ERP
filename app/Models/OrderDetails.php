@@ -125,9 +125,23 @@ class OrderDetails extends Model implements Auditable
         static::creating(function ($orderDetail) {
             $orderDetail->orderd_product_id = $orderDetail->product_id;
             $orderDetail->ordered_unit_id = $orderDetail->unit_id;
+            if (is_null($orderDetail->package_size)) {
+                $unitPrice = \App\Models\UnitPrice::where('product_id', $orderDetail->product_id)
+                    ->where('unit_id', $orderDetail->unit_id)
+                    ->first();
+
+                $orderDetail->package_size = $unitPrice?->package_size ?? 1; // fallback to 1 if still null
+            }
             $orderDetail->available_quantity = $orderDetail->quantity;
         });
         static::updated(function ($orderDetail) {
+            if (is_null($orderDetail->package_size)) {
+                $unitPrice = \App\Models\UnitPrice::where('product_id', $orderDetail->product_id)
+                    ->where('unit_id', $orderDetail->unit_id)
+                    ->first();
+
+                $orderDetail->package_size = $unitPrice?->package_size ?? 1; // fallback to 1 if still null
+            }
             $order = $orderDetail->order;
             $dirty = $orderDetail->getDirty();
             $messageParts = [];

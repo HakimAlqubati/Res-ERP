@@ -26,6 +26,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class ResellerSaleResource extends Resource
 {
@@ -198,13 +199,85 @@ class ResellerSaleResource extends Resource
                 TextColumn::make('sale_date')->date('Y-m-d')->toggleable(),
                 TextColumn::make('total_amount')
                     ->label(__('lang.total_amount'))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state)),
+                TextColumn::make('total_paid')
+                    ->label(__('lang.paid'))
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->toggleable(),
+
+                TextColumn::make('remaining_amount')
+                    ->label(__('lang.remaining'))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->toggleable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('add_payment')
+                    ->label(__('lang.add_payment')) // استخدم مفتاح ترجمة إن وجد
+                    ->icon('heroicon-o-banknotes')
+                    ->button()
+                    ->form(function (ResellerSale $record) {
+                        $remaining = $record->remaining_amount;
+
+                        return [
+                            Fieldset::make()->columns(2)->schema([
+                                TextInput::make('amount')
+                                    ->label(__('lang.amount'))
+                                    ->numeric()
+                                    ->minValue(0.01)
+                                    ->maxValue($remaining)
+                                    ->default($remaining)
+                                    ->required()
+                                    ->helperText("Remaining: " . formatMoneyWithCurrency($remaining)),
+
+                                DatePicker::make('paid_at')
+                                    ->label(__('lang.paid_at'))
+                                    ->default(now())
+                                    ->required(),
+
+                                Textarea::make('notes')
+                                    ->label(__('lang.notes'))
+                                    ->rows(2)
+                                    ->maxLength(500)
+                                    ->columnSpanFull(),
+                            ])
+                        ];
+                    })
+                    ->action(function (array $data, ResellerSale $record): void {
+                        try {
+                            $remaining = $record->remaining_amount;
+
+                            if ($data['amount'] > $remaining || $data['amount'] <= 0) {
+                                throw new \Exception("Invalid payment amount. Remaining is: {$remaining}");
+                            }
+
+                            DB::transaction(function () use ($data, $record) {
+                                \App\Models\ResellerSalePaidAmount::create([
+                                    'reseller_sale_id' => $record->id,
+                                    'amount' => $data['amount'],
+                                    'paid_at' => $data['paid_at'],
+                                    'notes' => $data['notes'] ?? null,
+                                    'created_by' => auth()->id(),
+                                ]);
+                            });
+
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('lang.payment_added_successfully'))
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            report($e);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title(__('lang.error_while_adding_payment'))
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

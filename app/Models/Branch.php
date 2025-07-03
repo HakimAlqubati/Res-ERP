@@ -205,7 +205,7 @@ class Branch extends Model implements HasMedia, Auditable
     {
         return $query->where('type', self::TYPE_RESELLER);
     }
-    
+
     public function scopeBranches($query)
     {
         return $query->where('type', self::TYPE_BRANCH);
@@ -298,25 +298,42 @@ class Branch extends Model implements HasMedia, Auditable
         return $this->hasMany(BranchPaidAmount::class);
     }
 
-    public function salesAmounts()
+    public function resellerSales()
     {
-        return $this->hasMany(BranchSalesAmount::class);
+        return $this->hasMany(ResellerSale::class, 'branch_id');
     }
 
-    public function getTotalPaidAttribute(): float
+    // public function getResellerBalanceAttribute(): float
+    // {
+    //     return $this->total_sales - $this->total_paid;
+    // }
+
+
+    // public function getTotalPaidAttribute(): float
+    // {
+    //     return $this->paidAmounts->sum('amount');
+    // }
+
+
+    public function resellerSaleItems()
     {
-        return $this->paidAmounts->sum('amount');
+        return $this->hasManyThrough(
+            \App\Models\ResellerSaleItem::class,
+            \App\Models\ResellerSale::class,
+            'branch_id',
+            'reseller_sale_id',
+            'id',
+            'id'
+        );
     }
+
 
     public function getTotalSalesAttribute(): float
     {
-        return $this->salesAmounts->sum('amount');
+        return $this->resellerSaleItems()->sum('total_price');
     }
 
-    public function getResellerBalanceAttribute(): float
-    {
-        return $this->total_sales - $this->total_paid;
-    }
+
 
     public function getTotalOrdersAmountAttribute(): float
     {
@@ -331,5 +348,27 @@ class Branch extends Model implements HasMedia, Auditable
     public function scopeVisible($query)
     {
         return $query->where('is_hidden', false);
+    }
+
+    public function resellerPaidAmounts()
+    {
+        return $this->hasManyThrough(
+            ResellerSalePaidAmount::class,
+            ResellerSale::class,
+            'branch_id',
+            'reseller_sale_id',
+            'id',
+            'id'
+        );
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        return $this->resellerPaidAmounts()->sum('amount');
+    }
+
+    public function getResellerBalanceAttribute(): float
+    {
+        return $this->total_sales - $this->total_paid;
     }
 }

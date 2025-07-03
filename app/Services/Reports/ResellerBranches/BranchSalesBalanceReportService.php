@@ -13,11 +13,11 @@ class BranchSalesBalanceReportService
     public function generate(): Collection
     {
         return Branch::where('type', Branch::TYPE_RESELLER)
-            ->with(['salesAmounts', 'paidAmounts'])
+
             ->get()
             ->map(function ($branch) {
-                $sales = $branch->salesAmounts->sum('amount');
-                $paid = $branch->paidAmounts->sum('amount');
+                $sales = $branch->total_sales;
+                $paid = $branch->total_paid;
                 $balance = $sales - $paid;
 
                 return [

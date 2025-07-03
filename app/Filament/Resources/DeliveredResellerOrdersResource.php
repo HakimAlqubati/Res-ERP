@@ -24,6 +24,7 @@ use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -105,6 +106,17 @@ class DeliveredResellerOrdersResource extends Resource
                     ->searchable()->alignCenter()
                     ->sortable()->copyable()
                     ->weight(FontWeight::Bold),
+
+                BadgeColumn::make('status')
+                    ->label(__('lang.order_status'))
+                    ->colors([
+                        'primary',
+                        'secondary' => static fn($state): bool => $state === Order::PENDING_APPROVAL,
+                        'warning' => static fn($state): bool => $state === Order::READY_FOR_DELEVIRY,
+                        'success' => static fn($state): bool => $state === Order::DELEVIRED,
+                        'danger' => static fn($state): bool => $state === Order::PROCESSING,
+                    ])
+                    ->iconPosition('after')->toggleable(isToggledHiddenByDefault: false),
 
                 TextColumn::make('branch.name')
                     ->label('Reseller')

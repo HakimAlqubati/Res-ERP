@@ -27,6 +27,10 @@ class ResellerSaleItem extends Model
     {
         return $this->belongsTo(ResellerSale::class, 'reseller_sale_id');
     }
+    public function resellerSale()
+    {
+        return $this->belongsTo(ResellerSale::class);
+    }
 
     public function product()
     {
@@ -49,7 +53,17 @@ class ResellerSaleItem extends Model
         });
 
 
+        static::updated(function ($item) {
+            $item->sale?->updateTotalAmount();
+        });
+
+
+        static::deleted(function ($item) {
+            $item->sale?->updateTotalAmount();
+        });
+
         static::created(function (ResellerSaleItem $item) {
+            $item->sale?->updateTotalAmount();
             $sale = $item->sale;
 
             if (!$sale || !$sale->store_id) {

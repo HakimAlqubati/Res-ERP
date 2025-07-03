@@ -198,7 +198,7 @@ return [
     'reseller_sale' => 'فاتورة مبيعات موزّع',
     'reseller_sales' => 'مبيعات الموزّعين',
     'reseller_sale_info' => 'معلومات الفاتورة',
-    
+
     'sale_date' => 'تاريخ البيع',
     'note' => 'ملاحظة',
     'items' => 'العناصر',
@@ -209,4 +209,14 @@ return [
     'total_price' => 'السعر الإجمالي',
     'package_size' => 'حجم الحزمة',
     'total_amount' => 'الإجمالي الكلي',
+
+    'add_payment' => 'إضافة دفعة',
+    'amount' => 'المبلغ',
+    'paid_at' => 'تاريخ الدفع',
+    'notes' => 'ملاحظات',
+    'payment_added_successfully' => 'تمت إضافة الدفعة بنجاح',
+    'error_while_adding_payment' => 'حدث خطأ أثناء إضافة الدفعة',
+    'paid' => 'المدفوع',
+    'remaining' => 'المتبقي',
+
 ];

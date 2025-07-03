@@ -21,7 +21,7 @@ class OrderDeliveryReportService
                 $query->where('type', Branch::TYPE_RESELLER); // غيّر "warehouse" لنوع الفرع الذي تريده
             })
             ->whereIn('status', [
-                // Order::READY_FOR_DELEVIRY,
+                Order::READY_FOR_DELEVIRY,
                 Order::DELEVIRED,
             ])
             ->get();
@@ -35,7 +35,7 @@ class OrderDeliveryReportService
             $branchName = $branch?->name ?? 'Unknown Branch';
 
             $doTotal = $orders->sum('total_amount');
-            $invoicedTotal = $branch?->paidAmounts->sum('amount') ?? 0;
+            $invoicedTotal = $branch?->total_sales ?? 0;
 
             $returnedTotal = $orders->sum('total_returned_amount');
             $balance = $doTotal - $invoicedTotal - $returnedTotal;

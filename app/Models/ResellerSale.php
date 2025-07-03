@@ -42,4 +42,35 @@ class ResellerSale extends Model
         $this->total_amount = $this->items()->sum('total_price');
         $this->save();
     }
+
+    public function paidAmounts()
+    {
+        return $this->hasMany(ResellerSalePaidAmount::class);
+    }
+
+    public function getTotalPaidAttribute(): float
+    {
+        return $this->paidAmounts()->sum('amount');
+    }
+
+    public function getRemainingAmountAttribute(): float
+    {
+        return $this->total_amount - $this->total_paid;
+    }
+
+    public function ensureTotalAmountIsCorrect(): void
+    {
+        $itemsTotal = $this->items()->sum('total_price');
+
+        if (is_null($this->total_amount) || round($this->total_amount, 2) !== round($itemsTotal, 2)) {
+            $this->updateTotalAmount();
+        }
+    }
+
+    protected static function booted()
+    {
+        static::retrieved(function (ResellerSale $sale) {
+            $sale->ensureTotalAmountIsCorrect();
+        });
+    }
 }

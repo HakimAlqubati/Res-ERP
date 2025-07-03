@@ -216,7 +216,7 @@ return [
     'reseller_sale' => 'Reseller Sale Invoice',
     'reseller_sales' => 'Reseller Sales',
     'reseller_sale_info' => 'Sale Information',
-    
+
     'sale_date' => 'Sale Date',
     'note' => 'Note',
     'items' => 'Items',
@@ -227,4 +227,13 @@ return [
     'total_price' => 'Total Price',
     'package_size' => 'Package Size',
     'total_amount' => 'Total Amount',
+    'add_payment' => 'Add Payment',
+    'amount' => 'Amount',
+    'paid_at' => 'Paid At',
+    'notes' => 'Notes',
+    'payment_added_successfully' => 'Payment added successfully',
+    'error_while_adding_payment' => 'An error occurred while adding the payment',
+    'paid' => 'Paid',
+    'remaining' => 'Remaining',
+
 ];
