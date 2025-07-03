@@ -12,6 +12,7 @@ use App\Models\BranchReseller;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
+use App\Models\Store;
 use App\Models\User;
 use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Facades\Filament;
@@ -58,7 +59,7 @@ class BranchResellerResource extends Resource
     {
         return __('menu.resellers');
     }
-    
+
     public static function getLabel(): ?string
     {
         return __('lang.reseller');
@@ -123,6 +124,12 @@ class BranchResellerResource extends Resource
                                             ->nullable()
                                             ->visible(fn(callable $get) => $get('type') === Branch::TYPE_POPUP),
                                     ]),
+                                Select::make('categories')
+                                    ->label(__('lang.customized_categories'))
+                                    // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                    ->relationship('categories', 'name')
+                                    ->columnSpanFull()->preload()
+                                    ->searchable()->multiple(),
                                 Textarea::make('address')
                                     ->columnSpanFull()
                                     ->label(__('lang.address')),
@@ -284,6 +291,55 @@ class BranchResellerResource extends Resource
 
             ])
             ->actions([
+
+                Action::make('manageStore')
+                    ->label('Manage Store')
+                    ->icon('heroicon-o-building-storefront')
+                    ->visible(fn(Model $record) => $record->type === \App\Models\Branch::TYPE_RESELLER)
+                    ->form(function (Model $record) {
+                        // إذا فيه مخزن موجود، نستخدم بياناته كقيمة افتراضية
+                        $existingStore = $record->store;
+
+                        return [
+                            TextInput::make('name')
+                                ->label('Store Name')
+                                ->default($existingStore?->name ?? $record->name. ' Store')
+                                ->required(),
+
+                            Toggle::make('active')
+                                ->label('Active')
+                                ->default($existingStore?->active ?? true),
+                        ];
+                    })
+                    ->action(function (Model $record, array $data) {
+                        if ($record->store) {
+                            $record->store->update([
+                                'name'   => $data['name'],
+                                'active' => $data['active'],
+                            ]);
+
+                            $message = "✅ Store updated: {$data['name']}";
+                        } else {
+                            $store = Store::create([
+                                'name'       => $data['name'],
+                                'active'     => $data['active'],
+                                'branch_id'  => $record->id,
+                            ]);
+
+                            $record->update(['store_id' => $store->id]);
+
+                            $message = "✅ Store created and linked: {$store->name}";
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Store Management')
+                            ->body($message)
+                            ->success()
+                            ->send();
+                    })
+                    ->modalHeading('Manage Store')
+                    ->color('gray')
+                    ->button(),
                 Action::make('addPayment')
                     ->label('Add Payment')
                     ->icon('heroicon-o-currency-dollar')

@@ -344,6 +344,54 @@ class UserResource extends Resource
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
+                    Tables\Actions\Action::make('quickEdit')
+                        ->label('Quick Edit')
+                        ->icon('heroicon-o-pencil-square')
+                        ->form([
+
+                            Fieldset::make()->columns(2)->schema([
+
+                                TextInput::make('name')
+                                    ->required()
+                                    ->default(fn($record) => $record->name)
+                                    ->unique(ignoreRecord: true),
+                                PhoneInput::make('phone_number')
+                                    ->label('Phone')
+                                    ->required()
+                                    ->default(fn($record) => $record->phone_number)
+                                    ->unique(ignoreRecord: true)
+                                    ->initialCountry('MY')
+                                    ->onlyCountries(['MY', 'US', 'YE', 'AE', 'SA'])
+                                    ->displayNumberFormat(PhoneInputNumberType::E164),
+                                TextInput::make('email')
+                                    ->email()
+                                    ->default(fn($record) => $record->email)
+                                    ->required()
+                                    ->unique(ignoreRecord: true),
+                                Select::make('branch_id')
+                                    ->label('Branch')
+                                    ->searchable()
+                                    ->default(fn($record) => $record->branch_id)
+                                    ->options(
+                                        fn() => Branch::active()
+                                            
+                                        ->pluck('name', 'id')
+                                    )
+                                    ->required(),
+                            ])
+                        ])
+                        ->action(function (User $record, array $data): void {
+                            try {
+                                if ($record->update($data)) {
+                                    showSuccessNotifiMessage('User updated successfully');
+                                } else {
+                                    showWarningNotifiMessage('No changes made to the user');
+                                }
+                            } catch (\Throwable $th) {
+                                throw $th;
+                                showWarningNotifiMessage('Failed to update user', $th->getMessage());
+                            }
+                        }),
                     // Add a custom action for updating password
                     Tables\Actions\Action::make('updatePassword')
                         ->form([

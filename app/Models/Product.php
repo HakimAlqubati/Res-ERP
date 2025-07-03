@@ -68,7 +68,13 @@ class Product extends Model implements Auditable
 
     public function unitPrices()
     {
-        return $this->hasMany(UnitPrice::class)->where('show_in_invoices', 1);
+        return $this->hasMany(UnitPrice::class)
+            ->whereIn('usage_scope', [
+                UnitPrice::USAGE_ALL,
+                UnitPrice::USAGE_SUPPLY_ONLY,
+                UnitPrice::USAGE_OUT_ONLY,
+                UnitPrice::USAGE_MANUFACTURING_ONLY,
+            ]);
     }
     public function allUnitPrices()
     {
@@ -324,5 +330,15 @@ class Product extends Model implements Auditable
         ]);
 
         return $pdf->download("product_items_{$this->id}.pdf");
+    }
+
+    public function scopeVisibleToBranch($query, Branch $branch)
+    {
+        if ($branch->type === Branch::TYPE_RESELLER) {
+            $categoryIds = $branch->categories->pluck('id');
+            return $query->whereIn('category_id', $categoryIds);
+        }
+
+        return $query;
     }
 }

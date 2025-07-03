@@ -67,8 +67,8 @@ class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
      * Calculate total price after waste percentage.
      */
     public static function calculateTotalPriceAfterWaste(float $totalPrice, float $wastePercentage): float
-    {
-        return round($totalPrice * (1 + ($wastePercentage / 100)), 2);
+    { 
+        return round($totalPrice * (1 + ($wastePercentage / 100)), 8);
     }
 
     /**

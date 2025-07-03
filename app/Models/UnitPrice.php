@@ -20,11 +20,12 @@ class UnitPrice extends Model implements Auditable
         'price',
         'package_size',
         'order',
-        'minimum_quantity',
-        'show_in_invoices',
+        'minimum_quantity', 
         'use_in_orders',
         'date',
         'notes',
+        'usage_scope',
+        'selling_price',
     ];
     protected $auditInclude = [
         'unit_id',
@@ -32,8 +33,9 @@ class UnitPrice extends Model implements Auditable
         'price',
         'package_size',
         'order',
-        'minimum_quantity',
-        'show_in_invoices'
+        'minimum_quantity', 
+        'usage_scope',
+        'selling_price',
     ];
     public function product()
     {
@@ -44,6 +46,21 @@ class UnitPrice extends Model implements Auditable
     {
         return $this->belongsTo(Unit::class);
     }
+
+    const USAGE_ALL = 'all';
+    const USAGE_SUPPLY_ONLY = 'supply_only';
+    const USAGE_OUT_ONLY = 'out_only';
+    const USAGE_MANUFACTURING_ONLY = 'manufacturing_only';
+    const USAGE_NONE = 'none';
+
+    // List of usage scope options for selection or validation
+    const USAGE_SCOPES = [
+        self::USAGE_ALL => 'Allowed in all operations',
+        self::USAGE_SUPPLY_ONLY => 'Allowed in supply operations only',
+        self::USAGE_OUT_ONLY => 'Allowed in outgoing operations only',
+        self::USAGE_MANUFACTURING_ONLY => 'Allowed in manufacturing only',
+        self::USAGE_NONE => 'Disabled in all operations (visible in reports only)',
+    ];
     public function toArray()
     {
         return [
@@ -81,6 +98,33 @@ class UnitPrice extends Model implements Auditable
 
     public function scopeShowInInvoices($query)
     {
-        return $query->where('show_in_invoices', true);
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_SUPPLY_ONLY,
+            self::USAGE_OUT_ONLY,
+        ]);
+    }
+    public function scopeUsableInSupply($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_SUPPLY_ONLY,
+        ]);
+    }
+
+    public function scopeUsableInOut($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_OUT_ONLY,
+        ]);
+    }
+
+    public function scopeUsableInManufacturing($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_MANUFACTURING_ONLY,
+        ]);
     }
 }

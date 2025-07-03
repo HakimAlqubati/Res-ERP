@@ -3,7 +3,8 @@
 namespace App\Filament\Resources\DeliveredResellerOrdersResource\Pages;
 
 use App\Filament\Resources\DeliveredResellerOrdersResource;
-use Filament\Actions; 
+use App\Models\Order;
+use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewDeliveredResellerOrders extends ViewRecord
@@ -15,5 +16,19 @@ class ViewDeliveredResellerOrders extends ViewRecord
         return [
             // Actions\DeleteAction::make(),
         ];
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $order = Order::with('orderDetails')->find($this->record->id);
+        if ($order) {
+            foreach ($order->orderDetails as $detail) {
+                $detail->update([
+                    'total_unit_price' => $detail->available_quantity * $detail->price,
+                ]);
+            }
+        }
+
+        return $data;
     }
 }

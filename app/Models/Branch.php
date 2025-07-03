@@ -201,6 +201,11 @@ class Branch extends Model implements HasMedia, Auditable
     {
         return $query->where('type', self::TYPE_CENTRAL_KITCHEN);
     }
+    public function scopeResellers($query)
+    {
+        return $query->where('type', self::TYPE_RESELLER);
+    }
+    
     public function scopeBranches($query)
     {
         return $query->where('type', self::TYPE_BRANCH);

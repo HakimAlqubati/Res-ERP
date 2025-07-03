@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\LogsRelationManager;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Clusters\ResellersCluster\Resources\DeliveredResellerOrdersResource\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\DeliveredResellerOrdersResource\Pages;
 use App\Filament\Resources\DeliveredResellerOrdersResource\RelationManagers;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
 use App\Models\Branch;
 use App\Models\DeliveredResellerOrders;
 use App\Models\Order;
@@ -111,7 +113,7 @@ class DeliveredResellerOrdersResource extends Resource
                 TextColumn::make('customer.name')
                     ->label('Manager')
                     ->sortable(),
-
+                TextColumn::make('item_count')->label(__('lang.item_counts'))->alignCenter(true),
                 TextColumn::make('total_amount')
                     ->label('Total Amount')
                     ->numeric()->alignCenter()
@@ -245,7 +247,9 @@ class DeliveredResellerOrdersResource extends Resource
     public static function getRelations(): array
     {
         return [
+            OrderDetailsRelationManager::class,
             PaymentsRelationManager::class,
+            LogsRelationManager::class,
 
         ];
     }
@@ -261,7 +265,9 @@ class DeliveredResellerOrdersResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('status', Order::DELEVIRED)
+            // ->where('status', Order::DELEVIRED)
+            ->where('is_purchased', 0)
+            ->whereHas('orderDetails')
             ->whereHas('branch', function ($query) {
                 $query->where('type', Branch::TYPE_RESELLER);
             })

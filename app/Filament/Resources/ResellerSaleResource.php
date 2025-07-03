@@ -1,0 +1,250 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Clusters\ResellersCluster;
+use App\Filament\Resources\ResellerSaleResource\Pages;
+use App\Filament\Resources\ResellerSaleResource\RelationManagers;
+use App\Models\Branch;
+use App\Models\Product;
+use App\Models\ResellerSale;
+use App\Models\UnitPrice;
+use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+class ResellerSaleResource extends Resource
+{
+    protected static ?string $model = ResellerSale::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $cluster = ResellersCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 2;
+
+    public static function getLabel(): ?string
+    {
+        return __('lang.reseller_sale');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('lang.reseller_sales');
+    }
+
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Fieldset::make(__('lang.reseller_sale_info'))->schema([
+                    Grid::make(2)->schema([
+                        Select::make('branch_id')
+                            ->label(__('lang.branch'))
+                            ->options(
+                                \App\Models\Branch::resellers()->active()->pluck('name', 'id')
+                            )
+                            ->disabledOn('edit')
+                            ->required()->preload()
+                            ->searchable(),
+
+                        DatePicker::make('sale_date')
+                            ->label(__('lang.sale_date'))
+                            ->disabledOn('edit')
+                            ->default(now())
+                            ->required(),
+                    ]),
+
+                    Textarea::make('note')
+                        ->label(__('lang.note'))
+                        ->columnSpanFull(),
+                ]),
+
+                Repeater::make('items')
+                    ->label(__('lang.items'))
+                    ->relationship()
+                    ->defaultItems(1)
+                    ->columns(6)
+                    ->disabledOn('edit')
+                    ->columnSpanFull()
+                    ->schema([
+                        Select::make('product_id')
+                            ->label(__('lang.product'))
+                            ->afterStateUpdated(function ($set, $state, $get) {
+                                $set('unit_id', null); // reset old
+
+                                if (! $state) return;
+                                $product = \App\Models\Product::find($state);
+                                if (! $product) return;
+
+                                $unitPrices = $product->unitPrices->pluck('unit.name', 'unit_id');
+                                if ($unitPrices->isNotEmpty()) {
+                                    $firstUnitId = $unitPrices->keys()->first();
+                                    $set('unit_id', $firstUnitId);
+
+                                    $unitPrice = $product->unitPrices->firstWhere('unit_id', $firstUnitId);
+                                    $unitSellingPrice = round($unitPrice?->selling_price ?? 0, 2);
+                                    $set('unit_price', $unitSellingPrice);
+                                    $set('package_size', $unitPrice?->package_size ?? 0);
+
+                                    $quantity = (float) $get('quantity') ?: 1;
+                                    $set('total_price', round($unitSellingPrice * $quantity, 2));
+                                }
+                            })
+                            ->options(function (callable $get) {
+                                $storeId = Branch::find($get('../../branch_id'))?->store_id;
+
+                                if (! $storeId) return [];
+                                return Product::whereHas('inventoryTransactions', function ($q) use ($storeId) {
+                                    $q->where('store_id', $storeId);
+                                })
+                                    ->get()
+                                    ->pluck('name', 'id');
+                            })->preload()
+                            ->reactive()
+
+                            ->searchable()
+                            ->required(),
+
+                        Select::make('unit_id')
+                            ->label(__('lang.unit'))
+                            ->options(function (callable $get) {
+                                $product = \App\Models\Product::find($get('product_id'));
+                                if (! $product) return [];
+
+                                return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                            })
+                            ->searchable()
+                            ->reactive()
+                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                $unitPrice = UnitPrice::where(
+                                    'product_id',
+                                    $get('product_id')
+                                )
+                                    ->showInInvoices()
+                                    ->where('unit_id', $state)->first();
+                                $unitSellingPrice = round($unitPrice?->selling_price, 2) ?? 0;
+                                $set('unit_price', $unitSellingPrice ?? 0);
+                                $total = round(((float) ($unitSellingPrice ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
+
+                                $set('total_price', $total ?? 0);
+                                $set('package_size',  $unitPrice->package_size ?? 0);
+                            })
+                            ->searchable()
+                            ->required(),
+
+                        TextInput::make('package_size')
+                            ->label(__('lang.package_size'))
+                            ->numeric()->type('number')->readOnly()
+                            ->required(),
+
+                        TextInput::make('quantity')
+                            ->label(__('lang.quantity'))
+                            ->disabledOn('edit')
+                            ->default(1)->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $state, $get) {
+                                $sellingPrice = \App\Models\UnitPrice::where('product_id', $get('product_id'))->where('unit_id', $get('unit_id'))->first()?->selling_price ?? 0;
+
+                                $total =  ((float) ($sellingPrice ?? 0)) * $state;
+                                $total = round($total, 2);
+                                $set('total_price', $total ?? 0);
+                            })
+                            ->numeric()->minValue(0.1)
+                            ->required()
+                            ->live(onBlur: true),
+
+                        TextInput::make('unit_price')
+                            ->label(__('lang.unit_price'))
+                            ->numeric()->readOnly()
+                            ->required()
+                            ->live(onBlur: true),
+
+                        TextInput::make('total_price')
+                            ->label(__('lang.total_price'))
+                            ->numeric()
+                            ->dehydrated()
+                            ->readOnly()
+                            // ->afterStateHydrated(function ($state, callable $set, callable $get) {
+                            //     $set('total_price', round($get('quantity') * $get('unit_price'), 2));
+                            // })
+                            ->disabled(),
+                    ])
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->striped()->defaultSort('id', 'desc')
+            ->columns([
+                TextColumn::make('id')->sortable()->searchable()->toggleable()->alignCenter(),
+                TextColumn::make('branch.name')->label(__('lang.branch'))->toggleable(),
+                TextColumn::make('store.name')->label(__('lang.store'))->toggleable(),
+                TextColumn::make('sale_date')->date('Y-m-d')->toggleable(),
+                TextColumn::make('total_amount')
+                    ->label(__('lang.total_amount'))
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListResellerSales::route('/'),
+            'create' => Pages\CreateResellerSale::route('/create'),
+            'edit' => Pages\EditResellerSale::route('/{record}/edit'),
+        ];
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        return self::getEloquentQuery()->count();
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withoutGlobalScopes([
+            SoftDeletingScope::class,
+        ]);
+    }
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListResellerSales::class,
+            Pages\CreateResellerSale::class,
+            Pages\EditResellerSale::class,
+        ]);
+    }
+}

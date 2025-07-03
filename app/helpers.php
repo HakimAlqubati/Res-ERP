@@ -882,3 +882,13 @@ if (!function_exists('formatQunantity')) {
         return  number_format((float) $qty, 2, '.', ',');
     }
 }
+
+
+if (!function_exists('getDefaultSellingMarkup')) {
+    function getDefaultSellingMarkup(): float
+    {
+        $percentageValue = settingWithDefault('default_selling_markup', 10);
+        $result = $percentageValue / 100;
+        return round($result, 2);
+    }
+}

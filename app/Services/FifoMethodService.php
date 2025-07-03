@@ -28,11 +28,12 @@ class FifoMethodService
         $unitId,
         $requestedQty,
         $storeId = null
-    ) {
+    ) { 
         $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
         $product = Product::find($productId);
+        
         if (is_null($storeId)) {
             $storeId = defaultManufacturingStore($product)->id ?? null;
         }
@@ -53,7 +54,7 @@ class FifoMethodService
         $allocations = [];
         $entries = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-            ->where('transactionable_type', '!=', Order::class)
+            // ->where('transactionable_type', '!=', Order::class)
             ->where('store_id', $storeId)
             ->whereNull('deleted_at')
             ->orderBy('id')

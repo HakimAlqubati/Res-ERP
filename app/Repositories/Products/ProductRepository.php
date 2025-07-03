@@ -30,7 +30,7 @@ class ProductRepository implements ProductRepositoryInterface
         $code = $request->input('code');
         $categoryId = $request->input('category_id');
         $isManufacturing = $request->input('is_manufacturing', false); // Default to true if not specified
-
+        $branch = auth()->user()->branch ?? null;
 
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
         $query = Product::active()
@@ -45,6 +45,10 @@ class ProductRepository implements ProductRepositoryInterface
                 // return $query->unmanufacturingCategory();
             })
             ->HasUnitPrices()
+            ->when(
+                $branch && $branch->type === \App\Models\Branch::TYPE_RESELLER,
+                fn($query) => $query->visibleToBranch($branch)
+            )
             ->with(['unitPrices' => function ($query) {
                 $query->orderBy('order', 'asc');
             }])

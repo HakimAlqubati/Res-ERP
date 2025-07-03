@@ -109,9 +109,8 @@ class ProductResource extends Resource
                                 ->searchable()->live()
                                 ->options(function () {
                                     $type = request()->query('type');
-                                    // dd(request()->query(), $type);
                                     return Category::when($type == 'manufacturing', function ($query) use ($type) {
-                                        // dd($type);
+
                                         $query->where('is_manafacturing', true);
                                     })->pluck('name', 'id');
                                 })
@@ -189,11 +188,7 @@ class ProductResource extends Resource
                                         ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                         ->reactive()
                                         ->afterStateUpdated(function ($set, $state) {
-                                            $product = Product::find($state);
 
-                                            if ($product) {
-                                                // dd($product?->is_manufacturing, $product->product_items_count);
-                                            }
                                             $set('unit_id', null);
                                         })
                                         ->searchable()->columnSpan(3),
@@ -242,7 +237,18 @@ class ProductResource extends Resource
                                         ->default(1)
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                            $res = ((float) $state) * ((float)$get('price'));
+
+                                            $currentPrice = (float) $get('price');
+                                            if ($currentPrice <= 0) {
+                                                $currentPrice = getUnitPrice($get('product_id'), $get('unit_id'));
+                                                $set('price', $currentPrice);
+                                            }
+                                            $unitPrice = $currentPrice;
+
+
+                                            $res = ((float) $state) * ($unitPrice);
+
+                                            $res = round($res, 8);
                                             if ($get('qty_waste_percentage') == 0) {
                                                 $set('total_price_after_waste', $res);
                                             }
@@ -260,7 +266,7 @@ class ProductResource extends Resource
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float)$get('quantity'));
-                                            $res = round($res, 1);
+                                            $res = round($res, 8);
                                             if ($get('qty_waste_percentage') == 0) {
                                                 $set('total_price_after_waste', $res);
                                             }
@@ -287,7 +293,7 @@ class ProductResource extends Resource
                                             $totalPrice = (float) $get('total_price');
 
                                             $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice ?? 0, $state ?? 0);
-                                            $res = round($res, 2);
+                                            $res = round($res, 8);
                                             $set('total_price_after_waste', $res);
                                             $qty = $get('quantity') ?? 0;
                                             if (is_numeric($qty) && $qty > 0) {
@@ -362,7 +368,7 @@ class ProductResource extends Resource
                                             if ($isNew) {
                                                 return false;
                                             }
-                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('usage_scope') !== \App\Models\UnitPrice::USAGE_NONE;;
                                         }),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
@@ -371,7 +377,7 @@ class ProductResource extends Resource
                                             if ($isNew) {
                                                 return false;
                                             }
-                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('usage_scope') !== \App\Models\UnitPrice::USAGE_NONE;;
                                         })
                                         ->live(onBlur: true)
 
@@ -397,7 +403,7 @@ class ProductResource extends Resource
                                             $firstPrice = $units[0]['price'] ?? null;
 
                                             if ($firstPrice && $currentPackageSize && $currentPackageSize != 0) {
-                                                $set('price', round($firstPrice / $currentPackageSize, 2));
+                                                $set('price', round($firstPrice / $currentPackageSize, 8));
                                             }
                                         })
 
@@ -430,7 +436,7 @@ class ProductResource extends Resource
                                                 $currentPackageSize = $unit['package_size'] ?? 1;
 
                                                 // 🧮 الحساب:
-                                                $newPrice = round($firstPrice * ($currentPackageSize / $firstPackageSize), 2);
+                                                $newPrice = round($firstPrice * ($currentPackageSize / $firstPackageSize), 8);
 
                                                 $newUnits[] = array_merge($unit, [
                                                     'price' => $newPrice,
@@ -477,27 +483,27 @@ class ProductResource extends Resource
                                             $firstPackageSize = $firstUnit['package_size'] ?? null;
 
                                             if ($firstPrice && $state != 0) {
-                                                $set('price', round(($firstPrice / $firstPackageSize) * $state, 7));
+                                                $set('price', round(($firstPrice / $firstPackageSize) * $state, 8));
                                             }
                                         })->disabled(function (callable $get, $livewire) {
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
                                             }
-                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('show_in_invoices');
+                                            return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('usage_scope') !== \App\Models\UnitPrice::USAGE_NONE;;
                                         }),
-                                    Toggle::make('show_in_invoices')
-                                        ->inline(false)
-                                        ->label(__('lang.show_in_invoices'))
-                                        ->default(false)
+                                    Select::make('usage_scope')
+                                        ->label('Usage Scope')
+                                        ->options(\App\Models\UnitPrice::USAGE_SCOPES)
+                                        ->default(\App\Models\UnitPrice::USAGE_ALL)
                                         ->disabled(function (callable $get, $record, $livewire) {
-                                            return (ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record));
+                                            return ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record);
                                         })
-                                        ->dehydrated(),
-                                    Toggle::make('use_in_orders')
-                                        ->inline(false)
-                                        ->label(__('lang.use_in_orders'))
-                                        ->default(true),
+                                        ->dehydrated()
+                                        ->required()
+                                        ->columnSpan(2)
+                                        ->native(false),
+
 
                                 ])
                                 ->orderColumn('order')
@@ -516,7 +522,7 @@ class ProductResource extends Resource
 
 
                             Repeater::make('units')->label(__('lang.units_prices'))
-                                ->columns(3)
+                                ->columns(4)
                                 // ->hiddenOn(Pages\EditProduct::class)
                                 ->helperText(function (callable $get, $livewire) {
                                     if (static::isProductLocked($livewire->form->getRecord())) {
@@ -588,7 +594,7 @@ class ProductResource extends Resource
                                             if ($finalPrice == 0) {
                                                 $finalPrice = $totalNetPrice;
                                             }
-                                            $res = round($packageSize * $finalPrice, 2);
+                                            $res = round($packageSize * $finalPrice, 8);
                                             $set('price', $res);
                                         }),
                                     TextInput::make('package_size')
@@ -613,7 +619,7 @@ class ProductResource extends Resource
                                             if ($finalPrice == 0) {
                                                 $finalPrice = $totalNetPrice;
                                             }
-                                            $res = round($state * $finalPrice, 2);
+                                            $res = round($state * $finalPrice, 8);
                                             $set('price', $res);
                                         })
                                         ->extraInputAttributes(function (callable $get, $livewire) {
@@ -635,7 +641,15 @@ class ProductResource extends Resource
                                                 : [];
                                         })
                                         ->label(__('lang.price')),
-
+                                    TextInput::make('selling_price')
+                                        ->numeric()
+                                        ->minValue(0)
+                                        ->label(__('lang.selling_price'))
+                                        ->default(function ($record, $livewire) {
+                                            // يمكن تعديل هذا الحساب حسب منطقك إن كان هناك ربط بالهامش أو غيره
+                                            $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
+                                            return $finalPrice > 0 ? round($finalPrice * 1.2, 2) : null;
+                                        }),
 
 
                                 ])->orderColumn('order')
@@ -1024,11 +1038,14 @@ class ProductResource extends Resource
         } else {
             $units = $get('../../units') ?? [];
         }
-        // dd($units,$totalNetPrice);
-        // 🔄 Create a new array with updated prices to avoid modifying in place
         $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
-            // dd($unit);
-            return array_merge($unit, ['price' => round(($unit['package_size'] ?? 1) * $totalNetPrice, 2)]); // Set new price
+            $packageSize = $unit['package_size'] ?? 1;
+            $basePrice = $packageSize * $totalNetPrice;
+            $markup = getDefaultSellingMarkup();
+            return array_merge($unit, [
+                'price' => round($basePrice, 4),
+                'selling_price' => round($basePrice * (1 + $markup), 4),
+            ]);
         }, $units);
 
         // 🔄 Replace the `units` array completely
@@ -1091,7 +1108,8 @@ class ProductResource extends Resource
     public static function validateUnitsPackageSizeOrder(array $units, callable $fail = null): void
     {
         $filteredUnits = collect($units)
-            ->filter(fn($unit) => ($unit['show_in_invoices'] ?? false)) // فقط التي show_in_invoices = true
+            ->filter(fn($unit) => ($unit['usage_scope'] ?? 'all') !== \App\Models\UnitPrice::USAGE_NONE)
+
             ->values(); // إعادة ترتيب الفهرس
         $packageSizes = $filteredUnits
             ->pluck('package_size')
