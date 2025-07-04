@@ -71,6 +71,64 @@ class StockTransferOrderResource extends Resource
                     ])->columns(4),
 
                     Grid::make()->schema([
+                        \Filament\Forms\Components\Select::make('product_selector')
+                            ->label('Add Products')
+                            ->multiple()
+                            ->searchable()->columnSpanFull()
+                            ->options(
+                                \App\Models\Product::where('active', 1)
+                                    ->get()
+                                    ->mapWithKeys(fn($product) => [
+                                        $product->id => "{$product->code} - {$product->name}"
+                                    ])
+                                    ->toArray()
+                            )
+                            ->visible(fn($record) => blank($record)) // يظهر فقط أثناء الإضافة
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $details = $get('details') ?? [];
+
+                                // جمع الـ product_ids الموجودة حاليًا في details
+                                $existingProductIds = collect($details)->pluck('product_id')->all();
+
+                                // المنتجات التي يجب إضافتها
+                                $newProductIds = array_diff($state, $existingProductIds);
+
+                                foreach ($newProductIds as $productId) {
+                                    $product = Product::find($productId);
+                                    if (! $product) continue;
+
+                                    $unitPrice = $product->supplyOutUnitPrices->first();
+                                    $availableQty = 1;
+
+                                    if ($get('from_store_id')) {
+                                        $availableQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+                                            $productId,
+                                            $unitPrice?->unit_id,
+                                            $get('from_store_id'),
+                                        );
+                                    }
+
+                                    $details[] = [
+                                        'product_id' => $productId,
+                                        'unit_id' => $unitPrice?->unit_id,
+                                        'package_size' => $unitPrice?->package_size ?? 1,
+                                        'quantity' => 1,
+                                        'remaining_quantity' => $availableQty,
+                                        'notes' => '',
+                                    ];
+                                }
+
+                                // المنتجات التي يجب حذفها من details
+                                $remainingProductIds = $state;
+                                $details = collect($details)
+                                    ->filter(fn($item) => in_array($item['product_id'], $remainingProductIds))
+                                    ->values()
+                                    ->toArray();
+
+                                $set('details', $details);
+                            }),
+
                         Repeater::make('details')
                             ->label('Transfer Details')
                             ->relationship()
@@ -130,13 +188,30 @@ class StockTransferOrderResource extends Resource
                                     ->required()
                                     ->minValue(0.1)
                                     ->label('Quantity'),
+                                TextInput::make('remaining_quantity')
+                                    ->label('Remaining Qty')
+                                    ->numeric()
+                                    ->readOnly()
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function (callable $set, $get) {
+                                        $productId = $get('product_id');
+                                        $unitId = $get('unit_id');
+                                        $storeId = $get('../../from_store_id'); // صعود للخارج للوصول لقيمة المخزن
+
+                                        if ($productId && $unitId && $storeId) {
+                                            $qty = \App\Services\MultiProductsInventoryService::getRemainingQty($productId, $unitId, $storeId);
+                                            $set('remaining_quantity', $qty);
+                                        }
+                                    })
+                                    ->reactive()
+                                    ->columnSpan(1),
 
                                 Textarea::make('notes')->label('Notes')->columnSpanFull(),
 
                             ])
                             ->minItems(1)
-                            ->defaultItems(1)
-                            ->columns(6)
+                            ->defaultItems(0)
+                            ->columns(7)
                             ->columnSpanFull(),
                     ])->columns(4),
                 ])

@@ -80,7 +80,7 @@ trait HasStockTransferInventoryTransactions
                 'transaction_date'     => $this->date ?? now(),
                 'movement_date'        => $this->date ?? now(),
                 'store_id'             => $this->to_store_id,
-                'notes'                => 'Stock Transfer IN from Store ID: ' . $this->from_store_id,
+                'notes'                => 'Stock Transfer IN from Store ' . $this->fromStore?->name,
                 'transactionable_id'   => $this->id,
                 'transactionable_type' => StockTransferOrder::class,
                 'source_transaction_id' => $outTransaction->id,
