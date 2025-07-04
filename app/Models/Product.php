@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Product\HasScopedUnitPrices;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,8 @@ class Product extends Model implements Auditable
         SoftDeletes,
         \OwenIt\Auditing\Auditable
         // , HasTranslations
-    ;
+        ,
+        HasScopedUnitPrices;
     // public $translatable = ['name', 'description'];
 
     protected $fillable = [

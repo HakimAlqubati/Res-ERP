@@ -288,7 +288,9 @@ class MultiProductsInventoryService
     public function getProductUnitPrices($productId)
     {
         $query = Product::find($productId)
-            ?->unitPrices()->orderBy('order', 'asc')
+            
+            ?->reportUnitPrices()
+            ->orderBy('order', 'asc')
             ->with('unit');
 
         if ($this->unitId !== 'all') {

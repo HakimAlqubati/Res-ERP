@@ -210,7 +210,8 @@ class PurchaseInvoiceResource extends Resource
                                     $product = \App\Models\Product::find($get('product_id'));
                                     if (! $product) return [];
 
-                                    return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                    return $product->supplyUnitPrices
+                                    ->pluck('unit.name','unit_id')?->toArray() ?? [];
                                 })
                                 ->searchable()
                                 ->reactive()

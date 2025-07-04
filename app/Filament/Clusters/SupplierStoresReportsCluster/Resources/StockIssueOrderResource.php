@@ -118,7 +118,7 @@ class StockIssueOrderResource extends Resource
                                         $product = \App\Models\Product::find($get('product_id'));
                                         if (! $product) return [];
 
-                                        return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                        return $product?->outUnitPrices?->pluck('unit.name', 'unit_id') ?? [];
                                     })
                                     ->searchable()
                                     ->reactive()

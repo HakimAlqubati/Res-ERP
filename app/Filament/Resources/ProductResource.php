@@ -200,9 +200,8 @@ class ProductResource extends Resource
                                         ->options(
                                             function (callable $get) {
 
-                                                $unitPrices = UnitPrice::where('product_id', $get('product_id'))
-                                                    ->orderBy('package_size', 'asc')
-                                                    ->get()->toArray();
+                                                $unitPrices = \App\Models\Product::find($get('product_id'))?->manufacturingUnitPrices?->toArray() ?? [];
+
 
                                                 if ($unitPrices)
                                                     return array_column($unitPrices, 'unit_name', 'unit_id');
@@ -493,13 +492,18 @@ class ProductResource extends Resource
                                             return ProductResource::isProductLocked($livewire->form->getRecord()) || $get('usage_scope') !== \App\Models\UnitPrice::USAGE_NONE;;
                                         }),
                                     Select::make('usage_scope')
-                                        ->label('Usage Scope')
+                                        ->label('Usage')
                                         ->options(\App\Models\UnitPrice::USAGE_SCOPES)
                                         ->default(\App\Models\UnitPrice::USAGE_ALL)
                                         ->disabled(function (callable $get, $record, $livewire) {
-                                            return ProductResource::isProductLockedForToggle($livewire->form->getRecord(), $record);
+
+                                            return ProductResource::isProductLockedForToggle(
+                                                $livewire->form->getRecord(),
+
+                                                $record
+                                            );
                                         })
-                                        ->dehydrated()
+                                        // ->dehydrated()
                                         ->required()
                                         ->columnSpan(2)
                                         ->native(false),
@@ -925,7 +929,7 @@ class ProductResource extends Resource
                         $data = [];
 
                         foreach ($records as $product) {
-                            $product->load(['unitPrices.unit', 'category']);
+                            $product->load(['allUnitPrices.unit', 'category']);
                             foreach ($product->unitPrices as $unitPrice) {
                                 $data[] = [
                                     'product_id' => $product->id,
@@ -1128,11 +1132,11 @@ class ProductResource extends Resource
             if ($packageSizes[$i] > $packageSizes[$i - 1]) {
                 $message = __('⚠️ Package sizes must be sorted from largest to smallest.');
                 if ($fail) {
-                    $fail($message);
+                    // $fail($message);
                 } else {
-                    showWarningNotifiMessage($message);
+                    // showWarningNotifiMessage($message);
                 }
-                return;
+                // return;
             }
         }
 
@@ -1140,11 +1144,11 @@ class ProductResource extends Resource
         if ($packageSizes->last() !== 1.0) {
             $message = __('⚠️ The last qty per pack must be exactly 1.');
             if ($fail) {
-                $fail($message);
+                // $fail($message);
             } else {
-                showWarningNotifiMessage($message);
+                // showWarningNotifiMessage($message);
             }
-            return;
+            // return;
         }
 
         // 3️⃣ ممنوع أكثر من واحدة قيمتها = 1
@@ -1193,10 +1197,18 @@ class ProductResource extends Resource
             return false;
         }
 
-        return \App\Models\OrderDetails::where('product_id', $productId)->exists()
-            || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists()
-            || \App\Models\InventoryTransaction::where('product_id', $productId)->exists()
-            || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+        return \App\Models\OrderDetails::where('product_id', $productId)
+            ->where('unit_id', $record->unit_id)
+            ->exists()
+            || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)
+            ->where('unit_id', $record->unit_id)
+            ->exists()
+            || \App\Models\GoodsReceivedNoteDetail::where('product_id', $productId)
+            ->where('unit_id', $record->unit_id)
+            ->exists()
+            || \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $record->unit_id)->exists()
+            || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $record->unit_id)
+            ->exists();
     }
     public static function canEdit(Model $record): bool
     {

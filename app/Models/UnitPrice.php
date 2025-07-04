@@ -20,7 +20,7 @@ class UnitPrice extends Model implements Auditable
         'price',
         'package_size',
         'order',
-        'minimum_quantity', 
+        'minimum_quantity',
         'use_in_orders',
         'date',
         'notes',
@@ -33,7 +33,7 @@ class UnitPrice extends Model implements Auditable
         'price',
         'package_size',
         'order',
-        'minimum_quantity', 
+        'minimum_quantity',
         'usage_scope',
         'selling_price',
     ];
@@ -55,11 +55,11 @@ class UnitPrice extends Model implements Auditable
 
     // List of usage scope options for selection or validation
     const USAGE_SCOPES = [
-        self::USAGE_ALL => 'Allowed in all operations',
-        self::USAGE_SUPPLY_ONLY => 'Allowed in supply operations only',
-        self::USAGE_OUT_ONLY => 'Allowed in outgoing operations only',
-        self::USAGE_MANUFACTURING_ONLY => 'Allowed in manufacturing only',
-        self::USAGE_NONE => 'Disabled in all operations (visible in reports only)',
+        self::USAGE_ALL => 'Supply & Outgoing',
+        self::USAGE_SUPPLY_ONLY => 'Supply only',
+        self::USAGE_OUT_ONLY => 'Outgoing only',
+        self::USAGE_MANUFACTURING_ONLY => 'Manufacturing only',
+        self::USAGE_NONE => 'Disabled',
     ];
     public function toArray()
     {
@@ -94,37 +94,66 @@ class UnitPrice extends Model implements Auditable
         //     // UnitPriceSyncService::syncPackageSizeForProduct($unitPrice->product_id);
         // });
     }
-
-
-    public function scopeShowInInvoices($query)
-    {
-        return $query->whereIn('usage_scope', [
-            self::USAGE_ALL,
-            self::USAGE_SUPPLY_ONLY,
-            self::USAGE_OUT_ONLY,
-        ]);
-    }
-    public function scopeUsableInSupply($query)
-    {
-        return $query->whereIn('usage_scope', [
-            self::USAGE_ALL,
-            self::USAGE_SUPPLY_ONLY,
-        ]);
-    }
-
-    public function scopeUsableInOut($query)
-    {
-        return $query->whereIn('usage_scope', [
-            self::USAGE_ALL,
-            self::USAGE_OUT_ONLY,
-        ]);
-    }
-
+ 
+   
     public function scopeUsableInManufacturing($query)
     {
         return $query->whereIn('usage_scope', [
             self::USAGE_ALL,
             self::USAGE_MANUFACTURING_ONLY,
+        ]);
+    }
+
+    // داخل App\Models\UnitPrice
+    public function scopeWhereUsageScope($query, array|string $scopes)
+    {
+        if (is_string($scopes)) {
+            $scopes = [$scopes];
+        }
+
+        return $query->whereIn('usage_scope', $scopes);
+    }
+
+    public function scopeForSupply($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_SUPPLY_ONLY,
+        ]);
+    }
+
+    public function scopeForOut($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_OUT_ONLY,
+        ]);
+    }
+
+    public function scopeForOperations($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_SUPPLY_ONLY,
+            self::USAGE_OUT_ONLY,
+        ]);
+    }
+    public function scopeForReportsExcludingManufacturing($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_SUPPLY_ONLY,
+            self::USAGE_OUT_ONLY,
+            self::USAGE_NONE,
+        ]);
+    }
+
+    public function scopeForSupplyAndOut($query)
+    {
+        return $query->whereIn('usage_scope', [
+            self::USAGE_ALL,
+            self::USAGE_SUPPLY_ONLY,
+            self::USAGE_OUT_ONLY,
         ]);
     }
 }

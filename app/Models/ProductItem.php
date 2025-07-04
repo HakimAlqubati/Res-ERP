@@ -48,7 +48,7 @@ class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
         return $this->belongsTo(Unit::class);
     }
 
-     
+
 
     /**
      * Get the quantity after applying waste percentage.
@@ -67,7 +67,7 @@ class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
      * Calculate total price after waste percentage.
      */
     public static function calculateTotalPriceAfterWaste(float $totalPrice, float $wastePercentage): float
-    { 
+    {
         return round($totalPrice * (1 + ($wastePercentage / 100)), 8);
     }
 
@@ -85,7 +85,7 @@ class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
             'product_id' => $this->product_id,
             'product_name' => $this?->product?->name ?? '',
             'unit_id' => $this->unit_id,
-            'unit_name' => $this->unit->name??'',
+            'unit_name' => $this->unit->name ?? '',
             'quantity' => $this->quantity,
             'price' => $this->price,
             'total_price' => $this->total_price,
@@ -95,5 +95,10 @@ class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
             'package_size' => $this->package_size,
             'quantity_after_waste' => $this->quantity_after_waste,
         ];
+    }
+
+    public function getAvailableUnitsAttribute()
+    {
+        return $this->product?->manufacturingUnitPrices ?? collect();
     }
 }

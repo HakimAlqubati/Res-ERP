@@ -78,8 +78,16 @@
         }
 
         .login_container {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            /* Soft professional shadow */
             border-radius: 19px;
             max-width: 30rem;
+
+        }
+
+        .login_container:hover {
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            transition: box-shadow 0.3s ease;
         }
 
         .login_container h2 {

@@ -155,7 +155,8 @@ class GoodsReceivedNoteResource extends Resource
                                             if (!$product)
                                                 return [];
 
-                                            return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                            return $product->supplyUnitPrices
+                                                ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                         })
                                         ->searchable()
                                         ->reactive()

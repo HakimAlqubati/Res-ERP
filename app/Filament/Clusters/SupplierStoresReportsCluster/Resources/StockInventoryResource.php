@@ -210,7 +210,8 @@ class StockInventoryResource extends Resource
                                     $product = \App\Models\Product::find($get('product_id'));
                                     if (! $product) return [];
 
-                                    return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                    return $product->supplyOutUnitPrices
+                                        ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                 })
                                 ->searchable()
                                 ->reactive()
