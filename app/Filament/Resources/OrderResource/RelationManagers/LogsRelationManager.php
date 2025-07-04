@@ -53,7 +53,7 @@ class LogsRelationManager extends RelationManager
                     // ->since()
                     ->sortable(),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('created_at', 'asc')
             ->filters([])
             ->headerActions([])
             ->actions([])
