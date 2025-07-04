@@ -295,57 +295,65 @@ class BranchResellerResource extends Resource
             ])
             ->actions([
 
+                Action::make('addStore')
+                    ->label('Add Store')
+                    ->icon('heroicon-o-plus-circle')
+                    ->visible(fn(Model $record) => !$record->store)
+                    ->form([
+                        TextInput::make('name')
+                            ->label('Store Name')
+                            ->default(fn(Model $record) => $record->name . ' Store')
+                            ->required(),
+
+                        Toggle::make('active')
+                            ->label('Active')
+                            ->default(true),
+                    ])
+                    ->action(function (Model $record, array $data) {
+                        try {
+                            //code...
+                            $store = Store::create([
+                                'name' => $data['name'],
+                                'active' => $data['active'],
+                                'branch_id' => $record->id,
+                            ]);
+                            $record->update(['store_id' => $store->id]);
+                        } catch (\Throwable $th) {
+                            throw $th;
+                        }
+                    })
+                    ->modalHeading('Create and Link Store')
+                    ->color('primary')
+                    ->button(),
                 Action::make('manageStore')
-                    ->label('Manage Store')
-                    ->icon('heroicon-o-building-storefront')
-                    ->visible(fn(Model $record) => $record->type === \App\Models\Branch::TYPE_RESELLER)
+                    ->label('🛠 Manage Store')
+                    ->icon('heroicon-o-pencil-square')
+                    ->visible(fn(Model $record) => $record->store !== null)
                     ->form(function (Model $record) {
-                        // إذا فيه مخزن موجود، نستخدم بياناته كقيمة افتراضية
-                        $existingStore = $record->store;
-
                         return [
-                            TextInput::make('name')
-                                ->label('Store Name')
-                                ->default($existingStore?->name ?? $record->name . ' Store')
+                            Select::make('store_id')
+                                ->label('Select Store')
+                                ->options(Store::active()->pluck('name', 'id'))
+                                ->searchable()
+                                ->default($record->store_id)
                                 ->required(),
-
-                            Toggle::make('active')
-                                ->label('Active')
-                                ->default($existingStore?->active ?? true),
                         ];
                     })
                     ->action(function (Model $record, array $data) {
-                        if ($record->store) {
-                            $record->store->update([
-                                'name'   => $data['name'],
-                                'active' => $data['active'],
-                            ]);
-
-                            $message = "✅ Store updated: {$data['name']}";
-                        } else {
-                            $store = Store::create([
-                                'name'       => $data['name'],
-                                'active'     => $data['active'],
-                                'branch_id'  => $record->id,
-                            ]);
-
-                            $record->update(['store_id' => $store->id]);
-
-                            $message = "✅ Store created and linked: {$store->name}";
+                        try {
+                            $record->update(['store_id' => $data['store_id']]);
+                            \Filament\Notifications\Notification::make()
+                                ->title('Store Updated')
+                                ->body("✅ Store linked to branch successfully.")
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $th) {
+                            throw $th;
                         }
-
-                        \Filament\Notifications\Notification::make()
-                            ->title('Store Management')
-                            ->body($message)
-                            ->success()
-                            ->send();
                     })
-                    ->modalHeading('Manage Store')
+                    ->modalHeading('Change Linked Store')
                     ->color('gray')
                     ->button(),
-
-
-
 
 
 
