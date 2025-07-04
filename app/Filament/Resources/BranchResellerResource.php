@@ -326,7 +326,7 @@ class BranchResellerResource extends Resource
                     ->color('primary')
                     ->button(),
                 Action::make('manageStore')
-                    ->label('🛠 Manage Store')
+                    ->label('Manage Store')
                     ->icon('heroicon-o-pencil-square')
                     ->visible(fn(Model $record) => $record->store !== null)
                     ->form(function (Model $record) {
