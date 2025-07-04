@@ -46,7 +46,23 @@ class StockTransferOrderResource extends Resource
                         Select::make('from_store_id')
                             ->label('From Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
-                            ->required(),
+                            ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $details = collect($get('details') ?? [])
+                                    ->map(function ($item) use ($state) {
+                                        if ($item['product_id'] && $item['unit_id'] && $state) {
+                                            $item['remaining_quantity'] = \App\Services\MultiProductsInventoryService::getRemainingQty(
+                                                $item['product_id'],
+                                                $item['unit_id'],
+                                                $state
+                                            );
+                                        }
+                                        return $item;
+                                    })->toArray();
+
+                                $set('details', $details);
+                            }),
 
                         Select::make('to_store_id')
                             ->label('To Store')
@@ -170,14 +186,19 @@ class StockTransferOrderResource extends Resource
                                     ->searchable()
                                     ->reactive()
                                     ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                        $unitPrice = UnitPrice::where(
-                                            'product_id',
-                                            $get('product_id')
-                                        )
-                                            ->where('unit_id', $state)->first();
+                                        $productId = $get('product_id');
+                                        $fromStoreId = $get('../../from_store_id'); // صعود للمخزن
 
+                                        $unitPrice = UnitPrice::where('product_id', $productId)
+                                            ->where('unit_id', $state)
+                                            ->first();
 
-                                        $set('package_size',  $unitPrice->package_size ?? 0);
+                                        $set('package_size', $unitPrice->package_size ?? 1);
+
+                                        if ($productId && $state && $fromStoreId) {
+                                            $remainingQty = \App\Services\MultiProductsInventoryService::getRemainingQty($productId, $state, $fromStoreId);
+                                            $set('remaining_quantity', $remainingQty);
+                                        }
                                     })->columnSpan(2)->required(),
 
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
