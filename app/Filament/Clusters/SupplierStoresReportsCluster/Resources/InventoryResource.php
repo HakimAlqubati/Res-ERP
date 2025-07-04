@@ -101,7 +101,12 @@ class InventoryResource extends Resource
                     ->label('Qty')->alignCenter(true)
                     ->formatStateUsing(fn($state) => formatQunantity($state))
                     ->sortable(),
-
+                Tables\Columns\TextColumn::make('remaining_quantity')
+                    ->label('Remaining Qty')->sortable()
+                    ->formatStateUsing(fn($state) => formatQunantity($state))
+                    // ->description('The remaining quantity of the product at the time this transaction was recorded')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('unit.name')
                     ->label('Unit'),
 
@@ -137,6 +142,7 @@ class InventoryResource extends Resource
                     ->label('Source ID')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
+
 
             ])
             ->filters([

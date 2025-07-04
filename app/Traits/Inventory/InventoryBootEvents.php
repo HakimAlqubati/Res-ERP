@@ -53,6 +53,14 @@ trait InventoryBootEvents
                 //     $transaction
                 // );
             }
+
+            $availableQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+                $transaction->product_id,
+                $transaction->unit_id,
+                $transaction->store_id
+            );
+            $transaction->remaining_quantity = $availableQty;
+             $transaction->save();
         });
     }
 }

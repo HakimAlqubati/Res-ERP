@@ -36,6 +36,7 @@ class InventoryTransaction extends Model implements Auditable
         'transactionable_type',
         'waste_stock_percentage',
         'source_transaction_id',
+        'remaining_quantity',
     ];
 
     protected $auditInclude = [
@@ -54,6 +55,7 @@ class InventoryTransaction extends Model implements Auditable
         'transactionable_type',
         'waste_stock_percentage',
         'source_transaction_id',
+    'remaining_quantity',
     ];
     protected $appends = ['movement_type_title', 'formatted_transactionable_type'];
 
