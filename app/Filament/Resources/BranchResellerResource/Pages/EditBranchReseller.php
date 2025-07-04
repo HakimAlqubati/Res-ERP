@@ -10,6 +10,16 @@ class EditBranchReseller extends EditRecord
 {
     protected static string $resource = BranchResellerResource::class;
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

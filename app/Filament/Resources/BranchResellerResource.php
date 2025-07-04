@@ -349,7 +349,7 @@ class BranchResellerResource extends Resource
 
 
 
-                // Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // Tables\Actions\RestoreAction::make(),
             ])
@@ -363,8 +363,8 @@ class BranchResellerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            SalesAmountsRelationManager::class,
-            PaidAmountsRelationManager::class,
+            // SalesAmountsRelationManager::class,
+            // PaidAmountsRelationManager::class,
         ];
     }
 
@@ -374,6 +374,7 @@ class BranchResellerResource extends Resource
             'index' => Pages\ListBranchResellers::route('/'),
             'create' => Pages\CreateBranchReseller::route('/create'),
             'view' => Pages\ViewBranchReseller::route('/{record}'),
+            'edit' => Pages\EditBranchReseller::route('/{record}/edit'),
         ];
     }
 
