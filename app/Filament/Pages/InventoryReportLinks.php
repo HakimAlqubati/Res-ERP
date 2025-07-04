@@ -33,8 +33,8 @@ class InventoryReportLinks extends Page
 
     public function getTitle(): string | Htmlable
     {
-        return '';
         return __('Inventory Reports');
+        
     }
 
     public function getReportLinks(): array

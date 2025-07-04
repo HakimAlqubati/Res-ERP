@@ -271,14 +271,15 @@ class StockInventoryResource extends Resource
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->sortable()->label('ID')->searchable(),
+                TextColumn::make('id')->sortable()->label('ID')->searchable()->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('inventory_date')->sortable()->label('Date')->toggleable(),
                 TextColumn::make('categories_names')->limit(40)
                     ->weight(FontWeight::Medium)->tooltip(fn($record): string => $record->categories_names)
                     ->wrap()->label('Categories')->toggleable(),
-                TextColumn::make('inventory_date')->sortable()->label('Date')->toggleable(),
+                TextColumn::make('details_count')->label('Products No')->alignCenter(true)->toggleable(),
                 TextColumn::make('store.name')->sortable()->label('Store')->toggleable(),
                 TextColumn::make('responsibleUser.name')->sortable()->label('Responsible')->toggleable(),
-                TextColumn::make('details_count')->label('Products No')->alignCenter(true)->toggleable(),
                 IconColumn::make('finalized')->sortable()->label('Finalized')->boolean()->alignCenter(true)->toggleable(),
 
             ])

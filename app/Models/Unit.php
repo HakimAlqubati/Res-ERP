@@ -23,6 +23,7 @@ class Unit extends Model implements Auditable
         'parent_unit_id',
         'conversion_factor',
         'operation',
+        'is_fractional',
     ];
     protected $auditInclude = [
         'name',
@@ -32,6 +33,7 @@ class Unit extends Model implements Auditable
         'parent_unit_id',
         'conversion_factor',
         'operation',
+        'is_fractional',
     ];
 
     protected $appends = ['is_main'];
