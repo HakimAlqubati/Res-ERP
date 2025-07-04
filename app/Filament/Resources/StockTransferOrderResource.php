@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Resources\StockTransferOrderResource\Pages;
 use App\Filament\Resources\StockTransferOrderResource\RelationManagers;
 use App\Models\Product;
 use App\Models\StockTransferOrder;
+use App\Models\Store;
 use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
@@ -16,18 +18,24 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 
 class StockTransferOrderResource extends Resource
 {
     protected static ?string $model = StockTransferOrder::class;
     protected static ?string $slug = 'stock-transfer-orders';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static ?string $cluster = InventoryManagementCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 8;
 
     public static function form(Form $form): Form
     {
@@ -37,12 +45,12 @@ class StockTransferOrderResource extends Resource
                     Grid::make()->schema([
                         Select::make('from_store_id')
                             ->label('From Store')
-                            ->relationship('fromStore', 'name')
+                            ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
                             ->required(),
 
                         Select::make('to_store_id')
                             ->label('To Store')
-                            ->relationship('toStore', 'name')
+                            ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
                             ->required(),
 
                         DatePicker::make('date')
@@ -98,8 +106,8 @@ class StockTransferOrderResource extends Resource
                                     ->options(function (callable $get) {
                                         $product = \App\Models\Product::find($get('product_id'));
                                         if (! $product) return [];
-
-                                        return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
+                                        return $product->supplyOutUnitPrices
+                                            ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                     })
                                     ->searchable()
                                     ->reactive()
@@ -108,11 +116,9 @@ class StockTransferOrderResource extends Resource
                                             'product_id',
                                             $get('product_id')
                                         )
-                                            ->showInInvoices()
                                             ->where('unit_id', $state)->first();
-                                        $set('price', $unitPrice->price);
 
-                                        $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
+
                                         $set('package_size',  $unitPrice->package_size ?? 0);
                                     })->columnSpan(2)->required(),
 
@@ -124,7 +130,7 @@ class StockTransferOrderResource extends Resource
                                     ->required()
                                     ->minValue(0.1)
                                     ->label('Quantity'),
-                              
+
                                 Textarea::make('notes')->label('Notes')->columnSpanFull(),
 
                             ])
@@ -154,6 +160,28 @@ class StockTransferOrderResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('approve')
+                    ->label('Approve')
+                    ->color('success')->button()
+                    ->icon('heroicon-o-check-circle')
+                    // ->requiresConfirmation()
+                    ->visible(fn($record) => $record->status === StockTransferOrder::STATUS_CREATED)
+                    ->action(function ($record) {
+                        try {
+                            DB::beginTransaction();
+                            $record->update([
+                                'status' => StockTransferOrder::STATUS_APPROVED,
+                                'approved_at' => now(),
+                            ]);
+
+                            DB::commit();
+                            showSuccessNotifiMessage('Done');
+                        } catch (\Throwable $e) {
+                            DB::rollBack();
+
+                            showWarningNotifiMessage('Faild', $e->getMessage());
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

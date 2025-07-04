@@ -17,6 +17,7 @@ class StockTransferOrderObserver
      */
     public function updated(StockTransferOrder $order): void
     {
+        Log::info('in_observer', [$order]);
         // الحالة تغيرت من شيء آخر إلى approved؟
         if (
             $order->isDirty('status') &&

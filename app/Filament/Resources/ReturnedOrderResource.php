@@ -7,6 +7,7 @@ use App\Filament\Resources\ReturnedOrderResource\Pages;
 use App\Filament\Resources\ReturnedOrderResource\RelationManagers;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
+use App\Models\Product;
 use App\Models\ReturnedOrder;
 use App\Models\Store;
 use Filament\Forms;
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReturnedOrderResource extends Resource
 {
@@ -114,12 +116,29 @@ class ReturnedOrderResource extends Resource
                                 Select::make('product_id')
                                     ->label('Product')
                                     ->searchable()
-                                    ->getSearchResultsUsing(function (string $search) {
-                                        return \App\Models\Product::where('name', 'like', "%{$search}%")
-                                            ->limit(5)
-                                            ->pluck('name', 'id');
+                                    ->options(function () {
+                                        return Product::active()
+                                            ->orderBy('id', 'asc')
+                                            ->get(['id', 'code', 'name', 'active'])
+
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}"
+                                            ]);
                                     })
-                                    ->getOptionLabelUsing(fn($value): ?string => \App\Models\Product::find($value)?->name)
+                                    ->getSearchResultsUsing(function (string $search): array {
+                                        return Product::active()
+                                            ->where(function ($query) use ($search) {
+                                                $query->where('name', 'like', "%{$search}%")
+                                                    ->orWhere('code', 'like', "%{$search}%");
+                                            })
+                                            ->limit(50)
+                                            ->get()
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}"
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                     ->required()
                                     ->columnSpan(2),
 
@@ -213,24 +232,60 @@ class ReturnedOrderResource extends Resource
                         }
                         try {
                             DB::transaction(function () use ($record) {
+
                                 $record->update([
                                     'status' => ReturnedOrder::STATUS_APPROVED,
                                     'approved_by' => auth()->id(),
                                 ]);
                                 foreach ($record->details as $detail) {
-                                    InventoryTransaction::moveToStore([
-                                        'product_id' => $detail->product_id,
-                                        'quantity' => $detail->quantity,
-                                        'unit_id' => $detail->unit_id,
-                                        'store_id' => $record->store_id,
-                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                                        'price' => $detail->price,
-                                        'package_size' => $detail->package_size,
-                                        'transaction_date' => $record->returned_date,
-                                        'movement_date' => $record->returned_date,
-                                        'notes' => 'Return from branch #' . $record->branch->name,
-                                        'transactionable' => $record,
-                                    ]);
+
+                                    if ($record->branch->hasStore()) {
+                                        // التحقق من الكمية المتوفرة في مخزن الفرع (المصدر)
+                                        $availableQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+                                            $detail->product_id,
+                                            $detail->unit_id,
+                                            $record->branch->store_id,
+                                        ); 
+                                        if ($detail->quantity > $availableQty) {
+                                            // أوقف العملية برمتها وأظهر إشعار
+                                            throw new \Exception("Insufficient stock in branch store ({$record->branch->name}) for product ID: {$detail->product_id}");
+                                        }
+
+                                        // أولاً نُخرج الكمية من المخزن الخاص بالفرع (باعتباره مصدر المرتجع)
+                                        $transaction =    InventoryTransaction::moveOutFromStore([
+                                            'product_id' => $detail->product_id,
+                                            'quantity' => $detail->quantity,
+                                            'unit_id' => $detail->unit_id,
+                                            'store_id' => $record->branch?->store_id, // أو مررها حسب لوجيكك
+                                            'price' => $detail->price,
+                                            'package_size' => $detail->package_size,
+                                            'transaction_date' => $record->returned_date,
+                                            'movement_date' => $record->returned_date,
+                                            'notes' => 'Auto-out from branch for returned order #' . $record->id,
+                                            'transactionable' => $record,
+                                        ]);
+                                        if (!$transaction) {
+                                            // فشل الصرف، ممكن تسجل لوج أو تتجاهل بناءً على منطقك
+                                            Log::warning("Insufficient stock to move out for returned order #{$record->id}");
+                                        }
+
+
+                                        // ثم ندخل الكمية إلى مخزن المرتجع
+
+                                        InventoryTransaction::moveToStore([
+                                            'product_id' => $detail->product_id,
+                                            'quantity' => $detail->quantity,
+                                            'unit_id' => $detail->unit_id,
+                                            'store_id' => $record->store_id,
+                                            'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                                            'price' => $detail->price,
+                                            'package_size' => $detail->package_size,
+                                            'transaction_date' => $record->returned_date,
+                                            'movement_date' => $record->returned_date,
+                                            'notes' => 'Return from branch #' . $record->branch->name,
+                                            'transactionable' => $record,
+                                        ]);
+                                    }
                                 }
                             });
                             showSuccessNotifiMessage('Returned order approved successfully.');

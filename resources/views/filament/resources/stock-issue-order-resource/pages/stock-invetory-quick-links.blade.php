@@ -192,6 +192,17 @@
                 </div>
             </x-filament::link>
 
+            {{-- Stock Transfer Orders --}}
+            <x-filament::link :href="route('filament.admin.inventory-management.resources.stock-transfer-orders.index')" icon="heroicon-o-arrows-right-left" class="link"
+                tooltip="Go to Stock Transfer Orders Page">
+
+                <div class="link-text">
+                    <span class="link_span">{{ __('Stock Transfer Orders') }}</span>
+                    <span class="badge">{{ \App\Models\StockTransferOrder::count() }}</span>
+                </div>
+            </x-filament::link>
+
+
         </x-filament::grid>
     </x-filament::fieldset>
 

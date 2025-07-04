@@ -288,7 +288,7 @@ class MultiProductsInventoryService
     public function getProductUnitPrices($productId)
     {
         $query = Product::find($productId)
-            
+
             ?->reportUnitPrices()
             ->orderBy('order', 'asc')
             ->with('unit');
@@ -458,5 +458,18 @@ class MultiProductsInventoryService
     public function setProductIds(array $productIds)
     {
         $this->productIds = $productIds;
+    }
+
+
+    public static function getRemainingQty(int $productId, int $unitId, int $storeId): float
+    {
+        $service = new self(
+            null,
+            $productId,
+            $unitId,
+            $storeId
+        );
+
+        return $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0.0;
     }
 }

@@ -371,4 +371,8 @@ class Branch extends Model implements HasMedia, Auditable
     {
         return $this->total_sales - $this->total_paid;
     }
+    public function hasStore(): bool
+    {
+        return !is_null($this->store?->id);
+    }
 }

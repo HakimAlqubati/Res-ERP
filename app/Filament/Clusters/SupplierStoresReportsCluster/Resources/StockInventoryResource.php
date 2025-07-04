@@ -132,7 +132,7 @@ class StockInventoryResource extends Resource
                                 $storeId = $get('store_id');
 
                                 $details = $products->map(function ($product) use ($storeId) {
-                                    $unitPrice = $product->unitPrices()->showInInvoices()->first();
+                                    $unitPrice = $product->unitPrices()->first();
                                     $unitId = $unitPrice?->unit_id;
                                     $packageSize = $unitPrice?->package_size ?? 0;
 
@@ -220,7 +220,6 @@ class StockInventoryResource extends Resource
                                         'product_id',
                                         $get('product_id')
                                     )
-                                        ->showInInvoices()
                                         ->where('unit_id', $state)->first();
 
 

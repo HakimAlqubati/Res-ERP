@@ -112,4 +112,36 @@ trait InventoryStaticMethods
             'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
         ]);
     }
+    public static function moveOutFromStore(array $data): ?InventoryTransaction
+    {
+        if (empty($data['store_id']) || empty($data['product_id']) || empty($data['unit_id']) || empty($data['quantity'])) {
+            return null;
+        }
+
+        $remainingQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+            $data['product_id'],
+            $data['unit_id'],
+            $data['store_id']
+        );
+
+        // تجنب العملية إذا الكمية غير كافية
+        if ($data['quantity'] > $remainingQty) {
+            return null;
+        }
+
+        return InventoryTransaction::create([
+            'product_id'           => $data['product_id'],
+            'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
+            'quantity'             => $data['quantity'],
+            'unit_id'              => $data['unit_id'],
+            'package_size'         => $data['package_size'] ?? 1,
+            'store_id'             => $data['store_id'],
+            'price'                => $data['price'] ?? 0,
+            'transaction_date'     => $data['transaction_date'] ?? now(),
+            'movement_date'        => $data['movement_date'] ?? $data['transaction_date'] ?? now(),
+            'notes'                => $data['notes'] ?? null,
+            'transactionable_id'   => $data['transactionable']?->id ?? null,
+            'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
+        ]);
+    }
 }
