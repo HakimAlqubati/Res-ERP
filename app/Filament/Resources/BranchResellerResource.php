@@ -330,32 +330,38 @@ class BranchResellerResource extends Resource
                     ->icon('heroicon-o-pencil-square')
                     ->visible(fn(Model $record) => $record->store !== null)
                     ->form(function (Model $record) {
+                        $store = $record->store;
+
                         return [
-                            Select::make('store_id')
-                                ->label('Select Store')
-                                ->options(Store::active()->pluck('name', 'id'))
-                                ->searchable()
-                                ->default($record->store_id)
+                            TextInput::make('name')
+                                ->label('Store Name')
+                                ->default($store?->name)
                                 ->required(),
+
+                            Toggle::make('active')
+                                ->label('Active')
+                                ->default($store?->active),
                         ];
                     })
                     ->action(function (Model $record, array $data) {
-                        try {
-                            $record->update(['store_id' => $data['store_id']]);
-                            \Filament\Notifications\Notification::make()
-                                ->title('Store Updated')
-                                ->body("✅ Store linked to branch successfully.")
-                                ->success()
-                                ->send();
-                        } catch (\Throwable $th) {
-                            throw $th;
+                        if (!$record->store) {
+                            throw new \Exception("No store linked to this branch.");
                         }
+
+                        $record->store->update([
+                            'name' => $data['name'],
+                            'active' => $data['active'],
+                        ]);
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Store Updated')
+                            ->body("✅ Store updated successfully.")
+                            ->success()
+                            ->send();
                     })
-                    ->modalHeading('Change Linked Store')
+                    ->modalHeading('Edit Store Info')
                     ->color('gray')
                     ->button(),
-
-
 
                 Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
