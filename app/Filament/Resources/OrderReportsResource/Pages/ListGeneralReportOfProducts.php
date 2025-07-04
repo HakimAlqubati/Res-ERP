@@ -148,9 +148,9 @@ class ListGeneralReportOfProducts extends ListRecords
             $total_quantity += $obj->quantity;
             $final_result['data'][] = $obj;
         }
-        $final_result['total_price'] =     $total_price ;
+        $final_result['total_price'] = $total_price;
         $final_result['total_quantity'] = number_format($total_quantity, 2);
-
+        return [];
         return $final_result;
     }
 

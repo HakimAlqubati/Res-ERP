@@ -127,7 +127,7 @@ class ReportProductQuantitiesResource extends Resource
 
                         return $query->when(
                             isset($data['start_date']) && isset($data['end_date']),
-                            fn($query) => $query->whereBetween('orders.created_at', [$data['start_date'], $data['end_date']])
+                            fn($query) => $query->whereBetween('orders.transfer_date', [$data['start_date'], $data['end_date']])
                         );
                     }),
             ], layout: FiltersLayout::AboveContent);
@@ -162,7 +162,7 @@ class ReportProductQuantitiesResource extends Resource
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
             ->whereNull('orders.deleted_at')
             ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
-                $query->whereBetween('orders.created_at', [$start_date, $end_date]);
+                $query->whereBetween('orders.transfer_date', [$start_date, $end_date]);
             })
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->where('products.id', $product_id)
