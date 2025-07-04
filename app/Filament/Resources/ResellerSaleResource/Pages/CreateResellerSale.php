@@ -17,8 +17,7 @@ class CreateResellerSale extends CreateRecord
     public function create(bool $another = false): void
     {
         try {
-            parent::create($another);
-            showSuccessNotifiMessage('Done');
+            parent::create($another); 
         } catch (\Exception $e) {
 
             showWarningNotifiMessage('Error',       $e->getMessage());
@@ -34,4 +33,5 @@ class CreateResellerSale extends CreateRecord
         }
         return $data;
     }
+    
 }
