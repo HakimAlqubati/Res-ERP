@@ -55,7 +55,7 @@ class UnitPrice extends Model implements Auditable
 
     // List of usage scope options for selection or validation
     const USAGE_SCOPES = [
-        self::USAGE_ALL => 'Supply & Outgoing',
+        self::USAGE_ALL => 'All',
         self::USAGE_SUPPLY_ONLY => 'Supply only',
         self::USAGE_OUT_ONLY => 'Outgoing only',
         self::USAGE_MANUFACTURING_ONLY => 'Manufacturing only',
