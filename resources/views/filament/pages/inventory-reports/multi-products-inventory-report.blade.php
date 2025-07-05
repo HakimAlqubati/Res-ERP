@@ -82,7 +82,7 @@
                                         {{ $data['package_size'] }}
                                     </x-filament-tables::cell>
                                     <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
-                                        {{ formatQunantity($data['remaining_qty']) }}
+                                        {{ $data['remaining_qty'] }}
                                     </x-filament-tables::cell>
                                 </x-filament-tables::row>
                             @endforeach
