@@ -1,8 +1,6 @@
 <?php
 
-use App\Filament\Pages\AttendanecEmployee;
 use App\Filament\Pages\AttendanecEmployee2;
-use App\Filament\Pages\AttendanecEmployeeTest;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\ImageController;
@@ -13,10 +11,9 @@ use App\Http\Controllers\Reports\OrderDeliveryReportController;
 use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
-use App\Http\Controllers\TestController;
 use App\Http\Controllers\TestController3;
 use App\Http\Controllers\TestController4;
-use App\Mail\MailableEmployee;
+use App\Http\Controllers\TestController;
 use App\Mail\TestEmail;
 use App\Models\Approval;
 use App\Models\Attendance;
@@ -30,7 +27,6 @@ use App\Models\Supplier;
 use App\Models\Task;
 use App\Models\UnitPrice;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -57,13 +53,12 @@ Route::middleware('tenant')->group(function () {
         // $tasks = Task::all();
         $per = DB::table('permissions')->orderBy('id', 'desc')->first();
 
-
         config([
-            'database.connections.tenant.host' =>  $_ENV['DB_HOST'],
-            'database.connections.tenant.database' =>  'tenant_tenant108',
-            'database.connections.tenant.username' =>  $_ENV['DB_USERNAME'],
-            'database.connections.tenant.password' =>  $_ENV['DB_PASSWORD'],
-            'database.connections.tenant.port' =>  $_ENV['DB_PORT'],
+            'database.connections.tenant.host'     => $_ENV['DB_HOST'],
+            'database.connections.tenant.database' => 'tenant_tenant108',
+            'database.connections.tenant.username' => $_ENV['DB_USERNAME'],
+            'database.connections.tenant.password' => $_ENV['DB_PASSWORD'],
+            'database.connections.tenant.port'     => $_ENV['DB_PORT'],
         ]);
         dd(
             DB::purge('tenant'),
@@ -91,11 +86,11 @@ Route::get('/totestpdf/{empId}/{startMonth}/{endMonth}', function ($employeeId, 
 
     // return generateSalarySlipPdf_(82,170);
     $employee = Employee::find(143);
-    $branch = Employee::find(6);
-    $task = Task::with('steps')->find(69);
+    $branch   = Employee::find(6);
+    $task     = Task::with('steps')->find(69);
     return view('export.reports.hr.tasks.employee-task-report2', compact('employee', 'branch', 'task'));
     return view('export.reports.hr.salaries.salary-slip');
-    $order = Order::find(52);
+    $order        = Order::find(52);
     $orderDetails = $order?->orderDetails;
     return view('export.order_pdf', compact('order', 'orderDetails'));
 });
@@ -110,7 +105,6 @@ Route::get('/to_test_emplployee_attendance_time', [TestController2::class, 'to_t
 Route::get('/to_get_employee_attendances', [TestController2::class, 'to_get_employee_attendances']);
 Route::get('/to_get_employee_attendance_period_details', [TestController2::class, 'to_get_employee_attendance_period_details']);
 Route::get('/to_get_multi_employees_attendances', [TestController2::class, 'to_get_multi_employees_attendances']);
-
 
 Route::get('/to_test_inventory/{product}/{unit}', [TestController2::class, 'testInventory']);
 Route::get('/migrateEmployeePeriodHistory', [MigrateDataController::class, 'migrateEmployeePeriodHistory']);
@@ -145,7 +139,7 @@ Route::get('/toviewrepeated', function () {
     }
     // return $ress;
     foreach ($ress as $r => $rv) {
-        $sum_qty = 0;
+        $sum_qty    = 0;
         $sum_av_qty = 0;
         foreach ($rv as $rr => $rrvv) {
             $sum_qty += $rrvv->quantity;
@@ -156,7 +150,7 @@ Route::get('/toviewrepeated', function () {
             }
             if ($rr == 1) {
                 OrderDetails::find($rv[1]->id)->update([
-                    'quantity' => $sum_qty,
+                    'quantity'           => $sum_qty,
                     'available_quantity' => $sum_av_qty,
                 ]);
                 // $ressss[$rrvv->order_id][] = [
@@ -173,7 +167,7 @@ Route::get('/tomodifypricinginpurchaseinvoices', function () {
     $purchase_invoice_details = PurchaseInvoiceDetail::get();
     // return $purchase_invoice_details;
     foreach ($purchase_invoice_details as $key => $value) {
-        $val = (object) $value;
+        $val        = (object) $value;
         $unit_price = UnitPrice::where('product_id', $val->product_id)->where('unit_id', $val->unit_id)?->first()?->price;
 
         // $res[] = [
@@ -189,24 +183,24 @@ Route::get('/tomodifypricinginpurchaseinvoices', function () {
 
         if ($unit_price == null) {
             $res['nullable'][] = [
-                'id' => $val->id,
-                'product_id' => $val->product_id,
-                'product_name' => Product::find($val->product_id)->name,
-                'unit_id' => $val->unit_id,
-                'quantity' => $val->quantity,
-                'price' => $val->price,
-                'unit_price' => $unit_price,
+                'id'                  => $val->id,
+                'product_id'          => $val->product_id,
+                'product_name'        => Product::find($val->product_id)->name,
+                'unit_id'             => $val->unit_id,
+                'quantity'            => $val->quantity,
+                'price'               => $val->price,
+                'unit_price'          => $unit_price,
                 'product_unit_prices' => UnitPrice::where('product_id', $val->product_id)->get()->toArray(),
             ];
         } else {
             $res['have'][] = [
-                'id' => $val->id,
-                'product_id' => $val->product_id,
-                'product_name' => Product::find($val->product_id)->name,
-                'unit_id' => $val->unit_id,
-                'quantity' => $val->quantity,
-                'price' => $val->price,
-                'unit_price' => $unit_price,
+                'id'                  => $val->id,
+                'product_id'          => $val->product_id,
+                'product_name'        => Product::find($val->product_id)->name,
+                'unit_id'             => $val->unit_id,
+                'quantity'            => $val->quantity,
+                'price'               => $val->price,
+                'unit_price'          => $unit_price,
                 'product_unit_prices' => UnitPrice::where('product_id', $val->product_id)->get()->toArray(),
             ];
         }
@@ -296,7 +290,7 @@ Route::get('/test-tasks-job', function () {
 
 Route::get('/updated_user_type_for_branch_managers', function () {
     $branchManagers = Role::find(7)->users;
-    $arr = [];
+    $arr            = [];
     foreach ($branchManagers as $branchManager) {
         $user = User::find($branchManager['id']);
         $user->update(['user_type' => 2]);
@@ -310,7 +304,7 @@ Route::get('/updated_user_type_for_branch_managers', function () {
 
 Route::get('/updated_user_type_for_managers', function () {
     $managers = Role::find(3)->users;
-    $arr = [];
+    $arr      = [];
     foreach ($managers as $manager) {
         $user = User::find($manager['id']);
         $user->update(['user_type' => 3]);
@@ -323,7 +317,7 @@ Route::get('/updated_user_type_for_managers', function () {
 });
 Route::get('/updated_user_type_for_stuff_branches_users', function () {
     $stuffManagers = Role::find(8)->users;
-    $arr = [];
+    $arr           = [];
     foreach ($stuffManagers as $stuffManager) {
         $user = User::find($stuffManager['id']);
         $user->update(['user_type' => 4]);
@@ -338,7 +332,7 @@ Route::get('/updated_user_type_for_stuff_branches_users', function () {
 
 Route::get('/updated_user_type_for_top_management_users', function () {
     $maintenanceManagers = Role::find(14)->users;
-    $arr = [];
+    $arr                 = [];
     foreach ($maintenanceManagers as $maintenanceManager) {
         $user = User::find($maintenanceManager['id']);
         $user->update(['user_type' => 1]);
@@ -355,15 +349,15 @@ Route::get('/migration_branch_manager_users', function () {
     // dd($branchManagers);
     foreach ($branchManagers as $branchManager) {
         Employee::create([
-            'name' => $branchManager->name,
-            'position_id' => 1,
-            'email' => $branchManager->email,
+            'name'         => $branchManager->name,
+            'position_id'  => 1,
+            'email'        => $branchManager->email,
             'phone_number' => $branchManager->phone_number,
-            'job_title' => 'Branch manager',
-            'user_id' => $branchManager->id,
-            'branch_id' => $branchManager?->branch?->id,
-            'employee_no' => '12005' . $branchManager->id,
-            'active' => 1,
+            'job_title'    => 'Branch manager',
+            'user_id'      => $branchManager->id,
+            'branch_id'    => $branchManager?->branch?->id,
+            'employee_no'  => '12005' . $branchManager->id,
+            'active'       => 1,
         ]);
     }
 
@@ -373,15 +367,15 @@ Route::get('/migration_users_of_branch', function () {
     $users = Role::find(8)->users;
     foreach ($users as $user) {
         Employee::create([
-            'name' => $user->name,
-            'position_id' => 2,
-            'email' => $user?->email,
+            'name'         => $user->name,
+            'position_id'  => 2,
+            'email'        => $user?->email,
             'phone_number' => $user?->phone_number,
-            'job_title' => 'Department employee',
-            'user_id' => $user->id,
-            'branch_id' => $user?->owner?->branch?->id,
-            'employee_no' => '12005' . $user->id,
-            'active' => 1,
+            'job_title'    => 'Department employee',
+            'user_id'      => $user->id,
+            'branch_id'    => $user?->owner?->branch?->id,
+            'employee_no'  => '12005' . $user->id,
+            'active'       => 1,
         ]);
     }
 
@@ -392,15 +386,15 @@ Route::get('/migration_store_users', function () {
     $users = Role::find(5)->users;
     foreach ($users as $user) {
         Employee::create([
-            'name' => $user->name,
-            'position_id' => 3,
-            'email' => $user?->email,
+            'name'         => $user->name,
+            'position_id'  => 3,
+            'email'        => $user?->email,
             'phone_number' => $user?->phone_number,
-            'job_title' => 'Store responsiple',
-            'user_id' => $user->id,
+            'job_title'    => 'Store responsiple',
+            'user_id'      => $user->id,
 
-            'employee_no' => '12005' . $user->id,
-            'active' => 1,
+            'employee_no'  => '12005' . $user->id,
+            'active'       => 1,
         ]);
     }
 
@@ -414,14 +408,14 @@ Route::get('/migration_suppliers_users', function () {
 
         foreach ($users as $user) {
             Supplier::create([
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'whatsapp_number' =>  random_int(100000000, 999999999),
-                'phone_number' => random_int(100000000, 999999999),
-                'job_title' => 'Store responsible',
-                'user_id' => $user->id,
-                'address' => $user->supplier_address,
+                'id'              => $user->id,
+                'name'            => $user->name,
+                'email'           => $user->email,
+                'whatsapp_number' => random_int(100000000, 999999999),
+                'phone_number'    => random_int(100000000, 999999999),
+                'job_title'       => 'Store responsible',
+                'user_id'         => $user->id,
+                'address'         => $user->supplier_address,
             ]);
         }
 
@@ -439,14 +433,14 @@ Route::get('/migration_accountants_users', function () {
     $users = Role::find(9)->users;
     foreach ($users as $user) {
         Employee::create([
-            'name' => $user->name,
-            'position_id' => 4,
-            'email' => $user?->email,
+            'name'         => $user->name,
+            'position_id'  => 4,
+            'email'        => $user?->email,
             'phone_number' => $user?->phone_number,
-            'job_title' => 'Accountant',
-            'user_id' => $user->id,
-            'employee_no' => '12005' . $user->id,
-            'active' => 1,
+            'job_title'    => 'Accountant',
+            'user_id'      => $user->id,
+            'employee_no'  => '12005' . $user->id,
+            'active'       => 1,
         ]);
     }
 
@@ -454,25 +448,25 @@ Route::get('/migration_accountants_users', function () {
 });
 
 Route::get('/update_user_branch_id_for_all_users', function () {
-    $users = User::whereNull('branch_id')->withTrashed()->get();
+    $users       = User::whereNull('branch_id')->withTrashed()->get();
     $branchUsers = [];
     foreach ($users as $user) {
-        // Check if the user has an owner
-        $owner = $user->owner()->exists(); // Check if the owner relationship exists
-        $branch = $user->branch()->exists(); // Check if the branch relationship exists
+                                               // Check if the user has an owner
+        $owner    = $user->owner()->exists();  // Check if the owner relationship exists
+        $branch   = $user->branch()->exists(); // Check if the branch relationship exists
         $branchId = 0;
-        if ($owner && (!is_null($user?->owner?->branch?->id))) {
-            $branchId = $user->owner->branch->id;
+        if ($owner && (! is_null($user?->owner?->branch?->id))) {
+            $branchId      = $user->owner->branch->id;
             $branchUsers[] = [
-                'user_id' => $user->id,
+                'user_id'   => $user->id,
                 'user_name' => $user->name,
                 'branch_id' => $branchId,
 
             ];
-        } else if ($branch && (!is_null($user?->branch?->id))) {
-            $branchId = $user?->branch?->id;
+        } else if ($branch && (! is_null($user?->branch?->id))) {
+            $branchId      = $user?->branch?->id;
             $branchUsers[] = [
-                'user_id' => $user->id,
+                'user_id'   => $user->id,
                 'user_name' => $user->name,
                 'branch_id' => $branchId,
 
@@ -494,7 +488,6 @@ Route::get('/attendanceSecret__', AttendanecEmployee2::class)
 // Route::get('/attendanceTest', AttendanecEmployeeTest::class)
 //     ->name('attendanceTest')->middleware('check');
 
-
 Route::get('get_employees_attendnaces/{check_date}', [MigrateDataController::class, 'get_employees_attendnaces']);
 Route::get('get_employees_without_attendances/{check_date}', [MigrateDataController::class, 'get_employees_without_attendances']);
 
@@ -503,7 +496,6 @@ Route::get('/migrateMissedCheckinRequest', [MigrateDataController::class, 'migra
 Route::get('/migrateMissedCheckoutRequest', [MigrateDataController::class, 'migrateMissedCheckoutRequest']);
 Route::get('/migrateLeaveRequest', [MigrateDataController::class, 'migrateLeaveRequest']);
 Route::get('/send-test-email', function () {
-
 
     // $sampleEmployees = [
     //     (object)['name' => 'John Doe'],
@@ -523,31 +515,30 @@ Route::get('/indexImages', [EmployeeImageAwsIndexesController::class, 'indexImag
 
 Route::post('/filament/search-by-camera/process', [SearchByCameraController::class, 'process'])->name('filament.pages.search-by-camera.process');
 
-
 Route::get('workbench_webcam', function () {
 
     // Check if the user is authenticated
-    if (!Auth::check()) {
+    if (! Auth::check()) {
         return redirect()->route('login')->with('error', 'You need to be logged in to access this page.');
     }
 
     $userId = auth()->id();
     // Check if an approval record exists for the user
     $approval = Approval::where('route_name', 'workbench_webcam')
-        // ->where('date', $date)
-        // ->where('time', $time)
+    // ->where('date', $date)
+    // ->where('time', $time)
         ->where('created_by', $userId)
         ->first();
 
-    if (!$approval) {
+    if (! $approval) {
         // If no approval record exists, create one
         $approval = Approval::create([
-            'route_name' => 'workbench_webcam',
-            'date' => now()->toDateString(),
-            'time' => now()->toTimeString(),
+            'route_name'  => 'workbench_webcam',
+            'date'        => now()->toDateString(),
+            'time'        => now()->toTimeString(),
             'is_approved' => false,
             'approved_by' => null,
-            'created_by' => $userId,
+            'created_by'  => $userId,
         ]);
 
         // For simplicity, we'll just inform the user
@@ -564,8 +555,8 @@ Route::get('workbench_webcam', function () {
 
         // Retrieve settings
         $timeoutWebCamValue = \App\Models\Setting::getSetting('timeout_webcam_value') ?? 60000;
-        $webCamCaptureTime = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
-        $currentTime = now()->toTimeString(); // Current hour in 24-hour format
+        $webCamCaptureTime  = \App\Models\Setting::getSetting('webcam_capture_time') ?? 3000;
+        $currentTime        = now()->toTimeString(); // Current hour in 24-hour format
         return view('filament.clusters.h-r-attenance-cluster.resources.test-search-by-image-resource.pages.view-camera', compact('currentTime', 'timeoutWebCamValue', 'webCamCaptureTime'));
     } else {
         // If the approval is pending, inform the user
@@ -590,7 +581,6 @@ Route::get('/images', [ImageController::class, 'displayAllImages']);
 //     ->middleware('check')
 // ;
 
-
 Route::get('workbench_webcam_v2', function () {
     $currentTime = \Carbon\Carbon::now()->format('H'); // Current hour in 24-hour format
 
@@ -599,12 +589,11 @@ Route::get('workbench_webcam_v2', function () {
 
 Route::post('/upload-captured-image', [EmployeeAWSController::class, 'uploadCapturedImage_old'])->name('upload.captured.image');
 
-
 Route::get('getAttendancesEarlyDeparture', function () {
     $attendances = Attendance::earlyDepartures()
         ->whereYear('check_date', '2024')
         ->whereMonth('check_date', '11')
-        // ->where('employee_id', 83)
+    // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'early_departure_minutes', 'period_id')
         ->where('check_type', Attendance::CHECKTYPEOUT)
         ->where('early_departure_minutes', '<=', 20)
@@ -617,7 +606,7 @@ Route::get('getAttendancesEarlyDeparture', function () {
     $result = [];
     foreach ($attendances as $key => $value) {
         $result[Employee::find($key)->name . '-' . $key] = $value;
-        foreach ($value as  $val) {
+        foreach ($value as $val) {
             DB::beginTransaction();
             try {
                 Attendance::find($val['id'])->update([
@@ -637,19 +626,19 @@ Route::get('getAttendancesLateArrival', function () {
     $attendances = Attendance::lateArrival()
         ->whereYear('check_date', '2024')
         ->whereMonth('check_date', '11')
-        // ->where('employee_id', 83)
+    // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'delay_minutes', 'period_id')
         ->get()
-        // ->groupBy('employee_id')
-        // ->map(function ($attendances) {
-        //     return $attendances->toArray();
-        // })
+    // ->groupBy('employee_id')
+    // ->map(function ($attendances) {
+    //     return $attendances->toArray();
+    // })
         ->toArray();
     dd($attendances);
     $result = [];
     foreach ($attendances as $key => $value) {
         $result[Employee::find($key)->name . '-' . $key] = $value;
-        foreach ($value as  $val) {
+        foreach ($value as $val) {
             DB::beginTransaction();
             try {
                 // Attendance::find($val['id'])->update([
@@ -695,7 +684,7 @@ Route::get('/test-delivery-order/{order}', function (Order $order) {
 
     $deliveryInfo = $order->getDeliveryInfo();
 
-    if (!$deliveryInfo) {
+    if (! $deliveryInfo) {
         return '❌ Order has not been delivered yet.';
     }
 
@@ -708,14 +697,13 @@ Route::get('/reports/order-delivery', [OrderDeliveryReportController::class, 'in
 Route::get('/reports/sales-payments', [OrderSalesPaymentsReportController::class, 'index'])
     ->name('reports.sales-payments');
 
-
 Route::get('/routes-list', function () {
     $routes = collect(Route::getRoutes())->map(function ($route) {
         return [
-            'uri' => $route->uri(),
-            'method' => implode('|', $route->methods()),
-            'name' => $route->getName(),
-            'action' => $route->getActionName(),
+            'uri'        => $route->uri(),
+            'method'     => implode('|', $route->methods()),
+            'name'       => $route->getName(),
+            'action'     => $route->getActionName(),
             'middleware' => $route->gatherMiddleware(),
         ];
     });
