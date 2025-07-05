@@ -638,7 +638,7 @@ class ProductResource extends Resource
                                         ->label(__('lang.price')),
                                     TextInput::make('selling_price')
                                         ->numeric()
-                                        ->minValue(0)
+                                        ->minValue(1)
                                         ->label(__('lang.selling_price'))
                                         ->default(function ($record, $livewire) {
                                             return 0;
@@ -1048,8 +1048,7 @@ class ProductResource extends Resource
     }
 
     public static function validateUnitDeletion($unitPriceRecordId, ?Model $record = null): void
-    {
-        $unitId    = UnitPrice::find($unitPriceRecordId)?->unit_id ?? null;
+    { 
         $productId = $record?->id ?? null;
 
         if (! $productId) {
@@ -1131,9 +1130,9 @@ class ProductResource extends Resource
         if ($packageSizes->last() !== 1.0) {
             $message = __('⚠️ The last qty per pack must be exactly 1.');
             if ($fail) {
-                // $fail($message);
+                $fail($message);
             } else {
-                // showWarningNotifiMessage($message);
+                showWarningNotifiMessage($message);
             }
             // return;
         }

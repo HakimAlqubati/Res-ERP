@@ -119,7 +119,7 @@ class BranchResellerResource extends Resource
                                 // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
                                     ->relationship('categories', 'name')
                                     ->columnSpanFull()->preload()
-                                    ->searchable()->multiple(),
+                                    ->searchable()->multiple()->required(),
                                 Textarea::make('address')
                                     ->columnSpanFull()
                                     ->label(__('lang.address')),
