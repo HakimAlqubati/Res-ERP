@@ -641,10 +641,12 @@ class ProductResource extends Resource
                                         ->minValue(0)
                                         ->label(__('lang.selling_price'))
                                         ->default(function ($record, $livewire) {
+                                            return 0;
                                             // يمكن تعديل هذا الحساب حسب منطقك إن كان هناك ربط بالهامش أو غيره
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             return $finalPrice > 0 ? round($finalPrice * 1.2, 2) : null;
-                                        }),
+                                        })
+                                        ,
 
                                 ])->orderColumn('order')
                                 ->reorderable()

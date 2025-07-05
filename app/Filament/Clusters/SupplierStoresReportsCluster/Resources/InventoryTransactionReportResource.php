@@ -84,6 +84,7 @@ class InventoryTransactionReportResource extends Resource
                     })->multiple(),
                 SelectFilter::make("store_id")->placeholder('Select Store')
                     ->label(__('lang.store'))->searchable()
+                    ->default(fn () => request()->get('store_id'))
                     ->query(function (Builder $q, $data) {
                         return $q;
                     })->options(
@@ -94,6 +95,7 @@ class InventoryTransactionReportResource extends Resource
                     ->form([
                         Toggle::make('only_available')
                             ->inline(false)
+                            ->default(fn () => request()->get('only_available'))
                             ->label('Show Available in Stock')
                     ]),
             

@@ -1,14 +1,9 @@
 <?php
-
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\ResellersCluster;
-use App\Filament\Resources\BranchResellerResource\BranchPaidAmountsRelationManagerResource\RelationManagers\PaidAmountsRelationManager;
-use App\Filament\Resources\BranchResellerResource\BranchSalesAmountsRelationManagerResource\RelationManagers\SalesAmountsRelationManager;
 use App\Filament\Resources\BranchResellerResource\Pages;
-use App\Filament\Resources\BranchResellerResource\RelationManagers;
 use App\Models\Branch;
-use App\Models\BranchReseller;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
@@ -16,16 +11,13 @@ use App\Models\Store;
 use App\Models\User;
 use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Facades\Filament;
-use Filament\Forms;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
@@ -37,20 +29,18 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class BranchResellerResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = ResellersCluster::class;
+    protected static ?string $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static ?string $cluster                             = ResellersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort                         = 0;
     public static function getPluralLabel(): ?string
     {
         return __('menu.resellers');
@@ -88,7 +78,7 @@ class BranchResellerResource extends Resource
                                     ->options(User::whereHas('roles', function ($q) {
                                         $q->where('id', 7);
                                     })
-                                        ->get(['name', 'id'])->pluck('name', 'id'))
+                                            ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Toggle::make('active')
                                     ->inline(false)->default(true),
@@ -126,7 +116,7 @@ class BranchResellerResource extends Resource
                                     ]),
                                 Select::make('categories')
                                     ->label(__('lang.customized_categories'))
-                                    // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
                                     ->relationship('categories', 'name')
                                     ->columnSpanFull()->preload()
                                     ->searchable()->multiple(),
@@ -142,51 +132,50 @@ class BranchResellerResource extends Resource
                             Fieldset::make()
                                 ->relationship('location')
                                 ->columns(3)->schema([
-                                    Select::make('country_id')
-                                        ->label(__('Country'))->searchable()
-                                        // ->relationship('city', 'name')
-                                        ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
-                                        ->reactive()
-                                        ->required(false),
-                                    Select::make('city_id')
-                                        ->label(__('City'))->searchable()
-                                        // ->relationship('city', 'name')
-                                        ->options(function (callable $get) {
-                                            $countryId = $get('country_id');
-                                            return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
-                                        })
-                                        ->reactive()
-                                        ->required(false),
+                                Select::make('country_id')
+                                    ->label(__('Country'))->searchable()
+                                // ->relationship('city', 'name')
+                                    ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
+                                    ->reactive()
+                                    ->required(false),
+                                Select::make('city_id')
+                                    ->label(__('City'))->searchable()
+                                // ->relationship('city', 'name')
+                                    ->options(function (callable $get) {
+                                        $countryId = $get('country_id');
+                                        return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
+                                    })
+                                    ->reactive()
+                                    ->required(false),
 
-                                    Select::make('district_id')
-                                        ->label(__('District'))
-                                        ->searchable()
-                                        ->options(function (callable $get) {
-                                            $cityId = $get('city_id');
-                                            return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
-                                        })
-                                        ->reactive()
-                                        ->required(false),
-                                    Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                    LocationPickr::make('location')->label('')->columnSpanFull()
-                                        ->mapControls([
-                                            'mapTypeControl'    => true,
-                                            'scaleControl'      => true,
-                                            'streetViewControl' => true,
-                                            'rotateControl'     => true,
-                                            'fullscreenControl' => true,
-                                            'zoomControl'       => false,
-                                        ])
-                                        ->defaultZoom(5)
-                                        ->draggable()
-                                        ->clickable()
-                                        ->height('40vh')
-                                        // ->defaultLocation([41.32836109345274, 19.818383186960773])
-                                        ->myLocationButtonLabel('My location'),
-                                    // Add other location fields as needed (district_id, city_id, etc.)
+                                Select::make('district_id')
+                                    ->label(__('District'))
+                                    ->searchable()
+                                    ->options(function (callable $get) {
+                                        $cityId = $get('city_id');
+                                        return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
+                                    })
+                                    ->reactive()
+                                    ->required(false),
+                                Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
+                                LocationPickr::make('location')->label('')->columnSpanFull()
+                                    ->mapControls([
+                                        'mapTypeControl'    => true,
+                                        'scaleControl'      => true,
+                                        'streetViewControl' => true,
+                                        'rotateControl'     => true,
+                                        'fullscreenControl' => true,
+                                        'zoomControl'       => false,
+                                    ])
+                                    ->defaultZoom(5)
+                                    ->draggable()
+                                    ->clickable()
+                                    ->height('40vh')
+                                // ->defaultLocation([41.32836109345274, 19.818383186960773])
+                                    ->myLocationButtonLabel('My location'),
+                                // Add other location fields as needed (district_id, city_id, etc.)
 
-
-                                ]),
+                            ]),
 
                         ]),
                     Wizard\Step::make('Images')
@@ -225,15 +214,13 @@ class BranchResellerResource extends Resource
                                     ])->maxSize(800)
                                     ->imageEditorMode(2)
                                     ->imageEditorEmptyFillColor('#fff000')
-                                    ->circleCropper()
-                            ])
+                                    ->circleCropper(),
+                            ]),
                         ]),
                 ])->columnSpanFull()->skippable(),
 
             ]);
     }
-
-
 
     public static function table(Table $table): Table
     {
@@ -242,12 +229,12 @@ class BranchResellerResource extends Resource
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
-                        return null;
-                    })->limit(3),
+                    return null;
+                })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
-                    // ->limit(100)
+                // ->limit(100)
                     ->words(5)->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('user.name')->label(__('lang.account_manager')),
@@ -272,13 +259,10 @@ class BranchResellerResource extends Resource
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
 
-
                 TextColumn::make('total_paid')
                     ->label('Total Paid')
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
-
-
 
             ])
             ->filters([
@@ -298,7 +282,7 @@ class BranchResellerResource extends Resource
                 Action::make('addStore')
                     ->label('Add Store')
                     ->icon('heroicon-o-plus-circle')
-                    ->visible(fn(Model $record) => !$record->store)
+                    ->visible(fn(Model $record) => ! $record->store)
                     ->form([
                         TextInput::make('name')
                             ->label('Store Name')
@@ -313,8 +297,8 @@ class BranchResellerResource extends Resource
                         try {
                             //code...
                             $store = Store::create([
-                                'name' => $data['name'],
-                                'active' => $data['active'],
+                                'name'      => $data['name'],
+                                'active'    => $data['active'],
                                 'branch_id' => $record->id,
                             ]);
                             $record->update(['store_id' => $store->id]);
@@ -325,10 +309,21 @@ class BranchResellerResource extends Resource
                     ->modalHeading('Create and Link Store')
                     ->color('primary')
                     ->button(),
+                Action::make('viewInventory')
+                    ->label('View Inventory')->button()
+                    ->icon('heroicon-o-chart-bar')
+                    ->url(fn(Model $record) => \App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource::getUrl('index',
+                     ['store_id' =>
+                        $record->store_id,
+                        'only_available' => 1
+                        , 'from_url' => 'branch-resellers',
+                        ]))
+                    ->openUrlInNewTab()
+                    ->visible(fn(Model $record) => $record->hasStore()),
                 Action::make('manageStore')
                     ->label('Manage Store')
                     ->icon('heroicon-o-pencil-square')
-                    ->visible(fn(Model $record) => $record->store !== null)
+                    ->hidden(fn(Model $record) =>  $record->hasStore())
                     ->form(function (Model $record) {
                         $store = $record->store;
 
@@ -344,12 +339,12 @@ class BranchResellerResource extends Resource
                         ];
                     })
                     ->action(function (Model $record, array $data) {
-                        if (!$record->store) {
+                        if (! $record->store) {
                             throw new \Exception("No store linked to this branch.");
                         }
 
                         $record->store->update([
-                            'name' => $data['name'],
+                            'name'   => $data['name'],
                             'active' => $data['active'],
                         ]);
 
@@ -385,10 +380,10 @@ class BranchResellerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListBranchResellers::route('/'),
+            'index'  => Pages\ListBranchResellers::route('/'),
             'create' => Pages\CreateBranchReseller::route('/create'),
-            'view' => Pages\ViewBranchReseller::route('/{record}'),
-            'edit' => Pages\EditBranchReseller::route('/{record}/edit'),
+            'view'   => Pages\ViewBranchReseller::route('/{record}'),
+            'edit'   => Pages\EditBranchReseller::route('/{record}/edit'),
         ];
     }
 
