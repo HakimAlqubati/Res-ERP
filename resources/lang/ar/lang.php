@@ -218,5 +218,7 @@ return [
     'error_while_adding_payment' => 'حدث خطأ أثناء إضافة الدفعة',
     'paid' => 'المدفوع',
     'remaining' => 'المتبقي',
+    'manufacturing_branches' => 'الفروع التصنيعية',
+    'manufacturing_branch' => 'فرع تصنيعي',
 
 ];

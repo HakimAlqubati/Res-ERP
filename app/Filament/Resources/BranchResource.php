@@ -90,7 +90,7 @@ class BranchResource extends Resource
                                             return in_array($tab, Branch::TYPES) ? $tab : Branch::TYPE_BRANCH;
                                         })->options([
                                             Branch::TYPE_BRANCH => __('lang.normal_branch'),
-                                            Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
+                                            // Branch::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
                                             Branch::TYPE_HQ => __('lang.hq'),
                                             Branch::TYPE_POPUP => __('lang.popup_branch'),
                                             // Branch::TYPE_RESELLER => __('lang.reseller'),
@@ -98,14 +98,14 @@ class BranchResource extends Resource
                                         ->default(Branch::TYPE_BRANCH)
                                         ->icons([
                                             Branch::TYPE_BRANCH => 'heroicon-o-building-storefront',
-                                            Branch::TYPE_CENTRAL_KITCHEN => 'heroicon-o-fire',
+                                            // Branch::TYPE_CENTRAL_KITCHEN => 'heroicon-o-fire',
                                             Branch::TYPE_HQ => 'heroicon-o-building-storefront',
                                             Branch::TYPE_POPUP => 'heroicon-o-sparkles',
                                             // Branch::TYPE_RESELLER => 'heroicon-o-user-group',
                                         ])
                                         ->colors([
                                             Branch::TYPE_BRANCH => 'warning',
-                                            Branch::TYPE_CENTRAL_KITCHEN => 'info',
+                                            // Branch::TYPE_CENTRAL_KITCHEN => 'info',
                                             Branch::TYPE_HQ => 'success',
                                             Branch::TYPE_POPUP => 'danger',
                                             // Branch::TYPE_RESELLER => 'info',
@@ -115,27 +115,27 @@ class BranchResource extends Resource
                                     Toggle::make('active')
                                         ->inline(false)->default(true),
                                     Grid::make()->columnSpanFull()->columns(3)->schema([
-                                        Toggle::make('manager_abel_show_orders')
-                                            ->label(__('stock.manager_abel_show_orders'))
-                                            ->inline(false)
-                                            ->default(false)
-                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        // Toggle::make('manager_abel_show_orders')
+                                        //     ->label(__('stock.manager_abel_show_orders'))
+                                        //     ->inline(false)
+                                        //     ->default(false)
+                                        //     ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
 
                                         Select::make('store_id')
                                             ->label(__('stock.store_id'))
                                             ->options(\App\Models\Store::active()
                                                 ->centralKitchen()->pluck('name', 'id'))
                                             ->searchable()
-                                            ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
+                                            // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
                                         // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
                                         ,
-                                        Select::make('categories')
-                                            ->label(__('stock.customized_manufacturing_categories'))
-                                            // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
-                                            ->relationship('categories', 'name')
+                                        // Select::make('categories')
+                                        //     ->label(__('stock.customized_manufacturing_categories'))
+                                        //     // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                        //     ->relationship('categories', 'name')
 
-                                            ->searchable()->multiple()
-                                            ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
+                                        //     ->searchable()->multiple()
+                                        //     ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN),
 
                                     ]),
 
@@ -375,7 +375,8 @@ class BranchResource extends Resource
                                 ->label(__('stock.store_id'))->default($record->store_id)
                                 ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
                                 ->searchable()
-                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
+                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
+                                ,
 
                         ];
                     })
@@ -408,10 +409,10 @@ class BranchResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
-    }
+    // public static function getNavigationBadge(): ?string
+    // {
+    //     return static::getModel()::count();
+    // }
 
     public static function getRelations(): array
     {
@@ -423,6 +424,7 @@ class BranchResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+        // ->whereIn('type', [Branch::TYPE_BRANCH])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

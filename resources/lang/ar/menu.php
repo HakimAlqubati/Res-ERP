@@ -14,4 +14,6 @@ return [
     'task_reports' => 'تقارير المهام',
     'order_reports' => 'تقارير الطلبات',
     'resellers' => 'نقاط البيع',
+    'manufacturing_branches' => 'الفروع التصنيعية',
+    'manufacturing_branch' => 'فرع تصنيعي',
 ];
