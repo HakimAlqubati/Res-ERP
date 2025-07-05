@@ -115,7 +115,7 @@ class StockSupplyOrderResource extends Resource
                                         'product_id',
                                         $get('product_id')
                                     )
-                                        ->showInInvoices()
+                                        
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price);
 
