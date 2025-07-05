@@ -207,7 +207,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'units.name AS unit',
                 'orders_details.package_size AS package_size',
                 DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-                // 'orders_details.price as unit_price',
+                'orders_details.price as unit_price',
             )
             ->join('products', 'orders_details.product_id', '=', 'products.id')
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
@@ -217,9 +217,9 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
                 return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
             })
-            ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
-                return $query->whereIn('orders.branch_id', $branch_id);
-            })
+            // ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
+            //     return $query->whereIn('orders.branch_id', $branch_id);
+            // })
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
@@ -231,7 +231,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'branches.name',
                 'units.name',
                 'orders_details.package_size',
-                // 'orders_details.price'
+                'orders_details.price'
             )
             ->get();
         $final = [];
@@ -242,6 +242,7 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->branch = $val->branch;
             $obj->unit = $val->unit;
             $obj->quantity =   formatQunantity($val->quantity);
+            $obj->price = formatMoneyWithCurrency($val->unit_price);
             $final[] = $obj;
         }
         return $final;
