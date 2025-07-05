@@ -244,10 +244,10 @@ class MultiProductsInventoryService
             // }
 
             if ($allowsFraction) {
-                // $remainingQty = round($remainingQty,2);
+                $remainingQty = round($remainingQty,2);
             } else {
                 
-                // $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
+                $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
             }
              
             // نحاول نجيب السعر من المخزون حسب الوحدة
