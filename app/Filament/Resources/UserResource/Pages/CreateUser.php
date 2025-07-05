@@ -1,10 +1,8 @@
 <?php
-
 namespace App\Filament\Resources\UserResource\Pages;
 
 use App\Filament\Resources\UserResource;
 use App\Models\Employee;
-use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateUser extends CreateRecord
@@ -24,13 +22,13 @@ class CreateUser extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if ($data['is_exist_employee']) {
-            $data['name'] = $this->data['name'];
-            $data['email'] = $this->data['email'];
-            $data['is_employee'] = 1;
-            $data['owner_id'] = $this->data['owner_id'];
+        if (isset($data['is_exist_employee']) && $data['is_exist_employee']) {
+            $data['name']         = $this->data['name'];
+            $data['email']        = $this->data['email'];
+            $data['is_employee']  = 1;
+            $data['owner_id']     = $this->data['owner_id'];
             $data['phone_number'] = $this->data['phone_number'];
-            $data['branch_id'] = $this->data['branch_id'];
+            $data['branch_id']    = $this->data['branch_id'];
             if (Employee::find($this->data['search_employee'])->avatar) {
                 $data['avatar'] = Employee::find($this->data['search_employee'])->avatar;
             }

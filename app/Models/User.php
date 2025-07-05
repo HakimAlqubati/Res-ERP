@@ -191,7 +191,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return false;
     }
     public function isAttendance()
-    {
+    { 
         if (getCurrentRole() == 17) {
             return true;
         }

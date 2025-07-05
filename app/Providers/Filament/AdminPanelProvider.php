@@ -180,7 +180,7 @@ class AdminPanelProvider extends PanelProvider
 
                                     ($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
                                     ||
-                                    is_null($currentTenant)
+                                    is_null($currentTenant) && (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager())
 
                                 ) ? HRSalarySettingCluster::getNavigationItems() : [],
                                 ((isSuperAdmin() || isSystemManager() || isBranchManager())) && (($currentTenant && is_array($currentTenant->modules) && in_array(CustomTenantModel::MODULE_HR, $currentTenant->modules))
