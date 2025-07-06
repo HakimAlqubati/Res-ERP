@@ -217,9 +217,9 @@ class ProductRepository implements ProductRepositoryInterface
             ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
                 return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
             })
-            // ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
-            //     return $query->whereIn('orders.branch_id', $branch_id);
-            // })
+            ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
+                return $query->whereIn('orders.branch_id', $branch_id);
+            })
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
             // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
