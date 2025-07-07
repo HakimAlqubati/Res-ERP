@@ -3,7 +3,7 @@ namespace App\Filament\Traits\Forms;
 
 use App\Models\Branch;
 use App\Models\Employee;
-use App\Models\Role;
+use Spatie\Permission\Models\Role as Role;
 use App\Models\User;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Fieldset;

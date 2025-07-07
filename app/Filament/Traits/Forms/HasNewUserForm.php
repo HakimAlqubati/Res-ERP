@@ -2,7 +2,7 @@
 namespace App\Filament\Traits\Forms;
 
 use App\Models\Branch;
-use App\Models\Role;
+use Spatie\Permission\Models\Role as Role;
 use App\Models\User;
 use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
@@ -21,7 +21,16 @@ trait HasNewUserForm
 
     private static function newUserForm()
     {
-        return Fieldset::make()->visible(fn(Get $get) => $get('account_mode') === 'new_user')
+        return Fieldset::make()
+            ->visible(function (Get $get, $record) {
+                if (! is_null($record)) {
+                    return true;
+                }
+                if ($get('account_mode') === 'new_user') {
+                    return true;
+                }
+                return false;
+            })
             ->schema([
 
                 Grid::make()->columns(3)->schema([
