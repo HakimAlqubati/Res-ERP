@@ -679,7 +679,6 @@ class AttendanecEmployee2 extends BasePage
         }
 
         $data['delay_minutes']                = 0;
-        dd($sumDurationFormatted);
         $data['total_actual_duration_hourly'] = $sumDurationFormatted ?? 0;
         $allowedTimeAfterPeriod               = Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'))->format('H:i:s');
         if (
