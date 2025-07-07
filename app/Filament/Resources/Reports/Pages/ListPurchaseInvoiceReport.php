@@ -21,7 +21,7 @@ class ListPurchaseInvoiceReport extends ListRecords
 {
     protected static string $resource = PurchaseInvoiceReportResource::class;
     protected static string $view = 'filament.pages.stock-report.purchase-invoice-report-with-pagination';
-    public int|string $perPage = 50;
+    public $perPage = 15;
     protected $updatesQueryString = ['perPage'];
 
 
@@ -29,10 +29,13 @@ class ListPurchaseInvoiceReport extends ListRecords
 
     protected function getViewData(): array
     {
-        // $perPage = request()->get('perPage', 20);
-        // if ($perPage === 'all') {
-        //     $perPage = 9999; // سيتم إرجاع كل النتائج
-        // }
+        
+        $perPage = $this->perPage;
+
+        if ($perPage === 'all') {
+            $perPage = 9999; // أو أي عدد كبير جدًا لضمان عرض الكل
+        }
+ 
         $productsIds = [];
         $invoiceNos = [];
 
@@ -44,19 +47,20 @@ class ListPurchaseInvoiceReport extends ListRecords
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? 'all';
         $categoryIds = $this->getTable()->getFilters()['category_id']->getState()['values'] ?? [];
 
-        $purchase_invoice_data = (new PurchaseInvoiceReportService())->getPurchasesInvoiceDataWithPagination(
+        $purchaseInvoiceData = (new PurchaseInvoiceReportService())->getPurchasesInvoiceDataWithPagination(
             $productsIds,
             $storeId,
             $supplierId,
             $invoiceNos,
             $this->getTable()->getFilters()['date']->getState() ?? [],
             $categoryIds,
-            $this->perPage // يمكنك تركه null إذا لم ترغب في استخدام pagination حالياً
+            $perPage 
         );
-
+ 
 
         return [
-            'purchase_invoice_data' => $purchase_invoice_data,
+            'purchase_invoice_data' => $purchaseInvoiceData,
+            'total_amount' => $purchaseInvoiceData['total_amount'],
             'show_invoice_no' => $showInvoiceNo,
         ];
     }

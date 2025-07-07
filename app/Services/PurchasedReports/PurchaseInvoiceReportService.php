@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services\PurchasedReports;
 
 use App\Models\Store;
@@ -18,7 +17,7 @@ class PurchaseInvoiceReportService
         $categoryIds = [],
         $perPage = null
     ) {
-        $store_name = 'All';
+        $store_name    = 'All';
         $supplier_name = 'All';
 
         $query = DB::table('purchase_invoices')
@@ -44,7 +43,7 @@ class PurchaseInvoiceReportService
 
             ->where('purchase_invoices.active', 1);
 
-        if (!empty($categoryIds)) {
+        if (! empty($categoryIds)) {
             $query->whereIn('products.category_id', $categoryIds);
         }
 
@@ -66,25 +65,29 @@ class PurchaseInvoiceReportService
             $query->whereIn('purchase_invoices.invoice_no', $invoiceNos);
         }
 
-
-        if (!empty($dateFilter['from'])) {
+        if (! empty($dateFilter['from'])) {
             $query->whereDate('purchase_invoices.date', '>=', $dateFilter['from']);
         }
-        if (!empty($dateFilter['to'])) {
+        if (! empty($dateFilter['to'])) {
             $query->whereDate('purchase_invoices.date', '<=', $dateFilter['to']);
         }
 
-        $results = $perPage ? $query->paginate($perPage) : $query->get();
+        $results     = $perPage ? $query->paginate($perPage) : $query->get();
+        $totalAmount = 0;
         foreach ($results as $item) {
-            $item->unit_price =   $item->unit_price;
-            $item->quantity =   $item->quantity;
-            $item->formatted_unit_price =  formatMoneyWithCurrency($item->unit_price);
-            $item->formatted_quantity =  formatQunantity($item->quantity);
+            $item->unit_price           = $item->unit_price;
+            $item->quantity             = $item->quantity;
+            $item->formatted_unit_price = formatMoneyWithCurrency($item->unit_price);
+            $item->formatted_quantity   = formatQunantity($item->quantity);
+            $totalAmount += $item->unit_price * $item->quantity;
+
         }
         return [
-            'results' => $results,
+            'results'       => $results,
             'supplier_name' => $supplier_name,
-            'store_name' => $store_name,
+            'total_amount'  => formatMoneyWithCurrency($totalAmount),
+            'store_name'    => $store_name,
+
         ];
     }
 }

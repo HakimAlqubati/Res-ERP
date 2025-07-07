@@ -77,8 +77,8 @@
                         {{ $invoice_item->purchase_date }}
                     </x-filament-tables::cell>
                     @if (!isStoreManager())
-                        <x-filament-tables::cell> {{ $unit_price }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{  formatMoneyWithCurrency($unit_price) }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ formatMoneyWithCurrency($sub_total) }} </x-filament-tables::cell>
                     @endif
                 </x-filament-tables::row>
             @endforeach
@@ -91,7 +91,7 @@
                     <x-filament-tables::cell colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}
                     </x-filament-tables::cell>
                     {{-- <x-filament-tables::cell> {{ formatMoneyWithCurrency($sum_unit_price) }} </x-filament-tables::cell> --}}
-                    <x-filament-tables::cell> {{ formatMoneyWithCurrency($total_sub_total) }}
+                    <x-filament-tables::cell> {{ $total_amount }}
                     </x-filament-tables::cell>
                 </x-filament-tables::row>
             </tbody>
@@ -109,6 +109,18 @@
 
 
     </x-filament-tables::table>
+    <div class="mt-4">
+        <div class="paginator_container">
+
+            {{ $purchase_invoice_data['results']->links() }}
+
+
+        </div>
+
+
+        <x-per-page-selector />
+    </div>
+
     {{-- <div class="flex justify-end mb-2">
         
             <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
