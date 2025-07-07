@@ -1130,9 +1130,9 @@ class ProductResource extends Resource
         if ($packageSizes->last() !== 1.0) {
             $message = __('⚠️ The last qty per pack must be exactly 1.');
             if ($fail) {
-                $fail($message);
+                // $fail($message);
             } else {
-                showWarningNotifiMessage($message);
+                // showWarningNotifiMessage($message);
             }
             // return;
         }
