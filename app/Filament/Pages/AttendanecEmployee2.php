@@ -183,7 +183,7 @@ class AttendanecEmployee2 extends BasePage
 
         $employee = Employee::find($empId);
         if (!$employee) {
-            return showWarningNotifiMessage('No Employee');
+            return $this->sendWarningNotification('No Employee');
             exit;
         }
         $employeePeriods = $employee?->periods;
@@ -733,7 +733,7 @@ class AttendanecEmployee2 extends BasePage
             ->icon('heroicon-o-exclamation-triangle')
             ->iconSize(IconSize::Large)
             ->iconPosition(IconPosition::Before)
-            ->duration(10000)
+            ->duration(20000)
             ->iconColor('warning')
             ->warning()
             ->send();

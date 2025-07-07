@@ -93,7 +93,7 @@ class Employee extends Model implements Auditable
         'working_hours',
         'manager_id',
     ];
-    public $appends = ['avatar_image'];
+    public $appends = ['avatar_image','periodsCount'];
     protected $casts = [
         'bank_information' => 'array',
         'changes' => 'array', // This allows storing changes as a JSON
@@ -152,7 +152,9 @@ class Employee extends Model implements Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-            return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
+           
+            // return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
+            return  Storage::disk('public')->url($defaultAvatarPath);
             return Storage::disk('public')->url($defaultAvatarPath);
         }
 
@@ -712,4 +714,9 @@ class Employee extends Model implements Auditable
     {
         return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
     }
+    public function getPeriodsCountAttribute()
+{
+    return $this->periods()->count();
+}
+
 }

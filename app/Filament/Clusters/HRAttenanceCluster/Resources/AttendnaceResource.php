@@ -22,6 +22,7 @@ use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Average;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Enums\FiltersLayout;
@@ -171,6 +172,9 @@ class AttendnaceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
                 Tables\Columns\TextColumn::make('attendance_type')->alignCenter(true),
+                IconColumn::make('accepted')
+                    ->label('Is Accepted?')
+                    ->alignCenter(true)->toggleable(isToggledHiddenByDefault:true)->boolean(),
 
             ])
             ->filters([
@@ -253,7 +257,7 @@ class AttendnaceResource extends Resource
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options(Attendance::getStatuses()),
-            ], FiltersLayout::AboveContent)
+            ])
             ->actions([
 
                 Tables\Actions\Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
