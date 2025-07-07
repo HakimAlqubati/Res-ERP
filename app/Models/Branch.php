@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use App\Traits\DynamicConnection;
@@ -9,15 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
-use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Branch extends Model implements HasMedia, Auditable
 {
 
     use HasFactory, SoftDeletes, DynamicConnection, InteractsWithMedia, \OwenIt\Auditing\Auditable;
-
-
 
     protected $fillable = [
         'id',
@@ -25,7 +20,6 @@ class Branch extends Model implements HasMedia, Auditable
         'address',
         'manager_id',
         'active',
-
 
         'store_id',
         'manager_abel_show_orders',
@@ -43,7 +37,6 @@ class Branch extends Model implements HasMedia, Auditable
         'manager_id',
         'active',
 
-
         'store_id',
         'manager_abel_show_orders',
 
@@ -60,22 +53,22 @@ class Branch extends Model implements HasMedia, Auditable
         'total_paid',
         'total_sales',
         'total_orders_amount',
-        'is_kitchen'
+        'is_kitchen',
     ];
 
     // ✅ Constants
-    public const TYPE_BRANCH = 'branch';
+    public const TYPE_BRANCH          = 'branch';
     public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
-    public const TYPE_HQ = 'hq';
-    public const TYPE_POPUP = 'popup';
-    public const TYPE_RESELLER = 'reseller';
+    public const TYPE_HQ              = 'hq';
+    public const TYPE_POPUP           = 'popup';
+    public const TYPE_RESELLER        = 'reseller';
     // ✅ Optional: Array of allowed types
     public const TYPES = [
         self::TYPE_BRANCH,
         self::TYPE_CENTRAL_KITCHEN,
         self::TYPE_HQ,
         self::TYPE_POPUP,
-        self::TYPE_RESELLER
+        self::TYPE_RESELLER,
     ];
     // protected $casts = [
 
@@ -110,7 +103,7 @@ class Branch extends Model implements HasMedia, Auditable
 
     public function scopeWithUserCheck($query)
     {
-        $isSuperAdmin = isSuperAdmin();
+        $isSuperAdmin    = isSuperAdmin();
         $isSystemManager = isSystemManager();
         $isBranchManager = isBranchManager();
 
@@ -161,11 +154,11 @@ class Branch extends Model implements HasMedia, Auditable
     }
     public function toArray()
     {
-        $data = parent::toArray();
-        $data['is_central_kitchen'] = (int) $this->isKitchen;
+        $data                          = parent::toArray();
+        $data['is_central_kitchen']    = (int) $this->isKitchen;
         $data['customized_categories'] = $this->categories->map(function ($category) {
             return [
-                'id' => $category->id,
+                'id'   => $category->id,
                 'name' => $category->name,
             ];
         });
@@ -195,7 +188,6 @@ class Branch extends Model implements HasMedia, Auditable
         }
         return null;
     }
-
 
     public function scopeCentralKitchens($query)
     {
@@ -260,10 +252,10 @@ class Branch extends Model implements HasMedia, Auditable
         return match ($this->type) {
             self::TYPE_BRANCH => __('lang.branch'),
             self::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
-            self::TYPE_HQ => __('lang.hq'),
-            self::TYPE_POPUP => __('lang.popup_branch'),
-            self::TYPE_RESELLER => __('lang.reseller'),
-            default => __('lang.unknown'),
+            self::TYPE_HQ              => __('lang.hq'),
+            self::TYPE_POPUP           => __('lang.popup_branch'),
+            self::TYPE_RESELLER        => __('lang.reseller'),
+            default                    => __('lang.unknown'),
         };
     }
 
@@ -282,7 +274,7 @@ class Branch extends Model implements HasMedia, Auditable
     {
         return $this->categories->map(function ($category) {
             return [
-                'id' => $category->id,
+                'id'   => $category->id,
                 'name' => $category->name,
             ];
         });
@@ -308,12 +300,10 @@ class Branch extends Model implements HasMedia, Auditable
     //     return $this->total_sales - $this->total_paid;
     // }
 
-
     // public function getTotalPaidAttribute(): float
     // {
     //     return $this->paidAmounts->sum('amount');
     // }
-
 
     public function resellerSaleItems()
     {
@@ -327,13 +317,10 @@ class Branch extends Model implements HasMedia, Auditable
         );
     }
 
-
     public function getTotalSalesAttribute(): float
     {
         return $this->resellerSaleItems()->sum('total_price');
     }
-
-
 
     public function getTotalOrdersAmountAttribute(): float
     {
@@ -373,6 +360,17 @@ class Branch extends Model implements HasMedia, Auditable
     }
     public function hasStore(): bool
     {
-        return !is_null($this->store?->id);
+        return ! is_null($this->store?->id);
     }
+
+    public function scopeReseller($query)
+    {
+        return $query->where('type', self::TYPE_RESELLER);
+    }
+
+    public function scopeNotReseller($query)
+    {
+        return $query->where('type', '!=', self::TYPE_RESELLER);
+    }
+
 }
