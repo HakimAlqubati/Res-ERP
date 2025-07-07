@@ -175,11 +175,7 @@ class ReturnedOrderResource extends Resource
                                             ? ['max:' . $detail->available_quantity]
                                             : [];
                                     }),
-
-                                // TextInput::make('price')
-                                //     ->label('Price')
-                                //     ->numeric()
-                                //     ->required(),
+ 
                                 Hidden::make('price'),
 
                                 TextInput::make('package_size')
