@@ -48,10 +48,12 @@ class LogsRelationManager extends RelationManager
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created At')
-                    ->since()
+                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->format('d-m-Y h:i A'))
+
+                    // ->since()
                     ->sortable(),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('created_at', 'asc')
             ->filters([])
             ->headerActions([])
             ->actions([])

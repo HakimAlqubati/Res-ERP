@@ -132,7 +132,7 @@ class GeneralReportOfProductsResource extends Resource
                 $s_d = date('Y-m-d', strtotime($start_date)) . ' 00:00:00';
                 $e_d = date('Y-m-d', strtotime($end_date)) . ' 23:59:59';
 
-                return $query->whereBetween('orders.created_at', [$s_d, $e_d]);
+                return $query->whereBetween('orders.transfer_date', [$s_d, $e_d]);
             })
             ->get();
 

@@ -17,8 +17,19 @@
             /* لون الخلفية للتأكيد */
             z-index: 10;
         }
+
+        button {
+            background: #0d7c66;
+        }
     </style>
     {{ $this->getTableFiltersForm() }}
+    <div class="flex justify-end mb-4">
+        <button onclick="exportTableToExcel('report-table')"
+            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
+            {{ __('lang.export_excel') }}
+            📑
+        </button>
+    </div>
     {{-- @if (isset($branch_id)) --}}
     <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
         <thead style="top:64px;" class="fixed-header">
@@ -77,8 +88,8 @@
                         {{ $invoice_item->purchase_date }}
                     </x-filament-tables::cell>
                     @if (!isStoreManager())
-                        <x-filament-tables::cell> {{ $unit_price }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $sub_total }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ formatMoneyWithCurrency($unit_price) }} </x-filament-tables::cell>
+                        <x-filament-tables::cell> {{ formatMoneyWithCurrency($sub_total) }} </x-filament-tables::cell>
                     @endif
                 </x-filament-tables::row>
             @endforeach
@@ -91,7 +102,7 @@
                     <x-filament-tables::cell colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}
                     </x-filament-tables::cell>
                     {{-- <x-filament-tables::cell> {{ formatMoneyWithCurrency($sum_unit_price) }} </x-filament-tables::cell> --}}
-                    <x-filament-tables::cell> {{ formatMoneyWithCurrency($total_sub_total) }}
+                    <x-filament-tables::cell> {{ $total_amount }}
                     </x-filament-tables::cell>
                 </x-filament-tables::row>
             </tbody>
@@ -109,17 +120,23 @@
 
 
     </x-filament-tables::table>
-    {{-- <div class="flex justify-end mb-2">
-        
-            <label for="perPage" class="mr-2 font-semibold text-sm">Items per page:</label>
-            <select wire:model="perPage" class="border border-gray-300 px-3 py-1 rounded-md text-sm">
-                @foreach ([5, 10, 15, 20, 30, 50, 'all'] as $option)
-                    <option value="{{ $option }}">
-                        {{ is_numeric($option) ? $option : 'All' }}
-                    </option>
-                @endforeach
-            </select>
-        
-    </div> --}}
+    <div class="mt-4">
+        <div class="paginator_container">
+            {{ $purchase_invoice_data['results']->links() }}
+        </div>
+        <x-per-page-selector />
+    </div>
+
 
 </x-filament-panels::page>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+    function exportTableToExcel(tableId, filename = 'purchase_invoice_report.xlsx') {
+        const table = document.getElementById(tableId);
+        const workbook = XLSX.utils.table_to_book(table, {
+            sheet: "Report"
+        });
+        XLSX.writeFile(workbook, filename);
+    }
+</script>
