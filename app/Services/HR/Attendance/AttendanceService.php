@@ -7,17 +7,14 @@ use App\Models\Employee;
 class AttendanceService
 {
     protected AttendanceValidator $validator;
-    protected AttendanceHandler $handler;
-    protected AttendanceNotifier $notifier;
+    protected AttendanceHandler $handler; 
 
     public function __construct(
         AttendanceValidator $validator,
-        AttendanceHandler $handler,
-        AttendanceNotifier $notifier,
+        AttendanceHandler $handler, 
     ) {
         $this->validator = $validator;
-        $this->handler = $handler;
-        $this->notifier = $notifier;
+        $this->handler = $handler; 
     }
 
     public function handle(array $formData, string $attendanceType = 'rfid'): array
@@ -27,7 +24,7 @@ class AttendanceService
         if (!$rfid) {
             return [
                 'success' => false,
-                'message' => $this->notifier->warning('RFID is required.'),
+                'message' => 'RFID is required.',
             ];
         }
 
@@ -36,7 +33,7 @@ class AttendanceService
         if (!$employee) {
             return [
                 'success' => false,
-                'message' => $this->notifier->warning('Employee not found.'),
+                'message' => 'Employee not found.',
             ];
         }
  
@@ -45,7 +42,7 @@ class AttendanceService
         // TODO: Replace this with actual attendance creation logic
         return [
             'success' => true,
-            'message' => $this->notifier->success("Employee found: {$employee->name}"),
+            'message' => "Employee found: {$employee->name}",
         ];
     }
 }

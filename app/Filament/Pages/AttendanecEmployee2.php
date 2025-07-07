@@ -75,7 +75,7 @@ class AttendanecEmployee2 extends BasePage
     }
 
     public function form(Form $form): Form
-    { 
+    {
         app()->setLocale('en');
         return $form
             ->schema([
@@ -344,8 +344,7 @@ class AttendanecEmployee2 extends BasePage
             } else {
                 $checkType = Attendance::CHECKTYPE_CHECKOUT;
             }
-        }
-        // dd($checkType);
+        } 
 
         return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, $checkType);
     }
@@ -436,7 +435,7 @@ class AttendanecEmployee2 extends BasePage
             }
 
             $attendanceData = array_merge($attendanceData, $this->storeCheckIn($nearestPeriod, $checkTime, $date));
-            //   dd($attendanceData);
+              
             $notificationMessage = __('notifications.the_attendance_has_been_recorded');
         } elseif ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
 
@@ -455,12 +454,13 @@ class AttendanecEmployee2 extends BasePage
                     Attendance::storeNotAccepted($employee, $date, $checkTime->toTimeString(), $day, $message, $nearestPeriod->id, $this->attendanceType);
                     return $this->sendWarningNotification($message);
                 }
-            }
+            } 
             $attendanceData      = array_merge($attendanceData, $this->storeCheckOut($nearestPeriod, $employee->id, $date, $checkTime, $previousRecord));
             $notificationMessage = __('notifications.the_departure_has_been_recorded');
         }
-
+ 
         $attendanceData['attendance_type'] = $this->attendanceType;
+        dd($attendanceData);
         // Try to create the attendance record
         try {
             Attendance::create($attendanceData);
@@ -601,6 +601,7 @@ class AttendanecEmployee2 extends BasePage
 
             // Store both durations in a format like "hours:minutes"
             $currentDurationFormatted         = sprintf('%02d:%02d', $hoursActual, $minutesActual);
+            
             $data['actual_duration_hourly']   = $currentDurationFormatted;
             $data['supposed_duration_hourly'] = $nearestPeriod?->supposed_duration;
             $data['checkinrecord_id']         = $checkinRecord?->id;
@@ -678,6 +679,7 @@ class AttendanecEmployee2 extends BasePage
         }
 
         $data['delay_minutes']                = 0;
+        dd($sumDurationFormatted);
         $data['total_actual_duration_hourly'] = $sumDurationFormatted ?? 0;
         $allowedTimeAfterPeriod               = Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'))->format('H:i:s');
         if (

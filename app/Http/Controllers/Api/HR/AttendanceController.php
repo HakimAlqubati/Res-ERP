@@ -24,9 +24,9 @@ class AttendanceController extends Controller
         $result = $this->attendanceService->handle($validated);
 
         return response()->json([
-            'status'         => $result['success'] ? 'success' : 'error',
-            'closest_period' => $result['closest_period'] ?? '',
-            'message'        => $result['message'],
+            'status'  => $result['success'] ? true : false,
+            'message' => $result['message'],
+            'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
     }
 }

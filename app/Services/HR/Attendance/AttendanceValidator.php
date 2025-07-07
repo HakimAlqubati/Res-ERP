@@ -33,7 +33,13 @@ class AttendanceValidator
         $before = Carbon::createFromFormat('H:i:s', $period->start_at)
             ->subHours((int) Setting::getSetting('hours_count_after_period_before'))
             ->format('H:i:s');
-// dd($after,$before);
+        // dd($time,
+        //     $before,
+        //     $after,
+        //     $time >= $before,
+
+        //     $time <= $after);
+
         // إذا لم يكن الوقت ضمن الفاصل المسموح → اعتبره مرفوض
         if (! ($time >= $before || $time <= $after)) {
             return true;
