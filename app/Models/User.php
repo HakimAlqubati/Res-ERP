@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -14,24 +13,21 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Passport\HasApiTokens;
-use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection;
-use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
-use Spatie\Permission\Traits\HasRoles;
 use OwenIt\Auditing\Contracts\Auditable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, Auditable
 // implements FilamentUser
 
 {
     use HasApiTokens,
-        HasFactory,
-        Notifiable,
-        HasRoles,
-        SoftDeletes,
-        HasPanelShield,
-        DynamicConnection,
-        \OwenIt\Auditing\Auditable;
-
+    HasFactory,
+    Notifiable,
+    HasRoles,
+    SoftDeletes,
+    HasPanelShield,
+    DynamicConnection,
+    \OwenIt\Auditing\Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -96,7 +92,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         'email_verified_at' => 'datetime',
     ];
 
-    protected $appends = ['managed_stores_ids'];
+    protected $appends                = ['managed_stores_ids', 'is_attendance'];
     public static $filamentUserColumn = 'is_filament_user'; // The name of a boolean column in your database.
 
     public static $filamentAdminColumn = 'is_filament_admin'; // The name of a boolean column in your database.
@@ -138,7 +134,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-            return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
+            return url('/') . Storage::disk('public')->url($defaultAvatarPath);
             return Storage::disk('public')->url($defaultAvatarPath);
         }
         // If file is not found, return a fallback URL
@@ -191,10 +187,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return false;
     }
     public function isAttendance()
-    { 
-        if (getCurrentRole() == 17) {
-            return true;
-        }
+    {
+        return in_array(17, $this->roles->pluck('id')->toArray());
         return false;
     }
     public function isSystemManager()
@@ -236,7 +230,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
         return false;
     }
 
-    public function getIsBranchManagerAttribute() {}
+    public function getIsBranchManagerAttribute()
+    {}
     // public function canAccessFilament(): bool
     // {
     //     return true;
@@ -286,7 +281,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function getManagedStoresIdsAttribute()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return [];
         }
         $ids = auth()->user()->managedStores->pluck('id')->toArray() ?? [];
@@ -333,5 +328,11 @@ class User extends Authenticatable implements FilamentUser, Auditable
     public function getLastSeenAttribute()
     {
         return $this->last_seen_at?->diffForHumans();
+    }
+
+    public function getIsAttendanceAttribute()
+    {
+    
+        return $this->isAttendance() ?? false;
     }
 }

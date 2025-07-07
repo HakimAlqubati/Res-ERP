@@ -175,4 +175,6 @@ Route::get('branchConsumptionReport/topBranches', [BranchConsumptionController::
 Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::class, 'topProducts']);
 
 
+ 
+require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');
