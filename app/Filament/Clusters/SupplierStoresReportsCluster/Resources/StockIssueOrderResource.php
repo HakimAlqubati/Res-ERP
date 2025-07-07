@@ -126,8 +126,7 @@ class StockIssueOrderResource extends Resource
                                         $unitPrice = UnitPrice::where(
                                             'product_id',
                                             $get('product_id')
-                                        )
-                                            ->showInInvoices()
+                                        ) 
                                             ->where('unit_id', $state)->first();
                                         if ($unitPrice) {
 

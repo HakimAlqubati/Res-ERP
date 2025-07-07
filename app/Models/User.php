@@ -181,6 +181,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isSuperAdmin()
     {
+        $roleIds = $this->roles->pluck('id')->toArray();
+        return in_array(1, $roleIds) || in_array(11, $roleIds);
         if (getCurrentRole() == 1) {
             return true;
         }

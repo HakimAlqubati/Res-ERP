@@ -252,7 +252,8 @@ class DetailsRelationManager extends RelationManager
                                     $allocations = $fifoService->getAllocateFifo(
                                         $detail['product_id'],
                                         $detail['unit_id'],
-                                        abs($detail['quantity'])
+                                        abs($detail['quantity']),
+                                        $data['store_id']
                                     );
                                     Log::alert('details', [$detail]);
                                     Log::alert('stockAdjustment', [$stockAdjustment]);
