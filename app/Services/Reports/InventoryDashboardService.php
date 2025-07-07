@@ -19,15 +19,15 @@ class InventoryDashboardService
         $today        = Carbon::today();
         $yesterday    = Carbon::yesterday();
         $startOfMonth = Carbon::now()->startOfMonth();
-
         // ✅ PROCUREMENT
         $grnsCount = GoodsReceivedNote::approved()
             ->whereDate('created_at', '>=', $startOfMonth)
             ->count();
 
         $invoicesQuery = PurchaseInvoice::
-            whereDate('created_at', '>=', $startOfMonth)
-            ->query();
+            query()
+            ->whereDate('created_at', '>=', $startOfMonth)
+        ;
         $invoicesCount = $invoicesQuery->count();
         $invoicesTotal = $invoicesQuery->with('details')->get()
             ->sum(fn($invoice) => $invoice->total_amount);
