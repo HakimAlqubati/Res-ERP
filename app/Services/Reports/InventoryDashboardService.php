@@ -48,7 +48,9 @@ class InventoryDashboardService
 
         // ✅ MANUFACTURING (Chocolate)
         $manufacturingOrders = Order::with('orderDetails')
-            ->where('type', Order::TYPE_MANUFACTURING);
+            ->where('type', Order::TYPE_MANUFACTURING)
+            ->whereDate('created_at', '>=', $startOfMonth)
+            ;
 
         $itemsMade = (clone $manufacturingOrders)
             ->whereDate('created_at', '>=', $startOfMonth)
