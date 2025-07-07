@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Middleware;
 
 use Closure;
@@ -17,12 +16,12 @@ class CheckAuthenticated
     public function handle($request, Closure $next)
     {
         // Check if the user is authenticated
-        if (!Auth::check() || !( isSuperAdmin() || isAttendance()) ) {
+        if (! Auth::check() || ! (isAttendance())) {                
             // If the request expects JSON, return a custom message
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthorized access. Please log in to continue.'], 401);
             }
-            
+
             // Otherwise, redirect to the custom login page
             return redirect('/admin/login');
         }

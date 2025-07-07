@@ -188,7 +188,8 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
     public function isAttendance()
     {
-        return in_array(17, $this->roles->pluck('id')->toArray());
+        $roleIds = $this->roles->pluck('id')->toArray();
+        return in_array(17, $roleIds);
         return false;
     }
     public function isSystemManager()
@@ -332,7 +333,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
 
     public function getIsAttendanceAttribute()
     {
-    
+
         return $this->isAttendance() ?? false;
     }
 }

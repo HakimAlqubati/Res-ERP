@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
@@ -18,15 +17,16 @@ class AttendanceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'rfid' => 'required|string|max:255',
+            'rfid'      => 'required|string|max:255',
             'date_time' => 'nullable|date',
         ]);
 
         $result = $this->attendanceService->handle($validated);
 
         return response()->json([
-            'status' => 'success',
-            'message' => $result,
-        ]);
+            'status'         => $result['success'] ? 'success' : 'error',
+            'closest_period' => $result['closest_period'] ?? '',
+            'message'        => $result['message'],
+        ], $result['success'] ? 200 : 422);
     }
 }

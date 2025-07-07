@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('hr')
     ->group(function () {
-    Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware(['auth','check']);
+    Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
     // يمكنك إضافة المزيد لاحقًا مثل:
     // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
 });
