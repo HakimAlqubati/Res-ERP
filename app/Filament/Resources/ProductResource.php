@@ -1174,6 +1174,9 @@ class ProductResource extends Resource
         || \App\Models\StockIssueOrderDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
                 ->exists()
+        || \App\Models\GoodsReceivedNoteDetail::where('product_id', $productId)
+            ->where('unit_id', $unitPrice->unit_id)
+                ->exists()
         || \App\Models\ProductItem::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
                 ->exists();
@@ -1207,7 +1210,9 @@ class ProductResource extends Resource
         || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
         || \App\Models\GoodsReceivedNoteDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
         || \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+        || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        || \App\Models\ProductItem::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        ;
 
         return $isUsed;
     }
