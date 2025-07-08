@@ -99,7 +99,7 @@ class InventoryResource extends Resource
 
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Qty')->alignCenter(true)
-                    ->formatStateUsing(fn($state) => formatQunantity($state))
+                    // ->formatStateUsing(fn($state) => formatQunantity($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('unit.name')

@@ -65,8 +65,6 @@ class AllocateAllProductsFifoJob implements ShouldQueue
 
         foreach ($productIds as $productId) {
             $allocations = $fifoService->allocate($productId);
-
-
             try {
                 FifoAllocationSaver::save($allocations, $productId);
             } catch (\Throwable $e) {

@@ -879,6 +879,6 @@ if (!function_exists('formatMoneyWithCurrency')) {
 if (!function_exists('formatQunantity')) {
     function formatQunantity($qty)
     {
-        return  number_format((float) $qty, 2, '.', ',');
+        return  number_format((float) $qty, 4, '.', ',');
     }
 }

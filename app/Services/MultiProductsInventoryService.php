@@ -230,11 +230,12 @@ class MultiProductsInventoryService
                 ->exists();
         }
 
+        
         foreach ($unitPrices as $unitPrice) {
 
             if ($unitPrice['package_size'] <= 0) continue;
             $packageSize = $unitPrice['package_size']; // يضمن عدم القسمة على صفر
-            $remainingQty = round($remQty / $packageSize, 2);
+            $remainingQty = round($remQty / $packageSize, 4);
             $allowsFraction = $unitPrice['is_fractional'];
 
             // إذا الوحدة الحالية هي أصغر وحدة ولا توجد حركات كسرية لها، نقرب الكمية للأقرب عدد صحيح
@@ -244,7 +245,7 @@ class MultiProductsInventoryService
             // }
 
             if ($allowsFraction) {
-                $remainingQty = round($remainingQty,2);
+                $remainingQty = round($remainingQty,4);
             } else {
                 
                 $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
@@ -417,7 +418,7 @@ class MultiProductsInventoryService
 
         foreach ($unitPrices as $unitPrice) {
             $packageSize = max($unitPrice['package_size'] ?? 1, 1);
-            $totalInRes = round($totalIn / $packageSize, 2);
+            $totalInRes = round($totalIn / $packageSize, 4);
 
             $result[] = [
                 'product_id' => $productId,
@@ -448,7 +449,7 @@ class MultiProductsInventoryService
 
         foreach ($unitPrices as $unitPrice) {
             $packageSize = max($unitPrice['package_size'] ?? 1, 1); // يضمن عدم القسمة على صفر
-            $totalOutRes = round($totalOut / $packageSize, 2);
+            $totalOutRes = round($totalOut / $packageSize, 4);
 
             $result[] = [
                 'product_id' => $productId,
