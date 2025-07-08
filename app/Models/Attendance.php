@@ -1,8 +1,6 @@
 <?php
-
 namespace App\Models;
 
-use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,9 +10,9 @@ class Attendance extends Model
     use HasFactory, SoftDeletes;
     protected $table = 'hr_attendances';
 
-    const CHECKTYPE_CHECKIN = 'checkin';
-    const CHECKTYPE_CHECKOUT = 'checkout';
-    const CHECKTYPE_CHECKIN_LABLE = 'Check in';
+    const CHECKTYPE_CHECKIN        = 'checkin';
+    const CHECKTYPE_CHECKOUT       = 'checkout';
+    const CHECKTYPE_CHECKIN_LABLE  = 'Check in';
     const CHECKTYPE_CHECKOUT_LABLE = 'Checkout';
 
     public function scopeEarlyDepartures($query)
@@ -32,23 +30,23 @@ class Attendance extends Model
     }
 
     const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR = 'quarter_period';
-    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR = 'half_period';
-    const PERIOD_ALLOWED_OVERTIME_HOUR = 'hour';
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR    = 'half_period';
+    const PERIOD_ALLOWED_OVERTIME_HOUR         = 'hour';
 
     const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_MINUTES = 15;
-    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_MINUTES = 30;
-    const PERIOD_ALLOWED_OVERTIME_HOUR_MINUTES = 60;
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_MINUTES    = 30;
+    const PERIOD_ALLOWED_OVERTIME_HOUR_MINUTES         = 60;
 
     const PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL = 'Quarter hour';
-    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL = 'Half hour';
-    const PERIOD_ALLOWED_OVERTIME_HOUR_LABEL = 'Hour';
+    const PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL    = 'Half hour';
+    const PERIOD_ALLOWED_OVERTIME_HOUR_LABEL         = 'Hour';
 
-    const STATUS_EARLY_ARRIVAL = 'early_arrival';
-    const STATUS_LATE_ARRIVAL = 'late_arrival';
-    const STATUS_ON_TIME = 'on_time';
+    const STATUS_EARLY_ARRIVAL   = 'early_arrival';
+    const STATUS_LATE_ARRIVAL    = 'late_arrival';
+    const STATUS_ON_TIME         = 'on_time';
     const STATUS_EARLY_DEPARTURE = 'early_departure';
-    const STATUS_LATE_DEPARTURE = 'late_departure';
-    const STATUS_TEST = 'status_test';
+    const STATUS_LATE_DEPARTURE  = 'late_departure';
+    const STATUS_TEST            = 'status_test';
 
     protected $fillable = [
         'employee_id',
@@ -80,13 +78,13 @@ class Attendance extends Model
 
     ];
 
-    const ATTENDANCE_TYPE_WEBCAM = 'webcam';
-    const ATTENDANCE_TYPE_RFID = 'rfid';
+    const ATTENDANCE_TYPE_WEBCAM  = 'webcam';
+    const ATTENDANCE_TYPE_RFID    = 'rfid';
     const ATTENDANCE_TYPE_REQUEST = 'request';
 
-    const ATTENDANCE_METHOD_FINGERPRINT = 'fingerprint';
-    const ATTENDANCE_METHOD_FACEPRINT = 'faceprint';
-    const ATTENDANCE_METHOD_RFID = 'rfid';
+    const ATTENDANCE_METHOD_FINGERPRINT      = 'fingerprint';
+    const ATTENDANCE_METHOD_FACEPRINT        = 'faceprint';
+    const ATTENDANCE_METHOD_RFID             = 'rfid';
     const ATTENDANCE_METHOD_EMPLOYEE_REQUEST = 'employee_request';
     public static function getMinutesByConstant($constantName)
     {
@@ -102,7 +100,7 @@ class Attendance extends Model
     public static function getCheckTypes()
     {
         return [
-            self::CHECKTYPE_CHECKIN => self::CHECKTYPE_CHECKIN_LABLE,
+            self::CHECKTYPE_CHECKIN  => self::CHECKTYPE_CHECKIN_LABLE,
             self::CHECKTYPE_CHECKOUT => self::CHECKTYPE_CHECKOUT_LABLE,
         ];
     }
@@ -152,12 +150,12 @@ class Attendance extends Model
     public static function getStatuses()
     {
         return [
-            self::STATUS_EARLY_ARRIVAL => self::STATUS_EARLY_ARRIVAL,
-            self::STATUS_LATE_ARRIVAL => self::STATUS_LATE_ARRIVAL,
-            self::STATUS_ON_TIME => self::STATUS_ON_TIME,
+            self::STATUS_EARLY_ARRIVAL   => self::STATUS_EARLY_ARRIVAL,
+            self::STATUS_LATE_ARRIVAL    => self::STATUS_LATE_ARRIVAL,
+            self::STATUS_ON_TIME         => self::STATUS_ON_TIME,
             self::STATUS_EARLY_DEPARTURE => self::STATUS_EARLY_DEPARTURE,
-            self::STATUS_LATE_DEPARTURE => self::STATUS_LATE_DEPARTURE,
-            self::STATUS_TEST => self::STATUS_TEST,
+            self::STATUS_LATE_DEPARTURE  => self::STATUS_LATE_DEPARTURE,
+            self::STATUS_TEST            => self::STATUS_TEST,
         ];
     }
 
@@ -172,17 +170,22 @@ class Attendance extends Model
         // Ensure that 'accepted' is set to false
         $attributes['accepted'] = false;
 
-        $attributes['created_by'] = auth()->id();
-        $attributes['employee_id'] = $employee->id;
-        $attributes['check_date'] = $date;
-        $attributes['check_time'] = $time;
-        $attributes['day'] = $day;
-        $attributes['message'] = $message;
-        $attributes['period_id'] = $periodId;
-        $attributes['branch_id'] = $employee?->branch_id;
+        $attributes['created_by']      = auth()->id();
+        $attributes['employee_id']     = $employee->id;
+        $attributes['check_date']      = $date;
+        $attributes['check_time']      = $time;
+        $attributes['day']             = $day;
+        $attributes['message']         = $message;
+        $attributes['period_id']       = $periodId;
+        $attributes['branch_id']       = $employee?->branch_id;
         $attributes['attendance_type'] = $attendanceType;
 
         // Create and return the new attendance record
         return self::create($attributes);
+    }
+
+    public function scopeAccepted($query)
+    {
+        return $query->where('accepted', 1);
     }
 }

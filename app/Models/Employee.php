@@ -1,19 +1,14 @@
 <?php
-
 namespace App\Models;
 
 use App\Mail\MailableEmployee;
-use App\Traits\DynamicConnection;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use OwenIt\Auditing\Contracts\Auditable;
-
 
 class Employee extends Model implements Auditable
 {
@@ -24,7 +19,7 @@ class Employee extends Model implements Auditable
      *
      * @var array<int, string>
      */
-    protected $table = 'hr_employees';
+    protected $table    = 'hr_employees';
     protected $fillable = [
         'name',
         'position_id',
@@ -46,8 +41,8 @@ class Employee extends Model implements Auditable
         'employee_type',
         'bank_account_number',
         'bank_information',
-        'gender',        // New field
-        'nationality',   // New field
+        'gender',      // New field
+        'nationality', // New field
         'passport_no',
         'mykad_number',
         'tax_identification_number',
@@ -56,7 +51,6 @@ class Employee extends Model implements Auditable
         'manager_id',
         'is_ceo',
     ];
-
 
     /**
      * Attributes to include in the Audit.
@@ -93,12 +87,12 @@ class Employee extends Model implements Auditable
         'working_hours',
         'manager_id',
     ];
-    public $appends = ['avatar_image','periodsCount'];
+    public $appends  = ['avatar_image', 'periodsCount'];
     protected $casts = [
         'bank_information' => 'array',
-        'changes' => 'array', // This allows storing changes as a JSON
+        'changes'          => 'array', // This allows storing changes as a JSON
     ];
-    public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED = 'added';
+    public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_ADDED   = 'added';
     public const TYPE_ACTION_EMPLOYEE_PERIOD_LOG_REMOVED = 'removed';
 
     public function branch()
@@ -152,9 +146,8 @@ class Employee extends Model implements Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-           
+
             // return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
-            return  Storage::disk('public')->url($defaultAvatarPath);
             return Storage::disk('public')->url($defaultAvatarPath);
         }
 
@@ -168,7 +161,7 @@ class Employee extends Model implements Auditable
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
             return Storage::disk('s3')->url($this?->avatar);
         }
-        if (!$this->avatar) {
+        if (! $this->avatar) {
             return url('/storage') . '/' . 'employees/default/avatar.png';
         }
 
@@ -223,21 +216,15 @@ class Employee extends Model implements Auditable
         ;
     }
 
-    // public function getApprovedAdvanceApplicationAttribute()
-    // {
-    //     return $this->approvedAdvanceApplication()->get();
-    // }
-
-
     // Custom attribute to fetch approved advance applications
     public function getApprovedAdvanceApplicationAttribute()
     {
         return $this->approvedAdvanceApplication()->get()->map(function ($application) {
-            // dd($application->paid_installments_count);  
+            // dd($application->paid_installments_count);
             return [
-                'id' => $application->id,
-                'paid' => $application->paid_installments_count,
-                'details' => json_decode($application->details, true), // Parse the JSON details
+                'id'         => $application->id,
+                'paid'       => $application->paid_installments_count,
+                'details'    => json_decode($application->details, true), // Parse the JSON details
                 'created_at' => $application->created_at->format('Y-m-d'),
                 'updated_at' => $application->updated_at->format('Y-m-d'),
             ];
@@ -249,13 +236,13 @@ class Employee extends Model implements Auditable
     {
         return $this->approvedLeaveApplication()->get()->map(function ($leaveRequest) {
             return [
-                'id' => $leaveRequest->id,
+                'id'            => $leaveRequest->id,
                 'leave_type_id' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_leave_type_id'] ?? null : null,
-                'from_date' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_from_date'] ?? null : null,
-                'to_date' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_to_date'] ?? null : null,
-                'days_count' => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_days_count'] ?? null : null,
-                'created_at' => $leaveRequest->created_at->format('Y-m-d'),
-                'updated_at' => $leaveRequest->updated_at->format('Y-m-d'),
+                'from_date'     => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_from_date'] ?? null : null,
+                'to_date'       => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_to_date'] ?? null : null,
+                'days_count'    => $leaveRequest->details ? json_decode($leaveRequest->details, true)['detail_days_count'] ?? null : null,
+                'created_at'    => $leaveRequest->created_at->format('Y-m-d'),
+                'updated_at'    => $leaveRequest->updated_at->format('Y-m-d'),
             ];
         });
     }
@@ -266,11 +253,11 @@ class Employee extends Model implements Auditable
     }
     public function periodHistories()
     {
-        return $this->hasMany(EmployeePeriodHistory::class,);
+        return $this->hasMany(EmployeePeriodHistory::class, );
     }
     public function advancedInstallments()
     {
-        return $this->hasMany(EmployeeAdvanceInstallment::class,);
+        return $this->hasMany(EmployeeAdvanceInstallment::class, );
     }
 
     // Log changes to periods
@@ -278,12 +265,10 @@ class Employee extends Model implements Auditable
     {
         EmployeePeriodLog::create([
             'employee_id' => $this->id,
-            'period_ids' => json_encode($periodIds), // Store as JSON
-            'action' => $action,
+            'period_ids'  => json_encode($periodIds), // Store as JSON
+            'action'      => $action,
         ]);
     }
-
-
 
     /**
      * Get the total number of hours worked by the employee based on their assigned periods.
@@ -297,7 +282,7 @@ class Employee extends Model implements Auditable
         // Loop through each period and calculate the difference in hours
         foreach ($this->periods as $period) {
             $start = Carbon::parse($period->start_at);
-            $end = Carbon::parse($period->end_at);
+            $end   = Carbon::parse($period->end_at);
             $totalHours += $start->diffInHours($end);
         }
 
@@ -340,7 +325,7 @@ class Employee extends Model implements Auditable
     public function overtimesofMonth($date)
     {
         $startOfMonth = Carbon::parse($date)->startOfMonth()->toDateString();
-        $endOfMonth = Carbon::parse($date)->endOfMonth()->toDateString();
+        $endOfMonth   = Carbon::parse($date)->endOfMonth()->toDateString();
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')->day()
             ->where('approved', 1)
             ->whereBetween('date', [$startOfMonth, $endOfMonth]);
@@ -392,7 +377,7 @@ class Employee extends Model implements Auditable
 
                     // Ensure it is indeed a check-out
                     if ($checkOut->check_type === 'checkout') {
-                        $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
+                        $checkInTime  = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
                         $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
 
                         // Adjust for midnight crossing
@@ -408,11 +393,11 @@ class Employee extends Model implements Auditable
         }
 
         // Convert total minutes to hours and minutes
-        $totalHours = floor($totalMinutes / 60);
+        $totalHours       = floor($totalMinutes / 60);
         $remainingMinutes = $totalMinutes % 60;
 
         // Ensure positive values (in case of unexpected negatives)
-        $totalHours = abs($totalHours);
+        $totalHours       = abs($totalHours);
         $remainingMinutes = abs($remainingMinutes);
 
         // Format the output as "X h Y minutes"
@@ -439,7 +424,7 @@ class Employee extends Model implements Auditable
                 ->get();
 
             $totalMinutes = 0;
-            $checkInTime = null;
+            $checkInTime  = null;
             $checkOutTime = null; // To store checkout time
 
             // Loop through attendances to calculate total minutes worked
@@ -455,7 +440,7 @@ class Employee extends Model implements Auditable
 
                         // Ensure it is indeed a check-out
                         if ($checkOut->check_type === 'checkout') {
-                            $checkInTime = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
+                            $checkInTime  = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
                             $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
 
                             // Adjust for midnight crossing
@@ -471,7 +456,7 @@ class Employee extends Model implements Auditable
             }
 
             // Convert the supposed duration string "HH:MM" to total minutes
-            list($hours, $minutes) = explode(':', $period->supposed_duration);
+            list($hours, $minutes)   = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ($hours * 60) + $minutes; // Convert to total minutes
 
             if ($totalMinutes > ($supposedDurationMinutes + Attendance::getMinutesByConstant(Setting::getSetting('period_allowed_to_calculate_overtime')))) {
@@ -480,7 +465,7 @@ class Employee extends Model implements Auditable
 
                 // Format the overtime into hours and minutes
                 // $overtimeHours = floor($overtimeMinutes / 60);
-                $overtimeHours = round($overtimeMinutes / 60 * 2) / 2;
+                $overtimeHours    = round($overtimeMinutes / 60 * 2) / 2;
                 $remainingMinutes = $overtimeMinutes % 60;
 
                 // Format as "X h Y m"
@@ -490,35 +475,34 @@ class Employee extends Model implements Auditable
                 // $supposedEndTime = Carbon::parse("{$period->end_time}"); // Assuming you have supposed_end_time in your period
 
                 $overtimeStartTime = $period->end_at;
-                $overtimeEndTime = $checkOutTime; // End of overtime is the checkout time
+                $overtimeEndTime   = $checkOutTime; // End of overtime is the checkout time
 
                 if (Setting::getSetting('period_allowed_to_calculate_overtime') == Attendance::PERIOD_ALLOWED_OVERTIME_HOUR && Setting::getSetting('calculating_overtime_with_half_hour_after_hour')) {
                     $overtimeHours = round($overtimeHours, 2);
                 }
                 $results[] = [
-                    'employee_id' => $employee->id,
-                    'period_id' => $period->id,
+                    'employee_id'               => $employee->id,
+                    'period_id'                 => $period->id,
                     'supposed_duration_minutes' => (int) $overtimeMinutes,
-                    'overtime_hours' => $overtimeHours,
-                    'overtime' => $formattedOvertime,
-                    'overtime_start_time' => $overtimeStartTime, // Return as "HH:MM:SS"
-                    'overtime_end_time' => $overtimeEndTime->toTimeString(), // Return as "HH:MM:SS"
-                    'check_in_time' => $checkIn->check_time, // Check-in time
-                    'check_out_time' => $checkOut->check_time, // Check-out time
+                    'overtime_hours'            => $overtimeHours,
+                    'overtime'                  => $formattedOvertime,
+                    'overtime_start_time'       => $overtimeStartTime,               // Return as "HH:MM:SS"
+                    'overtime_end_time'         => $overtimeEndTime->toTimeString(), // Return as "HH:MM:SS"
+                    'check_in_time'             => $checkIn->check_time,             // Check-in time
+                    'check_out_time'            => $checkOut->check_time,            // Check-out time
                 ];
             }
         }
         return $results; // Return the results
     }
 
-
     /**
      * Scope query to only include employees with manager-level employee types (1, 2, 3)
-     * 
+     *
      * Example usage:
      * Employee::employeeTypesManagers()->get(); // Gets all employees who are managers
      * Employee::employeeTypesManagers()->where('active', 1)->get(); // Gets active manager employees
-     * 
+     *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -527,7 +511,6 @@ class Employee extends Model implements Auditable
         return;
         return $query->whereIn('employee_type', [1, 2, 3]);
     }
-
 
     protected static function booted()
     {
@@ -554,10 +537,10 @@ class Employee extends Model implements Auditable
                 // Log the branch change in the EmployeeBranchLog table
                 EmployeeBranchLog::create([
                     'employee_id' => $employee->id,
-                    'branch_id' => $employee->branch_id,
-                    'start_at' => now(), // Set the start time of the new branch
-                    'end_at' => null,    // End time is null because this is the current branch
-                    'created_by' => auth()->id(), // Who made the change
+                    'branch_id'   => $employee->branch_id,
+                    'start_at'    => now(),        // Set the start time of the new branch
+                    'end_at'      => null,         // End time is null because this is the current branch
+                    'created_by'  => auth()->id(), // Who made the change
                 ]);
 
                 // Optionally, you could handle the previous branch log (if you want to mark the previous branch as ended)
@@ -571,10 +554,10 @@ class Employee extends Model implements Auditable
         // 👇 New logic: after creating employee, create user
         static::created(function ($employee) {
             // Only create user if not already linked
-            if (!$employee->user_id) {
+            if (! $employee->user_id) {
                 $user = \App\Models\User::create([
-                    'name' => $employee->name,
-                    'email' => $employee->email,
+                    'name'     => $employee->name,
+                    'email'    => $employee->email,
                     'password' => bcrypt('123456'),
                 ]);
 
@@ -582,26 +565,25 @@ class Employee extends Model implements Auditable
                 $employee->user_id = $user->id;
                 $employee->save();
                 $user->assignRole(8);
-                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
+                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email, ));
             }
         });
     }
 
-
     // Define the tax brackets
     public const TAX_BRACKETS = [
-        [0, 5000, 0],          // 0 - 5,000 -> 0%
-        [5001, 20000, 1],      // 5,001 - 20,000 -> 1%
-        [20001, 35000, 3],     // 20,001 - 35,000 -> 3%
-        [35001, 50000, 8],     // 35,001 - 50,000 -> 8%
-        [50001, 70000, 13],    // 50,001 - 70,000 -> 13%
-        [70001, 100000, 21],   // 70,001 - 100,000 -> 21%
-        [100001, 250000, 24],  // 100,001 - 250,000 -> 24%
-        [250001, 400000, 25],  // 250,001 - 400,000 -> 25%
-        [400001, 600000, 26],  // 400,001 - 600,000 -> 26%
-        [600001, 1000000, 28], // 600,001 - 1,000,000 -> 28%
-        [1000001, 2000000, 30], // 1,000,001 - 2,000,000 -> 30%
-        [2000001, PHP_INT_MAX, 32] // Above 2,000,000 -> 32%
+        [0, 5000, 0],               // 0 - 5,000 -> 0%
+        [5001, 20000, 1],           // 5,001 - 20,000 -> 1%
+        [20001, 35000, 3],          // 20,001 - 35,000 -> 3%
+        [35001, 50000, 8],          // 35,001 - 50,000 -> 8%
+        [50001, 70000, 13],         // 50,001 - 70,000 -> 13%
+        [70001, 100000, 21],        // 70,001 - 100,000 -> 21%
+        [100001, 250000, 24],       // 100,001 - 250,000 -> 24%
+        [250001, 400000, 25],       // 250,001 - 400,000 -> 25%
+        [400001, 600000, 26],       // 400,001 - 600,000 -> 26%
+        [600001, 1000000, 28],      // 600,001 - 1,000,000 -> 28%
+        [1000001, 2000000, 30],     // 1,000,001 - 2,000,000 -> 30%
+        [2000001, PHP_INT_MAX, 32], // Above 2,000,000 -> 32%
     ];
 
     /**
@@ -647,7 +629,7 @@ class Employee extends Model implements Auditable
     // Create an accessor for 'is_foreign' (if needed)
     public function getIsForeignAttribute()
     {
-        return !$this->is_citizen; // This will return the opposite of is_citizen
+        return ! $this->is_citizen; // This will return the opposite of is_citizen
     }
     public function getGenderTitleAttribute()
     {
@@ -665,12 +647,10 @@ class Employee extends Model implements Auditable
         }
     }
 
-
     public function approvedPenaltyDeductions()
     {
         return $this->hasMany(PenaltyDeduction::class)->where('status', 'approved');
     }
-
 
     public function getApprovedPenaltyDeductionsForPeriod($year, $month)
     {
@@ -709,14 +689,18 @@ class Employee extends Model implements Auditable
         return $query->where('active', true);
     }
 
-
     public function managers()
     {
         return $this->hasManyThrough(Employee::class, Department::class, 'id', 'department_id', 'department_id', 'manager_id');
     }
     public function getPeriodsCountAttribute()
-{
-    return $this->periods()->count();
-}
+    {
+        return $this->periods()->count();
+    }
+
+    public function periodDays()
+    {
+        return $this->hasMany(EmployeePeriodDay::class, 'employee_id');
+    }
 
 }

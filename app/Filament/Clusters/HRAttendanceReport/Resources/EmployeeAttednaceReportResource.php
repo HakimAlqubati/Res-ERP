@@ -64,18 +64,7 @@ class EmployeeAttednaceReportResource extends Resource
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
-                // Filter::make('date_range')
-                //     ->form([
-                //         DatePicker::make('start_date')->live()
-                //             ->afterStateUpdated(function (Set $set, $state) {
-                //                 $endNextMonth = Carbon::parse($state)->endOfMonth()->format('Y-m-d');
-                //                 $set('end_date', $endNextMonth);
-                //             })
-                //             ->label('Start Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
-                //         DatePicker::make('end_date')
-                //             ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
-                //             ->label('End Date'),
-                //     ]),
+                
 
                 Filter::make('date_range')
                     ->form([

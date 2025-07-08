@@ -5,6 +5,7 @@ use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\BranchLogRelationManager;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\EmployeePeriodDaysRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
@@ -483,6 +484,15 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $employee = Employee::with('periodDays.workPeriod')->find(1);
+        foreach ($employee->periodDays as $periodDay) {
+            $period = $periodDay->workPeriod;
+            $day    = $periodDay->day_of_week;
+
+            $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
+        }
+        dd($res);
+
         // $sessionLifetime = config('session.lifetime');
         // dd($sessionLifetime);
         return $table->striped()
@@ -544,10 +554,10 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
-                   
-                    ->color('info')          // لإظهار أن النص قابل للنقر
-                     // اختياري: أيقونة مشاهدة
-                    
+
+                    ->color('info') // لإظهار أن النص قابل للنقر
+                                // اختياري: أيقونة مشاهدة
+
                 ,
 
                 TextColumn::make('working_hours')->label('Working hours')->toggleable(isToggledHiddenByDefault: true)
@@ -794,6 +804,7 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
+            EmployeePeriodDaysRelationManager::class,
         ];
     }
 

@@ -420,7 +420,8 @@ if (!function_exists('employeeAttendances')) {
             // Initialize the result for the current date
             $result[$date->toDateString()] = [
                 'date' => $date->toDateString(),
-                'day' => $date->format('l'),
+                // 'day' => $date->format('l'),
+                'day' => strtolower($date->format('D')), // 'Tue' → 'tue'
                 'periods' => [],
             ];
 
@@ -624,7 +625,7 @@ if (!function_exists('getEmployeePeriodAttendnaceDetails')) {
     function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
     {
         $attenance = Attendance::where('employee_id', $employeeId)
-            ->where('accepted', 1)
+            ->accepted()
             ->where('period_id', $periodId)
             ->where('check_date', $date)
             ->select('check_time', 'check_type', 'period_id')
@@ -721,7 +722,8 @@ if (!function_exists('employeeAttendancesByDate')) {
                     'employee_id' => $employeeId,
                     'employee_name' => $employee->name . '(' . $employeeId . ')',
                     'date' => $date->toDateString(),
-                    'day' => $date->format('l'),
+                    // 'day' => $date->format('l'),
+                    'day' => strtolower($date->format('D')), // 'Tue' → 'tue'
                     'periods' => [],
                 ];
 
@@ -1240,7 +1242,9 @@ if (!function_exists('getWeeksAndDaysInMonth')) {
 
             $weeks[$weekNumber]['days'][] = [
                 'date' => $date->format('Y-m-d'),
-                'day' => $date->format('l'), // Full name of the day
+                // 'day' => $date->format('l'), // Full name of the day
+                'day' => strtolower($date->format('D')) // 'Tue' → 'tue'
+
             ];
         }
 

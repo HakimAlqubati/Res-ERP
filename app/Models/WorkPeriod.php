@@ -1,8 +1,6 @@
 <?php
-
 namespace App\Models;
 
-use App\Traits\DynamicConnection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -67,7 +65,7 @@ class WorkPeriod extends Model implements Auditable
     {
         // Parse start_at and end_at using Carbon
         $start = Carbon::parse($this->start_at);
-        $end = Carbon::parse($this->end_at);
+        $end   = Carbon::parse($this->end_at);
 
         // If end_at is before start_at, it's an overnight shift, so add a day to the end time
         if ($end->lt($start)) {
@@ -77,9 +75,9 @@ class WorkPeriod extends Model implements Auditable
         // Calculate the difference in total minutes
         $totalMinutes = $start->diffInMinutes($end);
 
-        // Convert minutes to hours with decimal (fractional hours)
-        $hours = intdiv($totalMinutes, 60); // Get whole hours
-        $minutes = $totalMinutes % 60; // Get remaining minutes
+                                              // Convert minutes to hours with decimal (fractional hours)
+        $hours   = intdiv($totalMinutes, 60); // Get whole hours
+        $minutes = $totalMinutes % 60;        // Get remaining minutes
 
         // Return the duration as hours + decimal (fractional) part for the minutes
         // $result = $hours + round($minutes / 60, 2);
@@ -87,14 +85,12 @@ class WorkPeriod extends Model implements Auditable
         return $result;
     }
 
-
     // Function to calculate the total supposed duration for a given number of days
     public function calculateTotalSupposedDurationForDays(int $days)
     {
         // Parse start_at and end_at
         $start = Carbon::parse($this->start_at);
-        $end = Carbon::parse($this->end_at);
-
+        $end   = Carbon::parse($this->end_at);
 
         // Handle overnight shifts by adding a day if necessary
         if ($end->lt($start)) {
@@ -103,19 +99,18 @@ class WorkPeriod extends Model implements Auditable
 
         // Calculate total minutes for one day
         $totalMinutesPerDay = $start->diffInMinutes($end);
-        
 
         // Multiply total minutes by the number of days
         $totalMinutes = $totalMinutesPerDay * $days;
 
         return $totalMinutes;
         // Convert minutes to hours and minutes
-        $totalHours = intdiv($totalMinutes, 60);
+        $totalHours       = intdiv($totalMinutes, 60);
         $remainingMinutes = $totalMinutes % 60;
 
         // Return the total duration as a formatted string (e.g., 5 days as "12h 30m")
         $result = sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
-    
+
         return $result;
     }
 
@@ -131,5 +126,9 @@ class WorkPeriod extends Model implements Auditable
             //     $builder->whereIn('id', auth()?->user()?->employee?->periods?->pluck('id')->toArray()); // Add your default query here
             // });
         }
+    }
+    public function periodDays()
+    {
+        return $this->hasMany(EmployeePeriodDay::class, 'period_id');
     }
 }
