@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\DB;
 class StoreCostReportService
 {
     public function __construct(
-        protected int $storeId,
+                protected ?int $storeId,
+
         protected string $fromDate,
         protected string $toDate,
         protected array $returnableTypes = [], // e.g. [StockReturnOrder::class]
