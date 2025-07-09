@@ -757,4 +757,5 @@ if (!function_exists('getDefaultSellingMarkup')) {
         $result = $percentageValue / 100;
         return round($result, 2);
     }
-}
+        return  number_format((float) $qty, 4, '.', ',');
+    }

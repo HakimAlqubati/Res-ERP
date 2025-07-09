@@ -37,6 +37,10 @@ class InventoryTransaction extends Model implements Auditable
         'waste_stock_percentage',
         'source_transaction_id',
         'remaining_quantity',
+        'base_unit_id',
+        'base_quantity',
+        'base_unit_package_size',
+        'price_per_base_unit',
     ];
 
     protected $auditInclude = [

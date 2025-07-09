@@ -366,7 +366,7 @@ class StockInventoryResource extends Resource
             return 0;
         }
         // dd($remaningQty,$physicalQty);
-        $difference = round($physicalQty - $remaningQty, 2);
+        $difference = round($physicalQty - $remaningQty, 4);
         return $difference;
     }
 

@@ -120,8 +120,8 @@ class StockSupplyOrderResource extends Resource
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price);
 
-                                    $set('total_price', ((float) $unitPrice->price) * ((float) $get('quantity')));
-                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                    $set('total_price', ((float) $unitPrice?->price) * ((float) $get('quantity')));
+                                    $set('package_size',  $unitPrice?->package_size ?? 0);
                                 })->columnSpan(2)->required(),
 
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -130,7 +130,7 @@ class StockSupplyOrderResource extends Resource
                             TextInput::make('quantity')
                                 ->numeric()
                                 ->required()
-                                ->minValue(0.1)
+                                ->minValue(0.0001)
                                 ->label('Quantity'),
                             TextInput::make('waste_stock_percentage')
                                 ->label('Waste %')
