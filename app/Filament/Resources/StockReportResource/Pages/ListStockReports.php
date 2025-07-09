@@ -16,8 +16,7 @@ class ListStockReports extends ListRecords
     protected static string $view = 'filament.pages.stock-report.stock-report';
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make(),
+        return [ 
         ];
     }
 
