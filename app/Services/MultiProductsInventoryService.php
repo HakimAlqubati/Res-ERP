@@ -208,7 +208,16 @@ class MultiProductsInventoryService
         $totalIn = $queryIn->sum(DB::raw('quantity * package_size'));
         $totalOut = $queryOut->sum(DB::raw('quantity * package_size'));
 
+        // $totalIn = $queryIn->sum(DB::raw('COALESCE(base_quantity, quantity * package_size)'));
+        // $totalOut = $queryOut->sum(DB::raw('COALESCE(base_quantity, quantity * package_size)'));
+
+        $totalBaseIn = $queryIn->sum(DB::raw('IFNULL(base_quantity, quantity * package_size)'));
+        $totalBaseOut = $queryOut->sum(DB::raw('IFNULL(base_quantity, quantity * package_size)'));
+
+        $remainingBaseQty = $totalBaseIn - $totalBaseOut;
+         $remainingBaseQty = round($remainingBaseQty,4);
         $remQty = $totalIn - $totalOut;
+        
         $unitPrices = $this->getProductUnitPrices($productId);
         $product = Product::find($productId);
         $result = [];
@@ -217,19 +226,7 @@ class MultiProductsInventoryService
             ->with('unit')
             ->orderBy('package_size', 'asc')
             ->first();
-
-        $hasFractionalMovement = false;
-
-        if ($smallestUnit) {
-            $hasFractionalMovement = DB::table('inventory_transactions')
-                ->whereNull('deleted_at')
-                ->where('product_id', $productId)
-                ->where('store_id', $this->storeId)
-                ->where('unit_id', $smallestUnit->unit_id)
-                ->whereRaw('MOD(quantity * package_size, 1) != 0')
-                ->exists();
-        }
-
+ 
         
         foreach ($unitPrices as $unitPrice) {
 
@@ -238,18 +235,15 @@ class MultiProductsInventoryService
             $remainingQty = round($remQty / $packageSize, 4);
             $allowsFraction = $unitPrice['is_fractional'];
 
-            // إذا الوحدة الحالية هي أصغر وحدة ولا توجد حركات كسرية لها، نقرب الكمية للأقرب عدد صحيح
-            // if ($smallestUnit && $smallestUnit->unit_id == $unitPrice['unit_id'] && !$hasFractionalMovement) {
+            $remainingBaseQty = round($remainingBaseQty/$packageSize,4);
 
-
-            // }
-
-            if ($allowsFraction) {
-                $remainingQty = round($remainingQty,4);
-            } else {
+            $remainingQty = round($remainingQty,4);
+            // if ($allowsFraction) {
+            //     $remainingQty = round($remainingQty,4);
+            // } else {
                 
-                $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
-            }
+            //     $remainingQty = floor($remainingQty); // نقرب للأقرب عدد صحيح
+            // }
              
             // نحاول نجيب السعر من المخزون حسب الوحدة
             $unitId = $unitPrice['unit_id'];
@@ -285,6 +279,7 @@ class MultiProductsInventoryService
                 'package_size' => $unitPrice['package_size'],
                 'unit_name' => $unitPrice['unit_name'],
                 'remaining_qty' => $remainingQty,
+                'remaining_quantity_base' => $remainingBaseQty,
                 'minimum_quantity' => $unitPrice['minimum_quantity'],
                 'is_last_unit' => $unitPrice['is_last_unit'],
                 'is_largest_unit' => $unitPrice['is_largest_unit'],

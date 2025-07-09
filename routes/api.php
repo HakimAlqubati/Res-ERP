@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\ManufacturingReportController;
 use App\Http\Controllers\Api\PurchaseInvoiceController;
 use App\Http\Controllers\Api\PurchaseReportController;
 use App\Http\Controllers\Api\Reports\BranchConsumptionController;
+use App\Http\Controllers\Api\Reports\ResellerReportController;
+use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
 use App\Http\Controllers\Api\ReturnedOrderController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
@@ -18,14 +20,10 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TestController3;
 use App\Models\Branch;
 use App\Models\Order;
-use App\Models\OrderDetails;
 use App\Models\User;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Api\Reports\ResellerReportController;
-use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
-use App\Http\Middleware\EnsureOwnerIfRequired;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -40,18 +38,17 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/compare', function (Request $request) {
-    $qty = $request->input('qty');
+    $qty        = $request->input('qty');
     $product_id = $request->input('product_id');
-    $unit_id = $request->input('unit_id');
+    $unit_id    = $request->input('unit_id');
     // $fdata = getSumQtyOfProductFromPurchases($product_id, $unit_id);
     $fdata = comparePurchasedWithOrderdQties($product_id, $unit_id);
 
     return $fdata;
 });
 
-
 Route::post('/login', [AuthController::class, 'login'])
-    // ->middleware(EnsureOwnerIfRequired::class)
+// ->middleware(EnsureOwnerIfRequired::class)
 ;
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
 Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
@@ -78,9 +75,63 @@ Route::post('/user/updateBranch', [AuthController::class, 'updateBranch'])
     ->middleware('auth:api');
 
 Route::get('/test', function () {
+
+// بناء كويري واحد يحتوي كل المصادر باستخدام union
+    $productIds = DB::table('orders_details as od')
+        ->join('orders as o', 'od.order_id', '=', 'o.id')
+        ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+        ->whereNull('o.deleted_at')
+        ->select('od.product_id')
+
+        ->union(
+
+            DB::table('stock_issue_order_details as sid')
+                ->join('stock_issue_orders as si', 'sid.stock_issue_order_id', '=', 'si.id')
+                ->whereNull('si.deleted_at')
+                ->select('sid.product_id')
+        )
+
+        ->union(
+
+            DB::table('stock_adjustment_details')
+                ->where('adjustment_type', 'decrease')
+                ->select('product_id')
+        )
+
+        ->distinct()
+        ->pluck('product_id');
+
+        $productIds1 = DB::table('orders_details as od')
+            ->join('orders as o', 'od.order_id', '=', 'o.id')
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereNull('o.deleted_at')
+            ->distinct()
+            ->pluck('od.product_id');
+
+        $productIdsFromOrders = DB::table('orders_details as od')
+            ->join('orders as o', 'od.order_id', '=', 'o.id')
+            ->whereIn('o.status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereNull('o.deleted_at')
+            ->pluck('od.product_id');
+
+        $productIdsFromIssues = DB::table('stock_issue_order_details as sid')
+            ->join('stock_issue_orders as si', 'sid.stock_issue_order_id', '=', 'si.id')
+            ->whereNull('si.deleted_at')
+            ->pluck('sid.product_id');
+
+        $productIdsFromAdjustments = DB::table('stock_adjustment_details')
+            ->where('adjustment_type', 'decrease')
+            ->pluck('product_id');
+               $productIds2 = $productIdsFromOrders
+            ->merge($productIdsFromIssues)
+            ->merge($productIdsFromAdjustments)
+            ->unique()
+            ->sort()
+            ->values();
+    dd(count($productIds),count($productIds2));
+    dd(round(0.999600, 1));
     return User::role([1, 3])->pluck('id');
 });
-
 
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
@@ -98,7 +149,7 @@ Route::middleware('auth:api')->group(function () {
 
 Route::get('purchaseReports', [PurchaseReportController::class, 'index']);
 Route::prefix('returnedOrders')->group(function () {
-    Route::get('/', [ReturnedOrderController::class, 'index']);     // all with filters
+    Route::get('/', [ReturnedOrderController::class, 'index']);    // all with filters
     Route::get('/{id}', [ReturnedOrderController::class, 'show']); // single order
 });
 
@@ -110,7 +161,6 @@ Route::get('/manufacturingInventoryReport', [ManufacturingInventoryReportControl
 
 Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary']);
 
-
 Route::prefix('reseller')->group(function () {
     Route::get('branchSalesBalanceReport', [ResellerReportController::class, 'branchSalesBalanceReport']);
     Route::get('orderDeliveryReports', [ResellerReportController::class, 'orderDeliveryReports']);
@@ -118,16 +168,15 @@ Route::prefix('reseller')->group(function () {
 
 Route::get('stockAdjustmentsByCategory', [StockAdjustmentReportController::class, 'byCategory']);
 
-
 Route::get('/suppliers', [SupplierController::class, 'index']);
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
 Route::get('/testInventoryReport', [App\Http\Controllers\Api\InventoryReportController::class, 'inventoryReport']);
 Route::get('/testInventoryPurchasedReport', [App\Http\Controllers\Api\InventoryReportController::class, 'testInventoryPurchasedReport']);
 Route::get('/testInventoryReport2', function (Request $request) {
-    $productId = $request->input('product_id');
-    $unitId = $request->input('unit_id');
-    $storeId = $request->input('store_id');
+    $productId        = $request->input('product_id');
+    $unitId           = $request->input('unit_id');
+    $storeId          = $request->input('store_id');
     $inventoryService = new MultiProductsInventoryService(
         null,
         $productId,
@@ -138,7 +187,7 @@ Route::get('/testInventoryReport2', function (Request $request) {
         ->where('unit_id', $unitId)->with('unit')
         ->first();
     $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
-    $inventoryRemainingQty = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+    $inventoryRemainingQty  = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
     return response()->json($inventoryRemainingQty);
 });
 
@@ -173,6 +222,5 @@ Route::get('productsSearch', function (\Illuminate\Http\Request $request) {
 Route::get('branchConsumptionReport', [BranchConsumptionController::class, 'index']);
 Route::get('branchConsumptionReport/topBranches', [BranchConsumptionController::class, 'topBranches']);
 Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::class, 'topProducts']);
-
 
 require base_path('routes/custom_route.php');

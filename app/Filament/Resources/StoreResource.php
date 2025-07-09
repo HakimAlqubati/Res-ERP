@@ -59,7 +59,7 @@ class StoreResource extends Resource
                             ->stores()->pluck('name', 'id')),
                     Toggle::make('active')->label(__('lang.active'))->default(1)->inline(false),
                     Toggle::make('default_store')->label(__('lang.default'))->default(0)->inline(false),
-                    Toggle::make('is_central_kitchen')->label(__('stock.is_central_kitchen'))->default(0)->inline(false),
+                    // Toggle::make('is_central_kitchen')->label(__('stock.is_central_kitchen'))->default(0)->inline(false),
 
 
                     Textarea::make('location')
@@ -80,8 +80,8 @@ class StoreResource extends Resource
                 TextColumn::make('storekeeper_name')->label(__('stock.storekeeper'))->toggleable()->default('-'),
                 CheckboxColumn::make('default_store')
                     ->label(__('lang.default'))->disableClick()->toggleable()->alignCenter(true),
-                CheckboxColumn::make('is_central_kitchen')
-                    ->label(__('stock.is_central_kitchen'))->disableClick()->toggleable()->alignCenter(true),
+                // CheckboxColumn::make('is_central_kitchen')
+                //     ->label(__('stock.is_central_kitchen'))->disableClick()->toggleable()->alignCenter(true),
 
             ])
             ->filters([

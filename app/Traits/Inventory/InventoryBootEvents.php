@@ -1,9 +1,8 @@
 <?php
-
 namespace App\Traits\Inventory;
 
 use App\Models\InventoryTransaction;
-use App\Services\UnitPriceFifoUpdater;
+use Illuminate\Support\Facades\Log;
 
 trait InventoryBootEvents
 {
@@ -16,6 +15,55 @@ trait InventoryBootEvents
             }
         });
         static::creating(function ($transaction) {
+
+            $product = $transaction->product ?? $transaction->product()->with('allUnitPrices')->first();
+
+            if (! $product || ! $transaction->unit_id || ! $transaction->quantity) {
+                Log::warning('InventoryTransaction creation skipped due to missing data', [
+                    'product'    => $product ? $product->id : null,
+                    'product_id' => $transaction->product_id ?? null,
+                    'unit_id'    => $transaction->unit_id ?? null,
+                    'quantity'   => $transaction->quantity ?? null,
+                ]);
+                return;
+            }
+
+            // 1. جلب وحدة الحركة الحالية من unit_prices
+            $currentUnitPrice = $product->allUnitPrices()
+                ->where('unit_id', $transaction->unit_id)
+                ->first();
+
+            // 2. جلب أصغر وحدة مرتبطة بالمنتج من unit_prices (package_size الأصغر)
+            $baseUnitPrice = $product->allUnitPrices()
+                ->orderBy('package_size', 'asc')
+                ->first();
+
+            if (! $currentUnitPrice || ! $baseUnitPrice) {
+                Log::warning("Missing unit price mapping", [
+                    'product_id' => $transaction->product_id,
+                    'unit_id'    => $transaction->unit_id,
+                ]);
+                return;
+            }
+
+            // 3. تعيين الوحدة الأساسية وحجمها
+            $transaction->base_unit_id           = $baseUnitPrice->unit_id;
+            $transaction->base_unit_package_size = $currentUnitPrice->package_size;
+
+            // 4. حساب الكمية المحوّلة إلى الوحدة الأساسية
+            $conversionRate = $currentUnitPrice->package_size / $baseUnitPrice->package_size;
+
+            $res                        = round($transaction->quantity * $conversionRate, 1);
+            $transaction->base_quantity = $res;
+
+
+             // 5. حساب السعر لكل وحدة أساس (بدقة 6 خانات)
+            if ($transaction->price && $currentUnitPrice->package_size > 0) {
+                $transaction->price_per_base_unit = round(
+                    $transaction->price / $currentUnitPrice->package_size,
+                    6
+                );
+            }
             if (is_null($transaction->waste_stock_percentage)) {
                 $transaction->waste_stock_percentage = 0;
             }
@@ -30,19 +78,19 @@ trait InventoryBootEvents
 
                 if ($wasteQuantity > 0) {
                     \App\Models\InventoryTransaction::create([
-                        'product_id' => $transaction->product_id,
-                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_OUT,
-                        'quantity' => $wasteQuantity,
-                        'unit_id' => $transaction->unit_id,
-                        'movement_date' => $transaction->transaction_date ?? now(),
-                        'package_size' => $transaction->package_size,
-                        'store_id' => $transaction?->store_id,
-                        'price' => $transaction->price,
-                        'transaction_date' => $transaction->transaction_date ?? now(),
-                        'notes' => 'Auto waste recorded during supply (based on waste percentage: ' . $wastePercentage . '%)',
-                        'transactionable_id' => 0,
+                        'product_id'           => $transaction->product_id,
+                        'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                        'quantity'             => $wasteQuantity,
+                        'unit_id'              => $transaction->unit_id,
+                        'movement_date'        => $transaction->transaction_date ?? now(),
+                        'package_size'         => $transaction->package_size,
+                        'store_id'             => $transaction?->store_id,
+                        'price'                => $transaction->price,
+                        'transaction_date'     => $transaction->transaction_date ?? now(),
+                        'notes'                => 'Auto waste recorded during supply (based on waste percentage: ' . $wastePercentage . '%)',
+                        'transactionable_id'   => 0,
                         'transactionable_type' => 'Waste', // رمزي فقط إذا ما عندك جدول
-                        'is_waste' => true, // إذا كنت أضفت هذا الحقل في المايجريشن
+                        'is_waste'             => true,    // إذا كنت أضفت هذا الحقل في المايجريشن
                     ]);
                 }
             }

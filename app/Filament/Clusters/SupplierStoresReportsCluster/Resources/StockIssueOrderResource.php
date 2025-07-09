@@ -146,7 +146,7 @@ class StockIssueOrderResource extends Resource
                                 TextInput::make('quantity')
                                     ->numeric()
                                     ->required()
-                                    ->minValue(0.1)
+                                    ->minValue(0.0001)
                                     ->label('Quantity')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function ($get, $set, $state) {

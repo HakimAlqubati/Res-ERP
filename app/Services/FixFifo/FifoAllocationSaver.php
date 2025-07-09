@@ -11,14 +11,14 @@ class FifoAllocationSaver
     public static function save(array $allocations, int $productId)
     {
         DB::transaction(function () use ($allocations, $productId) {
-            if ($productId == 0) {
-                InventoryTransaction::where('transactionable_type', Order::class)
-                    ->forceDelete();
-            } else {
-                InventoryTransaction::where('transactionable_type', Order::class)
-                    ->where('product_id', $productId)
-                    ->forceDelete();
-            }
+            // if ($productId == 0) {
+            //     InventoryTransaction::where('transactionable_type', Order::class)
+            //         ->forceDelete();
+            // } else {
+            //     InventoryTransaction::where('transactionable_type', Order::class)
+            //         ->where('product_id', $productId)
+            //         ->forceDelete();
+            // }
             foreach ($allocations as $allocation) {
                 InventoryTransaction::create([
                     'product_id'            => $allocation['product_id'],
