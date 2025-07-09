@@ -2,7 +2,6 @@
 namespace App\Console\Commands;
 
 use App\Models\InventoryTransaction;
-use App\Models\UnitPrice;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -22,22 +21,24 @@ class UpdateBaseInventoryFields extends Command
 
             InventoryTransaction::
                 // whereNull('base_quantity')->
-                where('product_id', 107)
+                where('product_id', 116)
                 ->chunkById(100, function ($transactions) use (&$updatedCount) {
                     foreach ($transactions as $transaction) {
                         $productId = $transaction->product_id;
                         $unitId    = $transaction->unit_id;
                         $quantity  = $transaction->quantity;
 
-                        if (! $productId || ! $unitId || ! $quantity) {
+                        $product = $transaction->product;
+                        if (is_null($productId) || is_null($unitId) || is_null($quantity)) {
                             continue;
                         }
 
-                        $currentUnitPrice = UnitPrice::where('product_id', $productId)
-                            ->where('unit_id', $unitId)
+                        $currentUnitPrice = $product->supplyOutUnitPrices()
+                            ->where('unit_id', $transaction->unit_id)
                             ->first();
 
-                        $baseUnitPrice = UnitPrice::where('product_id', $productId)
+                        // 2. جلب أصغر وحدة مرتبطة بالمنتج من unit_prices (package_size الأصغر)
+                        $baseUnitPrice = $product->supplyOutUnitPrices()
                             ->orderBy('package_size', 'asc')
                             ->first();
 
@@ -67,7 +68,7 @@ class UpdateBaseInventoryFields extends Command
 
                         $transaction->update([
                             'base_unit_id'           => $baseUnitPrice->unit_id,
-                            'base_unit_package_size' => $currentUnitPrice->package_size,
+                            'base_unit_package_size' => $baseUnitPrice->package_size,
                             'base_quantity'          => $baseQuantity,
                             'price_per_base_unit'    => $pricePerBaseUnit,
                         ]);

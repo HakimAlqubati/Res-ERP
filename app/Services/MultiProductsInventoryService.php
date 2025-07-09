@@ -222,11 +222,10 @@ class MultiProductsInventoryService
         $product = Product::find($productId);
         $result = [];
 
-        $smallestUnit = \App\Models\UnitPrice::where('product_id', $productId)
-            ->with('unit')
-            ->orderBy('package_size', 'asc')
-            ->first();
- 
+       $baseUnitPrice = $product->supplyOutUnitPrices()
+                            ->orderBy('package_size', 'asc')
+                            ->first();
+  
         
         foreach ($unitPrices as $unitPrice) {
 
@@ -280,6 +279,8 @@ class MultiProductsInventoryService
                 'unit_name' => $unitPrice['unit_name'],
                 'remaining_qty' => $remainingQty,
                 'remaining_quantity_base' => $remainingBaseQty,
+                'base_unit_id' => $baseUnitPrice->unit_id,
+                'base_unit_name' => $baseUnitPrice->unit->name,
                 'minimum_quantity' => $unitPrice['minimum_quantity'],
                 'is_last_unit' => $unitPrice['is_last_unit'],
                 'is_largest_unit' => $unitPrice['is_largest_unit'],
