@@ -1,4 +1,10 @@
 <x-filament::page>
+
+    <style>
+        .fi-tabs {
+            display: none !important;
+        }
+    </style>
     <div class="flex justify-end mb-4">
         <button id="printReport"
             class="px-6 py-2 font-semibold rounded-md border border-blue-600 bg-blue-500 hover:bg-blue-700 transition duration-300 shadow-md">
@@ -14,7 +20,7 @@
                 <thead class="fixed-header" style="top:64px;">
                     <x-filament-tables::row class="header_report">
                         <th colspan="6" class="text-left text-xl font-bold px-4 py-2">
-                             ({{ $store }}) To Date {{ $toDate }}
+                            ({{ $store }}) To Date {{ $toDate }}
                         </th>
                     </x-filament-tables::row>
                     <x-filament-tables::row class="bg-blue-50 text-xs text-gray-700">
@@ -49,10 +55,14 @@
                 </tbody>
             </x-filament-tables::table>
         @else
-            <p class="text-center mt-10 text-gray-500">No data available for this store/date range.</p>
+            <div class="please_select_message_div text-center">
+                <p class="text-center mt-10 text-gray-500">No data available for this store/date range.</p>
+            </div>
         @endif
     @else
-        <p class="text-center mt-10 text-gray-500">Please select a store.</p>
+        <div class="please_select_message_div text-center">
+            <p class="text-center mt-10 text-gray-500">Please select a store.</p>
+        </div>
     @endif
 
     <script>

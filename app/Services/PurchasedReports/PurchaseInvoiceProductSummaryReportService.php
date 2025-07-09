@@ -3,6 +3,7 @@
 namespace App\Services\PurchasedReports;
 
 use App\Models\InventoryTransaction;
+use App\Models\Product;
 use App\Models\UnitPrice;
 use App\Services\MultiProductsInventoryService;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +102,11 @@ class PurchaseInvoiceProductSummaryReportService
 
     public function getSmallestUnitPrice($productId)
     {
-        return UnitPrice::where('product_id', $productId)->showInInvoices()
+        $product = Product::find($productId);
+        if(!$product){
+            return;
+        }
+        return $product->supplyOutUnitPrices()
             ->orderBy('package_size', 'asc')->first();
     }
 

@@ -137,7 +137,7 @@ class ResellerSaleResource extends Resource
                                     'product_id',
                                     $get('product_id')
                                 )
-                                    ->showInInvoices()
+                                    ->supplyOutUnitPrices()
                                     ->where('unit_id', $state)->first();
                                 $unitSellingPrice = round($unitPrice?->selling_price, 2) ?? 0;
                                 $set('unit_price', $unitSellingPrice ?? 0);

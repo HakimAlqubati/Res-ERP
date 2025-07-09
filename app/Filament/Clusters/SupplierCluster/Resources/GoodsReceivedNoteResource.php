@@ -165,7 +165,7 @@ class GoodsReceivedNoteResource extends Resource
                                                 'product_id',
                                                 $get('product_id')
                                             )
-                                                ->showInInvoices()
+                                                ->supplyOutUnitPrices()
                                                 ->where('unit_id', $state)->first();
                                             $set('package_size',  $unitPrice->package_size ?? 0);
                                         })->columnSpan(2)->required(),

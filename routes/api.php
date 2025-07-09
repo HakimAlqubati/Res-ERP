@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PurchaseReportController;
 use App\Http\Controllers\Api\Reports\BranchConsumptionController;
 use App\Http\Controllers\Api\Reports\ResellerReportController;
 use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
+use App\Http\Controllers\Api\Reports\StoreCostReportController;
 use App\Http\Controllers\Api\ReturnedOrderController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
@@ -167,6 +168,8 @@ Route::prefix('reseller')->group(function () {
 });
 
 Route::get('stockAdjustmentsByCategory', [StockAdjustmentReportController::class, 'byCategory']);
+
+Route::get('/storeCostReport', [StoreCostReportController::class, 'generate']);
 
 Route::get('/suppliers', [SupplierController::class, 'index']);
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);

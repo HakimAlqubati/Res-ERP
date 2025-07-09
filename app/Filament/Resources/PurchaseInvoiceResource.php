@@ -220,7 +220,7 @@ class PurchaseInvoiceResource extends Resource
                                         'product_id',
                                         $get('product_id')
                                     )
-                                        ->showInInvoices()
+                                        ->supplyOutUnitPrices()
                                         ->where('unit_id', $state)->first();
                                     $set('price', $unitPrice->price ?? 0);
                                     $total = round(((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity')), 2) ?? 0;

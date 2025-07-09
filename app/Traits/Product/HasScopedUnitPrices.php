@@ -1,12 +1,10 @@
 <?php
-
 namespace App\Traits\Product;
 
 use App\Models\UnitPrice;
 
 trait HasScopedUnitPrices
 {
-
 
     // Supply-only + All
     public function supplyUnitPrices()
@@ -16,14 +14,12 @@ trait HasScopedUnitPrices
             ->orderBy('package_size', 'asc');
     }
 
-
     public function reportUnitPrices()
     {
         return $this->hasMany(UnitPrice::class)
             ->forReportsExcludingManufacturing()
             ->orderBy('package_size', 'asc');
     }
-
 
     // Manufacturing-only + All
     public function manufacturingUnitPrices()
@@ -68,4 +64,12 @@ trait HasScopedUnitPrices
             ->forSupplyAndOut()
             ->orderBy('package_size', 'asc');
     }
+
+    public function getBaseUnitPriceAttribute()
+    {
+        return $this->supplyOutUnitPrices()
+            ->orderBy('package_size', 'asc')
+            ->first();
+    }
+
 }

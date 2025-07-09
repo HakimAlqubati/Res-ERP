@@ -124,7 +124,7 @@ class InVsOutReportService
     }
     public function getSmallestUnitPrice($productId)
     {
-        return UnitPrice::where('product_id', $productId)->showInInvoices()
+        return UnitPrice::where('product_id', $productId)->forSupplyAndOut()
             ->orderBy('package_size', 'asc')->first();
     }
 
