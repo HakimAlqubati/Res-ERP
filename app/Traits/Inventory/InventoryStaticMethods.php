@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Traits\Inventory;
 
 use App\Models\InventoryTransaction;
@@ -19,23 +18,22 @@ trait InventoryStaticMethods
         $query = InventoryTransaction::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
             ->where('product_id', $productId);
-        if (!empty($movementType)) {
+        if (! empty($movementType)) {
             $query->where('movement_type', $movementType);
         }
-        if (!empty($unitId)) {
+        if (! empty($unitId)) {
             $query->where('unit_id', $unitId);
         }
 
-        if (!empty($storeId)) {
+        if (! empty($storeId)) {
             $query->where('store_id', $storeId);
         }
-        if (!empty($transactionableType)) {
+        if (! empty($transactionableType)) {
             $query->where('transactionable_type', $transactionableType);
         }
-        return  $query->orderBy('id', 'asc')
+        return $query->orderBy('id', 'asc')
             ->paginate($perPage);
     }
-
 
     public static function getInventoryTrackingData($productId)
     {
@@ -53,22 +51,21 @@ trait InventoryStaticMethods
             $remainingQty += ($transaction->movement_type === InventoryTransaction::MOVEMENT_IN) ? $quantityImpact : -$quantityImpact;
 
             $trackingData[] = [
-                'date' => $transaction->movement_date,
-                'type' => $transaction->formatted_transactionable_type, // Now it works!
-                'quantity' => $transaction->quantity,
-                'unit_id' => $transaction->unit_id,
-                'unit_name' => $transaction->unit?->name ?? '',
-                'package_size' => $transaction->package_size,
-                'quantity_impact' => $quantityImpact,
-                'remaining_qty' => $remainingQty,
+                'date'               => $transaction->movement_date,
+                'type'               => $transaction->formatted_transactionable_type, // Now it works!
+                'quantity'           => $transaction->quantity,
+                'unit_id'            => $transaction->unit_id,
+                'unit_name'          => $transaction->unit?->name ?? '',
+                'package_size'       => $transaction->package_size,
+                'quantity_impact'    => $quantityImpact,
+                'remaining_qty'      => $remainingQty,
                 'transactionable_id' => $transaction->transactionable_id,
-                'notes' => $transaction->notes,
+                'notes'              => $transaction->notes,
             ];
         }
 
         return $trackingData;
     }
-
 
     /**
      * Get the remaining inventory for a given product and unit (static version).
@@ -93,7 +90,6 @@ trait InventoryStaticMethods
 
         return $totalIn - $totalOut;
     }
-
 
     public static function moveToStore(array $data): InventoryTransaction
     {
@@ -144,4 +140,13 @@ trait InventoryStaticMethods
             'transactionable_type' => $data['transactionable'] ? get_class($data['transactionable']) : null,
         ]);
     }
+
+    public static function getMovementTypes(): array
+    {
+        return [
+            InventoryTransaction::MOVEMENT_IN  => 'In',
+            InventoryTransaction::MOVEMENT_OUT => 'Out',
+        ];
+    }
+
 }

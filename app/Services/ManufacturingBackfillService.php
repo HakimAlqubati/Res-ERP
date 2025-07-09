@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\InventoryTransaction;
@@ -7,10 +6,9 @@ use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\StockSupplyOrder;
 use App\Models\Store;
+use App\Services\ProductItemCalculatorService;
 use App\Traits\Inventory\InventoryStaticMethods;
 use Illuminate\Support\Facades\DB;
-use App\Services\ProductItemCalculatorService;
-use Filament\Notifications\Collection;
 use Illuminate\Support\Facades\Log;
 
 class ManufacturingBackfillService
@@ -26,12 +24,11 @@ class ManufacturingBackfillService
         Log::info('Starting handleFromSimulation...', ['timestamp' => now()]);
 
         DB::transaction(function () use ($storeId) {
-            if ($storeId && !Store::whereKey($storeId)->exists()) {
+            if ($storeId && ! Store::whereKey($storeId)->exists()) {
                 throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
             }
 
             $simulatedTransactions = $this->simulateBackfill($storeId);
-
             $stockSupplyOrderIds = collect($simulatedTransactions)->pluck('transactionable_id')->unique();
 
             InventoryTransaction::where('movement_type', InventoryTransaction::MOVEMENT_OUT)
@@ -46,18 +43,16 @@ class ManufacturingBackfillService
 
             Log::info('handleFromSimulation completed', [
                 'transactions_created' => count($simulatedTransactions),
-                'store_id' => $storeId,
+                'store_id'             => $storeId,
             ]);
         });
     }
-
-
 
     public function simulateBackfill(
         ?int $storeId,
         $productId = null
     ) {
-        if ($storeId && !Store::whereKey($storeId)->exists()) {
+        if ($storeId && ! Store::whereKey($storeId)->exists()) {
             throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
         }
 
@@ -76,21 +71,20 @@ class ManufacturingBackfillService
             ->with('product')
             ->get();
 
-
         return $transactions->flatMap(function ($transaction) use ($storeId, &$globalAllocatedPerSource) {
             $components = ProductItemCalculatorService::calculateComponents(
                 $transaction->product_id,
                 $transaction->quantity
             );
 
-            $supplyOrderId = $transaction->transactionable_id;
-            $movementDate = $transaction->transaction_date;
-            $result = [];
+            $supplyOrderId        = $transaction->transactionable_id;
+            $movementDate         = $transaction->transaction_date;
+            $result               = [];
             $componentCostSummary = [];
             foreach ($components as $component) {
                 $productKey = $component['product_id'];
 
-                if (!isset($globalAllocatedPerSource[$productKey])) {
+                if (! isset($globalAllocatedPerSource[$productKey])) {
                     $globalAllocatedPerSource[$productKey] = [];
                 }
 
@@ -98,7 +92,7 @@ class ManufacturingBackfillService
                     ->where('unit_id', $component['unit_id'])
                     ->value('package_size');
 
-                if (!$packageSize || $packageSize == 0) {
+                if (! $packageSize || $packageSize == 0) {
                     continue;
                 }
 
@@ -120,11 +114,9 @@ class ManufacturingBackfillService
                 }
             }
 
-
             return $result;
         });
     }
-
 
     public function getRawMaterialInTransactions(int $productId, int $storeId): \Illuminate\Support\Collection
     {
@@ -150,17 +142,17 @@ class ManufacturingBackfillService
 
             $batches = $transactions->map(function ($txn) {
                 return [
-                    'transaction_id' => $txn->id,
-                    'transaction_date' => $txn->transaction_date,
-                    'transactionable_id' => $txn->transactionable_id,
+                    'transaction_id'       => $txn->id,
+                    'transaction_date'     => $txn->transaction_date,
+                    'transactionable_id'   => $txn->transactionable_id,
                     'transactionable_type' => $txn->transactionable_type,
-                    'store_id' => $txn->store_id,
-                    'quantity' => $txn->quantity,
-                    'package_size' => $txn->package_size,
-                    'unit_id' => $txn->unit_id,
-                    'price' => $txn->price,
-                    'total_qty' => $txn->quantity * $txn->package_size,
-                    'product_id' => $txn->product_id,
+                    'store_id'             => $txn->store_id,
+                    'quantity'             => $txn->quantity,
+                    'package_size'         => $txn->package_size,
+                    'unit_id'              => $txn->unit_id,
+                    'price'                => $txn->price,
+                    'total_qty'            => $txn->quantity * $txn->package_size,
+                    'product_id'           => $txn->product_id,
                 ];
             });
 
@@ -168,9 +160,9 @@ class ManufacturingBackfillService
                 continue;
             }
             $result[] = [
-                'product_id' => $product->id,
+                'product_id'   => $product->id,
                 'product_name' => $product->name,
-                'batches' => $batches,
+                'batches'      => $batches,
             ];
         }
 
@@ -185,9 +177,9 @@ class ManufacturingBackfillService
         array &$allocatedPerSource,
         string $compositeProductName
     ): array {
-        $requiredQty = $component['quantity_after_waste'];
-        $productId = $component['product_id'];
-        $unitId = $component['unit_id'];
+        $requiredQty  = $component['quantity_after_waste'];
+        $productId    = $component['product_id'];
+        $unitId       = $component['unit_id'];
         $pricePerUnit = $component['price_per_unit'];
 
         $inTransactions = $this->getRawMaterialInTransactions($productId, $storeId);
@@ -195,11 +187,11 @@ class ManufacturingBackfillService
         //     dd($inTransactions, $productId);
         // }
         $totalBatches = count($inTransactions);
-        $allocated = [];
+        $allocated    = [];
         foreach ($inTransactions as $index => $in) {
             $priceFromIn = $in->price;
             $isLastBatch = ($index === $totalBatches - 1);
-            $totalInQty = $in->quantity * $in->package_size;
+            $totalInQty  = $in->quantity * $in->package_size;
 
             $alreadyConsumed = InventoryTransaction::where('source_transaction_id', $in->id)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
@@ -208,13 +200,13 @@ class ManufacturingBackfillService
                     return $txn->quantity * getUnitPricePackageSize($txn->product_id, $txn->unit_id);
                 });
             $tempConsumed = $allocatedPerSource[$in->id] ?? 0;
-            $consumed = $alreadyConsumed + $tempConsumed;
-            $remaining = round($totalInQty - $consumed, 4);
+            $consumed     = $alreadyConsumed + $tempConsumed;
+            $remaining    = round($totalInQty - $consumed, 4);
 
-            if ($remaining <= 0 && !$isLastBatch) {
+            if ($remaining <= 0 && ! $isLastBatch) {
                 continue;
             }
-            $take = min($requiredQty, $remaining > 0 ? $remaining : $requiredQty);
+            $take                        = min($requiredQty, $remaining > 0 ? $remaining : $requiredQty);
             $allocatedPerSource[$in->id] = $tempConsumed + $take;
 
             if ($take <= 0) {
@@ -225,21 +217,21 @@ class ManufacturingBackfillService
 
             $quantityInUnits = $take / $outPackageSize;
 
-            $newPrice = ($priceFromIn * $outPackageSize) / $in->package_size;
+            $newPrice    = ($priceFromIn * $outPackageSize) / $in->package_size;
             $allocated[] = [
-                'movement_type' => InventoryTransaction::MOVEMENT_OUT,
-                'product_id' => $productId,
-                'unit_id' => $unitId,
-                'quantity' => round($quantityInUnits, 4),
-                'package_size' => getUnitPricePackageSize($productId, $unitId),
-                'price' => $newPrice,
-                'transaction_date' => $movementDate,
-                'movement_date' => $movementDate,
-                'store_id' => $storeId,
-                'transactionable_type' => StockSupplyOrder::class,
-                'transactionable_id' => $stockSupplyOrderId,
+                'movement_type'         => InventoryTransaction::MOVEMENT_OUT,
+                'product_id'            => $productId,
+                'unit_id'               => $unitId,
+                'quantity'              => round($quantityInUnits, 4),
+                'package_size'          => getUnitPricePackageSize($productId, $unitId),
+                'price'                 => $newPrice,
+                'transaction_date'      => $movementDate,
+                'movement_date'         => $movementDate,
+                'store_id'              => $storeId,
+                'transactionable_type'  => StockSupplyOrder::class,
+                'transactionable_id'    => $stockSupplyOrderId,
                 'source_transaction_id' => $in->id,
-                'notes' => "FIFO OUT for raw '{$component['product_name']}' used in '{$compositeProductName}' - SupplyOrder #$stockSupplyOrderId",
+                'notes'                 => "FIFO OUT for raw '{$component['product_name']}' used in '{$compositeProductName}' - SupplyOrder #$stockSupplyOrderId",
 
             ];
 
@@ -272,9 +264,9 @@ class ManufacturingBackfillService
     }
 
     protected function syncComponentPriceToProductItem(
-        int $productId,         // ID الخاص بالمكون (المادة الخام)
-        int $unitId,            // الوحدة المرتبطة بالمكون
-        int $parentProductId,   // المنتج المركب الذي يحتوي هذا المكون
+        int $productId,       // ID الخاص بالمكون (المادة الخام)
+        int $unitId,          // الوحدة المرتبطة بالمكون
+        int $parentProductId, // المنتج المركب الذي يحتوي هذا المكون
         float $newPrice
     ): void {
         $item = \App\Models\ProductItem::where('product_id', $productId)
@@ -283,8 +275,8 @@ class ManufacturingBackfillService
             ->first();
 
         if ($item) {
-            $item->price = $newPrice;
-            $item->total_price = round($item->quantity * $newPrice, 4);
+            $item->price                   = $newPrice;
+            $item->total_price             = round($item->quantity * $newPrice, 4);
             $item->total_price_after_waste = \App\Models\ProductItem::calculateTotalPriceAfterWaste(
                 $item->total_price,
                 $item->qty_waste_percentage
@@ -314,7 +306,7 @@ class ManufacturingBackfillService
             $adjustedPrice = round($unitPrice->package_size * $sumNetPrice, 4);
 
             $unitPrice->price = $adjustedPrice;
-            $unitPrice->date = now();
+            $unitPrice->date  = now();
             $unitPrice->notes = $note ?? 'تحديث تلقائي من عملية تصنيع';
             $unitPrice->save();
         }

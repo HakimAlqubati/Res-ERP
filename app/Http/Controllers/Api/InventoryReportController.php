@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -19,11 +18,10 @@ class InventoryReportController extends Controller
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
 
         return response()->json([
-            'data' => $lowStockProducts,
+            'data'       => $lowStockProducts,
             'totalPages' => $lowStockProducts->lastPage(),
         ]);
     }
-
 
     public function minimumStockReportToSupply()
     {
@@ -32,23 +30,23 @@ class InventoryReportController extends Controller
         return $lowStockProducts;
         foreach ($lowStockProducts as $product) {
             InventoryTransaction::create([
-                'product_id' => $product['product_id'],
-                'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                'quantity' => 1000,
-                'unit_id' => $product['unit_id'],
-                'movement_date' => Carbon::now(),
-                'package_size' => $product['package_size'],
-                'price' => $product['price'],
-                'transaction_date' => Carbon::now(),
-                'notes' => 'Stock supply for minimum stock products',
-                'transactionable_id' => $product['product_id'],
-                'transactionable_type' => 'ProductImport',
-                'store_id' => 1,
+                'product_id'             => $product['product_id'],
+                'movement_type'          => InventoryTransaction::MOVEMENT_IN,
+                'quantity'               => 1000,
+                'unit_id'                => $product['unit_id'],
+                'movement_date'          => Carbon::now(),
+                'package_size'           => $product['package_size'],
+                'price'                  => $product['price'],
+                'transaction_date'       => Carbon::now(),
+                'notes'                  => 'Stock supply for minimum stock products',
+                'transactionable_id'     => $product['product_id'],
+                'transactionable_type'   => 'ProductImport',
+                'store_id'               => 1,
                 'waste_stock_percentage' => 0,
             ]);
         }
         return response()->json([
-            'data' => $lowStockProducts,
+            'data'       => $lowStockProducts,
             'totalPages' => $lowStockProducts->lastPage(),
         ]);
     }
@@ -56,13 +54,13 @@ class InventoryReportController extends Controller
     public function inventoryReport(Request $request)
     {
         $productId = $request->product_id ?? null;
-        $storeId = $request->store_id ?? null;
+        $storeId   = $request->store_id ?? null;
         if (isset(auth()->user()->branch) && auth()->user()->branch->is_kitchen) {
             $storeId = auth()->user()->branch->store_id;
-        };
+        }
         $categoryId = $request->category_id ?? null;
-        $unitId = 'all';
-        if (!empty($request->unit_id)) {
+        $unitId     = 'all';
+        if (! empty($request->unit_id)) {
             $unitId = $request->unit_id;
         }
         $showAvailableInStock = 0;
@@ -96,45 +94,48 @@ class InventoryReportController extends Controller
     {
         $productId = $request->product_id ?? null;
 
-        $product = Product::find($productId);
-
-        $reportData = collect();
+        $product      = Product::find($productId);
+        $movementType = $request->movement_type ?? null;
+        $storeId      = $request->store_id ?? null;
+        $reportData   = collect();
 
         $rawData = null;
-        if (!empty($productId)) {
-            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15);
+        if (! empty($productId)) {
+            $rawData = InventoryTransaction::getInventoryTrackingDataPagination($productId, 15,
+                $movementType, null, $storeId);
             $reportData = $rawData->through(function ($item) {
 
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 $item->unit->name;
-                $item->movement_date = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
+                $item->movement_date    = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
                 $item->transaction_date = \Carbon\Carbon::parse($item->transaction_date)->format('Y-m-d');
-                $item->quantity =  formatQunantity($item->quantity );
+                $item->quantity         = formatQunantity($item->quantity);
                 return $item;
             });
         }
 
-        return ['reportData' => $reportData, 'product' => $product, 'totalPages' =>  $rawData ? $rawData->lastPage() : 0];
+        return ['reportData' => $reportData, 'product' => $product, 'totalPages' => $rawData ? $rawData->lastPage() : 0];
     }
     public function filters()
     {
         $filters = [
 
-            'categories' => \App\Models\Category::active()->pluck('name', 'id')->toArray(),
-            'stores' => \App\Models\Store::active()
+            'categories'     => \App\Models\Category::active()->pluck('name', 'id')->toArray(),
+            'stores'         => \App\Models\Store::active()
                 ->centralKitchenStores()
                 ->pluck('name', 'id')->toArray(),
+            'movement_types' => InventoryTransaction::getMovementTypes(),
         ];
 
         return response()->json($filters);
     }
     public function branchQuantities()
     {
-        $service = new BranchOrderSupplyReportService();
-        $branchId = request('branch_id');
+        $service   = new BranchOrderSupplyReportService();
+        $branchId  = request('branch_id');
         $productId = request('product_id');
-        $result = $service->branchQuantities($branchId, $productId);
-        $res = ['reportData' => $result];
+        $result    = $service->branchQuantities($branchId, $productId);
+        $res       = ['reportData' => $result];
         return response()->json($res);
     }
 
