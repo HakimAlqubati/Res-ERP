@@ -16,7 +16,7 @@ trait InventoryBootEvents
         });
         static::creating(function ($transaction) {
 
-            $product = $transaction->product ?? $transaction->product()->with('allUnitPrices')->first();
+            $product = $transaction->product ?? $transaction->product()->with('supplyOutUnitPrices')->first();
 
             if (! $product || ! $transaction->unit_id || ! $transaction->quantity) {
                 Log::warning('InventoryTransaction creation skipped due to missing data', [
@@ -29,12 +29,12 @@ trait InventoryBootEvents
             }
 
             // 1. جلب وحدة الحركة الحالية من unit_prices
-            $currentUnitPrice = $product->allUnitPrices()
+            $currentUnitPrice = $product->supplyOutUnitPrices()
                 ->where('unit_id', $transaction->unit_id)
                 ->first();
 
             // 2. جلب أصغر وحدة مرتبطة بالمنتج من unit_prices (package_size الأصغر)
-            $baseUnitPrice = $product->allUnitPrices()
+            $baseUnitPrice = $product->supplyOutUnitPrices()
                 ->orderBy('package_size', 'asc')
                 ->first();
 

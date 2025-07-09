@@ -26,6 +26,7 @@ class UnitPrice extends Model implements Auditable
         'notes',
         'usage_scope',
         'selling_price',
+        'show_in_invoices',
     ];
     protected $auditInclude = [
         'unit_id',
@@ -69,6 +70,9 @@ class UnitPrice extends Model implements Auditable
             'price' => $this->price,
             'package_size' => $this->package_size,
             'order' => $this->order,
+            'usage_scope'=> $this->usage_scope,
+            'show_in_invoices' => $this->show_in_invoices,
+            'use_in_orders' => $this->use_in_orders,
         ];
     }
 
