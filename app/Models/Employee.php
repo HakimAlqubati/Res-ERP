@@ -147,7 +147,7 @@ class Employee extends Model implements Auditable
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
             
-            if(env('APP_ENV'=='local')){
+            if(env('APP_ENV')=='local'){
                 return Storage::disk('public')->url($defaultAvatarPath);
             } 
             return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
