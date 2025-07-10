@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('product_items', function (Blueprint $table) {
             $table->decimal('qty_waste_percentage', 10, 8)->change();
             $table->decimal('quantity_after_waste', 10, 8)->change();
-            $table->decimal('total_price_after_waste', 10, 8)->change();
+            $table->decimal('total_price_after_waste', 20, 8)->change();
         });
     }
 
