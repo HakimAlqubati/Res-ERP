@@ -1,10 +1,10 @@
 <?php
-
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
-use Filament\Forms\Components\CheckboxList;
+use App\Enums\DayOfWeek;
+use Filament\Actions\Concerns\CanCustomizeProcess;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -13,33 +13,26 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Arr;
-use Filament\Actions\Concerns\CanCustomizeProcess;
 
 class PeriodHistoriesRelationManager extends RelationManager
 {
     use CanCustomizeProcess;
     protected static string $relationship = 'periodHistories';
-    protected static ?string $title = 'Shift History';
+    protected static ?string $title       = 'Shift History';
     public function form(Form $form): Form
     {
         return $form
             ->schema([
                 DatePicker::make('start_date')
-                    // ->minDate(function($record){
-                    //     return $record->employee->join_date?? now()->toDateString();
-                    // })
+                // ->minDate(function($record){
+                //     return $record->employee->join_date?? now()->toDateString();
+                // })
                     ->required(),
                 DatePicker::make('end_date'),
-                CheckboxList::make('period_days')
-                    ->label('Days of Work')
-                    ->columns(3)
-                    ->options(getDays())
-                    ->required()->columnSpanFull()
-                    ->bulkToggleable()
-                    ->helperText('Select the days this period applies to.'),
+                Select::make('day_of_week')
+                    ->label('Day of Week')
+                    ->options(DayOfWeek::options())
+                    ->required(),
                 // TimePicker::make('start_time'),
                 // TimePicker::make('end_time'),
             ]);
@@ -56,7 +49,8 @@ class PeriodHistoriesRelationManager extends RelationManager
                 TextColumn::make('workPeriod.name')->label('Shift name'),
                 TextColumn::make('start_date')->label('Start date')->sortable(),
                 TextColumn::make('end_date')->label('End date')->default('Current date'),
-                TextColumn::make('period_days_val')->label('Days'),
+                TextColumn::make('day_of_week')
+                    ->label('Day'),
 
                 // TextColumn::make('creator.name')->label('Created by'),
                 // TextColumn::make('start_time')->label('Start time'),
@@ -64,7 +58,9 @@ class PeriodHistoriesRelationManager extends RelationManager
 
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('day_of_week')
+                    ->options(DayOfWeek::options())
+                    ->label('Filter by Day'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
@@ -73,9 +69,9 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\EditAction::make()
                     ->action(function ($record, $data): void {
                         $recordMonth = date('m', strtotime($record->start_date));
-                        $recordYear = date('Y', strtotime($record->start_date));
+                        $recordYear  = date('Y', strtotime($record->start_date));
 
-                        $endOfMonth = getEndOfMonthDate($recordYear, $recordMonth);
+                        $endOfMonth                 = getEndOfMonthDate($recordYear, $recordMonth);
                         $isSalaryCreatedForEmployee = isSalaryCreatedForEmployee($record->employee_id, $endOfMonth['start_month'], $endOfMonth['end_month']);
                         // dd($isSalaryCreatedForEmployee,$endOfMonth);
                         if ($isSalaryCreatedForEmployee) {
@@ -90,7 +86,6 @@ class PeriodHistoriesRelationManager extends RelationManager
                     ->button()
                     ->color(Color::Red)
                     ->action(function ($record) {
-
 
                         $record->update(['active' => 0]);
                         Notification::make()->title('Done')->send();

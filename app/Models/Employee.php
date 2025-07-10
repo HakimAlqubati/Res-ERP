@@ -700,9 +700,18 @@ class Employee extends Model implements Auditable
         return $this->periods()->count();
     }
 
+    // داخل Employee.php
+
     public function periodDays()
     {
-        return $this->hasMany(EmployeePeriodDay::class, 'employee_id');
+        return $this->hasManyThrough(
+            EmployeePeriodDay::class,
+            EmployeePeriod::class,
+            'employee_id',          // Foreign key on EmployeePeriod
+            'employee_period_id',   // Foreign key on EmployeePeriodDay
+            'id',                   // Local key on Employee
+            'id'                    // Local key on EmployeePeriod
+        );
     }
 
 }

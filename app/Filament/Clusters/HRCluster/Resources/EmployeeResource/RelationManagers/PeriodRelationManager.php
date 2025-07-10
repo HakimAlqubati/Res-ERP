@@ -1,7 +1,7 @@
 <?php
-
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
+use App\Enums\DayOfWeek;
 use App\Models\Attendance;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Log;
 class PeriodRelationManager extends RelationManager
 {
     protected static string $relationship = 'periods';
-    protected static ?string $title = 'Shifts';
+    protected static ?string $title       = 'Shifts';
     // protected static ?string $badge = count($this->ownerRecord->periods);
     public function form(Form $form): Form
     {
@@ -62,11 +62,24 @@ class PeriodRelationManager extends RelationManager
                 // TextColumn::make('description')->label('description'),
                 TextColumn::make('start_at')->label('Start time'),
                 TextColumn::make('end_at')->label('End time'),
-                TextColumn::make('period_days')
+                TextColumn::make('days')
                     ->label('Days')
-                    ->formatStateUsing(function ($state) {
-                        $state = json_decode($state, true);
-                        return is_array($state) ? implode(',', $state) : '';
+                    ->getStateUsing(function ($record) {
+                        $employee = $this->ownerRecord;
+
+                        $employeePeriod = \App\Models\EmployeePeriod::with('days') // eager load للعلاقة
+                            ->where('employee_id', $employee->id)
+                            ->where('period_id', $record->id)
+                            ->first();
+
+                        if (! $employeePeriod || $employeePeriod->days->isEmpty()) {
+                            return '-';
+                        }
+
+                        return $employeePeriod->days
+                            ->pluck('day_of_week')
+                            ->map(fn($d) => DayOfWeek::from($d)->english())
+                            ->implode(', ');
                     })
                 // ->getStateUsing(fn($state): string =>    implode(',', $state))
                 ,
@@ -88,33 +101,33 @@ class PeriodRelationManager extends RelationManager
                                     DatePicker::make('start_period')->label('Start period date')
                                         ->default(now())
                                         ->columnSpanFull()
-                                        // ->minDate(function($record){
-                                        //     dd($record);
-                                        //     return $record->employee->join_date?? now()->toDateString();
-                                        // })
-                                        // ->maxDate(now())
+                                    // ->minDate(function($record){
+                                    //     dd($record);
+                                    //     return $record->employee->join_date?? now()->toDateString();
+                                    // })
+                                    // ->maxDate(now())
                                         ->required(),
                                 ]),
                             ToggleButtons::make('periods')
                                 ->label('Work Periods')
-                                // ->relationship('periods', 'name')
+                            // ->relationship('periods', 'name')
                                 ->columns(3)->multiple()
                                 ->options(
                                     WorkPeriod::select('name', 'id')
                                         ->where('branch_id', $this->ownerRecord->branch_id)
                                         ->get()->pluck('name', 'id'),
                                 )->default(function () {
-                                    return $this->ownerRecord?->periods?->plucK('id')?->toArray();
-                                })
-                                // ->disabled(function(){
-                                //     return [1,2,3,4];
-                                // })
+                                return $this->ownerRecord?->periods?->plucK('id')?->toArray();
+                            })
+                            // ->disabled(function(){
+                            //     return [1,2,3,4];
+                            // })
                                 ->helperText('Select the employee\'s work periods.'),
                             Fieldset::make()->schema([
                                 CheckboxList::make('period_days')
                                     ->label('Days of Work')
                                     ->columns(3)
-                                    ->options(getDays())
+                                    ->options(DayOfWeek::options())
                                     ->required()->columnSpanFull()
                                     ->bulkToggleable()
                                     ->helperText('Select the days this period applies to.'),
@@ -125,9 +138,9 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         DB::beginTransaction();
-                        $employee = $this->ownerRecord;
+                        $employee          = $this->ownerRecord;
                         $employeeHistories = $employee->periodHistories->select('period_id', 'start_date', 'end_date') ?? null;
-                        foreach ($employeeHistories as  $history) {
+                        foreach ($employeeHistories as $history) {
                             if (isset($history['end_date']) && $history['end_date'] == $data['start_period']) {
                                 Notification::make()
                                     ->title('Validation Error')
@@ -160,48 +173,63 @@ class PeriodRelationManager extends RelationManager
 
                             // Insert new periods into hr_employee_periods table
                             foreach ($result as $value) {
-                                $workPeriod = WorkPeriod::find($value);
+                                $workPeriod    = WorkPeriod::find($value);
                                 $periodStartAt = $workPeriod?->start_at;
-                                $periodEndAt = $workPeriod?->end_at;
+                                $periodEndAt   = $workPeriod?->end_at;
 
-                                // Check for overlapping periods
-                                $overlap = EmployeePeriod::query()
-                                    ->join('hr_work_periods', 'hr_employee_periods.period_id', '=', 'hr_work_periods.id')
-                                    ->where('hr_employee_periods.employee_id', $this->ownerRecord->id)
-                                    ->where(function ($query) use ($periodStartAt, $periodEndAt) {
-                                        $query->whereBetween('hr_work_periods.start_at', [$periodStartAt, $periodEndAt])
-                                            ->orWhereBetween('hr_work_periods.end_at', [$periodStartAt, $periodEndAt])
-                                            ->orWhere(function ($query) use ($periodStartAt, $periodEndAt) {
-                                                $query->where('hr_work_periods.start_at', '<=', $periodStartAt)
-                                                    ->where('hr_work_periods.end_at', '>=', $periodEndAt);
-                                            });
+                                // أيام الفترة المراد إدخالها
+                                $periodDays = $data['period_days'] ?? [];
+
+// الفترات المرتبطة بالموظف والتي تتداخل في الزمن
+                                $overlappingPeriods = EmployeePeriod::query()
+                                    ->with('days') // ضروري لجلب الأيام
+                                    ->where('employee_id', $this->ownerRecord->id)
+                                    ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
+                                        $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
+                                            $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
+                                                ->orWhereBetween('end_at', [$periodStartAt, $periodEndAt])
+                                                ->orWhere(function ($q) use ($periodStartAt, $periodEndAt) {
+                                                    $q->where('start_at', '<=', $periodStartAt)
+                                                        ->where('end_at', '>=', $periodEndAt);
+                                                });
+                                        });
                                     })
-                                    ->exists();
+                                    ->get();
 
-                                if ($overlap) {
-                                    // If overlap exists, throw an exception
-                                    Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
-                                    return;
+// التحقق من تداخل الأيام
+                                foreach ($overlappingPeriods as $period) {
+                                    $existingDays = $period->days->pluck('day_of_week')->toArray();
+
+                                    if (count(array_intersect($periodDays, $existingDays)) > 0) {
+                                        Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
+                                        return;
+                                    }
                                 }
 
+                                $employeePeriod              = new EmployeePeriod();
+                                $employeePeriod->employee_id = $this->ownerRecord->id;
+                                $employeePeriod->period_id   = $value;
+                                $employeePeriod->save();
 
-                                // Insert into hr_employee_periods
-                                EmployeePeriod::insert([
-                                    'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
-                                    'period_id' => $value,
-                                    'period_days' => json_encode($data['period_days']),
-                                ]);
+                                foreach ($data['period_days'] as $dayOfWeek) {
 
-                                // Also insert into hr_employee_period_histories
-                                EmployeePeriodHistory::insert([
-                                    'employee_id' => $this->ownerRecord->id, // Assuming the ownerRecord has the employee ID
-                                    'period_id' => $value,
-                                    'start_date' => $data['start_period'],
-                                    'end_date' => null,
-                                    'start_time' => $periodStartAt,
-                                    'end_time' => $periodEndAt,
-                                    'period_days' => json_encode($data['period_days']),
-                                ]);
+                                    $employeePeriod->days()->create([
+                                        'day_of_week' => $dayOfWeek,
+                                        'start_date'  => $data['start_period'],
+                                        'end_date'    => null,
+                                    ]);
+
+                                    EmployeePeriodHistory::create([
+                                        'employee_id' => $this->ownerRecord->id,
+                                        'period_id'   => $value,
+                                        'start_date'  => $data['start_period'],
+                                        'end_date'    => null,
+                                        'start_time'  => $periodStartAt,
+                                        'end_time'    => $periodEndAt,
+                                        'day_of_week' => $dayOfWeek,
+                                    ]);
+                                }
+
                             }
 
                             // Send notification after the operation is complete
@@ -219,6 +247,7 @@ class PeriodRelationManager extends RelationManager
             ->actions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
+                $this->assignDaysAction(),
                 Action::make('Delete')->requiresConfirmation()
                     ->color('warning')
                     ->button()
@@ -233,7 +262,7 @@ class PeriodRelationManager extends RelationManager
                                     ->minDate(now()->subDay())
                                     ->maxDate(now())
                                     ->label('End period date')->required(),
-                            ])
+                            ]),
                     ])
                     ->databaseTransaction()
                     ->icon('heroicon-o-x-mark')
@@ -253,12 +282,12 @@ class PeriodRelationManager extends RelationManager
                             }
 
                             EmployeePeriodHistory::where('employee_id', $record->employee_id) // Filter by the employee ID
-                                ->where('period_id', $record->period_id) // Filter by the associated period ID
-                                ->update(['end_date' => $data['end_period']]); // Set end_date to the current timestamp
+                                ->where('period_id', $record->period_id)                          // Filter by the associated period ID
+                                ->update(['end_date' => $data['end_period']]);                    // Set end_date to the current timestamp
 
-                            // Now, delete the employee period
+                                                                                       // Now, delete the employee period
                             EmployeePeriod::where('employee_id', $record->employee_id) // Ensure to delete the correct employee period
-                                ->where('period_id', $record->period_id) // Filter by the associated period ID
+                                ->where('period_id', $record->period_id)                   // Filter by the associated period ID
                                 ->delete();
 
                             // Optionally, send a success notification
@@ -284,5 +313,94 @@ class PeriodRelationManager extends RelationManager
             return true;
         }
         return false;
+    }
+
+    private function assignDaysAction()
+    {
+        return Action::make('AssignDays')
+            ->label('Assign Days')->button()
+            ->icon('heroicon-o-calendar-days')
+            ->form(fn($record) => [
+                CheckboxList::make('days')
+                    ->label('Select Days')
+                    ->options(DayOfWeek::options())
+                    ->columns(3)
+                    ->required()
+                    ->default(function () use ($record) {
+                        $employee = $this->ownerRecord;
+
+                        return \App\Models\EmployeePeriodDay::where('employee_period_id', $record->id)
+                            ->pluck('day_of_week')
+                            ->toArray();
+                    })
+                ,
+                DatePicker::make('start_date')
+                    ->label('Start Date')->default(now())
+                    ->required(),
+                DatePicker::make('end_date')
+                    ->label('End Date')
+                    ->after('start_date')
+                    ->nullable(),
+            ])
+            ->action(function (array $data, $record) {
+                $employee = $this->ownerRecord;
+
+                $employeePeriod = \App\Models\EmployeePeriod::where('employee_id', $employee->id)
+                    ->where('period_id', $record->id)
+                    ->first();
+
+                if (! $employeePeriod) {
+                    Notification::make()
+                        ->title('Assignment Error')
+                        ->body('Work period not assigned to employee yet.')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
+                try {
+                    DB::transaction(function () use ($data, $employeePeriod) {
+                        $employeePeriod->days()->delete();
+                        EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
+                            ->where('period_id', $employeePeriod->period_id)
+                            ->whereIn('day_of_week', $data['days'])
+                            ->delete();
+                        foreach ($data['days'] as $dayOfWeek) {
+                            $employeePeriod->days()->create([
+                                'day_of_week' => $dayOfWeek,
+                                'start_date'  => $data['start_date'],
+                                'end_date'    => $data['end_date'] ?? null,
+                            ]);
+
+                            EmployeePeriodHistory::create([
+                                'employee_id' => $employeePeriod->employee_id,
+                                'period_id'   => $employeePeriod->period_id,
+                                'start_date'  => $data['start_date'],
+                                'end_date'    => $data['end_date'] ?? null,
+                                'start_time'  => $employeePeriod->workPeriod->start_at,
+                                'end_time'    => $employeePeriod->workPeriod->end_at,
+                                'day_of_week' => $dayOfWeek,
+                            ]);
+                        }
+
+                        Notification::make()
+                            ->title('Days Assigned Successfully')
+                            ->success()
+                            ->send();
+                    });
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    Notification::make()
+                        ->title('Error')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            })
+
+            ->modalHeading('Assign Work Days')
+            ->modalSubmitActionLabel('Save')
+            ->modalWidth('md');
+
     }
 }

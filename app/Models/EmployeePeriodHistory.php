@@ -1,8 +1,7 @@
 <?php
-
 namespace App\Models;
 
-use App\Traits\DynamicConnection;
+use App\Enums\DayOfWeek;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +11,7 @@ class EmployeePeriodHistory extends Model implements Auditable
 {
     use HasFactory, \OwenIt\Auditing\Auditable;
 
-    protected $table = 'hr_employee_period_histories';
+    protected $table    = 'hr_employee_period_histories';
     protected $fillable = [
         'employee_id',
         'period_id',
@@ -24,6 +23,7 @@ class EmployeePeriodHistory extends Model implements Auditable
         'period_days',
         'created_by',
         'updated_by',
+        'day_of_week',
     ];
     protected $auditInclude = [
         'employee_id',
@@ -36,10 +36,13 @@ class EmployeePeriodHistory extends Model implements Auditable
         'period_days',
         'created_by',
         'updated_by',
+        'day_of_week',
     ];
 
     protected $casts = [
-        'period_days' => 'array'
+        'period_days' => 'array',
+        'day_of_week' => DayOfWeek::class,
+
     ];
     // Define the relationship with Employee
     public function employee()
@@ -81,8 +84,4 @@ class EmployeePeriodHistory extends Model implements Auditable
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    public function getPeriodDaysValAttribute()
-    {
-        return is_array($this->period_days) ? implode(',', $this->period_days) : '';
-    }
 }
