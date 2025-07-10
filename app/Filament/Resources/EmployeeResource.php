@@ -805,7 +805,7 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
-            EmployeePeriodDaysRelationManager::class,
+            // EmployeePeriodDaysRelationManager::class,
         ];
     }
 
