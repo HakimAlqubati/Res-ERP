@@ -484,14 +484,15 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        $employee = Employee::with('periodDays.workPeriod')->find(1);
-        foreach ($employee->periodDays as $periodDay) {
-            $period = $periodDay->workPeriod;
-            $day    = $periodDay->day_of_week;
+        // $employee = Employee::with('periodDays.workPeriod')->find(1);
+        // $res=[];
+        // foreach ($employee->periodDays as $periodDay) {
+        //     $period = $periodDay->workPeriod;
+        //     $day    = $periodDay->day_of_week;
 
-            $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
-        }
-        dd($res);
+        //     $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
+        // }
+        // dd($res);
 
         // $sessionLifetime = config('session.lifetime');
         // dd($sessionLifetime);
