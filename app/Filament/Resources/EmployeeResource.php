@@ -503,7 +503,7 @@ class EmployeeResource extends Resource
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
-                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault:true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')
