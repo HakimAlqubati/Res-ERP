@@ -146,13 +146,16 @@ class Employee extends Model implements Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-
+            
             if(env('APP_ENV','local')){
+                dd('s1');
                 return Storage::disk('public')->url($defaultAvatarPath);
             }
+            dd('s');
             return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
         }
-
+        
+        dd('s13');
         // If file is not found, return a fallback URL
         return asset('images/default-avatar.png');
     }
