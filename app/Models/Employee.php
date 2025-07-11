@@ -146,13 +146,13 @@ class Employee extends Model implements Auditable
         $defaultAvatarPath = 'employees/default/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-            
-            if(env('APP_ENV')=='local'){
+
+            if (env('APP_ENV') == 'local') {
                 return Storage::disk('public')->url($defaultAvatarPath);
-            } 
-            return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
+            }
+            return url('/') . Storage::disk('public')->url($defaultAvatarPath);
         }
-         
+
         // If file is not found, return a fallback URL
         return asset('images/default-avatar.png');
     }
@@ -251,8 +251,14 @@ class Employee extends Model implements Auditable
 
     public function periods()
     {
-        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id');
+        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id')->withPivot('id');
     }
+    // داخل موديل Employee
+    public function employeePeriods()
+    {
+        return $this->hasMany(EmployeePeriod::class, 'employee_id', 'id');
+    }
+
     public function periodHistories()
     {
         return $this->hasMany(EmployeePeriodHistory::class, );
@@ -707,10 +713,10 @@ class Employee extends Model implements Auditable
         return $this->hasManyThrough(
             EmployeePeriodDay::class,
             EmployeePeriod::class,
-            'employee_id',          // Foreign key on EmployeePeriod
-            'employee_period_id',   // Foreign key on EmployeePeriodDay
-            'id',                   // Local key on Employee
-            'id'                    // Local key on EmployeePeriod
+            'employee_id',        // Foreign key on EmployeePeriod
+            'employee_period_id', // Foreign key on EmployeePeriodDay
+            'id',                 // Local key on Employee
+            'id'                  // Local key on EmployeePeriod
         );
     }
 

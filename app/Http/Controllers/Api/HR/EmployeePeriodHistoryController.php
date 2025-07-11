@@ -3,7 +3,7 @@ namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
-use App\Services\HR\EmployeePeriodHistoryService;
+use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 

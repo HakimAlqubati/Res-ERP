@@ -43,9 +43,9 @@ class CheckInHandler
             $attendanceData['check_date'] = $prevDate->toDateString();
             $attendanceData['day'] = $prevDate->format('l');
         }
-
+ 
         // إن وُجد سجل سابق
-        if ($previousRecord) {
+        if ($previousRecord && isset($previousRecord['in_previous']))  {
             $attendanceData['is_from_previous_day'] = 1;
             $attendanceData['check_date'] = $previousRecord['in_previous']?->check_date;
         }

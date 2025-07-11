@@ -112,13 +112,27 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Work Periods')
                             // ->relationship('periods', 'name')
                                 ->columns(3)->multiple()
+                                ->disableOptionWhen(function ($value) {
+                                    $employee = $this->ownerRecord;
+                                    return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
+
+                                })
+
                                 ->options(
-                                    WorkPeriod::select('name', 'id')
-                                        ->where('branch_id', $this->ownerRecord->branch_id)
-                                        ->get()->pluck('name', 'id'),
-                                )->default(function () {
-                                return $this->ownerRecord?->periods?->plucK('id')?->toArray();
-                            })
+                                    function () {
+                                        $employee = $this->ownerRecord;
+                                        // $assigned = $employee->periods->pluck('id')->toArray();
+                                        // Only fetch periods NOT assigned to the employee
+                                        return WorkPeriod::select('name', 'id')
+                                            ->where('branch_id', $employee->branch_id)
+                                        // ->whereNotIn('id', $assigned)
+                                            ->get()
+                                            ->pluck('name', 'id');
+                                    }
+                                )
+                            //     ->default(function () {
+                            //     return $this->ownerRecord?->periods?->plucK('id')?->toArray();
+                            // })
                             // ->disabled(function(){
                             //     return [1,2,3,4];
                             // })
@@ -180,30 +194,14 @@ class PeriodRelationManager extends RelationManager
                                 // أيام الفترة المراد إدخالها
                                 $periodDays = $data['period_days'] ?? [];
 
-// الفترات المرتبطة بالموظف والتي تتداخل في الزمن
-                                $overlappingPeriods = EmployeePeriod::query()
-                                    ->with('days') // ضروري لجلب الأيام
-                                    ->where('employee_id', $this->ownerRecord->id)
-                                    ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
-                                        $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
-                                            $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
-                                                ->orWhereBetween('end_at', [$periodStartAt, $periodEndAt])
-                                                ->orWhere(function ($q) use ($periodStartAt, $periodEndAt) {
-                                                    $q->where('start_at', '<=', $periodStartAt)
-                                                        ->where('end_at', '>=', $periodEndAt);
-                                                });
-                                        });
-                                    })
-                                    ->get();
-
-// التحقق من تداخل الأيام
-                                foreach ($overlappingPeriods as $period) {
-                                    $existingDays = $period->days->pluck('day_of_week')->toArray();
-
-                                    if (count(array_intersect($periodDays, $existingDays)) > 0) {
-                                        Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
-                                        return;
-                                    }
+                                if ($this->isOverlappingDays(
+                                    $this->ownerRecord->id,
+                                    $periodDays,
+                                    $periodStartAt,
+                                    $periodEndAt
+                                )) {
+                                    Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
+                                    return;
                                 }
 
                                 $employeePeriod              = new EmployeePeriod();
@@ -267,7 +265,6 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->icon('heroicon-o-x-mark')
                     ->action(function ($record, $data) {
-
                         try {
                             // Update the end_date in hr_employee_period_histories
                             // Validate the employee's last attendance
@@ -329,7 +326,7 @@ class PeriodRelationManager extends RelationManager
                     ->default(function () use ($record) {
                         $employee = $this->ownerRecord;
 
-                        return \App\Models\EmployeePeriodDay::where('employee_period_id', $record->id)
+                        return \App\Models\EmployeePeriodDay::where('employee_period_id', $record->pivot_id)
                             ->pluck('day_of_week')
                             ->toArray();
                     })
@@ -360,6 +357,16 @@ class PeriodRelationManager extends RelationManager
 
                 try {
                     DB::transaction(function () use ($data, $employeePeriod) {
+                        if ($this->isOverlappingDays(
+                            $employeePeriod->employee_id,
+                            $data['days'],
+                            $employeePeriod->workPeriod->start_at,
+                            $employeePeriod->workPeriod->end_at,
+                            $employeePeriod->id// لاستثناء نفسه أثناء التعديل
+                        )) {
+                            Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
+                            return;
+                        }
                         $employeePeriod->days()->delete();
                         EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
                             ->where('period_id', $employeePeriod->period_id)
@@ -403,4 +410,38 @@ class PeriodRelationManager extends RelationManager
             ->modalWidth('md');
 
     }
+    private function isOverlappingDays($employeeId, $periodDays, $periodStartAt, $periodEndAt, $excludePeriodId = null)
+    {
+        // Query all employee periods that overlap in time, excluding current one (for edit)
+        $query = EmployeePeriod::query()
+            ->with('days')
+            ->where('employee_id', $employeeId)
+            ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
+                $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
+                    $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
+                        ->orWhereBetween('end_at', [$periodStartAt, $periodEndAt])
+                        ->orWhere(function ($q) use ($periodStartAt, $periodEndAt) {
+                            $q->where('start_at', '<=', $periodStartAt)
+                                ->where('end_at', '>=', $periodEndAt);
+                        });
+                });
+            });
+
+        // Exclude the current period if editing
+        if ($excludePeriodId) {
+            $query->where('id', '!=', $excludePeriodId);
+        }
+
+        $overlappingPeriods = $query->get();
+
+        foreach ($overlappingPeriods as $period) {
+            $existingDays = $period->days->pluck('day_of_week')->toArray();
+            if (count(array_intersect($periodDays, $existingDays)) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 }

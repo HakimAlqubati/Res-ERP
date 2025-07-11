@@ -84,4 +84,8 @@ class EmployeePeriodHistory extends Model implements Auditable
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
 }

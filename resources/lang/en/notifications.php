@@ -15,5 +15,7 @@ return [
     'you_cannot_attendance_before'                                                    => 'You can not checkin before',
     'hours'                                                                           => 'Hours',
     'cannot_check_in_because_adjust'                                                  => 'You cannot check in right now. Please contact your manager to adjust your shift.',
+    'attendance_out_of_range_before_period' => 'Attendance before period start',
+    'attendance_success' => 'Attendance success'
 
 ];

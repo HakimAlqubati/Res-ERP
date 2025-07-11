@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationMan
 use App\Enums\DayOfWeek;
 use Filament\Actions\Concerns\CanCustomizeProcess;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -13,35 +14,18 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 
 class PeriodHistoriesRelationManager extends RelationManager
 {
     use CanCustomizeProcess;
     protected static string $relationship = 'periodHistories';
     protected static ?string $title       = 'Shift History';
-    public function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                DatePicker::make('start_date')
-                // ->minDate(function($record){
-                //     return $record->employee->join_date?? now()->toDateString();
-                // })
-                    ->required(),
-                DatePicker::make('end_date'),
-                Select::make('day_of_week')
-                    ->label('Day of Week')
-                    ->options(DayOfWeek::options())
-                    ->required(),
-                // TimePicker::make('start_time'),
-                // TimePicker::make('end_time'),
-            ]);
-    }
 
     public function table(Table $table): Table
     {
         return $table
-            ->defaultSort('start_date', 'asc')
+            ->defaultSort('period_id', 'asc')
             ->striped()
             ->recordTitleAttribute('period_id')
             ->columns([
@@ -66,20 +50,50 @@ class PeriodHistoriesRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
+                Tables\Actions\Action::make('edit')->label('Edit')->button()
+
                     ->action(function ($record, $data): void {
                         $recordMonth = date('m', strtotime($record->start_date));
                         $recordYear  = date('Y', strtotime($record->start_date));
 
                         $endOfMonth                 = getEndOfMonthDate($recordYear, $recordMonth);
                         $isSalaryCreatedForEmployee = isSalaryCreatedForEmployee($record->employee_id, $endOfMonth['start_month'], $endOfMonth['end_month']);
-                        // dd($isSalaryCreatedForEmployee,$endOfMonth);
                         if ($isSalaryCreatedForEmployee) {
                             Notification::make()->title('Cannot edit because salary is already created')->warning()->send();
                             return;
                         }
-                        $record->update($data);
+
+                        DB::beginTransaction();
+                        try {
+                            $record->update($data);
+
+                            DB::commit();
+                            Notification::make()->title('Updated successfully!')->success()->send();
+                        } catch (\Throwable $e) {
+                            DB::rollBack();
+                            Notification::make()
+                                ->title('Error')
+                                ->body('An error occurred while saving: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
                     })
+
+                    ->form(fn($record) => [
+                        Fieldset::make()->columns(3)->schema([
+                            DatePicker::make('start_date')
+                                ->default($record->start_date)
+                                ->required(),
+                            DatePicker::make('end_date')
+                                ->default($record->end_date),
+                            Select::make('day_of_week')
+                                ->label('Day of Week')
+                                ->options(DayOfWeek::options())
+                                ->default(is_object($record->day_of_week) ? $record->day_of_week->value : $record->day_of_week)
+                                ->required(),
+                        ]),
+                    ])
+
                     ->visible(fn(): bool => (isSuperAdmin() || isBranchManager())),
                 Action::make('disable')->label('Disable')->visible(fn($record): bool => (isSuperAdmin() && $record->active == 1))
                     ->requiresConfirmation()->databaseTransaction()

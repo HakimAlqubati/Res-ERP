@@ -93,27 +93,27 @@ class WorkPeriodResource extends Resource
                         ->default('12:00:00'),
                 ]),
 
-                Grid::make()->columns(2)->schema([
-                    Forms\Components\Select::make('days')
-                        ->label('Days')
-                        ->multiple()
-                        ->options([
-                            'Monday' => 'Monday',
-                            'Tuesday' => 'Tuesday',
-                            'Wednesday' => 'Wednesday',
-                            'Thursday' => 'Thursday',
-                            'Friday' => 'Friday',
-                            'Saturday' => 'Saturday',
-                            'Sunday' => 'Sunday',
-                        ])->default(['Sunday'])
-                        ->columnSpan(1)
-                        ->required(),
+                // Grid::make()->columns(2)->schema([
+                //     Forms\Components\Select::make('days')
+                //         ->label('Days')
+                //         ->multiple()
+                //         ->options([
+                //             'Monday' => 'Monday',
+                //             'Tuesday' => 'Tuesday',
+                //             'Wednesday' => 'Wednesday',
+                //             'Thursday' => 'Thursday',
+                //             'Friday' => 'Friday',
+                //             'Saturday' => 'Saturday',
+                //             'Sunday' => 'Sunday',
+                //         ])->default(['Sunday'])
+                //         ->columnSpan(1)
+                //         ->required(),
 
-                    // Forms\Components\TextInput::make('allowed_count_minutes_late')
-                    //     ->label('Allowed Delay (Minutes)')->required()->default(0)
-                    //     ->columnSpan(1)
-                    //     ->numeric(),
-                ]),
+                //     // Forms\Components\TextInput::make('allowed_count_minutes_late')
+                //     //     ->label('Allowed Delay (Minutes)')->required()->default(0)
+                //     //     ->columnSpan(1)
+                //     //     ->numeric(),
+                // ]),
 
             ]),
         ];
@@ -194,7 +194,9 @@ class WorkPeriodResource extends Resource
                                     ->required()
                                     ->default($record->end_at),
                                 Forms\Components\Select::make('branch_id')
-                                    ->options(Branch::where('active', 1)->pluck('name', 'id'))
+                                    ->options(Branch::active()
+                                    ->branches()
+                                    ->pluck('name', 'id'))
                                     ->label('Branch')
                                     ->default($record->branch_id),
                                 // Forms\Components\TextInput::make('allowed_count_minutes_late')
