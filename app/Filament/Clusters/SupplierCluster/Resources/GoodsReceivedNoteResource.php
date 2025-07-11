@@ -119,8 +119,10 @@ class GoodsReceivedNoteResource extends Resource
                                         ->distinct()
                                         ->searchable()
                                         ->options(function () {
-                                            return Product::where('active', 1)
+                                            return Product::active()
                                                 ->unmanufacturingCategory()
+                                                ->orderBy('id', 'asc')
+                                                ->limit(10)
                                                 ->get()
                                                 ->mapWithKeys(fn($product) => [
                                                     $product->id => "{$product->code} - {$product->name}"
@@ -158,7 +160,7 @@ class GoodsReceivedNoteResource extends Resource
                                             return $product->supplyUnitPrices
                                                 ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                         })
-                                        ->searchable()
+                                        // ->searchable()
                                         ->reactive()
                                         ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
                                             $unitPrice = UnitPrice::where(
