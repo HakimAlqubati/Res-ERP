@@ -96,51 +96,27 @@ class AttendanceCreator
         bool $isRequest = false
     ) {
         $checkTimeStr = $checkTime;
-        $checkTime    = Carbon::parse("$date $checkTime");
+        // Ensure that $checkTime is a Carbon instance
+        // $checkTime = \Carbon\Carbon::parse($checkTime);
+        $checkTime = Carbon::parse($date . ' ' . $checkTime);
 
-        // منع تكرار التسجيل خلال 15 دقيقة
-        // $lastRecord = Attendance::where('employee_id', $employee->id)
-        //     ->where('accepted', 1)
-        //     ->where('created_at', '>=', Carbon::now()->subMinutes(15))
-        //     ->first();
-
-        $newCheckDateTime = $date . ' ' . $checkTimeStr;
-        $thresholdTime    = Carbon::parse($newCheckDateTime)->subMinutes(15)->format('Y-m-d H:i:s');
-
-        $lastRecord = Attendance::where('employee_id', $employee->id)
-            ->where('accepted', 1)
-            ->whereRaw("STR_TO_DATE(CONCAT(check_date, ' ', check_time), '%Y-%m-%d %H:%i:%s') >= ?", [$thresholdTime])
-            ->orderByDesc('check_date')
-            ->orderByDesc('check_time')
-            ->first();
+        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(15))->where('accepted', 1)->where('employee_id', $employee->id)->first();
 
         if ($lastRecord && ! $isRequest) {
-            // استخدم check_date + check_time معًا لآخر سجل
-            $lastCheckDateTime = Carbon::parse($lastRecord->check_date . ' ' . $lastRecord->check_time);
-            $nextAllowedTime   = $lastCheckDateTime->copy()->addMinutes(15);
+            // // Calculate the remaining seconds until a new record can be created
+            $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(15)->diffInSeconds(Carbon::now());
 
-                                        // الوقت الذي يحاول المستخدم التسجيل فيه
-            $newCheckTime = $checkTime; // من الكود الأصلي، وهو فعلاً Carbon لـ (التاريخ + الوقت)
+            // Convert seconds to minutes and seconds
+            $remainingMinutes = floor($remainingSeconds / 60);
+            $remainingSeconds = $remainingSeconds % 60;
+            $remainingMinutes *= -1;
+            $remainingSeconds *= -1;
+            $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
 
-            // إذا لم تمر 15 دقيقة بعد، حساب الوقت المتبقي
-            if ($nextAllowedTime->gt($newCheckTime)) {
-                $remainingSeconds = $nextAllowedTime->diffInSeconds($newCheckTime, false) * -1; // القيمة سالبة لو لم تمر الفترة
-                $remainingMinutes = floor($remainingSeconds / 60);
-                $remainingSeconds = $remainingSeconds % 60;
-
-                $message = __('notifications.please_wait_for_a') . ' ' .
-                abs($remainingMinutes) . ' ' . __('notifications.minute') . ' ' .
-                abs($remainingSeconds) . ' ' . __('notifications.second');
-
-                $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' .
-                __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
-
-                return [
-                    'success' => false,
-                    'message' => $message,
-                ];
-
-            }
+            return [
+                'success' => false,
+                'message' => $message,
+            ];
         }
 
         // بيانات أولية للحضور
@@ -186,5 +162,6 @@ class AttendanceCreator
 
         }
         return $attendanceData;
+
     }
 }
