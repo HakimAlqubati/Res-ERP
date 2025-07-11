@@ -46,7 +46,8 @@ class TestController4 extends Controller
         if ($request->has('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
         }
-
+    
+        $where[] = ' o.deleted_at is null ';
 
         // ✅ Role-based filters
         $user = auth()->user();
