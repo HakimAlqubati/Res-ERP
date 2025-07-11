@@ -51,6 +51,7 @@ class ProductUnitConversionService // Suggesting a name that indicates its purpo
                     'inventory_transactions',
                     'stock_inventory_details',
                     'stock_adjustment_details',
+                    'stock_transfer_order_details',
                 ];
 
                 foreach ($tablesToUpdate as $tableName) {
