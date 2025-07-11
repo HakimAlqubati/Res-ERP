@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource;
@@ -8,6 +7,7 @@ use App\Models\Holiday;
 use App\Models\LeaveType;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
+use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use Carbon\Carbon;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -23,13 +23,13 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
     protected static string $resource = EmployeeAttednaceReportResource::class;
 
     public $showDetailsModal = false;
-    public $modalData = [];
+    public $modalData        = [];
     public function showDetails($date, $employeeId, $periodId)
     {
         // Replace with your actual data-fetching logic if needed
         $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        $this->modalData = $AttendanceDetails->toArray();
-        //  dd($this->modalData);
+        $this->modalData   = $AttendanceDetails->toArray();
+                                        //  dd($this->modalData);
         $this->showDetailsModal = true; // This opens the modal
     }
 
@@ -64,21 +64,25 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
     protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
     {
-        if (!isStuff()) {
+        if (! isStuff()) {
             $employee_id = $this->getTable()->getFilters()['employee_id']->getState()['value'];
         } else {
             $employee_id = auth()->user()?->employee?->id;
         }
 
+        // $employee  = Employee::find($employee_id);
         $start_date = $this->getTable()->getFilters()['date_range']->getState()['start_date'];
-        $end_date = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
-        $show_day = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
-
+        $end_date   = $this->getTable()->getFilters()['date_range']->getState()['end_date'];
+        $show_day   = $this->getTable()->getFilters()['show_extra_fields']->getState()['show_day'];
+        // $historyService = new EmployeePeriodHistoryService();
+        // $start_date = Carbon::parse($start_date);
+        // $end_date = Carbon::parse($end_date);
+        // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $start_date, $end_date);
         // Initialize total counters
         $totalSupposed = '0 h 0 m';
-        $totalWorked = 0;
+        $totalWorked   = 0;
         $totalApproved = 0;
-        $totalMinutes = 0;
+        $totalMinutes  = 0;
         // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
         $data = employeeAttendances($employee_id, $start_date, $end_date);
         // dd($data);
@@ -93,10 +97,10 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
             }
             break;
         }
-        // Now convert the total minutes to hours and minutes
-        $totalHours = intdiv($totalMinutes, 60); // Get the total hours
-        $remainingMinutes = $totalMinutes % 60; // Get the remaining minutes
-        // Ensure totalHours is positive
+                                                       // Now convert the total minutes to hours and minutes
+        $totalHours       = intdiv($totalMinutes, 60); // Get the total hours
+        $remainingMinutes = $totalMinutes % 60;        // Get the remaining minutes
+                                                       // Ensure totalHours is positive
         $totalHours = abs($totalHours);
         // if ($totalHours > 0) {
         // }
@@ -112,22 +116,22 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
             }
         }
         // dd($totalSupposed);
-        // dd($data);
+        
         return [
-            'report_data' => $data,
-            'show_day' => $show_day,
-            'employee_id' => $employee_id,
-            'start_date' => $start_date,
-            'end_date' => $end_date,
+            'report_data'   => $data,
+            'show_day'      => $show_day,
+            'employee_id'   => $employee_id,
+            'start_date'    => $start_date,
+            'end_date'      => $end_date,
             'totalSupposed' => $totalSupposed,
-            'totalWorked' => $this->formatDuration($totalWorked),
+            'totalWorked'   => $this->formatDuration($totalWorked),
             'totalApproved' => $this->formatDuration($totalApproved),
         ];
     }
 
     public function getReportData2($employee_id, $start_date, $end_date)
     {
-        $employee = Employee::find($employee_id);
+        $employee          = Employee::find($employee_id);
         $leaveApplications = $employee?->approvedLeaveApplications()
             ->where(function ($query) use ($start_date, $end_date) {
                 $query->whereBetween('from_date', [$start_date, $end_date])
@@ -142,11 +146,11 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
             foreach ($leaveApplications as $leave) {
 
                 $fromDate = Carbon::parse($leave->from_date);
-                $toDate = Carbon::parse($leave->to_date);
+                $toDate   = Carbon::parse($leave->to_date);
 
                 // Create a loop to generate the list of dates
                 for ($date = $fromDate; $date->lte($toDate); $date->addDay()) {
-                    // $leaveDates[$date->format('Y-m-d')] = $date->format('Y-m-d'); // Add date to the array
+                                                                                                                                // $leaveDates[$date->format('Y-m-d')] = $date->format('Y-m-d'); // Add date to the array
                     $leaveDates[$date->format('Y-m-d')] = 'Leave application approved for (' . $leave?->leaveType?->name . ')'; // Add date to the array
                 }
             }
@@ -156,7 +160,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         // }
         // dd($leaveApplications, $leaveDates);
         $report_data['data'] = [];
-        $holidays = Holiday::where('active', 1)
+        $holidays            = Holiday::where('active', 1)
             ->whereBetween('from_date', [$start_date, $end_date])
             ->orWhereBetween('to_date', [$start_date, $end_date])
             ->select('from_date', 'to_date', 'count_days', 'name')
@@ -171,7 +175,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         foreach ($period as $date) {
 
             $formatted_date = $date->format('Y-m-d');
-            $day_of_week = $date->format('l'); // Get the day name (e.g., "Saturday")
+            $day_of_week    = $date->format('l'); // Get the day name (e.g., "Saturday")
 
             $work_periods = WorkPeriod::where('active', 1)->get()->map(function ($period) {
                 $period->days = json_decode($period->days);
@@ -221,31 +225,31 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
                 if (isset($holidays[$formatted_date])) {
                     // If the date is a holiday, add it as a holiday
 
-                    $holiday = $holidays[$formatted_date];
+                    $holiday                                                      = $holidays[$formatted_date];
                     $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
-                        'period_id' => $matching_period->id,
-                        'employee_id' => $employee_id,
-                        'employee_no' => 'N/A', // Adjust accordingly
+                        'period_id'     => $matching_period->id,
+                        'employee_id'   => $employee_id,
+                        'employee_no'   => 'N/A', // Adjust accordingly
                         'employee_name' => 'N/A', // Adjust accordingly
-                        'check_type' => 'Holiday',
-                        'check_date' => $formatted_date,
-                        'check_time' => null,
-                        'day' => $day_of_week, // Add the day for holidays
-                        'holiday_name' => 'Holiday of (' . $holiday->name . ')', // Add the holiday name
+                        'check_type'    => 'Holiday',
+                        'check_date'    => $formatted_date,
+                        'check_time'    => null,
+                        'day'           => $day_of_week,                          // Add the day for holidays
+                        'holiday_name'  => 'Holiday of (' . $holiday->name . ')', // Add the holiday name
                     ];
                 } else if (isset($leaveDates[$formatted_date])) {
                     // If the date is a approved leave application, add it as a approved leave application
                     // dd($leaveDates,array_values($leaveDates));
-                    $leave_date = $leaveDates[$formatted_date];
+                    $leave_date                                                   = $leaveDates[$formatted_date];
                     $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
-                        'period_id' => $matching_period->id,
-                        'employee_id' => $employee_id,
-                        'employee_no' => 'N/A', // Adjust accordingly
-                        'employee_name' => 'N/A', // Adjust accordingly
-                        'check_type' => 'ApprovedLeaveApplication',
-                        'check_date' => $formatted_date,
-                        'check_time' => null,
-                        'day' => $day_of_week,
+                        'period_id'       => $matching_period->id,
+                        'employee_id'     => $employee_id,
+                        'employee_no'     => 'N/A', // Adjust accordingly
+                        'employee_name'   => 'N/A', // Adjust accordingly
+                        'check_type'      => 'ApprovedLeaveApplication',
+                        'check_date'      => $formatted_date,
+                        'check_time'      => null,
+                        'day'             => $day_of_week,
                         'leave_type_name' => $leave_date,
                     ];
                 } else {
@@ -261,28 +265,28 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
                         }
                         return false;
                     });
-                    if (!empty($attendances_for_date)) {
+                    if (! empty($attendances_for_date)) {
                         // Loop through all the attendances for the date
                         foreach ($attendances_for_date as $attendances) {
                             foreach ($attendances as $attendance) {
                                 if ($attendance->period_id == $matching_period->id) {
                                     $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
-                                        'employee_id' => $attendance->employee_id,
-                                        'employee_no' => $attendance->employee_no,
-                                        'employee_name' => $attendance->employee_name,
-                                        'check_type' => $attendance->check_type,
-                                        'check_date' => $attendance->check_date,
-                                        'check_time' => $attendance->check_time,
-                                        'day' => $attendance->day,
-                                        'actual_duration_hourly' => $attendance->actual_duration_hourly,
+                                        'employee_id'              => $attendance->employee_id,
+                                        'employee_no'              => $attendance->employee_no,
+                                        'employee_name'            => $attendance->employee_name,
+                                        'check_type'               => $attendance->check_type,
+                                        'check_date'               => $attendance->check_date,
+                                        'check_time'               => $attendance->check_time,
+                                        'day'                      => $attendance->day,
+                                        'actual_duration_hourly'   => $attendance->actual_duration_hourly,
                                         'supposed_duration_hourly' => $attendance->supposed_duration_hourly,
-                                        'early_arrival_minutes' => $attendance->early_arrival_minutes,
-                                        'late_departure_minutes' => $attendance->late_departure_minutes,
-                                        'status' => $attendance->status,
-                                        'period_id' => $matching_period->id,
-                                        'period_start_at' => $matching_period->start_at,
-                                        'period_end_at' => $matching_period->end_at,
-                                        'id' => $attendance->id,
+                                        'early_arrival_minutes'    => $attendance->early_arrival_minutes,
+                                        'late_departure_minutes'   => $attendance->late_departure_minutes,
+                                        'status'                   => $attendance->status,
+                                        'period_id'                => $matching_period->id,
+                                        'period_start_at'          => $matching_period->start_at,
+                                        'period_end_at'            => $matching_period->end_at,
+                                        'id'                       => $attendance->id,
                                     ];
                                 }
                             }
@@ -292,27 +296,27 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
                         if (in_array($day_of_week, $weekend_days)) {
                             // Add a row with 'Weekend' status for weekend days
                             $report_data['data'][$formatted_date][] = (object) [
-                                'employee_id' => $employee_id,
-                                'employee_no' => 'N/A', // Adjust accordingly
+                                'employee_id'   => $employee_id,
+                                'employee_no'   => 'N/A', // Adjust accordingly
                                 'employee_name' => 'N/A', // Adjust accordingly
-                                'check_type' => 'Weekend',
-                                'check_date' => $formatted_date,
-                                'check_time' => null,
-                                'day' => $day_of_week, // Add the day for weekend
+                                'check_type'    => 'Weekend',
+                                'check_date'    => $formatted_date,
+                                'check_time'    => null,
+                                'day'           => $day_of_week, // Add the day for weekend
                             ];
                         } else {
                             // Add a row with 'Absent' status for missing dates that are not weekends or holidays
                             $report_data['data'][$formatted_date][$matching_period->id][] = (object) [
-                                'period_id' => $matching_period->id,
-                                'employee_id' => $employee_id,
-                                'employee_no' => 'N/A', // Adjust accordingly
-                                'employee_name' => 'N/A', // Adjust accordingly
-                                'check_type' => 'Absent',
+                                'period_id'       => $matching_period->id,
+                                'employee_id'     => $employee_id,
+                                'employee_no'     => 'N/A', // Adjust accordingly
+                                'employee_name'   => 'N/A', // Adjust accordingly
+                                'check_type'      => 'Absent',
                                 'period_start_at' => $matching_period->start_at,
-                                'period_end_at' => $matching_period->end_at,
-                                'check_date' => $formatted_date,
-                                'check_time' => null,
-                                'day' => $day_of_week, // Add the day for absent days
+                                'period_end_at'   => $matching_period->end_at,
+                                'check_date'      => $formatted_date,
+                                'check_time'      => null,
+                                'day'             => $day_of_week, // Add the day for absent days
                             ];
                         }
                     }
@@ -326,8 +330,8 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
     public function getTabs(): array
     {
         return [
-            'all' => Tab::make(),
-            'active' => Tab::make()
+            'all'      => Tab::make(),
+            'active'   => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('active', true)),
             'inactive' => Tab::make()
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('active', false)),
@@ -337,7 +341,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
     private function parseDuration($duration)
     {
         if (preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches)) {
-            $hours = (int) $matches[1];
+            $hours   = (int) $matches[1];
             $minutes = (int) $matches[2];
             return $hours * 60 + $minutes; // Convert to total minutes
         }
@@ -346,7 +350,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 
     private function formatDuration($totalMinutes)
     {
-        $hours = intdiv($totalMinutes, 60);
+        $hours   = intdiv($totalMinutes, 60);
         $minutes = $totalMinutes % 60;
         return "{$hours} h {$minutes} m";
     }

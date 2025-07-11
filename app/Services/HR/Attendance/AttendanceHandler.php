@@ -41,29 +41,28 @@ class AttendanceHandler
             $day  = strtolower(Carbon::parse($date)->format('D')); // الآن: "wed", "sun", إلخ
 
             $employeePeriods = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
-            
-            $periodsForDay = $employeePeriods->filter(function ($period) use ($day, $date) {
-                
-                foreach ($period->days as $dayRow) {
-                    $isDayOk  = $dayRow->day_of_week === $day; // الآن يقارن بالاختصار
-                    
-                    $isDateOk = $dayRow->start_date <= $date && (! $dayRow->end_date || $dayRow->end_date >= $date);
-                    if ($isDayOk && $isDateOk) {
-                        return true;
-                    }
-                }
-                return false;
-            }); 
+
+            $periodsForDay = $this->getPeriodsForDate($employeePeriods, $date);
             $closestPeriod = $this->findClosestPeriod($time, $periodsForDay);
 
+            if (! $closestPeriod) {
+                $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
+                $periodsForPrevDay = $this->getPeriodsForDate($employeePeriods, $prevDate);
+                $closestPeriod     = $this->findClosestPeriod($time, $periodsForPrevDay);
+                $date = $prevDate;
+                $day  = strtolower(Carbon::parse($date)->format('D'));
+            }
+
+            // dd($closestPeriod?->name,$day,$date);
             // Check if no periods are found for the given day
-            if ($periodsForDay->isEmpty()) {
+            if (! $closestPeriod) {
                 return
                     [
                     'success' => false,
-                    'message' => __('notifications.you_dont_have_periods_today') . ' (' . $day . ')',
+                    'message' => __('notifications.you_dont_have_periods_today') . ' (' . $day . ') ',
+                    'data' => $closestPeriod,
                 ];
-            } 
+            }
             if ($this->validator->isTimeOutOfAllowedRange($closestPeriod, $time)) {
                 return [
                     'success' => false,
@@ -87,7 +86,7 @@ class AttendanceHandler
             $day      = $adjusted['day'];
 
             $existAttendance = AttendanceFetcher::getExistingAttendance($employee, $closestPeriod, $date, $day, $time);
- 
+
             $attendanceData = $this->attendanceCreator->handleOrCreateAttendance(
                 $employee,
                 $closestPeriod,
@@ -99,7 +98,7 @@ class AttendanceHandler
             if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                 return $attendanceData;
             }
- 
+
             if (! $attendanceData['success']) {
                 return $attendanceData;
             }
@@ -108,7 +107,7 @@ class AttendanceHandler
                 Attendance::CHECKTYPE_CHECKIN => __('notifications.check_in_success'),
                 Attendance::CHECKTYPE_CHECKOUT => __('notifications.check_out_success'),
                 default => __('notifications.attendance_success'),
-            };  
+            };
 // ✳️ الحفظ باستخدام AttendanceSaver
             $attendanceRecord = $this->attendanceSaver->save($attendanceData['data']);
 
@@ -143,8 +142,8 @@ class AttendanceHandler
 
         foreach ($periods as $period) {
             $period = $period->workPeriod;
-            $start = strtotime($period->start_at);
-            $end   = strtotime($period->end_at);
+            $start  = strtotime($period->start_at);
+            $end    = strtotime($period->end_at);
 
             $diff = min(abs($currentTime - $start), abs($currentTime - $end));
 
@@ -155,6 +154,21 @@ class AttendanceHandler
         }
 
         return $closest;
+    }
+
+    protected function getPeriodsForDate($employeePeriods, $date)
+    {
+        $day = strtolower(Carbon::parse($date)->format('D'));
+        return $employeePeriods->filter(function ($period) use ($day, $date) {
+            foreach ($period->days as $dayRow) {
+                $isDayOk  = $dayRow->day_of_week === $day;
+                $isDateOk = $dayRow->start_date <= $date && (! $dayRow->end_date || $dayRow->end_date >= $date);
+                if ($isDayOk && $isDateOk) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
 }

@@ -93,7 +93,7 @@ class AttendanceCreator
         string $day,
         string $checkType,
         $previousRecord = null,
-        bool $isRequest = false
+        bool $isRequest = false,
     ) {
         $checkTimeStr = $checkTime;
         // Ensure that $checkTime is a Carbon instance
@@ -113,10 +113,10 @@ class AttendanceCreator
             $remainingSeconds *= -1;
             $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
 
-            return [
-                'success' => false,
-                'message' => $message,
-            ];
+            // return [
+            //     'success' => false,
+            //     'message' => $message,
+            // ];
         }
 
         // بيانات أولية للحضور
