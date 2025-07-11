@@ -46,7 +46,7 @@ class TestController4 extends Controller
         if ($request->has('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
         }
-        // $where[] = "o.deleted_at IS NULL";
+        $where[] = "o.deleted_at IS NULL";
 
         // ✅ Role-based filters
         $user = auth()->user();
@@ -299,8 +299,7 @@ AND (
                      )
                  ";
             }
-        }
-        $query .= " AND o.deleted_at is not null ";
+        } 
         if (isStoreManager() && !isBranchManager()) {
             $allCustomizedCategories = \App\Models\Branch::centralKitchens()
                 ->with('categories:id')
