@@ -46,7 +46,7 @@ class TestController4 extends Controller
         if ($request->has('id')) {
             $where[] = 'o.id = ' . (int) $request->id;
         }
-        $where[] = "o.deleted_at IS NULL";
+
 
         // ✅ Role-based filters
         $user = auth()->user();
@@ -265,7 +265,6 @@ AND (
     OR
     (o.customer_id = {$user->id} AND (c.is_manafacturing = 1 OR c.is_manafacturing = 0))
 )
-    
 ";
 
                 $otherBranchesCategories = \App\Models\Branch::centralKitchens()
@@ -299,7 +298,7 @@ AND (
                      )
                  ";
             }
-        } 
+        }
         if (isStoreManager() && !isBranchManager()) {
             $allCustomizedCategories = \App\Models\Branch::centralKitchens()
                 ->with('categories:id')
@@ -318,7 +317,7 @@ AND (
                 and c.id NOT IN ($allCustomizedCategoriesStr) ";
             }
         }
-
+        $query .=  "WHERE od.order_id = ?";
 
         $details = DB::select($query, [$id]);
 
