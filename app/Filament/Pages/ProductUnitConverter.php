@@ -108,9 +108,9 @@ class ProductUnitConverter extends Page implements HasForms
                 ->options(function (callable $get) {
                     $fromUnitId = $get('fromUnitId');
                     $query = \App\Models\Unit::query();
-                    if ($fromUnitId) {
-                        $query->where('id', '!=', $fromUnitId);
-                    }
+                    // if ($fromUnitId) {
+                    //     $query->where('id', '!=', $fromUnitId);
+                    // }
                     return $query->pluck('name', 'id')->toArray();
                 })
                 ->searchable()

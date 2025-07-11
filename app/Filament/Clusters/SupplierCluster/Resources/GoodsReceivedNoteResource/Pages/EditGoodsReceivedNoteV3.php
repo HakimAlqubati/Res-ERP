@@ -65,6 +65,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
 
                 TextInput::make('invoice_no')
                     ->label('Invoice No')->columnSpan(2)
+                    
                     ->statePath('formData.invoice_no'),
 
                 DatePicker::make('date')
@@ -133,6 +134,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
         try {
             DB::transaction(function () use ($data) {
                 $this->validatePrice($data);
+                 $this->validateInvoiceNo($data['invoice_no']);
                 $invoice = PurchaseInvoice::create([
                     'invoice_no' => $data['invoice_no'],
                     'date' => $data['date'],
@@ -185,6 +187,12 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
             }
         }
     }
+protected function validateInvoiceNo(string $invoiceNo)
+{
+    if (PurchaseInvoice::where('invoice_no', $invoiceNo)->exists()) {
+        throw new \Exception("Invoice number already exists!");
+    }
+}
 
     protected static string $view = 'filament.pages.edit-goods-received-note-v3';
 }
