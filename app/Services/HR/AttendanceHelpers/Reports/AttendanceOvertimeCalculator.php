@@ -14,7 +14,6 @@ class AttendanceOvertimeCalculator
     {
 // 1. اجلب إجمالي الساعات الفعلية للعمل بهذه الفترة (بالعشري)
         $actualHours = $this->parseDurationToFloat($employee->calculateTotalWorkHours($period['period_id'], $date) ?? 0);
-
 // 2. مدة الدوام المفترضة للفترة (بالعشري)
         $periodObject     = WorkPeriod::find($period['period_id']);
         $supposedDuration = $this->parseDurationToFloat($periodObject?->supposed_duration ?? 0);
@@ -23,18 +22,19 @@ class AttendanceOvertimeCalculator
         $isActualLargerThanSupposed = $actualHours > $supposedDuration;
 
 // 4. اجلب الأوفر تايم المعتمد لليوم والفترة
-        $approvedOvertimeDB = $employee->overtimesByDate($date)// احذف هذا السطر إذا ما عندك period_id بجدول الاوفر تايم
-            ->sum('hours');                            // تأكد أن الساعات مخزنة كـ float
+        $approvedOvertimeDB = $employee->overtimesByDate($date) // احذف هذا السطر إذا ما عندك period_id بجدول الاوفر تايم
+            ->sum('hours');                                         // تأكد أن الساعات مخزنة كـ float
 
 // 5. تطبيق نفس لوجيك الهيلبر
         if ($isActualLargerThanSupposed && $approvedOvertimeDB > 0) {
 // لو الموظف عمل أوفر تايم ومسجّل بنظام الاوفر تايم
             return $this->formatFloatToDuration($approvedOvertimeDB + ($actualHours - $supposedDuration));
         } elseif ($isActualLargerThanSupposed && $approvedOvertimeDB == 0) {
-// عمل أكثر من المفترض، ولا يوجد سجل أوفر تايم (أو غير معتمد)
             return $this->formatFloatToDuration($actualHours - $supposedDuration);
         } else {
-// لم يتجاوز الوقت المفترض
+            if (is_numeric($actualHours) && $actualHours > 0) {
+                return $this->formatFloatToDuration($actualHours);
+            }
             return $this->formatFloatToDuration(0);
         }
     }
@@ -52,6 +52,13 @@ class AttendanceOvertimeCalculator
             [$h, $m] = explode(':', $duration);
             return (float) $h + ((float) $m / 60);
         }
+
+        if (is_string($duration) && preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches)) {
+            $h = (float) $matches[1];
+            $m = (float) $matches[2];
+            return $h + ($m / 60);
+        }
+
         return 0;
     }
 
@@ -62,6 +69,6 @@ class AttendanceOvertimeCalculator
     {
         $h = floor($hours);
         $m = round(($hours - $h) * 60);
-        return sprintf("%d:%02d", $h, $m);
+        return sprintf('%dh %dm', $h, $m);
     }
 }

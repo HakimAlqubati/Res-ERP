@@ -165,8 +165,6 @@ class AttendanceFetcher
         return $result;
     }
 
- 
-
     public function getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date)
     {
         $attenance = Attendance::where('employee_id', $employeeId)

@@ -1,16 +1,12 @@
 <?php
-
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
-use App\Filament\Clusters\HRAttenanceCluster;
-use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -35,8 +31,8 @@ class LeaveBalanceResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRLeaveManagementCluster::class;
-    protected static ?string $modelLabel = 'Leave balance';
+    protected static ?string $cluster     = HRLeaveManagementCluster::class;
+    protected static ?string $modelLabel  = 'Leave balance';
     protected static ?string $pluralLabel = 'Leave balance';
 
     // public static function getCluster(): ?string
@@ -51,15 +47,15 @@ class LeaveBalanceResource extends Resource
     // }
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My leaves' : static::$modelLabel;
+        return isStuff() ? 'My leaves': static::$modelLabel;
     }
     public static function getPluralLabel(): ?string
     {
-        return isStuff() ? 'My leaves' : static::$modelLabel;
+        return isStuff() ? 'My leaves': static::$modelLabel;
         static::$pluralLabel;
     }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort                         = 2;
     public static function form(Form $form): Form
     {
         return $form
@@ -131,8 +127,8 @@ class LeaveBalanceResource extends Resource
                                                 ;
                                             }
                                         )->validationMessages([
-                                            'unique' => 'Balance already created',
-                                        ]),
+                                        'unique' => 'Balance already created',
+                                    ]),
 
                                     TextInput::make('balance')->label('Balance')
                                         ->numeric()
@@ -195,10 +191,16 @@ class LeaveBalanceResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
-                SelectFilter::make('employee_id')
-                    ->searchable()
-                    ->multiple()
-                    ->label('Employee')->options([Employee::get()->pluck('name', 'id')->toArray()]),
+                SelectFilter::make('employee_id')->label('Employee')->getSearchResultsUsing(function ($search = null) {
+                    return Employee::query()
+                        ->where('active', 1)
+                        ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                        ->limit(20)
+                        ->get()
+                        ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                })
+
+                    ->searchable(),
                 SelectFilter::make('year')
                     ->searchable()
                     ->multiple()
@@ -216,19 +218,19 @@ class LeaveBalanceResource extends Resource
                             TextInput::make('balance', $record->balance)->default($record->balance),
                         ];
                     })->action(function ($record, $data) {
-                        DB::beginTransaction();
-                        try {
-                            $record->update([
-                                'balance' => $data['balance'],
-                            ]);
-                            DB::commit();
-                            Notification::make()->success()->title('Done')->send();
-                        } catch (\Exception $th) {
-                            //throw $th;
-                            DB::rollBack();
-                            Notification::make()->warning()->body($th->getMessage())->send();
-                        }
-                    }),
+                    DB::beginTransaction();
+                    try {
+                        $record->update([
+                            'balance' => $data['balance'],
+                        ]);
+                        DB::commit();
+                        Notification::make()->success()->title('Done')->send();
+                    } catch (\Exception $th) {
+                        //throw $th;
+                        DB::rollBack();
+                        Notification::make()->warning()->body($th->getMessage())->send();
+                    }
+                }),
 
             ])
             ->bulkActions([
@@ -248,7 +250,7 @@ class LeaveBalanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListLeaveBalances::route('/'),
+            'index'  => Pages\ListLeaveBalances::route('/'),
             'create' => Pages\CreateLeaveBalance::route('/create'),
             // 'edit' => Pages\EditLeaveBalance::route('/{record}/edit'),
         ];

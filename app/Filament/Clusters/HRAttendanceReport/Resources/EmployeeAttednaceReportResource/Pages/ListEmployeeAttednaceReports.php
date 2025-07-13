@@ -83,7 +83,7 @@ class ListEmployeeAttednaceReports extends ListRecords
         //     }
         // }
         // // dd($totalSupposed);
-
+// dd($chartData);
         return [
             'report_data'   => $data,
             'show_day'      => $showDay,

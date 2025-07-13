@@ -1,6 +1,99 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
+    <style>
+        table {
+            /* border-collapse: collapse; */
+            width: 100%;
+            border-collapse: inherit;
+            border-spacing: initial;
+        }
 
+        /* Print-specific styles */
+        @media print {
+
+            /* Hide everything except the table */
+            body * {
+                visibility: hidden;
+            }
+
+            #report-table,
+            #report-table * {
+                visibility: visible;
+            }
+
+            #report-table {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+
+            /* Add borders and spacing for printed tables */
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            th,
+            td {
+                border: 1px solid #000;
+                padding: 10px;
+                font-size: 12px;
+                /* Adjust font size for better readability */
+                color: #000;
+                /* Black text for headers */
+            }
+
+            th {
+                background-color: #ddd;
+                /* Light gray background for table headers */
+
+            }
+
+            td {
+                background-color: #fff;
+                /* White background for cells */
+            }
+
+        }
+
+        .btn-print,
+        .btn-primary {
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-print {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        .btn-print i,
+        .btn-primary i {
+            margin-right: 8px;
+        }
+    </style>
     <div class="text-right mb-4">
         <button type="button" class="btn btn-info" onclick="showChartModal()">
             📊 {{ __('Show Charts') }}
@@ -16,7 +109,7 @@
 
     @if (isset($employee_id) && is_numeric($employee_id))
         <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
-            <thead>
+            <thead class="fixed-header" style="top:64px;">
                 <x-filament-tables::row class="header_report">
                     <th colspan="4">
                         <p>({{ \App\Models\Employee::find($employee_id)?->name ?? __('lang.choose_branch') }})</p>
@@ -173,14 +266,14 @@
                 @endforeach
             </tbody>
 
-            <tfoot>
+            {{-- <tfoot>
                 <x-filament-tables::row>
                     <th colspan="{{ $show_day ? 8 : 7 }}" class="text-right font-bold">{{ __('Total') }}</th>
                     <td class="text-center">-</td>
                     <td class="text-center">-</td>
                     <td class="text-center">-</td>
                 </x-filament-tables::row>
-            </tfoot>
+            </tfoot> --}}
         </x-filament-tables::table>
     @else
         <div class="please_select_message_div" style="text-align: center;">

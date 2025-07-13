@@ -20,34 +20,45 @@
                 </x-filament-tables::row>
             </thead>
             <tbody>
+                {{-- {{dd($report_data)}} --}}
                 @foreach ($report_data as $date => $data)
                     {{-- @if (empty($data['employees']))
                         <x-filament-tables::row>
                             <x-filament-tables::cell colspan="5" class="text-center">{{ __('No One') }}</x-filament-tables::cell>
                         </x-filament-tables::row>
-                    @else --}}
-                        @php $rowspan = count($data['employees']); @endphp
+                    @endif --}}
+                    @php $rowspan = count($data['employees']); @endphp
+                    @if ($rowspan == 0)
+                        <div class="please_select_message_div" style="text-align: center;">
+
+                            <h1 class="please_select_message_text">{{ __('No Data') }}</h1>
+                        </div>
+                        @break
+
+                    @else
                         @foreach ($data['employees'] as $index => $employee)
                             <x-filament-tables::row>
-                                @if ($index === 0) <!-- Only show date for the first employee on this date -->
-                                    <x-filament-tables::cell rowspan="{{ $rowspan }}" class="text-center">{{ $date }}</x-filament-tables::cell>
+                                @if ($index === 0)
+                                    <!-- Only show date for the first employee on this date -->
+                                    <x-filament-tables::cell rowspan="{{ $rowspan }}"
+                                        class="text-center">{{ $date }}</x-filament-tables::cell>
                                 @endif
                                 <x-filament-tables::cell>{{ $employee['name'] }}</x-filament-tables::cell>
                                 <x-filament-tables::cell>{{ ucfirst($employee['prediction']) }}</x-filament-tables::cell>
                                 {{-- @foreach ($employee['attendances'] as $attendance)
                                     <x-filament-tables::cell>{{ $attendance['check_time'] }}</x-filament-tables::cell>
                                     <x-filament-tables::cell>{{ ucfirst($attendance['check_type']) }}</x-filament-tables::cell>
-                                @endforeach --}}
+                                    @endforeach --}}
                             </x-filament-tables::row>
                         @endforeach
-                    {{-- @endif --}}
+                    @endif
                 @endforeach
             </tbody>
         </x-filament-tables::table>
     @else
-    <div class="please_select_message_div" style="text-align: center;">
+        <div class="please_select_message_div" style="text-align: center;">
 
-        <h1 class="please_select_message_text">{{ __('Please select an Branch') }}</h1>
-    </div>
+            <h1 class="please_select_message_text">{{ __('Please select an Branch') }}</h1>
+        </div>
     @endif
 </x-filament-panels::page>

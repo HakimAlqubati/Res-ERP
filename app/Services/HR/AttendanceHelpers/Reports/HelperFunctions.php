@@ -58,7 +58,7 @@ class HelperFunctions
 
         // dd($stats,$statuses);
         $chartData = [
-            'labels' => array_map(fn($s) => $s->label(), $statuses),
+            'labels' => array_map(fn($s) => $s->value, $statuses),
             'values' => array_map(fn($s) => $stats[$s->value] ?? 0, $statuses),
             'colors' => array_map(fn($s) => $s->hexColor(), $statuses),
         ];

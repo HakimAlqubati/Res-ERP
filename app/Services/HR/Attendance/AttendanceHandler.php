@@ -45,6 +45,7 @@ class AttendanceHandler
             $periodsForDay = $this->getPeriodsForDate($employeePeriods, $date);
             $closestPeriod = $this->findClosestPeriod($time, $periodsForDay);
 
+            // dd($closestPeriod,$day,$date,$employeePeriods);
             if (! $closestPeriod) {
                 $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
                 $periodsForPrevDay = $this->getPeriodsForDate($employeePeriods, $prevDate);

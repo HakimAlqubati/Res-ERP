@@ -16,7 +16,7 @@ class AttendanceSaver
             'day'                          => $attendanceData['day'],
             'check_type'                   => $attendanceData['check_type'],
             'branch_id'                    => $attendanceData['branch_id'] ?? null,
-            'created_by'                   => $attendanceData['created_by'] ?? 0,
+            'created_by'                   => auth()->id(),
             'attendance_type'              => $attendanceData['attendance_type'] ,
             'status'                       => $attendanceData['status'] ,
             'actual_duration_hourly'       => $attendanceData['actual_duration_hourly'] ?? null,
