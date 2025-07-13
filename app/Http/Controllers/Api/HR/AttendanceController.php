@@ -3,9 +3,10 @@ namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
-use App\Services\HR\Attendance\AttendanceService;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
+use App\Services\HR\Attendance\AttendanceService;
+use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -37,7 +38,6 @@ class AttendanceController extends Controller
         ], $result['success'] ? 200 : 422);
     }
 
-    
     /**
      * API: استرجاع سجل الحضور لموظف محدد خلال مدى زمني
      * GET /api/employee-attendance?employee_id=1&from=2024-07-01&to=2024-07-31
@@ -62,8 +62,8 @@ class AttendanceController extends Controller
         return response()->json([
             'success'  => true,
             'employee' => [
-                'id'   => $employee->id,
-                'name' => $employee->name,
+                'id'     => $employee->id,
+                'name'   => $employee->name,
                 'number' => $employee->employee_no,
             ],
             'from'     => $from->toDateString(),
@@ -71,4 +71,30 @@ class AttendanceController extends Controller
             'data'     => $result,
         ]);
     }
+
+    /**
+     * API: استرجاع تقرير حضور عدة موظفين ليوم واحد
+     * GET /api/employees-attendance-on-date?employee_ids[]=1&employee_ids[]=2&date=2025-07-12
+     */
+    public function employeesAttendanceOnDate(Request $request, EmployeesAttendanceOnDateService $attendanceService)
+    {
+        $request->validate([
+            'employee_ids'   => 'required|array|min:1',
+            'employee_ids.*' => 'required|exists:hr_employees,id',
+            'date'           => 'required|date',
+        ]);
+
+        $employeeIds = $request->employee_ids;
+        $date        = $request->date;
+
+        // استدعاء الخدمة الجديدة
+        $reports = $attendanceService->fetchAttendances($employeeIds, $date);
+
+        return response()->json([
+            'success'   => true,
+            'date'      => $date,
+            'employees' => $reports->values(), // لو تريد بدون المفاتيح الرقمية ضع ->values()
+        ]);
+    }
+
 }
