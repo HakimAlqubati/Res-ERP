@@ -1,8 +1,5 @@
 <x-filament-panels::page>
     {{ $this->getTableFiltersForm() }}
-    <style>
-        /* ... يمكن إبقاء كل ستايلاتك كما هي ... */
-    </style>
 
     <div class="text-right mb-4">
         <button onclick="printReport()" class="btn btn-print">
@@ -50,35 +47,113 @@
                     <th class="internal_cell">{{ __('Approved') }}</th>
                 </x-filament-tables::row>
             </thead>
+
             <tbody>
                 @foreach ($report_data as $date => $data)
                     @php
                         $periods = $data['periods'] ?? [];
-                        $rowspan = max(count($periods), 1);
+                        $dayStatus = $data['day_status'] ?? null;
+
                     @endphp
 
-                    @if (count($periods) > 0)
-                        @foreach ($periods as $index => $period)
+                    @if ($dayStatus == 'leave')
+                        <x-filament-tables::row>
+                            @if ($show_day)
+                                <x-filament-tables::cell>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</x-filament-tables::cell>
+                            @endif
+                            <x-filament-tables::cell>{{ $date }}</x-filament-tables::cell>
+                            <x-filament-tables::cell colspan="9" class="text-center text-gray-500 font-bold">
+                                {{ $data['leave_type'] }}
+                            </x-filament-tables::cell>
+                        </x-filament-tables::row>
+                    @elseif (!is_null($dayStatus) && count($periods) > 0)
+                        {{-- @if (count($periods) > 0) --}}
+                        @foreach ($periods as $periodIndex => $period)
+                            @php
+                                // احصل على كل checkins الرقمية
+                                $checkIns = collect($period['attendances']['checkin'] ?? [])
+                                    ->filter(fn($v, $k) => is_int($k))
+                                    ->values()
+                                    ->all();
+                                // أول دخول
+                                $firstCheckin = $checkIns[0]['check_time'] ?? '-';
+                                $firstCheckinStatus = $checkIns[0]['status'] ?? '-';
+
+                                // آخر خروج (باستخدام lastcheckout حصراً)
+                                $lastCheckout = $period['attendances']['checkout']['lastcheckout']['check_time'] ?? '-';
+                                $lastCheckoutStatus =
+                                    $period['attendances']['checkout']['lastcheckout']['status'] ?? '-';
+                            @endphp
+
                             <x-filament-tables::row>
-                                @if ($index == 0)
-                                    <x-filament-tables::cell style="display: {{ $show_day ? 'table-cell' : 'none' }};"
-                                        rowspan="{{ $rowspan }}">
-                                        {{ $data['day_name'] ?? ($data['day'] ?? '') }}
+                                {{-- اليوم --}}
+                                @if ($periodIndex == 0)
+                                    @if ($show_day)
+                                        <x-filament-tables::cell rowspan="{{ count($periods) }}">
+                                            {{ $data['day_name'] ?? ($data['day'] ?? '') }}
+                                        </x-filament-tables::cell>
+                                    @endif
+                                    <x-filament-tables::cell rowspan="{{ count($periods) }}">
+                                        {{ $date }}
                                     </x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        rowspan="{{ $rowspan }}">{{ $date }}</x-filament-tables::cell>
                                 @endif
-                                <x-filament-tables::cell
-                                    class="internal_cell">{{ $period['start_time'] ?? ($period['start_at'] ?? '-') }}</x-filament-tables::cell>
-                                <x-filament-tables::cell
-                                    class="internal_cell">{{ $period['end_time'] ?? ($period['end_at'] ?? '-') }}</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
-                                <x-filament-tables::cell class="internal_cell">-</x-filament-tables::cell>
+
+                                {{-- بيانات الفترة --}}
+                                <x-filament-tables::cell>
+                                    {{ $period['start_time'] ?? '-' }}
+                                </x-filament-tables::cell>
+                                <x-filament-tables::cell>
+                                    {{ $period['end_time'] ?? '-' }}
+                                </x-filament-tables::cell>
+
+                                @if ($period['final_status'] == 'absent')
+                                    <x-filament-tables::cell colspan="8">
+                                        Absent
+                                    </x-filament-tables::cell>
+                                @else
+                                    <x-filament-tables::cell>
+                                        {{ $firstCheckin }}
+                                    </x-filament-tables::cell>
+
+                                    <x-filament-tables::cell>
+                                        {{ $firstCheckinStatus }}
+                                    </x-filament-tables::cell>
+
+                                    <x-filament-tables::cell>
+                                        {{ $lastCheckout }}
+                                    </x-filament-tables::cell>
+
+                                    <x-filament-tables::cell>
+                                        {{ $lastCheckoutStatus }}
+                                    </x-filament-tables::cell>
+
+                                    <x-filament-tables::cell>
+                                        {{ $period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '-' }}
+
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell>
+                                        @php
+                                            $duration =
+                                                $period['attendances']['checkout']['lastcheckout'][
+                                                    'total_actual_duration_hourly'
+                                                ] ?? '-';
+                                        @endphp
+                                        @if ($duration !== '-')
+                                            <button
+                                                class="text-blue-600 font-semibold underline hover:text-blue-900 transition"
+                                                wire:click="showDetails('{{ $date }}', {{ $employee_id }}, {{ $period['period_id'] }})"
+                                                style="cursor:pointer; border:none; background:none; padding:0;"
+                                                title="Show all check-in/out details">
+                                                {{ $duration }}
+                                            </button>
+                                        @else
+                                            <span>{{ $duration }}</span>
+                                        @endif
+                                    </x-filament-tables::cell>
+                                    <x-filament-tables::cell>
+                                        {{ $period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '-' }}
+                                    </x-filament-tables::cell>
+                                @endif
                             </x-filament-tables::row>
                         @endforeach
                     @else
@@ -93,8 +168,8 @@
                         </x-filament-tables::row>
                     @endif
                 @endforeach
-
             </tbody>
+
             <tfoot>
                 <x-filament-tables::row>
                     <th colspan="{{ $show_day ? 8 : 7 }}" class="text-right font-bold">{{ __('Total') }}</th>
@@ -153,4 +228,10 @@
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    @if ($showDetailsModal)
+        @include('components.hr.attendances-reports.attendance-details-modal', [
+            'modalData' => $modalData,
+        ])
+    @endif
+
 </x-filament-panels::page>

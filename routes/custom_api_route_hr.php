@@ -11,5 +11,7 @@ Route::prefix('hr')
     // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
 
     Route::get('employees/{employee}/periodsHistory', [EmployeePeriodHistoryController::class, 'getPeriodsByDateRange']);
+    Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);
+
 
 });

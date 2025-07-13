@@ -28,8 +28,7 @@ class EmployeePeriodHistoryController extends Controller
         $start = Carbon::parse($request->input('start_date'));
         $end   = Carbon::parse($request->input('end_date'));
 
-        // $result = $this->historyService->getEmployeePeriodsByDateRange($employee, $start, $end);
-        $result = $this->historyService->getEmployeePeriodsWithAttendanceByDateRange($employee, $start, $end);
+        $result = $this->historyService->getEmployeePeriodsByDateRange($employee, $start, $end); 
 
 
         return response()->json([
