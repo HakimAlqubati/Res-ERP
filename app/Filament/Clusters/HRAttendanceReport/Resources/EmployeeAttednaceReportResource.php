@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport;
@@ -15,27 +14,25 @@ use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class EmployeeAttednaceReportResource extends Resource
 {
-    protected static ?string $model = Attendance::class;
-    protected static ?string $slug = 'employee-attendance-reports';
+    protected static ?string $model          = Attendance::class;
+    protected static ?string $slug           = 'employee-attendance-reports';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
-    protected static ?string $label = 'Attendance by employee';
+    protected static ?string $label   = 'Attendance by employee';
     public static function getModelLabel(): string
     {
         return isStuff() ? 'My records' : 'Attendance by employee';
     }
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort                         = 2;
     public static function form(Form $form): Form
     {
         return $form
@@ -52,19 +49,17 @@ class EmployeeAttednaceReportResource extends Resource
             ->emptyStateHeading('No data')
             ->columns([])
             ->filters([
-                SelectFilter::make('employee_id')->label('Employee')->options(
-                    function () {
-                        return Employee::where('active', 1)
-                            ->get()
-                            ->mapWithKeys(function ($employee) {
-                                return [$employee->id => $employee->name . ' - ' . $employee->id];
-                            });
-                    }
-                )
+                SelectFilter::make('employee_id')->label('Employee')->getSearchResultsUsing(function ($search = null) {
+                    return Employee::query()
+                        ->where('active', 1)
+                        ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                        ->limit(20)
+                        ->get()
+                        ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                })
 
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
-                
 
                 Filter::make('date_range')
                     ->form([
@@ -85,7 +80,7 @@ class EmployeeAttednaceReportResource extends Resource
                     ->form([
                         Toggle::make('show_day')
                             ->inline(false)
-                            ->label('Show Day')
+                            ->label('Show Day'),
                     ]),
 
             ], FiltersLayout::AboveContent)

@@ -42,8 +42,8 @@ class ListEmployeeAttednaceReports extends ListRecords
         $endDate   = Carbon::parse($endDate);
         // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
         $attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        $data              = $attendanceFetcher->fetchEmployeeAttendances($employee, $startDate, $endDate);
-        $chartData         = HelperFunctions::getAttendanceChartData($data,$employee);
+        $data              = $employee ? $attendanceFetcher->fetchEmployeeAttendances($employee, $startDate, $endDate) : [];
+        $chartData         = HelperFunctions::getAttendanceChartData($data, $employee);
 
         // Initialize total counters
         $totalSupposed = '0 h 0 m';
@@ -83,7 +83,6 @@ class ListEmployeeAttednaceReports extends ListRecords
         //     }
         // }
         // // dd($totalSupposed);
-
 
         return [
             'report_data'   => $data,

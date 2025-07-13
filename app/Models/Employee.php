@@ -87,7 +87,7 @@ class Employee extends Model implements Auditable
         'working_hours',
         'manager_id',
     ];
-    public $appends  = ['avatar_image', 'periodsCount'];
+    // public $appends  = ['avatar_image', 'periodsCount'];
     protected $casts = [
         'bank_information' => 'array',
         'changes'          => 'array', // This allows storing changes as a JSON

@@ -5,8 +5,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
-use App\Services\HR\Attendance\AttendanceService;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
+use App\Services\HR\Attendance\AttendanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -97,4 +97,45 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function employeesAttendanceOnDateToTest(Request $request)
+    {
+        $request->validate([
+            'date'  => 'required|date',
+            // اختياري: عدد الموظفين للتجربة
+            'count' => 'sometimes|integer|min:1',
+        ]);
+
+        $date  = $request->input('date');
+        $count = $request->input('count', 5000); // الافتراضي 5000
+
+        // جلب IDs أول عدد محدد من الموظفين (active فقط كمثال)
+        $employeeIds = \App\Models\Employee::where('active', 1)->limit($count)->pluck('id')->toArray();
+        $startTime   = microtime(true);
+        $empName     = [];
+        $allEmpNames = [];
+        $chunkSize   = 1000;
+
+        foreach (array_chunk($employeeIds, $chunkSize) as $chunk) {
+            $empNames = Employee::whereIn('id', $chunk)->pluck('name', 'id')->toArray();
+            $allEmpNames += $empNames;
+        }
+
+        // $attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
+        // $attendanceService = new EmployeesAttendanceOnDateService($attendanceFetcher);
+
+        // $results   = $attendanceService->fetchAttendances($employeeIds, $date);
+        $endTime = microtime(true);
+
+        $duration = round($endTime - $startTime, 3); // بالثواني
+
+        return response()->json([
+            'success'          => true,
+            'date'             => $date,
+            'count'            => count($employeeIds),
+            'duration_seconds' => $duration,
+            'names_sample'     => array_slice($empNames, 0, 5), // فقط عينة للعرض
+
+            // 'data'             => $results, // يفضل في الاختبار فقط. في الإنتاج ارجع مختصرًا أو paginated
+        ]);
+    }
 }

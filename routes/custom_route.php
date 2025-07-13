@@ -240,3 +240,5 @@ Route::get('/updateCorrectStore',function(){
         WHERE p.category_id = 36
     ");;
 });
+
+Route::get('employeesAttendanceOnDateToTest', [\App\Http\Controllers\Api\HR\AttendanceController::class, 'employeesAttendanceOnDateToTest']);
