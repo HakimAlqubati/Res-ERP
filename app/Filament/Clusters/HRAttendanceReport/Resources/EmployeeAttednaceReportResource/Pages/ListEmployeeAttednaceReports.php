@@ -5,6 +5,7 @@ use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportRe
 use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
+use App\Services\HR\AttendanceHelpers\Reports\HelperFunctions;
 use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 
@@ -42,6 +43,8 @@ class ListEmployeeAttednaceReports extends ListRecords
         // $data     = $historyService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
         $attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $data              = $attendanceFetcher->fetchEmployeeAttendances($employee, $startDate, $endDate);
+        $chartData         = HelperFunctions::getAttendanceChartData($data,$employee);
+
         // Initialize total counters
         $totalSupposed = '0 h 0 m';
         $totalWorked   = 0;
@@ -81,6 +84,7 @@ class ListEmployeeAttednaceReports extends ListRecords
         // }
         // // dd($totalSupposed);
 
+
         return [
             'report_data'   => $data,
             'show_day'      => $showDay,
@@ -90,6 +94,8 @@ class ListEmployeeAttednaceReports extends ListRecords
             'totalSupposed' => $totalSupposed,
             'totalWorked'   => $this->formatDuration($totalWorked),
             'totalApproved' => $this->formatDuration($totalApproved),
+            'chartData'     => $chartData['chartData'],
+            'employee_name' => $chartData['employee_name'],
         ];
     }
 

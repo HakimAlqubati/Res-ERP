@@ -5,7 +5,7 @@ enum AttendanceReportStatus: string {
     case Absent                 = 'absent';
     case IncompleteCheckinOnly  = 'incomplete_checkin_only';
     case IncompleteCheckoutOnly = 'incomplete_checkout_only';
-    case Present                = 'present';
+    case Present                = 'present_days';
     case Partial                = 'partial';
     case Leave                  = 'leave';
     case NoPeriods              = 'no_periods';
@@ -19,6 +19,35 @@ enum AttendanceReportStatus: string {
             self::Present => 'Present',
             self::Partial => 'Parital',
             self::Leave => 'Leave',
+            self::NoPeriods => 'No Periods',
+        };
+    }
+
+     // يمكنك تغيير الألوان حسب إطار العمل أو ذوقك (Bootstrap/Tailwind أو Hex code)
+    public function color(): string
+    {
+        return match ($this) {
+            self::Absent                 => 'danger',    // Bootstrap: أحمر. Tailwind: 'red-600'
+            self::IncompleteCheckinOnly  => 'warning',   // Bootstrap: أصفر. Tailwind: 'yellow-500'
+            self::IncompleteCheckoutOnly => 'warning',   // Bootstrap: أصفر. Tailwind: 'yellow-500'
+            self::Present                => 'success',   // Bootstrap: أخضر. Tailwind: 'green-600'
+            self::Partial                => 'info',      // Bootstrap: أزرق فاتح. Tailwind: 'sky-500'
+            self::Leave                  => 'primary',   // Bootstrap: أزرق. Tailwind: 'blue-600'
+            self::NoPeriods              => 'secondary', // Bootstrap: رمادي. Tailwind: 'gray-400'
+        };
+    }
+
+    // لو تريد Hex:
+    public function hexColor(): string
+    {
+        return match ($this) {
+            self::Absent                 => '#dc3545', // أحمر
+            self::IncompleteCheckinOnly  => '#ffc107', // أصفر
+            self::IncompleteCheckoutOnly => '#ffc107', // أصفر
+            self::Present                => '#28a745', // أخضر
+            self::Partial                => '#17a2b8', // أزرق سماوي
+            self::Leave                  => '#007bff', // أزرق
+            self::NoPeriods              => '#6c757d', // رمادي
         };
     }
 }

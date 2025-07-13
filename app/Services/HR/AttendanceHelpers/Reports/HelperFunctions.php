@@ -8,12 +8,12 @@ class HelperFunctions
     public static function calculateAttendanceStats($reportData)
     {
         $stats = [
-            'present_days'    => 0,
-            'absent_days'     => 0,
-            'partial_days'    => 0,
-            'no_periods_days' => 0,
-            'leave_days'      => 0,
-            'total_days'      => 0,
+            'present_days' => 0,
+            'absent'       => 0,
+            'partial'      => 0,
+            'no_periods'   => 0,
+            'leave'        => 0,
+            'total_days'   => 0,
         ];
 
         foreach ($reportData as $date => $data) {
@@ -28,20 +28,44 @@ class HelperFunctions
             switch ($data['day_status'] ?? null) {
                 case AttendanceReportStatus::Present->value: $stats['present_days']++;
                     break;
-                case AttendanceReportStatus::Absent->value: $stats['absent_days']++;
+                case AttendanceReportStatus::Absent->value: $stats['absent']++;
                     break;
-                case AttendanceReportStatus::Partial->value: $stats['partial_days']++;
+                case AttendanceReportStatus::Partial->value: $stats['partial']++;
                     break;
-                case AttendanceReportStatus::Leave->value: $stats['leave_days']++;
+                case AttendanceReportStatus::Leave->value: $stats['leave']++;
                     break;
-                case AttendanceReportStatus::NoPeriods->value: $stats['no_periods_days']++;
+                case AttendanceReportStatus::NoPeriods->value: $stats['no_periods']++;
                     break;
 
-                default: $stats['no_periods_days']++;
+                default: $stats['no_periods']++;
                     break;
             }
         }
 
         return $stats;
+    }
+
+    public static function getAttendanceChartData($reportData, $employee = null)
+    { 
+        $statuses = [
+            AttendanceReportStatus::Present,
+            AttendanceReportStatus::Absent,
+            AttendanceReportStatus::Partial,
+            AttendanceReportStatus::Leave,
+            AttendanceReportStatus::NoPeriods,
+        ];
+        $stats = self::calculateAttendanceStats($reportData);
+
+        // dd($stats,$statuses);
+        $chartData = [
+            'labels' => array_map(fn($s) => $s->label(), $statuses),
+            'values' => array_map(fn($s) => $stats[$s->value] ?? 0, $statuses),
+            'colors' => array_map(fn($s) => $s->hexColor(), $statuses),
+        ];
+        return [
+            'chartData'     => $chartData,
+            'employee_name' => $employee?->name ?? '',
+            // باقي البيانات
+        ];
     }
 }

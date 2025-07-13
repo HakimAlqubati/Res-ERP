@@ -2,6 +2,9 @@
     {{ $this->getTableFiltersForm() }}
 
     <div class="text-right mb-4">
+        <button type="button" class="btn btn-info" onclick="showChartModal()">
+            📊 {{ __('Show Charts') }}
+        </button>
         <button onclick="printReport()" class="btn btn-print">
             &#128438; {{ __('Print Report') }}
         </button>
@@ -234,4 +237,7 @@
         ])
     @endif
 
+    @include('components.hr.attendances-reports.attendance-stats-chart-modal', [
+        'chartData' => $chartData,
+    ])
 </x-filament-panels::page>
