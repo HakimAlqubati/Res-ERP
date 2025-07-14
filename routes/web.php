@@ -3,12 +3,14 @@
 use App\Filament\Pages\AttendanecEmployee2;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
+use App\Http\Controllers\HR\TestSalaryCalcController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Reports\OrderDeliveryReportController;
 use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
+use App\Http\Controllers\SalaryReportController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController3;
@@ -714,3 +716,9 @@ Route::get('/routes-list', function () {
 Route::get('/products/{product}/export-items-pdf', function (\App\Models\Product $product) {
     return $product->exportItemsPdf();
 })->name('products.export-items-pdf');
+
+Route::get('/salary-report/{employee}', [SalaryReportController::class, 'show'])
+    ->name('salary.report');
+
+Route::get('test/salary-calc/{employee}/{year}/{month}', [TestSalaryCalcController::class, 'show'])
+    ->name('test.salary-calc');
