@@ -110,6 +110,7 @@ class InventoryReportController extends Controller
                 $item->movement_date    = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
                 $item->transaction_date = \Carbon\Carbon::parse($item->transaction_date)->format('Y-m-d');
                 $item->quantity         = formatQunantity($item->quantity);
+                $item->store = $item?->store?->name??'';
                 return $item;
             });
         }
