@@ -1,8 +1,6 @@
 <?php
-
 namespace App\Filament\Resources;
 
-use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Resources\SettingResource\Pages;
 use App\Models\Attendance;
 use App\Models\Setting;
@@ -18,7 +16,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -31,7 +28,7 @@ class SettingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $modelLabel = 'System Settings';
+    protected static ?string $modelLabel  = 'System Settings';
     protected static ?string $pluralLabel = 'System Settings';
     // protected static ?string $cluster = SettingsCluster::class;
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -76,7 +73,7 @@ class SettingResource extends Resource
                                         ->visibility('public')
                                         ->columnSpan(3)
                                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                            return  Str::random(15) . "." . $file->getClientOriginalExtension();
+                                            return Str::random(15) . "." . $file->getClientOriginalExtension();
                                         }),
 
                                     Fieldset::make()->columnSpanFull()->label('Address')->schema([
@@ -100,12 +97,12 @@ class SettingResource extends Resource
 
                                     TextInput::make("early_attendance_minutes")
                                         ->label('Early arrival minutes')
-                                        // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                    // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("pre_end_hours_for_check_in_out")
                                         ->label('Pre-period action hours')
-                                        // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                    // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("early_depature_deduction_minutes")
@@ -117,8 +114,8 @@ class SettingResource extends Resource
                                             ->label('Overtime calculation period')
                                             ->options([
                                                 Attendance::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_QUARTER_HOUR_LABEL,
-                                                Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL,
-                                                Attendance::PERIOD_ALLOWED_OVERTIME_HOUR => Attendance::PERIOD_ALLOWED_OVERTIME_HOUR_LABEL,
+                                                Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR    => Attendance::PERIOD_ALLOWED_OVERTIME_HALF_HOUR_LABEL,
+                                                Attendance::PERIOD_ALLOWED_OVERTIME_HOUR         => Attendance::PERIOD_ALLOWED_OVERTIME_HOUR_LABEL,
                                             ])
                                             ->live()
                                             ->required(),
@@ -160,161 +157,97 @@ class SettingResource extends Resource
                                         Select::make('end_of_month_day')
                                             ->label('Custom End of Month Day')
                                             ->helperText('Select a custom day for the end of the month')
-                                            ->options(array_combine(range(1, 28), range(1, 28))) // Creates options from 1 to 28
-                                            ->visible(fn(Get $get) => !$get('use_standard_end_of_month')) // Only visible if 'use_standard_end_of_month' is false
+                                            ->options(array_combine(range(1, 28), range(1, 28)))          // Creates options from 1 to 28
+                                            ->visible(fn(Get $get) => ! $get('use_standard_end_of_month')) // Only visible if 'use_standard_end_of_month' is false
                                             ->required(),
-                                    ])
+                                    ]),
 
                                 ]),
+                                Fieldset::make()->label('Payroll Closing Settings')->columns(4)->schema([
+                                    Select::make('payroll_closing_method')
+                                        ->label('Payroll Closing Method')
+                                        ->options([
+                                            'manual' => 'Manual (By HR/Accountant)',
+                                            'auto'   => 'Automatic (By System)',
+                                        ])
+                                        ->default('manual')
+                                        ->live() // Make it reactive to show/hide other fields
+                                        ->helperText('Select how the payroll month will be closed'),
+
+                                    // يظهر فقط إذا تم اختيار auto
+                                    Select::make('payroll_auto_closing_day')
+                                        ->label('Auto Closing Day')
+                                        ->options(array_combine(range(1, 31), range(1, 31)))
+                                        ->default(21)
+                                        ->visible(fn(Get $get) => $get('payroll_closing_method') === 'auto')
+                                        ->helperText('Select the day of month for auto closing (e.g., 21)'),
+
+                                    TextInput::make('payroll_auto_closing_time')
+                                        ->label('Auto Closing Time')
+                                        ->default('04:00')
+                                        ->visible(fn(Get $get) => $get('payroll_closing_method') === 'auto')
+                                        ->helperText('Time (HH:MM) for auto payroll closing'),
+
+                                    // تحديد بداية ونهاية دورة الرواتب
+                                    Select::make('payroll_period_start_day')
+                                        ->label('Payroll Period Start Day')
+                                        ->options(array_combine(range(1, 28), range(1, 28)))
+                                        ->default(22)
+                                        ->helperText('First day of salary period (e.g., 22)'),
+
+                                    Select::make('payroll_period_end_day')
+                                        ->label('Payroll Period End Day')
+                                        ->options(array_combine(range(1, 31), range(1, 31)))
+                                        ->default(21)
+                                        ->helperText('Last day of salary period (e.g., 21)'),
+
+                                    TextInput::make('payroll_closing_notification_days')
+                                        ->label('Notification Before Closing (days)')
+                                        ->default(2)
+                                        ->numeric()
+                                        ->helperText('How many days before closing should the system notify HR?'),
+                                ])
+                                ,
                                 Fieldset::make()->label('Face rekognation settings')
                                     ->hidden(fn(): bool => isFinanceManager())
                                     ->columns(4)->schema([
-                                        Select::make('timeout_webcam_value')
-                                            ->label('Camera Auto-Off Timer (minutes)')
-                                            ->options([
-                                                '30000' => 'Half Minute',
-                                                '60000' => 'One Minute',
-                                                '120000' => 'Two Minutes',
-                                                '180000' => 'Three Minutes',
-                                                '300000' => 'Five Minutes',
-                                                '600000' => 'Ten Minutes',
-                                            ])
-                                            ->default('30000')
-                                            ->native(false)
-                                            ->required()
-                                            ->helperText('Select the camera timeout duration.'),
-                                        Select::make('webcam_capture_time')
-                                            ->label('Image Capture Delay (Seconds)')
-                                            ->options([
-                                                '500' => 'Half a Second',
-                                                '1000' => 'One Second',
-                                                '2000' => 'Two Seconds',
-                                                '3000' => 'Three Seconds',
-                                                '5000' => 'Five Seconds',
-                                                '7000' => 'Seven Seconds',
-                                                '8000' => 'Eight Seconds',
-                                                '10000' => 'Ten Seconds',
-                                            ])
-                                            ->default('1000') // Default to 1 second
-                                            ->helperText('Choose the delay before capturing an image.')
-                                            ->native(false)
-                                            ->required(),
-                                    ]),
+                                    Select::make('timeout_webcam_value')
+                                        ->label('Camera Auto-Off Timer (minutes)')
+                                        ->options([
+                                            '30000'  => 'Half Minute',
+                                            '60000'  => 'One Minute',
+                                            '120000' => 'Two Minutes',
+                                            '180000' => 'Three Minutes',
+                                            '300000' => 'Five Minutes',
+                                            '600000' => 'Ten Minutes',
+                                        ])
+                                        ->default('30000')
+                                        ->native(false)
+                                        ->required()
+                                        ->helperText('Select the camera timeout duration.'),
+                                    Select::make('webcam_capture_time')
+                                        ->label('Image Capture Delay (Seconds)')
+                                        ->options([
+                                            '500'   => 'Half a Second',
+                                            '1000'  => 'One Second',
+                                            '2000'  => 'Two Seconds',
+                                            '3000'  => 'Three Seconds',
+                                            '5000'  => 'Five Seconds',
+                                            '7000'  => 'Seven Seconds',
+                                            '8000'  => 'Eight Seconds',
+                                            '10000' => 'Ten Seconds',
+                                        ])
+                                        ->default('1000') // Default to 1 second
+                                        ->helperText('Choose the delay before capturing an image.')
+                                        ->native(false)
+                                        ->required(),
+                                ]),
 
                             ])
                             ->hidden(function () {
                                 return hideHrForTenant();
                             }),
-                        Tab::make('Tax Settings')->hidden()
-                            ->icon('heroicon-o-calculator')
-                            ->schema([
-                                Fieldset::make('MTD/PCB Tax Brackets')->columns(4)->schema([
-                                    TextInput::make('tax_bracket_0_to_5000')
-                                        ->label('0 - 5,000')
-                                        ->default(0) // 0% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->disabled(),
 
-                                    TextInput::make('tax_bracket_5001_to_20000')
-                                        ->label('5,001 - 20,000')
-                                        ->default(1) // 1% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_20001_to_35000')
-                                        ->label('20,001 - 35,000')
-                                        ->default(3) // 3% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_35001_to_50000')
-                                        ->label('35,001 - 50,000')
-                                        ->default(8) // 8% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_50001_to_70000')
-                                        ->label('50,001 - 70,000')
-                                        ->default(13) // 13% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_70001_to_100000')
-                                        ->label('70,001 - 100,000')
-                                        ->default(21) // 21% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_100001_to_250000')
-                                        ->label('100,001 - 250,000')
-                                        ->default(24) // 24% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_250001_to_400000')
-                                        ->label('250,001 - 400,000')
-                                        ->default(25) // 25% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_400001_to_600000')
-                                        ->label('400,001 - 600,000')
-                                        ->default(26) // 26% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_600001_to_1000000')
-                                        ->label('600,001 - 1,000,000')
-                                        ->default(28) // 28% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_1000001_to_2000000')
-                                        ->label('1,000,001 - 2,000,000')
-                                        ->default(30) // 30% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-
-                                    TextInput::make('tax_bracket_above_2000000')
-                                        ->label('Above 2,000,000')
-                                        ->default(32) // 32% tax rate
-                                        ->helperText(fn($state) => "Tax Rate: {$state}%")
-                                        ->numeric()
-                                        ->required()
-                                        ->reactive()
-                                        ->afterStateUpdated(fn($state, callable $set) => $set('helperText', "Tax Rate: {$state}%")),
-                                ]),
-                            ]),
                         Tab::make('Task Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema([
@@ -323,7 +256,7 @@ class SettingResource extends Resource
                                         ->label('Rejections times lead to red')
                                         ->default(2)
                                         ->prefixIconColor('danger')
-                                        ->prefixIcon('heroicon-o-credit-card') // Replace with a red card icon class
+                                        ->prefixIcon('heroicon-o-credit-card')                   // Replace with a red card icon class
                                         ->helperText('Red card indicates task rejection limit'), // Optional helper text
 
                                     TextInput::make('task_rejection_times_yello_card')
@@ -333,15 +266,15 @@ class SettingResource extends Resource
                                         ->helperText('Yellow card indicates task rejection limit')
                                         ->default(1),
                                     Select::make('task_red_card_penalty_type')->required()
-                                        // ->text('-select a panality-')
+                                    // ->text('-select a panality-')
                                         ->native(false)
                                         ->reactive()
                                         ->label('Penalty Type for Red Card')
                                         ->options([
                                             'deduction_half_day' => 'Deduction Half Day',
                                             'deduction_full_day' => 'Deduction Full Day',
-                                            'custom_amount' => 'Custom amount',
-                                            'no_penalty' => 'No Penalty',
+                                            'custom_amount'      => 'Custom amount',
+                                            'no_penalty'         => 'No Penalty',
                                         ])
                                         ->default('no_penalty')
                                         ->helperText('Select the penalty applied when a red card is issued'),
@@ -369,8 +302,8 @@ class SettingResource extends Resource
 
                                 // ]),
                             ])->hidden(function () {
-                                return hideHrForTenant();
-                            }),
+                            return hideHrForTenant();
+                        }),
                         Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
@@ -388,7 +321,7 @@ class SettingResource extends Resource
                                     Toggle::make('purchase_invoice_from_grn_only')
                                         ->inline(false)->columnSpanFull()
                                         ->label('Enable GRN')
-                                        // ->helperText('If enabled, purchase invoices can be created through GRN.')
+                                    // ->helperText('If enabled, purchase invoices can be created through GRN.')
                                         ->default(false),
                                     Select::make('grn_entry_role_id')->multiple()
                                         ->label('Role Allowed to Create GRN')
@@ -439,7 +372,7 @@ class SettingResource extends Resource
                                         //     ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
                                         Toggle::make('enable_user_orders_to_store')->inline(false)
                                             ->label(__('system_settings.enable_user_orders_to_store'))
-                                            // ->onIcon('heroicon-s-lightning-bolt')
+                                        // ->onIcon('heroicon-s-lightning-bolt')
                                             ->offIcon('heroicon-s-user')
                                             ->onColor('success')
                                             ->offColor('danger')
@@ -472,10 +405,10 @@ class SettingResource extends Resource
                                         Select::make('password_contains_for')
                                             ->label(__('lang.password_strong_type'))
                                             ->options([
-                                                'easy_password' => __('lang.easy_password'),
+                                                'easy_password'   => __('lang.easy_password'),
                                                 'strong_password' => __('lang.strong_password'),
                                             ])
-                                            ->required() // You can adjust validation as needed
+                                            ->required()              // You can adjust validation as needed
                                             ->default('only_letters') // Set default value if required
                                         ,
                                         Select::make('disallow_multi_session')
@@ -500,7 +433,7 @@ class SettingResource extends Resource
                                             Select::make('type_reactive_blocked_users')
                                                 ->label(__('lang.type_reactive_blocked_users'))
                                                 ->options([
-                                                    'manual' => __('lang.manual'),
+                                                    'manual'                 => __('lang.manual'),
                                                     'based_on_specific_time' => __('lang.based_on_specific_time'),
                                                 ])
                                                 ->required()
@@ -524,12 +457,12 @@ class SettingResource extends Resource
                                                 ->label('Login Authentication Method')
                                                 ->options([
                                                     'password' => 'Email/Phone with Password',
-                                                    'otp' => 'OTP via Email',
+                                                    'otp'      => 'OTP via Email',
                                                 ])
                                                 ->default('password')
                                                 ->required()
                                                 ->helperText('Choose how users should authenticate when logging in.'),
-                                        ])
+                                        ]),
                                 ]),
                             ]),
                     ]),
