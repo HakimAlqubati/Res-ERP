@@ -1142,6 +1142,7 @@ if (!function_exists('calculate_missing_hours')) {
         //     ->havingRaw('COUNT(*) > 1')
         //     ->exists();
 
+        
 
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
             ->where('check_date', $date)
@@ -1151,10 +1152,6 @@ if (!function_exists('calculate_missing_hours')) {
             ->having('total', '>', 1)
             ->exists();
 
-        // $isMultipleOld = Attendance::where('check_date', $date)
-        //     ->where('employee_id', $employeeId)
-        //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count() > 1 ? true : false;
-        // dd($isMultiple,$isMultiple2);
         if (!$isMultiple) {
             return [
                 'formatted' => '0 h 0m',

@@ -2,7 +2,8 @@
 namespace App\Services\HR\AttendanceHelpers\Reports;
 
 use App\Enums\HR\Attendance\AttendanceReportStatus;
-use App\Http\Resources\AttendanceResource;
+use App\Http\Resources\CheckInAttendanceResource;
+use App\Http\Resources\CheckOutAttendanceResource;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
@@ -76,31 +77,44 @@ class AttendanceFetcher
                 $checkOutCollection = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->values();
 
                 // تحويل إلى Resources (مصفوفة رقمية)
-                $checkInResources  = AttendanceResource::collection($checkInCollection)->toArray(request());
-                $checkOutResources = AttendanceResource::collection($checkOutCollection)->toArray(request());
+                $checkInResources  = CheckInAttendanceResource::collection($checkInCollection)->toArray(request());
+                $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator) {
+                    $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+                    return (new CheckOutAttendanceResource($item, $approvedOvertime, $date))->toArray(request());
+                })->all();
 
                 // أول سجل checkout (للـ firstcheckout)
                 $firstCheckoutModel    = $checkOutCollection->first();
-                $firstCheckoutResource = $firstCheckoutModel ? (new AttendanceResource($firstCheckoutModel))->toArray(request()) : null;
+                $firstCheckoutResource = $firstCheckoutModel ? (new CheckOutAttendanceResource($firstCheckoutModel))->toArray(request()) : null;
+
                 if ($firstCheckoutResource) {
                     $firstCheckoutResource['period_end_at'] = $period['end_time'];
                     // أضف أي حقول إضافية هنا
                 }
-
+                $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+ 
                 // آخر سجل checkout (للـ lastcheckout)
                 $lastCheckoutModel    = $checkOutCollection->last();
-                $lastCheckoutResource = $lastCheckoutModel ? (new AttendanceResource($lastCheckoutModel))->toArray(request()) : null;
+                $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $date))->toArray(request()) : null;
                 if ($lastCheckoutResource) {
                     $lastCheckoutResource['period_end_at'] = $period['end_time'];
                     // أضف أي حقول إضافية هنا
                 }
 
                 // ركب المصفوفة: (مفاتيح رقمية + firstcheckout + lastcheckout)
-                $checkIn          = $checkInResources;
-                $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
+                $checkIn = $checkInResources;
+
                 if ($firstCheckoutResource) {
                     $checkIn['firstcheckout']                      = $firstCheckoutResource;
                     $checkIn['firstcheckout']['approved_overtime'] = $approvedOvertime;
+                    // $checkIn['firstcheckout']['missing_hours'] = calculate_missing_hours(
+                    //                 $attendance->status,
+                    //                 $attendance->supposed_duration_hourly ?? $periodObject . ':00',
+                    //                 $approvedOvertime,
+                    //                 $date->toDateString(),
+                    //                 $employeeId
+
+                    //             );
                 }
 
                 $checkOut = $checkOutResources;
