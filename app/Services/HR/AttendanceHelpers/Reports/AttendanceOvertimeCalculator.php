@@ -12,8 +12,9 @@ class AttendanceOvertimeCalculator
  */
     public function calculatePeriodApprovedOvertime(Employee $employee, $period, $date)
     {
-// 1. اجلب إجمالي الساعات الفعلية للعمل بهذه الفترة (بالعشري)
+        // 1. اجلب إجمالي الساعات الفعلية للعمل بهذه الفترة (بالعشري)
         $actualHours = $this->parseDurationToFloat($employee->calculateTotalWorkHours($period['period_id'], $date) ?? 0);
+
 // 2. مدة الدوام المفترضة للفترة (بالعشري)
         $periodObject     = WorkPeriod::find($period['period_id']);
         $supposedDuration = $this->parseDurationToFloat($periodObject?->supposed_duration ?? 0);
@@ -21,16 +22,16 @@ class AttendanceOvertimeCalculator
 // 3. هل الموظف تجاوز الوقت المفترض؟
         $isActualLargerThanSupposed = $actualHours > $supposedDuration;
 
-// 4. اجلب الأوفر تايم المعتمد لليوم والفترة
+                                                                // 4. اجلب الأوفر تايم المعتمد لليوم والفترة
         $approvedOvertimeDB = $employee->overtimesByDate($date) // احذف هذا السطر إذا ما عندك period_id بجدول الاوفر تايم
             ->sum('hours');                                         // تأكد أن الساعات مخزنة كـ float
 
-// 5. تطبيق نفس لوجيك الهيلبر
+        // 5. تطبيق نفس لوجيك الهيلبر
         if ($isActualLargerThanSupposed && $approvedOvertimeDB > 0) {
-// لو الموظف عمل أوفر تايم ومسجّل بنظام الاوفر تايم
+            // لو الموظف عمل أوفر تايم ومسجّل بنظام الاوفر تايم
             return $this->formatFloatToDuration($approvedOvertimeDB + ($actualHours - $supposedDuration));
         } elseif ($isActualLargerThanSupposed && $approvedOvertimeDB == 0) {
-            return $this->formatFloatToDuration($actualHours - $supposedDuration);
+            return $this->formatFloatToDuration($supposedDuration);
         } else {
             if (is_numeric($actualHours) && $actualHours > 0) {
                 return $this->formatFloatToDuration($actualHours);

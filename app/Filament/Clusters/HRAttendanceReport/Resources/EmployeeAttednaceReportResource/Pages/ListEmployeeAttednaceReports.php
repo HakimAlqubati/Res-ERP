@@ -50,40 +50,7 @@ class ListEmployeeAttednaceReports extends ListRecords
         $totalWorked   = 0;
         $totalApproved = 0;
         $totalMinutes  = 0;
-        // $report_data = $this->getReportData2($employee_id, $startDate, $endDate);
-        // $data = employeeAttendances($employee_id, $startDate, $endDate);
-        // dd($data);
-
-        // Calculate totals from the attendance data
-        // foreach ($data as $date => $dayData) {
-        //     $periodIds = collect($dayData['periods'])->pluck('period_id')->toArray();
-        //     foreach ($periodIds as $periodId) {
-
-        //         $totalMinutes += WorkPeriod::find($periodId)
-        //             ->calculateTotalSupposedDurationForDays((count($data) - LeaveType::getMonthlyCountDaysSum()));
-        //     }
-        //     break;
-        // }
-        //                                                // Now convert the total minutes to hours and minutes
-        // $totalHours       = intdiv($totalMinutes, 60); // Get the total hours
-        // $remainingMinutes = $totalMinutes % 60;        // Get the remaining minutes
-        //                                                // Ensure totalHours is positive
-        // $totalHours = abs($totalHours);
-        // // if ($totalHours > 0) {
-        // // }
-        // // dd($totalHours,$remainingMinutes);
-        // $totalSupposed = sprintf('%02d h %02d m', $totalHours, $remainingMinutes);
-        // // Format the result
-
-        // foreach ($data as $date => $dayData) {
-        //     foreach ($dayData['periods'] ?? [] as $period) {
-        //         // $arr[] = $period['period_id'];
-        //         $totalWorked += $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
-        //         $totalApproved += $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
-        //     }
-        // }
-        // // dd($totalSupposed);
-// dd($chartData);
+        
         return [
             'report_data'   => $data,
             'show_day'      => $showDay,
@@ -95,6 +62,9 @@ class ListEmployeeAttednaceReports extends ListRecords
             'totalApproved' => $this->formatDuration($totalApproved),
             'chartData'     => $chartData['chartData'],
             'employee_name' => $chartData['employee_name'],
+            'total_actual_duration_hours' => $data['total_actual_duration_hours'],
+            'total_duration_hours'=> $data['total_duration_hours'],
+            'total_approved_overtime'=> $data['total_approved_overtime'],
         ];
     }
 

@@ -266,14 +266,14 @@
                 @endforeach
             </tbody>
 
-            {{-- <tfoot>
+            <tfoot>
                 <x-filament-tables::row>
-                    <th colspan="{{ $show_day ? 8 : 7 }}" class="text-right font-bold">{{ __('Total') }}</th>
-                    <td class="text-center">-</td>
-                    <td class="text-center">-</td>
-                    <td class="text-center">-</td>
+                    <x-filament-tables::cell colspan="{{ $show_day ? 8 : 7 }}" class="text-center font-bold">{{ __('Total') }}</x-filament-tables::cell>
+                    <x-filament-tables::cell class="text-center">{{$total_duration_hours}}</x-filament-tables::cell>
+                    <x-filament-tables::cell class="text-center">{{$total_actual_duration_hours}}</x-filament-tables::cell>
+                    <x-filament-tables::cell class="text-center">{{$total_approved_overtime}}</x-filament-tables::cell>
                 </x-filament-tables::row>
-            </tfoot> --}}
+            </tfoot>
         </x-filament-tables::table>
     @else
         <div class="please_select_message_div" style="text-align: center;">

@@ -49,7 +49,16 @@ class EmployeeAttednaceReportResource extends Resource
             ->emptyStateHeading('No data')
             ->columns([])
             ->filters([
-                SelectFilter::make('employee_id')->label('Employee')->getSearchResultsUsing(function ($search = null) {
+                SelectFilter::make('employee_id')->label('Employee')
+                ->options(function ($search = null) {
+                    return Employee::query()
+                        ->where('active', 1)
+                        // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                        ->limit(20)
+                        ->get()
+                        ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                })
+                ->getSearchResultsUsing(function ($search = null) {
                     return Employee::query()
                         ->where('active', 1)
                         ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))

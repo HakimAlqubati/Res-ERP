@@ -24,6 +24,7 @@ class CheckOutAttendanceResource extends JsonResource
             'late_departure_minutes'   => $this->late_departure_minutes,
             'early_departure_minutes'  => $this->early_departure_minutes,
             'actual_duration_hourly'   => $this->actual_duration_hourly,
+            'total_actual_duration_hourly'   => $this->total_actual_duration_hourly,
             'supposed_duration_hourly' => $this->supposed_duration_hourly,
             'status'                   => $this->status,
             'missing_hours'            => calculate_missing_hours(

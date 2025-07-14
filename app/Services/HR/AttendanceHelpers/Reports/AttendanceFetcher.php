@@ -32,11 +32,12 @@ class AttendanceFetcher
         // 1. استخرج الفترات لكل يوم
         $periodsByDay = $this->periodHistoryService->getEmployeePeriodsByDateRange($employee, $startDate, $endDate);
 
-        $result = collect();
+        $totalDurationHours = $periodsByDay['total_duration_hours'];
+        $result             = collect();
 
         $leaveApplications = $this->getEmployeeLeaves($employee, $startDate, $endDate);
         // 2. لكل يوم -> لكل فترة -> جلب الحضور
-        foreach ($periodsByDay as $date => $data) {
+        foreach ($periodsByDay['days'] as $date => $data) {
             $leaveFound = null;
 
             foreach ($leaveApplications as $leave) {
@@ -92,7 +93,7 @@ class AttendanceFetcher
                     // أضف أي حقول إضافية هنا
                 }
                 $approvedOvertime = $overtimeCalculator->calculatePeriodApprovedOvertime($employee, $period, $date);
- 
+
                 // آخر سجل checkout (للـ lastcheckout)
                 $lastCheckoutModel    = $checkOutCollection->last();
                 $lastCheckoutResource = $lastCheckoutModel ? (new CheckOutAttendanceResource($lastCheckoutModel, $approvedOvertime, $date))->toArray(request()) : null;
@@ -101,20 +102,11 @@ class AttendanceFetcher
                     // أضف أي حقول إضافية هنا
                 }
 
-                // ركب المصفوفة: (مفاتيح رقمية + firstcheckout + lastcheckout)
                 $checkIn = $checkInResources;
 
                 if ($firstCheckoutResource) {
                     $checkIn['firstcheckout']                      = $firstCheckoutResource;
                     $checkIn['firstcheckout']['approved_overtime'] = $approvedOvertime;
-                    // $checkIn['firstcheckout']['missing_hours'] = calculate_missing_hours(
-                    //                 $attendance->status,
-                    //                 $attendance->supposed_duration_hourly ?? $periodObject . ':00',
-                    //                 $approvedOvertime,
-                    //                 $date->toDateString(),
-                    //                 $employeeId
-
-                    //             );
                 }
 
                 $checkOut = $checkOutResources;
@@ -165,16 +157,80 @@ class AttendanceFetcher
                 // هنا نستخدم قيمة جزئي – يمكنك تعريفها في الـ Enum أو ترجع قيمة ثابتة هنا فقط
                 $dayStatus = AttendanceReportStatus::Partial->value;
             }
+            $actualSeconds = 0;
+            foreach ($periods as $period) {
+                $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                if ($lastCheckout && ! empty($lastCheckout['total_actual_duration_hourly'])) {
+                    list($h, $m, $s) = explode(':', $lastCheckout['total_actual_duration_hourly']);
+                    $actualSeconds += ($h * 3600) + ($m * 60) + $s;
+                }
+            }
+            $actualDuration = gmdate('H:i:s', $actualSeconds);
 
             $result->put($date, [
-                'date'       => $date,
-                'day_name'   => $data['day_name'],
-                'periods'    => $periods,
-                'day_status' => $dayStatus,
+                'date'                  => $date,
+                'day_name'              => $data['day_name'],
+                'periods'               => $periods,
+                'actual_duration_hours' => $actualDuration,
+                'day_status'            => $dayStatus,
             ]);
         }
         $stats = HelperFunctions::calculateAttendanceStats($result);
         $result->put('statistics', $stats);
+        $result->put('total_duration_hours', $totalDurationHours);
+
+        // جمع total actual secods
+        $totalActualSeconds = 0;
+        foreach ($result as $key => $day) {
+            // فقط الأيام، وليست عناصر الإحصائيات أو التجميع
+            if (
+                is_array($day)
+                && isset($day['actual_duration_hours'])
+                && preg_match('/^\d{2}:\d{2}:\d{2}$/', $day['actual_duration_hours'])
+            ) {
+                list($h, $m, $s) = explode(':', $day['actual_duration_hours']);
+                $totalActualSeconds += ($h * 3600) + ($m * 60) + $s;
+            }
+        }
+        $totalActualDuration = sprintf('%02d:%02d:%02d',
+            floor($totalActualSeconds / 3600),
+            ($totalActualSeconds / 60) % 60,
+            $totalActualSeconds % 60
+        );
+        $result->put('total_actual_duration_hours', $totalActualDuration);
+
+        $totalApprovedOvertimeSeconds = 0;
+        foreach ($result as $key => $day) {
+            if (
+                is_array($day)
+                && isset($day['periods'])
+                && $day['periods'] instanceof Collection
+            ) {
+                foreach ($day['periods'] as $period) {
+                    $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                    if (
+                        $lastCheckout &&
+                        ! empty($lastCheckout['approved_overtime'])
+                    ) {
+                        $value = $lastCheckout['approved_overtime'];
+                        if (preg_match('/^\d{2}:\d{2}:\d{2}$/', $value)) {
+                            list($h, $m, $s) = explode(':', $value);
+                            $totalApprovedOvertimeSeconds += ($h * 3600) + ($m * 60) + $s;
+                        } else {
+                            $totalApprovedOvertimeSeconds += $this->parseHourMinuteString($value);
+                        }
+                    }
+                }
+            }
+        }
+
+        $totalApprovedOvertime = sprintf('%02d:%02d:%02d',
+            floor($totalApprovedOvertimeSeconds / 3600),
+            ($totalApprovedOvertimeSeconds / 60) % 60,
+            $totalApprovedOvertimeSeconds % 60
+        );
+
+        $result->put('total_approved_overtime', $totalApprovedOvertime);
 
         return $result;
     }
@@ -208,4 +264,25 @@ class AttendanceFetcher
                 'hr_leave_types.name as transaction_description'
             )->get();
     }
+
+    protected function parseHourMinuteString($str)
+    {
+        $hours   = 0;
+        $minutes = 0;
+        $seconds = 0;
+        if (preg_match('/(\d+)\s*h/', $str, $m)) {
+            $hours = (int) $m[1];
+        }
+
+        if (preg_match('/(\d+)\s*m/', $str, $m)) {
+            $minutes = (int) $m[1];
+        }
+
+        if (preg_match('/(\d+)\s*s/', $str, $m)) {
+            $seconds = (int) $m[1];
+        }
+
+        return $hours * 3600 + $minutes * 60 + $seconds;
+    }
+
 }
