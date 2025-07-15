@@ -22,7 +22,7 @@ class CheckOutHandler
             ->first();
 
         if ($checkinRecord) {
-            $checkinTime       = Carbon::parse($checkinRecord->check_date.' '. $checkinRecord->check_time);
+            $checkinTime       = Carbon::parse($checkinRecord->check_date . ' ' . $checkinRecord->check_time);
             $previousCheckDate = $date;
             $previousCheckId   = $checkinRecord->id;
             $previousDayName   = Carbon::parse($checkinRecord->check_date)->format('l');
@@ -50,7 +50,7 @@ class CheckOutHandler
 
         $currentDurationFormatted = sprintf('%02d:%02d', $hoursActual, $minutesActual);
         $actualDurationFormatted  = sprintf('%02d:%02d', floor($actualMinutes / 60), $actualMinutes % 60);
- 
+
         $attendanceData['actual_duration_hourly']   = $actualDurationFormatted;
         $attendanceData['checkinrecord_id']         = $previousCheckId ?? null;
         $attendanceData['supposed_duration_hourly'] = $nearestPeriod?->supposed_duration;
@@ -114,7 +114,14 @@ class CheckOutHandler
                 $attendanceData['status']                  = Attendance::STATUS_EARLY_DEPARTURE;
             }
         }
+        if (is_array($attendanceData) && isset($attendanceData['employee_id'], $attendanceData['period_id'])) {
 
+            return [
+                'success' => true,
+                'data'    => $attendanceData,
+            ];
+
+        }
         return $attendanceData;
     }
 }

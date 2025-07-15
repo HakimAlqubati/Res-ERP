@@ -95,18 +95,21 @@ class PeriodRelationManager extends RelationManager
                     ->form(
 
                         [Grid::make()->columnSpanFull()->columns(1)->schema([
-                            Fieldset::make()->columnSpanFull()
-                                ->label('Choose the start period date')
+                            Fieldset::make()->columns(2)->columnSpanFull()
+                                ->label('Choose the period duration')
                                 ->schema([
                                     DatePicker::make('start_period')->label('Start period date')
-                                        ->default(now())
-                                        ->columnSpanFull()
-                                    // ->minDate(function($record){
-                                    //     dd($record);
-                                    //     return $record->employee->join_date?? now()->toDateString();
-                                    // })
-                                    // ->maxDate(now())
+                                        
+                                        ->default(function ($record) {
+                                            return $this->ownerRecord->join_date ?? now()->toDateString();
+                                        })
                                         ->required(),
+
+                                    DatePicker::make('end_date')->label('End period date')
+                                        
+                                        ->after('start_period')
+                                        ->nullable()
+                                        ->helperText('Leave empty for unlimited (open) period'),
                                 ]),
                             ToggleButtons::make('periods')
                                 ->label('Work Periods')
@@ -136,7 +139,7 @@ class PeriodRelationManager extends RelationManager
                             // ->disabled(function(){
                             //     return [1,2,3,4];
                             // })
-                                ->helperText('Select the employee\'s work periods.'),
+                                ->helperText('Select the employee\'s work periods.')->required(),
                             Fieldset::make()->schema([
                                 CheckboxList::make('period_days')
                                     ->label('Days of Work')
@@ -214,14 +217,14 @@ class PeriodRelationManager extends RelationManager
                                     $employeePeriod->days()->create([
                                         'day_of_week' => $dayOfWeek,
                                         'start_date'  => $data['start_period'],
-                                        'end_date'    => null,
+                                        'end_date'    => $data['end_date'] ?? null,
                                     ]);
 
                                     EmployeePeriodHistory::create([
                                         'employee_id' => $this->ownerRecord->id,
                                         'period_id'   => $value,
                                         'start_date'  => $data['start_period'],
-                                        'end_date'    => null,
+                                        'end_date'    => $data['end_date'] ?? null,
                                         'start_time'  => $periodStartAt,
                                         'end_time'    => $periodEndAt,
                                         'day_of_week' => $dayOfWeek,
@@ -411,7 +414,7 @@ class PeriodRelationManager extends RelationManager
 
     }
     private function isOverlappingDays($employeeId, $periodDays, $periodStartAt, $periodEndAt, $excludePeriodId = null)
-    {
+    { 
         // Query all employee periods that overlap in time, excluding current one (for edit)
         $query = EmployeePeriod::query()
             ->with('days')

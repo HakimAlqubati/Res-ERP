@@ -62,9 +62,9 @@ class ListEmployeeAttednaceReports extends ListRecords
             'totalApproved' => $this->formatDuration($totalApproved),
             'chartData'     => $chartData['chartData'],
             'employee_name' => $chartData['employee_name'],
-            'total_actual_duration_hours' => $data['total_actual_duration_hours'],
-            'total_duration_hours'=> $data['total_duration_hours'],
-            'total_approved_overtime'=> $data['total_approved_overtime'],
+            'total_actual_duration_hours' => $data['total_actual_duration_hours']??0,
+            'total_duration_hours'=> $data['total_duration_hours']??0,
+            'total_approved_overtime'=> $data['total_approved_overtime']??0,
         ];
     }
 

@@ -78,6 +78,9 @@ class AttendanceCreator
         if (isset($createdAttendance['success']) && ! $createdAttendance['success']) {
             return $createdAttendance;
         }
+        if (isset($createdAttendance['success']) &&  $createdAttendance['success']) {
+            return $createdAttendance;
+        } 
         return [
             'success' => true,
             'data'    => $createdAttendance,
@@ -156,7 +159,7 @@ class AttendanceCreator
             }
             $attendanceData = $result;
         }
-
+ 
         if ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
             $attendanceData = $this->checkOutHandler->handle($attendanceData, $nearestPeriod, $employee->id, $date, $checkTime, $previousRecord);
 

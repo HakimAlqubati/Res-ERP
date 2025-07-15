@@ -13,9 +13,11 @@ class AttendanceHandler
         protected CheckInHandler $checkInHandler,
         protected CheckOutHandler $checkOutHandler,
         protected AttendanceSaver $attendanceSaver,
-        protected AttendanceCreator $attendanceCreator
+        protected AttendanceCreator $attendanceCreator,
+        protected PeriodHelper $periodHelper,
     ) {
-        $this->validator = $validator;
+        $this->validator    = $validator;
+        $this->periodHelper = $periodHelper;
     }
 
     public function handleEmployeeAttendance(Employee $employee,
@@ -40,19 +42,28 @@ class AttendanceHandler
             $date = date('Y-m-d', strtotime($dateTime));
             $day  = strtolower(Carbon::parse($date)->format('D')); // الآن: "wed", "sun", إلخ
 
-            $employeePeriods = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
+            $employeePeriods   = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
+            $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
+            $periodsForToday   = $this->getPeriodsForDate($employeePeriods, $date);
+            $periodsForPrevDay = $employeePeriods->filter(function ($period) use ($prevDate) {
+                return $period->workPeriod->day_and_night && // فقط الفترات الليلية
+                $this->periodHelper->periodCoversDate($period, $prevDate);
+            });
 
-            $periodsForDay = $this->getPeriodsForDate($employeePeriods, $date);
-            $closestPeriod = $this->findClosestPeriod($time, $periodsForDay);
-
-            // dd($closestPeriod,$day,$date,$employeePeriods);
-            if (! $closestPeriod) {
-                $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
-                $periodsForPrevDay = $this->getPeriodsForDate($employeePeriods, $prevDate);
-                $closestPeriod     = $this->findClosestPeriod($time, $periodsForPrevDay);
-                $date = $prevDate;
-                $day  = strtolower(Carbon::parse($date)->format('D'));
+            if($periodsForPrevDay->count()>0 && $periodsForToday->count()<=0){
+                $date= $prevDate; 
             }
+// دمج المصفوفتين
+            $allPeriods    = $periodsForToday->merge($periodsForPrevDay);
+            $closestPeriod = $this->findClosestPeriod($time, $allPeriods);
+            // dd($closestPeriod, $day, $date, $employeePeriods);
+            // if (! $closestPeriod) {
+            //     $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
+            //     $periodsForPrevDay = $this->getPeriodsForDate($employeePeriods, $prevDate);
+            //     $closestPeriod     = $this->findClosestPeriod($time, $periodsForPrevDay, true);
+            //     $date              = $prevDate;
+            //     $day               = strtolower(Carbon::parse($date)->format('D'));
+            // }
 
             // dd($closestPeriod?->name,$day,$date);
             // Check if no periods are found for the given day
@@ -60,8 +71,8 @@ class AttendanceHandler
                 return
                     [
                     'success' => false,
-                    'message' => __('notifications.you_dont_have_periods_today') . ' (' . $day . ') ',
-                    'data' => $closestPeriod,
+                    'message' => __('notifications.you_dont_have_periods_today') . ' (' . $day . '-' . $date . ') ',
+                    'data'    => $closestPeriod,
                 ];
             }
             if ($this->validator->isTimeOutOfAllowedRange($closestPeriod, $time)) {
@@ -99,8 +110,7 @@ class AttendanceHandler
             if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                 return $attendanceData;
             }
-
-            if (! $attendanceData['success']) {
+            if (is_array($attendanceData) && isset($attendanceData['success']) && ! $attendanceData['success']) {
                 return $attendanceData;
             }
             $checkType = $attendanceData['check_type'] ?? null;
@@ -108,7 +118,7 @@ class AttendanceHandler
                 Attendance::CHECKTYPE_CHECKIN => __('notifications.check_in_success'),
                 Attendance::CHECKTYPE_CHECKOUT => __('notifications.check_out_success'),
                 default => __('notifications.attendance_success'),
-            };
+            }; 
 // ✳️ الحفظ باستخدام AttendanceSaver
             $attendanceRecord = $this->attendanceSaver->save($attendanceData['data']);
 
@@ -135,22 +145,31 @@ class AttendanceHandler
         }
     }
 
-    protected function findClosestPeriod(string $time, $periods)
+    protected function findClosestPeriod(string $time, $periods, $forPrevDay = false)
     {
         $currentTime = strtotime($time);
         $closest     = null;
         $minDiff     = null;
 
         foreach ($periods as $period) {
-            $period = $period->workPeriod;
-            $start  = strtotime($period->start_at);
-            $end    = strtotime($period->end_at);
+            $workPeriod = $period->workPeriod;
 
+            $dayAndNight = $workPeriod->day_and_night;
+            $start       = strtotime($workPeriod->start_at);
+            $end         = strtotime($workPeriod->end_at);
+
+            if ($dayAndNight) {
+                // فترة ليلية (تعبر منتصف الليل)
+                if (($currentTime >= strtotime('00:00:00')) && ($currentTime <= $end)) {
+                    return $workPeriod;
+                }
+                return null;
+            }
             $diff = min(abs($currentTime - $start), abs($currentTime - $end));
 
             if (is_null($minDiff) || $diff < $minDiff) {
                 $minDiff = $diff;
-                $closest = $period;
+                $closest = $workPeriod;
             }
         }
 
