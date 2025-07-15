@@ -99,14 +99,14 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Choose the period duration')
                                 ->schema([
                                     DatePicker::make('start_period')->label('Start period date')
-                                        
+
                                         ->default(function ($record) {
                                             return $this->ownerRecord->join_date ?? now()->toDateString();
                                         })
                                         ->required(),
 
                                     DatePicker::make('end_date')->label('End period date')
-                                        
+
                                         ->after('start_period')
                                         ->nullable()
                                         ->helperText('Leave empty for unlimited (open) period'),
@@ -115,11 +115,10 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Work Periods')
                             // ->relationship('periods', 'name')
                                 ->columns(3)->multiple()
-                                ->disableOptionWhen(function ($value) {
-                                    $employee = $this->ownerRecord;
-                                    return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
-
-                                })
+                            ->disableOptionWhen(function ($value) {
+                                $employee = $this->ownerRecord;
+                                return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
+                            })
 
                                 ->options(
                                     function () {
@@ -169,13 +168,12 @@ class PeriodRelationManager extends RelationManager
                         }
                         try {
                             // Retrieve the existing periods associated with the owner record
-                            $existPeriods = $this->ownerRecord?->periods?->pluck('id')->toArray();
-
-                            // Retrieve the periods from the incoming data
-                            $dataPeriods = $data['periods'];
+                            // $existPeriods = array_map('intval', $this->ownerRecord?->periods?->pluck('id')->toArray());
+                            $dataPeriods = array_map('intval', $data['periods']);
 
                             // Find the periods that are not currently associated
-                            $result = array_values(array_diff($dataPeriods, $existPeriods));
+                            // $result = array_values(array_diff($dataPeriods, $existPeriods));
+                            // dd($existPeriods, $dataPeriods, $result);
 
                             // Validate the employee's last attendance
                             $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
@@ -189,7 +187,7 @@ class PeriodRelationManager extends RelationManager
                             }
 
                             // Insert new periods into hr_employee_periods table
-                            foreach ($result as $value) {
+                            foreach ($dataPeriods as $value) {
                                 $workPeriod    = WorkPeriod::find($value);
                                 $periodStartAt = $workPeriod?->start_at;
                                 $periodEndAt   = $workPeriod?->end_at;
@@ -197,14 +195,18 @@ class PeriodRelationManager extends RelationManager
                                 // أيام الفترة المراد إدخالها
                                 $periodDays = $data['period_days'] ?? [];
 
-                                if ($this->isOverlappingDays(
+                                if ($this->isOverlappingDays_(
                                     $this->ownerRecord->id,
                                     $periodDays,
                                     $periodStartAt,
-                                    $periodEndAt
+                                    $periodEndAt,
+                                    $data['start_period'],
+                                    $data['end_date'] ?? null,
                                 )) {
-                                    Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
-                                    return;
+                                    throw new \Exception('Overlapping periods are not allowed.');
+
+                                    // Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
+                                    // return;
                                 }
 
                                 $employeePeriod              = new EmployeePeriod();
@@ -414,7 +416,7 @@ class PeriodRelationManager extends RelationManager
 
     }
     private function isOverlappingDays($employeeId, $periodDays, $periodStartAt, $periodEndAt, $excludePeriodId = null)
-    { 
+    {
         // Query all employee periods that overlap in time, excluding current one (for edit)
         $query = EmployeePeriod::query()
             ->with('days')
@@ -444,6 +446,58 @@ class PeriodRelationManager extends RelationManager
             }
         }
 
+        return false;
+    }
+
+    private function isOverlappingDays_($employeeId, $periodDays, $periodStartAt, $periodEndAt, $periodStartDate, $periodEndDate = null, $excludePeriodId = null)
+    {
+        $query = EmployeePeriod::query()
+            ->with(['days' => function ($q) use ($periodDays, $periodStartDate, $periodEndDate) {
+                $q->whereIn('day_of_week', $periodDays)
+                // تحقق من تقاطع التواريخ بين الفترة المدخلة والأيام الموجودة فعلياً
+                    ->where(function ($q2) use ($periodStartDate, $periodEndDate) {
+                        $q2->where(function ($qq) use ($periodStartDate, $periodEndDate) {
+                            $qq->where(function ($q3) use ($periodStartDate, $periodEndDate) {
+                                // إذا كانت الفترة منتهية، تحقق من أي تداخل
+                                $q3->whereNull('end_date')->orWhere(function ($q4) use ($periodStartDate, $periodEndDate) {
+                                    if ($periodEndDate) {
+                                        $q4->where('start_date', '<=', $periodEndDate)
+                                            ->where(function ($q5) use ($periodStartDate) {
+                                                $q5->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
+                                            });
+                                    } else {
+                                        // إذا كانت الفترة الجديدة مفتوحة
+                                        $q4->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
+                                    }
+                                });
+                            });
+                        });
+                    });
+            }])
+            ->where('employee_id', $employeeId)
+            ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
+                $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
+                    $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
+                        ->orWhereBetween('end_at', [$periodStartAt, $periodEndAt])
+                        ->orWhere(function ($q) use ($periodStartAt, $periodEndAt) {
+                            $q->where('start_at', '<=', $periodStartAt)
+                                ->where('end_at', '>=', $periodEndAt);
+                        });
+                });
+            });
+
+        if ($excludePeriodId) {
+            $query->where('id', '!=', $excludePeriodId);
+        }
+
+        $overlappingPeriods = $query->get();
+
+        foreach ($overlappingPeriods as $period) {
+            foreach ($period->days as $day) {
+                // إذا وجد يوم متداخل (في نفس اليوم ونفس نطاق التواريخ)
+                return true;
+            }
+        }
         return false;
     }
 
