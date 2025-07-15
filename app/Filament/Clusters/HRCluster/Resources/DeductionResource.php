@@ -122,11 +122,7 @@ class DeductionResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
-        // dd(
-        //     Deduction::find(11)->calculateTax(5000),
-        //     Deduction::calculateTax2(5000)
-        // );
+    { 
         return $table
             ->striped()
             ->columns([
