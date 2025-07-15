@@ -107,12 +107,12 @@ class InventoryReportLinks extends Page
                 'icon'        => 'heroicon-o-presentation-chart-bar',
                 'url'         => StockAdjustmentSummaryReportResource::getUrl(),
             ],
-            [
-                'title'       => 'Stock Cost Report',
-                'description' => 'Analyze stock cost in a specific store.',
-                'icon'        => 'heroicon-o-banknotes',
-                'url'         => \App\Filament\Resources\StockCostReportResource::getUrl(),
-            ],
+            //     [
+            //         'title'       => 'Stock Cost Report',
+            //         'description' => 'Analyze stock cost in a specific store.',
+            //         'icon'        => 'heroicon-o-banknotes',
+            //         'url'         => \App\Filament\Resources\StockCostReportResource::getUrl(),
+            //     ],
         ];
 
         usort($links, function ($a, $b) {
