@@ -147,6 +147,16 @@
             <tbody>
                 @foreach ($report_data as $date => $data)
                     @php
+                        $isDate = false;
+                        try {
+                            \Carbon\Carbon::parse($date);
+                            $isDate = true;
+                        } catch (\Exception $e) {
+                            $isDate = false;
+                        }
+                        if (!$isDate) {
+                            continue;
+                        }
                         $periods = $data['periods'] ?? [];
                         $dayStatus = $data['day_status'] ?? null;
 
@@ -268,10 +278,13 @@
 
             <tfoot>
                 <x-filament-tables::row>
-                    <x-filament-tables::cell colspan="{{ $show_day ? 8 : 7 }}" class="text-center font-bold">{{ __('Total') }}</x-filament-tables::cell>
-                    <x-filament-tables::cell class="text-center">{{$total_duration_hours}}</x-filament-tables::cell>
-                    <x-filament-tables::cell class="text-center">{{$total_actual_duration_hours}}</x-filament-tables::cell>
-                    <x-filament-tables::cell class="text-center">{{$total_approved_overtime}}</x-filament-tables::cell>
+                    <x-filament-tables::cell colspan="{{ $show_day ? 8 : 7 }}"
+                        class="text-center font-bold">{{ __('Total') }}</x-filament-tables::cell>
+                    <x-filament-tables::cell class="text-center">{{ $total_duration_hours }}</x-filament-tables::cell>
+                    <x-filament-tables::cell
+                        class="text-center">{{ $total_actual_duration_hours }}</x-filament-tables::cell>
+                    <x-filament-tables::cell
+                        class="text-center">{{ $total_approved_overtime }}</x-filament-tables::cell>
                 </x-filament-tables::row>
             </tfoot>
         </x-filament-tables::table>
