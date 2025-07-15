@@ -111,7 +111,11 @@ class PenaltyDeduction extends Model implements Auditable
                 $this->date,
                 $this->description,
                 $this, // reference is this PenaltyDeduction object
-                null   // payroll_id (أو حددها إذا موجودة)
+                null,
+                [
+                    'month' => $this->month,
+                    'year'  => $this->year,
+                ]
             );
         }
     }

@@ -1,10 +1,8 @@
 <?php
-
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages;
-use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\RelationManagers;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\PenaltyDeduction;
@@ -17,10 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
-use Ramsey\Uuid\Guid\Fields;
 
 class PenaltyDeductionResource extends Resource
 {
@@ -28,9 +23,9 @@ class PenaltyDeductionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRSalaryCluster::class;
+    protected static ?string $cluster                             = HRSalaryCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort                         = 9;
     public static function form(Form $form): Form
     {
         return $form
@@ -39,7 +34,7 @@ class PenaltyDeductionResource extends Resource
                     Forms\Components\Select::make('year')
                         ->options([
                             date('Y') - 1 => date('Y') - 1,
-                            date('Y') => date('Y'),
+                            date('Y')     => date('Y'),
                             date('Y') + 1 => date('Y') + 1,
                         ])
                         ->default(date('Y'))
@@ -51,23 +46,38 @@ class PenaltyDeductionResource extends Resource
                         ->required(),
 
                     Forms\Components\Select::make('employee_id')
-                        ->relationship('employee', 'name')
+                        ->options(function ($search = null) {
+                            return Employee::query()
+                                ->where('active', 1)
+                            // ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                                ->limit(20)
+                                ->get()
+                                ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                        })
+                        ->getSearchResultsUsing(function ($search = null) {
+                            return Employee::query()
+                                ->where('active', 1)
+                                ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                                ->limit(20)
+                                ->get()
+                                ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                        })
                         ->searchable()
                         ->preload()->live()
                         ->required(),
                     Forms\Components\Select::make('deduction_id')->label('Deduction')
                         ->live()->afterStateUpdated(function ($get, $set, $state) {
-                            $deduction = Deduction::find($state);
-                            $defaultAmount = 0;
-                            if ($deduction->is_percentage) {
-                                $defaultAmount = $deduction->percentage;
-                            } else {
-                                $defaultAmount = $deduction->amount;
-                            }
-                            // $set('penalty_amount', $defaultAmount);
-                            $set('penalty_amount', 0);
-                            $set('deduction_type', PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT);
-                        })
+                        $deduction     = Deduction::find($state);
+                        $defaultAmount = 0;
+                        if ($deduction->is_percentage) {
+                            $defaultAmount = $deduction->percentage;
+                        } else {
+                            $defaultAmount = $deduction->amount;
+                        }
+                        // $set('penalty_amount', $defaultAmount);
+                        $set('penalty_amount', 0);
+                        $set('deduction_type', PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT);
+                    })
                         ->options(Deduction::penalty()->get()->pluck('name', 'id'))
                         ->required(),
                 ]),
@@ -89,13 +99,13 @@ class PenaltyDeductionResource extends Resource
                         ->visible(fn($get): bool => $get('deduction_type') == PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE)
                         ->numeric()->minValue(0.5)
                         ->maxValue(100)->required()->live()->afterStateUpdated(function ($get, $set, $state) {
-                            $employee = Employee::find($get('employee_id'));
-                            if ($employee) {
-                                $salary = $employee->salary;
-                                $percentageAmount = ($salary * $state) / 100;
-                                $set('penalty_amount', $percentageAmount);
-                            }
-                        }),
+                        $employee = Employee::find($get('employee_id'));
+                        if ($employee) {
+                            $salary           = $employee->salary;
+                            $percentageAmount = ($salary * $state) / 100;
+                            $set('penalty_amount', $percentageAmount);
+                        }
+                    }),
                     Forms\Components\TextInput::make('penalty_amount')
 
                         ->numeric()
@@ -103,7 +113,7 @@ class PenaltyDeductionResource extends Resource
 
                     Forms\Components\Textarea::make('description')
                         ->label('Reason')->columnSpanFull()
-                        ->required()
+                        ->required(),
                 ]),
             ]);
     }
@@ -142,9 +152,9 @@ class PenaltyDeductionResource extends Resource
                     ->badge()->toggleable()
                     ->alignCenter(true)
                     ->color(fn(string $state): string => match ($state) {
-                        'approved' => 'success',
-                        'rejected' => 'danger',
-                        'pending' => 'warning',
+                        'approved'                        => 'success',
+                        'rejected'                        => 'danger',
+                        'pending'                         => 'warning',
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('date')->toggleable()
@@ -197,7 +207,7 @@ class PenaltyDeductionResource extends Resource
                         Forms\Components\Textarea::make('rejected_reason')
                             ->label('Rejection Reason')
                             ->required()
-                            ->maxLength(255)
+                            ->maxLength(255),
                     ])
                     ->action(function ($record, array $data) {
                         try {
@@ -229,9 +239,9 @@ class PenaltyDeductionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPenaltyDeductions::route('/'),
+            'index'  => Pages\ListPenaltyDeductions::route('/'),
             'create' => Pages\CreatePenaltyDeduction::route('/create'),
-            'edit' => Pages\EditPenaltyDeduction::route('/{record}/edit'),
+            'edit'   => Pages\EditPenaltyDeduction::route('/{record}/edit'),
         ];
     }
 

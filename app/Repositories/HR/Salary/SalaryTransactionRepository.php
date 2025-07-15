@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Repositories\HR\Salary;
 
 use App\Models\SalaryTransaction;
@@ -45,13 +44,14 @@ class SalaryTransactionRepository
         string $date,
         string $description,
         $reference = null,
-        $payrollId = null
+        $payrollId = null,
+        array $extra = [],
     ): SalaryTransaction {
-        return $this->create([
+        return $this->create(array_merge([
             'employee_id'    => $employeeId,
             'payroll_id'     => $payrollId,
             'date'           => $date,
-            'amount'         => abs($amount), // دائماً موجب
+            'amount'         => abs($amount),
             'type'           => SalaryTransaction::TYPE_DEDUCTION,
             'operation'      => SalaryTransaction::OPERATION_SUB,
             'description'    => $description,
@@ -59,7 +59,7 @@ class SalaryTransactionRepository
             'reference_type' => $reference ? get_class($reference) : null,
             'status'         => SalaryTransaction::STATUS_APPROVED,
             'created_by'     => auth()->id() ?? null,
-        ]);
+        ], $extra));
     }
 
     /**

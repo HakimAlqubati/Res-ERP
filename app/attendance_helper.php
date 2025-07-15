@@ -1140,8 +1140,7 @@ if (!function_exists('calculate_missing_hours')) {
         //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
         //     ->groupBy('period_id')
         //     ->havingRaw('COUNT(*) > 1')
-        //     ->exists();
-
+        //     ->exists(); 
         
 
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
