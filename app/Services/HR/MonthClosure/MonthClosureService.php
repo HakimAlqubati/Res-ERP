@@ -4,7 +4,7 @@
 namespace App\Services\HR\MonthClosure;
 
 use App\Models\MonthClosure;
-use App\Repositories\Hr\MonthClosuers\MonthClosureRepository;
+use App\Repositories\HR\MonthClosuers\MonthClosureRepository;
 use Carbon\Carbon;
 
 class MonthClosureService
