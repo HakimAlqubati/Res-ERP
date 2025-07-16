@@ -284,6 +284,18 @@ class PeriodRelationManager extends RelationManager
                                 $period = EmployeePeriod::find($record->pivot_id);
 
                                 if ($period) {
+
+                                    // 1. البحث عن أي حضور أو انصراف مرتبط بهذه الفترة
+                                    $attendanceExists = \App\Models\Attendance::where('employee_id', $record->employee_id)
+                                        ->where('period_id', $record->period_id)
+                                        ->whereDate('check_date', '>=', $period->start_date)
+                                        ->when($period->end_date, fn($q) => $q->whereDate('check_date', '<=', $period->end_date))
+                                        ->exists();
+
+                                    if ($attendanceExists) { 
+                                        throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
+                                    }
+
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
                                     $period->days()->delete();
                                     // حذف الهستوري بنفس نطاق التواريخ
@@ -302,7 +314,8 @@ class PeriodRelationManager extends RelationManager
                             Notification::make()->title('Deleted')->success()->send();
                         } catch (\Exception $e) {
                             // Handle the exception
-                            Notification::make()->title('Error')->message($e->getMessage())->danger()->send();
+                            Notification::make()->title('Error')->icon('heroicon-o-x-circle')
+                            ->body($e->getMessage())->danger()->persistent()->send();
                             // You can also log the error if needed
                             // Log::error($e);
                         }
@@ -407,7 +420,7 @@ class PeriodRelationManager extends RelationManager
                         foreach ($daysToRemove as $day) {
                             $periodStart = $data['start_date'];       // بداية الفترة المحذوفة
                             $periodEnd   = $data['end_date'] ?? null; // نهاية الفترة المحذوفة (قد تكون null = مفتوحة)
-                            // تحديث end_date في جدول الأيام وفي الهستوري
+                                                                      // تحديث end_date في جدول الأيام وفي الهستوري
                             $employeePeriod->days()->where('day_of_week', $day)->delete();
                             EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
                                 ->where('period_id', $employeePeriod->period_id)
