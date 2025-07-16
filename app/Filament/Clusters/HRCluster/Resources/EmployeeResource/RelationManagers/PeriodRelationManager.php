@@ -51,8 +51,8 @@ class PeriodRelationManager extends RelationManager
         // $explodeHost = explode('.', request()->getHost());
 
         // $count = count($explodeHost);
-        // dd($this->ownerRecord,$this->ownerRecord->branch_id,$count);
         return $table
+            ->defaultSort('hr_employee_periods.id', 'desc')
             ->recordTitleAttribute('period_id')
             ->striped()
             ->columns([
@@ -62,7 +62,7 @@ class PeriodRelationManager extends RelationManager
                 // TextColumn::make('description')->label('description'),
                 TextColumn::make('start_at')->label('Start time'),
                 TextColumn::make('end_at')->label('End time'),
-                TextColumn::make('days')
+                TextColumn::make('days')->wrap()
                     ->label('Days')
                     ->getStateUsing(function ($record) {
                         $employee = $this->ownerRecord;
@@ -83,7 +83,15 @@ class PeriodRelationManager extends RelationManager
                     })
                 // ->getStateUsing(fn($state): string =>    implode(',', $state))
                 ,
-                TextColumn::make('creator.name')->label('Created by'),
+                TextColumn::make('start_date')
+                    ->label('Start Date')
+                    ->date()
+                    ->sortable(),
+                TextColumn::make('end_date')
+                    ->label('End Date')
+                    ->date()
+                    ->sortable(),
+                TextColumn::make('creator.name')->label('Created by')->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
@@ -98,7 +106,7 @@ class PeriodRelationManager extends RelationManager
                             Fieldset::make()->columns(2)->columnSpanFull()
                                 ->label('Choose the period duration')
                                 ->schema([
-                                    DatePicker::make('start_period')->label('Start period date')
+                                    DatePicker::make('start_date')->label('Start period date')
 
                                         ->default(function ($record) {
                                             return $this->ownerRecord->join_date ?? now()->toDateString();
@@ -107,7 +115,7 @@ class PeriodRelationManager extends RelationManager
 
                                     DatePicker::make('end_date')->label('End period date')
 
-                                        ->after('start_period')
+                                    // ->after('')
                                         ->nullable()
                                         ->helperText('Leave empty for unlimited (open) period'),
                                 ]),
@@ -115,10 +123,10 @@ class PeriodRelationManager extends RelationManager
                                 ->label('Work Periods')
                             // ->relationship('periods', 'name')
                                 ->columns(3)->multiple()
-                            ->disableOptionWhen(function ($value) {
-                                $employee = $this->ownerRecord;
-                                return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
-                            })
+                            // ->disableOptionWhen(function ($value) {
+                            //     $employee = $this->ownerRecord;
+                            //     return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
+                            // })
 
                                 ->options(
                                     function () {
@@ -154,18 +162,18 @@ class PeriodRelationManager extends RelationManager
                     ->databaseTransaction()
                     ->action(function ($data) {
                         DB::beginTransaction();
-                        $employee          = $this->ownerRecord;
-                        $employeeHistories = $employee->periodHistories->select('period_id', 'start_date', 'end_date') ?? null;
-                        foreach ($employeeHistories as $history) {
-                            if (isset($history['end_date']) && $history['end_date'] == $data['start_period']) {
-                                Notification::make()
-                                    ->title('Validation Error')
-                                    ->body('Cannot start period on ended period date')
-                                    ->warning()
-                                    ->send();
-                                return;
-                            }
-                        }
+                        $employee = $this->ownerRecord;
+                        // $employeeHistories = $employee->periodHistories->select('period_id', 'start_date', 'end_date') ?? null;
+                        // foreach ($employeeHistories as $history) {
+                        //     if (isset($history['end_date']) && $history['end_date'] == $data['end_date']) {
+                        //         Notification::make()
+                        //             ->title('Validation Error')
+                        //             ->body('Cannot start period on ended period date')
+                        //             ->warning()
+                        //             ->send();
+                        //         return;
+                        //     }
+                        // }
                         try {
                             // Retrieve the existing periods associated with the owner record
                             // $existPeriods = array_map('intval', $this->ownerRecord?->periods?->pluck('id')->toArray());
@@ -173,7 +181,6 @@ class PeriodRelationManager extends RelationManager
 
                             // Find the periods that are not currently associated
                             // $result = array_values(array_diff($dataPeriods, $existPeriods));
-                            // dd($existPeriods, $dataPeriods, $result);
 
                             // Validate the employee's last attendance
                             $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
@@ -200,7 +207,7 @@ class PeriodRelationManager extends RelationManager
                                     $periodDays,
                                     $periodStartAt,
                                     $periodEndAt,
-                                    $data['start_period'],
+                                    $data['start_date'],
                                     $data['end_date'] ?? null,
                                 )) {
                                     throw new \Exception('Overlapping periods are not allowed.');
@@ -212,20 +219,21 @@ class PeriodRelationManager extends RelationManager
                                 $employeePeriod              = new EmployeePeriod();
                                 $employeePeriod->employee_id = $this->ownerRecord->id;
                                 $employeePeriod->period_id   = $value;
+                                $employeePeriod->start_date  = $data['start_date'];
+                                $employeePeriod->end_date    = $data['end_date'] ?? null;
                                 $employeePeriod->save();
 
                                 foreach ($data['period_days'] as $dayOfWeek) {
 
                                     $employeePeriod->days()->create([
                                         'day_of_week' => $dayOfWeek,
-                                        'start_date'  => $data['start_period'],
-                                        'end_date'    => $data['end_date'] ?? null,
+
                                     ]);
 
                                     EmployeePeriodHistory::create([
                                         'employee_id' => $this->ownerRecord->id,
                                         'period_id'   => $value,
-                                        'start_date'  => $data['start_period'],
+                                        'start_date'  => $data['start_date'],
                                         'end_date'    => $data['end_date'] ?? null,
                                         'start_time'  => $periodStartAt,
                                         'end_time'    => $periodEndAt,
@@ -254,44 +262,42 @@ class PeriodRelationManager extends RelationManager
                 Action::make('Delete')->requiresConfirmation()
                     ->color('warning')
                     ->button()
-                    ->form([
-                        Fieldset::make()
-                            ->label('Choose the end period date')
-                            ->columnSpanFull()
-                            ->schema([
-                                DatePicker::make('end_period')
-                                    ->columnSpanFull()
-                                    ->default(now())
-                                    ->minDate(now()->subDay())
-                                    ->maxDate(now())
-                                    ->label('End period date')->required(),
-                            ]),
-                    ])
+
                     ->databaseTransaction()
                     ->icon('heroicon-o-x-mark')
-                    ->action(function ($record, $data) {
+                    ->action(function ($record) {
+
                         try {
+
                             // Update the end_date in hr_employee_period_histories
                             // Validate the employee's last attendance
-                            $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
-                            if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
-                                Notification::make()
-                                    ->title('Validation Error')
-                                    ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
-                                    ->warning()
-                                    ->send();
-                                return;
-                            }
+                            // $lastAttendance = $this->ownerRecord->attendances()->latest('id')->first();
+                            // if ($lastAttendance && $lastAttendance->check_type === Attendance::CHECKTYPE_CHECKIN) {
+                            //     Notification::make()
+                            //         ->title('Validation Error')
+                            //         ->body('The employee has a pending check-out. You cannot add new work periods until the check-out is recorded.')
+                            //         ->warning()
+                            //         ->send();
+                            //     return;
+                            // }
+                            DB::transaction(function () use ($record) {
+                                $period = EmployeePeriod::find($record->pivot_id);
 
-                            EmployeePeriodHistory::where('employee_id', $record->employee_id) // Filter by the employee ID
-                                ->where('period_id', $record->period_id)                          // Filter by the associated period ID
-                                ->update(['end_date' => $data['end_period']]);                    // Set end_date to the current timestamp
+                                if ($period) {
+                                    // حذف كل الأيام المرتبطة بهذه الفترة فقط
+                                    $period->days()->delete();
+                                    // حذف الهستوري بنفس نطاق التواريخ
+                                    $periodStart = $period->start_date;
+                                    $periodEnd   = $period->end_date;
+                                    \App\Models\EmployeePeriodHistory::where('employee_id', $record->employee_id)
+                                        ->where('period_id', $record->period_id)
+                                        ->where('start_date', $periodStart)
+                                        ->when($periodEnd, fn($q) => $q->where('end_date', $periodEnd), fn($q) => $q->whereNull('end_date'))
+                                        ->delete();
+                                }
 
-                                                                                       // Now, delete the employee period
-                            EmployeePeriod::where('employee_id', $record->employee_id) // Ensure to delete the correct employee period
-                                ->where('period_id', $record->period_id)                   // Filter by the associated period ID
-                                ->delete();
-
+                                $period->delete();
+                            });
                             // Optionally, send a success notification
                             Notification::make()->title('Deleted')->success()->send();
                         } catch (\Exception $e) {
@@ -337,20 +343,31 @@ class PeriodRelationManager extends RelationManager
                     })
                 ,
                 DatePicker::make('start_date')
-                    ->label('Start Date')->default(now())
-                    ->required(),
+                    ->label('Start Date')
+                    ->required()->readOnly()
+                    ->default(function () use ($record) {
+                        // تاريخ بداية الفترة للموظف أو اليوم الحالي
+                        $employee = $this->ownerRecord;
+                        $period   = \App\Models\EmployeePeriod::where('employee_id', $employee->id)
+                            ->where('period_id', $record->id)
+                            ->first();
+                        return $period?->start_date ?? $employee->join_date ?? now()->toDateString();
+                    }),
                 DatePicker::make('end_date')
                     ->label('End Date')
                     ->after('start_date')
-                    ->nullable(),
+                    ->nullable()
+                    ->default(function () use ($record) {
+                        $employee = $this->ownerRecord;
+                        $period   = \App\Models\EmployeePeriod::where('employee_id', $employee->id)
+                            ->where('period_id', $record->id)
+                            ->first();
+                        return $period?->end_date;
+                    })
+                ,
             ])
             ->action(function (array $data, $record) {
-                $employee = $this->ownerRecord;
-
-                $employeePeriod = \App\Models\EmployeePeriod::where('employee_id', $employee->id)
-                    ->where('period_id', $record->id)
-                    ->first();
-
+                $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot_id);
                 if (! $employeePeriod) {
                     Notification::make()
                         ->title('Assignment Error')
@@ -361,29 +378,20 @@ class PeriodRelationManager extends RelationManager
                 }
 
                 try {
-                    DB::transaction(function () use ($data, $employeePeriod) {
-                        if ($this->isOverlappingDays(
-                            $employeePeriod->employee_id,
-                            $data['days'],
-                            $employeePeriod->workPeriod->start_at,
-                            $employeePeriod->workPeriod->end_at,
-                            $employeePeriod->id// لاستثناء نفسه أثناء التعديل
-                        )) {
-                            Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
-                            return;
-                        }
-                        $employeePeriod->days()->delete();
-                        EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
-                            ->where('period_id', $employeePeriod->period_id)
-                            ->whereIn('day_of_week', $data['days'])
-                            ->delete();
-                        foreach ($data['days'] as $dayOfWeek) {
-                            $employeePeriod->days()->create([
-                                'day_of_week' => $dayOfWeek,
-                                'start_date'  => $data['start_date'],
-                                'end_date'    => $data['end_date'] ?? null,
-                            ]);
+                    DB::transaction(function () use ($data, $employeePeriod, $record) {
+                        $existingDays = $employeePeriod->days()->pluck('day_of_week')->toArray();
+                        $selectedDays = $data['days'];
 
+                        // الأيام الجديدة التي أضيفت
+                        $daysToAdd = array_diff($selectedDays, $existingDays);
+                        // الأيام التي أزيلت
+                        $daysToRemove = array_diff($existingDays, $selectedDays);
+
+                        // إضافة الأيام الجديدة
+                        foreach ($daysToAdd as $day) {
+                            $employeePeriod->days()->create([
+                                'day_of_week' => $day,
+                            ]);
                             EmployeePeriodHistory::create([
                                 'employee_id' => $employeePeriod->employee_id,
                                 'period_id'   => $employeePeriod->period_id,
@@ -391,8 +399,31 @@ class PeriodRelationManager extends RelationManager
                                 'end_date'    => $data['end_date'] ?? null,
                                 'start_time'  => $employeePeriod->workPeriod->start_at,
                                 'end_time'    => $employeePeriod->workPeriod->end_at,
-                                'day_of_week' => $dayOfWeek,
+                                'day_of_week' => $day,
                             ]);
+                        }
+
+                        // إنهاء الأيام المحذوفة (تحديث end_date فقط وليس حذف!)
+                        foreach ($daysToRemove as $day) {
+                            $periodStart = $data['start_date'];       // بداية الفترة المحذوفة
+                            $periodEnd   = $data['end_date'] ?? null; // نهاية الفترة المحذوفة (قد تكون null = مفتوحة)
+                            // تحديث end_date في جدول الأيام وفي الهستوري
+                            $employeePeriod->days()->where('day_of_week', $day)->delete();
+                            EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
+                                ->where('period_id', $employeePeriod->period_id)
+                                ->where('day_of_week', $day)
+                                ->where(function ($q) use ($periodStart, $periodEnd) {
+                                    $q->where(function ($query) use ($periodEnd) {
+                                        if ($periodEnd) {
+                                            $query->whereNull('end_date')
+                                                ->orWhere('end_date', '>=', $periodEnd);
+                                        } else {
+                                            $query->whereNull('end_date');
+                                        }
+                                    })
+                                        ->where('start_date', '<=', $periodStart);
+                                })
+                                ->delete();
                         }
 
                         Notification::make()
@@ -452,29 +483,26 @@ class PeriodRelationManager extends RelationManager
     private function isOverlappingDays_($employeeId, $periodDays, $periodStartAt, $periodEndAt, $periodStartDate, $periodEndDate = null, $excludePeriodId = null)
     {
         $query = EmployeePeriod::query()
-            ->with(['days' => function ($q) use ($periodDays, $periodStartDate, $periodEndDate) {
-                $q->whereIn('day_of_week', $periodDays)
-                // تحقق من تقاطع التواريخ بين الفترة المدخلة والأيام الموجودة فعلياً
-                    ->where(function ($q2) use ($periodStartDate, $periodEndDate) {
-                        $q2->where(function ($qq) use ($periodStartDate, $periodEndDate) {
-                            $qq->where(function ($q3) use ($periodStartDate, $periodEndDate) {
-                                // إذا كانت الفترة منتهية، تحقق من أي تداخل
-                                $q3->whereNull('end_date')->orWhere(function ($q4) use ($periodStartDate, $periodEndDate) {
-                                    if ($periodEndDate) {
-                                        $q4->where('start_date', '<=', $periodEndDate)
-                                            ->where(function ($q5) use ($periodStartDate) {
-                                                $q5->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
-                                            });
-                                    } else {
-                                        // إذا كانت الفترة الجديدة مفتوحة
-                                        $q4->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
-                                    }
-                                });
-                            });
-                        });
-                    });
+            ->with(['days' => function ($q) use ($periodDays) {
+                $q->whereIn('day_of_week', $periodDays);
             }])
             ->where('employee_id', $employeeId)
+            ->where(function ($q) use ($periodStartDate, $periodEndDate) {
+                $q->where(function ($q2) use ($periodStartDate, $periodEndDate) {
+                    // شرط تقاطع الفترات
+                    $q2->whereNull('end_date')->orWhere(function ($q3) use ($periodStartDate, $periodEndDate) {
+                        if ($periodEndDate) {
+                            $q3->where('start_date', '<=', $periodEndDate)
+                                ->where(function ($q4) use ($periodStartDate) {
+                                    $q4->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
+                                });
+                        } else {
+                            // الفترة الجديدة مفتوحة
+                            $q3->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
+                        }
+                    });
+                });
+            })
             ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
                 $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
                     $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
@@ -494,7 +522,6 @@ class PeriodRelationManager extends RelationManager
 
         foreach ($overlappingPeriods as $period) {
             foreach ($period->days as $day) {
-                // إذا وجد يوم متداخل (في نفس اليوم ونفس نطاق التواريخ)
                 return true;
             }
         }

@@ -109,7 +109,7 @@ class EmployeePeriodHistoryService
             $totalSecondsAllDays % 60
         );
 // الناتج هنا سيكون 31:00:00
-        
+
 // يمكنك إرجاع النتيجة كمصفوفة فيها كل الأيام والمجموع الكلي، هكذا:
         return collect([
             'days'                 => $days,

@@ -56,7 +56,6 @@ class AttendanceHandler
 // دمج المصفوفتين
             $allPeriods    = $periodsForToday->merge($periodsForPrevDay);
             $closestPeriod = $this->findClosestPeriod($time, $allPeriods);
-            // dd($closestPeriod, $day, $date, $employeePeriods);
             // if (! $closestPeriod) {
             //     $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
             //     $periodsForPrevDay = $this->getPeriodsForDate($employeePeriods, $prevDate);

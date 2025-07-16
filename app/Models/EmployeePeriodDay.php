@@ -9,7 +9,7 @@ class EmployeePeriodDay extends Model
 {
     use HasFactory;
 
-    protected $table = 'employee_period_days';
+    protected $table = 'hr_employee_period_days';
 
     protected $fillable = [
         'employee_period_id',

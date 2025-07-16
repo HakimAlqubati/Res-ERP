@@ -26,6 +26,7 @@ class EmployeePeriod extends Model implements Auditable
         'period_id', 
         'created_by',
         'updated_by',
+        'start_date','end_date',
         // Add other columns if necessary
     ];
     protected $auditInclude = [

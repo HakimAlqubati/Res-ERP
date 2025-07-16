@@ -114,7 +114,7 @@
                     <th colspan="4">
                         <p>({{ \App\Models\Employee::find($employee_id)?->name ?? __('lang.choose_branch') }})</p>
                     </th>
-                    <th colspan="2">
+                    <th colspan="2" class="no_border_right_left">
                         <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                         <br>
                         <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
