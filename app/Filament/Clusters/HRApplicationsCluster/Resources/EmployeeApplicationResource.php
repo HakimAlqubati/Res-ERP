@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
+use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
 use App\Filament\Pages\AttendanecEmployee2 as AttendanecEmployee;
 use App\Models\AdvanceRequest;
@@ -27,6 +28,7 @@ use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Notifications\Notification;
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -47,10 +49,9 @@ class EmployeeApplicationResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected ?bool $hasDatabaseTransactions = true;
 
-    // protected static ?string $cluster = HRApplicationsCluster::class;
-    // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    // protected static ?int $navigationSort = 0;
-    protected static ?string $slug = 'request';
+    protected static ?string $cluster = HRApplicationsCluster::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?int $navigationSort = 0; 
     protected static ?string $label = 'Request';
     protected static ?string $pluralLabel = 'Requests';
 

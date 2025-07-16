@@ -56,514 +56,514 @@ class EmployeeApplicationResource_old extends Resource
 
     protected static ?string $pluralModelLabel = 'Requests';
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Fieldset::make()->label('')->columns(2)->schema([
-                    Select::make('employee_id')
-                        ->label('Employee')
-                        ->searchable()
-                        ->required()
-                        ->live()
-                        // ->afterStateUpdated(function ($get, $set, $state) {
-                        //     $employee = Employee::find($state);
-                        //     $set('basic_salary', $employee?->salary);
-                        // })
-                        ->disabled(function () {
-                            if (isStuff() || isFinanceManager()) {
-                                return true;
-                            }
-                            return false;
-                        })
-                        ->default(function () {
-                            if (isStuff() || isFinanceManager()) {
-                                return auth()->user()->employee->id;
-                            }
-                        })
-                        ->options(Employee::select('name', 'id')
+    // public static function form(Form $form): Form
+    // {
+    //     return $form
+    //         ->schema([
+    //             Fieldset::make()->label('')->columns(2)->schema([
+    //                 Select::make('employee_id')
+    //                     ->label('Employee')
+    //                     ->searchable()
+    //                     ->required()
+    //                     ->live()
+    //                     // ->afterStateUpdated(function ($get, $set, $state) {
+    //                     //     $employee = Employee::find($state);
+    //                     //     $set('basic_salary', $employee?->salary);
+    //                     // })
+    //                     ->disabled(function () {
+    //                         if (isStuff() || isFinanceManager()) {
+    //                             return true;
+    //                         }
+    //                         return false;
+    //                     })
+    //                     ->default(function () {
+    //                         if (isStuff() || isFinanceManager()) {
+    //                             return auth()->user()->employee->id;
+    //                         }
+    //                     })
+    //                     ->options(Employee::select('name', 'id')
 
-                            ->get()->plucK('name', 'id')),
+    //                         ->get()->plucK('name', 'id')),
 
-                    DatePicker::make('application_date')
-                        ->label('Request date')
-                        ->default(date('Y-m-d'))
-                        ->required(),
+    //                 DatePicker::make('application_date')
+    //                     ->label('Request date')
+    //                     ->default(date('Y-m-d'))
+    //                     ->required(),
 
-                    ToggleButtons::make('application_type')
-                        ->columnSpan(2)
-                        ->label('Request type')
-                        ->hiddenOn('edit')
-                        ->live()->required()
-                        ->options(EmployeeApplication::APPLICATION_TYPES)
-                        ->icons([
-                            EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'heroicon-o-banknotes',
-                            EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'heroicon-o-clock',
-                            EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
-                            EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
-                        ])->inline()
-                        ->colors([
-                            EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'info',
-                            EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'warning',
-                            EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'success',
-                            EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'danger',
-                        ]),
-                ]),
-                Fieldset::make('')
-                    ->label(fn(Get $get): string => EmployeeApplication::APPLICATION_TYPES[$get('application_type')])
+    //                 ToggleButtons::make('application_type')
+    //                     ->columnSpan(2)
+    //                     ->label('Request type')
+    //                     ->hiddenOn('edit')
+    //                     ->live()->required()
+    //                     ->options(EmployeeApplication::APPLICATION_TYPES)
+    //                     ->icons([
+    //                         EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'heroicon-o-banknotes',
+    //                         EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'heroicon-o-clock',
+    //                         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
+    //                         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'heroicon-o-finger-print',
+    //                     ])->inline()
+    //                     ->colors([
+    //                         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST => 'info',
+    //                         EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST => 'warning',
+    //                         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST => 'success',
+    //                         EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST => 'danger',
+    //                     ]),
+    //             ]),
+    //             Fieldset::make('')
+    //                 ->label(fn(Get $get): string => EmployeeApplication::APPLICATION_TYPES[$get('application_type')])
 
-                    ->columns(1)
-                    // ->visible(fn(Get $get): bool => in_array($get('application_type')
+    //                 ->columns(1)
+    //                 // ->visible(fn(Get $get): bool => in_array($get('application_type')
 
-                    //     , [
-                    //         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
-                    //         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
-                    //     ]))
-                    ->visible(fn(Get $get): bool => is_numeric($get('application_type')))
+    //                 //     , [
+    //                 //         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+    //                 //         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
+    //                 //     ]))
+    //                 ->visible(fn(Get $get): bool => is_numeric($get('application_type')))
 
-                    ->schema(function ($get, $set) {
+    //                 ->schema(function ($get, $set) {
 
-                        $form = [];
-                        if (in_array($get('application_type'), [
-                            EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
-                            EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
-                        ])) {
-                            $form = [
-                                DatePicker::make('detail_date')->maxDate(now()->toDateString())
-                                    ->label('Date')->required()
-                                    ->default('Y-m-d'),
-                                TimePicker::make('detail_time')
-                                    ->label('Time')->required(),
-                            ];
-                        }
-                        if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST) {
-                            $employee = Employee::find($get('employee_id'));
-                            $set('basic_salary', $employee?->salary);
-                            return [
-                                Fieldset::make()->label('')->schema([
-                                    Grid::make()->columns(3)->schema([
-                                        DatePicker::make('detail_date')
-                                            ->label('Date')
-                                            ->live()
-                                            ->maxDate(now()->toDateString())
-                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                                $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
-                                                $set('detail_deduction_starts_from', $endNextMonth);
-                                            })
-                                            ->default('Y-m-d'),
-                                        TextInput::make('detail_advance_amount')->numeric()->required()
-                                            ->label('Amount'),
-                                        TextInput::make('basic_salary')->numeric()->disabled()
-                                            ->default(0)
-                                            ->label('Basic salary')->helperText('Employee basic salary'),
+    //                     $form = [];
+    //                     if (in_array($get('application_type'), [
+    //                         EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+    //                         EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
+    //                     ])) {
+    //                         $form = [
+    //                             DatePicker::make('detail_date')->maxDate(now()->toDateString())
+    //                                 ->label('Date')->required()
+    //                                 ->default('Y-m-d'),
+    //                             TimePicker::make('detail_time')
+    //                                 ->label('Time')->required(),
+    //                         ];
+    //                     }
+    //                     if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST) {
+    //                         $employee = Employee::find($get('employee_id'));
+    //                         $set('basic_salary', $employee?->salary);
+    //                         return [
+    //                             Fieldset::make()->label('')->schema([
+    //                                 Grid::make()->columns(3)->schema([
+    //                                     DatePicker::make('detail_date')
+    //                                         ->label('Date')
+    //                                         ->live()
+    //                                         ->maxDate(now()->toDateString())
+    //                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                             // Parse the state as a Carbon date, add one month, and set it to the end of the month
+    //                                             $endNextMonth = Carbon::parse($state)->addMonth()->endOfMonth()->format('Y-m-d');
+    //                                             $set('detail_deduction_starts_from', $endNextMonth);
+    //                                         })
+    //                                         ->default('Y-m-d'),
+    //                                     TextInput::make('detail_advance_amount')->numeric()->required()
+    //                                         ->label('Amount'),
+    //                                     TextInput::make('basic_salary')->numeric()->disabled()
+    //                                         ->default(0)
+    //                                         ->label('Basic salary')->helperText('Employee basic salary'),
 
-                                    ]),
-                                    Grid::make()->columns(3)->schema([
-                                        TextInput::make('detail_monthly_deduction_amount')
-                                            ->numeric()
-                                            ->label('Monthly deduction amount')->required()
-                                            ->live(onBlur: true)
-                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                $advancedAmount = $get('detail_advance_amount');
-                                                // dd($advancedAmount);
-                                                if ($state > 0 && $advancedAmount > 0) {
-                                                    $res = $advancedAmount / $state;
+    //                                 ]),
+    //                                 Grid::make()->columns(3)->schema([
+    //                                     TextInput::make('detail_monthly_deduction_amount')
+    //                                         ->numeric()
+    //                                         ->label('Monthly deduction amount')->required()
+    //                                         ->live(onBlur: true)
+    //                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                             $advancedAmount = $get('detail_advance_amount');
+    //                                             // dd($advancedAmount);
+    //                                             if ($state > 0 && $advancedAmount > 0) {
+    //                                                 $res = $advancedAmount / $state;
 
-                                                    $set('detail_number_of_months_of_deduction', $res);
-                                                    $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
-                                                    $set('detail_deduction_ends_at', $toMonth);
-                                                }
-                                            }),
-                                        Fieldset::make()->columnSpan(1)->columns(1)->schema([
-                                            DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
-                                                ->label('Deduction starts from')
-                                                ->default('Y-m-d')
-                                                ->live()
-                                                ->afterStateUpdated(function ($get, $set, $state) {
+    //                                                 $set('detail_number_of_months_of_deduction', $res);
+    //                                                 $toMonth = Carbon::now()->addMonths(($res - 2))->endOfMonth()->format('Y-m-d');
+    //                                                 $set('detail_deduction_ends_at', $toMonth);
+    //                                             }
+    //                                         }),
+    //                                     Fieldset::make()->columnSpan(1)->columns(1)->schema([
+    //                                         DatePicker::make('detail_deduction_starts_from')->minDate(now()->toDateString())
+    //                                             ->label('Deduction starts from')
+    //                                             ->default('Y-m-d')
+    //                                             ->live()
+    //                                             ->afterStateUpdated(function ($get, $set, $state) {
 
-                                                    $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
+    //                                                 $noOfMonths = (int) $get('detail_number_of_months_of_deduction');
 
-                                                    // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
+    //                                                 // $toMonth = Carbon::now()->addMonths($noOfMonths)->endOfMonth()->format('Y-m-d');
 
-                                                    $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
-                                                    $set('detail_deduction_ends_at', $endNextMonth);
-                                                }),
-                                            DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
-                                                ->label('Deduction ends at')
-                                                ->default('Y-m-d'),
-                                        ]),
-                                        TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
-                                            ->numeric()
-                                            ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                $advancedAmount = $get('detail_advance_amount');
-                                                if ($advancedAmount > 0 && $state > 0) {
+    //                                                 $endNextMonth = Carbon::parse($state)->addMonths(($noOfMonths - 1))->endOfMonth()->format('Y-m-d');
+    //                                                 $set('detail_deduction_ends_at', $endNextMonth);
+    //                                             }),
+    //                                         DatePicker::make('detail_deduction_ends_at')->minDate(now()->toDateString())
+    //                                             ->label('Deduction ends at')
+    //                                             ->default('Y-m-d'),
+    //                                     ]),
+    //                                     TextInput::make('detail_number_of_months_of_deduction')->live(onBlur: true)
+    //                                         ->numeric()
+    //                                         ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                             $advancedAmount = $get('detail_advance_amount');
+    //                                             if ($advancedAmount > 0 && $state > 0) {
 
-                                                    $res = $advancedAmount / $state;
-                                                    // dd($res,$state);
-                                                    $set('detail_monthly_deduction_amount', round($res, 2));
-                                                    $state = (int) $state;
+    //                                                 $res = $advancedAmount / $state;
+    //                                                 // dd($res,$state);
+    //                                                 $set('detail_monthly_deduction_amount', round($res, 2));
+    //                                                 $state = (int) $state;
 
-                                                    $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
+    //                                                 $toMonth = Carbon::now()->addMonths(($state - 2))->endOfMonth()->format('Y-m-d');
 
-                                                    $set('detail_deduction_ends_at', $toMonth);
-                                                }
-                                            })->minValue(1)
-                                            ->label('Number of months of deduction'),
+    //                                                 $set('detail_deduction_ends_at', $toMonth);
+    //                                             }
+    //                                         })->minValue(1)
+    //                                         ->label('Number of months of deduction'),
 
-                                    ]),
+    //                                 ]),
 
-                                ]),
-                            ];
-                        }
-                        if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
+    //                             ]),
+    //                         ];
+    //                     }
+    //                     if ($get('application_type') == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST) {
 
-                            $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
-                            $set('from_to_date', date('Y-m-d'));
-                            // Get the leave types that are active and have a balance for the employee
-                            $leaveTypes = LeaveType::where('active', 1)
-                                ->whereIn('id', $leaveBalances)
-                                ->whereHas('leaveBalances', function ($query) use ($get) {
-                                    $query->where('employee_id', $get('employee_id'))
-                                        ->where('balance', '>', 0); // Ensure the balance is greater than 0
-                                })
-                                ->select('name', 'id')
-                                ->get()
-                                ->pluck('name', 'id');
-                            return [
-                                Fieldset::make()->schema(
+    //                         $leaveBalances = LeaveBalance::where('employee_id', $get('employee_id'))->pluck('leave_type_id');
+    //                         $set('from_to_date', date('Y-m-d'));
+    //                         // Get the leave types that are active and have a balance for the employee
+    //                         $leaveTypes = LeaveType::where('active', 1)
+    //                             ->whereIn('id', $leaveBalances)
+    //                             ->whereHas('leaveBalances', function ($query) use ($get) {
+    //                                 $query->where('employee_id', $get('employee_id'))
+    //                                     ->where('balance', '>', 0); // Ensure the balance is greater than 0
+    //                             })
+    //                             ->select('name', 'id')
+    //                             ->get()
+    //                             ->pluck('name', 'id');
+    //                         return [
+    //                             Fieldset::make()->schema(
 
-                                    [
-                                        Grid::make()->columns(4)->schema([
-                                            Select::make('detail_leave_type_id')->label('Leave type')
-                                                ->requiredIf('application_type', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
-                                                ->live()
-                                                ->options(
-                                                    $leaveTypes
-                                                )->required()
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state, $get('detail_year'));
+    //                                 [
+    //                                     Grid::make()->columns(4)->schema([
+    //                                         Select::make('detail_leave_type_id')->label('Leave type')
+    //                                             ->requiredIf('application_type', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
+    //                                             ->live()
+    //                                             ->options(
+    //                                                 $leaveTypes
+    //                                             )->required()
+    //                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                                 $leaveBalance = LeaveBalance::getBalanceForEmployee($get('employee_id'), $state, $get('detail_year'));
 
-                                                    (LeaveType::find($get('detail_leave_type_id'))?->is_monthly != 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
-                                                    // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
-                                                }),
-                                            Select::make('detail_year')->label('Year')
-                                                ->options([
-                                                    2024 => 2024,
-                                                    2025 => 2025,
-                                                    2026 => 2026
-                                                ])->default(2024)
-                                                ->live()
-                                            // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
-                                            // ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                            //     // dd($state);
-                                            //     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'), $state);
+    //                                                 (LeaveType::find($get('detail_leave_type_id'))?->is_monthly != 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
+    //                                                 // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
+    //                                             }),
+    //                                         Select::make('detail_year')->label('Year')
+    //                                             ->options([
+    //                                                 2024 => 2024,
+    //                                                 2025 => 2025,
+    //                                                 2026 => 2026
+    //                                             ])->default(2024)
+    //                                             ->live()
+    //                                         // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
+    //                                         // ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                         //     // dd($state);
+    //                                         //     $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'),$get('detail_leave_type_id'), $state);
 
-                                            //     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
-                                            //     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
-                                            // })
-                                            ,
-                                            Select::make('detail_month')->label('Month')
-                                                ->options(getMonthArrayWithKeys())
-                                                ->live()
-                                                // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    // dd($state);
-                                                    $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_year'), $state);
+    //                                         //     (LeaveType::find($get('detail_leave_type_id'))?->is_monthly ==1) ? $set('detail_balance', $leaveBalance?->balance):'';
+    //                                         //     // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
+    //                                         // })
+    //                                         ,
+    //                                         Select::make('detail_month')->label('Month')
+    //                                             ->options(getMonthArrayWithKeys())
+    //                                             ->live()
+    //                                             // ->visible(fn($get): bool => (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1))
+    //                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                                 // dd($state);
+    //                                                 $leaveBalance = LeaveBalance::getMonthlyBalanceForEmployee($get('employee_id'), $get('detail_year'), $state);
 
-                                                    (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
-                                                    // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
-                                                }),
-                                            TextInput::make('detail_balance')->label('Leave balance')->disabled(),
+    //                                                 (LeaveType::find($get('detail_leave_type_id'))?->is_monthly == 1) ? $set('detail_balance', $leaveBalance?->balance) : '';
+    //                                                 // $set('detail_days_count.max', $leaveBalance?->balance ?? 0);
+    //                                             }),
+    //                                         TextInput::make('detail_balance')->label('Leave balance')->disabled(),
 
-                                        ]),
-                                        Grid::make()->columns(3)->schema([
-                                            DatePicker::make('detail_from_date')
-                                                ->label('From Date')
-                                                ->reactive()
-                                                ->default(date('Y-m-d'))
-                                                ->required()
-                                                ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                    $fromDate = $get('detail_from_date');
-                                                    $toDate = $get('detail_to_date');
+    //                                     ]),
+    //                                     Grid::make()->columns(3)->schema([
+    //                                         DatePicker::make('detail_from_date')
+    //                                             ->label('From Date')
+    //                                             ->reactive()
+    //                                             ->default(date('Y-m-d'))
+    //                                             ->required()
+    //                                             ->afterStateUpdated(function ($state, callable $set, $get) {
+    //                                                 $fromDate = $get('detail_from_date');
+    //                                                 $toDate = $get('detail_to_date');
 
-                                                    if ($fromDate && $toDate) {
-                                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
-                                                    } else {
-                                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
-                                                    }
-                                                }),
+    //                                                 if ($fromDate && $toDate) {
+    //                                                     $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+    //                                                     $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
+    //                                                 } else {
+    //                                                     $set('detail_days_count', 0); // Reset if no valid dates are selected
+    //                                                 }
+    //                                             }),
 
-                                            DatePicker::make('detail_to_date')
-                                                ->label('To Date')
-                                                ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
-                                                ->reactive()
-                                                ->required()
-                                                ->afterStateUpdated(function ($state, callable $set, $get) {
-                                                    $fromDate = $get('detail_from_date');
-                                                    $toDate = $get('detail_to_date');
+    //                                         DatePicker::make('detail_to_date')
+    //                                             ->label('To Date')
+    //                                             ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+    //                                             ->reactive()
+    //                                             ->required()
+    //                                             ->afterStateUpdated(function ($state, callable $set, $get) {
+    //                                                 $fromDate = $get('detail_from_date');
+    //                                                 $toDate = $get('detail_to_date');
 
-                                                    if ($fromDate && $toDate) {
-                                                        $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
-                                                        $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
-                                                    } else {
-                                                        $set('detail_days_count', 0); // Reset if no valid dates are selected
-                                                    }
-                                                }),
+    //                                                 if ($fromDate && $toDate) {
+    //                                                     $daysDiff = now()->parse($fromDate)->diffInDays(now()->parse($toDate)) + 1;
+    //                                                     $set('detail_days_count', $daysDiff); // Set the detail_days_count automatically
+    //                                                 } else {
+    //                                                     $set('detail_days_count', 0); // Reset if no valid dates are selected
+    //                                                 }
+    //                                             }),
 
-                                            TextInput::make('detail_days_count')
-                                                // ->disabled()
-                                                ->label('Number of Days')
-                                                // ->helperText('Type how many days this leave will be')
-                                                ->helperText('Type how many days this leave will be')
-                                                ->numeric()
-                                                // ->default(2)
-                                                ->minValue(1)
-                                                ->live()
-                                                ->required()
-                                                ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                                    // Parse the state as a Carbon date, add one month, and set it to the end of the month
-                                                    $state = (int) $state;
-                                                    $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state - 1))->format('Y-m-d');
-                                                    $set('detail_to_date', $nextDate);
-                                                })
-                                                ->maxValue(function ($get) {
-                                                    $balance = $get('detail_balance') ?? 0;
-                                                    return $balance;
-                                                })->validationAttribute('ddddd'),
+    //                                         TextInput::make('detail_days_count')
+    //                                             // ->disabled()
+    //                                             ->label('Number of Days')
+    //                                             // ->helperText('Type how many days this leave will be')
+    //                                             ->helperText('Type how many days this leave will be')
+    //                                             ->numeric()
+    //                                             // ->default(2)
+    //                                             ->minValue(1)
+    //                                             ->live()
+    //                                             ->required()
+    //                                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
+    //                                                 // Parse the state as a Carbon date, add one month, and set it to the end of the month
+    //                                                 $state = (int) $state;
+    //                                                 $nextDate = Carbon::parse($get('detail_from_date'))->addDays(($state - 1))->format('Y-m-d');
+    //                                                 $set('detail_to_date', $nextDate);
+    //                                             })
+    //                                             ->maxValue(function ($get) {
+    //                                                 $balance = $get('detail_balance') ?? 0;
+    //                                                 return $balance;
+    //                                             })->validationAttribute('ddddd'),
 
-                                        ]),
-                                    ]
+    //                                     ]),
+    //                                 ]
 
-                                ),
-                            ];
-                        }
+    //                             ),
+    //                         ];
+    //                     }
 
-                        return [
-                            Fieldset::make()->columns(count($form))->schema(
-                                $form
-                            ),
-                        ];
-                    }),
-                Fieldset::make()->label('')->schema([
-                    Textarea::make('notes') // Add the new details field
-                        ->label('Notes')
-                        ->placeholder('Notes...')
-                        // ->rows(5)
-                        ->columnSpanFull(),
-                ]),
-            ]);
-    }
+    //                     return [
+    //                         Fieldset::make()->columns(count($form))->schema(
+    //                             $form
+    //                         ),
+    //                     ];
+    //                 }),
+    //             Fieldset::make()->label('')->schema([
+    //                 Textarea::make('notes') // Add the new details field
+    //                     ->label('Notes')
+    //                     ->placeholder('Notes...')
+    //                     // ->rows(5)
+    //                     ->columnSpanFull(),
+    //             ]),
+    //         ]);
+    // }
 
-    public static function table(Table $table): Table
-    {
-        return $table->defaultSort('id', 'desc')
-            ->paginated([10, 25, 50, 100])
-            ->columns([
-                TextColumn::make('id')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('employee.name')
-                    ->sortable()->limit(20)
-                    ->searchable(),
-                TextColumn::make('createdBy.name')->limit(20)
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('application_date')->label('Request date')
-                    ->sortable(),
-                // TextColumn::make('approvedBy.name')->label('Approved by')
-                //     ->sortable(),
-                // TextColumn::make('approved_at')->label('Approved at')
-                //     ->sortable()
-                // ,
+    // public static function table(Table $table): Table
+    // {
+    //     return $table->defaultSort('id', 'desc')
+    //         ->paginated([10, 25, 50, 100])
+    //         ->columns([
+    //             TextColumn::make('id')
+    //                 ->sortable()
+    //                 ->searchable(),
+    //             TextColumn::make('employee.name')
+    //                 ->sortable()->limit(20)
+    //                 ->searchable(),
+    //             TextColumn::make('createdBy.name')->limit(20)
+    //                 ->sortable()
+    //                 ->searchable(),
+    //             TextColumn::make('application_date')->label('Request date')
+    //                 ->sortable(),
+    //             // TextColumn::make('approvedBy.name')->label('Approved by')
+    //             //     ->sortable(),
+    //             // TextColumn::make('approved_at')->label('Approved at')
+    //             //     ->sortable()
+    //             // ,
 
-                TextColumn::make('status')->label('Status')
-                    ->badge()
-                    ->icon('heroicon-m-check-badge')
-                    ->color(fn(string $state): string => match ($state) {
-                        EmployeeApplication::STATUS_PENDING => 'warning',
-                        EmployeeApplication::STATUS_REJECTED => 'danger',
-                        EmployeeApplication::STATUS_APPROVED => 'success',
-                    })
-                    ->toggleable(isToggledHiddenByDefault: false),
-            ])
-            ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                SelectFilter::make('status')->options([
-                    EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
-                    EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
-                    EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED
-                ]),
-                SelectFilter::make('branch_id')
-                    ->label('Branch')
-                    ->options(Branch::select('name', 'id')->pluck('name', 'id')),
-            ])
-            ->actions([
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\DeleteAction::make()->using(function ($record) {
+    //             TextColumn::make('status')->label('Status')
+    //                 ->badge()
+    //                 ->icon('heroicon-m-check-badge')
+    //                 ->color(fn(string $state): string => match ($state) {
+    //                     EmployeeApplication::STATUS_PENDING => 'warning',
+    //                     EmployeeApplication::STATUS_REJECTED => 'danger',
+    //                     EmployeeApplication::STATUS_APPROVED => 'success',
+    //                 })
+    //                 ->toggleable(isToggledHiddenByDefault: false),
+    //         ])
+    //         ->filters([
+    //             Tables\Filters\TrashedFilter::make(),
+    //             SelectFilter::make('status')->options([
+    //                 EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
+    //                 EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
+    //                 EmployeeApplication::STATUS_APPROVED => EmployeeApplication::STATUS_APPROVED
+    //             ]),
+    //             SelectFilter::make('branch_id')
+    //                 ->label('Branch')
+    //                 ->options(Branch::select('name', 'id')->pluck('name', 'id')),
+    //         ])
+    //         ->actions([
+    //             Tables\Actions\RestoreAction::make(),
+    //             Tables\Actions\DeleteAction::make()->using(function ($record) {
 
-                    DB::beginTransaction();
-                    try {
-                        $record->delete();
-                        $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
-                        if ($transaction) {
-                            $transactionDetail = $transaction->where('transaction_type_id', 1)
-                                ->where('application_id', $record->id)->first();
-                            if (!is_null($transactionDetail) && $transactionDetail->transaction_type_id == 1) {
-                                $fromDate = Carbon::parse($transactionDetail->from_date);
-                                $toDate = Carbon::parse($transactionDetail->to_date);
-                                $remaning = $fromDate->diffInDays($toDate) + 1;
-                                $leaveBalance = LeaveBalance::where('leave_type_id', $record->detail_leave_type_id)->where('employee_id', $transactionDetail->employee_id)
-                                    ->where('year', $record->detail_year)
-                                    ->where('month', $record->detail_month)
-                                    ->first();
-                                if (!is_null($leaveBalance)) {
-                                    $leaveBalance->update([
-                                        'balance' => $remaning + $leaveBalance?->balance
-                                    ]);
-                                }
-                            }
-                            $transaction->update(['is_canceled' => 1, 'cancel_reason' => 'Application deleted', 'canceled_at' => now()]);
-                        }
-                        DB::commit();
-                    } catch (\Exception $th) {
-                        DB::rollBack();
-                        return Notification::make()->title($th->getMessage())->warning()->send();
-                        //throw $th;
-                    }
-                }),
-                Tables\Actions\ForceDeleteAction::make()->using(function ($record) {
-                    DB::beginTransaction();
-                    try {
-                        $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
-                        $record->forceDelete();
-                        if ($transaction) {
-                            $transaction->forceDelete();
-                        }
-                        DB::commit();
-                    } catch (\Exception $th) {
-                        DB::rollBack();
-                        return Notification::make()->title($th->getMessage())->warning()->send();
-                        //throw $th;
-                    }
-                }),
+    //                 DB::beginTransaction();
+    //                 try {
+    //                     $record->delete();
+    //                     $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
+    //                     if ($transaction) {
+    //                         $transactionDetail = $transaction->where('transaction_type_id', 1)
+    //                             ->where('application_id', $record->id)->first();
+    //                         if (!is_null($transactionDetail) && $transactionDetail->transaction_type_id == 1) {
+    //                             $fromDate = Carbon::parse($transactionDetail->from_date);
+    //                             $toDate = Carbon::parse($transactionDetail->to_date);
+    //                             $remaning = $fromDate->diffInDays($toDate) + 1;
+    //                             $leaveBalance = LeaveBalance::where('leave_type_id', $record->detail_leave_type_id)->where('employee_id', $transactionDetail->employee_id)
+    //                                 ->where('year', $record->detail_year)
+    //                                 ->where('month', $record->detail_month)
+    //                                 ->first();
+    //                             if (!is_null($leaveBalance)) {
+    //                                 $leaveBalance->update([
+    //                                     'balance' => $remaning + $leaveBalance?->balance
+    //                                 ]);
+    //                             }
+    //                         }
+    //                         $transaction->update(['is_canceled' => 1, 'cancel_reason' => 'Application deleted', 'canceled_at' => now()]);
+    //                     }
+    //                     DB::commit();
+    //                 } catch (\Exception $th) {
+    //                     DB::rollBack();
+    //                     return Notification::make()->title($th->getMessage())->warning()->send();
+    //                     //throw $th;
+    //                 }
+    //             }),
+    //             Tables\Actions\ForceDeleteAction::make()->using(function ($record) {
+    //                 DB::beginTransaction();
+    //                 try {
+    //                     $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
+    //                     $record->forceDelete();
+    //                     if ($transaction) {
+    //                         $transaction->forceDelete();
+    //                     }
+    //                     DB::commit();
+    //                 } catch (\Exception $th) {
+    //                     DB::rollBack();
+    //                     return Notification::make()->title($th->getMessage())->warning()->send();
+    //                     //throw $th;
+    //                 }
+    //             }),
 
-                // static::approveDepartureRequest(),
-                // static::rejectDepartureRequest(),
+    //             // static::approveDepartureRequest(),
+    //             // static::rejectDepartureRequest(),
 
-                static::approveDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::rejectDepartureRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
+    //             static::approveDepartureRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
+    //             static::rejectDepartureRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
 
-                static::approveAdvanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::rejectAdvanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
+    //             static::approveAdvanceRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
+    //             static::rejectAdvanceRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
 
-                static::approveLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::rejectLeaveRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
+    //             static::approveLeaveRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
+    //             static::rejectLeaveRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
 
-                static::approveAttendanceRequest()->hidden(function ($record) {
-                    // return false;
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
+    //             static::approveAttendanceRequest()->hidden(function ($record) {
+    //                 // return false;
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
 
-                static::rejectAttendanceRequest()->hidden(function ($record) {
-                    if (isstuff() || isFinanceManager()) {
-                        return true;
-                    }
-                    if (isset(Auth::user()->employee)) {
-                        if ($record->employee_id == Auth::user()->employee->id) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }),
-                static::AttendanceRequestDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
+    //             static::rejectAttendanceRequest()->hidden(function ($record) {
+    //                 if (isstuff() || isFinanceManager()) {
+    //                     return true;
+    //                 }
+    //                 if (isset(Auth::user()->employee)) {
+    //                     if ($record->employee_id == Auth::user()->employee->id) {
+    //                         return true;
+    //                     }
+    //                 }
+    //                 return false;
+    //             }),
+    //             static::AttendanceRequestDetails()
+    //                 ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST)),
 
-                static::LeaveRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)),
-                static::departureRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
+    //             static::LeaveRequesttDetails()
+    //                 ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)),
+    //             static::departureRequesttDetails()
+    //                 ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST)),
 
-                static::advancedRequesttDetails()
-                    ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)),
+    //             static::advancedRequesttDetails()
+    //                 ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)),
 
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                ]),
-            ]);
-    }
+    //         ])
+    //         ->bulkActions([
+    //             Tables\Actions\BulkActionGroup::make([
+    //                 Tables\Actions\ForceDeleteBulkAction::make(),
+    //                 Tables\Actions\RestoreBulkAction::make(),
+    //             ]),
+    //         ]);
+    // }
 
     public static function getRelations(): array
     {
@@ -575,8 +575,8 @@ class EmployeeApplicationResource_old extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployeeApplications::route('/'),
-            'create' => Pages\CreateEmployeeApplication::route('/create'),
+            // 'index' => Pages\ListEmployeeApplications::route('/'),
+            // 'create' => Pages\CreateEmployeeApplication::route('/create'),
             // 'edit' => Pages\EditEmployeeApplication::route('/{record}/edit'),
         ];
     }
