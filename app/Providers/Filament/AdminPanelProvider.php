@@ -39,6 +39,7 @@ use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
 use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
+use App\Filament\Resources\MonthClosureResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
 use App\Filament\Resources\Shield\RoleResource;
@@ -110,6 +111,7 @@ class AdminPanelProvider extends PanelProvider
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager() || isMaintenanceManager()) ? HRCircularCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isFinanceManager()) ? HRSalaryCluster::getNavigationItems() : [],
                             (isSuperAdmin() || isSystemManager() || isBranchManager() || isStuff() || isFinanceManager()) ? HRApplicationsCluster::getNavigationItems() : [],
+                            (isSuperAdmin() || isSystemManager()) ? MonthClosureResource::getNavigationItems() : [],
                         ));
                 }
 
