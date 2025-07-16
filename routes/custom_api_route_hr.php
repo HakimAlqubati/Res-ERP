@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\API\HR\AttendanceController;
+use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
 use Illuminate\Support\Facades\Route;
 
