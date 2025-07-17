@@ -175,6 +175,15 @@ class PeriodRelationManager extends RelationManager
                         //     }
                         // }
                         try {
+
+                            if ($this->isInternalPeriodsOverlapping($data['periods'])) {
+                                Notification::make()
+                                    ->title('Overlapping Error')
+                                    ->body('Selected shifts have overlapping times. Please choose non-overlapping shifts for the same days and period.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
                             // Retrieve the existing periods associated with the owner record
                             // $existPeriods = array_map('intval', $this->ownerRecord?->periods?->pluck('id')->toArray());
                             $dataPeriods = array_map('intval', $data['periods']);
@@ -482,9 +491,10 @@ class PeriodRelationManager extends RelationManager
             ->modalWidth('md');
 
     }
- 
-    private function isOverlappingDays_($employeeId, $periodDays, $periodStartAt, $periodEndAt, $periodStartDate, $periodEndDate = null, $excludePeriodId = null)
-    {
+
+    private function isOverlappingDays_($employeeId, $periodDays,
+        $periodStartAt, $periodEndAt, $periodStartDate,
+        $periodEndDate = null, $excludePeriodId = null) {
         $query = EmployeePeriod::query()
             ->with(['days' => function ($q) use ($periodDays) {
                 $q->whereIn('day_of_week', $periodDays);
@@ -500,7 +510,6 @@ class PeriodRelationManager extends RelationManager
                                     $q4->whereNull('end_date')->orWhere('end_date', '>=', $periodStartDate);
                                 });
                         } else {
-                            // الفترة الجديدة مفتوحة
                             $q3->where('end_date', '>=', $periodStartDate)->orWhereNull('end_date');
                         }
                     });
@@ -526,6 +535,28 @@ class PeriodRelationManager extends RelationManager
         foreach ($overlappingPeriods as $period) {
             foreach ($period->days as $day) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    private function isInternalPeriodsOverlapping($selectedPeriodIds)
+    {
+        $periods = \App\Models\WorkPeriod::whereIn('id', $selectedPeriodIds)->get();
+        foreach ($periods as $i => $periodA) {
+            foreach ($periods as $j => $periodB) {
+                if ($i >= $j) {
+                    continue;
+                }
+                // لا تقارن نفس الشيفت أو تكرار
+                // تحقق من تداخل الأوقات
+                if (
+                    ($periodA->start_at < $periodB->end_at) &&
+                    ($periodB->start_at < $periodA->end_at)
+                ) {
+                    // يوجد تداخل بين الشيفتين
+                    return true;
+                }
             }
         }
         return false;
