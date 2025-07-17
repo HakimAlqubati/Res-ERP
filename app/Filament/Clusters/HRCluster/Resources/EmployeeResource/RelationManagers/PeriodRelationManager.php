@@ -292,7 +292,7 @@ class PeriodRelationManager extends RelationManager
                                         ->when($period->end_date, fn($q) => $q->whereDate('check_date', '<=', $period->end_date))
                                         ->exists();
 
-                                    if ($attendanceExists) { 
+                                    if ($attendanceExists) {
                                         throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
                                     }
 
@@ -315,7 +315,7 @@ class PeriodRelationManager extends RelationManager
                         } catch (\Exception $e) {
                             // Handle the exception
                             Notification::make()->title('Error')->icon('heroicon-o-x-circle')
-                            ->body($e->getMessage())->danger()->persistent()->send();
+                                ->body($e->getMessage())->danger()->persistent()->send();
                             // You can also log the error if needed
                             // Log::error($e);
                         }
@@ -390,6 +390,29 @@ class PeriodRelationManager extends RelationManager
                     return;
                 }
 
+                $periodStartAt   = $employeePeriod->workPeriod->start_at;
+                $periodEndAt     = $employeePeriod->workPeriod->end_at;
+                $periodStartDate = $employeePeriod->start_date;
+                $periodEndDate   = $employeePeriod->end_date;
+
+                // لاحظ تمرير رقم فترة الموظف حتى لا يحتسب تداخل مع نفسه
+                if ($this->isOverlappingDays_(
+                    $employeePeriod->employee_id,
+                    $data['days'],
+                    $periodStartAt,
+                    $periodEndAt,
+                    $periodStartDate,
+                    $periodEndDate,
+                    $employeePeriod->id// exclude self
+                )) {
+                    Notification::make()
+                        ->title('Overlapping Error')
+                        ->body('There is an overlapping period with the selected days. Please review your selection.')
+                        ->danger()
+                        ->send();
+                    return;
+                }
+
                 try {
                     DB::transaction(function () use ($data, $employeePeriod, $record) {
                         $existingDays = $employeePeriod->days()->pluck('day_of_week')->toArray();
@@ -459,40 +482,7 @@ class PeriodRelationManager extends RelationManager
             ->modalWidth('md');
 
     }
-    private function isOverlappingDays($employeeId, $periodDays, $periodStartAt, $periodEndAt, $excludePeriodId = null)
-    {
-        // Query all employee periods that overlap in time, excluding current one (for edit)
-        $query = EmployeePeriod::query()
-            ->with('days')
-            ->where('employee_id', $employeeId)
-            ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
-                $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
-                    $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
-                        ->orWhereBetween('end_at', [$periodStartAt, $periodEndAt])
-                        ->orWhere(function ($q) use ($periodStartAt, $periodEndAt) {
-                            $q->where('start_at', '<=', $periodStartAt)
-                                ->where('end_at', '>=', $periodEndAt);
-                        });
-                });
-            });
-
-        // Exclude the current period if editing
-        if ($excludePeriodId) {
-            $query->where('id', '!=', $excludePeriodId);
-        }
-
-        $overlappingPeriods = $query->get();
-
-        foreach ($overlappingPeriods as $period) {
-            $existingDays = $period->days->pluck('day_of_week')->toArray();
-            if (count(array_intersect($periodDays, $existingDays)) > 0) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
+ 
     private function isOverlappingDays_($employeeId, $periodDays, $periodStartAt, $periodEndAt, $periodStartDate, $periodEndDate = null, $excludePeriodId = null)
     {
         $query = EmployeePeriod::query()
