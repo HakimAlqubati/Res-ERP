@@ -6,6 +6,7 @@ use App\Models\Attendance;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
 use App\Models\WorkPeriod;
+use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -176,14 +177,24 @@ class PeriodRelationManager extends RelationManager
                         // }
                         try {
 
-                            if ($this->isInternalPeriodsOverlapping($data['periods'])) {
+                            $selectedPeriodsWithDates = [];
+                            foreach ($data['periods'] as $periodId) {
+                                $selectedPeriodsWithDates[] = [
+                                    'period_id'  => $periodId,
+                                    'start_date' => $data['start_date'],
+                                    'end_date'   => $data['end_date'] ?? null,
+                                ];
+                            }
+
+                            if ($this->isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)) {
                                 Notification::make()
                                     ->title('Overlapping Error')
-                                    ->body('Selected shifts have overlapping times. Please choose non-overlapping shifts for the same days and period.')
+                                    ->body('There are overlapping shifts with overlapping periods and times. Please check your selection.')
                                     ->danger()
                                     ->send();
                                 return;
                             }
+
                             // Retrieve the existing periods associated with the owner record
                             // $existPeriods = array_map('intval', $this->ownerRecord?->periods?->pluck('id')->toArray());
                             $dataPeriods = array_map('intval', $data['periods']);
@@ -490,15 +501,24 @@ class PeriodRelationManager extends RelationManager
             ->modalSubmitActionLabel('Save')
             ->modalWidth('md');
 
-    }
+    } 
 
-    private function isOverlappingDays_($employeeId, $periodDays,
-        $periodStartAt, $periodEndAt, $periodStartDate,
-        $periodEndDate = null, $excludePeriodId = null) {
+    private function isOverlappingDays_(
+        $employeeId,
+        $periodDays,
+        $periodStartAt,
+        $periodEndAt,
+        $periodStartDate,
+        $periodEndDate = null,
+        $excludePeriodId = null
+    ) {
         $query = EmployeePeriod::query()
-            ->with(['days' => function ($q) use ($periodDays) {
-                $q->whereIn('day_of_week', $periodDays);
-            }])
+            ->with([
+                'days' => function ($q) use ($periodDays) {
+                    $q->whereIn('day_of_week', $periodDays);
+                },
+                'workPeriod', // إضافة علاقة الشيفت
+            ])
             ->where('employee_id', $employeeId)
             ->where(function ($q) use ($periodStartDate, $periodEndDate) {
                 $q->where(function ($q2) use ($periodStartDate, $periodEndDate) {
@@ -514,16 +534,6 @@ class PeriodRelationManager extends RelationManager
                         }
                     });
                 });
-            })
-            ->whereHas('workPeriod', function ($query) use ($periodStartAt, $periodEndAt) {
-                $query->where(function ($q) use ($periodStartAt, $periodEndAt) {
-                    $q->whereBetween('start_at', [$periodStartAt, $periodEndAt])
-                        ->orWhereBetween('end_at', [$periodStartAt, $periodEndAt])
-                        ->orWhere(function ($q) use ($periodStartAt, $periodEndAt) {
-                            $q->where('start_at', '<=', $periodStartAt)
-                                ->where('end_at', '>=', $periodEndAt);
-                        });
-                });
             });
 
         if ($excludePeriodId) {
@@ -532,8 +542,37 @@ class PeriodRelationManager extends RelationManager
 
         $overlappingPeriods = $query->get();
 
+        // أوقات الفترة الحالية المراد إضافتها
+        $currentStart = Carbon::createFromFormat('H:i:s', $periodStartAt);
+        $currentEnd   = Carbon::createFromFormat('H:i:s', $periodEndAt);
+
+        // إذا الشيفت جديد يمتد لليوم التالي، عدل النهاية
+        $currentWorkPeriodModel = \App\Models\WorkPeriod::where('start_at', $periodStartAt)
+            ->where('end_at', $periodEndAt)->first();
+
+        $currentDayAndNight = $currentWorkPeriodModel?->day_and_night ?? 0;
+        if ($currentDayAndNight) {
+            $currentEnd->addDay();
+        }
+
         foreach ($overlappingPeriods as $period) {
-            foreach ($period->days as $day) {
+            $wp = $period->workPeriod;
+            if (! $wp) {
+                continue;
+            }
+
+            $existStart = Carbon::createFromFormat('H:i:s', $wp->start_at);
+            $existEnd   = Carbon::createFromFormat('H:i:s', $wp->end_at);
+
+            if ($wp->day_and_night) {
+                $existEnd->addDay();
+            }
+
+            // تحقق تداخل الأوقات
+            $timesOverlap = ($currentStart < $existEnd) && ($existStart < $currentEnd);
+
+            // يوجد يوم متداخل && أوقات متداخلة
+            if ($timesOverlap && $period->days->count()) {
                 return true;
             }
         }
@@ -555,6 +594,49 @@ class PeriodRelationManager extends RelationManager
                     ($periodB->start_at < $periodA->end_at)
                 ) {
                     // يوجد تداخل بين الشيفتين
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
+    {
+        // $selectedPeriodsWithDates = [
+        //     ['period_id' => 1, 'start_date' => '2024-01-01', 'end_date' => '2024-01-10'],
+        //     ['period_id' => 2, 'start_date' => '2024-01-05', 'end_date' => '2024-01-15'],
+        //     ...
+        // ];
+        $periods = \App\Models\WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))->get()->keyBy('id');
+
+        $count = count($selectedPeriodsWithDates);
+        for ($i = 0; $i < $count; $i++) {
+            for ($j = $i + 1; $j < $count; $j++) {
+                $a = $selectedPeriodsWithDates[$i];
+                $b = $selectedPeriodsWithDates[$j];
+
+                $periodA = $periods[$a['period_id']];
+                $periodB = $periods[$b['period_id']];
+
+                // تحقق من تداخل أوقات الشيفت
+                $timesOverlap = (
+                    ($periodA->start_at < $periodB->end_at) &&
+                    ($periodB->start_at < $periodA->end_at)
+                );
+
+                // تحقق من تداخل تواريخ الفترات (null end_date تعني مفتوحة)
+                $aEnd         = $a['end_date'] ?? null;
+                $bEnd         = $b['end_date'] ?? null;
+                $datesOverlap =
+                // الحالة العامة: تواريخ متقاطعة
+                (
+                    ($aEnd === null || $b['start_date'] <= $aEnd) &&
+                    ($bEnd === null || $a['start_date'] <= $bEnd)
+                );
+
+                if ($timesOverlap && $datesOverlap) {
+                    // يوجد تداخل كامل
                     return true;
                 }
             }
