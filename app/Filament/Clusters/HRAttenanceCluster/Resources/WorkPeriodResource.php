@@ -133,27 +133,29 @@ class WorkPeriodResource extends Resource
                 Tables\Columns\TextColumn::make('id')
                     ->label('id')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()->toggleable(),
 
                 Tables\Columns\TextColumn::make('branch.name')
-                    ->label('Branch')->searchable()->sortable(),
+                    ->label('Branch')->searchable()->sortable()->toggleable(),
 
                 Tables\Columns\BooleanColumn::make('active')->alignCenter(true)
-                    ->label('Active'),
+                    ->label('Active')->toggleable(),
                 Tables\Columns\BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
-                    ->label('Day and Night'),
+                    ->label('Day and Night')->toggleable(),
 
                 Tables\Columns\TextColumn::make('start_at')
                     ->label('Start Time')
-                    ->sortable(),
+                    ->sortable()->toggleable(),
 
                 Tables\Columns\TextColumn::make('end_at')
                     ->label('End Time')
-                    ->sortable(),
+                    ->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('supposed_duration')
+                    ->label('Duration')->toggleable()->alignCenter(),
 
                 // Tables\Columns\TextColumn::make('allowed_count_minutes_late')->alignCenter(true)
                 //     ->label('Late Minutes Allowed'),
