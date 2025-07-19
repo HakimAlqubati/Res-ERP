@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
+use App\Http\Controllers\AWS\EmployeeLivenessController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('hr')
@@ -15,3 +16,11 @@ Route::prefix('hr')
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
     });
+
+Route::prefix('aws/employee-liveness')->group(function () {
+    // بدء جلسة التحقق (startSession)
+    Route::post('/start-session', [EmployeeLivenessController::class, 'startSession']);
+
+    // التحقق من نتيجة الجلسة (checkSession)
+    Route::get('/check-session', [EmployeeLivenessController::class, 'checkSession']);
+});

@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
 use App\Http\Controllers\HR\TestSalaryCalcController;
@@ -722,3 +723,11 @@ Route::get('/salary-report/{employee}', [SalaryReportController::class, 'show'])
 
 Route::get('test/salary-calc/{employee}/{year}/{month}', [TestSalaryCalcController::class, 'show'])
     ->name('test.salary-calc');
+
+Route::post('/liveness/start', [\App\Http\Controllers\AWS\EmployeeLivenessAWSController::class, 'startLivenessSession']);
+Route::get('/liveness/check', [\App\Http\Controllers\AWS\EmployeeLivenessAWSController::class, 'checkLivenessResult']);
+
+
+Route::get('/liveness', function () {
+    return view('liveness');
+});

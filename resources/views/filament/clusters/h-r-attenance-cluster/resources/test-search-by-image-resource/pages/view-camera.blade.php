@@ -403,9 +403,9 @@
 
         Promise.all([
             faceapi.nets.tinyFaceDetector.loadFromUri('{{ asset('models') }}'),
-            // faceapi.nets.faceLandmark68Net.loadFromUri('{{ asset('models') }}'),
-            // faceapi.nets.faceRecognitionNet.loadFromUri('{{ asset('models') }}'),
-            // faceapi.nets.faceExpressionNet.loadFromUri('{{ asset('models') }}')
+            faceapi.nets.faceLandmark68Net.loadFromUri('{{ asset('models') }}'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('{{ asset('models') }}'),
+            faceapi.nets.faceExpressionNet.loadFromUri('{{ asset('models') }}')
         ]).then(startVideo);
 
 
@@ -530,8 +530,8 @@
             const canvas = faceapi.createCanvasFromMedia(video);
             document.body.append(canvas);
             const displaySize = {
-                width: video.width,
-                height: video.height
+                width: video.videoWidth,
+                height: video.videoHeight
             };
             faceapi.matchDimensions(canvas, displaySize);
 

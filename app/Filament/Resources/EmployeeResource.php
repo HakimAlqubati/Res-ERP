@@ -5,7 +5,6 @@ use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\BranchLogRelationManager;
-use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\EmployeePeriodDaysRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
@@ -171,31 +170,7 @@ class EmployeeResource extends Resource
                                         ->columnSpanFull()
                                         ->schema([
                                             Grid::make()->columns(2)->schema([
-                                                FileUpload::make('avatar')
-                                                    ->image()
-                                                    ->label('')
-                                                // ->avatar()
-                                                    ->imageEditor()
-
-                                                    ->circleCropper()
-                                                // ->disk('public')
-                                                // ->directory('employees')
-                                                    ->visibility('public')
-                                                    ->imageEditorAspectRatios([
-                                                        '16:9',
-                                                        '4:3',
-                                                        '1:1',
-                                                    ])
-                                                    ->disk('s3') // Change disk to S3
-                                                    ->directory('employees')
-                                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                        return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                    })
-                                                // ->imagePreviewHeight('250')
-                                                    ->resize(5)
-                                                    ->maxSize(333)
-                                                    ->columnSpan(2)
-                                                    ->reactive(),
+                                                self::avatarUploadField(),
                                             ]),
                                         ]),
                                 ]),
@@ -503,7 +478,7 @@ class EmployeeResource extends Resource
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
-                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault:true)->hidden(),
+                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')
@@ -729,6 +704,25 @@ class EmployeeResource extends Resource
                     }),
 
                 ActionGroup::make([
+                    
+                ActionsAction::make('quick_edit_avatar')
+                    ->label('Edit Avatar')
+                    ->icon('heroicon-o-camera')
+                    ->color('secondary')
+                    ->modalHeading('Edit Employee Avatar')
+                    ->form([
+                        static::avatarUploadField(),
+                    ])
+                    ->action(function (array $data, $record) {
+                        $record->update([
+                            'avatar' => $data['avatar'],
+                        ]);
+                        Notification::make()
+                            ->title('Avatar updated')
+                            ->body('Employee avatar updated successfully.')
+                            ->success()
+                            ->send();
+                    }),
                     ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
@@ -888,5 +882,34 @@ class EmployeeResource extends Resource
             return true;
         }
         return false;
+    }
+
+    public static function avatarUploadField(): \Filament\Forms\Components\FileUpload
+    {
+        return FileUpload::make('avatar')
+            ->image()
+            ->label('')
+        // ->avatar()
+            ->imageEditor()
+
+            ->circleCropper()
+        // ->disk('public')
+        // ->directory('employees')
+            ->visibility('public')
+            ->imageEditorAspectRatios([
+                '16:9',
+                '4:3',
+                '1:1',
+            ])
+            ->disk('s3') // Change disk to S3
+            ->directory('employees')
+            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                return Str::random(15) . "." . $file->getClientOriginalExtension();
+            })
+        // ->imagePreviewHeight('250')
+            ->resize(5)
+            ->maxSize(333)
+            ->columnSpan(2)
+            ->reactive();
     }
 }
