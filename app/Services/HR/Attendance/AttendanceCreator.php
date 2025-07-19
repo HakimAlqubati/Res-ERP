@@ -103,11 +103,11 @@ class AttendanceCreator
         // $checkTime = \Carbon\Carbon::parse($checkTime);
         $checkTime = Carbon::parse($date . ' ' . $checkTime);
 
-        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(15))->where('accepted', 1)->where('employee_id', $employee->id)->first();
+        $lastRecord = Attendance::where('created_at', '>=', Carbon::now()->subMinutes(1))->where('accepted', 1)->where('employee_id', $employee->id)->first();
 
         if ($lastRecord && ! $isRequest) {
             // // Calculate the remaining seconds until a new record can be created
-            $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(15)->diffInSeconds(Carbon::now());
+            $remainingSeconds = Carbon::parse($lastRecord->created_at)->addMinutes(1)->diffInSeconds(Carbon::now());
 
             // Convert seconds to minutes and seconds
             $remainingMinutes = floor($remainingSeconds / 60);
@@ -116,10 +116,10 @@ class AttendanceCreator
             $remainingSeconds *= -1;
             $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
 
-            // return [
-            //     'success' => false,
-            //     'message' => $message,
-            // ];
+            return [
+                'success' => false,
+                'message' => $message,
+            ];
         }
 
         // بيانات أولية للحضور

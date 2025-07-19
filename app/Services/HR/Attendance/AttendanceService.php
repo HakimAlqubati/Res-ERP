@@ -1,43 +1,43 @@
 <?php
-
 namespace App\Services\HR\Attendance;
 
 use App\Models\Employee;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceService
 {
     protected AttendanceValidator $validator;
-    protected AttendanceHandler $handler; 
+    protected AttendanceHandler $handler;
 
     public function __construct(
         AttendanceValidator $validator,
-        AttendanceHandler $handler, 
+        AttendanceHandler $handler,
     ) {
         $this->validator = $validator;
-        $this->handler = $handler; 
+        $this->handler   = $handler;
     }
 
     public function handle(array $formData, string $attendanceType = 'rfid'): array
     {
         $rfid = $formData['rfid'] ?? null;
 
-        if (!$rfid) {
-            return [
-                'success' => false,
-                'message' => 'RFID is required.',
-            ];
-        }
+        if (isset($formData['employee']) && $formData['employee'] instanceof Employee) {
+            $employee = $formData['employee'];
+        } elseif (isset($formData['employee_id'])) {
+            $employee = Employee::find($formData['employee_id']);
+        } elseif (isset($formData['rfid'])) {
+            $employee = Employee::where('rfid', $formData['rfid'])->first();
+        }  
 
-        $employee = Employee::where('rfid', $rfid)->first();
-
-        if (!$employee) {
+        if (! $employee) {
             return [
                 'success' => false,
                 'message' => 'Employee not found.',
             ];
         }
- 
-        return $this->handler->handleEmployeeAttendance($employee,$formData,$formData['date_time']); 
+
+        Log::alert('zxc',[$employee, $formData, $formData['date_time']]);
+        return $this->handler->handleEmployeeAttendance($employee, $formData, $formData['date_time']);
 
         // TODO: Replace this with actual attendance creation logic
         return [

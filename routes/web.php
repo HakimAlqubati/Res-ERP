@@ -1,5 +1,6 @@
 <?php
-
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\EmployeeAWSController;
@@ -482,8 +483,7 @@ Route::get('/update_user_branch_id_for_all_users', function () {
         $userObj->update(['branch_id' => $branchUser['branch_id']]);
     }
     return $branchUsers;
-});
-
+}); 
 Route::get('/attendance', AttendanecEmployee2::class)
     ->name('attendance')->middleware('check');
 Route::get('/attendanceSecret__', AttendanecEmployee2::class)
@@ -731,3 +731,15 @@ Route::get('/liveness/check', [\App\Http\Controllers\AWS\EmployeeLivenessAWSCont
 Route::get('/liveness', function () {
     return view('liveness');
 });
+
+Route::get('/test-cors', function () {
+    return env('LARAVEL_CORS_ALLOWED_ORIGINS');
+});
+
+Route::get('/app/{any?}', function () {
+    $path = public_path('react-app/index.html');
+    if (!File::exists($path)) {
+        abort(404);
+    }
+    return Response::file($path);
+})->where('any', '.*');

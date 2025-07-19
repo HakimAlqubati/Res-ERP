@@ -2,11 +2,19 @@
 namespace App\Http\Controllers\AWS;
 
 use App\Http\Controllers\Controller;
+use App\Services\HR\Attendance\AttendanceService;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\Request;
 
 class EmployeeLivenessController extends Controller
 {
+
+    protected AttendanceService $attendanceService;
+
+    public function __construct(AttendanceService $attendanceService)
+    {
+        $this->attendanceService = $attendanceService;
+    }
     public function startSession()
     {
         $client = new RekognitionClient([
@@ -120,16 +128,24 @@ class EmployeeLivenessController extends Controller
                 $employeeId    = $expodedResult[1] ?? 0;
                 $employeeName  = $expodedResult[0] ?? 'Employee not found';
 
+                $attendanceResult = null;
+                if ($employeeId && is_numeric($employeeId) && $employeeId > 0) {
+                    $attendanceResult = $this->attendanceService->handle([
+                        'employee_id' => $employeeId,
+                                    // يمكنك إرسال بيانات إضافية مثل 'date_time' => now() إذا أردت
+                    ], 'face'); // النوع face للتمييز إن أردت
+                }
                 // 4. إرجاع النتيجة النهائية
                 return response()->json([
                     'status'           => 'success',
-                    'isLive'           => ($result['Confidence'] ?? 0) > 90,
+                    'isLive'           => ($result['Confidence'] ?? 0) > 70,
                     'confidence'       => $result['Confidence'] ?? null,
                     'employee_id'      => $employeeId,
                     'employee'         => $employeeName,
                     'face_id'          => $rekognitionId,
                     'raw_name'         => $name,
                     'auditImagesCount' => count($result['AuditImages'] ?? []),
+                    'attendance'       => $attendanceResult,
                 ]);
             }
 

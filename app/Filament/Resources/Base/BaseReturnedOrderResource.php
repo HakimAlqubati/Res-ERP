@@ -25,7 +25,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-abstract class ReturnedOrderResource extends Resource
+abstract class BaseReturnedOrderResource extends Resource
 {
     protected static ?string $model = ReturnedOrder::class;
     abstract protected static function getOrderSearchQuery(string $search);

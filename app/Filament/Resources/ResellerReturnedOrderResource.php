@@ -2,7 +2,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\ResellersCluster;
-use App\Filament\Resources\Base\ReturnedOrderResource as BaseReturnedOrderResource;
+use App\Filament\Resources\Base\BaseReturnedOrderResource as BaseReturnedOrderResource;
 use App\Models\Branch;
 use App\Models\Order;
 use Filament\Facades\Filament;

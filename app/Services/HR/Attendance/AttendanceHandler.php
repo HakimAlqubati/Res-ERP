@@ -5,6 +5,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceHandler
 {
@@ -24,6 +25,7 @@ class AttendanceHandler
     public function handleEmployeeAttendance(Employee $employee,
         array $data): array {
         try {
+            Log::info('sss',['sdf']);
             $dateTime = $data['date_time']; // e.g. "2025-07-07 14:30:00"
 
             $date = date('Y-m-d', strtotime($dateTime)); // "2025-07-07"
