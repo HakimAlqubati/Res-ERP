@@ -63,17 +63,17 @@ class EmployeeLivenessController extends Controller
             if (isset($result['Status']) && $result['Status'] === 'SUCCEEDED') {
                 $imageBytes = $result['ReferenceImage']['Bytes'] ?? null;
 
-                if (! $imageBytes) {
-                    LivenessSession::createLivenessSession([
-                        'session_id' => $sessionId,
-                        'status'     => 'NO_IMAGE',
-                        'error'      => 'لم يتم العثور على صورة مرجعية.',
-                    ]);
-                    return response()->json([
-                        'status'  => 'NO_IMAGE',
-                        'message' => 'لم يتم العثور على صورة مرجعية.',
-                    ], 400);
-                }
+                // if (! $imageBytes) {
+                //     LivenessSession::createLivenessSession([
+                //         'session_id' => $sessionId,
+                //         'status'     => 'NO_IMAGE',
+                //         'error'      => 'لم يتم العثور على صورة مرجعية.',
+                //     ]);
+                //     return response()->json([
+                //         'status'  => 'NO_IMAGE',
+                //         'message' => 'لم يتم العثور على صورة مرجعية.',
+                //     ], 400);
+                // }
 
                 // 2. البحث عن الوجه في مجموعة Rekognition في سنغافورة
                 $rekognitionClient = new \Aws\Rekognition\RekognitionClient([
@@ -144,7 +144,8 @@ class EmployeeLivenessController extends Controller
 
                 LivenessSession::createLivenessSession([
                     'session_id'         => $sessionId,
-                    'employee_id'        => $employeeId ?? null,
+                    // 'employee_id'        => $employeeId ?? null,
+                    'employee_id'        => 0,
                     'employee_name'      => $employeeName ?? null,
                     'face_id'            => $rekognitionId ?? null,
                     'raw_name'           => $name ?? null,
