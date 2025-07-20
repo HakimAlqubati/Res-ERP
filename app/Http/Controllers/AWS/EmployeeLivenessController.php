@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\AWS;
 
 use App\Http\Controllers\Controller;
+use App\Models\LivenessSession;
 use App\Services\HR\Attendance\AttendanceService;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\Request;
@@ -63,6 +64,11 @@ class EmployeeLivenessController extends Controller
                 $imageBytes = $result['ReferenceImage']['Bytes'] ?? null;
 
                 if (! $imageBytes) {
+                    LivenessSession::createLivenessSession([
+                        'session_id' => $sessionId,
+                        'status'     => 'NO_IMAGE',
+                        'error'      => 'لم يتم العثور على صورة مرجعية.',
+                    ]);
                     return response()->json([
                         'status'  => 'NO_IMAGE',
                         'message' => 'لم يتم العثور على صورة مرجعية.',
@@ -135,6 +141,20 @@ class EmployeeLivenessController extends Controller
                                     // يمكنك إرسال بيانات إضافية مثل 'date_time' => now() إذا أردت
                     ], 'face'); // النوع face للتمييز إن أردت
                 }
+
+                LivenessSession::createLivenessSession([
+                    'session_id'         => $sessionId,
+                    'employee_id'        => $employeeId ?? null,
+                    'employee_name'      => $employeeName ?? null,
+                    'face_id'            => $rekognitionId ?? null,
+                    'raw_name'           => $name ?? null,
+                    'is_live'            => ($result['Confidence'] ?? 0) > 70,
+                    'confidence'         => $result['Confidence'] ?? null,
+                    'status'             => $result['Status'] ?? 'FAILED',
+                    'audit_images_count' => count($result['AuditImages'] ?? []),
+                    'attendance_result'  => $attendanceResult ?? null,
+                    'error'              => null,
+                ]);
                 // 4. إرجاع النتيجة النهائية
                 return response()->json([
                     'status'           => 'success',

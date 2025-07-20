@@ -736,8 +736,15 @@ Route::get('/test-cors', function () {
     return env('LARAVEL_CORS_ALLOWED_ORIGINS');
 });
 
-Route::get('/app/{any?}', function () {
-    $path = public_path('react-app/index.html');
+Route::get('/keypad/{any?}', function () {
+    $path = public_path('react-app-keypad/index.html');
+    if (!File::exists($path)) {
+        abort(404);
+    }
+    return Response::file($path);
+})->where('any', '.*');
+Route::get('/camera/{any?}', function () {
+    $path = public_path('react-app-keypad/index.html');
     if (!File::exists($path)) {
         abort(404);
     }
