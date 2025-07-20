@@ -736,7 +736,7 @@ Route::get('/test-cors', function () {
     return env('LARAVEL_CORS_ALLOWED_ORIGINS');
 });
  
-Route::get('/my-app/{any?}', function () {
+Route::get('/react-app/{any?}', function () {
     $path = public_path('react-app/index.html');
     if (!File::exists($path)) {
         abort(404);
