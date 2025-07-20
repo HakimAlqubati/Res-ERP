@@ -743,3 +743,10 @@ Route::get('/my-app/{any?}', function () {
     }
     return Response::file($path);
 })->where('any', '.*');
+
+Route::get('/public/react-app/{any?}', function ($any = null) {
+    // إعادة التوجيه للرابط الصحيح
+    $to = '/react-app';
+    if ($any) $to .= '/' . $any;
+    return redirect($to, 301); // 301 تعني توجيه دائم
+})->where('any', '.*');
