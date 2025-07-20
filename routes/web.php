@@ -744,7 +744,7 @@ Route::get('/keypad/{any?}', function () {
     return Response::file($path);
 })->where('any', '.*');
 Route::get('/camera/{any?}', function () {
-    $path = public_path('react-app-keypad/index.html');
+    $path = public_path('react-app-camera/index.html');
     if (!File::exists($path)) {
         abort(404);
     }
