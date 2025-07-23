@@ -188,4 +188,36 @@ class Attendance extends Model
     {
         return $query->where('accepted', 1);
     }
+
+    public static function isPeriodClosed($employeeId, $periodId, $date)
+    { 
+        $workPeriod = \App\Models\WorkPeriod::find($periodId);
+        if (! $workPeriod) {
+            return false;
+        }
+
+        $checkoutRecord = self::where('employee_id', $employeeId)
+            ->where('period_id', $periodId)
+            ->where('check_date', $date)
+            ->where('check_type', self::CHECKTYPE_CHECKOUT)
+            ->where('accepted', 1)
+            ->orderByDesc('check_time')
+            ->first();
+
+        if (! $checkoutRecord) {
+            return false;
+        }
+
+        // بناء تاريخ/وقت نهاية الشفت بالضبط
+        $periodEndDateTime = \Carbon\Carbon::parse("$date " . $workPeriod->end_at);
+        $checkoutDateTime  = \Carbon\Carbon::parse("$date " . $checkoutRecord->check_time);
+
+        // إذا الشفت ليل ووقت الانصراف بعد منتصف الليل
+        if ($workPeriod->day_and_night && $checkoutDateTime->lessThan($periodEndDateTime)) {
+            $checkoutDateTime->addDay();
+        }
+
+        return $checkoutDateTime->greaterThan($periodEndDateTime);
+    }
+
 }

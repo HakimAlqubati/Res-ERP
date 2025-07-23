@@ -78,9 +78,9 @@ class AttendanceCreator
         if (isset($createdAttendance['success']) && ! $createdAttendance['success']) {
             return $createdAttendance;
         }
-        if (isset($createdAttendance['success']) &&  $createdAttendance['success']) {
+        if (isset($createdAttendance['success']) && $createdAttendance['success']) {
             return $createdAttendance;
-        } 
+        }
         return [
             'success' => true,
             'data'    => $createdAttendance,
@@ -116,10 +116,10 @@ class AttendanceCreator
             $remainingSeconds *= -1;
             $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
 
-            return [
-                'success' => false,
-                'message' => $message,
-            ];
+            // return [
+            //     'success' => false,
+            //     'message' => $message,
+            // ];
         }
 
         // بيانات أولية للحضور
@@ -159,7 +159,7 @@ class AttendanceCreator
             }
             $attendanceData = $result;
         }
- 
+
         if ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
             $attendanceData = $this->checkOutHandler->handle($attendanceData, $nearestPeriod, $employee->id, $date, $checkTime, $previousRecord);
 

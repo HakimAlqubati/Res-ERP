@@ -5,12 +5,13 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class AttendanceHandler
 {
     protected AttendanceValidator $validator;
 
+    public $employeeId = 0;
+    public $date       = '';
     public function __construct(AttendanceValidator $validator,
         protected CheckInHandler $checkInHandler,
         protected CheckOutHandler $checkOutHandler,
@@ -25,12 +26,11 @@ class AttendanceHandler
     public function handleEmployeeAttendance(Employee $employee,
         array $data): array {
         try {
-            Log::info('sss',['sdf']);
             $dateTime = $data['date_time']; // e.g. "2025-07-07 14:30:00"
 
-            $date = date('Y-m-d', strtotime($dateTime)); // "2025-07-07"
-            $time = date('H:i:s', strtotime($dateTime)); // "14:30:00"
-
+            $date             = date('Y-m-d', strtotime($dateTime)); // "2025-07-07"
+            $time             = date('H:i:s', strtotime($dateTime)); // "14:30:00"
+            $this->employeeId = $employee->id;
             app(MonthClosureService::class)->ensureMonthIsOpen($date);
             $employeePeriods = $employee?->periods;
             if (! is_null($employee) && count($employeePeriods) > 0) {
@@ -49,32 +49,41 @@ class AttendanceHandler
                 $employeePeriods   = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
                 $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
                 $periodsForToday   = $this->getPeriodsForDate($employeePeriods, $date);
-                $periodsForPrevDay = $employeePeriods->filter(function ($period) use ($prevDate) {
-                    return $period->workPeriod->day_and_night && // فقط الفترات الليلية
-                    $this->periodHelper->periodCoversDate($period, $prevDate);
-                });
+                $periodsForPrevDay = $employeePeriods->filter(function ($period) use ($prevDate, $date, $time) {
 
+                    $dayAndNight = $period->workPeriod->day_and_night ?? 0;
+                    if ($dayAndNight && !Attendance::isPeriodClosed($this->employeeId, $period->workPeriod->id, $prevDate)) {
+                        // فترات اليوم والليلة ترجع دائماً لأنها قابلة للانصراف بعد منتصف الليل
+                        return true;
+                    }
+                    $periodEndTime      = $period->workPeriod->end_at;
+                    $allowedHours       = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
+                    $periodEndDateTime  = Carbon::parse("$prevDate $periodEndTime");
+                    $allowedEndDateTime = $periodEndDateTime->copy()->addHours($allowedHours);
+
+                    // وقت الحضور الحالي يجب أن يكون >= نهاية الفترة، <= نهاية السماحية
+                    $currentDateTime = Carbon::parse("$date $time");
+
+                    if (! $this->periodHelper->periodCoversDate($period, $prevDate)) {
+                        return false;
+                    }
+
+                    return $currentDateTime->between($periodEndDateTime, $allowedEndDateTime);
+                });
                 if ($periodsForPrevDay->count() > 0 && $periodsForToday->count() <= 0) {
                     $date = $prevDate;
                 }
+                $this->date = $date;
 // دمج المصفوفتين
                 $allPeriods    = $periodsForToday->merge($periodsForPrevDay);
                 $closestPeriod = $this->findClosestPeriod($time, $allPeriods);
-                // if (! $closestPeriod) {
-                //     $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
-                //     $periodsForPrevDay = $this->getPeriodsForDate($employeePeriods, $prevDate);
-                //     $closestPeriod     = $this->findClosestPeriod($time, $periodsForPrevDay, true);
-                //     $date              = $prevDate;
-                //     $day               = strtolower(Carbon::parse($date)->format('D'));
-                // }
-
-                // dd($closestPeriod?->name,$day,$date);
+                // dd($closestPeriod);
                 // Check if no periods are found for the given day
                 if (! $closestPeriod) {
                     return
                         [
                         'success' => false,
-                        'message' => __('notifications.you_dont_have_periods_today') . ' (' . $day . '-' . $date . ') ',
+                        'message' => __('notifications.you_dont_have_periods_today') . ' (' . $day . '-' . date('Y-m-d', strtotime($dateTime)) . ') ',
                         'data'    => $closestPeriod,
                     ];
                 }
@@ -85,16 +94,7 @@ class AttendanceHandler
                     ];
 
                 }
-
-                if ($closestPeriod) {
-
-                    // dd($closestPeriod);
-                    // return [
-                    //     'success'        => true,
-                    //     'closest_period' => $closestPeriod,
-                    //     'message'        => '',
-                    // ];
-                }
+ 
 
                 $adjusted = AttendanceDateService::adjustDateForMidnightShift($date, $time, $closestPeriod);
                 $date     = $adjusted['date'];
@@ -161,6 +161,8 @@ class AttendanceHandler
         $closest     = null;
         $minDiff     = null;
 
+        $allowedHours = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
+
         foreach ($periods as $period) {
             $workPeriod = $period->workPeriod;
 
@@ -168,9 +170,12 @@ class AttendanceHandler
             $start       = strtotime($workPeriod->start_at);
             $end         = strtotime($workPeriod->end_at);
 
-            if ($dayAndNight) {
+            $periodEndDateTime = Carbon::createFromFormat('H:i:s', $workPeriod->end_at)->addHours($allowedHours);
+            $end               = strtotime($periodEndDateTime->format('H:i:s'));
+            if ($dayAndNight && ! Attendance::isPeriodClosed($this->employeeId, $workPeriod->id, $this->date)) {
                 // فترة ليلية (تعبر منتصف الليل)
-                if (($currentTime >= strtotime('00:00:00')) && ($currentTime <= $end)) {
+                if (($currentTime >= strtotime('00:00:00')) && ($currentTime <= $end)
+                ) {
                     return $workPeriod;
                 }
                 return null;

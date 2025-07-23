@@ -15,6 +15,6 @@ return [
     'you_cannot_attendance_before'                                                    => 'لا تستطيع تسجيل الحضور قبل',
     'hours'                                                                           => 'ساعات',
     'cannot_check_in_because_adjust'                                                  => 'لا يمكنك تسجيل الحضور في الوقت الحالي. يرجى التواصل مع مديرك لتعديل الشيفت.',
-    'attendance_out_of_range_before_period'                                           => 'الحضور قبل بداية الفترة',
+    'attendance_out_of_range_before_period'                                           => 'لا يمكنك تسجيل الحضور في هذا الوقت، أنت خارج الفترة المسموح بها قبل بداية الدوام. يرجى المحاولة في الوقت المسموح قبل بدء الدوام',
     'attendance_success'                                                              => 'تم بنجاح',
 ];

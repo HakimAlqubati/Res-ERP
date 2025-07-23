@@ -26,6 +26,7 @@ class PeriodHelper
     public function periodCoversDate($period, $date)
     {
         foreach ($period->days as $dayRow) {
+            
             $isDayOk  = $dayRow->day_of_week === strtolower(Carbon::parse($date)->format('D'));
             $isDateOk = $dayRow->start_date <= $date && (! $dayRow->end_date || $dayRow->end_date >= $date);
             if ($isDayOk && $isDateOk) {
