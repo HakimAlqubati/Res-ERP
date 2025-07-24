@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
@@ -27,3 +28,5 @@ Route::prefix('aws/employee-liveness')->group(function () {
 });
 
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
+
+Route::post('/face-images', [FaceImageController::class, 'store']);
