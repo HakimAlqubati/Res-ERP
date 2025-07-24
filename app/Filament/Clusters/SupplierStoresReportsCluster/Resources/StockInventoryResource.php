@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
+use App\Filament\Pages\StockInventoryReactPage;
 use App\Models\StockInventory;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
@@ -345,6 +346,7 @@ class StockInventoryResource extends Resource
     {
         return [
             'index'  => Pages\ListStockInventories::route('/'),
+            // 'new-create' => StockInventoryReactPage::route('/new-create'),
             'create' => Pages\CreateStockInventory::route('/create'),
             'edit'   => Pages\EditStockInventory::route('/{record}/edit'),
         ];
