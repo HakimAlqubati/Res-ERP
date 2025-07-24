@@ -147,7 +147,7 @@ class EmployeeResource extends Resource
 
                                         Select::make('nationality')
                                             ->label('Nationality')->live()
-                                            ->required()
+                                            // ->required()
                                             ->options(getNationalities())
                                             ->searchable(),
 
