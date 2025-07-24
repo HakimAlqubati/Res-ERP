@@ -5,17 +5,11 @@ use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Models\StockInventory;
-use App\Models\Store;
-use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
@@ -57,227 +51,238 @@ class StockInventoryResource extends Resource
     }
     public static function form(Form $form): Form
     {
-        $operaion = $form->getOperation();
         return $form
             ->schema([
-                Fieldset::make()->label('')->schema([
-                    Grid::make()->columns(4)->schema([
-                        DatePicker::make('inventory_date')
-                            ->required()->default(now())
-                            ->label('Inventory Date')->disabledOn('edit'),
-                        Select::make('store_id')->label(__('lang.store'))
-                            ->default(getDefaultStore())
-                            ->disabledOn('edit')
-                            ->live()
-                            ->options(
-                                Store::active()
-                                    ->withManagedStores()
-                                    ->get(['name', 'id'])->pluck('name', 'id')
-                            )->required()
-                            ->afterStateUpdated(function (callable $get, callable $set) {
-                                $details = $get('details');
-                                $storeId = $get('store_id');
-
-                                if (! is_array($details) || ! $storeId) {
-                                    return;
-                                }
-
-                                $updatedDetails = collect($details)->map(function ($item) use ($storeId) {
-                                    $productId = $item['product_id'] ?? null;
-                                    $unitId    = $item['unit_id'] ?? null;
-
-                                    if (! $productId || ! $unitId) {
-                                        return $item;
-                                    }
-
-                                    $service = new \App\Services\MultiProductsInventoryService(
-                                        null,
-                                        $productId,
-                                        $unitId,
-                                        $storeId
-                                    );
-
-                                    $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
-
-                                    $item['system_quantity']   = $remainingQty;
-                                    $item['physical_quantity'] = $remainingQty;
-                                    $item['difference']        = 0;
-
-                                    return $item;
-                                })->toArray();
-
-                                $set('details', $updatedDetails);
-                            }),
-
-                        Select::make('responsible_user_id')->searchable()->default(auth()->id())
-                            ->relationship('responsibleUser', 'name')->disabledOn('edit')
-                            ->required()
-                            ->label('Responsible'),
-                        $operaion == 'create' ?
-                        Select::make('category_id')->visibleOn('create')
-                            ->label('Category')
-                            ->options(\App\Models\Category::pluck('name', 'id'))
-                            ->live()
-                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                if (! $state) {
-                                    return;
-                                }
-
-                                $products = \App\Models\Product::where('category_id', $state)
-                                    ->where('active', 1)
-                                    ->get();
-
-                                $storeId = $get('store_id');
-
-                                $details = $products->map(function ($product) use ($storeId) {
-                                    $unitPrice   = $product->unitPrices()->first();
-                                    $unitId      = $unitPrice?->unit_id;
-                                    $packageSize = $unitPrice?->package_size ?? 0;
-
-                                    $service = new MultiProductsInventoryService(
-                                        null,
-                                        $product->id,
-                                        $unitId,
-                                        $storeId
-                                    );
-
-                                    $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
-
-                                    return [
-                                        'product_id'        => $product->id,
-                                        'unit_id'           => $unitId,
-                                        'package_size'      => $packageSize,
-                                        'system_quantity'   => $remainingQty,
-                                        'physical_quantity' => $remainingQty,
-                                        'difference'        => $remainingQty - $remainingQty,
-                                    ];
-                                })->toArray();
-
-                                $set('details', $details);
-                            }) :
-                        Toggle::make('edit_enabled')
-                            ->label('Edit')
-                            ->inline(false)
-                            ->default(false)->live()
-                            ->helperText('Enable this option to allow editing inventory details')
-                            ->dehydrated()
-                            ->columnSpan(1),
-
+                Repeater::make('test_items')
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Name'),
                     ]),
-
-                    Repeater::make('details')
-                    // ->hidden(function ($record) use ($operaion) {
-                    //     return $record?->finalized && $operaion === 'edit';
-                    // })
-                        ->hidden(fn($get, $record) => $operaion === 'edit' && (! $get('edit_enabled') || $record?->finalized))
-
-                        ->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
-                        ->relationship('details')
-                        ->label('Inventory Details')->columnSpanFull()
-                        ->schema([
-                            Select::make('product_id')
-                                ->required()->columnSpan(2)->distinct()
-                                ->label('Product')->searchable()
-                                ->options(function () {
-                                    // افتراضيًا أول 5 منتجات
-                                    return InventoryProductCacheService::getDefaultOptions()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}",
-                                        ])
-                                        ->toArray();
-                                })
-                            // ->options(function () {
-                            //     return Product::where('active', 1)
-                            //         ->limit(5)
-                            //         ->get(['name', 'id', 'code'])
-                            //         ->mapWithKeys(fn($product) => [
-                            //             $product->id => "{$product->code} - {$product->name}",
-                            //         ]);
-                            // })
-                                // ->debounce(300)
-                                ->getSearchResultsUsing(function ($search) {
-                                    if (empty($search)) {
-                                        return [];
-                                    }
-                                    return InventoryProductCacheService::search($search)
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}",
-                                        ])
-                                        ->toArray();
-                                })
-                                ->getOptionLabelUsing(fn($value) =>
-                                    \App\Models\Product::find($value)?->code . ' - ' . \App\Models\Product::find($value)?->name
-                                )
-                                ->reactive()
-                                ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                    if (! $state) {
-                                        $set('unit_id', null);
-                                        return;
-                                    }
-
-                                    // بداية القياس
-                                    $start = microtime(true);
-                                    // استخدم نفس دالة جلب الوحدات كما في unit_id Select
-                                    $units = static::getProductUnits($state);
-
-                                    // اختيار أول وحدة في القائمة
-                                    $firstUnitId = $units->first()?->unit_id;
-
-                                    $set('unit_id', $firstUnitId);
-                                    $end      = microtime(true);
-                                    $duration = round($end - $start, 3); // بالثواني مع ثلاث منازل عشرية
-                                    showSuccessNotifiMessage($duration);
-                                    static::handleUnitSelection($set, $get, $firstUnitId);
-                                })->placeholder('Select a Product'),
-
-                            Select::make('unit_id')->label('Unit')
-                                ->options(function (callable $get) {
-                                    $product = \App\Models\Product::find($get('product_id'));
-                                    if (! $product) {
-                                        return [];
-                                    }
-
-                                    // تظهر فقط وحدات supplyOutUnitPrices (كما هو في منطقك الحالي)
-                                    return $product->supplyOutUnitPrices
-                                        ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
-                                })
-                            // ->searchable()
-                                ->reactive()
-                                ->placeholder('Select a Unit')
-                                ->extraAttributes(fn($get) => [
-                                    'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
-                                ])
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                    static::handleUnitSelection($set, $get, $state);
-                                })->columnSpan(2)->required(),
-                            TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
-                                ->label(__('lang.package_size')),
-
-                            TextInput::make('physical_quantity')
-                            // ->default(0)
-                                ->numeric()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(function ($set, $state, $get) {
-
-                                    $difference = static::getDifference($get('system_quantity'), $state);
-                                    $set('difference', $difference);
-                                })->minValue(0)
-                                ->label('Physical Qty')
-                                ->required(),
-
-                            TextInput::make('system_quantity')->readOnly()
-                                ->numeric()
-                                ->label('System Qty')
-                                ->required(),
-                            TextInput::make('difference')->readOnly()
-                            // ->rule('not_in:0', 'Now Allowed')
-
-                                ->numeric(),
-                        ])->addActionLabel('Add Item')
-                        ->columns(8),
-                ]),
             ]);
     }
+    // public static function form(Form $form): Form
+    // {
+    //     $operaion = $form->getOperation();
+    //     return $form
+    //         ->schema([
+    //             Fieldset::make()->label('')->schema([
+    //                 Grid::make()->columns(4)->schema([
+    //                     DatePicker::make('inventory_date')
+    //                         ->required()->default(now())
+    //                         ->label('Inventory Date')->disabledOn('edit'),
+    //                     Select::make('store_id')->label(__('lang.store'))
+    //                         ->default(getDefaultStore())
+    //                         ->disabledOn('edit')
+    //                         ->live()
+    //                         ->options(
+    //                             Store::active()
+    //                                 ->withManagedStores()
+    //                                 ->get(['name', 'id'])->pluck('name', 'id')
+    //                         )->required()
+    //                         ->afterStateUpdated(function (callable $get, callable $set) {
+    //                             $details = $get('details');
+    //                             $storeId = $get('store_id');
+
+    //                             if (! is_array($details) || ! $storeId) {
+    //                                 return;
+    //                             }
+
+    //                             $updatedDetails = collect($details)->map(function ($item) use ($storeId) {
+    //                                 $productId = $item['product_id'] ?? null;
+    //                                 $unitId    = $item['unit_id'] ?? null;
+
+    //                                 if (! $productId || ! $unitId) {
+    //                                     return $item;
+    //                                 }
+
+    //                                 $service = new \App\Services\MultiProductsInventoryService(
+    //                                     null,
+    //                                     $productId,
+    //                                     $unitId,
+    //                                     $storeId
+    //                                 );
+
+    //                                 $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+
+    //                                 $item['system_quantity']   = $remainingQty;
+    //                                 $item['physical_quantity'] = $remainingQty;
+    //                                 $item['difference']        = 0;
+
+    //                                 return $item;
+    //                             })->toArray();
+
+    //                             $set('details', $updatedDetails);
+    //                         }),
+
+    //                     Select::make('responsible_user_id')->searchable()->default(auth()->id())
+    //                         ->relationship('responsibleUser', 'name')->disabledOn('edit')
+    //                         ->required()
+    //                         ->label('Responsible'),
+    //                     $operaion == 'create' ?
+    //                     Select::make('category_id')->visibleOn('create')
+    //                         ->label('Category')
+    //                         ->options(\App\Models\Category::pluck('name', 'id'))
+    //                         ->live()
+    //                         ->afterStateUpdated(function (callable $set, callable $get, $state) {
+    //                             if (! $state) {
+    //                                 return;
+    //                             }
+
+    //                             $products = \App\Models\Product::where('category_id', $state)
+    //                                 ->where('active', 1)
+    //                                 ->get();
+
+    //                             $storeId = $get('store_id');
+
+    //                             $details = $products->map(function ($product) use ($storeId) {
+    //                                 $unitPrice   = $product->unitPrices()->first();
+    //                                 $unitId      = $unitPrice?->unit_id;
+    //                                 $packageSize = $unitPrice?->package_size ?? 0;
+
+    //                                 $service = new MultiProductsInventoryService(
+    //                                     null,
+    //                                     $product->id,
+    //                                     $unitId,
+    //                                     $storeId
+    //                                 );
+
+    //                                 $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
+
+    //                                 return [
+    //                                     'product_id'        => $product->id,
+    //                                     'unit_id'           => $unitId,
+    //                                     'package_size'      => $packageSize,
+    //                                     'system_quantity'   => $remainingQty,
+    //                                     'physical_quantity' => $remainingQty,
+    //                                     'difference'        => $remainingQty - $remainingQty,
+    //                                 ];
+    //                             })->toArray();
+
+    //                             $set('details', $details);
+    //                         }) :
+    //                     Toggle::make('edit_enabled')
+    //                         ->label('Edit')
+    //                         ->inline(false)
+    //                         ->default(false)->live()
+    //                         ->helperText('Enable this option to allow editing inventory details')
+    //                         ->dehydrated()
+    //                         ->columnSpan(1),
+
+    //                 ]),
+
+    //                 Repeater::make('details')
+    //                 // ->hidden(function ($record) use ($operaion) {
+    //                 //     return $record?->finalized && $operaion === 'edit';
+    //                 // })
+    //                     ->hidden(fn($get, $record) => $operaion === 'edit' && (! $get('edit_enabled') || $record?->finalized))
+
+    //                     ->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
+    //                     ->relationship('details')
+    //                     ->label('Inventory Details')->columnSpanFull()
+    //                     ->schema([
+    //                         Select::make('product_id')
+    //                             ->required()->columnSpan(2)->distinct()
+    //                             ->label('Product')->searchable()
+    //                             ->options(function () {
+    //                                 // افتراضيًا أول 5 منتجات
+    //                                 return InventoryProductCacheService::getDefaultOptions()
+    //                                     ->mapWithKeys(fn($product) => [
+    //                                         $product->id => "{$product->code} - {$product->name}",
+    //                                     ])
+    //                                     ->toArray();
+    //                             })
+    //                         // ->options(function () {
+    //                         //     return Product::where('active', 1)
+    //                         //         ->limit(5)
+    //                         //         ->get(['name', 'id', 'code'])
+    //                         //         ->mapWithKeys(fn($product) => [
+    //                         //             $product->id => "{$product->code} - {$product->name}",
+    //                         //         ]);
+    //                         // })
+    //                             // ->debounce(300)
+    //                             ->getSearchResultsUsing(function ($search) {
+    //                                 if (empty($search)) {
+    //                                     return [];
+    //                                 }
+    //                                 return InventoryProductCacheService::search($search)
+    //                                     ->mapWithKeys(fn($product) => [
+    //                                         $product->id => "{$product->code} - {$product->name}",
+    //                                     ])
+    //                                     ->toArray();
+    //                             })
+    //                             ->getOptionLabelUsing(fn($value) =>
+    //                                 \App\Models\Product::find($value)?->code . ' - ' . \App\Models\Product::find($value)?->name
+    //                             )
+    //                             ->reactive()
+    //                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
+    //                                 if (! $state) {
+    //                                     $set('unit_id', null);
+    //                                     return;
+    //                                 }
+
+    //                                 // بداية القياس
+    //                                 $start = microtime(true);
+    //                                 // استخدم نفس دالة جلب الوحدات كما في unit_id Select
+    //                                 $units = static::getProductUnits($state);
+
+    //                                 // اختيار أول وحدة في القائمة
+    //                                 $firstUnitId = $units->first()?->unit_id;
+
+    //                                 $set('unit_id', $firstUnitId);
+    //                                 $end      = microtime(true);
+    //                                 $duration = round($end - $start, 3); // بالثواني مع ثلاث منازل عشرية
+    //                                 showSuccessNotifiMessage($duration);
+    //                                 static::handleUnitSelection($set, $get, $firstUnitId);
+    //                             })->placeholder('Select a Product'),
+
+    //                         Select::make('unit_id')->label('Unit')
+    //                             ->options(function (callable $get) {
+    //                                 $product = \App\Models\Product::find($get('product_id'));
+    //                                 if (! $product) {
+    //                                     return [];
+    //                                 }
+
+    //                                 // تظهر فقط وحدات supplyOutUnitPrices (كما هو في منطقك الحالي)
+    //                                 return $product->supplyOutUnitPrices
+    //                                     ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
+    //                             })
+    //                         // ->searchable()
+    //                             ->reactive()
+    //                             ->placeholder('Select a Unit')
+    //                             ->extraAttributes(fn($get) => [
+    //                                 'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
+    //                             ])
+    //                             ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+    //                                 static::handleUnitSelection($set, $get, $state);
+    //                             })->columnSpan(2)->required(),
+    //                         TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
+    //                             ->label(__('lang.package_size')),
+
+    //                         TextInput::make('physical_quantity')
+    //                         // ->default(0)
+    //                             ->numeric()
+    //                             ->live(onBlur: true)
+    //                             ->afterStateUpdated(function ($set, $state, $get) {
+
+    //                                 $difference = static::getDifference($get('system_quantity'), $state);
+    //                                 $set('difference', $difference);
+    //                             })->minValue(0)
+    //                             ->label('Physical Qty')
+    //                             ->required(),
+
+    //                         TextInput::make('system_quantity')->readOnly()
+    //                             ->numeric()
+    //                             ->label('System Qty')
+    //                             ->required(),
+    //                         TextInput::make('difference')->readOnly()
+    //                         // ->rule('not_in:0', 'Now Allowed')
+
+    //                             ->numeric(),
+    //                     ])->addActionLabel('Add Item')
+    //                     ->columns(8),
+    //             ]),
+    //         ]);
+    // }
 
     public static function table(Table $table): Table
     {
