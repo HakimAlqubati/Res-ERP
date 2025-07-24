@@ -186,6 +186,7 @@ class StockInventoryResource extends Resource
                                             $product->id => "{$product->code} - {$product->name}",
                                         ]);
                                 })
+                                 ->debounce(300)
                                 ->getSearchResultsUsing(function (string $search): array {
                                     if (empty($search)) {
                                         // لا تعرض إلا الـ 5 من options
@@ -236,7 +237,7 @@ class StockInventoryResource extends Resource
                                 })
                             // ->searchable()
                                 ->reactive()
-                                ->placeholder('-Select a Unit')
+                                ->placeholder('Select a Unit')
                                 ->extraAttributes(fn($get) => [
                                     'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
                                 ])
