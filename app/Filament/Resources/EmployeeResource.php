@@ -201,7 +201,7 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
                                             ->label('Manager')
                                             ->searchable()
-                                            ->requiredIf('is_ceo', false)
+                                            // ->requiredIf('is_ceo', false)
                                             ->options(function ($get) {
                                                 $branchId = $get('branch_id');
                                                 // if ($branchId) {
