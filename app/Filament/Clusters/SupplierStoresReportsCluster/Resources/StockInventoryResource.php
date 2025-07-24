@@ -4,10 +4,10 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
-use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
+use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
@@ -29,7 +29,6 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
 
 class StockInventoryResource extends Resource
 {
@@ -179,6 +178,14 @@ class StockInventoryResource extends Resource
                             Select::make('product_id')
                                 ->required()->columnSpan(2)->distinct()
                                 ->label('Product')->searchable()
+                                ->options(function () {
+                                    // افتراضيًا أول 5 منتجات
+                                    return InventoryProductCacheService::getDefaultOptions()
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}",
+                                        ])
+                                        ->toArray();
+                                })
                             // ->options(function () {
                             //     return Product::where('active', 1)
                             //         ->limit(5)
@@ -187,26 +194,20 @@ class StockInventoryResource extends Resource
                             //             $product->id => "{$product->code} - {$product->name}",
                             //         ]);
                             // })
-                                ->debounce(300)
-                                ->getSearchResultsUsing(function (string $search): array {
+                                // ->debounce(300)
+                                ->getSearchResultsUsing(function ($search) {
                                     if (empty($search)) {
-                                        // لا تعرض إلا الـ 5 من options
                                         return [];
                                     }
-                                    return Product::where('active', 1)
-                                        ->where(function ($query) use ($search) {
-                                            $query->where('name', 'like', "%{$search}%")
-                                                ->orWhere('code', 'like', "%{$search}%");
-                                        })
-                                        ->limit(15)
-                                        ->get()
+                                    return InventoryProductCacheService::search($search)
                                         ->mapWithKeys(fn($product) => [
                                             $product->id => "{$product->code} - {$product->name}",
                                         ])
                                         ->toArray();
                                 })
-                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-
+                                ->getOptionLabelUsing(fn($value) =>
+                                    \App\Models\Product::find($value)?->code . ' - ' . \App\Models\Product::find($value)?->name
+                                )
                                 ->reactive()
                                 ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                     if (! $state) {
@@ -274,12 +275,14 @@ class StockInventoryResource extends Resource
                                 ->numeric(),
                         ])->addActionLabel('Add Item')
                         ->columns(8),
-                ])
+                ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        InventoryProductCacheService::cacheAllActiveProducts();
+
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
@@ -412,18 +415,11 @@ class StockInventoryResource extends Resource
 
     public static function getProductUnits($productId)
     {
-        return Cache::remember("product_units_$productId", 600, function () use ($productId) {
-            $product = \App\Models\Product::find($productId);
-            if (! $product) {
-                return collect();
-            }
-            return $product->supplyOutUnitPrices ?? collect();
-        });
-        // $product = \App\Models\Product::find($productId);
-        // if (! $product) {
-        //     return collect();
-        // }
-        // return $product->supplyOutUnitPrices ?? collect();
+        $product = \App\Models\Product::find($productId);
+        if (! $product) {
+            return collect();
+        }
+        return $product->supplyOutUnitPrices ?? collect();
     }
 
     public static function handleUnitSelection(callable $set, callable $get, $unitId)
