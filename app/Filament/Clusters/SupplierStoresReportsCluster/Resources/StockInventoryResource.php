@@ -178,14 +178,14 @@ class StockInventoryResource extends Resource
                             Select::make('product_id')
                                 ->required()->columnSpan(2)->distinct()
                                 ->label('Product')->searchable()
-                                ->options(function () {
-                                    return Product::where('active', 1)
-                                        ->limit(5)
-                                        ->get(['name', 'id', 'code'])
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}",
-                                        ]);
-                                })
+                                // ->options(function () {
+                                //     return Product::where('active', 1)
+                                //         ->limit(5)
+                                //         ->get(['name', 'id', 'code'])
+                                //         ->mapWithKeys(fn($product) => [
+                                //             $product->id => "{$product->code} - {$product->name}",
+                                //         ]);
+                                // })
                                  ->debounce(300)
                                 ->getSearchResultsUsing(function (string $search): array {
                                     if (empty($search)) {
