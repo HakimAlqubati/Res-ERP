@@ -112,7 +112,7 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
 
                                         // ->numeric()
-                                            ->maxLength(12)->minLength(8),
+                                            ->maxLength(14)->minLength(8),
 
                                         // PhoneInput::make('phone_number')
                                         //     // ->numeric()
