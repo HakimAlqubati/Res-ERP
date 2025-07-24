@@ -29,6 +29,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class StockInventoryResource extends Resource
 {
@@ -178,15 +179,15 @@ class StockInventoryResource extends Resource
                             Select::make('product_id')
                                 ->required()->columnSpan(2)->distinct()
                                 ->label('Product')->searchable()
-                                // ->options(function () {
-                                //     return Product::where('active', 1)
-                                //         ->limit(5)
-                                //         ->get(['name', 'id', 'code'])
-                                //         ->mapWithKeys(fn($product) => [
-                                //             $product->id => "{$product->code} - {$product->name}",
-                                //         ]);
-                                // })
-                                 ->debounce(300)
+                            // ->options(function () {
+                            //     return Product::where('active', 1)
+                            //         ->limit(5)
+                            //         ->get(['name', 'id', 'code'])
+                            //         ->mapWithKeys(fn($product) => [
+                            //             $product->id => "{$product->code} - {$product->name}",
+                            //         ]);
+                            // })
+                                ->debounce(300)
                                 ->getSearchResultsUsing(function (string $search): array {
                                     if (empty($search)) {
                                         // لا تعرض إلا الـ 5 من options
@@ -213,18 +214,18 @@ class StockInventoryResource extends Resource
                                         return;
                                     }
 
-                                     // بداية القياس
-                                     $start = microtime(true);
+                                    // بداية القياس
+                                    $start = microtime(true);
                                     // استخدم نفس دالة جلب الوحدات كما في unit_id Select
                                     $units = static::getProductUnits($state);
 
                                     // اختيار أول وحدة في القائمة
                                     $firstUnitId = $units->first()?->unit_id;
- 
+
                                     $set('unit_id', $firstUnitId);
-                                       $end = microtime(true);
-                                       $duration = round($end - $start, 3); // بالثواني مع ثلاث منازل عشرية
-                                       showSuccessNotifiMessage($duration); 
+                                    $end      = microtime(true);
+                                    $duration = round($end - $start, 3); // بالثواني مع ثلاث منازل عشرية
+                                    showSuccessNotifiMessage($duration);
                                     static::handleUnitSelection($set, $get, $firstUnitId);
                                 })->placeholder('Select a Product'),
 
@@ -411,11 +412,18 @@ class StockInventoryResource extends Resource
 
     public static function getProductUnits($productId)
     {
-        $product = \App\Models\Product::find($productId);
-        if (! $product) {
-            return collect();
-        }
-        return $product->supplyOutUnitPrices ?? collect();
+        return Cache::remember("product_units_$productId", 600, function () use ($productId) {
+            $product = \App\Models\Product::find($productId);
+            if (! $product) {
+                return collect();
+            }
+            return $product->supplyOutUnitPrices ?? collect();
+        });
+        // $product = \App\Models\Product::find($productId);
+        // if (! $product) {
+        //     return collect();
+        // }
+        // return $product->supplyOutUnitPrices ?? collect();
     }
 
     public static function handleUnitSelection(callable $set, callable $get, $unitId)
