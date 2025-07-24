@@ -214,19 +214,14 @@ class StockInventoryResource extends Resource
                                         $set('unit_id', null);
                                         return;
                                     }
-
-                                    // بداية القياس
-                                    $start = microtime(true);
+ 
                                     // استخدم نفس دالة جلب الوحدات كما في unit_id Select
                                     $units = static::getProductUnits($state);
 
                                     // اختيار أول وحدة في القائمة
                                     $firstUnitId = $units->first()?->unit_id;
 
-                                    $set('unit_id', $firstUnitId);
-                                    $end      = microtime(true);
-                                    $duration = round($end - $start, 3); // بالثواني مع ثلاث منازل عشرية
-                                    showSuccessNotifiMessage($duration);
+                                    $set('unit_id', $firstUnitId); 
                                     static::handleUnitSelection($set, $get, $firstUnitId);
                                 })->placeholder('Select a Product'),
 
