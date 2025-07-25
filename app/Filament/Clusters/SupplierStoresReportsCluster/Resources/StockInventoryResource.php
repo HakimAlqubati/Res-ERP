@@ -4,7 +4,7 @@ namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
-use App\Filament\Pages\StockInventoryReactPage;
+use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
@@ -16,6 +16,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
@@ -55,7 +56,7 @@ class StockInventoryResource extends Resource
     {
         return 'Stocktake';
     }
-     public static function form(Form $form): Form
+    public static function form(Form $form): Form
     {
         $operaion = $form->getOperation();
         return $form
@@ -162,6 +163,79 @@ class StockInventoryResource extends Resource
                             ->helperText('Enable this option to allow editing inventory details')
                             ->dehydrated()
                             ->columnSpan(1),
+                        Select::make('product_selector')
+                            ->label('Add Products')
+                            ->multiple()
+                            ->searchable()->columnSpanFull()
+                            ->visible(fn($record) => blank($record)) // فقط في وضع الإضافة
+                            ->options(function () {
+                                return InventoryProductCacheService::getDefaultOptions()
+                                    ->mapWithKeys(fn($product) => [
+                                        $product->id => "{$product->code} - {$product->name}",
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getSearchResultsUsing(function ($search) {
+                                if (empty($search)) {
+                                    return [];
+                                }
+                                return InventoryProductCacheService::search($search)
+                                    ->mapWithKeys(fn($product) => [
+                                        $product->id => "{$product->code} - {$product->name}",
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getOptionLabelUsing(fn($value) =>
+                                optional(Product::find($value))
+                                ?->code . ' - ' . optional(Product::find($value))?->name
+                            )
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $details = $get('details') ?? [];
+                                $storeId = $get('store_id');
+
+                                $existingProductIds = collect($details)->pluck('product_id')->all();
+
+                                $newProductIds = array_diff($state, $existingProductIds);
+
+                                foreach ($newProductIds as $productId) {
+                                    $product = Product::find($productId);
+                                    if (! $product) {
+                                        continue;
+                                    }
+
+                                    $unitPrice   = $product->supplyOutUnitPrices->first();
+                                    $unitId      = $unitPrice?->unit_id;
+                                    $packageSize = $unitPrice?->package_size ?? 1;
+
+                                    $service = new \App\Services\MultiProductsInventoryService(
+                                        null,
+                                        $productId,
+                                        $unitId,
+                                        $storeId
+                                    );
+
+                                    $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+
+                                    $details[] = [
+                                        'product_id'        => $productId,
+                                        'unit_id'           => $unitId,
+                                        'package_size'      => $packageSize,
+                                        'system_quantity'   => $remainingQty,
+                                        'physical_quantity' => $remainingQty,
+                                        'difference'        => 0,
+                                    ];
+                                }
+
+                                // (اختياري) لحذف المنتجات غير المختارة
+                                $remainingProductIds = $state;
+                                $details             = collect($details)
+                                    ->filter(fn($item) => in_array($item['product_id'], $remainingProductIds))
+                                    ->values()
+                                    ->toArray();
+
+                                $set('details', $details);
+                            }),
 
                     ]),
 
@@ -194,7 +268,7 @@ class StockInventoryResource extends Resource
                             //             $product->id => "{$product->code} - {$product->name}",
                             //         ]);
                             // })
-                                // ->debounce(300)
+                            // ->debounce(300)
                                 ->getSearchResultsUsing(function ($search) {
                                     if (empty($search)) {
                                         return [];
@@ -214,14 +288,14 @@ class StockInventoryResource extends Resource
                                         $set('unit_id', null);
                                         return;
                                     }
- 
+
                                     // استخدم نفس دالة جلب الوحدات كما في unit_id Select
                                     $units = static::getProductUnits($state);
 
                                     // اختيار أول وحدة في القائمة
                                     $firstUnitId = $units->first()?->unit_id;
 
-                                    $set('unit_id', $firstUnitId); 
+                                    $set('unit_id', $firstUnitId);
                                     static::handleUnitSelection($set, $get, $firstUnitId);
                                 })->placeholder('Select a Product'),
 
