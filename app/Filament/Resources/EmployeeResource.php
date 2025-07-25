@@ -5,6 +5,7 @@ use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\BranchLogRelationManager;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\EmployeeFaceDataRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodHistoriesRelationManager;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers\PeriodRelationManager;
 use App\Filament\Resources\EmployeeResource\Pages;
@@ -52,6 +53,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -147,7 +149,7 @@ class EmployeeResource extends Resource
 
                                         Select::make('nationality')
                                             ->label('Nationality')->live()
-                                            // ->required()
+                                        // ->required()
                                             ->options(getNationalities())
                                             ->searchable(),
 
@@ -201,7 +203,7 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
                                             ->label('Manager')
                                             ->searchable()
-                                            // ->requiredIf('is_ceo', false)
+                                        // ->requiredIf('is_ceo', false)
                                             ->options(function ($get) {
                                                 $branchId = $get('branch_id');
                                                 // if ($branchId) {
@@ -459,18 +461,6 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        // $employee = Employee::with('periodDays.workPeriod')->find(1);
-        // $res=[];
-        // foreach ($employee->periodDays as $periodDay) {
-        //     $period = $periodDay->workPeriod;
-        //     $day    = $periodDay->day_of_week;
-
-        //     $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
-        // }
-        // dd($res);
-
-        // $sessionLifetime = config('session.lifetime');
-        // dd($sessionLifetime);
         return $table->striped()
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'asc')
@@ -701,28 +691,49 @@ class EmployeeResource extends Resource
                                 ->danger()
                                 ->send();
                         }
-                    }),
+                    })->hidden(),
 
-                ActionGroup::make([
-                    
-                ActionsAction::make('quick_edit_avatar')
-                    ->label('Edit Avatar')
-                    ->icon('heroicon-o-camera')
-                    ->color('secondary')
-                    ->modalHeading('Edit Employee Avatar')
+                ActionsAction::make('add_face_images')
+                    ->label('Add Face Images')
+                    ->icon('heroicon-o-photo')
+                    ->color('primary')
                     ->form([
-                        static::avatarUploadField(),
+                        FileUpload::make('images')
+                            ->label('Face Images')
+                            ->multiple()
+                            ->required()->disk('public')
+                            ->image()
+                            ->maxSize(10240) // 10MB
+                            ->directory('employee_faces')
+                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                return Str::random(15) . "." . $file->getClientOriginalExtension();
+                            })
+                        ,
                     ])
-                    ->action(function (array $data, $record) {
-                        $record->update([
-                            'avatar' => $data['avatar'],
-                        ]);
-                        Notification::make()
-                            ->title('Avatar updated')
-                            ->body('Employee avatar updated successfully.')
-                            ->success()
-                            ->send();
-                    }),
+                    ->action(fn(array $data, $record) => static::storeFaceImages($record, $data['images']))
+                    ->modalHeading('Upload Employee Face Images')
+                    ->modalSubmitActionLabel('Upload')
+                    ->modalCancelActionLabel('Cancel'),
+                ActionGroup::make([
+
+                    ActionsAction::make('quick_edit_avatar')
+                        ->label('Edit Avatar')
+                        ->icon('heroicon-o-camera')
+                        ->color('secondary')
+                        ->modalHeading('Edit Employee Avatar')
+                        ->form([
+                            static::avatarUploadField(),
+                        ])
+                        ->action(function (array $data, $record) {
+                            $record->update([
+                                'avatar' => $data['avatar'],
+                            ]);
+                            Notification::make()
+                                ->title('Avatar updated')
+                                ->body('Employee avatar updated successfully.')
+                                ->success()
+                                ->send();
+                        }),
                     ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
@@ -799,6 +810,7 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
+            EmployeeFaceDataRelationManager::class,
             // EmployeePeriodDaysRelationManager::class,
         ];
     }
@@ -912,4 +924,58 @@ class EmployeeResource extends Resource
             ->columnSpan(2)
             ->reactive();
     }
+
+    public static function storeFaceImages($employee, array $images)
+    {
+        DB::beginTransaction();
+
+        try {
+            foreach ($images as $image) {
+                                                          
+
+                \App\Models\EmployeeFaceData::create([
+                    'employee_id'        => $employee->id,
+                    'employee_name'      => $employee->name,
+                    'employee_email'     => $employee->email,
+                    'employee_branch_id' => $employee->branch_id,
+                    'image_path'         => $image,
+                    'embedding'          => [],
+                    'active'             => true,
+                ]);
+            }
+
+            DB::commit();
+
+            Notification::make()
+                ->title('Success')
+                ->body('Face images uploaded and indexed successfully.')
+                ->success()
+                ->send();
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            Log::error('Failed to store face images', [
+                'employee_id' => $employee->id,
+                'error'       => $th->getMessage(),
+            ]);
+
+            Notification::make()
+                ->title('Error')
+                ->body('An error occurred while uploading face images.')
+                ->danger()
+                ->send();
+        }
+    }
+
+/**
+ * Temporary function to simulate face embedding generation.
+ */
+    protected static function generateFakeEmbedding(): array
+    {
+        return array_map(function () {
+            return round(mt_rand() / mt_getrandmax(), 6);
+        }, range(1, 128));
+    }
+
 }

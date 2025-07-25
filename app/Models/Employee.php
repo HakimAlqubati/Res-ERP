@@ -720,4 +720,9 @@ class Employee extends Model implements Auditable
         );
     }
 
+    public function faceData()
+    {
+        return $this->hasMany(EmployeeFaceData::class, 'employee_id');
+    }
+
 }
