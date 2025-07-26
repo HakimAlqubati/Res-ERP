@@ -242,13 +242,3 @@ Route::get('/updateCorrectStore',function(){
 });
 
 Route::get('employeesAttendanceOnDateToTest', [\App\Http\Controllers\Api\HR\AttendanceController::class, 'employeesAttendanceOnDateToTest']);
-
-Route::get('/api/face-data', function () {
-    return \App\Models\EmployeeFaceData::active()->get([
-        'employee_id',
-        'employee_name',
-        'employee_email',
-        'employee_branch_id',
-        'embedding',
-    ]);
-});

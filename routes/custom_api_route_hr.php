@@ -30,3 +30,14 @@ Route::prefix('aws/employee-liveness')->group(function () {
 Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
 
 Route::post('/face-images', [FaceImageController::class, 'store']);
+
+
+Route::get('/face-data', function () {
+    return \App\Models\EmployeeFaceData::active()->get([
+        'employee_id',
+        'employee_name',
+        'employee_email',
+        'employee_branch_id',
+        'embedding',
+    ]);
+});
