@@ -58,8 +58,8 @@ class EmployeeFaceDataRelationManager extends RelationManager
                     ->post('https://54.251.132.76:5000/api/represent', [
                         'img'               => $imageUrl,
                         'model_name'        => 'Facenet',
-                        // 'detector_backend'  => 'opencv',
-                        // 'enforce_detection' => false,
+                        'detector_backend'  => 'opencv',
+                        'enforce_detection' => false,
                     ]);
                 Log::info('result_embedding', [$response]);
 
