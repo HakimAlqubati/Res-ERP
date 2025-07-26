@@ -40,12 +40,18 @@ class EmployeeFaceDataRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
                 BulkAction::make('Generate Embeddings')
-                    ->action(fn($records) => self::generateEmbeddings($records))
+                // ->action(fn($records) => self::generateEmbeddings($records))
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            \App\Jobs\GenerateFaceEmbeddingJob::dispatch($record->id);
+                        }
+                        showSuccessNotifiMessage('Embedding Jobs have been queued.');
+                    })
                     ->requiresConfirmation()
-                    ->modalHeading('Processing Face Embeddings...')
-                    ->modalSubheading('This process may take a few minutes per image.')                    
-                    ->label('Generate Embeddings'),
-        
+                    ->modalHeading('Queueing Embeddings...')
+                    ->modalSubheading('Embeddings will be processed in background.')
+                    ->label('Queue Embeddings'),
+
             ]);
     }
 
