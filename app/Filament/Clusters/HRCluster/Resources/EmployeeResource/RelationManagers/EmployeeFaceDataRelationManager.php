@@ -20,7 +20,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image'),
-                Tables\Columns\TextColumn::make('employee_email'),
+                // Tables\Columns\TextColumn::make('employee_email'),
                 // Tables\Columns\IconColumn::make('active')->boolean(),
                 Tables\Columns\IconColumn::make('embedding')
                     ->label('Has Embedding')
@@ -34,8 +34,8 @@ class EmployeeFaceDataRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\EditAction::make(),
+                // Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
