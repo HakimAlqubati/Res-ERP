@@ -52,10 +52,11 @@ class EmployeeFaceDataRelationManager extends RelationManager
                         'detector_backend'  => 'opencv',
                         'enforce_detection' => false,
                     ]);
-                    Log::info('result_embedding',[$response]);
+                Log::info('result_embedding', [$response]);
 
                 if ($response->ok()) {
-                    
+
+                    showSuccessNotifiMessage('done');
                     $json = $response->json();
                     if (isset($json['results'][0]['embedding'])) {
                         $record->update([
@@ -65,6 +66,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
                 }
             } catch (Exception $e) {
                 Log::error('face_embeddings', [$e->getMessage()]);
+                showWarningNotifiMessage($e->getMessage());
                 continue;
             }
         }
