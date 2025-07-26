@@ -38,12 +38,14 @@ class EmployeeFaceDataRelationManager extends RelationManager
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
                 BulkAction::make('Generate Embeddings')
                     ->action(fn($records) => self::generateEmbeddings($records))
                     ->requiresConfirmation()
                     ->modalHeading('Processing Face Embeddings...')
                     ->modalSubheading('This process may take a few minutes per image.')                    
                     ->label('Generate Embeddings'),
+        
             ]);
     }
 
