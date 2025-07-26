@@ -21,7 +21,14 @@ class EmployeeFaceDataRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image'),
                 Tables\Columns\TextColumn::make('employee_email'),
-                Tables\Columns\IconColumn::make('active')->boolean(),
+                // Tables\Columns\IconColumn::make('active')->boolean(),
+                Tables\Columns\IconColumn::make('embedding')
+                    ->label('Has Embedding')
+                    ->boolean() // ✅ تلقائيًا يعرض أيقونة ✅ أو ❌ إذا كانت القيمة truthy/falsy
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
