@@ -78,7 +78,7 @@ class PurchaseInvoiceController extends Controller
             'current_page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),
             'total' => $paginator->total(),
-            'total_amount' => formatMoneyWithCurrency($totalAmount),
+            // 'total_amount' => formatMoneyWithCurrency($totalAmount),
         ]);
     }
 }
