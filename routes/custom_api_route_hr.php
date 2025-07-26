@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
+use App\Models\EmployeeFaceData;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('hr')
@@ -33,11 +34,24 @@ Route::post('/face-images', [FaceImageController::class, 'store']);
 
 
 Route::get('/face-data', function () {
-    return \App\Models\EmployeeFaceData::active()->get([
-        'employee_id',
-        'employee_name',
-        'employee_email',
-        'employee_branch_id',
-        'embedding',
-    ]);
+    return EmployeeFaceData::active()
+        ->get([
+            'employee_id',
+            'employee_name',
+            'employee_email',
+            'employee_branch_id',
+            'embedding',
+        ])
+        ->groupBy('employee_id')
+        ->map(function ($group) {
+            $first = $group->first();
+            return [
+                'employee_id'       => $first->employee_id,
+                'employee_name'     => $first->employee_name,
+                'employee_email'    => $first->employee_email,
+                'employee_branch_id'=> $first->employee_branch_id,
+                'embeddings'        => $group->pluck('embedding')->values(),
+            ];
+        })
+        ->values();
 });
