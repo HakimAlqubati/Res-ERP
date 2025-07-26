@@ -31,7 +31,8 @@ class EmployeeFaceDataRelationManager extends RelationManager
                     ->falseColor('danger'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                // Tables\Actions\CreateAction::make(),
+                Tables\Actions\Action::make('refresh')->icon('heroicon-m-arrow-path'),
             ])
             ->actions([
                 // Tables\Actions\EditAction::make(),
