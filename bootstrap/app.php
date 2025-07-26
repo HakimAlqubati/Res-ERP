@@ -21,9 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ])
             ->web(append: [
                 \App\Http\Middleware\TrackUserLastActivity::class,
-                \App\Http\Middleware\LogUserActivity::class,
+                // \App\Http\Middleware\LogUserActivity::class,
             ])->api(append: [
-                \App\Http\Middleware\LogUserActivity::class,
+                // \App\Http\Middleware\LogUserActivity::class,
             ])
         ;
         $middleware->alias([
