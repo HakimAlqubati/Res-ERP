@@ -54,7 +54,6 @@ class PurchaseInvoiceController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid to_date format. Use d-m-Y.']);
             }
         }
-        // $totalAmount = $query->sum('total_amount');
         // $invoices = $query->latest()->get();
         $paginator = $query->latest()->paginate($perPage);
         // 🧾 Format output
@@ -78,7 +77,6 @@ class PurchaseInvoiceController extends Controller
             'current_page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),
             'total' => $paginator->total(),
-            // 'total_amount' => formatMoneyWithCurrency($totalAmount),
         ]);
     }
 }
