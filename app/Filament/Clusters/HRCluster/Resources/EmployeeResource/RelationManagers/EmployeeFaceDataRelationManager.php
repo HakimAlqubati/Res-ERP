@@ -41,6 +41,8 @@ class EmployeeFaceDataRelationManager extends RelationManager
                 BulkAction::make('Generate Embeddings')
                     ->action(fn($records) => self::generateEmbeddings($records))
                     ->requiresConfirmation()
+                    ->modalHeading('Processing Face Embeddings...')
+                    ->modalSubheading('This process may take a few minutes per image.')                    
                     ->label('Generate Embeddings'),
             ]);
     }
@@ -51,7 +53,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
             try {
                 $imageUrl = $record->image_url;
 
-                $response = Http::timeout(10)
+                $response = Http::timeout(180)
                     ->withOptions(['verify' => false])
                     ->post('https://54.251.132.76:5000/api/represent', [
                         'img'               => $imageUrl,
