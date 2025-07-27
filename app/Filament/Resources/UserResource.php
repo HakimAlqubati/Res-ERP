@@ -66,7 +66,7 @@ class UserResource extends Resource
                         'existing_employee' => 'heroicon-o-identification',
                         'attendance_user'   => 'heroicon-o-camera',
                         'new_user'          => 'heroicon-o-user-plus',
-                    ])
+                    ])->visibleOn('create')
                     ->default('new_user')
                     ->live()
                     ->required() ,
