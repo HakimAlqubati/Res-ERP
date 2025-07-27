@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\Api\ProductPriceHistoryController;
+use App\Http\Controllers\Api\Reports\PurchaseInventoryReportController;
 use App\Http\Controllers\CopyOrderOutToBranchStoreController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FixFifoController;
@@ -240,3 +241,5 @@ Route::get('/updateCorrectStore',function(){
         WHERE p.category_id = 36
     ");;
 });
+
+Route::get('stockPosition', [PurchaseInventoryReportController::class, 'index']);

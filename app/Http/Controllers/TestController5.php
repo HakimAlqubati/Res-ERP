@@ -1,18 +1,12 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Arr;
-
-use App\Models\InventoryTransaction;
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 use Illuminate\Http\Request;
 
-use Illuminate\Support\Facades\DB;
-
 class TestController5 extends Controller
 {
-    public  function stockCostReport(Request $request)
+    public function stockCostReport(Request $request)
     {
         $filters = $request->only([
             'product_id',
@@ -21,21 +15,19 @@ class TestController5 extends Controller
             'date_from',
             'date_to',
             'details',
-            'store_id'
+            'store_id',
         ]);
 
         $groupByInvoice = $request->boolean('group_by_invoice', false);
-        $groupByPrice = $request->boolean('group_by_price', false);
+        $groupByPrice   = $request->boolean('group_by_price', false);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
         $purchasedData = $reportService->getProductSummaryPerInvoice($filters);
         return [
             'count' => count($purchasedData),
-            'data' => $purchasedData
+            'data'  => $purchasedData,
         ];
     }
-   
-
 
     public function orderdData(Request $request)
     {
@@ -46,27 +38,24 @@ class TestController5 extends Controller
         ]);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
-        $orderdData = $reportService->getOrderedProductsLinkedToPurchase($filters);
+        $orderdData    = $reportService->getOrderedProductsLinkedToPurchase($filters);
         return [
             'count' => count($orderdData),
-            'data' => $orderdData,
+            'data'  => $orderdData,
         ];
     }
-
-
-     
 
     public function purchasedVSordered(Request $request)
     {
         $filters = $request->only([
             'product_id',
-            'group_by_invoice'
+            'group_by_invoice',
         ]);
 
         $reportService = new PurchaseInvoiceProductSummaryReportService();
 
         $purchased = $reportService->getProductSummaryPerInvoice($filters); // or with filters
-        $ordered = $reportService->getOrderedProductsLinkedToPurchase($filters);
+        $ordered   = $reportService->getOrderedProductsLinkedToPurchase($filters);
 
         $diffReport = $reportService->calculatePurchaseVsOrderedDifference($purchased, $ordered);
         // $productIds = Arr::pluck($diffReport, 'product_id');
@@ -76,7 +65,7 @@ class TestController5 extends Controller
         // dd($productIds, $pids);
         return [
             'count' => count($diffReport),
-            'data' => $diffReport,
+            'data'  => $diffReport,
         ];
     }
 }
