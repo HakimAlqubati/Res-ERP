@@ -1,15 +1,12 @@
 <?php
-
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\ResellerSaleResource\Pages;
-use App\Filament\Resources\ResellerSaleResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\ResellerSale;
 use App\Models\UnitPrice;
-use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -34,9 +31,9 @@ class ResellerSaleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = ResellersCluster::class;
+    protected static ?string $cluster                             = ResellersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort                         = 2;
 
     public static function getLabel(): ?string
     {
@@ -47,7 +44,6 @@ class ResellerSaleResource extends Resource
     {
         return __('lang.reseller_sales');
     }
-
 
     public static function form(Form $form): Form
     {
@@ -89,16 +85,21 @@ class ResellerSaleResource extends Resource
                             ->afterStateUpdated(function ($set, $state, $get) {
                                 $set('unit_id', null); // reset old
 
-                                if (! $state) return;
+                                if (! $state) {
+                                    return;
+                                }
+
                                 $product = \App\Models\Product::find($state);
-                                if (! $product) return;
+                                if (! $product) {
+                                    return;
+                                }
 
                                 $unitPrices = $product->unitPrices->pluck('unit.name', 'unit_id');
                                 if ($unitPrices->isNotEmpty()) {
                                     $firstUnitId = $unitPrices->keys()->first();
                                     $set('unit_id', $firstUnitId);
 
-                                    $unitPrice = $product->unitPrices->firstWhere('unit_id', $firstUnitId);
+                                    $unitPrice        = $product->unitPrices->firstWhere('unit_id', $firstUnitId);
                                     $unitSellingPrice = round($unitPrice?->selling_price ?? 0, 2);
                                     $set('unit_price', $unitSellingPrice);
                                     $set('package_size', $unitPrice?->package_size ?? 0);
@@ -110,7 +111,10 @@ class ResellerSaleResource extends Resource
                             ->options(function (callable $get) {
                                 $storeId = Branch::find($get('../../branch_id'))?->store_id;
 
-                                if (! $storeId) return [];
+                                if (! $storeId) {
+                                    return [];
+                                }
+
                                 return Product::whereHas('inventoryTransactions', function ($q) use ($storeId) {
                                     $q->where('store_id', $storeId);
                                 })
@@ -126,7 +130,9 @@ class ResellerSaleResource extends Resource
                             ->label(__('lang.unit'))
                             ->options(function (callable $get) {
                                 $product = \App\Models\Product::find($get('product_id'));
-                                if (! $product) return [];
+                                if (! $product) {
+                                    return [];
+                                }
 
                                 return $product->unitPrices->pluck('unit.name', 'unit_id')->toArray();
                             })
@@ -144,7 +150,7 @@ class ResellerSaleResource extends Resource
                                 $total = round(((float) ($unitSellingPrice ?? 0)) * ((float) $get('quantity')), 2) ?? 0;
 
                                 $set('total_price', $total ?? 0);
-                                $set('package_size',  $unitPrice->package_size ?? 0);
+                                $set('package_size', $unitPrice->package_size ?? 0);
                             })
                             ->searchable()
                             ->required(),
@@ -161,7 +167,7 @@ class ResellerSaleResource extends Resource
                             ->afterStateUpdated(function ($set, $state, $get) {
                                 $sellingPrice = \App\Models\UnitPrice::where('product_id', $get('product_id'))->where('unit_id', $get('unit_id'))->first()?->selling_price ?? 0;
 
-                                $total =  ((float) ($sellingPrice ?? 0)) * $state;
+                                $total = ((float) ($sellingPrice ?? 0)) * $state;
                                 $total = round($total, 2);
                                 $set('total_price', $total ?? 0);
                             })
@@ -180,11 +186,11 @@ class ResellerSaleResource extends Resource
                             ->numeric()
                             ->dehydrated()
                             ->readOnly()
-                            // ->afterStateHydrated(function ($state, callable $set, callable $get) {
-                            //     $set('total_price', round($get('quantity') * $get('unit_price'), 2));
-                            // })
+                        // ->afterStateHydrated(function ($state, callable $set, callable $get) {
+                        //     $set('total_price', round($get('quantity') * $get('unit_price'), 2));
+                        // })
                             ->disabled(),
-                    ])
+                    ]),
             ]);
     }
 
@@ -214,6 +220,14 @@ class ResellerSaleResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('print_invoice')
+                    ->label('Print')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(ResellerSale $record) =>
+                        \App\Filament\Resources\ResellerSaleResource::getUrl(name: 'print', parameters: ['record' => $record])
+                    )
+                    ->openUrlInNewTab(),
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('add_payment')
                     ->label(__('lang.add_payment')) // استخدم مفتاح ترجمة إن وجد
@@ -244,7 +258,7 @@ class ResellerSaleResource extends Resource
                                     ->rows(2)
                                     ->maxLength(500)
                                     ->columnSpanFull(),
-                            ])
+                            ]),
                         ];
                     })
                     ->action(function (array $data, ResellerSale $record): void {
@@ -259,10 +273,10 @@ class ResellerSaleResource extends Resource
                             DB::transaction(function () use ($data, $record, $amount) {
                                 \App\Models\ResellerSalePaidAmount::create([
                                     'reseller_sale_id' => $record->id,
-                                    'amount' => $amount,
-                                    'paid_at' => $data['paid_at'],
-                                    'notes' => $data['notes'] ?? null,
-                                    'created_by' => auth()->id(),
+                                    'amount'           => $amount,
+                                    'paid_at'          => $data['paid_at'],
+                                    'notes'            => $data['notes'] ?? null,
+                                    'created_by'       => auth()->id(),
                                 ]);
                             });
 
@@ -298,9 +312,10 @@ class ResellerSaleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListResellerSales::route('/'),
+            'index'  => Pages\ListResellerSales::route('/'),
             'create' => Pages\CreateResellerSale::route('/create'),
-            'edit' => Pages\EditResellerSale::route('/{record}/edit'),
+            'edit'   => Pages\EditResellerSale::route('/{record}/edit'),
+            'print'  => Pages\PrintResellerInvoice::route('/{record}/print'),
         ];
     }
     public static function getNavigationBadge(): ?string
