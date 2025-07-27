@@ -77,7 +77,7 @@ Route::get('/face-data-with-urls', function () {
                 'employee_email'     => $first->employee_email,
                 'employee_branch_id' => $first->employee_branch_id,
                 'image_urls'         => $group->pluck('image_path')->map(function ($path) {
-                    return Storage::url($path); // ← يرجع رابط الصورة
+                    return env('APP_URL').'/'. Storage::url($path); // ← يرجع رابط الصورة
                 })->values(),
             ];
         })
