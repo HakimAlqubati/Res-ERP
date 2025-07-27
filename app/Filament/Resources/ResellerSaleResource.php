@@ -225,7 +225,7 @@ class ResellerSaleResource extends Resource
                     ->icon('heroicon-o-printer')
                     ->url(fn(ResellerSale $record) =>
                         \App\Filament\Resources\ResellerSaleResource::getUrl(name: 'print', parameters: ['record' => $record])
-                    )
+                    )->button()
                     ->openUrlInNewTab(),
 
                 Tables\Actions\EditAction::make(),
