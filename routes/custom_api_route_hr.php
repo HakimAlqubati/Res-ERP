@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Models\EmployeeFaceData;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::prefix('hr')
     ->group(function () {
@@ -51,6 +52,33 @@ Route::get('/face-data', function () {
                 'employee_email'    => $first->employee_email,
                 'employee_branch_id'=> $first->employee_branch_id,
                 'embeddings'        => $group->pluck('embedding')->values(),
+            ];
+        })
+        ->values();
+});
+
+
+Route::get('/face-data-with-urls', function () {
+    return EmployeeFaceData::active()
+        ->get([
+            'employee_id',
+            'employee_name',
+            'employee_email',
+            'employee_branch_id',
+            'image_path', // ← افترضنا أن الصورة محفوظة في هذا الحقل
+        ])
+        ->groupBy('employee_id')
+        ->map(function ($group) {
+            $first = $group->first();
+
+            return [
+                'employee_id'        => $first->employee_id,
+                'employee_name'      => $first->employee_name,
+                'employee_email'     => $first->employee_email,
+                'employee_branch_id' => $first->employee_branch_id,
+                'image_urls'         => $group->pluck('image_path')->map(function ($path) {
+                    return Storage::url($path); // ← يرجع رابط الصورة
+                })->values(),
             ];
         })
         ->values();
