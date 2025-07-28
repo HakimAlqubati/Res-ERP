@@ -20,11 +20,11 @@ class EmployeeFaceDataRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image'),
-                // Tables\Columns\TextColumn::make('employee_email'),
+                Tables\Columns\TextColumn::make('response_message'),
                 // Tables\Columns\IconColumn::make('active')->boolean(),
-                Tables\Columns\IconColumn::make('embedding')
+                Tables\Columns\IconColumn::make('face_added')
                     ->label('Has Embedding')
-                    ->boolean() // ✅ تلقائيًا يعرض أيقونة ✅ أو ❌ إذا كانت القيمة truthy/falsy
+                    ->boolean() 
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')

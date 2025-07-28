@@ -15,7 +15,6 @@ class FaceImageController extends Controller
             $request->validate([
                 'image'    => 'required|file|image|max:4096', // 4 MB max
                 'score'    => 'nullable|numeric',
-                // 'liveness' => 'nullable|boolean',
             ]);
 
             // حفظ الصورة
@@ -26,8 +25,7 @@ class FaceImageController extends Controller
             $faceImage = FaceImage::create([
                 'user_id'  => auth()->id(), // يمكن حذفها إذا لم تستخدم المصادقة
                 'path'     => $path,
-                'score'    => $request->input('score'),
-                // 'liveness' => $request->input('liveness'),
+                'score'    => $request->input('score'), 
                 'meta'     => null,
             ]);
 

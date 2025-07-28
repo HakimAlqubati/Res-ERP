@@ -16,13 +16,17 @@ class EmployeeFaceData extends Model
         'image_path',
         'embedding',
         'active',
+        'face_added',
+        'response_message',
+
     ];
 
     protected $appends = ['image_url'];
 
     protected $casts = [
-        'embedding' => 'array',
-        'active' => 'boolean',
+        'embedding'  => 'array',
+        'active'     => 'boolean',
+        'face_added' => 'boolean',
     ];
 
     /**
@@ -58,9 +62,26 @@ class EmployeeFaceData extends Model
     }
 
     public function getImageUrlAttribute(): ?string
-{
-    return $this->image_path
+    {
+        return $this->image_path
         ? Storage::disk('public')->url($this->image_path)
         : null;
-}
+    }
+
+    /**
+     * Scope: فقط السجلات التي تم فيها إضافة البصمة
+     */
+    public function scopeFaceAdded($query)
+    {
+        return $query->where('face_added', true);
+    }
+
+/**
+ * Scope: فقط السجلات التي لم تُضف فيها البصمة بعد
+ */
+    public function scopeFaceNotAdded($query)
+    {
+        return $query->where('face_added', false);
+    }
+
 }

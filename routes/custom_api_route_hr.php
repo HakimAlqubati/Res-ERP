@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Models\EmployeeFaceData;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -33,9 +34,10 @@ Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
 
 Route::post('/face-images', [FaceImageController::class, 'store']);
 
-
 Route::get('/face-data', function () {
+    $minFaces = request('min_faces', 3);
     return EmployeeFaceData::active()
+         ->faceAdded()
         ->get([
             'employee_id',
             'employee_name',
@@ -44,41 +46,15 @@ Route::get('/face-data', function () {
             'embedding',
         ])
         ->groupBy('employee_id')
+        ->filter(fn(Collection $employeeFaceGroup) => $employeeFaceGroup->count() >= $minFaces)
         ->map(function ($group) {
             $first = $group->first();
-            return [
-                'employee_id'       => $first->employee_id,
-                'employee_name'     => $first->employee_name,
-                'employee_email'    => $first->employee_email,
-                'employee_branch_id'=> $first->employee_branch_id,
-                'embeddings'        => $group->pluck('embedding')->values(),
-            ];
-        })
-        ->values();
-});
-
-
-Route::get('/face-data-with-urls', function () {
-    return EmployeeFaceData::active()
-        ->get([
-            'employee_id',
-            'employee_name',
-            'employee_email',
-            'employee_branch_id',
-            'image_path', // ← افترضنا أن الصورة محفوظة في هذا الحقل
-        ])
-        ->groupBy('employee_id')
-        ->map(function ($group) {
-            $first = $group->first();
-
             return [
                 'employee_id'        => $first->employee_id,
                 'employee_name'      => $first->employee_name,
                 'employee_email'     => $first->employee_email,
                 'employee_branch_id' => $first->employee_branch_id,
-                'image_urls'         => $group->pluck('image_path')->map(function ($path) {
-                    return env('APP_URL').'/'. Storage::url($path); // ← يرجع رابط الصورة
-                })->values(),
+                'embeddings'         => $group->pluck('embedding')->values(),
             ];
         })
         ->values();
