@@ -35,7 +35,7 @@ Route::get('employees/simple-list', [EmployeeController::class, 'simpleList']);
 Route::post('/face-images', [FaceImageController::class, 'store']);
 
 Route::get('/face-data', function () {
-    $minFaces = request('min_faces', 3);
+    $minFaces = request('min_faces', 1);
     return EmployeeFaceData::active()
          ->faceAdded()
         ->get([
