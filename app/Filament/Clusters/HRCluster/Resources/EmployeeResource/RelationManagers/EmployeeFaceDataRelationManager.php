@@ -24,7 +24,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
                 // Tables\Columns\IconColumn::make('active')->boolean(),
                 Tables\Columns\IconColumn::make('face_added')
                     ->label('Has Embedding')->alignCenter()
-                    ->boolean() 
+                    ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
@@ -40,6 +40,23 @@ class EmployeeFaceDataRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
+                BulkAction::make('Reset Embeddings')
+                    ->label('Reset Embeddings')
+                    ->icon('heroicon-o-trash')
+                    ->requiresConfirmation()
+                    ->modalHeading('Reset Face Embeddings')
+                    ->modalSubheading('This will remove all stored embeddings and mark them as not added.')
+                    ->action(function ($records) {
+                        foreach ($records as $record) {
+                            $record->update([
+                                'embedding'        => '[]',
+                                'response_message' => 'Embedding reset.',
+                                'face_added'       => false,
+                            ]);
+                        }
+                        showSuccessNotifiMessage('Embeddings have been reset successfully.');
+                    }),
+
                 BulkAction::make('Generate Embeddings')
                 // ->action(fn($records) => self::generateEmbeddings($records))
                     ->action(function ($records) {
