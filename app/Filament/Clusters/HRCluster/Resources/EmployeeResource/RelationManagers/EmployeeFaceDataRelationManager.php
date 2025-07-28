@@ -23,7 +23,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('response_message'),
                 // Tables\Columns\IconColumn::make('active')->boolean(),
                 Tables\Columns\IconColumn::make('face_added')
-                    ->label('Has Embedding')
+                    ->label('Has Embedding')->alignCenter()
                     ->boolean() 
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle')
