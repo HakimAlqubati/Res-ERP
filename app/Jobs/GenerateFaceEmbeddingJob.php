@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\EmployeeFaceData;
@@ -16,6 +17,9 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $faceDataId;
+
+    // ✅ إطالة وقت تنفيذ الجوب إلى 5 دقائق (300 ثانية)
+    public $timeout = 300;
 
     public function __construct($faceDataId)
     {
@@ -42,10 +46,17 @@ class GenerateFaceEmbeddingJob implements ShouldQueue
 
             if ($response->ok()) {
                 $json = $response->json();
-                if (isset($json['results'][0]['embedding'])) {
+
+                if (
+                    isset($json['results'][0]['embedding']) &&
+                    isset($json['results'][0]['face_confidence']) &&
+                    $json['results'][0]['face_confidence'] >= 0.90
+                ) {
                     $record->update([
                         'embedding' => $json['results'][0]['embedding'],
                     ]);
+                } else {
+                    Log::warning('Face confidence too low or missing for record ID: ' . $this->faceDataId);
                 }
             }
         } catch (Exception $e) {
