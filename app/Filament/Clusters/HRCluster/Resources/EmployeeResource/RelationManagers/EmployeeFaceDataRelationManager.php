@@ -20,7 +20,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image')->height(200)->width(200),
+                Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image')->height(150)->width(150),
                 Tables\Columns\TextColumn::make('response_message')->label('Response Message')->wrap()->limit(50)->tooltip(fn($state)=> $state),
                 CheckboxColumn::make('active')->label(__('lang.active'))->toggleable()->alignCenter(),
                 Tables\Columns\IconColumn::make('face_added')
