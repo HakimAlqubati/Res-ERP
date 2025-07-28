@@ -5,6 +5,7 @@ use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -136,6 +137,21 @@ class Branch extends Model implements HasMedia, Auditable
                 });
             }
         }
+          static::created(function (Branch $branch) {
+            // نتأكد أن الفرع لم يُنشأ له متجر سابق
+            if ($branch->store_id) {
+                return;
+            }
+
+            DB::transaction(function () use ($branch) {
+                $store = Store::create([
+                    'name'      => $branch->name . ' Store',
+                    'active'    => true, 
+                ]);
+
+                $branch->update(['store_id' => $store->id]);
+            });
+        });
     }
 
     public function scopeActive($query)
