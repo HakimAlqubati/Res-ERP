@@ -5,6 +5,7 @@ use Exception;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
+use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -20,8 +21,8 @@ class EmployeeFaceDataRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image'),
-                Tables\Columns\TextColumn::make('response_message')->label('Response Message'),
-                // Tables\Columns\IconColumn::make('active')->boolean(),
+                Tables\Columns\TextColumn::make('response_message')->label('Response Message')->wrap()->limit(50)->tooltip(fn($state)=> $state),
+                CheckboxColumn::make('active')->label(__('lang.active'))->toggleable()->alignCenter(),
                 Tables\Columns\IconColumn::make('face_added')
                     ->label('Has Embedding')->alignCenter()
                     ->boolean()
