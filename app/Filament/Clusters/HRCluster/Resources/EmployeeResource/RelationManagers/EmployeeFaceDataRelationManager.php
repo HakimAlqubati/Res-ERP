@@ -20,7 +20,7 @@ class EmployeeFaceDataRelationManager extends RelationManager
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image_url')->circular()->label('Image'),
-                Tables\Columns\TextColumn::make('response_message'),
+                Tables\Columns\TextColumn::make('response_message')->label('Response Message'),
                 // Tables\Columns\IconColumn::make('active')->boolean(),
                 Tables\Columns\IconColumn::make('face_added')
                     ->label('Has Embedding')->alignCenter()
