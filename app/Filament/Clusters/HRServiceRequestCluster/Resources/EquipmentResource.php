@@ -23,6 +23,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EquipmentResource extends Resource
@@ -55,7 +56,7 @@ class EquipmentResource extends Resource
                                         ->prefixIcon('heroicon-s-chart-bar-square')->prefixIconColor('primary'),
 
                                     Forms\Components\Select::make('type_id')
-                                        ->label('Type')
+                                        ->label('Type')->searchable()
                                         ->options(EquipmentType::active()->pluck('name', 'id'))
                                         ->reactive()
                                         ->afterStateUpdated(function ($state, callable $set) {
@@ -376,27 +377,31 @@ class EquipmentResource extends Resource
         }
         return static::getModel()::count();
     }
+
     public static function generateEquipmentCode(?int $typeId): string
     {
-        // جلب بادئة النوع
-        $prefix = \App\Models\EquipmentType::find($typeId)?->equipment_code_start_with ?? 'EQ';
+        return DB::transaction(function () use ($typeId) {
+            // جلب الـ prefix من حقل code في نوع الجهاز
+            $prefix = EquipmentType::find($typeId)?->code ?? 'EQ';
 
-        // إيجاد آخر سجل من نفس النوع
-        $lastAssetTag = \App\Models\Equipment::where('type_id', $typeId)
-            ->where('asset_tag', 'like', $prefix . '%')
-            ->orderByDesc('id')
-            ->value('asset_tag');
+            // قفل السجلات المماثلة لمنع التكرار
+            $lastAssetTag = Equipment::where('asset_tag', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->orderByDesc('asset_tag')
+                ->value('asset_tag');
 
-        // استخراج الرقم الحالي إن وجد
-        if ($lastAssetTag && preg_match('/\d+$/', $lastAssetTag, $matches)) {
-            $lastNumber = (int) $matches[0];
-        } else {
+            // استخراج الرقم الأخير إن وُجد
             $lastNumber = 0;
-        }
+            if ($lastAssetTag && preg_match('/(\d+)$/', $lastAssetTag, $matches)) {
+                $lastNumber = (int) $matches[1];
+            }
 
-        $nextNumber = $lastNumber + 1;
+            // توليد الرقم الجديد
+            $nextNumber = $lastNumber + 1;
 
-        return $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+            // إعادة الكود الكامل بالشكل: CODE + 3 أرقام
+            return $prefix . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+        });
     }
 
 }

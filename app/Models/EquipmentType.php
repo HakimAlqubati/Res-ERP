@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -11,8 +10,8 @@ class EquipmentType extends Model
     protected $fillable = [
         'name',
         'description',
-        'active',
-        'equipment_code_start_with',
+        'active', 
+        'code', 
     ];
 
     public function category()
