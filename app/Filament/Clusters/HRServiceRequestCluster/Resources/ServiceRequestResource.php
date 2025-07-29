@@ -127,20 +127,20 @@ class ServiceRequestResource extends Resource
 
                                 ]),
 
-                                Fieldset::make()->columns(3)->schema([
-                                    // Select::make('assigned_to')
-                                    //     ->options(fn(Get $get): Collection => Employee::query()
-                                    //         ->where('active', 1)
-                                    //         ->where('branch_id', $get('branch_id'))
-                                    //         ->pluck('name', 'id'))
-                                    //     ->searchable()
-                                    //     ->disabledOn('edit')
-                                    //     ->helperText(function (Model $record = null) {
-                                    //         if ($record) {
-                                    //             return 'To reassign, go to table page ';
-                                    //         }
-                                    //     })
-                                    //     ->nullable(),
+                                Fieldset::make()->columns(4)->schema([
+                                    Select::make('assigned_to')
+                                        ->options(fn(Get $get): Collection => Employee::query()
+                                            ->where('active', 1)
+                                            ->where('branch_id', $get('branch_id'))
+                                            ->pluck('name', 'id'))
+                                        ->searchable()
+                                        ->disabledOn('edit')
+                                        ->helperText(function (Model $record = null) {
+                                            if ($record) {
+                                                return 'To reassign, go to table page ';
+                                            }
+                                        })
+                                        ->nullable(),
                                     Select::make('urgency')
                                         ->options([
                                             ServiceRequest::URGENCY_HIGH => 'High',
