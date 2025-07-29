@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Clusters\HrServiceRequestCluster\Resources;
 
 use App\Filament\Clusters\HRServiceRequestCluster;
@@ -17,7 +16,6 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -25,7 +23,6 @@ use Filament\Pages\Page;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
@@ -33,7 +30,6 @@ use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,7 +46,7 @@ class ServiceRequestResource extends Resource
     protected static ?string $cluster = HRServiceRequestCluster::class;
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort                         = 1;
 
     public static function form(Form $form): Form
     {
@@ -73,7 +69,7 @@ class ServiceRequestResource extends Resource
                                             }
                                         })
                                         ->options(Branch::branches()->active()
-                                            ->select('name', 'id')->pluck('name', 'id'))
+                                                ->select('name', 'id')->pluck('name', 'id'))
                                         ->default(function () {
                                             if (isStuff()) {
                                                 return auth()->user()->branch_id;
@@ -96,20 +92,20 @@ class ServiceRequestResource extends Resource
                                                 return true;
                                             }
                                         })->rule(function (Get $get) {
-                                            $branchId = $get('branch_id');
+                                        $branchId = $get('branch_id');
 
-                                            // تحقق من وجود مناطق للفرع المحدد
-                                            $hasAreas = \App\Models\BranchArea::where('branch_id', $branchId)->exists();
+                                        // تحقق من وجود مناطق للفرع المحدد
+                                        $hasAreas = \App\Models\BranchArea::where('branch_id', $branchId)->exists();
 
-                                            return $hasAreas
-                                                ? 'required'
-                                                : function () {
-                                                    return fn() => false; // يمنع التقديم
-                                                };
-                                        })
+                                        return $hasAreas
+                                        ? 'required'
+                                        : function () {
+                                            return fn() => false; // يمنع التقديم
+                                        };
+                                    })
                                         ->validationMessages([
                                             'required' => 'The branch area field is required. ⚠ Go to Branch to add Areas first.',
-                                            '*.0' => '',
+                                            '*.0'      => '',
                                         ]),
 
                                     Select::make('equipment_id')->label('Equipment')
@@ -127,67 +123,70 @@ class ServiceRequestResource extends Resource
 
                                 ]),
 
-                                Fieldset::make()->columns(4)->schema([
-                                    Select::make('assigned_to')
-                                        ->options(fn(Get $get): Collection => Employee::query()
-                                            ->where('active', 1)
-                                            ->where('branch_id', $get('branch_id'))
-                                            ->pluck('name', 'id'))
-                                        ->searchable()
-                                        ->disabledOn('edit')
-                                        ->helperText(function (Model $record = null) {
-                                            if ($record) {
-                                                return 'To reassign, go to table page ';
-                                            }
-                                        })
-                                        ->nullable(),
-                                    Select::make('urgency')
-                                        ->options([
-                                            ServiceRequest::URGENCY_HIGH => 'High',
-                                            ServiceRequest::URGENCY_MEDIUM => 'Medium',
-                                            ServiceRequest::URGENCY_LOW => 'Low',
-                                        ])
-                                        ->disabled(function () {
-                                            if (isset($record)) {
-                                                if ($record->created_by == auth()->user()->id) {
-                                                    return false;
+                                Fieldset::make()
+                                    ->columns(4)
+                                    ->schema([
+                                        Select::make('assigned_to')
+                                            ->options(fn(Get $get): Collection => Employee::query()
+                                                    ->where('active', 1)
+                                                    ->where('branch_id', $get('branch_id'))
+                                                    ->pluck('name', 'id'))
+                                            ->searchable()
+                                            ->hidden(fn() => request()->has('equipment_id'))
+                                            ->disabledOn('edit')
+                                            ->helperText(function (Model $record = null) {
+                                                if ($record) {
+                                                    return 'To reassign, go to table page ';
                                                 }
-                                                return true;
-                                            }
-                                        })
-                                        ->required(),
+                                            })
+                                            ->nullable(),
+                                        Select::make('urgency')
+                                            ->options([
+                                                ServiceRequest::URGENCY_HIGH   => 'High',
+                                                ServiceRequest::URGENCY_MEDIUM => 'Medium',
+                                                ServiceRequest::URGENCY_LOW    => 'Low',
+                                            ])
+                                            ->disabled(function () {
+                                                if (isset($record)) {
+                                                    if ($record->created_by == auth()->user()->id) {
+                                                        return false;
+                                                    }
+                                                    return true;
+                                                }
+                                            })
+                                            ->required(),
 
-                                    Select::make('impact')
-                                        ->options([
-                                            ServiceRequest::IMPACT_HIGH => 'High',
-                                            ServiceRequest::IMPACT_MEDIUM => 'Medium',
-                                            ServiceRequest::IMPACT_LOW => 'Low',
-                                        ])
-                                        ->disabled(function () {
-                                            if (isset($record)) {
-                                                if ($record->created_by == auth()->user()->id) {
-                                                    return false;
+                                        Select::make('impact')
+                                            ->options([
+                                                ServiceRequest::IMPACT_HIGH   => 'High',
+                                                ServiceRequest::IMPACT_MEDIUM => 'Medium',
+                                                ServiceRequest::IMPACT_LOW    => 'Low',
+                                            ])
+                                            ->disabled(function () {
+                                                if (isset($record)) {
+                                                    if ($record->created_by == auth()->user()->id) {
+                                                        return false;
+                                                    }
+                                                    return true;
                                                 }
-                                                return true;
-                                            }
-                                        })
-                                        ->required(),
-                                    Select::make('status')
-                                        ->default(ServiceRequest::STATUS_NEW)
-                                        ->options([
-                                            ServiceRequest::STATUS_NEW => 'New',
-                                            ServiceRequest::STATUS_PENDING => 'Pending',
-                                            ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
-                                            ServiceRequest::STATUS_CLOSED => 'Closed',
-                                        ])->disabled()
-                                        ->helperText(function (Model $record = null) {
-                                            if ($record) {
-                                                return 'To change status, go to table page ';
-                                            }
-                                        })
-                                        ->required(),
-                                ]),
-                            ])
+                                            })
+                                            ->required(),
+                                        Select::make('status')
+                                            ->default(ServiceRequest::STATUS_NEW)
+                                            ->options([
+                                                ServiceRequest::STATUS_NEW         => 'New',
+                                                ServiceRequest::STATUS_PENDING     => 'Pending',
+                                                ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
+                                                ServiceRequest::STATUS_CLOSED      => 'Closed',
+                                            ])->disabled()
+                                            ->helperText(function (Model $record = null) {
+                                                if ($record) {
+                                                    return 'To change status, go to table page ';
+                                                }
+                                            })
+                                            ->required(),
+                                    ]),
+                            ]),
                         ]),
 
                     Wizard\Step::make('Images')
@@ -195,12 +194,11 @@ class ServiceRequestResource extends Resource
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
                                 self::getMediaSpatieField(),
-                            ])
+                            ]),
                         ]),
                 ])->skippable()->columnSpanFull(),
             ]);
     }
-
 
     public static function table(Table $table): Table
     {
@@ -212,17 +210,17 @@ class ServiceRequestResource extends Resource
                     Stack::make([
                         SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                             ->circular()->alignCenter(true)->getStateUsing(function () {
-                                return null;
-                            })->limit(3),
+                            return null;
+                        })->limit(3),
                         TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable(),
-                        
+
                     ]),
                     TextColumn::make('description')->searchable(isIndividual: true)->sortable()
-                            ->color(Color::Blue)
-                            // ->size(TextColumnSize::Large)
-                            // ->weight(FontWeight::ExtraBold)
-                            ->description('Click')
-                            ->searchable(),
+                        ->color(Color::Blue)
+                    // ->size(TextColumnSize::Large)
+                    // ->weight(FontWeight::ExtraBold)
+                        ->description('Click')
+                        ->searchable(),
                     TextColumn::make('status')
                         ->badge()
                         ->sortable()
@@ -232,7 +230,7 @@ class ServiceRequestResource extends Resource
                         ->colors([
                             'primary' => ServiceRequest::STATUS_NEW,
                             'warning' => ServiceRequest::STATUS_PENDING,
-                            'info' => ServiceRequest::STATUS_IN_PROGRESS,
+                            'info'    => ServiceRequest::STATUS_IN_PROGRESS,
                             'success' => ServiceRequest::STATUS_CLOSED,
                         ]),
 
@@ -242,7 +240,7 @@ class ServiceRequestResource extends Resource
                         ->sortable()
                         ->icon('heroicon-m-check-badge')
                         ->colors([
-                            'danger' => ServiceRequest::URGENCY_HIGH,
+                            'danger'  => ServiceRequest::URGENCY_HIGH,
                             'warning' => ServiceRequest::URGENCY_MEDIUM,
                             'success' => ServiceRequest::URGENCY_LOW,
                         ])
@@ -262,7 +260,7 @@ class ServiceRequestResource extends Resource
                         ->searchable()
                         ->sortable()
                         ->colors([
-                            'danger' => ServiceRequest::IMPACT_HIGH,
+                            'danger'  => ServiceRequest::IMPACT_HIGH,
                             'warning' => ServiceRequest::IMPACT_MEDIUM,
                             'success' => ServiceRequest::IMPACT_LOW,
                         ])
@@ -278,7 +276,7 @@ class ServiceRequestResource extends Resource
                         ->toggleable(isToggledHiddenByDefault: true),
                     TextColumn::make('created_at')->label('Created At')->sortable()
                         ->toggleable(isToggledHiddenByDefault: true),
-                ])->from('md')
+                ])->from('md'),
             ])
             ->filters([
                 SelectFilter::make('equipment_id')
@@ -294,11 +292,11 @@ class ServiceRequestResource extends Resource
                             }
                             return false;
                         })
-                        // ->hidden(function ($record) {
-                        //     if (!isSuperAdmin() && !auth()->user()->can('move_status_task')) {
-                        //         return true;
-                        //     }
-                        // })
+                    // ->hidden(function ($record) {
+                    //     if (!isSuperAdmin() && !auth()->user()->can('move_status_task')) {
+                    //         return true;
+                    //     }
+                    // })
                         ->form(function ($record) {
                             return [
                                 Select::make('status')->default(function ($record) {
@@ -337,10 +335,10 @@ class ServiceRequestResource extends Resource
                                     })
                                     ->options(
                                         [
-                                            ServiceRequest::STATUS_NEW => 'New',
-                                            ServiceRequest::STATUS_PENDING => 'Pending',
+                                            ServiceRequest::STATUS_NEW         => 'New',
+                                            ServiceRequest::STATUS_PENDING     => 'Pending',
                                             ServiceRequest::STATUS_IN_PROGRESS => 'In progress',
-                                            ServiceRequest::STATUS_CLOSED => 'Closed',
+                                            ServiceRequest::STATUS_CLOSED      => 'Closed',
                                         ]
                                     ),
                             ];
@@ -350,14 +348,14 @@ class ServiceRequestResource extends Resource
                         ->action(function (array $data, $record): void {
                             // dd($data);
                             $prevStatus = $record->status;
-                            $move = $record->update([
+                            $move       = $record->update([
                                 'status' => $data['status'],
                             ]);
                             if ($move) {
                                 $record->logs()->create([
-                                    'created_by' => auth()->user()->id,
+                                    'created_by'  => auth()->user()->id,
                                     'description' => 'status changed from ' . $prevStatus . ' to ' . $record->status,
-                                    'log_type' => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
+                                    'log_type'    => ServiceRequestLog::LOG_TYPE_STATUS_CHANGED,
                                 ]);
                             }
                         }),
@@ -380,9 +378,9 @@ class ServiceRequestResource extends Resource
                                 Fieldset::make()->schema([
                                     Select::make('assigned_to')->label('')->columnSpanFull()
                                         ->options(Employee::query()
-                                            ->where('active', 1)
-                                            ->where('branch_id', $record->branch_id)
-                                            ->pluck('name', 'id'))
+                                                ->where('active', 1)
+                                                ->where('branch_id', $record->branch_id)
+                                                ->pluck('name', 'id'))
                                         ->searchable()
                                         ->nullable(),
                                 ]),
@@ -393,23 +391,23 @@ class ServiceRequestResource extends Resource
                         ->action(function (array $data, $record): void {
 
                             $prevAssigned = null;
-                            if (!is_null($record?->assigned_to)) {
+                            if (! is_null($record?->assigned_to)) {
                                 $prevAssigned = $record?->assignedTo?->name;
                             }
                             $newAssigned = Employee::find($data['assigned_to'])?->name;
-                            $reassign = $record->update([
+                            $reassign    = $record->update([
                                 'assigned_to' => $data['assigned_to'],
                             ]);
 
                             if ($reassign) {
                                 $description = 'Assigned to ' . $newAssigned;
-                                if (!is_null($prevAssigned)) {
+                                if (! is_null($prevAssigned)) {
                                     $description = 'Reassigned from ' . $prevAssigned . ' to ' . $newAssigned;
                                 }
                                 $record->logs()->create([
-                                    'created_by' => auth()->user()->id,
+                                    'created_by'  => auth()->user()->id,
                                     'description' => $description,
-                                    'log_type' => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
+                                    'log_type'    => ServiceRequestLog::LOG_TYPE_REASSIGN_TO_USER,
                                 ]);
                             }
                         }),
@@ -456,15 +454,15 @@ class ServiceRequestResource extends Resource
                         ->action(function (array $data, $record): void {
                             // dd($data);
                             $comment = $record->comments()->create([
-                                'comment' => $data['comment'],
+                                'comment'    => $data['comment'],
                                 'created_by' => auth()->user()->id,
                             ]);
 
                             if ($comment) {
                                 $record->logs()->create([
-                                    'created_by' => auth()->user()->id,
+                                    'created_by'  => auth()->user()->id,
                                     'description' => 'Comment added: ' . $data['comment'],
-                                    'log_type' => ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
+                                    'log_type'    => ServiceRequestLog::LOG_TYPE_COMMENT_ADDED,
                                 ]);
                             }
                             // If there are photos, save them after the comment is created
@@ -499,9 +497,9 @@ class ServiceRequestResource extends Resource
                                 'New Images added to service request #' . $record->id
                             );
                             $record->logs()->create([
-                                'created_by' => auth()->user()->id,
+                                'created_by'  => auth()->user()->id,
                                 'description' => 'Images added',
-                                'log_type' => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
+                                'log_type'    => ServiceRequestLog::LOG_TYPE_IMAGES_ADDED,
                             ]);
                         })
                         ->button()
@@ -519,7 +517,7 @@ class ServiceRequestResource extends Resource
                         ->modalWidth('lg') // Adjust modal size
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Close')
-                        // ->iconButton()
+                    // ->iconButton()
                         ->button()
                         ->icon('heroicon-o-camera')
                         ->modalContent(function ($record) {
@@ -531,7 +529,7 @@ class ServiceRequestResource extends Resource
                         }
                         return false;
                     }),
-                ])
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -552,10 +550,10 @@ class ServiceRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListServiceRequests::route('/'),
+            'index'  => Pages\ListServiceRequests::route('/'),
             'create' => Pages\CreateServiceRequest::route('/create'),
-            'edit' => Pages\EditServiceRequest::route('/{record}/edit'),
-            'view' => Pages\ViewServiceRequest::route('/{record}'),
+            'edit'   => Pages\EditServiceRequest::route('/{record}/edit'),
+            'view'   => Pages\ViewServiceRequest::route('/{record}'),
         ];
     }
 
