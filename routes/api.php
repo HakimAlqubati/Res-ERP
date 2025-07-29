@@ -230,3 +230,11 @@ Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::
  
 require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');
+
+Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
+Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
+Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
+    // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح
+    // return response()->json(['message' => 'تم الحفظ بنجاح']);
+    // (اكتب الكود حسب منطقك)
+});

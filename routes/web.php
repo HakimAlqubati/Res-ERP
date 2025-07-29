@@ -46,6 +46,10 @@ use Spatie\Permission\Models\Role;
 |
  */
 
+Route::get('home',function(){
+
+    return view('welcome');
+});
 Route::middleware('tenant')->group(function () {
     // routes
     Route::get('/dd', function () {

@@ -1,21 +1,15 @@
 <?php
-
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use App\Filament\Clusters\InventoryManagementCluster;
-use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
-use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
 use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\Store;
-use App\Models\Unit;
-use App\Models\UnitPrice;
-use App\Services\InventoryService;
 use App\Services\MultiProductsInventoryService;
+use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
-use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
@@ -36,7 +30,6 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StockInventoryResource extends Resource
 {
@@ -44,9 +37,9 @@ class StockInventoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = InventoryManagementCluster::class;
+    protected static ?string $cluster                             = InventoryManagementCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort                         = 9;
 
     public static function getNavigationLabel(): string
     {
@@ -86,13 +79,17 @@ class StockInventoryResource extends Resource
                                 $details = $get('details');
                                 $storeId = $get('store_id');
 
-                                if (!is_array($details) || !$storeId) return;
+                                if (! is_array($details) || ! $storeId) {
+                                    return;
+                                }
 
                                 $updatedDetails = collect($details)->map(function ($item) use ($storeId) {
                                     $productId = $item['product_id'] ?? null;
-                                    $unitId = $item['unit_id'] ?? null;
+                                    $unitId    = $item['unit_id'] ?? null;
 
-                                    if (!$productId || !$unitId) return $item;
+                                    if (! $productId || ! $unitId) {
+                                        return $item;
+                                    }
 
                                     $service = new \App\Services\MultiProductsInventoryService(
                                         null,
@@ -103,9 +100,9 @@ class StockInventoryResource extends Resource
 
                                     $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
 
-                                    $item['system_quantity'] = $remainingQty;
+                                    $item['system_quantity']   = $remainingQty;
                                     $item['physical_quantity'] = $remainingQty;
-                                    $item['difference'] = 0;
+                                    $item['difference']        = 0;
 
                                     return $item;
                                 })->toArray();
@@ -118,12 +115,14 @@ class StockInventoryResource extends Resource
                             ->required()
                             ->label('Responsible'),
                         $operaion == 'create' ?
-                            Select::make('category_id')->visibleOn('create')
+                        Select::make('category_id')->visibleOn('create')
                             ->label('Category')
                             ->options(\App\Models\Category::pluck('name', 'id'))
                             ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                if (!$state) return;
+                                if (! $state) {
+                                    return;
+                                }
 
                                 $products = \App\Models\Product::where('category_id', $state)
                                     ->where('active', 1)
@@ -132,8 +131,8 @@ class StockInventoryResource extends Resource
                                 $storeId = $get('store_id');
 
                                 $details = $products->map(function ($product) use ($storeId) {
-                                    $unitPrice = $product->unitPrices()->first();
-                                    $unitId = $unitPrice?->unit_id;
+                                    $unitPrice   = $product->unitPrices()->first();
+                                    $unitId      = $unitPrice?->unit_id;
                                     $packageSize = $unitPrice?->package_size ?? 0;
 
                                     $service = new MultiProductsInventoryService(
@@ -146,32 +145,105 @@ class StockInventoryResource extends Resource
                                     $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
 
                                     return [
-                                        'product_id' => $product->id,
-                                        'unit_id' => $unitId,
-                                        'package_size' => $packageSize,
-                                        'system_quantity' => $remainingQty,
+                                        'product_id'        => $product->id,
+                                        'unit_id'           => $unitId,
+                                        'package_size'      => $packageSize,
+                                        'system_quantity'   => $remainingQty,
                                         'physical_quantity' => $remainingQty,
-                                        'difference' => $remainingQty - $remainingQty,
+                                        'difference'        => $remainingQty - $remainingQty,
                                     ];
                                 })->toArray();
 
                                 $set('details', $details);
                             }) :
-                            Toggle::make('edit_enabled')
+                        Toggle::make('edit_enabled')
                             ->label('Edit')
                             ->inline(false)
                             ->default(false)->live()
                             ->helperText('Enable this option to allow editing inventory details')
                             ->dehydrated()
-                            ->columnSpan(1)
+                            ->columnSpan(1),
+                        Select::make('product_selector')
+                            ->label('Add Products')
+                            ->multiple()
+                            ->searchable()->columnSpanFull()
+                            ->visible(fn($record) => blank($record)) // فقط في وضع الإضافة
+                            ->options(function () {
+                                return InventoryProductCacheService::getDefaultOptions()
+                                    ->mapWithKeys(fn($product) => [
+                                        $product->id => "{$product->code} - {$product->name}",
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getSearchResultsUsing(function ($search) {
+                                if (empty($search)) {
+                                    return [];
+                                }
+                                return InventoryProductCacheService::search($search)
+                                    ->mapWithKeys(fn($product) => [
+                                        $product->id => "{$product->code} - {$product->name}",
+                                    ])
+                                    ->toArray();
+                            })
+                            ->getOptionLabelUsing(fn($value) =>
+                                optional(Product::find($value))
+                                ?->code . ' - ' . optional(Product::find($value))?->name
+                            )
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                $details = $get('details') ?? [];
+                                $storeId = $get('store_id');
+
+                                $existingProductIds = collect($details)->pluck('product_id')->all();
+
+                                $newProductIds = array_diff($state, $existingProductIds);
+
+                                foreach ($newProductIds as $productId) {
+                                    $product = Product::find($productId);
+                                    if (! $product) {
+                                        continue;
+                                    }
+
+                                    $unitPrice   = $product->supplyOutUnitPrices->first();
+                                    $unitId      = $unitPrice?->unit_id;
+                                    $packageSize = $unitPrice?->package_size ?? 1;
+
+                                    $service = new \App\Services\MultiProductsInventoryService(
+                                        null,
+                                        $productId,
+                                        $unitId,
+                                        $storeId
+                                    );
+
+                                    $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+
+                                    $details[] = [
+                                        'product_id'        => $productId,
+                                        'unit_id'           => $unitId,
+                                        'package_size'      => $packageSize,
+                                        'system_quantity'   => $remainingQty,
+                                        'physical_quantity' => $remainingQty,
+                                        'difference'        => 0,
+                                    ];
+                                }
+
+                                // (اختياري) لحذف المنتجات غير المختارة
+                                $remainingProductIds = $state;
+                                $details             = collect($details)
+                                    ->filter(fn($item) => in_array($item['product_id'], $remainingProductIds))
+                                    ->values()
+                                    ->toArray();
+
+                                $set('details', $details);
+                            }),
 
                     ]),
 
                     Repeater::make('details')
-                        // ->hidden(function ($record) use ($operaion) {
-                        //     return $record?->finalized && $operaion === 'edit';
-                        // })
-                        ->hidden(fn($get, $record) => $operaion === 'edit' && (!$get('edit_enabled') || $record?->finalized))
+                    // ->hidden(function ($record) use ($operaion) {
+                    //     return $record?->finalized && $operaion === 'edit';
+                    // })
+                        ->hidden(fn($get, $record) => $operaion === 'edit' && (! $get('edit_enabled') || $record?->finalized))
 
                         ->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
                         ->relationship('details')
@@ -181,72 +253,82 @@ class StockInventoryResource extends Resource
                                 ->required()->columnSpan(2)->distinct()
                                 ->label('Product')->searchable()
                                 ->options(function () {
-                                    return Product::where('active', 1)
-                                        ->get(['name', 'id', 'code'])
+                                    // افتراضيًا أول 5 منتجات
+                                    return InventoryProductCacheService::getDefaultOptions()
                                         ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}"
-                                        ]);
-                                })
-                                ->getSearchResultsUsing(function (string $search): array {
-                                    return Product::where('active', 1)
-                                        ->where(function ($query) use ($search) {
-                                            $query->where('name', 'like', "%{$search}%")
-                                                ->orWhere('code', 'like', "%{$search}%");
-                                        })
-                                        ->limit(50)
-                                        ->get()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}"
+                                            $product->id => "{$product->code} - {$product->name}",
                                         ])
                                         ->toArray();
                                 })
-                                ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
-
+                            // ->options(function () {
+                            //     return Product::where('active', 1)
+                            //         ->limit(5)
+                            //         ->get(['name', 'id', 'code'])
+                            //         ->mapWithKeys(fn($product) => [
+                            //             $product->id => "{$product->code} - {$product->name}",
+                            //         ]);
+                            // })
+                            // ->debounce(300)
+                                ->getSearchResultsUsing(function ($search) {
+                                    if (empty($search)) {
+                                        return [];
+                                    }
+                                    return InventoryProductCacheService::search($search)
+                                        ->mapWithKeys(fn($product) => [
+                                            $product->id => "{$product->code} - {$product->name}",
+                                        ])
+                                        ->toArray();
+                                })
+                                ->getOptionLabelUsing(fn($value) =>
+                                    \App\Models\Product::find($value)?->code . ' - ' . \App\Models\Product::find($value)?->name
+                                )
                                 ->reactive()
-                                ->afterStateUpdated(fn(callable $set) => $set('unit_id', null)),
+                                ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                    if (! $state) {
+                                        $set('unit_id', null);
+                                        return;
+                                    }
+
+                                    // استخدم نفس دالة جلب الوحدات كما في unit_id Select
+                                    $units = static::getProductUnits($state);
+
+                                    // اختيار أول وحدة في القائمة
+                                    $firstUnitId = $units->first()?->unit_id;
+
+                                    $set('unit_id', $firstUnitId);
+                                    static::handleUnitSelection($set, $get, $firstUnitId);
+                                })->placeholder('Select a Product'),
 
                             Select::make('unit_id')->label('Unit')
                                 ->options(function (callable $get) {
                                     $product = \App\Models\Product::find($get('product_id'));
-                                    if (! $product) return [];
+                                    if (! $product) {
+                                        return [];
+                                    }
 
+                                    // تظهر فقط وحدات supplyOutUnitPrices (كما هو في منطقك الحالي)
                                     return $product->supplyOutUnitPrices
                                         ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
                                 })
-                                ->searchable()
+                            // ->searchable()
                                 ->reactive()
+                                ->placeholder('Select a Unit')
+                                ->extraAttributes(fn($get) => [
+                                    'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
+                                ])
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                    $unitPrice = UnitPrice::where(
-                                        'product_id',
-                                        $get('product_id')
-                                    )
-                                        ->where('unit_id', $state)->first();
-
-
-                                    $service = new  MultiProductsInventoryService(
-                                        null,
-                                        $get('product_id'),
-                                        $state,
-                                        $get('../../store_id'),
-                                    );
-                                    $remaningQty = $service->getInventoryForProduct($get('product_id'))[0]['remaining_qty'] ?? 0;
-                                    $set('system_quantity', $remaningQty);
-                                    $set('physical_quantity', $remaningQty);
-                                    $difference =  static::getDifference($remaningQty, $get('physical_quantity'));
-                                    $set('difference', $difference);
-                                    $set('package_size',  $unitPrice->package_size ?? 0);
+                                    static::handleUnitSelection($set, $get, $state);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                 ->label(__('lang.package_size')),
 
-
                             TextInput::make('physical_quantity')
-                                // ->default(0)
+                            // ->default(0)
                                 ->numeric()
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function ($set, $state, $get) {
 
-                                    $difference =  static::getDifference($get('system_quantity'), $state);
+                                    $difference = static::getDifference($get('system_quantity'), $state);
                                     $set('difference', $difference);
                                 })->minValue(0)
                                 ->label('Physical Qty')
@@ -257,17 +339,19 @@ class StockInventoryResource extends Resource
                                 ->label('System Qty')
                                 ->required(),
                             TextInput::make('difference')->readOnly()
-                                // ->rule('not_in:0', 'Now Allowed')
+                            // ->rule('not_in:0', 'Now Allowed')
 
                                 ->numeric(),
                         ])->addActionLabel('Add Item')
                         ->columns(8),
-                ])
+                ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
+        InventoryProductCacheService::cacheAllActiveProducts();
+
         return $table
             ->striped()->defaultSort('id', 'desc')
             ->columns([
@@ -324,9 +408,10 @@ class StockInventoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockInventories::route('/'),
+            'index'  => Pages\ListStockInventories::route('/'),
+            // 'new-create' => StockInventoryReactPage::route('/new-create'),
             'create' => Pages\CreateStockInventory::route('/create'),
-            'edit' => Pages\EditStockInventory::route('/{record}/edit'),
+            'edit'   => Pages\EditStockInventory::route('/{record}/edit'),
         ];
     }
 
@@ -397,4 +482,39 @@ class StockInventoryResource extends Resource
     {
         return Color::Green;
     }
+
+    public static function getProductUnits($productId)
+    {
+        $product = \App\Models\Product::find($productId);
+        if (! $product) {
+            return collect();
+        }
+        return $product->supplyOutUnitPrices ?? collect();
+    }
+
+    public static function handleUnitSelection(callable $set, callable $get, $unitId)
+    {
+        $productId = $get('product_id');
+        if (! $productId || ! $unitId) {
+            return;
+        }
+
+        $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
+            ->where('unit_id', $unitId)
+            ->first();
+
+        $service = new \App\Services\MultiProductsInventoryService(
+            null,
+            $productId,
+            $unitId,
+            $get('../../store_id'),
+        );
+        $remaningQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+        $set('system_quantity', $remaningQty);
+        $set('physical_quantity', $remaningQty);
+        $difference = static::getDifference($remaningQty, $get('physical_quantity'));
+        $set('difference', $difference);
+        $set('package_size', $unitPrice->package_size ?? 0);
+    }
+
 }
