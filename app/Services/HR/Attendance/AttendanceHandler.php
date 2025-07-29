@@ -172,9 +172,9 @@ class AttendanceHandler
                 $nextDay            = Carbon::parse($this->date)->addDay()->format('Y-m-d');
                 $startDateTime      = Carbon::createFromFormat('Y-m-d H:i:s', "$nextDay 00:00:00");
                 $earliestStart      = $startDateTime->copy()->subHours($allowedHoursBefore);
-                $currentTime        = Carbon::createFromFormat('Y-m-d H:i:s', "$this->date $time");
+                $currentTimeObj        = Carbon::createFromFormat('Y-m-d H:i:s', "$this->date $time");
  
-                if ($currentTime->between($earliestStart, $startDateTime)) {
+                if ($currentTimeObj->between($earliestStart, $startDateTime)) {
                     // dd($currentTime, $earliestStart, $startDateTime,$currentTime->between($earliestStart, $startDateTime));
                     // ✅ تعديل التاريخ: لأنه حضر في الليلة السابقة لفترة تبدأ 00:00
                     $this->date = Carbon::parse($this->date)->addDay()->format('Y-m-d');
@@ -194,8 +194,10 @@ class AttendanceHandler
                 ) {
                     return $workPeriod;
                 }
-                return null;
+                continue;
+                // return null;
             }
+            
             $diff = min(abs($currentTime - $start), abs($currentTime - $end));
 
             if (is_null($minDiff) || $diff < $minDiff) {
