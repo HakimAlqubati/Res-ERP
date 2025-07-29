@@ -200,13 +200,14 @@ class EquipmentResource extends Resource
                                         ->label('Operation Start Date')
                                         ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
                                         ->default(now()->subYear())
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(function ($state, callable $set, $get) {
-                                            $months = (int) $get('warranty_months');
-                                            if ($months) {
-                                                $set('warranty_end_date', \Carbon\Carbon::parse($state)->addMonths($months)->format('Y-m-d'));
-                                            }
-                                        }),
+                                        // ->live(onBlur: true)
+                                        // ->afterStateUpdated(function ($state, callable $set, $get) {
+                                        //     $months = (int) $get('warranty_months');
+                                        //     if ($months) {
+                                        //         $set('warranty_end_date', \Carbon\Carbon::parse($state)->addMonths($months)->format('Y-m-d'));
+                                        //     }
+                                        // })
+                                        ,
                                 ]),
 
                                 Forms\Components\DatePicker::make('last_serviced')
