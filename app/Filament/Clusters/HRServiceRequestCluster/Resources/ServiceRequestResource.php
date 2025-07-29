@@ -206,17 +206,17 @@ class ServiceRequestResource extends Resource
             ->paginated([10, 25, 50, 100])
 
             ->columns([
-                Split::make([
-                    Stack::make([
+                // Split::make([
+                    // Stack::make([
                         SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                             ->circular()->alignCenter(true)->getStateUsing(function () {
                             return null;
                         })->limit(3),
-                        TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable(),
+                        TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable()->alignCenter(),
 
-                    ]),
+                    // ]),
                     TextColumn::make('description')->searchable(isIndividual: true)->sortable()
-                        ->color(Color::Blue)
+                        ->color(Color::Blue)->limit(50)->wrap()->tooltip(fn($state) => $state)
                     // ->size(TextColumnSize::Large)
                     // ->weight(FontWeight::ExtraBold)
                         ->description('Click')
@@ -276,7 +276,7 @@ class ServiceRequestResource extends Resource
                         ->toggleable(isToggledHiddenByDefault: true),
                     TextColumn::make('created_at')->label('Created At')->sortable()
                         ->toggleable(isToggledHiddenByDefault: true),
-                ])->from('md'),
+                // ])->from('md'),
             ])
             ->filters([
                 SelectFilter::make('equipment_id')
