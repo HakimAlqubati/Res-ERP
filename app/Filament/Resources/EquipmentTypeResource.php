@@ -44,7 +44,7 @@ class EquipmentTypeResource extends Resource
                         ->label('Code')
                         ->required()
                         // ->maxLength(40)
-                        ->unique()->readOnly()
+                        ->unique()
                         ->helperText('This will be used as the Asset Tag prefix.')
                         ,
 
