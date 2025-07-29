@@ -20,15 +20,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
             ])
             ->web(append: [
-                // \App\Http\Middleware\TrackUserLastActivity::class,
-                // \App\Http\Middleware\LogUserActivity::class,
+                \App\Http\Middleware\TrackUserLastActivity::class,
+                \App\Http\Middleware\LogUserActivity::class,
             ])->api(append: [
-                // \App\Http\Middleware\LogUserActivity::class,
+                \App\Http\Middleware\LogUserActivity::class,
             ])
         ;
         $middleware->alias([
             'check' => \App\Http\Middleware\CheckAuthenticated::class,
-            // 'lastSeen' => \App\Http\Middleware\TrackUserLastActivity::class,
+            'lastSeen' => \App\Http\Middleware\TrackUserLastActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

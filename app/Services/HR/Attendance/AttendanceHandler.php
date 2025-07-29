@@ -46,13 +46,14 @@ class AttendanceHandler
                 $date = date('Y-m-d', strtotime($dateTime));
                 $day  = strtolower(Carbon::parse($date)->format('D')); // الآن: "wed", "sun", إلخ
 
-                $employeePeriods   = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
-                $prevDate          = date('Y-m-d', strtotime("$date -1 day"));
-                $periodsForToday   = $this->getPeriodsForDate($employeePeriods, $date);
+                $employeePeriods = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
+                $prevDate        = date('Y-m-d', strtotime("$date -1 day"));
+                $periodsForToday = $this->getPeriodsForDate($employeePeriods, $date, $time);
+
                 $periodsForPrevDay = $employeePeriods->filter(function ($period) use ($prevDate, $date, $time) {
 
                     $dayAndNight = $period->workPeriod->day_and_night ?? 0;
-                    if ($dayAndNight && !Attendance::isPeriodClosed($this->employeeId, $period->workPeriod->id, $prevDate)) {
+                    if ($dayAndNight && ! Attendance::isPeriodClosed($this->employeeId, $period->workPeriod->id, $prevDate)) {
                         // فترات اليوم والليلة ترجع دائماً لأنها قابلة للانصراف بعد منتصف الليل
                         return true;
                     }
@@ -74,9 +75,10 @@ class AttendanceHandler
                     $date = $prevDate;
                 }
                 $this->date = $date;
-// دمج المصفوفتين
+                // دمج المصفوفتين
                 $allPeriods    = $periodsForToday->merge($periodsForPrevDay);
                 $closestPeriod = $this->findClosestPeriod($time, $allPeriods);
+                // dd($periodsForToday, $closestPeriod,$this->date,$date);
                 // dd($closestPeriod);
                 // Check if no periods are found for the given day
                 if (! $closestPeriod) {
@@ -94,7 +96,6 @@ class AttendanceHandler
                     ];
 
                 }
- 
 
                 $adjusted = AttendanceDateService::adjustDateForMidnightShift($date, $time, $closestPeriod);
                 $date     = $adjusted['date'];
@@ -166,6 +167,21 @@ class AttendanceHandler
         foreach ($periods as $period) {
             $workPeriod = $period->workPeriod;
 
+            if ($workPeriod->start_at === '00:00:00') {
+                $allowedHoursBefore = (int) \App\Models\Setting::getSetting('hours_count_after_period_before', 1);
+                $nextDay            = Carbon::parse($this->date)->addDay()->format('Y-m-d');
+                $startDateTime      = Carbon::createFromFormat('Y-m-d H:i:s', "$nextDay 00:00:00");
+                $earliestStart      = $startDateTime->copy()->subHours($allowedHoursBefore);
+                $currentTime        = Carbon::createFromFormat('Y-m-d H:i:s', "$this->date $time");
+ 
+                if ($currentTime->between($earliestStart, $startDateTime)) {
+                    // dd($currentTime, $earliestStart, $startDateTime,$currentTime->between($earliestStart, $startDateTime));
+                    // ✅ تعديل التاريخ: لأنه حضر في الليلة السابقة لفترة تبدأ 00:00
+                    $this->date = Carbon::parse($this->date)->addDay()->format('Y-m-d');
+                    return $workPeriod;
+                }
+            }
+
             $dayAndNight = $workPeriod->day_and_night;
             $start       = strtotime($workPeriod->start_at);
             $end         = strtotime($workPeriod->end_at);
@@ -191,15 +207,28 @@ class AttendanceHandler
         return $closest;
     }
 
-    protected function getPeriodsForDate($employeePeriods, $date)
+    protected function getPeriodsForDate($employeePeriods, $date, $time)
     {
         $day = strtolower(Carbon::parse($date)->format('D'));
-        return $employeePeriods->filter(function ($period) use ($day, $date) {
+        return $employeePeriods->filter(function ($period) use ($day, $date, $time) {
             foreach ($period->days as $dayRow) {
                 $isDayOk  = $dayRow->day_of_week === $day;
                 $isDateOk = $dayRow->start_date <= $date && (! $dayRow->end_date || $dayRow->end_date >= $date);
+
                 if ($isDayOk && $isDateOk) {
                     return true;
+                }
+                // ✅ منطق السماح بالحضور المبكر حسب الإعدادات:
+                if ($time !== null && $period->workPeriod->start_at === '00:00:00') {
+                    $allowedHoursBefore = (int) \App\Models\Setting::getSetting('hours_count_after_period_before', 1);
+
+                    $nextDay      = Carbon::parse($date)->addDay()->format('Y-m-d');
+                    $startTime    = Carbon::createFromFormat('Y-m-d H:i:s', "$nextDay 00:00:00");
+                    $earliestTime = $startTime->copy()->subHours($allowedHoursBefore);
+                    $currentTime  = Carbon::createFromFormat('Y-m-d H:i:s', "$date $time");
+                    if ($currentTime->between($earliestTime, $startTime)) {
+                        return true;
+                    }
                 }
             }
             return false;
