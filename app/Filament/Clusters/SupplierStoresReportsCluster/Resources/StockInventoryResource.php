@@ -317,6 +317,8 @@ class StockInventoryResource extends Resource
                                     'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
                                 ])
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $state, $get('../../store_id'));
+                                   dd($inventoryFromCache);
                                     static::handleUnitSelection($set, $get, $state);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
