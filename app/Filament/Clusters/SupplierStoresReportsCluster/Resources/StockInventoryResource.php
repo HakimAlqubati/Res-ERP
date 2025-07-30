@@ -511,8 +511,8 @@ class StockInventoryResource extends Resource
         //     $get('../../store_id'),
         // );
         $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $unitId, $get('../../store_id'));
-        dd($inventoryFromCache);
-        $remaningQty = $inventoryFromCache['remaining_quantity'] ?? 0;
+        
+        $remaningQty = $inventoryFromCache['remaining_qty'] ?? 0;
         $set('system_quantity', $remaningQty);
         $set('physical_quantity', $remaningQty);
         $difference = static::getDifference($remaningQty, $get('physical_quantity'));
