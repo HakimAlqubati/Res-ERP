@@ -512,7 +512,7 @@ class StockInventoryResource extends Resource
         //     $unitId,
         //     $get('../../store_id'),
         // );
-        // $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $unitId, $get('../../store_id'));
+        $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $unitId, $get('../../store_id'));
 
         $packageSize = $inventoryFromCache['package_size'] ?? 0;
         $remaningQty = $inventoryFromCache['remaining_qty'] ?? 0;
