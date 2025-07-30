@@ -502,22 +502,22 @@ class StockInventoryResource extends Resource
             return;
         }
 
-        // $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
-        //     ->where('unit_id', $unitId)
-        //     ->first();
+        $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
+            ->where('unit_id', $unitId)
+            ->first();
 
-        // $service = new \App\Services\MultiProductsInventoryService(
-        //     null,
-        //     $productId,
-        //     $unitId,
-        //     $get('../../store_id'),
-        // );
-        $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $unitId, $get('../../store_id'));
+        $service = new \App\Services\MultiProductsInventoryService(
+            null,
+            $productId,
+            $unitId,
+            $get('../../store_id'),
+        );
+        // $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $unitId, $get('../../store_id'));
 
-        $packageSize = $inventoryFromCache['package_size'] ?? 0;
-        $remaningQty = $inventoryFromCache['remaining_qty'] ?? 0;
-        // $packageSize = $unitPrice->package_size ?? 0;
-        // $remaningQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+        // $packageSize = $inventoryFromCache['package_size'] ?? 0;
+        // $remaningQty = $inventoryFromCache['remaining_qty'] ?? 0;
+        $packageSize = $unitPrice->package_size ?? 0;
+        $remaningQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
 
         $set('system_quantity', $remaningQty);
         $set('physical_quantity', $remaningQty);
