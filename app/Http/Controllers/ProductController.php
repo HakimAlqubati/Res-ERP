@@ -20,7 +20,7 @@ class ProductController extends Controller
     }
 
     public function index(Request $request)
-    {
+    { 
         return $this->productRepository->index($request);
     }
 

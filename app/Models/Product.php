@@ -99,7 +99,7 @@ class Product extends Model implements Auditable
 
     public function orderDetails()
     {
-        return $this->hasMany(OrderDetail::class);
+        return $this->hasMany(OrderDetails::class);
     }
     public function order_details()
     {

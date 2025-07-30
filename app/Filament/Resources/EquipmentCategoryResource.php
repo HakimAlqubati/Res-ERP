@@ -39,7 +39,7 @@ class EquipmentCategoryResource extends Resource
                         ->maxLength(255),
 
                     Forms\Components\TextInput::make('equipment_code_start_with')
-                        ->label('Code Prefix')
+                        ->label('Code Prefix')->required()
                         ->helperText('Prefix used for equipment code generation.')
                         ->maxLength(20),
                     Forms\Components\Toggle::make('active')

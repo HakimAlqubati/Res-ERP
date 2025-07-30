@@ -8,7 +8,6 @@ use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Models\EmployeeFaceData;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 
 Route::prefix('hr')
     ->group(function () {
@@ -37,7 +36,7 @@ Route::post('/face-images', [FaceImageController::class, 'store']);
 Route::get('/face-data', function () {
     $minFaces = request('min_faces', 1);
     return EmployeeFaceData::active()
-         ->faceAdded()
+        ->faceAdded()
         ->get([
             'employee_id',
             'employee_name',
@@ -58,4 +57,9 @@ Route::get('/face-data', function () {
             ];
         })
         ->values();
+    Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
+    // يمكنك إضافة المزيد لاحقًا مثل:
+    // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
+    Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
+
 });

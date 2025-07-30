@@ -72,7 +72,15 @@ class PurchaseInvoiceReportService
             $query->whereDate('purchase_invoices.date', '<=', $dateFilter['to']);
         }
 
-        $results     = $perPage ? $query->paginate($perPage) : $query->get();
+        // قبل paginate
+        $rawQuery = clone $query;
+
+// احسب الإجمالي الكلي من النسخة غير المقسّمة
+        $finalTotalAmount = $rawQuery->select(
+            DB::raw('SUM(purchase_invoice_details.quantity * purchase_invoice_details.price) as total')
+        )->value('total') ?? 0;
+
+        $results = $perPage ? $query->paginate($perPage) : $query->get();
         $totalAmount = 0;
         foreach ($results as $item) {
             $item->unit_price           = $item->unit_price;
@@ -87,6 +95,7 @@ class PurchaseInvoiceReportService
             'supplier_name' => $supplier_name,
             'total_amount'  => formatMoneyWithCurrency($totalAmount),
             'store_name'    => $store_name,
+            'final_total_amount'  => formatMoneyWithCurrency($finalTotalAmount),
 
         ];
     }

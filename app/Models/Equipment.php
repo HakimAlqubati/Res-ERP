@@ -44,6 +44,7 @@ class Equipment extends Model implements Auditable, HasMedia
         'service_interval_days',
         'warranty_years',
         'purchase_date',
+        'warranty_months',
     ];
     protected $auditInclude = [
         'asset_tag',
@@ -69,6 +70,7 @@ class Equipment extends Model implements Auditable, HasMedia
         'service_interval_days',
         'warranty_years',
         'purchase_date',
+        'warranty_months',
     ];
 
     const STATUS_ACTIVE = 'Active';

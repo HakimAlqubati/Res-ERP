@@ -6,9 +6,13 @@ use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
 use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
-use App\Services\HR\Attendance\AttendanceService;
 use Carbon\Carbon;
+use App\Services\HR\Attendance\AttendanceService;
+use Aws\DynamoDb\DynamoDbClient;
+use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class AttendanceController extends Controller
 {
@@ -38,104 +42,132 @@ class AttendanceController extends Controller
         ], $result['success'] ? 200 : 422);
     }
 
-    /**
-     * API: استرجاع سجل الحضور لموظف محدد خلال مدى زمني
-     * GET /api/employee-attendance?employee_id=1&from=2024-07-01&to=2024-07-31
-     */
-    public function employeeAttendance(Request $request)
+    public function identifyEmployeeFromImage(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required|exists:hr_employees,id',
-            'from'        => 'required|date',
-            'to'          => 'required|date|after_or_equal:from',
+            'image' => 'required|file|image|mimes:jpg,jpeg,png|max:5120', // 5MB max
         ]);
 
-        $employee = Employee::findOrFail($request->employee_id);
+        try {
+            $file = $request->file('image');
 
-        $from = Carbon::parse($request->from);
-        $to   = Carbon::parse($request->to);
+            // ✅ تحقق من صحة الملف
+            if (! $file->isValid()) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Uploaded file is not valid.',
+                ], 400);
+            }
 
-        $result = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $from, $to);
+            // ✅ إعداد الاسم والمسار
+            $fileName = 'identify_face_' . time() . '.' . $file->getClientOriginalExtension();
+            $path     = "uploads/{$fileName}";
 
-        // إذا أردت تنسيق البيانات قبل الإرجاع يمكنك تعديل النتائج هنا
+            // ✅ رفع الملف باستخدام fopen
+            Storage::disk('s3')->put($path, fopen($file->getRealPath(), 'r'), [
+                'visibility'  => 'private',
+                'ContentType' => $file->getMimeType(),
+            ]);
 
-        return response()->json([
-            'success'  => true,
-            'employee' => [
-                'id'     => $employee->id,
-                'name'   => $employee->name,
-                'number' => $employee->employee_no,
-            ],
-            'from'     => $from->toDateString(),
-            'to'       => $to->toDateString(),
-            'data'     => $result,
-        ]);
-    }
+            // ✅ التحقق من صحة الرفع
+            $sizeInBytes = Storage::disk('s3')->size($path);
+            $mimeType    = $file->getMimeType();
 
-    /**
-     * API: استرجاع تقرير حضور عدة موظفين ليوم واحد
-     * GET /api/employees-attendance-on-date?employee_ids[]=1&employee_ids[]=2&date=2025-07-12
-     */
-    public function employeesAttendanceOnDate(Request $request, EmployeesAttendanceOnDateService $attendanceService)
-    {
-        $request->validate([
-            'employee_ids'   => 'required|array|min:1',
-            'employee_ids.*' => 'required|exists:hr_employees,id',
-            'date'           => 'required|date',
-        ]);
+            Log::info('S3 Upload Info', [
+                'file'          => $fileName,
+                'mime'          => $mimeType,
+                's3_size_bytes' => $sizeInBytes,
+            ]);
 
-        $employeeIds = $request->employee_ids;
-        $date        = $request->date;
+            if ($sizeInBytes === 0) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'File uploaded to S3 but is empty.',
+                ], 500);
+            }
 
-        // استدعاء الخدمة الجديدة
-        $reports = $attendanceService->fetchAttendances($employeeIds, $date);
+            // ✅ تهيئة Rekognition
+            $rekognitionClient = new RekognitionClient([
+                'region'      => env('AWS_DEFAULT_REGION'),
+                'version'     => 'latest',
+                'credentials' => [
+                    'key'    => env('AWS_ACCESS_KEY_ID'),
+                    'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                ],
+            ]);
 
-        return response()->json([
-            'success'   => true,
-            'date'      => $date,
-            'employees' => $reports->values(), // لو تريد بدون المفاتيح الرقمية ضع ->values()
-        ]);
-    }
+            // ✅ استدعاء البحث عن الوجه
+            $result = $rekognitionClient->searchFacesByImage([
+                'CollectionId'       => 'workbenchemps2',
+                'Image'              => [
+                    'S3Object' => [
+                        'Bucket' => env('AWS_BUCKET'),
+                        'Name'   => $path,
+                    ],
+                ],
+                'FaceMatchThreshold' => 90,
+                'MaxFaces'           => 1,
+            ]);
 
-    public function employeesAttendanceOnDateToTest(Request $request)
-    {
-        $request->validate([
-            'date'  => 'required|date',
-            // اختياري: عدد الموظفين للتجربة
-            'count' => 'sometimes|integer|min:1',
-        ]);
+            // ✅ المعالجة الافتراضية
+            $employeeData = [
+                'found'         => false,
+                'name'          => 'No match found',
+                'employee_id'   => null,
+                'employee_data' => null,
+            ];
 
-        $date  = $request->input('date');
-        $count = $request->input('count', 5000); // الافتراضي 5000
+            if (! empty($result['FaceMatches'])) {
+                $rekognitionId = $result['FaceMatches'][0]['Face']['FaceId'];
 
-        // جلب IDs أول عدد محدد من الموظفين (active فقط كمثال)
-        $employeeIds = \App\Models\Employee::where('active', 1)->limit($count)->pluck('id')->toArray();
-        $startTime   = microtime(true);
-        $empName     = [];
-        $allEmpNames = [];
-        $chunkSize   = 1000;
+                // ✅ ربط بـ DynamoDB
+                $dynamoDbClient = new DynamoDbClient([
+                    'region'      => env('AWS_DEFAULT_REGION'),
+                    'version'     => 'latest',
+                    'credentials' => [
+                        'key'    => env('AWS_ACCESS_KEY_ID'),
+                        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+                    ],
+                ]);
 
-        foreach (array_chunk($employeeIds, $chunkSize) as $chunk) {
-            $empNames = Employee::whereIn('id', $chunk)->pluck('name', 'id')->toArray();
-            $allEmpNames += $empNames;
+                $dynamoResult = $dynamoDbClient->getItem([
+                    'TableName' => 'workbenchemps_recognition',
+                    'Key'       => [
+                        'RekognitionId' => ['S' => $rekognitionId],
+                    ],
+                ]);
+
+                if (! empty($dynamoResult['Item']['Name']['S'])) {
+                    $nameRaw      = $dynamoResult['Item']['Name']['S'];
+                    $parts        = explode('-', $nameRaw);
+                    $employeeName = $parts[0] ?? 'Unknown';
+                    $employeeId   = $parts[1] ?? null;
+
+                    $employee = Employee::find($employeeId);
+
+                    $employeeData = [
+                        'found'         => true,
+                        'name'          => $employeeName,
+                        'employee_id'   => $employeeId,
+                        'employee_data' => $employee,
+                    ];
+                }
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'match'  => $employeeData,
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Face recognition failed", [
+                'message' => $e->getMessage(),
+                'file'    => $file->getClientOriginalName() ?? 'unknown',
+            ]);
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Recognition failed: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // $attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
-        // $attendanceService = new EmployeesAttendanceOnDateService($attendanceFetcher);
-
-        // $results   = $attendanceService->fetchAttendances($employeeIds, $date);
-        $endTime = microtime(true);
-
-        $duration = round($endTime - $startTime, 3); // بالثواني
-
-        return response()->json([
-            'success'          => true,
-            'date'             => $date,
-            'count'            => count($employeeIds),
-            'duration_seconds' => $duration,
-            'names_sample'     => array_slice($empNames, 0, 5), // فقط عينة للعرض
-
-            // 'data'             => $results, // يفضل في الاختبار فقط. في الإنتاج ارجع مختصرًا أو paginated
-        ]);
     }
 }

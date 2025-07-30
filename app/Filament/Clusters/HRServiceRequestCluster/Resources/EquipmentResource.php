@@ -1,10 +1,8 @@
 <?php
-
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources;
 
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages;
-use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\RelationManagers;
 use App\Models\Branch;
 use App\Models\BranchArea;
 use App\Models\Equipment;
@@ -25,8 +23,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\DB;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class EquipmentResource extends Resource
@@ -35,9 +32,9 @@ class EquipmentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRServiceRequestCluster::class;
+    protected static ?string $cluster                             = HRServiceRequestCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort                         = 2;
     public static function form(Form $form): Form
     {
 
@@ -59,7 +56,7 @@ class EquipmentResource extends Resource
                                         ->prefixIcon('heroicon-s-chart-bar-square')->prefixIconColor('primary'),
 
                                     Forms\Components\Select::make('type_id')
-                                        ->label('Type')
+                                        ->label('Type')->searchable()
                                         ->options(EquipmentType::active()->pluck('name', 'id'))
                                         ->reactive()
                                         ->afterStateUpdated(function ($state, callable $set) {
@@ -76,7 +73,6 @@ class EquipmentResource extends Resource
                                         ->required()
                                         ->unique(ignoreRecord: true)->hidden(),
                                 ]),
-
 
                                 Fieldset::make()->label('Set Branch & Area')->columns(2)->schema([
 
@@ -133,39 +129,55 @@ class EquipmentResource extends Resource
                                 // Forms\Components\FileUpload::make('profile_picture')
                                 //     ->label('Profile Picture'),
 
-                            ])
+                            ]),
 
                         ]),
+
                     Wizard\Step::make('Dates')->label('Set Dates & Warranty')
                         ->icon('heroicon-o-calendar-date-range')
                         ->schema([
-
                             Fieldset::make()->label('Set Dates')->columns(2)->schema([
 
-                                Forms\Components\TextInput::make('warranty_years')
-                                    ->label('Warranty (Years)')
-                                    ->numeric()->columnSpan(1)
-                                    ->default(1)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $purchaseDate = $get('purchase_date');
-                                        if ($purchaseDate) {
-                                            $set('warranty_end_date', \Carbon\Carbon::parse($purchaseDate)->addYears((float)$state)->format('Y-m-d'));
-                                        }
-                                    }),
+                                Fieldset::make()->columnSpanFull()->columns(3)->schema([
+                                    Forms\Components\TextInput::make('warranty_months')
+                                        ->label('Warranty (Months)')
+                                        ->numeric()
+                                        ->default(12)
+                                        ->columnSpan(1)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                            $state = (int) $state;
+                                            $years = round($state / 12, 2);
+                                            $set('warranty_years', $years);
 
-                                Forms\Components\TextInput::make('service_interval_days')
-                                    ->label('Service Interval (Days)')
-                                    ->numeric()->columnSpan(1)
-                                    ->default(30)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
-                                        $state = (float)$state;
-                                        $lastServiced = $get('last_serviced');
-                                        if ($lastServiced) {
-                                            $set('next_service_date', \Carbon\Carbon::parse($lastServiced)->addDays($state)->format('Y-m-d'));
-                                        }
-                                    }),
+                                            $purchaseDate = $get('purchase_date');
+                                            if ($purchaseDate) {
+                                                $set('warranty_end_date', \Carbon\Carbon::parse($purchaseDate)->addMonths($state)->format('Y-m-d'));
+                                            }
+                                        }),
+
+                                    Forms\Components\TextInput::make('warranty_years')
+                                        ->label('Warranty (Years)')
+                                        ->disabled()
+                                        ->dehydrated() // تُرسل القيمة مع الحفظ
+                                        ->default(1)
+                                        ->numeric()
+                                        ->columnSpan(1),
+
+                                    Forms\Components\TextInput::make('service_interval_days')
+                                        ->label('Service Interval (Days)')
+                                        ->numeric()->columnSpan(1)
+                                        ->default(30)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function ($state, callable $set, $get) {
+                                            $state        = (float) $state;
+                                            $lastServiced = $get('last_serviced');
+                                            if ($lastServiced) {
+                                                $set('next_service_date', \Carbon\Carbon::parse($lastServiced)->addDays($state)->format('Y-m-d'));
+                                            }
+                                        }),
+
+                                ]),
                                 Grid::make()->columns(3)->columnSpanFull()->schema([
                                     Forms\Components\DatePicker::make('purchase_date')
                                         ->label('Purchase Date')
@@ -173,9 +185,9 @@ class EquipmentResource extends Resource
                                         ->default(now())
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                            $years = (float) $get('warranty_years');
-                                            if ($years) {
-                                                $set('warranty_end_date', \Carbon\Carbon::parse($state)->addYears($years)->format('Y-m-d'));
+                                            $months = (int) $get('warranty_months');
+                                            if ($months) {
+                                                $set('warranty_end_date', \Carbon\Carbon::parse($state)->addMonths($months)->format('Y-m-d'));
                                             }
                                         }),
 
@@ -188,35 +200,33 @@ class EquipmentResource extends Resource
                                         ->label('Operation Start Date')
                                         ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
                                         ->default(now()->subYear())
-                                        ->live(onBlur: true)
-                                        ->afterStateUpdated(function ($state, callable $set,   $get) {
-                                            $years = $get('warranty_years');
-                                            if ($years) {
-                                                $set('warranty_end_date', \Carbon\Carbon::parse($state)->addYears($years)->format('Y-m-d'));
-                                            }
-                                        }),
-
+                                        // ->live(onBlur: true)
+                                        // ->afterStateUpdated(function ($state, callable $set, $get) {
+                                        //     $months = (int) $get('warranty_months');
+                                        //     if ($months) {
+                                        //         $set('warranty_end_date', \Carbon\Carbon::parse($state)->addMonths($months)->format('Y-m-d'));
+                                        //     }
+                                        // })
+                                        ,
                                 ]),
+
                                 Forms\Components\DatePicker::make('last_serviced')
                                     ->label('Last Serviced')->default(now())
                                     ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary')
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function ($state, callable $set,   $get) {
+                                    ->afterStateUpdated(function ($state, callable $set, $get) {
                                         $interval = $get('service_interval_days');
                                         if ($interval) {
-                                            $set('next_service_date', \Carbon\Carbon::parse($state)->addDays((float)$interval)->format('Y-m-d'));
+                                            $set('next_service_date', \Carbon\Carbon::parse($state)->addDays((float) $interval)->format('Y-m-d'));
                                         }
                                     }),
-
-
-
 
                                 Forms\Components\DatePicker::make('next_service_date')
                                     ->label('Next Service Date')
                                     ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
                                     ->default(now()),
-                            ])
 
+                            ]),
                         ]),
                     Wizard\Step::make('Images')
                         ->icon('heroicon-o-photo')
@@ -254,8 +264,8 @@ class EquipmentResource extends Resource
                                     ])->maxSize(800)
                                     ->imageEditorMode(2)
                                     ->imageEditorEmptyFillColor('#fff000')
-                                    ->circleCropper()
-                            ])
+                                    ->circleCropper(),
+                            ]),
                         ]),
                 ])->skippable()->columnSpanFull(),
             ]);
@@ -267,8 +277,8 @@ class EquipmentResource extends Resource
             ->columns([
                 SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
                     ->circular()->alignCenter(true)->getStateUsing(function () {
-                        return null;
-                    })->limit(3),
+                    return null;
+                })->limit(3),
                 TextColumn::make('name')->toggleable()
                     ->searchable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
@@ -360,10 +370,10 @@ class EquipmentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEquipment::route('/'),
+            'index'  => Pages\ListEquipment::route('/'),
             'create' => Pages\CreateEquipment::route('/create'),
-            'edit' => Pages\EditEquipment::route('/{record}/edit'),
-            'view' => Pages\ViewEquipment::route('/{record}'),
+            'edit'   => Pages\EditEquipment::route('/{record}/edit'),
+            'view'   => Pages\ViewEquipment::route('/{record}'),
         ];
     }
 
@@ -384,13 +394,38 @@ class EquipmentResource extends Resource
         }
         return static::getModel()::count();
     }
+
     public static function generateEquipmentCode(?int $typeId): string
     {
-        $prefix = \App\Models\EquipmentType::find($typeId)?->equipment_code_start_with ?? 'EQ';
+        return DB::transaction(function () use ($typeId) {
+            // جلب نوع الجهاز مع علاقته بالفئة
+            $equipmentType = EquipmentType::with('category')->find($typeId);
 
-        // يمكنك استخدام رقم تسلسلي مختلف إذا أردت أن يكون خاص لكل نوع
-        $lastId = \App\Models\Equipment::max('id') + 1;
+            // استخراج البوادئ من الفئة والنوع، أو تعيين قيم افتراضية
+            $categoryPrefix = $equipmentType?->category?->equipment_code_start_with ?? 'EQ-';
+            $typeCode       = $equipmentType?->code ?? 'GEN';
 
-        return $prefix . str_pad((string)$lastId, 4, '0', STR_PAD_LEFT);
+            // دمج البادئة النهائية: CategoryPrefix + TypeCode
+            $prefix = $categoryPrefix .'-'. $typeCode;
+
+            // قفل السجلات المماثلة لمنع التكرار
+            $lastAssetTag = Equipment::where('asset_tag', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->orderByDesc('asset_tag')
+                ->value('asset_tag');
+
+            // استخراج الرقم الأخير إن وُجد
+            $lastNumber = 0;
+            if ($lastAssetTag && preg_match('/(\d+)$/', $lastAssetTag, $matches)) {
+                $lastNumber = (int) $matches[1];
+            }
+
+            // توليد الرقم الجديد
+            $nextNumber = $lastNumber + 1;
+
+            // إعادة الكود الكامل بالشكل: CATEGORYPREFIX + TYPECODE + 3 أرقام
+            return $prefix .'-'. str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+        });
     }
+
 }
