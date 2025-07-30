@@ -52,7 +52,7 @@ Route::post('/login', [AuthController::class, 'login'])
 // ->middleware(EnsureOwnerIfRequired::class)
 ;
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
-Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
+// Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
 Route::middleware(['auth:api', 'lastSeen'])->group(function () {
