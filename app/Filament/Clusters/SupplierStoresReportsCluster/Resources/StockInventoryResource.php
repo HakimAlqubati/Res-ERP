@@ -317,8 +317,6 @@ class StockInventoryResource extends Resource
                                     'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
                                 ])
                                 ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
-                                    $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $state, $get('../../store_id'));
-                                   dd($inventoryFromCache);
                                     static::handleUnitSelection($set, $get, $state);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -502,22 +500,24 @@ class StockInventoryResource extends Resource
             return;
         }
 
-        $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
-            ->where('unit_id', $unitId)
-            ->first();
+        // $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
+        //     ->where('unit_id', $unitId)
+        //     ->first();
 
-        $service = new \App\Services\MultiProductsInventoryService(
-            null,
-            $productId,
-            $unitId,
-            $get('../../store_id'),
-        );
-        $remaningQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+        // $service = new \App\Services\MultiProductsInventoryService(
+        //     null,
+        //     $productId,
+        //     $unitId,
+        //     $get('../../store_id'),
+        // );
+        $inventoryFromCache = InventoryProductCacheService::getCachedInventoryForProduct($get('product_id'), $unitId, $get('../../store_id'));
+        
+        $remaningQty = $inventoryFromCache['product_id'] ?? 0;
         $set('system_quantity', $remaningQty);
         $set('physical_quantity', $remaningQty);
         $difference = static::getDifference($remaningQty, $get('physical_quantity'));
         $set('difference', $difference);
-        $set('package_size', $unitPrice->package_size ?? 0);
+        $set('package_size', $inventoryFromCache['package_size'] ?? 0);
     }
 
 }
