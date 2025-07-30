@@ -529,7 +529,7 @@ class StockInventoryResource extends Resource
         $duration     = $end - $start;
         $seconds      = floor($duration);
         $milliseconds = round(($duration - $seconds) * 1000, 2);
-        showSuccessNotifiMessage($milliseconds);
+        showSuccessNotifiMessage('( '. $seconds.'Seconds ) ('. $milliseconds .' Milliseconds)');
 
     }
 
