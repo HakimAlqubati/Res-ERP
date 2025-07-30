@@ -497,6 +497,7 @@ class StockInventoryResource extends Resource
     public static function handleUnitSelection(callable $set, callable $get, $unitId)
     {
         $productId = $get('product_id');
+        $start     = microtime(true);
         if (! $productId || ! $unitId) {
             return;
         }
@@ -517,12 +518,19 @@ class StockInventoryResource extends Resource
         // $remaningQty = $inventoryFromCache['remaining_qty'] ?? 0;
         $packageSize = $unitPrice->package_size ?? 0;
         $remaningQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
-        
+
         $set('system_quantity', $remaningQty);
         $set('physical_quantity', $remaningQty);
         $difference = static::getDifference($remaningQty, $get('physical_quantity'));
         $set('difference', $difference);
         $set('package_size', $packageSize);
+        // Stop timing and calculate duration
+        $end          = microtime(true);
+        $duration     = $end - $start;
+        $seconds      = floor($duration);
+        $milliseconds = round(($duration - $seconds) * 1000, 2);
+        showSuccessNotifiMessage($milliseconds);
+
     }
 
 }
