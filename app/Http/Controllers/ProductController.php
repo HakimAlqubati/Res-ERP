@@ -16,6 +16,7 @@ class ProductController extends Controller
     private $productRepository;
     public function __construct(ProductRepository $productRepository)
     {
+        dd('sd');
         $this->productRepository = $productRepository;
     }
 
