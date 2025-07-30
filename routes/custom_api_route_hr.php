@@ -8,4 +8,6 @@ Route::prefix('hr')
     Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
     // يمكنك إضافة المزيد لاحقًا مثل:
     // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
+    Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
+
 });
