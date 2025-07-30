@@ -20,8 +20,7 @@ class ProductController extends Controller
     }
 
     public function index(Request $request)
-    {
-        dd('sdfs');
+    { 
         return $this->productRepository->index($request);
     }
 

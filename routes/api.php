@@ -52,7 +52,7 @@ Route::post('/login', [AuthController::class, 'login'])
 // ->middleware(EnsureOwnerIfRequired::class)
 ;
 Route::post('/login/otp/check', [AuthController::class, 'loginWithOtp']);
-// Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
+Route::get('/products', [ProductController::class, 'index'])->middleware('lastSeen');
 Route::get('/orders/{order}/pdf', [OrderController::class, 'generate']);
 
 Route::middleware(['auth:api', 'lastSeen'])->group(function () {
@@ -231,10 +231,10 @@ Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::
 require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');
 
-Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
-Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
-Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
+// Route::get('/stores', fn() => \App\Models\Store::select('id', 'name')->get());
+// Route::get('/products', fn() => \App\Models\Product::select('id', 'name')->get());
+// Route::post('/stock-inventory', function(\Illuminate\Http\Request $request) {
     // من هنا تحفظ البيانات في جدول StockInventory وتعيد رسالة نجاح
     // return response()->json(['message' => 'تم الحفظ بنجاح']);
     // (اكتب الكود حسب منطقك)
-});
+// });
