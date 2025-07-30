@@ -350,6 +350,7 @@ class StockInventoryResource extends Resource
 
     public static function table(Table $table): Table
     {
+        InventoryProductCacheService::clearAllCache();
         InventoryProductCacheService::cacheAllActiveProducts();
         InventoryProductCacheService::cacheInventoryForAllActiveStores();
 

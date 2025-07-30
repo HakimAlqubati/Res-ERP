@@ -84,6 +84,17 @@ class InventoryProductCacheService
         Cache::forget('inventory_products_default_options');
         Cache::forget(self::ALL_PRODUCTS_CACHE_KEY);
         // لحذف كاش البحث ينصح استخدام prefix أو tags لو كنت تستخدم Redis
+
+        // حذف كاشات المخزون حسب المخازن التي لديها بيانات
+        $storeIds = InventoryTransaction::query()
+            ->whereNotNull('store_id')
+            ->distinct()
+            ->pluck('store_id');
+
+        foreach ($storeIds as $storeId) {
+            $cacheKey = "inventory_products_with_units:store:$storeId";
+            Cache::forget($cacheKey);
+        }
     }
 
     public static function cacheInventoryWithUnitsForAllProducts(int $storeId): void
