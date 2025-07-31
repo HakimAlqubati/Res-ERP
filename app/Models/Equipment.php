@@ -125,6 +125,22 @@ class Equipment extends Model implements Auditable, HasMedia
             $equipment->created_by = Auth::id();
             $equipment->qr_code = 'QR-' . date('YmdHis') . '-' . Auth::id();
         });
+
+        static::created(function ($equipment) {
+            $equipment->addLog(
+                \App\Models\EquipmentLog::ACTION_CREATED,
+                'Equipment created',
+                $equipment->created_by
+            );
+        });
+        static::updated(function ($equipment) {
+            \App\Models\EquipmentLog::create([
+                'equipment_id' => $equipment->id,
+                'action'       => \App\Models\EquipmentLog::ACTION_UPDATED,
+                'description'  => 'Equipment updated',
+                'performed_by' => auth()->id(),
+            ]);
+        });
     }
 
     public function type()
