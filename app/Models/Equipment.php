@@ -14,6 +14,22 @@ class Equipment extends Model implements Auditable, HasMedia
 {
     use HasFactory, SoftDeletes, \OwenIt\Auditing\Auditable, InteractsWithMedia;
 
+    // Relationship with EquipmentLog
+    public function logs()
+    {
+        return $this->hasMany(EquipmentLog::class, 'equipment_id');
+    }
+
+    // Add a log entry to EquipmentLog
+    public function addLog(string $action, string $description, $userId = null)
+    {
+        return $this->logs()->create([
+            'action' => $action,
+            'description' => $description,
+            'created_by' => $userId ?? (auth()->id() ?? null),
+        ]);
+    } 
+
     protected $table = 'hr_equipment';
     /**
      * The attributes that are mass assignable.
