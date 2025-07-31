@@ -206,22 +206,17 @@ class ServiceRequestResource extends Resource
             ->paginated([10, 25, 50, 100])
 
             ->columns([
-                // Split::make([
-                    // Stack::make([
-                        SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                            ->circular()->alignCenter(true)->getStateUsing(function () {
-                            return null;
-                        })->limit(3),
-                        TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable()->alignCenter(),
-
-                    // ]),
-                    TextColumn::make('description')->searchable(isIndividual: true)->sortable()
-                        ->color(Color::Blue)->limit(50)->wrap()->tooltip(fn($state) => $state)
-                    // ->size(TextColumnSize::Large)
-                    // ->weight(FontWeight::ExtraBold)
-                        ->description('Click')
-                        ->searchable(),
-                    TextColumn::make('status')
+                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                    ->circular()->alignCenter(true)->getStateUsing(function () {
+                    return null;
+                })->limit(3),
+                TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable()->alignCenter(),
+                TextColumn::make('equipment.name')->label('Equipment')->sortable()->searchable()->alignCenter(),
+                TextColumn::make('description')->searchable(isIndividual: true)->sortable()
+                    ->color(Color::Blue)->limit(50)->wrap()->tooltip(fn($state) => $state)
+                    ->description('Click')
+                    ->searchable(),
+                TextColumn::make('status')
                         ->badge()
                         ->sortable()
                         ->searchable()
