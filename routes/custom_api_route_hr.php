@@ -19,6 +19,8 @@ Route::prefix('hr')
         Route::get('/employeeAttendance', [AttendanceController::class, 'employeeAttendance']);
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
+        Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
+
     });
 
 Route::prefix('aws/employee-liveness')->group(function () {
