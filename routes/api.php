@@ -160,7 +160,7 @@ Route::get('/purchaseInvoices', [PurchaseInvoiceController::class, 'index']);
 Route::get('/manufacturingReport', [ManufacturingReportController::class, 'index']);
 Route::get('/manufacturingInventoryReport', [ManufacturingInventoryReportController::class, 'show']);
 
-Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary']);
+Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary'])->middleware('auth:api');
 
 Route::prefix('reseller')->group(function () {
     Route::get('branchSalesBalanceReport', [ResellerReportController::class, 'branchSalesBalanceReport']);
