@@ -9,6 +9,7 @@ class EquipmentLog extends Model
 {
     use HasFactory;
 
+    protected $table = 'hr_equipment_logs';
     protected $fillable = [
         'equipment_id',
         'action',
@@ -44,14 +45,14 @@ class EquipmentLog extends Model
     {
         parent::booted();
 
-        static::updated(function ($equipment) {
-            \App\Models\EquipmentLog::create([
-                'equipment_id' => $equipment->id,
-                'action'       => \App\Models\EquipmentLog::ACTION_UPDATED,
-                'description'  => 'Equipment updated',
-                'performed_by' => auth()->id(),
-            ]);
+        static::created(function ($log) {
+            if (empty($log->performed_by)) {
+                $log->performed_by = auth()->id();
+                $log->save();
+            }
         });
+
+        
     }
 
     public function addLog(string $action, ?string $description = null, ?int $performedBy = null): void

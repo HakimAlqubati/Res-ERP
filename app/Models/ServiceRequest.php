@@ -116,6 +116,12 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         return $this->morphMany(ServiceRequestPhoto::class, 'imageable');
     }
 
+    // Equipment relationship
+    public function equipment()
+    {
+        return $this->belongsTo(Equipment::class, 'equipment_id');
+    }
+
     public function getFirstPhotoUrlAttribute()
     {
         // Get the first photo, or return a default image if none exists

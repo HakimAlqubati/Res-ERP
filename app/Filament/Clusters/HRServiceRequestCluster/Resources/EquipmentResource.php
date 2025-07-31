@@ -80,7 +80,9 @@ class EquipmentResource extends Resource
                                         ->label('Branch')
                                         ->options(Branch::branches()->active()->pluck('name', 'id'))
                                         ->required()->live()->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
-                                    Select::make('branch_area_id')->label('Branch area')
+                                    Select::make('branch_area_id')
+                                    ->required()
+                                    ->label('Branch area')
                                         ->options(function ($get) {
                                             return BranchArea::query()
                                                 ->where('branch_id', $get('branch_id'))
@@ -182,7 +184,7 @@ class EquipmentResource extends Resource
                                     Forms\Components\DatePicker::make('purchase_date')
                                         ->label('Purchase Date')
                                         ->prefixIcon('heroicon-s-calendar')
-                                        ->default(now())
+                                        // ->default(now())
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                             $months = (int) $get('warranty_months');
@@ -199,7 +201,7 @@ class EquipmentResource extends Resource
                                     Forms\Components\DatePicker::make('operation_start_date')
                                         ->label('Operation Start Date')
                                         ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                        ->default(now()->subYear())
+                                        // ->default(now()->subYear())
                                         // ->live(onBlur: true)
                                         // ->afterStateUpdated(function ($state, callable $set, $get) {
                                         //     $months = (int) $get('warranty_months');
@@ -211,7 +213,8 @@ class EquipmentResource extends Resource
                                 ]),
 
                                 Forms\Components\DatePicker::make('last_serviced')
-                                    ->label('Last Serviced')->default(now())
+                                    ->label('Last Serviced')
+                                    // ->default(now())
                                     ->prefixIcon('heroicon-s-calendar-date-range')->prefixIconColor('primary')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function ($state, callable $set, $get) {
