@@ -45,6 +45,13 @@ class EquipmentLog extends Model
     {
         parent::booted();
 
+        static::created(function ($log) {
+            if (empty($log->performed_by)) {
+                $log->performed_by = auth()->id();
+                $log->save();
+            }
+        });
+
         static::updated(function ($equipment) {
             \App\Models\EquipmentLog::create([
                 'equipment_id' => $equipment->id,
