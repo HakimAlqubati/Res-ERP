@@ -9,6 +9,7 @@ class EquipmentLog extends Model
 {
     use HasFactory;
 
+    protected $table = 'hr_equipment_logs';
     protected $fillable = [
         'equipment_id',
         'action',
