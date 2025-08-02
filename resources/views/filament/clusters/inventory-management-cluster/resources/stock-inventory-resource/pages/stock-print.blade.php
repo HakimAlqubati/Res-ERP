@@ -98,6 +98,12 @@
                 box-shadow: none;
             }
         }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -120,7 +126,7 @@
     <!-- Table Section -->
     <table>
         <thead>
-            <tr> 
+            <tr>
                 <th>Product Code</th>
                 <th>Product Name</th>
                 <th>Category</th>
@@ -132,7 +138,7 @@
             @foreach ($products as $product)
                 @if (!empty($product->unitPrices))
                     @foreach ($product->unitPrices as $unit)
-                        <tr> 
+                        <tr>
                             <td>{{ $product->code }}</td>
                             <td>{{ $product->name }}</td>
                             <td>{{ $product->category->name }}</td>
@@ -151,8 +157,25 @@
                 @endif
             @endforeach
         </tbody>
-        
+
     </table>
+
+    <!-- Print Button -->
+    <div style="text-align: center; margin-top: 10px; margin-bottom: 20px;" class="no-print">
+        <button onclick="window.print()"
+            style="
+        background-color: #0d7c66;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    ">
+            🖨️ Print Report
+        </button>
+    </div>
 
 </body>
 
