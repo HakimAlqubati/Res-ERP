@@ -693,27 +693,27 @@ class EmployeeResource extends Resource
                         }
                     })->hidden(),
 
-                ActionsAction::make('add_face_images')
-                    ->label('Add Face Images')
-                    ->icon('heroicon-o-photo')
-                    ->color('primary')
-                    ->form([
-                        FileUpload::make('images')
-                            ->label('Face Images')
-                            ->multiple()
-                            ->required()->disk('public')
-                            ->image()
-                            ->maxSize(10240) // 10MB
-                            ->directory('employee_faces')
-                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                return Str::random(15) . "." . $file->getClientOriginalExtension();
-                            })
-                        ,
-                    ])
-                    ->action(fn(array $data, $record) => static::storeFaceImages($record, $data['images']))
-                    ->modalHeading('Upload Employee Face Images')
-                    ->modalSubmitActionLabel('Upload')
-                    ->modalCancelActionLabel('Cancel'),
+                // ActionsAction::make('add_face_images')
+                //     ->label('Add Face Images')
+                //     ->icon('heroicon-o-photo')
+                //     ->color('primary')
+                //     ->form([
+                //         FileUpload::make('images')
+                //             ->label('Face Images')
+                //             ->multiple()
+                //             ->required()->disk('public')
+                //             ->image()
+                //             ->maxSize(10240) // 10MB
+                //             ->directory('employee_faces')
+                //             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                //                 return Str::random(15) . "." . $file->getClientOriginalExtension();
+                //             })
+                //         ,
+                //     ])
+                //     ->action(fn(array $data, $record) => static::storeFaceImages($record, $data['images']))
+                //     ->modalHeading('Upload Employee Face Images')
+                //     ->modalSubmitActionLabel('Upload')
+                //     ->modalCancelActionLabel('Cancel'),
                 ActionGroup::make([
 
                     ActionsAction::make('quick_edit_avatar')
@@ -810,7 +810,7 @@ class EmployeeResource extends Resource
             PeriodRelationManager::class,
             PeriodHistoriesRelationManager::class,
             BranchLogRelationManager::class,
-            EmployeeFaceDataRelationManager::class,
+            // EmployeeFaceDataRelationManager::class,
             // EmployeePeriodDaysRelationManager::class,
         ];
     }
