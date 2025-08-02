@@ -35,18 +35,23 @@ class AttendanceHandler
             $employeePeriods = $employee?->periods;
             if (! is_null($employee) && count($employeePeriods) > 0) {
                 $day = strtolower(Carbon::parse($date)->format('D'));
-
-                // Decode the days array for each period
-
-                $workTimePeriods = $employee->periods->map(function ($period) {
-
-                    return $period;
-                });
+ 
 
                 $date = date('Y-m-d', strtotime($dateTime));
                 $day  = strtolower(Carbon::parse($date)->format('D')); // الآن: "wed", "sun", إلخ
 
-                $employeePeriods = $employee->employeePeriods()->with(['days', 'workPeriod'])->get();
+                 $current     = Carbon::parse($date)->format('Y-m-d');
+                $yesterday   = Carbon::parse($date)->subDay()->format('Y-m-d');
+                $tomorrow    = Carbon::parse($date)->addDay()->format('Y-m-d');
+                $employeePeriods = $employee->employeePeriods()
+                  ->whereHas('days', function ($query) use ($yesterday, $tomorrow) {
+                        $query->where('start_date', '<=', $tomorrow)
+                            ->where(function ($q) use ($yesterday) {
+                                $q->whereNull('end_date')
+                                    ->orWhere('end_date', '>=', $yesterday);
+                            });
+                    })
+                ->with(['days', 'workPeriod'])->get();
                 $prevDate        = date('Y-m-d', strtotime("$date -1 day"));
                 $periodsForToday = $this->getPeriodsForDate($employeePeriods, $date, $time);
 
@@ -79,7 +84,6 @@ class AttendanceHandler
                 $allPeriods    = $periodsForToday->merge($periodsForPrevDay);
                 $closestPeriod = $this->findClosestPeriod($time, $allPeriods);
                 // dd($periodsForToday, $closestPeriod,$this->date,$date);
-                // dd($closestPeriod);
                 // Check if no periods are found for the given day
                 if (! $closestPeriod) {
                     return
