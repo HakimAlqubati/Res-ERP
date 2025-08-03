@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services\HR\Attendance;
 
 use App\Models\Attendance;
@@ -7,18 +6,19 @@ use App\Models\Attendance;
 class AttendanceSaver
 {
     public function save(array $attendanceData): Attendance
-    {
+    { 
         return Attendance::create([
             'employee_id'                  => $attendanceData['employee_id'],
             'period_id'                    => $attendanceData['period_id'],
             'check_date'                   => $attendanceData['check_date'],
+            'real_check_date'              => $attendanceData['real_check_date']?? $attendanceData['check_date'],
             'check_time'                   => $attendanceData['check_time'],
             'day'                          => $attendanceData['day'],
             'check_type'                   => $attendanceData['check_type'],
             'branch_id'                    => $attendanceData['branch_id'] ?? null,
             'created_by'                   => auth()->id(),
-            'attendance_type'              => $attendanceData['attendance_type'] ,
-            'status'                       => $attendanceData['status'] ,
+            'attendance_type'              => $attendanceData['attendance_type'],
+            'status'                       => $attendanceData['status'],
             'actual_duration_hourly'       => $attendanceData['actual_duration_hourly'] ?? null,
             'supposed_duration_hourly'     => $attendanceData['supposed_duration_hourly'] ?? null,
             'total_actual_duration_hourly' => $attendanceData['total_actual_duration_hourly'] ?? null,

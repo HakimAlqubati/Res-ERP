@@ -9,9 +9,9 @@ class CheckInHandler
 {
     public function handle(array $attendanceData, $nearestPeriod, Carbon $checkTime, string $checkTimeStr, string $day, $previousRecord = null, $type = ''): array | string
     {
-        $date     = $attendanceData['check_date'];
-        $employee = $attendanceData['employee'];
-
+        $date            = $attendanceData['check_date'];
+        $employee        = $attendanceData['employee'];
+        $realCheckDate   = $attendanceData['real_check_date'] ?? $date;
         $periodEndTime   = $nearestPeriod->end_at;
         $periodStartTime = $nearestPeriod->start_at;
 
@@ -51,7 +51,7 @@ class CheckInHandler
 
         $attendanceData = array_merge(
             $attendanceData,
-            $this->storeCheckIn($nearestPeriod, $checkTime, $attendanceData['check_date'])
+            $this->storeCheckIn($nearestPeriod, $checkTime, $attendanceData['check_date'], $attendanceData['real_check_date'])
         );
         if (is_array($attendanceData) && isset($attendanceData['employee_id'], $attendanceData['period_id'])) {
             return [
@@ -95,11 +95,15 @@ class CheckInHandler
         return round($startDateTime->diffInMinutes($checkTime) / 60, 2);
     }
 
-    protected function storeCheckIn($period, Carbon $checkTime, string $date): array
-    {
+    protected function storeCheckIn($period, Carbon $checkTime, string $date, $realCheckDate): array
+    {   
+        if($period->start_at=='00:00:00' ){
+            $checkTime = Carbon::parse("$realCheckDate {$checkTime->toTimeString()} ");
+        } 
         $startTime  = Carbon::parse("$date {$period->start_at}");
         $earlyLimit = Setting::getSetting('early_attendance_minutes');
-
+       
+        
         if ($checkTime->lt($startTime)) {
             $early = $checkTime->diffInMinutes($startTime);
             return [
@@ -111,7 +115,7 @@ class CheckInHandler
 
         $late   = $startTime->diffInMinutes($checkTime);
         $status = $late <= $earlyLimit ? Attendance::STATUS_ON_TIME : Attendance::STATUS_LATE_ARRIVAL;
-
+ 
         return [
             'delay_minutes'         => $late,
             'early_arrival_minutes' => 0,

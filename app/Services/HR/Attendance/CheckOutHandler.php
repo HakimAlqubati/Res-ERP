@@ -12,6 +12,7 @@ class CheckOutHandler
         $endTime   = Carbon::parse($date . ' ' . $nearestPeriod->end_at);
         $startTime = Carbon::parse($date . ' ' . $nearestPeriod->start_at);
 
+        $realCheckDate = $attendanceData['real_check_date'] ?? $date;
         // 1. تحديد سجل الدخول
         $checkinRecord = Attendance::where('employee_id', $employeeId)
             ->where('period_id', $nearestPeriod->id)
@@ -21,6 +22,7 @@ class CheckOutHandler
             ->latest('id')
             ->first();
 
+        // dd($checkinRecord,$previousRecord,$realCheckDate);
         if ($checkinRecord) {
             $checkinTime       = Carbon::parse($checkinRecord->check_date . ' ' . $checkinRecord->check_time);
             $previousCheckDate = $date;
@@ -40,17 +42,19 @@ class CheckOutHandler
 
         // 2. احتساب المدة الفعلية
 
-        if ($checkTime->lt($checkinTime)) {
+        if ($checkTime->lt($checkinTime) && $checkinRecord->period->start_at !== '00:00:00') {
             $checkTime = $checkTime->addDay();
         }
-
+        if ($checkinRecord->period->start_at == '00:00:00') {
+            $checkinTime = Carbon::parse($checkinRecord->real_check_date . ' ' . $checkinRecord->check_time);
+        } 
         $actualMinutes = $checkinTime->diffInMinutes($checkTime);
         $hoursActual   = floor($actualMinutes / 60);
         $minutesActual = $actualMinutes % 60;
 
         $currentDurationFormatted = sprintf('%02d:%02d', $hoursActual, $minutesActual);
         $actualDurationFormatted  = sprintf('%02d:%02d', floor($actualMinutes / 60), $actualMinutes % 60);
-
+ 
         $attendanceData['actual_duration_hourly']   = $actualDurationFormatted;
         $attendanceData['checkinrecord_id']         = $previousCheckId ?? null;
         $attendanceData['supposed_duration_hourly'] = $nearestPeriod?->supposed_duration;
@@ -75,6 +79,7 @@ class CheckOutHandler
 
         $attendanceData['total_actual_duration_hourly'] = sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60);
 
+        // dd($checkTime, $endTime, $attendanceData);
         // 4. تحديد الحالة: تأخر أو خروج مبكر
         if ($checkTime->gt($endTime)) {
             $attendanceData['late_departure_minutes']  = $endTime->diffInMinutes($checkTime);
@@ -88,8 +93,7 @@ class CheckOutHandler
             $attendanceData['late_departure_minutes']  = 0;
             $attendanceData['early_departure_minutes'] = 0;
             $attendanceData['status']                  = Attendance::STATUS_ON_TIME;
-        }
-
+        } 
         // 5. التعامل مع الحقول الأخرى
         $attendanceData['delay_minutes'] = 0;
 

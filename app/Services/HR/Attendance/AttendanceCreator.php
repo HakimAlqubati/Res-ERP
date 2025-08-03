@@ -9,6 +9,7 @@ class AttendanceCreator
 
     public $attendanceType = Attendance::ATTENDANCE_TYPE_RFID;
     protected AttendanceValidator $validator;
+    public AttendanceHandler $attendanceHandler;
     public function __construct(AttendanceValidator $validator,
         protected CheckInHandler $checkInHandler,
         protected CheckOutHandler $checkOutHandler,
@@ -23,12 +24,13 @@ class AttendanceCreator
         string $date,
         string $time,
         string $day,
-        array $existAttendance
-    ) {
+        array $existAttendance,
+        ?string $realAttendanceDate = null
+    ) { 
         if (isset($existAttendance['in_previous'])) {
             if ($existAttendance['in_previous']['check_type'] == Attendance::CHECKTYPE_CHECKIN) {
 
-                return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKOUT, $existAttendance);
+                return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKOUT, $existAttendance, false, $realAttendanceDate);
             } else {
 
                 $endTime   = \Carbon\Carbon::parse($closestPeriod->end_at);
@@ -36,7 +38,7 @@ class AttendanceCreator
 
                 if ($endTime->gt($checkTime)) {
 
-                    return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKIN, $existAttendance);
+                    return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKIN, $existAttendance, false, $realAttendanceDate);
                 } else {
                     $message = __('notifications.attendance_time_is_greater_than_current_period_end_time') . ':(' . $closestPeriod?->name . ')';
 
@@ -73,7 +75,7 @@ class AttendanceCreator
             $time,
             $day,
             $checkType,
-            $existAttendance
+            $existAttendance, false, $realAttendanceDate
         );
         if (isset($createdAttendance['success']) && ! $createdAttendance['success']) {
             return $createdAttendance;
@@ -97,6 +99,7 @@ class AttendanceCreator
         string $checkType,
         $previousRecord = null,
         bool $isRequest = false,
+        ?string $realAttendanceDate = null
     ) {
         $checkTimeStr = $checkTime;
         // Ensure that $checkTime is a Carbon instance
@@ -140,9 +143,10 @@ class AttendanceCreator
             $attendanceData['check_date']           = $previousRecord['in_previous']?->check_date;
         }
 
+        $attendanceData['real_check_date'] = $realAttendanceDate;
         if ($checkType === Attendance::CHECKTYPE_CHECKIN) {
-            $attendanceData['employee'] = $employee;
-            $result                     = $this->checkInHandler->handle(
+            $attendanceData['employee']        = $employee;
+            $result                            = $this->checkInHandler->handle(
                 $attendanceData,
                 $nearestPeriod,
                 $checkTime,

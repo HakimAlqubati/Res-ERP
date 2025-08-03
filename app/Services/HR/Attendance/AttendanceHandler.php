@@ -12,6 +12,7 @@ class AttendanceHandler
 
     public $employeeId = 0;
     public $date       = '';
+    public string $realAttendanceDate = '';
     public function __construct(AttendanceValidator $validator,
         protected CheckInHandler $checkInHandler,
         protected CheckOutHandler $checkOutHandler,
@@ -29,6 +30,7 @@ class AttendanceHandler
             $dateTime = $data['date_time']; // e.g. "2025-07-07 14:30:00"
 
             $date             = date('Y-m-d', strtotime($dateTime)); // "2025-07-07"
+            $this->realAttendanceDate = date('Y-m-d', strtotime($dateTime));
             $time             = date('H:i:s', strtotime($dateTime)); // "14:30:00"
             $this->employeeId = $employee->id;
             app(MonthClosureService::class)->ensureMonthIsOpen($date);
@@ -52,12 +54,13 @@ class AttendanceHandler
                             });
                     })
                 ->with(['days', 'workPeriod'])->get();
+                // dd($employeePeriods);
                 $prevDate        = date('Y-m-d', strtotime("$date -1 day"));
                 $periodsForToday = $this->getPeriodsForDate($employeePeriods, $date, $time);
 
                 $periodsForPrevDay = $employeePeriods->filter(function ($period) use ($prevDate, $date, $time) {
-
                     $dayAndNight = $period->workPeriod->day_and_night ?? 0;
+                    // dd($period->workPeriod,$dayAndNight,Attendance::isPeriodClosed($this->employeeId, $period->workPeriod->id, $prevDate));
                     if ($dayAndNight && ! Attendance::isPeriodClosed($this->employeeId, $period->workPeriod->id, $prevDate)) {
                         // فترات اليوم والليلة ترجع دائماً لأنها قابلة للانصراف بعد منتصف الليل
                         return true;
@@ -66,22 +69,23 @@ class AttendanceHandler
                     $allowedHours       = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
                     $periodEndDateTime  = Carbon::parse("$prevDate $periodEndTime");
                     $allowedEndDateTime = $periodEndDateTime->copy()->addHours($allowedHours);
-
+                    
                     // وقت الحضور الحالي يجب أن يكون >= نهاية الفترة، <= نهاية السماحية
                     $currentDateTime = Carbon::parse("$date $time");
-
+                    
                     if (! $this->periodHelper->periodCoversDate($period, $prevDate)) {
                         return false;
                     }
-
+                    
                     return $currentDateTime->between($periodEndDateTime, $allowedEndDateTime);
-                });
+                }); 
                 if ($periodsForPrevDay->count() > 0 && $periodsForToday->count() <= 0) {
                     $date = $prevDate;
                 }
                 $this->date = $date;
                 // دمج المصفوفتين
                 $allPeriods    = $periodsForToday->merge($periodsForPrevDay);
+                // dd($allPeriods);
                 $closestPeriod = $this->findClosestPeriod($time, $allPeriods);
                 // dd($periodsForToday, $closestPeriod,$this->date,$date);
                 // Check if no periods are found for the given day
@@ -104,16 +108,17 @@ class AttendanceHandler
                 $adjusted = AttendanceDateService::adjustDateForMidnightShift($date, $time, $closestPeriod);
                 $date     = $adjusted['date'];
                 $day      = $adjusted['day'];
-
+ 
                 $existAttendance = AttendanceFetcher::getExistingAttendance($employee, $closestPeriod, $date, $day, $time);
-
+ 
                 $attendanceData = $this->attendanceCreator->handleOrCreateAttendance(
                     $employee,
                     $closestPeriod,
                     $date,
                     $time,
                     $day,
-                    $existAttendance);
+                    $existAttendance,
+                $this->realAttendanceDate);
 
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                     return $attendanceData;
@@ -126,7 +131,7 @@ class AttendanceHandler
                     Attendance::CHECKTYPE_CHECKIN => __('notifications.check_in_success'),
                     Attendance::CHECKTYPE_CHECKOUT => __('notifications.check_out_success'),
                     default => __('notifications.attendance_success'),
-                };
+                }; 
 // ✳️ الحفظ باستخدام AttendanceSaver
                 $attendanceRecord = $this->attendanceSaver->save($attendanceData['data']);
 
@@ -167,7 +172,7 @@ class AttendanceHandler
         $minDiff     = null;
 
         $allowedHours = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
-
+dd($periods);
         foreach ($periods as $period) {
             $workPeriod = $period->workPeriod;
 
@@ -182,6 +187,7 @@ class AttendanceHandler
                     // dd($currentTime, $earliestStart, $startDateTime,$currentTime->between($earliestStart, $startDateTime));
                     // ✅ تعديل التاريخ: لأنه حضر في الليلة السابقة لفترة تبدأ 00:00
                     $this->date = Carbon::parse($this->date)->addDay()->format('Y-m-d');
+                    
                     return $workPeriod;
                 }
             }
@@ -192,12 +198,16 @@ class AttendanceHandler
 
             $periodEndDateTime = Carbon::createFromFormat('H:i:s', $workPeriod->end_at)->addHours($allowedHours);
             $end               = strtotime($periodEndDateTime->format('H:i:s'));
+            dd(Attendance::isPeriodClosed($this->employeeId, $workPeriod->id, $this->date));
             if ($dayAndNight && ! Attendance::isPeriodClosed($this->employeeId, $workPeriod->id, $this->date)) {
                 // فترة ليلية (تعبر منتصف الليل)
                 if (($currentTime >= strtotime('00:00:00')) && ($currentTime <= $end)
-                ) {
+                ) { 
+            dd('sdf1');
                     return $workPeriod;
                 }
+                dd('sdf');
+                return $workPeriod; 
                 continue;
                 // return null;
             }

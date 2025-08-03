@@ -75,6 +75,7 @@ class Attendance extends Model
         'accepted',
         'message',
         'attendance_type',
+        'real_check_date',
 
     ];
 
@@ -203,7 +204,6 @@ class Attendance extends Model
             ->where('accepted', 1)
             ->orderByDesc('check_time')
             ->first();
-
         if (! $checkoutRecord) {
             return false;
         }
@@ -211,12 +211,10 @@ class Attendance extends Model
         // بناء تاريخ/وقت نهاية الشفت بالضبط
         $periodEndDateTime = \Carbon\Carbon::parse("$date " . $workPeriod->end_at);
         $checkoutDateTime  = \Carbon\Carbon::parse("$date " . $checkoutRecord->check_time);
-
         // إذا الشفت ليل ووقت الانصراف بعد منتصف الليل
         if ($workPeriod->day_and_night && $checkoutDateTime->lessThan($periodEndDateTime)) {
             $checkoutDateTime->addDay();
-        }
-
+        } 
         return $checkoutDateTime->greaterThan($periodEndDateTime);
     }
 
