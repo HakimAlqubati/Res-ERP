@@ -148,6 +148,7 @@ Route::middleware('auth:api')->group(function () {
     });
 });
 
+Route::middleware('auth:api')->group(function () {
 Route::get('purchaseReports', [PurchaseReportController::class, 'index']);
 Route::prefix('returnedOrders')->group(function () {
     Route::get('/', [ReturnedOrderController::class, 'index']);    // all with filters
@@ -160,7 +161,7 @@ Route::get('/purchaseInvoices', [PurchaseInvoiceController::class, 'index']);
 Route::get('/manufacturingReport', [ManufacturingReportController::class, 'index']);
 Route::get('/manufacturingInventoryReport', [ManufacturingInventoryReportController::class, 'show']);
 
-Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary']);
+Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary'])->middleware('auth:api');
 
 Route::prefix('reseller')->group(function () {
     Route::get('branchSalesBalanceReport', [ResellerReportController::class, 'branchSalesBalanceReport']);
@@ -170,7 +171,6 @@ Route::prefix('reseller')->group(function () {
 Route::get('stockAdjustmentsByCategory', [StockAdjustmentReportController::class, 'byCategory']);
 
 Route::get('/storeCostReport', [StoreCostReportController::class, 'generate']);
-
 Route::get('/suppliers', [SupplierController::class, 'index']);
 Route::get('/minimumStockReportToSupply', [App\Http\Controllers\Api\InventoryReportController::class, 'minimumStockReportToSupply']);
 Route::get('/branchQuantities', [App\Http\Controllers\Api\InventoryReportController::class, 'branchQuantities']);
@@ -187,18 +187,18 @@ Route::get('/testInventoryReport2', function (Request $request) {
         $storeId
     );
     $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
-        ->where('unit_id', $unitId)->with('unit')
+    ->where('unit_id', $unitId)->with('unit')
         ->first();
-    $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
-    $inventoryRemainingQty  = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
-    return response()->json($inventoryRemainingQty);
-});
-
-Route::get('/branches', function () {
-    return Branch::active()
+        $inventoryReportProduct = $inventoryService->getInventoryForProduct($productId);
+        $inventoryRemainingQty  = collect($inventoryReportProduct)->firstWhere('unit_id', $unitId)['remaining_qty'] ?? 0;
+        return response()->json($inventoryRemainingQty);
+    });
+    
+    Route::get('/branches', function () {
+        return Branch::active()
         ->branches()
         ->get(['id', 'name', 'type'])
-
+        
         ->makeHidden([
             'categories',
             'salesAmounts',
@@ -210,8 +210,9 @@ Route::get('/branches', function () {
             'total_paid',
             'total_sales',
         ]);
+    });
+    
 });
-
 Route::get('/sendFCM', [TestController3::class, 'sendFCM']);
 Route::get('productsSearch', function (\Illuminate\Http\Request $request) {
     $query = $request->query('query', '');

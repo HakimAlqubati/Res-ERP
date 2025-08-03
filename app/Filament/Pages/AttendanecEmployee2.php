@@ -460,6 +460,7 @@ class AttendanecEmployee2 extends BasePage
         }
  
         $attendanceData['attendance_type'] = $this->attendanceType;
+        // dd($attendanceData);
         // Try to create the attendance record
         try {
             Attendance::create($attendanceData);
