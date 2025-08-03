@@ -172,7 +172,6 @@ class AttendanceHandler
         $minDiff     = null;
 
         $allowedHours = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
-dd($periods);
         foreach ($periods as $period) {
             $workPeriod = $period->workPeriod;
 
