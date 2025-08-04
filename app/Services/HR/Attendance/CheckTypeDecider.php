@@ -54,8 +54,7 @@ class CheckTypeDecider
             }
 
             return Attendance::CHECKTYPE_CHECKIN;
-        }
-
+        } 
         // فردي أو زوجي
         return $attendanceCount % 2 === 0
         ? Attendance::CHECKTYPE_CHECKIN

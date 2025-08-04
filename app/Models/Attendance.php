@@ -215,6 +215,11 @@ class Attendance extends Model
         if ($workPeriod->day_and_night && $checkoutDateTime->lessThan($periodEndDateTime)) {
             $checkoutDateTime->addDay();
         } 
+        
+        if($workPeriod->start_at == '00:00:00'){
+            $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
+        }
+        // dd($checkoutDateTime->greaterThan($periodEndDateTime));
         return $checkoutDateTime->greaterThan($periodEndDateTime);
     }
 

@@ -96,14 +96,13 @@ class CheckInHandler
     }
 
     protected function storeCheckIn($period, Carbon $checkTime, string $date, $realCheckDate): array
-    {   
+    {    
         if($period->start_at=='00:00:00' ){
             $checkTime = Carbon::parse("$realCheckDate {$checkTime->toTimeString()} ");
         } 
         $startTime  = Carbon::parse("$date {$period->start_at}");
         $earlyLimit = Setting::getSetting('early_attendance_minutes');
        
-        
         if ($checkTime->lt($startTime)) {
             $early = $checkTime->diffInMinutes($startTime);
             return [

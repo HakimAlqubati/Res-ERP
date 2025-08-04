@@ -8,7 +8,7 @@ use Carbon\Carbon;
 class AttendanceFetcher
 {
     public static function getExistingAttendance($employee, $closestPeriod, $date, $day, $currentCheckTime)
-    {
+    { 
         $attendances = Attendance::where('employee_id', $employee->id)
             ->where('period_id', $closestPeriod->id) // Using array key if closestPeriod is an array
             ->where('check_date', $date)
@@ -16,7 +16,6 @@ class AttendanceFetcher
             ->where('day', $day)
             ->select('check_type', 'check_date')
             ->get();
-  
         if ($attendances->count() === 0) {
             $previousDate    = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
             $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');

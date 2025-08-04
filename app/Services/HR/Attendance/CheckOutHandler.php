@@ -20,7 +20,7 @@ class CheckOutHandler
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->whereDate('check_date', $date)
             ->latest('id')
-            ->first();
+            ->first(); 
 
         // dd($checkinRecord,$previousRecord,$realCheckDate);
         if ($checkinRecord) {
