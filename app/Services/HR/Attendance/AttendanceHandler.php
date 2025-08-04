@@ -46,18 +46,8 @@ class AttendanceHandler
 
                 $date = date('Y-m-d', strtotime($dateTime));
                 $day  = strtolower(Carbon::parse($date)->format('D')); // الآن: "wed", "sun", إلخ
-
-                $current         = Carbon::parse($date)->format('Y-m-d');
-                $yesterday       = Carbon::parse($date)->subDay()->format('Y-m-d');
-                $tomorrow        = Carbon::parse($date)->addDay()->format('Y-m-d');
+ 
                 $employeePeriods = $employee->employeePeriods()
-                // ->whereHas('days', function ($query) use ($yesterday, $tomorrow) {
-                //     $query->where('start_date', '<=', $tomorrow)
-                //         ->where(function ($q) use ($yesterday) {
-                //             $q->whereNull('end_date')
-                //                 ->orWhere('end_date', '>=', $yesterday);
-                //         });
-                // })
                     ->with(['days', 'workPeriod'])->get();
                 // dd($employeePeriods); 
                 $periodsForToday   = $this->getPeriodsForDate($employeePeriods, $date, $time);
