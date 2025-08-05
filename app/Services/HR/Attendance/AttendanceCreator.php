@@ -26,7 +26,7 @@ class AttendanceCreator
         string $day,
         array $existAttendance,
         ?string $realAttendanceDate = null
-    ) {   
+    ) {
         if (isset($existAttendance['in_previous'])) {
             if ($existAttendance['in_previous']['check_type'] == Attendance::CHECKTYPE_CHECKIN) {
 
@@ -58,7 +58,7 @@ class AttendanceCreator
             $typeHidden,     // أو false حسب ما تريده هنا (يمكن تمريره كمرجع)
             $manualType = '' // أو قيمة `checkin/checkout` اليدوية إن وجدت
         );
- 
+
 // إذا كانت النتيجة رسالة نصية بدل نوع صالح
         if (! in_array($checkType, [Attendance::CHECKTYPE_CHECKIN, Attendance::CHECKTYPE_CHECKOUT])) {
             return [
@@ -82,7 +82,7 @@ class AttendanceCreator
         }
         if (isset($createdAttendance['success']) && $createdAttendance['success']) {
             return $createdAttendance;
-        } 
+        }
         return [
             'success' => true,
             'data'    => $createdAttendance,
@@ -118,7 +118,7 @@ class AttendanceCreator
             $remainingMinutes *= -1;
             $remainingSeconds *= -1;
             $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
-
+            Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
             // return [
             //     'success' => false,
             //     'message' => $message,
@@ -145,8 +145,8 @@ class AttendanceCreator
 
         $attendanceData['real_check_date'] = $realAttendanceDate;
         if ($checkType === Attendance::CHECKTYPE_CHECKIN) {
-            $attendanceData['employee']        = $employee;
-            $result                            = $this->checkInHandler->handle(
+            $attendanceData['employee'] = $employee;
+            $result                     = $this->checkInHandler->handle(
                 $attendanceData,
                 $nearestPeriod,
                 $checkTime,
@@ -167,7 +167,7 @@ class AttendanceCreator
         if ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
             $attendanceData = $this->checkOutHandler->handle($attendanceData, $nearestPeriod, $employee->id, $date, $checkTime, $previousRecord);
 
-        } 
+        }
         return $attendanceData;
 
     }

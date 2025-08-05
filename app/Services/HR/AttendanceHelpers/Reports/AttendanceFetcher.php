@@ -74,9 +74,12 @@ class AttendanceFetcher
                     ->get();
 
                 // تقسم الحضور
-                $checkInCollection  = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKIN)->values();
-                $checkOutCollection = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)->values();
-
+                $checkInCollection  = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                ->sortBy('id')
+                ->values();
+                $checkOutCollection = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
+                ->sortBy('id')
+                ->values();
                 // تحويل إلى Resources (مصفوفة رقمية)
                 $checkInResources  = CheckInAttendanceResource::collection($checkInCollection)->toArray(request());
                 $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator) {

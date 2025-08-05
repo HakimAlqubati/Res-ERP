@@ -16,6 +16,7 @@ class AttendanceFetcher
             ->where('day', $day)
             ->select('check_type', 'check_date')
             ->get();
+            // dd($attendances,$employee,$closestPeriod,$date,$day);
         if ($attendances->count() === 0) {
             $previousDate    = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
             $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
