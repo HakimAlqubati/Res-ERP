@@ -1,0 +1,1453 @@
+type: collection.insomnia.rest/5.0
+name: WORKBENCH
+meta:
+  id: wrk_cf9340d7e34a4a8c9301b926d8ed0fee
+  created: 1736813457483
+  modified: 1736813457483
+  description: ""
+collection:
+  - name: Auth user
+    meta:
+      id: fld_12a6323fde6b46f1ac1221a78aa9da90
+      created: 1684846446765
+      modified: 1752863984723
+      sortKey: -1685658797744.25
+      description: ""
+    children:
+      - url: "{{ _.baseUrlGeneral }}/api/login"
+        name: Login
+        meta:
+          id: req_00f67df3d9874eca8e73a71b0584eb70
+          created: 1684846455672
+          modified: 1752863964111
+          isPrivate: false
+          description: ""
+          sortKey: -1684846455672
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"username":"admin@admin.com",
+            	"password": "sultan@2025"
+            }
+        parameters:
+          - id: pair_fe6980c07bab425cbd0dc8ab103a8061
+            name: require_owner
+            value: "true"
+            description: ""
+            disabled: true
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_42b95464d958420ca00e71dd9ca877b6
+          - id: pair_602bb6683bff42a5b8f669705c6ed5a2
+            name: Accept
+            value: application/json
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseUrlGeneral }}/api/user"
+        name: get user
+        meta:
+          id: req_a03a5f1da04642c2abe9fea6c0cd509f
+          created: 1684847956493
+          modified: 1752863963491
+          isPrivate: false
+          description: ""
+          sortKey: -1684811703328.25
+        method: GET
+        body:
+          mimeType: application/json
+          text: ""
+        headers:
+          - name: Content-Type
+            value: application/json
+          - id: pair_afeb3f69f8d74c1fb3be5533adab01ba
+            name: Accept
+            value: application/json
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseUrlGeneral }}/api/login/otp/check"
+        name: OTP check to login
+        meta:
+          id: req_e9183fbb31854f72a2c91d4399d2d040
+          created: 1742966823061
+          modified: 1742966974559
+          isPrivate: false
+          description: ""
+          sortKey: -1684776950984.5
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"email": "hakimahmed123321@gmail.com",
+            	"otp": "203217"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseUrlGeneral }}/api/user/updateBranch"
+        name: Update Branch
+        meta:
+          id: req_951b51a742bd46f5a4e530cbc8954652
+          created: 1744788496682
+          modified: 1744788567413
+          isPrivate: false
+          description: ""
+          sortKey: -1684794327156.375
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"branch_id": 14
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - id: pair_afeb3f69f8d74c1fb3be5533adab01ba
+            name: Accept
+            value: application/json
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: FCM Notifications
+    meta:
+      id: fld_2b2f8d540e1c46e9a49b6290d7409470
+      created: 1741546413650
+      modified: 1741546413650
+      sortKey: -1741546413650
+      description: ""
+    children:
+      - url: "{{ _.baseUrlGeneral }}/api/updateFcmToken"
+        name: Update token
+        meta:
+          id: req_50c2e87b2da54de794f31c088d6494af
+          created: 1741111057448
+          modified: 1741546422094
+          isPrivate: false
+          description: ""
+          sortKey: -1741546422000
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"fcm_token":"ddd"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/10.3.1
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: https://nlt.nltworkbench.com/api/sendFCM
+        name: Send FCM
+        meta:
+          id: req_309f4f780ded47f5bad5cd46157c042f
+          created: 1741546437235
+          modified: 1744337918658
+          isPrivate: false
+          description: ""
+          sortKey: -1741509981168
+        method: GET
+        body:
+          mimeType: application/json
+          text: >
+            {
+                "token": "cP5wz_GWSpOuZxL-uSfcRj:APA91bFLdVMLO6hc_6RrDH5pMR757CXWtbvzw6Np9lgMAQTWC4_0u6IIHsTJL9sfpa-KXh3FeaJg1RdG9fcM0jGvEywZQ8Klfov0MrducUuLksei3dhTnII",
+                "title": "Hello from Laravel!",
+                "body": "This is a test notification."
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/10.3.1
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: For migrations
+    meta:
+      id: fld_829d1467749e49258f3870ad6becaba3
+      created: 1747964022430
+      modified: 1747964022430
+      sortKey: -1747964022430
+      description: ""
+    children:
+      - url: "{{ _.baseUrlGeneral }}/api/allocateForOrders"
+        name: allocateForOrders
+        meta:
+          id: req_61819114598741b38ab44c8a0e417504
+          created: 1747964039377
+          modified: 1747964075179
+          isPrivate: false
+          description: ""
+          sortKey: -1747964039377
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.1.0
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: HR
+    meta:
+      id: fld_4cb9ace112284478876aca5132389c4b
+      created: 1751892741587
+      modified: 1751892741587
+      sortKey: -1751892741587
+      description: ""
+    children:
+      - name: Attendance
+        meta:
+          id: fld_202eceb63b98410396b561a5c11baac1
+          created: 1751892755576
+          modified: 1751892755576
+          sortKey: -1751892755576
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/hr/attendance/store"
+            name: Add Attendance
+            meta:
+              id: req_ae9e54837f26480da3baf1d665aefe8c
+              created: 1751892769414
+              modified: 1754359420716
+              isPrivate: false
+              description: ""
+              sortKey: -1751892769414
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"rfid": "1593",
+                	"date_time": "2025-07-09 00:00:00"	
+                }				
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_8a92073f5e954437af151a0b0cec3b73
+              - name: User-Agent
+                value: insomnia/11.2.0
+                id: pair_57b79fd4b7a14083aaba22b95e384740
+              - id: pair_4d3ecd2a9c3d4cb08e3a0f3a6d29a933
+                name: Content-Type
+                value: application/json
+                description: ""
+                disabled: false
+              - id: pair_d7f8d353929c422c812bee705694dbe9
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Image Recoginze AWS
+        meta:
+          id: fld_72158066a43a438398bd4a1e8813e073
+          created: 1753901291050
+          modified: 1753901291050
+          sortKey: -1753901291050
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/hr/faceRecognition"
+            name: New Request
+            meta:
+              id: req_02a3a5d3eaf043cb8889dd55ef1a4f19
+              created: 1753901306291
+              modified: 1753919008140
+              isPrivate: false
+              description: ""
+              sortKey: -1753901306291
+            method: POST
+            body:
+              mimeType: multipart/form-data
+              params:
+                - id: pair_97a10123c562428984d5f50c9c0b1fd8
+                  name: image
+                  value: ""
+                  description: ""
+                  disabled: false
+                  type: file
+                  fileName: C:\Users\Hakim\Downloads\صور موظفين تست\ay.jpg
+            headers:
+              - name: Content-Type
+                value: multipart/form-data
+              - name: User-Agent
+                value: insomnia/11.3.0
+                id: pair_d3410276885b4bf797f23c3e4e9ce74e
+              - id: pair_18318bc28b064a4ab92fb62ac48ae76d
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: Stock
+    meta:
+      id: fld_fd23762482c04c05a6e2a63f02626337
+      created: 1751893136402
+      modified: 1751893136402
+      sortKey: -1751893136402
+      description: ""
+    children:
+      - name: products
+        meta:
+          id: fld_3efeb128eebd48fe947498d2310df046
+          created: 1684707433186
+          modified: 1751893190146
+          sortKey: -1751893146768
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/products"
+            name: Get products
+            meta:
+              id: req_0f403e132da84a28abde5e2953bac6ba
+              created: 1684707446297
+              modified: 1753884382085
+              isPrivate: false
+              description: ""
+              sortKey: -1684707446297
+            method: GET
+            body:
+              mimeType: application/json
+              text: "\n"
+            parameters:
+              - id: pair_82dbc019ab644759929eeb817187a299
+                name: is_manufacturing
+                value: "1"
+                description: ""
+                disabled: true
+              - id: pair_2179907f877f4bedb55d030177c80fa9
+                name: id
+                value: "116"
+                description: ""
+                disabled: true
+              - id: pair_6d1688fd665b475bbceed2e4930db01a
+                name: category_id
+                value: "19"
+                description: ""
+                disabled: true
+              - id: pair_5933c370acb6476d937fb840b386d702
+                name: code
+                value: "06081"
+                description: ""
+                disabled: true
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_9b8834f5ecbd47328eca514d2384790d
+              - id: pair_fe5e35e8a88143be8c24a1be0a2989f3
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/categories"
+            name: Get categories
+            meta:
+              id: req_277d2f5c1f154fbfab340096a3753d5f
+              created: 1684852288006
+              modified: 1740670530568
+              isPrivate: false
+              description: ""
+              sortKey: -1676332083442.5
+            method: GET
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Orders
+        meta:
+          id: fld_ab916339b3fe409aa1c5b37599ba80d3
+          created: 1685929581404
+          modified: 1751893180037
+          sortKey: -1751893146668
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/orders"
+            name: Orders post - get
+            meta:
+              id: req_f7dddd241fac425990d712ae4b262f40
+              created: 1684859297127
+              modified: 1751910314725
+              isPrivate: false
+              description: ""
+              sortKey: -1680519764869.75
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"order_details": [
+                		{
+                			"product_id": 3,
+                			"unit_id": 1,
+                			"quantity": 2
+                		}  
+                	]
+                }
+            parameters:
+              - id: pair_d0fa86c96de34652988486a045865c76
+                name: id
+                value: "423"
+                description: ""
+                disabled: true
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_41d9de2858034336a54214b1fc2840a2
+              - id: pair_9808a15c274640b3beb97776d279a594
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+              - id: pair_6fde1ed3e1eb4556a0f1d78dc35389c8
+                name: ""
+                value: ""
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/orders2/update/769"
+            name: Orders to update
+            meta:
+              id: req_6c5560c222db4e3586ff307e6760f484
+              created: 1685932313952
+              modified: 1751591481292
+              isPrivate: false
+              description: ""
+              sortKey: -1678425924156.125
+            method: POST
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                  "status": "ready_for_delivery"
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+            authentication:
+              type: bearer
+              token: "{{ _.token2 }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/patch"
+            name: Order details - patch
+            meta:
+              id: req_c4584159854e4786aae6aa8bff3e8a45
+              created: 1685935223426
+              modified: 1748124361512
+              isPrivate: false
+              description: ""
+              sortKey: -1677379003799.3125
+            method: PATCH
+            body:
+              mimeType: application/json
+              text: |-
+                { 
+                	"orders_details": [
+                		{
+                			"id": 5632,
+                			"quantity":2,
+                			"product_id":192,
+                			"unit_id":4,
+                			"operation": "update"
+                		} 
+                	]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_2642e5c8a54c41529e4e6194a4b175f4
+              - id: pair_60ca3db055b84903b19c3eeae31ad30e
+                name: Accept
+                value: applicaion/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token2 }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/to_try_order"
+            name: to test fifo
+            meta:
+              id: req_85cd813292314dad958db4fa91045353
+              created: 1744161208328
+              modified: 1744747663533
+              isPrivate: false
+              description: ""
+              sortKey: -1679472844512.9375
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {	
+                	"order_details": [
+                		{
+                			"product_id": 4314,
+                			"unit_id": 1,
+                			"quantity": 300
+                		}
+                	]
+                }
+            parameters:
+              - id: pair_d0fa86c96de34652988486a045865c76
+                name: id
+                value: "2103"
+                description: ""
+                disabled: true
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_41d9de2858034336a54214b1fc2840a2
+              - id: pair_9808a15c274640b3beb97776d279a594
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+              - id: pair_6fde1ed3e1eb4556a0f1d78dc35389c8
+                name: ""
+                value: ""
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/orders/8/pdf"
+            name: Export to PDF
+            meta:
+              id: req_9c493f93db244a3a93a7d92d4c51e67d
+              created: 1744335445079
+              modified: 1744882188720
+              isPrivate: false
+              description: ""
+              sortKey: -1679996304691.3438
+            method: GET
+            body:
+              mimeType: application/json
+              text: ""
+            parameters:
+              - id: pair_d0fa86c96de34652988486a045865c76
+                name: id
+                value: "2103"
+                description: ""
+                disabled: true
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_41d9de2858034336a54214b1fc2840a2
+              - id: pair_9808a15c274640b3beb97776d279a594
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+              - id: pair_6fde1ed3e1eb4556a0f1d78dc35389c8
+                name: ""
+                value: ""
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/testGetOrders"
+            name: "test get orders "
+            meta:
+              id: req_e3b4429f9231483b849035a94cf380a3
+              created: 1745339439490
+              modified: 1752519722768
+              isPrivate: false
+              description: ""
+              sortKey: -1745339439490
+            method: GET
+            parameters:
+              - id: pair_8690b4474406482e9923690b92936872
+                name: per_page
+                value: "50"
+                description: ""
+                disabled: false
+              - id: pair_ecf1bf6b1bc14c28b55d047c36ba3bd2
+                name: page
+                value: "1"
+                description: ""
+                disabled: false
+              - id: pair_744871a6a2a24d67b89ddae5848b1509
+                name: customer_id
+                value: "231"
+                description: ""
+                disabled: true
+              - id: pair_5ff74e0e7578409287f8d29f6c7c1abf
+                name: id
+                value: "304"
+                description: ""
+                disabled: true
+              - id: pair_e0d57f4d42b34046899a9518d6ef7c03
+                name: status
+                value: processing
+                description: ""
+                disabled: false
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_991d0d3047534324b80a5d81b03faeee
+              - id: pair_fe927a61bce4494084303d41cd931ba3
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token2 }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/testGetOrdersDetails/21"
+            name: test get orders  details
+            meta:
+              id: req_4089888a2b8a4543978bf4b57523d789
+              created: 1745353339829
+              modified: 1748592845615
+              isPrivate: false
+              description: ""
+              sortKey: -1743917607488
+            method: GET
+            parameters:
+              - id: pair_aeb1aece2494461189c4fb4533c695d1
+                name: ""
+                value: ""
+                description: ""
+                disabled: false
+            headers:
+              - name: User-Agent
+                value: insomnia/11.0.2
+                id: pair_991d0d3047534324b80a5d81b03faeee
+              - id: pair_fe927a61bce4494084303d41cd931ba3
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Reports
+        meta:
+          id: fld_6955aa61013a474fa4262a40b1147eb5
+          created: 1688410194989
+          modified: 1751893170822
+          sortKey: -1751893146568
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/v2/report_products"
+            name: Products report
+            meta:
+              id: req_146dc14398ea4463823ecfcad92c76b1
+              created: 1688410208638
+              modified: 1749912391780
+              isPrivate: false
+              description: ""
+              sortKey: -1688410208638
+            method: GET
+            parameters:
+              - id: pair_04741feec8f540bca168b52355c8aa2d
+                name: from_date
+                value: 2022-05-11
+                description: ""
+                disabled: true
+              - id: pair_bf966d91d33f4836a014fe8d3ef02632
+                name: to_date
+                value: 2023-07-30
+                description: ""
+                disabled: true
+              - id: pair_456f1094f7cc452794520a9bc3d164f5
+                name: branch_id
+                value: "3"
+                description: ""
+                disabled: false
+              - id: pair_ac6816bedd81444daf7195d0a1d79544
+                name: month
+                value: "7"
+                description: ""
+                disabled: true
+              - id: pair_f56fbd65d772449084bfeb2512a065d5
+                name: year
+                value: "2023"
+                description: ""
+                disabled: true
+            headers:
+              - id: pair_7c6b7089f15b449285042b4d13acfdb1
+                name: Accept
+                value: application/json
+                description: ""
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/getProductOrderQuantities"
+            name: product order quantities
+            meta:
+              id: req_ae32957691cf4282ab45b15eddc84bcd
+              created: 1748876684378
+              modified: 1751316655378
+              isPrivate: false
+              description: ""
+              sortKey: -1748876684378
+            method: GET
+            parameters:
+              - id: pair_778a1a34ce28407b8ef40efe9fd6b4ca
+                name: product_id
+                value: "1"
+                description: ""
+                disabled: false
+              - id: pair_6d2e9b1939cd4775bed83b62369c4923
+                name: branch_id
+                value: "2"
+                description: ""
+                disabled: false
+              - id: pair_43ef6b01923f4fd18f546d74a6569c47
+                name: from_date
+                value: 01-01-2025
+                description: ""
+                disabled: true
+              - id: pair_b1a80d7d828e44ad87237346be330a89
+                name: to_date
+                value: 25-10-2025
+                description: ""
+                disabled: true
+            headers:
+              - name: User-Agent
+                value: insomnia/11.1.0
+                id: pair_649006df874b4e85ab7a2482e1500450
+              - id: pair_cd9dbb8681144b3893036b8d83f059d8
+                name: accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/v2/report_products/details/27"
+            name: details
+            meta:
+              id: req_fb1087b3e21641d0b77aba2aae156565
+              created: 1749993485158
+              modified: 1749994922034
+              isPrivate: false
+              description: ""
+              sortKey: -1748855311633.5
+            method: GET
+            parameters:
+              - id: pair_778a1a34ce28407b8ef40efe9fd6b4ca
+                name: product_id
+                value: "1"
+                description: ""
+                disabled: true
+              - id: pair_6d2e9b1939cd4775bed83b62369c4923
+                name: branch_id
+                value: "2"
+                description: ""
+                disabled: false
+              - id: pair_a89dc43aa9af43cca72b2bb4331c1539
+                name: from_date
+                value: 2025-06-01
+                description: ""
+                disabled: false
+              - id: pair_2f1905d2cf2749468537445198551e60
+                name: to_date
+                value: 2025-06-30
+                description: ""
+                disabled: false
+            headers:
+              - name: User-Agent
+                value: insomnia/11.1.0
+                id: pair_649006df874b4e85ab7a2482e1500450
+              - id: pair_cd9dbb8681144b3893036b8d83f059d8
+                name: accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/purchaseReports"
+            name: Purchase Reports
+            meta:
+              id: req_ba880361a4604e2680b2cc1c4480038b
+              created: 1750193002757
+              modified: 1751305533564
+              isPrivate: false
+              description: ""
+              sortKey: -1686629082565.5
+            method: GET
+            parameters:
+              - id: pair_8e204311f8ae4cb38fd5b57a20c8631e
+                name: product_ids[]
+                value: "2"
+                description: ""
+                disabled: false
+              - id: pair_0051ce81ad4f437fa0438f22dcb54c7a
+                name: date_from
+                value: 01-06-2025
+                description: ""
+                disabled: false
+              - id: pair_bc7c18ee44a34bf2bc4ed0f5c77d567b
+                name: date_to
+                value: 01-07-2025
+                description: ""
+                disabled: false
+              - id: pair_909eed0978be4a87b4cf68d0f5e69da6
+                name: per_page
+                value: ""
+                description: ""
+                disabled: false
+            headers:
+              - id: pair_7c6b7089f15b449285042b4d13acfdb1
+                name: Accept
+                value: application/json
+                description: ""
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Inventory
+        meta:
+          id: fld_68bc5b808c5f40579425567ba8b6f763
+          created: 1741386328364
+          modified: 1751893152725
+          sortKey: -1751893146468
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/inventory/stockSupplyOrder"
+            name: Stock Supply
+            meta:
+              id: req_3415291e02fd442fb3505a49a69ee314
+              created: 1741386332837
+              modified: 1744874516273
+              isPrivate: false
+              description: ""
+              sortKey: -1741386332837
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"order_date": "2024-03-08",
+                	"notes": "Urgent order",
+                	"details": [
+                		{
+                			"product_id": 4315,
+                			"unit_id": 1,
+                			"quantity": 15
+                		}
+                	]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_c1a3ff8b06cc43ddb82450c5630240e9
+              - name: User-Agent
+                value: insomnia/10.3.1
+                id: pair_496b4f3caf594297ba67fb03176a1c78
+              - id: pair_451952af49334a2aa9d7f7c483cca774
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/inventory/minimumStockReport"
+            name: minimum stock qty
+            meta:
+              id: req_91023eea55f84d3595b7bedc530adacf
+              created: 1741732127157
+              modified: 1742686452242
+              isPrivate: false
+              description: ""
+              sortKey: -1741165614996.5
+            method: GET
+            body:
+              mimeType: application/json
+              text: |-
+                {
+                	"order_date": "2024-03-08",
+                	"notes": "Urgent order",
+                	"details": [
+                		{
+                			"product_id": 4,
+                			"unit_id": 3,
+                			"quantity": 15
+                		}
+                	]
+                }
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_c1a3ff8b06cc43ddb82450c5630240e9
+              - name: User-Agent
+                value: insomnia/10.3.1
+                id: pair_496b4f3caf594297ba67fb03176a1c78
+              - id: pair_451952af49334a2aa9d7f7c483cca774
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/inventory/inventoryReport"
+            name: Inventory report
+            meta:
+              id: req_80e6ff123eec4e7c847d1b84da2b513b
+              created: 1741732497405
+              modified: 1752098983672
+              isPrivate: false
+              description: ""
+              sortKey: -1741055256076.25
+            method: GET
+            body:
+              mimeType: application/json
+              text: ""
+            parameters:
+              - id: pair_7f2d630c23a84dfdb3e6baefcc3a4ce8
+                name: product_id
+                value: "1"
+                description: ""
+                disabled: false
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_c1a3ff8b06cc43ddb82450c5630240e9
+              - name: User-Agent
+                value: insomnia/10.3.1
+                id: pair_496b4f3caf594297ba67fb03176a1c78
+              - id: pair_451952af49334a2aa9d7f7c483cca774
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/inventory/productTracking"
+            name: Product Tracking
+            meta:
+              id: req_f4cd16166d6449f08e8887cd1531d391
+              created: 1741732962444
+              modified: 1752514797728
+              isPrivate: false
+              description: ""
+              sortKey: -1741000076616.125
+            method: GET
+            body:
+              mimeType: application/json
+              text: ""
+            parameters:
+              - id: pair_60916604e59541feaad6f51149fdd870
+                name: product_id
+                value: "1"
+                description: ""
+                disabled: false
+              - id: pair_9d2d98e002b24ee1875397005c2c07b0
+                name: store_id
+                value: "1"
+                description: ""
+                disabled: false
+              - id: pair_7c94f77097b7470fa5ccc9e6dcba3485
+                name: movement_type
+                value: out
+                description: ""
+                disabled: false
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_c1a3ff8b06cc43ddb82450c5630240e9
+              - name: User-Agent
+                value: insomnia/10.3.1
+                id: pair_496b4f3caf594297ba67fb03176a1c78
+              - id: pair_451952af49334a2aa9d7f7c483cca774
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/inventory/filters"
+            name: get filters
+            meta:
+              id: req_65af82e3cd994467b5b1336679badff5
+              created: 1744492312514
+              modified: 1744492339545
+              isPrivate: false
+              description: ""
+              sortKey: -1741027666346.1875
+            method: GET
+            body:
+              mimeType: application/json
+              text: ""
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_c1a3ff8b06cc43ddb82450c5630240e9
+              - name: User-Agent
+                value: insomnia/10.3.1
+                id: pair_496b4f3caf594297ba67fb03176a1c78
+              - id: pair_451952af49334a2aa9d7f7c483cca774
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+          - url: "{{ _.baseUrlGeneral }}/api/branchQuantities"
+            name: Branch Quantities
+            meta:
+              id: req_c491d19a0adb483d9335a61263bf8bd2
+              created: 1744503428565
+              modified: 1744504246450
+              isPrivate: false
+              description: ""
+              sortKey: -1740972486886.0625
+            method: GET
+            body:
+              mimeType: application/json
+              text: ""
+            parameters:
+              - id: pair_60916604e59541feaad6f51149fdd870
+                name: branch_id
+                value: "2"
+                description: ""
+                disabled: false
+            headers:
+              - name: Content-Type
+                value: application/json
+                id: pair_c1a3ff8b06cc43ddb82450c5630240e9
+              - name: User-Agent
+                value: insomnia/10.3.1
+                id: pair_496b4f3caf594297ba67fb03176a1c78
+              - id: pair_451952af49334a2aa9d7f7c483cca774
+                name: Accept
+                value: application/json
+                description: ""
+                disabled: false
+            authentication:
+              type: bearer
+              token: "{{ _.token }}"
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+      - name: Returned Orders
+        meta:
+          id: fld_230da0c66af34e1c8a702000cc6e3a65
+          created: 1750193386826
+          modified: 1751893146498
+          sortKey: -1751893146368
+          description: ""
+        children:
+          - url: "{{ _.baseUrlGeneral }}/api/returnedOrders"
+            name: get
+            meta:
+              id: req_290a9ac934504421ba0f613f2e2e0e01
+              created: 1750193391436
+              modified: 1750269965817
+              isPrivate: false
+              description: ""
+              sortKey: -1750193391436
+            method: GET
+            parameters:
+              - id: pair_1f411a32b848481cbd66580a5ba8634b
+                name: status
+                value: approved
+                description: ""
+                disabled: false
+            headers:
+              - name: User-Agent
+                value: insomnia/11.2.0
+                id: pair_1a16def9d79b4b408eca7846a501f23c
+              - id: pair_36ba119272284eefb92d7d54d0619335
+                name: accept
+                value: application/json
+                description: ""
+                disabled: false
+            settings:
+              renderRequestBody: true
+              encodeUrl: true
+              followRedirects: global
+              cookies:
+                send: true
+                store: true
+              rebuildPath: true
+  - name: "Testing AWS "
+    meta:
+      id: fld_daef7d960b334ea5b7c33a6ca7d046b9
+      created: 1752863618024
+      modified: 1752863618024
+      sortKey: -1752863618024
+      description: ""
+    children:
+      - url: http://localhost:8080/api/aws/employee-liveness/start-session
+        name: Start Session
+        meta:
+          id: req_23a12858ae184b1e8e9cf723efbf6240
+          created: 1752863621522
+          modified: 1752885731316
+          isPrivate: false
+          description: ""
+          sortKey: -1752863621522
+        method: POST
+        body:
+          mimeType: application/json
+          text: "\t"
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_5f1bb5de9c834f7c823d3c04011dc7f5
+          - name: User-Agent
+            value: insomnia/11.3.0
+            id: pair_535de37172864e4497ddfc297fd55b30
+          - id: pair_3e166932af8243c7b574ee37d5ce019d
+            name: Accept
+            value: applicatoin/json
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: http://localhost:8080/api/aws/employee-liveness/check-session
+        name: Check Session
+        meta:
+          id: req_ef0463fd99eb4b608592fb4437f015da
+          created: 1752863711293
+          modified: 1752867087744
+          isPrivate: false
+          description: ""
+          sortKey: -1752378195468
+        method: GET
+        body:
+          mimeType: application/json
+          text: |-
+            
+            {
+              "sessionId": "1acd16fa-a1a6-4561-ac71-6ff9cb39c455" 
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+            id: pair_5f1bb5de9c834f7c823d3c04011dc7f5
+          - name: User-Agent
+            value: insomnia/11.3.0
+            id: pair_535de37172864e4497ddfc297fd55b30
+          - id: pair_3e166932af8243c7b574ee37d5ce019d
+            name: Accept
+            value: applicatoin/json
+            description: ""
+            disabled: false
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_673368f870667dc3bfd05c909974dea33d6902b0
+    created: 1736813457486
+    modified: 1743541419094
+  cookies:
+    - key: XSRF-TOKEN
+      value: eyJpdiI6IkJkeHJ3RlNjT1czY3ZzWWI1NWMwOWc9PSIsInZhbHVlIjoiUms1bkY5LytaOTBYU0RKLzBRUHdCOUg2bTQ1UjV5c1ZDSW1ueTBvNklzRVYvK0tRT3dPWmhRQVFHbkFhSlhPVFV4VHRnc05DK25xanl3Z1hCeTc3ellsdHR1NHlvYlZHcUJOeEQvdjZOT2d0NTlkN1pZRHRYcDVZSXhSZ2M0RGMiLCJtYWMiOiJjMGI4YzA5MDRlYWU1YTg3MGNiOTM0OTcwMWEyNTU1YTU4NDk0YjVmMTEwYTdiOWMzNDhjOTM1ZjY1NjMwN2U3IiwidGFnIjoiIn0%3D
+      maxAge: 7200
+      domain: 127.0.0.1
+      path: /
+      hostOnly: true
+      creation: 2025-03-26T20:35:58.374Z
+      lastAccessed: 2025-03-26T20:36:21.658Z
+      sameSite: lax
+      id: f8f55425-db4c-4b9e-a532-c53b8f453479
+    - key: workbench_session
+      value: eyJpdiI6IkNvSk1Ga2loUUdMM2VwT1Q4ZXplVlE9PSIsInZhbHVlIjoid3RGOWR4Vm5nTm8xS2hCT3hPV1lLaUVhNDRFWitRUmZ4TjY4UWQ3bC9LMld6c2VkSGFOekRhOUl1SGdteDhUbTdiR3hvVGRlMTVXTjM1eEwvaUtmR0h2TnFHcUgvZ0sySWdyeFliazN4ZTZrSDFkcy9lSysrQzNNd0RwenhOV3UiLCJtYWMiOiI4NTQzYzMxNjQ4MWI2NzM2Yzk4OGU2ZmI3MGZhZGZiN2YyMjM1MGE3NDViMDdjZjg3NjhiYmRlOTMyNTdkYWFkIiwidGFnIjoiIn0%3D
+      maxAge: 7200
+      domain: 127.0.0.1
+      path: /
+      httpOnly: true
+      hostOnly: true
+      creation: 2025-03-26T20:35:58.374Z
+      lastAccessed: 2025-03-26T20:36:21.658Z
+      sameSite: lax
+      id: c7e58cb9-d7d5-4682-bc6c-b0dc14488b05
+    - key: XSRF-TOKEN
+      value: eyJpdiI6IjBXUUlXdmFBZ3FwNGtvY3UzOWpRYlE9PSIsInZhbHVlIjoibG10SUpOeER4eW9UOHk1d1dybW82NXg4MEZVMWJUSU12U1l2ZWJGMGpvTDk3dlVQSDZxcjFZS2I1eG1RNUVaWHFKcTNwTXgyNHlkWTZLVmFIcWpGOXVuLzFtTkNXMUNlSS9aOGk3RkRzOXEzMlJtNTM3cGVYajBlOFlOTzhneUsiLCJtYWMiOiI5NWZiZTMzZTY5M2MyN2ZhNGVmMWMyZjhmYjQ2M2RhNDQ0YzY4YTZiN2YzYjYxNDQ5NDg4ZDljZDlmMWQ1MjgxIiwidGFnIjoiIn0%3D
+      maxAge: 86400
+      domain: nlt.nltworkbench.com
+      path: /
+      secure: true
+      hostOnly: true
+      creation: 2025-04-01T21:03:39.090Z
+      lastAccessed: 2025-04-01T21:03:39.093Z
+      sameSite: lax
+      id: f1e36795-42b3-4cac-aa16-17cec9788c07
+    - key: workbench_session
+      value: eyJpdiI6IlFKOVZDZkFlMTVrYkZGMkdtL3BsRHc9PSIsInZhbHVlIjoiNlVoU0pJUDl5TUxqeENsSDBhSE1pTWlHT0hBbG9VaFBiWHl5L0NMeVlPVlVrNUc5NWh2em1QcUxBM09hdVVBQkU2TXo5aGZUa0RLY1YxNXRMTXlsdVVOb2dsNS9zbmdUYlhDVExaYVo0MFE2czFQUkJ1eVVKWnR2b0ZmeS9scTMiLCJtYWMiOiJjMjFkOWM3NzYzMzY1YzljZWFmNzhhNzZlMDIyNzk3MjdkNjFiNDcxNDE3MzBhODZkOGJmNjQ2ZDc1ZjEzZGEwIiwidGFnIjoiIn0%3D
+      maxAge: 86400
+      domain: nlt.nltworkbench.com
+      path: /
+      secure: true
+      httpOnly: true
+      hostOnly: true
+      creation: 2025-04-01T21:03:39.092Z
+      lastAccessed: 2025-04-01T21:03:39.093Z
+      sameSite: lax
+      id: 2814c572-904b-42b2-b5ad-7df67bc0a5f9
+environments:
+  name: Base Environment
+  meta:
+    id: env_673368f870667dc3bfd05c909974dea33d6902b0
+    created: 1736813457484
+    modified: 1736813457484
+    isPrivate: false
+  subEnvironments:
+    - name: baseurl
+      meta:
+        id: env_12f919371e834eee8c67297167bae671
+        created: 1687328506652
+        modified: 1754258179364
+        isPrivate: false
+        sortKey: 1687328506652
+      data:
+        baseUrlGeneral: http://127.0.0.1:7000
+        token: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI2IiwianRpIjoiZTliNmIwOGEyOGExZjAyMDkxMzdmMDgyNmI3NTFmYzQ4ZDRiNzFmMGYxNGUxNDZlMzM3ZWY1YzZkMTQyOWNjNzMxOTczMTY3MDNiZWExZDYiLCJpYXQiOjE3NTQxNzQ0MzYuOTEzODM0LCJuYmYiOjE3NTQxNzQ0MzYuOTEzODM3LCJleHAiOjE3ODU3MTA0MzYuNjgwNzQ1LCJzdWIiOiIxMjgiLCJzY29wZXMiOltdfQ.buPlkLcVW8tdqiOSFrE0cIBQpeNNppqlc3Er6dqJuLUHN3MVKq_ImQKOzJUd6R-QEBTK5ypWegcYfwWCFzRDn3jjEds-4b2J-0WbTCPEsL9zpHDeI3L2UdXx0VdwkwHln2RrPHqY1kv42WQ6YqtBSRAx6TLHcnJACtofe0z0a7fL36oBZmoD3SlAjkfdE8lpLygYamOk5NoPWewgZX0SHwuZcWZGHlAJg6I9K4XEirAZ3VSpYtlEzjdvQybir2u4AKnWVuoxjnycSH2R5oT7L3Y7wwBME8Fc1jGNWeHt-gfMIT8XMtSfim3uz-K0To098s7v5DF3oKPZHowK7SIBx5pJ1iJwWfMsl_nGyFuO1zbeGhLzRpls0VDPU6rsNr9hWu-tfXdzG_eWFyLoa6ybR2fCuBbFazV2obKE2srHdeT4V7S2AffkyNyZ8zIGUJi20YuCzdlhona7n1g6pAI6N-ijAX5z1tVr8jKVu9YwwePAc9iMvEXFa6NtLi4FLPdHX1PiFRiDLCb22G47uapnWPkn7BXASIKDyuvsqL-_dmhlVy-8MgG2g30SkuslwxVp5L2qqS1xMmZr1hskIaArcBrDp3AlI7nH1O8kkWgWJLaoWmvZxs_5H0zjA4vhqA3No--5Tj6I27mrTgZhzSFNT60WEmeeN6aNYapwKmJ5Qwc
+        token2: eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI2IiwianRpIjoiZjBmMzVkM2VlMGFkMDEzMjg0YTA0Y2FjNThlNGM1MGNlNzM0YTYxMWY0M2Q1YWU0NDg0MzVmNDczYmE3NGU1YzZjYmUzYjU5OGQ3YWM2MDEiLCJpYXQiOjE3NTI1MTk2NzMuNzExOTI5LCJuYmYiOjE3NTI1MTk2NzMuNzExOTMxLCJleHAiOjE3ODQwNTU2NzMuNzA3NDE1LCJzdWIiOiIzOTMiLCJzY29wZXMiOltdfQ.U3EPSgIiut2cv3OI2cKtBBmsf8RwSqPJbqWfej04Q2Ej7GhTSuCbwY1WqIiK9rexsqE_3H5eV4aGbWJUkIWI__2O6y5yZAoSUrejWlUWKWhj4Xrr4OvkKPj8JBZg5ktOCek4gLVuJoeeSEviImfX5yIfpaW7bhLymkod0F7VhjhIIKpieG8WxV5el-YztkiZZVe0-B-jDy80w3NWnYj1R5xuwoPwkKs39qSvjLYW766OJf1jT4DdnhtjomYhYW5-PaTpuPwb7Fa_zZk4_sgAs9zPrNlXBKNzkeeLeTfkbO-YzerT_eqx7m8raHYlsfdlvGiLYGMrryJuATMGGXNzLCKYH5Lo4ExlcK1Ce24Otu-zWj4wPYWEDplaGzeLEKtVGQUdee6RWE4od2a4Hk9eAaikn0tPcswORtEgnzYeUrV27j9MZWaWvYQFj-qUU-AzL5mDu1OFPOowENQjJE5BmbA9GOiAjufnMN5fNXqMMw_J3BYtN3eZFwc_A475hRgd8rqrQPXU7W-Kmf2RHfJRNfYFZjXRmEe_hVk0_AX0D7PqcVTvjGtJ2yzLDQcs1Fx97OlO1P6pjm9hcjdaLzKhzlV8xEUO-vf43hvMKLOCpjJngyIFbeHLPrqf1P2sHrUCMFoxhK0R62u39nDI3FIk46JGQAmrdFXwrsX6PZKMYJw
+      color: "#000000"
