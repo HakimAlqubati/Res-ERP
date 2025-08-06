@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repositories\HR\Salary;
 
 use App\Models\SalaryTransaction;
@@ -13,6 +14,15 @@ class SalaryTransactionRepository
         if (empty($data['currency'])) {
             $data['currency'] = SalaryTransaction::defaultCurrency();
         }
+        // ✅ إضافة السنة والشهر من التاريخ إن لم يتم تمريرهم
+        if (!isset($data['year'])) {
+            $data['year'] = \Carbon\Carbon::parse($data['date'])->year;
+        }
+
+        if (!isset($data['month'])) {
+            $data['month'] = \Carbon\Carbon::parse($data['date'])->month;
+        }
+
         // تأكد أن المبلغ دائماً موجب!
         $data['amount'] = abs($data['amount']);
 

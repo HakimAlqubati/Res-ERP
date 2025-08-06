@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\AttendanceHelpers\Reports;
 
 use App\Enums\HR\Attendance\AttendanceReportStatus;
@@ -13,6 +14,7 @@ class HelperFunctions
             'partial'      => 0,
             'no_periods'   => 0,
             'leave'        => 0,
+            'required_days' => 0,
             'total_days'   => 0,
         ];
 
@@ -26,18 +28,28 @@ class HelperFunctions
 
             // احسب نوع اليوم
             switch ($data['day_status'] ?? null) {
-                case AttendanceReportStatus::Present->value: $stats['present_days']++;
+                case AttendanceReportStatus::Present->value:
+                    $stats['present_days']++;
+                    $stats['required_days']++;
                     break;
-                case AttendanceReportStatus::Absent->value: $stats['absent']++;
+                case AttendanceReportStatus::Absent->value:
+                    $stats['absent']++;
+                    $stats['required_days']++;
                     break;
-                case AttendanceReportStatus::Partial->value: $stats['partial']++;
+                case AttendanceReportStatus::Partial->value:
+                    $stats['partial']++;
+                    $stats['required_days']++;
                     break;
-                case AttendanceReportStatus::Leave->value: $stats['leave']++;
+                case AttendanceReportStatus::Leave->value:
+                    $stats['leave']++;
+                    $stats['required_days']++;
                     break;
-                case AttendanceReportStatus::NoPeriods->value: $stats['no_periods']++;
+                case AttendanceReportStatus::NoPeriods->value:
+                    $stats['no_periods']++;
                     break;
 
-                default: $stats['no_periods']++;
+                default:
+                    $stats['no_periods']++;
                     break;
             }
         }
@@ -46,7 +58,7 @@ class HelperFunctions
     }
 
     public static function getAttendanceChartData($reportData, $employee = null)
-    { 
+    {
         $statuses = [
             AttendanceReportStatus::Present,
             AttendanceReportStatus::Absent,

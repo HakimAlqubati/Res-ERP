@@ -50,6 +50,7 @@ class Employee extends Model implements Auditable
         'working_hours',
         'manager_id',
         'is_ceo',
+        'working_days',
     ];
 
     /**

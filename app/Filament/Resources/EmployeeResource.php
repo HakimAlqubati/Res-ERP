@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\HRCluster;
@@ -18,6 +19,7 @@ use App\Models\EmployeeFileType;
 use App\Models\EmployeeFileTypeField;
 use App\Models\MonthlyIncentive;
 use App\Models\Position;
+use App\Models\Setting;
 use App\Models\UserType;
 use App\Services\S3ImageService;
 use Closure;
@@ -113,7 +115,7 @@ class EmployeeResource extends Resource
                                             ->unique(ignoreRecord: true)
                                             ->columnSpan(1)
 
-                                        // ->numeric()
+                                            // ->numeric()
                                             ->maxLength(14)->minLength(8),
 
                                         // PhoneInput::make('phone_number')
@@ -147,9 +149,23 @@ class EmployeeResource extends Resource
                                         // ->nullable(),
                                         TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
 
+                                        // TextInput::make('working_days')
+                                        //     ->label('Working Days per Month')
+                                        //     ->numeric()
+                                        //     ->minValue(1)
+                                        //     ->maxValue(31)
+                                        //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
+
+                                        // TextInput::make('working_hours')
+                                        //     ->label('Working Hours per Day')
+                                        //     ->numeric()
+                                        //     ->minValue(1)
+                                        //     ->maxValue(24)
+                                        //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
+
                                         Select::make('nationality')
                                             ->label('Nationality')->live()
-                                        // ->required()
+                                            // ->required()
                                             ->options(getNationalities())
                                             ->searchable(),
 
@@ -192,7 +208,7 @@ class EmployeeResource extends Resource
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
                                             ->required()
-                                        // ->disabledOn('edit')
+                                            // ->disabledOn('edit')
                                             ->live()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Toggle::make('is_ceo')->label('is_ceo')
@@ -203,12 +219,12 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
                                             ->label('Manager')
                                             ->searchable()
-                                        // ->requiredIf('is_ceo', false)
+                                            // ->requiredIf('is_ceo', false)
                                             ->options(function ($get) {
                                                 $branchId = $get('branch_id');
                                                 // if ($branchId) {
                                                 return Employee::active()
-                                                // ->forBranch($branchId)
+                                                    // ->forBranch($branchId)
                                                     ->pluck('name', 'id');
                                                 // }
                                                 return [];
@@ -222,7 +238,7 @@ class EmployeeResource extends Resource
                                                 $branchId = $get('branch_id');
                                                 // if ($branchId) {
                                                 return Department::where('active', 1)
-                                                // ->forBranch($branchId)
+                                                    // ->forBranch($branchId)
                                                     ->select('id', 'name')->get()->pluck('name', 'id');
                                                 // }
                                                 return Department::where('active', 1)
@@ -271,7 +287,7 @@ class EmployeeResource extends Resource
                                                 ->label('Attach File')
                                                 ->downloadable()
                                                 ->previewable()
-                                            // ->required()
+                                                // ->required()
                                                 ->imageEditor()
                                                 ->circleCropper(),
                                         ]),
@@ -367,7 +383,7 @@ class EmployeeResource extends Resource
                                         ])
                                         ->collapsed()
                                         ->minItems(0)         // Set the minimum number of items
-                                                          // Optional: set the maximum number of items
+                                        // Optional: set the maximum number of items
                                         ->defaultItems(1)     // Default number of items when the form loads
                                         ->columnSpan('full'), // Adjust the span as necessary
                                 ]),
@@ -465,7 +481,7 @@ class EmployeeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'asc')
             ->columns([
-                ImageColumn::make('avatar_image')->label('')
+                ImageColumn::make('avatar_image')->label('')->hidden()
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
@@ -510,7 +526,7 @@ class EmployeeResource extends Resource
                     ->searchable(isIndividual: false, isGlobal: false),
                 TextColumn::make('salary')->sortable()->label('Salary')
                     ->sortable()->searchable()
-                // ->money(fn(): string => getDefaultCurrency())
+                    // ->money(fn(): string => getDefaultCurrency())
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
@@ -522,7 +538,7 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
 
                     ->color('info') // لإظهار أن النص قابل للنقر
-                                // اختياري: أيقونة مشاهدة
+                // اختياري: أيقونة مشاهدة
 
                 ,
 
@@ -637,11 +653,11 @@ class EmployeeResource extends Resource
                         FileUpload::make('file')
                             ->label('Select Excel file'),
                     ])->extraModalFooterActions([
-                    ActionsAction::make('downloadexcel')->label(__('Download Example File'))
-                        ->icon('heroicon-o-arrow-down-on-square-stack')
-                        ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
-                        ->openUrlInNewTab(),
-                ])
+                        ActionsAction::make('downloadexcel')->label(__('Download Example File'))
+                            ->icon('heroicon-o-arrow-down-on-square-stack')
+                            ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
+                            ->openUrlInNewTab(),
+                    ])
                     ->color('success')
                     ->action(function ($data) {
 
@@ -763,7 +779,7 @@ class EmployeeResource extends Resource
                     \Filament\Tables\Actions\Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
                         ->label('Change Branch') // Label for the action button
                         ->visible(isSystemManager() || isSuperAdmin())
-                                                             // ->icon('heroicon-o-annotation') // Icon for the button
+                        // ->icon('heroicon-o-annotation') // Icon for the button
                         ->modalHeading('Change Employee Branch') // Modal heading
                         ->modalButton('Save')                    // Button inside the modal
                         ->form([
@@ -822,7 +838,7 @@ class EmployeeResource extends Resource
             'create'            => Pages\CreateEmployee::route('/create'),
             'edit'              => Pages\EditEmployee::route('/{record}/edit'),
             'org_chart'         => OrgChart::route('/org_chart'),
-                                                                                                 // 'view' => Pages\ViewEmployee::route('/{record}'),
+            // 'view' => Pages\ViewEmployee::route('/{record}'),
             'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here
 
         ];
@@ -846,7 +862,7 @@ class EmployeeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-        // ->where('role_id',8)
+            // ->where('role_id',8)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
@@ -901,12 +917,12 @@ class EmployeeResource extends Resource
         return FileUpload::make('avatar')
             ->image()
             ->label('')
-        // ->avatar()
+            // ->avatar()
             ->imageEditor()
 
             ->circleCropper()
-        // ->disk('public')
-        // ->directory('employees')
+            // ->disk('public')
+            // ->directory('employees')
             ->visibility('public')
             ->imageEditorAspectRatios([
                 '16:9',
@@ -918,7 +934,7 @@ class EmployeeResource extends Resource
             ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                 return Str::random(15) . "." . $file->getClientOriginalExtension();
             })
-        // ->imagePreviewHeight('250')
+            // ->imagePreviewHeight('250')
             ->resize(5)
             ->maxSize(333)
             ->columnSpan(2)
@@ -931,7 +947,7 @@ class EmployeeResource extends Resource
 
         try {
             foreach ($images as $image) {
-                                                          
+
 
                 \App\Models\EmployeeFaceData::create([
                     'employee_id'        => $employee->id,
@@ -951,7 +967,6 @@ class EmployeeResource extends Resource
                 ->body('Face images uploaded and indexed successfully.')
                 ->success()
                 ->send();
-
         } catch (\Throwable $th) {
             DB::rollBack();
 
@@ -968,14 +983,13 @@ class EmployeeResource extends Resource
         }
     }
 
-/**
- * Temporary function to simulate face embedding generation.
- */
+    /**
+     * Temporary function to simulate face embedding generation.
+     */
     protected static function generateFakeEmbedding(): array
     {
         return array_map(function () {
             return round(mt_rand() / mt_getrandmax(), 6);
         }, range(1, 128));
     }
-
 }

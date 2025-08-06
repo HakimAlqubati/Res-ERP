@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SettingResource\Pages;
@@ -97,12 +98,12 @@ class SettingResource extends Resource
 
                                     TextInput::make("early_attendance_minutes")
                                         ->label('Early arrival minutes')
-                                    // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
+                                        // ->helperText('The number of minutes before the scheduled start time that is considered early attendance.')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("pre_end_hours_for_check_in_out")
                                         ->label('Pre-period action hours')
-                                    // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
+                                        // ->helperText('Number of hours remaining before period end to trigger an action if check-in or check-out is not recorded')
                                         ->numeric()
                                         ->required(),
                                     TextInput::make("early_depature_deduction_minutes")
@@ -126,6 +127,30 @@ class SettingResource extends Resource
                                     ]),
                                 ]),
                                 Fieldset::make()->label('Salary')->columns(4)->schema([
+                                    // Select::make('working_policy_mode')
+                                    //     ->label('Working Hours Policy Mode')
+                                    //     ->helperText('Choose whether working hours/days are applied globally or customized per employee')
+                                    //     ->options([
+                                    //         'global' => 'Global (same for all employees)',
+                                    //         'custom_per_employee' => 'Custom Per Employee',
+                                    //     ])
+                                    //     ->default('global')->live()
+                                    //     ->required(),
+
+                                    // TextInput::make('default_employee_working_days')
+                                    //     ->label('Default Working Days per Month')
+                                    //     ->helperText('Used only when Working Policy Mode is set to Global')
+                                    //     ->numeric()->visible(fn(Get $get): bool => $get('working_policy_mode') == 'global')
+                                    //     ->default(26)
+                                    //     ->required(),
+
+                                    // TextInput::make('default_employee_working_hours')
+                                    //     ->label('Default Working Hours per Day')
+                                    //     ->helperText('Used only when Working Policy Mode is set to Global')
+                                    //     ->numeric()->visible(fn(Get $get): bool => $get('working_policy_mode') == 'global')
+                                    //     ->default(8)
+                                    //     ->required(),
+
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
 
                                     TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),
@@ -163,6 +188,7 @@ class SettingResource extends Resource
                                     ]),
 
                                 ]),
+
                                 Fieldset::make()->label('Payroll Closing Settings')->columns(4)->schema([
                                     Select::make('payroll_closing_method')
                                         ->label('Payroll Closing Method')
@@ -206,42 +232,41 @@ class SettingResource extends Resource
                                         ->default(2)
                                         ->numeric()
                                         ->helperText('How many days before closing should the system notify HR?'),
-                                ])
-                                ,
+                                ]),
                                 Fieldset::make()->label('Face rekognation settings')
                                     ->hidden(fn(): bool => isFinanceManager())
                                     ->columns(4)->schema([
-                                    Select::make('timeout_webcam_value')
-                                        ->label('Camera Auto-Off Timer (minutes)')
-                                        ->options([
-                                            '30000'  => 'Half Minute',
-                                            '60000'  => 'One Minute',
-                                            '120000' => 'Two Minutes',
-                                            '180000' => 'Three Minutes',
-                                            '300000' => 'Five Minutes',
-                                            '600000' => 'Ten Minutes',
-                                        ])
-                                        ->default('30000')
-                                        ->native(false)
-                                        ->required()
-                                        ->helperText('Select the camera timeout duration.'),
-                                    Select::make('webcam_capture_time')
-                                        ->label('Image Capture Delay (Seconds)')
-                                        ->options([
-                                            '500'   => 'Half a Second',
-                                            '1000'  => 'One Second',
-                                            '2000'  => 'Two Seconds',
-                                            '3000'  => 'Three Seconds',
-                                            '5000'  => 'Five Seconds',
-                                            '7000'  => 'Seven Seconds',
-                                            '8000'  => 'Eight Seconds',
-                                            '10000' => 'Ten Seconds',
-                                        ])
-                                        ->default('1000') // Default to 1 second
-                                        ->helperText('Choose the delay before capturing an image.')
-                                        ->native(false)
-                                        ->required(),
-                                ]),
+                                        Select::make('timeout_webcam_value')
+                                            ->label('Camera Auto-Off Timer (minutes)')
+                                            ->options([
+                                                '30000'  => 'Half Minute',
+                                                '60000'  => 'One Minute',
+                                                '120000' => 'Two Minutes',
+                                                '180000' => 'Three Minutes',
+                                                '300000' => 'Five Minutes',
+                                                '600000' => 'Ten Minutes',
+                                            ])
+                                            ->default('30000')
+                                            ->native(false)
+                                            ->required()
+                                            ->helperText('Select the camera timeout duration.'),
+                                        Select::make('webcam_capture_time')
+                                            ->label('Image Capture Delay (Seconds)')
+                                            ->options([
+                                                '500'   => 'Half a Second',
+                                                '1000'  => 'One Second',
+                                                '2000'  => 'Two Seconds',
+                                                '3000'  => 'Three Seconds',
+                                                '5000'  => 'Five Seconds',
+                                                '7000'  => 'Seven Seconds',
+                                                '8000'  => 'Eight Seconds',
+                                                '10000' => 'Ten Seconds',
+                                            ])
+                                            ->default('1000') // Default to 1 second
+                                            ->helperText('Choose the delay before capturing an image.')
+                                            ->native(false)
+                                            ->required(),
+                                    ]),
 
                             ])
                             ->hidden(function () {
@@ -266,7 +291,7 @@ class SettingResource extends Resource
                                         ->helperText('Yellow card indicates task rejection limit')
                                         ->default(1),
                                     Select::make('task_red_card_penalty_type')->required()
-                                    // ->text('-select a panality-')
+                                        // ->text('-select a panality-')
                                         ->native(false)
                                         ->reactive()
                                         ->label('Penalty Type for Red Card')
@@ -302,8 +327,8 @@ class SettingResource extends Resource
 
                                 // ]),
                             ])->hidden(function () {
-                            return hideHrForTenant();
-                        }),
+                                return hideHrForTenant();
+                            }),
                         Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
@@ -321,7 +346,7 @@ class SettingResource extends Resource
                                     Toggle::make('purchase_invoice_from_grn_only')
                                         ->inline(false)->columnSpanFull()
                                         ->label('Enable GRN')
-                                    // ->helperText('If enabled, purchase invoices can be created through GRN.')
+                                        // ->helperText('If enabled, purchase invoices can be created through GRN.')
                                         ->default(false),
                                     Select::make('grn_entry_role_id')->multiple()
                                         ->label('Role Allowed to Create GRN')
@@ -372,7 +397,7 @@ class SettingResource extends Resource
                                         //     ->helperText(__('system_settings.note_if_order_completed_if_not_qty')),
                                         Toggle::make('enable_user_orders_to_store')->inline(false)
                                             ->label(__('system_settings.enable_user_orders_to_store'))
-                                        // ->onIcon('heroicon-s-lightning-bolt')
+                                            // ->onIcon('heroicon-s-lightning-bolt')
                                             ->offIcon('heroicon-s-user')
                                             ->onColor('success')
                                             ->offColor('danger')

@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
 use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
+use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use App\Services\HR\Attendance\AttendanceService;
 use Aws\DynamoDb\DynamoDbClient;
 use Aws\Rekognition\RekognitionClient;
@@ -18,12 +19,13 @@ class AttendanceController extends Controller
 {
     protected AttendanceService $attendanceService;
     protected $attendanceFetcher;
+    protected EmployeesAttendanceOnDateService $employeesAttendanceOnDateService;
 
-    public function __construct(AttendanceService $attendanceService)
+    public function __construct(AttendanceService $attendanceService, EmployeesAttendanceOnDateService $employeesAttendanceOnDateService)
     {
         $this->attendanceService = $attendanceService;
         $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
-
+        $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
     }
 
     public function store(Request $request)
@@ -100,12 +102,32 @@ class AttendanceController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    public function employeesAttendanceOnDate(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_ids' => 'required|array',
+            'date'         => 'required|date',
+        ]);
+
+        $employeeIds = $validated['employee_ids'];
+        $date = $validated['date'];
+
+        $attendanceReports = $this->employeesAttendanceOnDateService->fetchAttendances($employeeIds, $date);
+
+        return response()->json([
+            'status'  => 'success',
+            'data'    => $attendanceReports,
+        ]);
+    }
+
     private function formatDuration($totalMinutes)
     {
         $hours   = intdiv($totalMinutes, 60);
         $minutes = $totalMinutes % 60;
         return "{$hours} h {$minutes} m";
     }
+
     public function identifyEmployeeFromImage(Request $request)
     {
         $request->validate([

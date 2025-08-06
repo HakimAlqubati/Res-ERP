@@ -66,14 +66,19 @@ class ListEmployeesAttednaceReport extends ListRecords
         $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
         $reports = $service->fetchAttendances($employeeIds, $date);
 
+        // dd($reports);
         // بعد جلب التقارير:
         $employees = $reports->map(function ($item) {
             // تحويل attendance_report إلى مصفوفة (لأنها Collection)
             $attendance_report = $item['attendance_report']->map(function ($dayData) {
-                // periods أيضًا Collection — حولها إلى Array
-                $dayData['periods'] = isset($dayData['periods'])
-                ? (is_a($dayData['periods'], 'Illuminate\Support\Collection') ? $dayData['periods']->toArray() : $dayData['periods'])
-                : [];
+                if (!is_array($dayData)) {
+                    return []; // أو يمكنك تسجيل خطأ أو تجاهله حسب الحاجة
+                }
+            
+                $dayData['periods'] = isset($dayData['periods']) && $dayData['periods'] instanceof \Illuminate\Support\Collection
+                    ? $dayData['periods']->toArray()
+                    : (is_array($dayData['periods'] ?? null) ? $dayData['periods'] : []);
+            
                 return $dayData;
             })->toArray();
 
