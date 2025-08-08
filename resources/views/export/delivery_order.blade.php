@@ -176,10 +176,10 @@
         <thead>
             <tr>
                 <th style="width: 5%">#</th>
-                <th style="width: 55%">Code</th>
-                <th style="width: 55%">Product</th>
-                <th style="width: 20%">UNIT</th>
-                <th style="width: 20%">QTY</th>
+                <th style="width: 15%">Code</th>
+                <th style="width: 50%">Product</th>
+                <th style="width: 15%">UNIT</th>
+                <th style="width: 15%">QTY</th>
             </tr>
         </thead>
         <tbody>
