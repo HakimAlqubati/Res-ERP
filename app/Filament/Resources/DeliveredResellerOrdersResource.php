@@ -193,14 +193,14 @@ class DeliveredResellerOrdersResource extends Resource
 
                         $deliveryInfo = $record->getDeliveryInfo();
 
-                        if (!$deliveryInfo) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Cannot generate PDF')
-                                ->body('Order must be delivered first.')
-                                ->danger()
-                                ->send();
-                            return null;
-                        }
+                        // if (!$deliveryInfo) {
+                        //     \Filament\Notifications\Notification::make()
+                        //         ->title('Cannot generate PDF')
+                        //         ->body('Order must be delivered first.')
+                        //         ->danger()
+                        //         ->send();
+                        //     return null;
+                        // }
 
                         $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('export.delivery_order', compact('deliveryInfo'));
 
