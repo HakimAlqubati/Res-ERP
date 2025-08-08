@@ -159,7 +159,7 @@
         <table>
             <tr>
                 <td style="width: 300px;">
-                    {{ $deliveryInfo['branch_address'] }}
+                    {{ $deliveryInfo['branch_address'] ?? '' }}
                 </td>
             </tr>
         </table>
