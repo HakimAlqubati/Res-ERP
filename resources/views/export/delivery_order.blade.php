@@ -155,7 +155,7 @@
 
     <div class="section">
         <strong>To:</strong><br>
-        <div><strong>{{ $deliveryInfo['customer_name'] }}</strong></div>
+        <div><strong>{{ $deliveryInfo['customer_name'] ?? '' }}</strong></div>
         <table>
             <tr>
                 <td style="width: 300px;">
