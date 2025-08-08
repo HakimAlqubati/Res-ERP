@@ -42,7 +42,7 @@ class StockTransferOrderResource extends Resource
                         Select::make('from_store_id')
                             ->label('From Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
-                            ->required()
+                            ->required()->searchable()
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 $details = collect($get('details') ?? [])
@@ -63,7 +63,7 @@ class StockTransferOrderResource extends Resource
                         Select::make('to_store_id')
                             ->label('To Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
-                            ->required(),
+                            ->required()->searchable(),
 
                         DatePicker::make('date')
                             ->required()->default(now()),

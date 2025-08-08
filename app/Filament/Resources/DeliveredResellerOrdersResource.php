@@ -187,7 +187,7 @@ class DeliveredResellerOrdersResource extends Resource
                     ->label(__('Print Delivery Order'))
                     ->icon('heroicon-o-printer')->button()
                     ->color('gray')
-                    ->visible(fn($record) => $record->status === Order::DELEVIRED)
+                    // ->visible(fn($record) => $record->status === Order::DELEVIRED)
                     ->action(function (Order $record) {
                         $record->load(['orderDetails.product', 'branch', 'logs.creator']);
 
