@@ -475,7 +475,8 @@ class Order extends Model implements Auditable
             'do_number'     => now()->format('Ymd') . str_pad($this->id, 4, '0', STR_PAD_LEFT),
             'do_date'       => $log->created_at->format('Y-m-d'),
             'delivered_by'  => $log->creator?->name ?? 'N/A',
-            'customer_name' => $this->customer?->name ?? $this->branch?->name ?? 'N/A',
+            // 'customer_name' => $this->customer?->name ?? $this->branch?->name ?? 'N/A',
+            'customer_name' =>  $this->branch?->name ?? 'N/A',
             'branch_address' => $this->branch?->address ?? 'N/A',
 
             'items' => $this->orderDetails->map(fn($item, $i) => [
