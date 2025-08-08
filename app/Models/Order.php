@@ -461,7 +461,7 @@ class Order extends Model implements Auditable
     public function getDeliveryInfo(): ?array
     {
         $log = $this->logs()
-            ->where('new_status', self::DELEVIRED)
+            // ->where('new_status', self::DELEVIRED)
             ->latest('created_at')
             ->with('creator') // تأكد أن العلاقة موجودة في OrderLog
             ->first();
