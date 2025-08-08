@@ -34,7 +34,7 @@
         <tr>
             <th>#</th>
             <th>التاريخ</th>
-            <th>نوع الحركة</th>
+            {{-- <th>نوع الحركة</th> --}}
             <th>الشهر</th>
             <th>الوصف</th>
             <th>المبلغ</th>
@@ -45,11 +45,11 @@
             <tr>
                 <td>{{ $loop->iteration }}</td>
                 <td>{{ \Carbon\Carbon::parse($tx->date)->format('Y-m-d') }}</td>
-                <td>
+                {{-- <td>
                     <span class="tx-type {{ $tx->type }}">
                         {{ __("transactions.types.$tx->type") ?? ucfirst($tx->type) }}
                     </span>
-                </td>
+                </td> --}}
                 <td>{{ $tx->month }}/{{ $tx->year }}</td>
                 <td class="desc">{{ $tx->description }}</td>
                 <td>

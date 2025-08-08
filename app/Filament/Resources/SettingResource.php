@@ -151,6 +151,11 @@ class SettingResource extends Resource
                                     //     ->default(8)
                                     //     ->required(),
 
+                                    Select::make('daily_salary_calculation_method')
+                                        ->label('Daily Salary Calculation Method')
+                                        ->options(\App\Enums\HR\Payroll\DailyRateMethod::options())
+                                        ->live()
+                                        ->required(),
                                     TextInput::make('days_in_month')->label('Days in Month')->helperText('Days of month to calculate daily salary')->required(),
 
                                     TextInput::make('hours_no_in_day')->label('Hours No in Day')->helperText('Hours number in day to calculate hourly salary')->required(),

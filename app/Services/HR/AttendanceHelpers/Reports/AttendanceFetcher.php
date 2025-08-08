@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\AttendanceHelpers\Reports;
 
 use App\Enums\HR\Attendance\AttendanceReportStatus;
@@ -13,10 +14,12 @@ use Illuminate\Support\Collection;
 class AttendanceFetcher
 {
     protected EmployeePeriodHistoryService $periodHistoryService;
+    public HelperFunctions $helperFunctions;
 
     public function __construct(EmployeePeriodHistoryService $periodHistoryService)
     {
         $this->periodHistoryService = $periodHistoryService;
+        $this->helperFunctions = new HelperFunctions();
     }
 
     /**
@@ -75,11 +78,11 @@ class AttendanceFetcher
 
                 // تقسم الحضور
                 $checkInCollection  = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKIN)
-                ->sortBy('id')
-                ->values();
+                    ->sortBy('id')
+                    ->values();
                 $checkOutCollection = $attendanceRecords->where('check_type', Attendance::CHECKTYPE_CHECKOUT)
-                ->sortBy('id')
-                ->values();
+                    ->sortBy('id')
+                    ->values();
                 // تحويل إلى Resources (مصفوفة رقمية)
                 $checkInResources  = CheckInAttendanceResource::collection($checkInCollection)->toArray(request());
                 $checkOutResources = $checkOutCollection->map(function ($item) use ($employee, $period, $date, $overtimeCalculator) {
@@ -151,7 +154,6 @@ class AttendanceFetcher
             $allAbsent        = count($allPeriodsStatus) > 0 && count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Absent->value;
             if (empty($allPeriodsStatus)) {
                 $dayStatus = AttendanceReportStatus::NoPeriods->value;
-
             } elseif (count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Absent->value) {
                 $dayStatus = AttendanceReportStatus::Absent->value;
             } elseif (count(array_unique($allPeriodsStatus)) === 1 && $allPeriodsStatus[0] === AttendanceReportStatus::Present->value) {
@@ -195,7 +197,8 @@ class AttendanceFetcher
                 $totalActualSeconds += ($h * 3600) + ($m * 60) + $s;
             }
         }
-        $totalActualDuration = sprintf('%02d:%02d:%02d',
+        $totalActualDuration = sprintf(
+            '%02d:%02d:%02d',
             floor($totalActualSeconds / 3600),
             ($totalActualSeconds / 60) % 60,
             $totalActualSeconds % 60
@@ -227,13 +230,47 @@ class AttendanceFetcher
             }
         }
 
-        $totalApprovedOvertime = sprintf('%02d:%02d:%02d',
+        $totalApprovedOvertime = sprintf(
+            '%02d:%02d:%02d',
             floor($totalApprovedOvertimeSeconds / 3600),
             ($totalApprovedOvertimeSeconds / 60) % 60,
             $totalApprovedOvertimeSeconds % 60
         );
 
         $result->put('total_approved_overtime', $totalApprovedOvertime);
+
+        // New logic to calculate total missing hours
+        $totalMissingHoursSeconds = 0;
+        foreach ($result as $key => $day) {
+            if (
+                is_array($day)
+                && isset($day['periods'])
+                && $day['periods'] instanceof Collection
+            ) {
+                foreach ($day['periods'] as $period) {
+                    $lastCheckout = $period['attendances']['checkout']['lastcheckout'] ?? null;
+                    if ($lastCheckout && isset($lastCheckout['missing_hours']['total_minutes'])) {
+                        $totalMissingHoursSeconds += $lastCheckout['missing_hours']['total_minutes'] * 60;
+                    }
+                }
+            }
+        }
+
+        // Convert total seconds to H:i:s format if needed, or just store the total minutes
+        $totalMissingHours = sprintf(
+            '%02d:%02d:%02d',
+            floor($totalMissingHoursSeconds / 3600),
+            ($totalMissingHoursSeconds / 60) % 60,
+            $totalMissingHoursSeconds % 60
+        );
+
+        // Add the total missing hours to the result collection
+        $result->put('total_missing_hours', [
+            'total_minutes' => $totalMissingHoursSeconds / 60,
+            'formatted' => $totalMissingHours
+        ]);
+
+        $result->put('late_hours',  $this->helperFunctions->calculateTotalLateArrival($result));
 
         return $result;
     }
@@ -246,7 +283,7 @@ class AttendanceFetcher
             ->where('check_date', $date)
             ->select('check_time', 'check_type', 'period_id')
             ->orderBy('id', 'asc')
-        // ->groupBy('period_id')
+            // ->groupBy('period_id')
             ->get();
         return $attenance;
     }
@@ -287,5 +324,4 @@ class AttendanceFetcher
 
         return $hours * 3600 + $minutes * 60 + $seconds;
     }
-
 }

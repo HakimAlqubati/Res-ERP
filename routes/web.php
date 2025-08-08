@@ -754,3 +754,31 @@ Route::get('/public/react-app/{any?}', function ($any = null) {
     if ($any) $to .= '/' . $any;
     return redirect($to, 301); // 301 تعني توجيه دائم
 })->where('any', '.*');
+
+
+Route::get('/phpinfo', function () {
+    if (app()->environment('local')) {
+        return phpinfo();
+    } else {
+        abort(403, 'Unauthorized action.');
+    }
+})->name('phpinfo');
+
+Route::get('/opcache-clear', function () {
+    // حماية: اسمح فقط في لوكال أو بمفتاح صحيح
+    $allowedEnvs = ['local', 'development'];
+    $hasValidKey = request('key') && request('key') === env('OPCACHE_CLEAR_KEY');
+
+    if (! in_array(app()->environment(), $allowedEnvs) && ! $hasValidKey) {
+        abort(403, 'Forbidden');
+    }
+
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+        return response('✅ OPcache cleared', 200)
+            ->header('Content-Type', 'text/plain');
+    }
+
+    return response('❌ OPcache not enabled', 500)
+        ->header('Content-Type', 'text/plain');
+})->name('opcache.clear');

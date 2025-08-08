@@ -1134,7 +1134,7 @@ if (!function_exists('calculate_missing_hours')) {
         $approvedOvertime,
         $date,
         $employeeId
-    ) {
+    ) { 
         // $isMultiple = Attendance::where('check_date', $date)
         //     ->where('employee_id', $employeeId)
         //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
@@ -1149,7 +1149,7 @@ if (!function_exists('calculate_missing_hours')) {
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->groupBy('period_id')
             ->having('total', '>', 1)
-            ->exists();
+            ->exists(); 
 
         if (!$isMultiple) {
             return [
@@ -1160,7 +1160,7 @@ if (!function_exists('calculate_missing_hours')) {
         if (in_array($status, [
             Attendance::STATUS_EARLY_DEPARTURE,
             Attendance::STATUS_LATE_ARRIVAL
-        ])) {
+        ])) { 
             return [
                 'formatted' => '0 h 0m',
                 'total_minutes' => 0,

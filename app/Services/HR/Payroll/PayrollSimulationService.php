@@ -22,7 +22,10 @@ class PayrollSimulationService
     {
         $results = [];
 
-        $employees = Employee::whereIn('id', $employeeIds)->get();
+        $employees    = Employee::whereIn('id', $employeeIds)->get();
+        $periodStart  = Carbon::create($year, $month, 1)->startOfMonth();
+        $periodEnd    = Carbon::create($year, $month, 1)->endOfMonth();
+        $monthDays    = $periodStart->daysInMonth;
 
         foreach ($employees as $employee) {
             $monthlySalary = $employee->salary;
@@ -39,20 +42,31 @@ class PayrollSimulationService
                 continue;
             }
 
-            $periodStart = Carbon::create($year, $month, 1)->startOfMonth();
-            $periodEnd   = Carbon::create($year, $month, 1)->endOfMonth();
+            $dailyHours = $employee->working_hours ?? 0;
+            $workDays   = $employee->working_days ?? 0;
 
+            if ($dailyHours <= 0 || $workDays <= 0) {
+                throw new \Exception("Missing or invalid working_hours or working_days for employee [{$employee->name}] (Employee No: {$employee->employee_no}) in branch [{$employee->branch?->name}]");
+            }
 
+            $attendanceData  = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
+            $attendanceArray = $attendanceData->toArray();
 
+            $totalDuration         = $attendanceArray['total_duration_hours'] ?? '0:00:00';
+            $totalActualDuration   = $attendanceArray['total_actual_duration_hours'] ?? '0:00:00';
+            $totalApprovedOvertime =  '0:00:00';
 
-            $attendanceData = $this->attendanceFetcher->fetchEmployeeAttendances($employee, $periodStart, $periodEnd);
-            // dd($attendanceData->toArray()['statistics']);
-            $workDays   = $attendanceData['statistics']['work_days'] ?? 26; // عدد أيام العمل في الشهر
+            // احتساب الراتب باستخدام القيم الجديدة
             $result = $this->salaryCalculatorService->calculate(
-                employeeData: $attendanceData,
+                employee: $employee,
+                employeeData: $attendanceArray,
                 salary: $monthlySalary,
-                workDays: $workDays,
-                dailyHours: 8
+                workingDays: $workDays,
+                dailyHours: $dailyHours,
+                monthDays: $monthDays,
+                totalDuration: $totalDuration,
+                totalActualDuration: $totalActualDuration,
+                totalApprovedOvertime: $totalApprovedOvertime
             );
 
             $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
@@ -69,48 +83,29 @@ class PayrollSimulationService
                 'monthly_salary' => $monthlySalary,
                 'daily_salary' => $result['daily_rate'],
                 'hourly_salary' => $result['hourly_rate'],
+                'month_days' => $monthDays,
 
-                // 'attendance' => $attendanceData->toArray(),
-                'attendance_statistics' => $attendanceData['statistics'],
-                'total_approved_overtime' => $attendanceData['total_approved_overtime'],
-                'total_actual_duration_hours' => $attendanceData['total_actual_duration_hours'],
-                'total_duration_hours' => $attendanceData['total_duration_hours'],
-                'data'        => [
+                'attendance_statistics' => $attendanceArray['statistics'],
+                'total_approved_overtime' => $result['total_approved_overtime'],
+                'total_actual_duration_hours' => $result['total_actual_duration'],
+                'total_duration_hours' => $result['total_duration'],
+                'tax' => $result['tax'] ,
+                'late_hours' => $result['late_hours'],
+                'transactions' => $result['transactions'] ?? [],
+                'data' => [
                     'base_salary'       => $result['base_salary'],
                     'gross_salary'      => $result['gross_salary'],
                     'net_salary'        => $netSalary,
                     'absence_deduction' => $result['absence_deduction'],
-                    'partial_deduction' => $result['partial_deduction'],
                     'overtime_amount'   => $result['overtime_amount'],
                     'debt_amount'       => $debt,
                     'period_start'      => $periodStart->toDateString(),
                     'period_end'        => $periodEnd->toDateString(),
-                ]
+                    'transactions' => $result['transactions'] ?? [],
+                ],
             ];
         }
 
         return $results;
-    }
-
-    protected function getWorkingConfig(Employee $employee): array
-    {
-        $mode = Setting::getSetting('working_policy_mode', 'global');
-
-        if ($mode === 'custom_per_employee') {
-            if (is_null($employee->working_days) || is_null($employee->working_hours)) {
-                throw new \Exception("Missing working_days or working_hours for employee [{$employee->name}] (Employee No: {$employee->employee_no})");
-            }
-
-            return [
-                'days'  => $employee->working_days,
-                'hours' => $employee->working_hours,
-            ];
-        }
-
-        // استخدام القيم من الإعدادات العامة
-        return [
-            'days'  => (int) Setting::getSetting('default_employee_working_days', 26),
-            'hours' => (float) Setting::getSetting('default_employee_working_hours', 8),
-        ];
     }
 }

@@ -1,12 +1,14 @@
 <?php
 namespace App\Http\Resources;
 
+use App\Services\HR\AttendanceHelpers\Reports\HelperFunctions;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CheckOutAttendanceResource extends JsonResource
 {
     protected $approvedOvertime;
     protected $date;
+    protected HelperFunctions $helperFunctions;
 
     public function __construct($resource, $approvedOvertime = null, $date = null)
     {
@@ -14,6 +16,7 @@ class CheckOutAttendanceResource extends JsonResource
         parent::__construct($resource);
         $this->approvedOvertime = $approvedOvertime;
         $this->date             = $date;
+        $this->helperFunctions = new HelperFunctions();
     }
 
     public function toArray($request)
@@ -27,7 +30,7 @@ class CheckOutAttendanceResource extends JsonResource
             'total_actual_duration_hourly'   => $this->total_actual_duration_hourly,
             'supposed_duration_hourly' => $this->supposed_duration_hourly,
             'status'                   => $this->status,
-            'missing_hours'            => calculate_missing_hours(
+            'missing_hours'            => $this->helperFunctions->calculateMissingHours(
                 $this->status,
                 $this->supposed_duration_hourly ?? $this->period . ':00',
                 $this->approvedOvertime,

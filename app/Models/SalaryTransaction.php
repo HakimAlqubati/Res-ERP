@@ -1,6 +1,8 @@
 <?php
 namespace App\Models;
 
+use App\Enums\HR\Payroll\SalaryTransactionSubType;
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -9,16 +11,7 @@ class SalaryTransaction extends Model
     use SoftDeletes;
 
     protected $table = 'hr_salary_transactions';
-
-    const TYPE_SALARY    = 'salary';
-    const TYPE_ALLOWANCE = 'allowance';
-    const TYPE_DEDUCTION = 'deduction';
-    const TYPE_ADVANCE   = 'advance';
-    const TYPE_INSTALL   = 'installment';
-    const TYPE_BONUS     = 'bonus';
-    const TYPE_OVERTIME  = 'overtime';
-    const TYPE_PENALTY   = 'penalty';
-    const TYPE_OTHER     = 'other';
+ 
 
     const OPERATION_ADD = '+';
     const OPERATION_SUB = '-';
@@ -28,13 +21,23 @@ class SalaryTransaction extends Model
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
 
+    protected $casts = [
+        'date'   => 'date',
+        'amount' => 'decimal:2',
+        'year'   => 'integer',
+        'month'  => 'integer',
+        // 'type'      => SalaryTransactionType::class,     // Enum رئيسي
+        // 'sub_type'  => SalaryTransactionSubType::class,
+    ];
+
+    
     // --- العملة الافتراضية (يمكن تعديلها حسب نظامك) ---
     public static function defaultCurrency()
     {
         return getDefaultCurrency();
     }
     protected $fillable = [
-        'employee_id', 'payroll_id', 'date', 'amount', 'currency', 'type',
+        'employee_id', 'payroll_id', 'date', 'amount', 'currency', 'type','sub_type',
         'reference_id', 'reference_type', 'description', 'created_by',
         'status', 'operation', 'year','month'
     ];
@@ -44,10 +47,10 @@ class SalaryTransaction extends Model
         return $this->belongsTo(Employee::class);
     }
 
-    // public function payroll()
-    // {
-    //     return $this->belongsTo(Payroll::class);
-    // }
+    public function payroll()
+    {
+        return $this->belongsTo(Payroll::class);
+    }
 
     // Morph relation للمرجع (خصم، سلفة، ...الخ)
     public function referenceable()

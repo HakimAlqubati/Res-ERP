@@ -106,7 +106,7 @@ class Deduction extends Model
         $salary *= 12;
         $tax = 0;
         $previousBracketMax = 0;
-
+ 
         // Loop through each tax bracket and calculate the tax for each applicable range
         foreach ($brackets as $bracket) {
             // If the salary exceeds the current bracket's max_amount, calculate the tax for the full range
@@ -121,7 +121,6 @@ class Deduction extends Model
 
         // Return both the total tax and the monthly tax deduction (divide by 12 for monthly)
         $monthlyTax = round($tax / 12, 2);
-
         return [
             'total_tax' => round($tax, 2),
             'monthly_tax' => $monthlyTax,
