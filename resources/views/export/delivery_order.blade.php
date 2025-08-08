@@ -43,6 +43,7 @@
             font-weight: bold;
             color: #b91c1c;
             font-size: 13px;
+            margin-bottom: 0;
         }
 
         .do-title {
@@ -133,7 +134,7 @@
                                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" height="60">
                             </td>
                             <td style="font-size: 11px; line-height: 1.4;">
-                                <div style="font-weight: bold; color: #b91c1c; font-size: 13px;">
+                                <div style="font-weight: bold; color: #b91c1c; font-size: 13px; margin-bottom: 2px;">
                                     {{ settingWithDefault('company_name', 'Company Name') }}
                                 </div>
                                 {!! nl2br(e(settingWithDefault('address'))) !!}<br>
