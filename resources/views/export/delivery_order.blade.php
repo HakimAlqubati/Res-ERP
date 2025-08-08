@@ -167,7 +167,7 @@
 
     <table class="meta-box">
         <tr>
-            <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] }}</td>
+            <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] ?? '' }}</td>
             <td><strong>Order #</strong> {{ $deliveryInfo['id'] }}</td>
         </tr>
     </table>
