@@ -125,6 +125,7 @@ class PayrollCalculationService
             'net_salary'       => $simulation['data']['net_salary']       ?? 0,
             // لو تحتاج معاملات مفصلة:
             'transactions'     => $simulation['transactions']     ?? [],
+            'dynamic_deductions' => $simulation['dynamic_deductions']?? [],
             'period_start'     => $simulation['data']['period_start']      ?? null,
             'period_end'       => $simulation['data']['period_end']        ?? null,
         ];

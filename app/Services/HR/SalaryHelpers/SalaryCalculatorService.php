@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Services\HR\SalaryHelpers;
@@ -6,6 +7,7 @@ namespace App\Services\HR\SalaryHelpers;
 use App\Enums\HR\Payroll\DailyRateMethod;
 use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Enums\HR\Payroll\SalaryTransactionType;
+use App\Models\Deduction;
 use App\Models\Employee;
 use InvalidArgumentException;
 
@@ -54,6 +56,8 @@ class SalaryCalculatorService
     protected float $baseSalary  = 0.0;
     protected float $totalDeductions = 0.0; // absence + late + any policy-added
     protected float $netSalary   = 0.0;
+
+    protected array $dynamicDeductions = [];
 
     // Config
     public function __construct(
@@ -125,19 +129,19 @@ class SalaryCalculatorService
         // Totals
         $this->baseSalary     = $this->salary;
         $this->grossSalary    = $this->round($this->baseSalary + $this->overtimeAmount);
-        $this->totalDeductions= $this->round($this->absenceDeduction + $this->lateDeduction);
+        $this->totalDeductions = $this->round($this->absenceDeduction + $this->lateDeduction);
         $this->netSalary      = $this->round($this->grossSalary - $this->totalDeductions);
 
         // Policy hooks (post calculation: taxes, caps, extra allowances…)
         foreach ($this->policyHooks as $hook) {
             $this->netSalary = $this->round($hook->afterTotals(
-                employee:          $this->employee,
-                context:           $this->employeeData,
-                baseSalary:        $this->baseSalary,
-                grossSalary:       $this->grossSalary,
-                totalDeductions:   $this->totalDeductions,
-                currentNet:        $this->netSalary,
-                mut:               $this->mutableComponents(),
+                employee: $this->employee,
+                context: $this->employeeData,
+                baseSalary: $this->baseSalary,
+                grossSalary: $this->grossSalary,
+                totalDeductions: $this->totalDeductions,
+                currentNet: $this->netSalary,
+                mut: $this->mutableComponents(),
             ));
         }
 
@@ -249,10 +253,10 @@ class SalaryCalculatorService
     {
         return new SalaryMutableComponents(
             absenceDeduction: $this->absenceDeduction,
-            lateDeduction:    $this->lateDeduction,
-            overtimeAmount:   $this->overtimeAmount,
-            grossSalary:      $this->grossSalary,
-            totalDeductions:  $this->totalDeductions,
+            lateDeduction: $this->lateDeduction,
+            overtimeAmount: $this->overtimeAmount,
+            grossSalary: $this->grossSalary,
+            totalDeductions: $this->totalDeductions,
         );
     }
 
@@ -260,8 +264,16 @@ class SalaryCalculatorService
 
     protected function buildResult(): array
     {
+        $this->dynamicDeductions = $this->generalDeduction();
+        $dynamicTotal = (float)($this->dynamicDeductions['result'] ?? 0);
+
+        // include dynamic deductions in totals
+        $finalTotalDeductions = $this->round($this->totalDeductions + $dynamicTotal);
+        $finalNetSalary       = $this->round($this->grossSalary - $finalTotalDeductions);
+
+
         $transactions = $this->buildTransactions();
- 
+
         return [
             // Core
             'base_salary'            => $this->round($this->baseSalary),
@@ -288,7 +300,7 @@ class SalaryCalculatorService
             'absent_days'            => $this->absentDays,
             'total_duration'         => $this->totalDuration,
             'total_actual_duration'  => $this->totalActualDuration,
-            'total_approved_overtime'=> $this->totalApprovedOvertime,
+            'total_approved_overtime' => $this->totalApprovedOvertime,
             'late_hours'             => $this->round($this->lateHours),
 
             // Raw details
@@ -296,9 +308,108 @@ class SalaryCalculatorService
 
             // Transactions (ready for persistence layer)
             'transactions'           => $transactions,
+            'dynamic_deductions' => $this->dynamicDeductions,
         ];
     }
 
+    public function generalDeduction()
+    {
+        $employee =  $this->employee;
+        $generalDeducationTypes = Deduction::where('is_specific', 0)
+            ->where('active', 1)
+            ->select(
+                'name',
+                'is_percentage',
+                'amount',
+                'percentage',
+                'id',
+                'condition_applied_v2',
+                'nationalities_applied',
+                'less_salary_to_apply',
+                'has_brackets',
+                'applied_by',
+                'employer_percentage',
+                'employer_amount'
+            )
+            ->with('brackets')
+            ->get();
+        // dd($generalDeducationTypes);
+        $deduction = [];
+        foreach ($generalDeducationTypes as  $deductionType) {
+
+            if ($deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_ALL) {
+                $deduction[] = $deductionType;
+            }
+            if (
+                $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
+                $employee->is_citizen
+                && $deductionType->has_brackets == 1
+            ) {
+                $deduction[] = $deductionType;
+            }
+            if (
+                $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
+                $employee->is_citizen
+            ) {
+                $deduction[] = $deductionType;
+            }
+            // if (
+            //     $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE &&
+            //     $employee->is_citizen
+            //     && $deductionType->has_brackets == 1
+            // ) {
+            //     $deduction[] = $deductionType;
+            // }
+            if (
+                $deductionType->condition_applied_v2 == Deduction::CONDITION_APPLIED_V2_CITIZEN_EMPLOYEE_AND_FOREIGN_HAS_PASS &&
+                ($employee->is_citizen || ($employee->has_employee_pass))
+                // && $basicSalary >= $deductionType->less_salary_to_apply
+            ) {
+                $deduction[] = $deductionType;
+            }
+        }
+        $generalDedeucationResultCalculated = $this->calculateDeductions($deduction, $this->netSalary);
+        return $generalDedeucationResultCalculated;
+    }
+    public function calculateDeductions(array $deductions, float $basicSalary): array
+    {
+        $finalDeductions = [];
+        $totalDeductions = 0.0; // Initialize total deductions
+
+        foreach ($deductions as $deduction) {
+            if ($deduction->is_percentage) {
+                // Calculate the deduction based on the percentage
+                $deductionAmount = ($basicSalary * $deduction->percentage) / 100;
+            } else {
+                // Use the fixed amount directly
+                $deductionAmount = (float) $deduction->amount;
+            }
+
+            if (isset($deduction->has_brackets) && $deduction->has_brackets && isset($deduction->brackets)) {
+ 
+                $deductionAmount = $deduction->calculateTax($basicSalary)['monthly_tax'] ?? 0;
+            }
+            // Add to total deductions
+            $totalDeductions += $deductionAmount;
+
+            $deduction = $deduction->toArray();
+            // Store the result
+            $finalDeductions[] = [
+                'id' => $deduction['id'],
+                'name' => $deduction['name'],
+                'deduction_amount' => $deductionAmount,
+                'is_percentage' => $deduction['is_percentage'],
+                'amount_value' => $deduction['amount'],
+                'percentage_value' => $deduction['percentage'],
+                'applied_by' => $deduction['applied_by'],
+            ];
+        }
+
+        // Add the total deductions to the result
+        $finalDeductions['result'] = $totalDeductions;
+
+        return $finalDeductions;
+    }
     protected function buildTransactions(): array
     {
         $tx = [];
@@ -356,6 +467,25 @@ class SalaryCalculatorService
                     $tx[] = $t;
                 }
             }
+        }
+
+        $newTransactions = [];
+        // Dynamic general deductions from property
+        foreach ($this->dynamicDeductions as $key => $ded) {
+            if ($key === 'result') continue;
+
+            $amount = (float)($ded['deduction_amount'] ?? 0);
+            if ($amount <= 0) continue;
+
+            $tx[] = [
+                'type'         => SalaryTransactionType::TYPE_DEDUCTION,
+                'sub_type'     => \Illuminate\Support\Str::slug($ded['name']),
+                'amount'       => $this->round($amount),
+                'operation'    => '-',
+                'description'  => $ded['name'] ?? 'General deduction',
+                'deduction_id' => $ded['id'] ?? null,
+                'applied_by'   => $ded['applied_by'] ?? null,
+            ];
         }
 
         return $tx;

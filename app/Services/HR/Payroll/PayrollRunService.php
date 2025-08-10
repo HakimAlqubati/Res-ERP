@@ -49,6 +49,7 @@ class PayrollRunService
                 'gross_salary'      => $calc['gross_salary'] ?? 0,
                 'net_salary'        => $calc['net_salary'] ?? 0,
                 'transactions'      => $calc['transactions'] ?? [],
+                'dynamic_deductions' => $calc['dynamic_deductions'] ?? [],
             ];
 
             $items[] = $row;

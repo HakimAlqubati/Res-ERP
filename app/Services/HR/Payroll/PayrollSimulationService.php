@@ -69,7 +69,7 @@ class PayrollSimulationService
                 totalActualDuration: $totalActualDuration,
                 totalApprovedOvertime: $totalApprovedOvertime
             );
-
+ 
             $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
             $debt      = $result['net_salary'] < 0 ? abs($result['net_salary']) : 0;
 
@@ -94,6 +94,7 @@ class PayrollSimulationService
                 'tax' => $result['tax'] ?? 0,
                 'late_hours' => $result['late_hours'],
                 'transactions' => $result['transactions'] ?? [],
+                'dynamic_deductions' => $result['dynamic_deductions']?? [],
                 'data' => [
                     'base_salary'       => $result['base_salary'],
                     'gross_salary'      => $result['gross_salary'],
