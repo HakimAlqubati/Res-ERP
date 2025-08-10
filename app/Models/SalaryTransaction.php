@@ -39,7 +39,7 @@ class SalaryTransaction extends Model
     protected $fillable = [
         'employee_id', 'payroll_id', 'date', 'amount', 'currency', 'type','sub_type',
         'reference_id', 'reference_type', 'description', 'created_by',
-        'status', 'operation', 'year','month'
+        'status', 'operation', 'year','month','payroll_run_id'
     ];
     // العلاقات
     public function employee()
@@ -51,6 +51,11 @@ class SalaryTransaction extends Model
     {
         return $this->belongsTo(Payroll::class);
     }
+
+    public function run()
+{
+    return $this->belongsTo(\App\Models\PayrollRun::class, 'payroll_run_id');
+}
 
     // Morph relation للمرجع (خصم، سلفة، ...الخ)
     public function referenceable()

@@ -9,8 +9,8 @@ class SalaryReportController extends Controller
     {
 
         $month = request('month');
-        $year  = request('year');
-
+        $year  = request('year'); 
+        
         $transactions = \App\Models\SalaryTransaction::where('employee_id', $employee->id)
             ->when($year, fn($q) => $q->where('year', $year))
             ->when($month, fn($q) => $q->where('month', $month))

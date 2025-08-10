@@ -49,6 +49,7 @@ class SalaryTransactionRepository
      * إضافة خصم للموظف
      */
     public function addDeduction(
+        int $payrollRunId,
         int $employeeId,
         float $amount,
         string $date,
@@ -60,6 +61,7 @@ class SalaryTransactionRepository
         array $extra = [],
     ): SalaryTransaction {
         return $this->create(array_merge([
+            'payroll_run_id' => $payrollRunId,
             'employee_id'    => $employeeId,
             'payroll_id'     => $payrollId,
             'date'           => $date,
@@ -79,6 +81,7 @@ class SalaryTransactionRepository
      * إضافة بدل للموظف
      */
     public function addAllowance(
+        int $payrollRunId,
         int $employeeId,
         float $amount,
         string $date,
@@ -87,6 +90,7 @@ class SalaryTransactionRepository
         $payrollId = null
     ): SalaryTransaction {
         return $this->create([
+            'payroll_run_id' => $payrollRunId,
             'employee_id'    => $employeeId,
             'payroll_id'     => $payrollId,
             'date'           => $date,
@@ -105,6 +109,7 @@ class SalaryTransactionRepository
      * إضافة حركة مالية عامة لأي نوع (مثلاً مكافأة أو سلفة ...)
      */
     public function addTransaction(
+        int $payrollRunId,
         int $employeeId,
         float $amount,
         string $date,
@@ -116,6 +121,7 @@ class SalaryTransactionRepository
         string $status = null
     ): SalaryTransaction {
         return $this->create([
+            'payroll_run_id' => $payrollRunId,
             'employee_id'    => $employeeId,
             'payroll_id'     => $payrollId,
             'date'           => $date,

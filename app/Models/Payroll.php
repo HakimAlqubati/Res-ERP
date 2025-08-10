@@ -23,7 +23,7 @@ class Payroll extends Model
         'total_deductions', 'total_advances', 'total_penalties', 'total_insurance',
         'employer_share', 'employee_share', 'taxes_amount', 'other_deductions',
         'gross_salary', 'net_salary', 'currency', 'status', 'pay_date', 'notes',
-        'created_by', 'approved_by', 'approved_at', 'paid_by', 'paid_at',
+        'created_by', 'approved_by', 'approved_at', 'paid_by', 'paid_at','name','payroll_run_id'
     ];
 
     // العلاقات
@@ -57,4 +57,9 @@ class Payroll extends Model
     {
         return $this->hasMany(SalaryTransaction::class, 'payroll_id');
     }
+    public function run()
+{
+    return $this->belongsTo(\App\Models\PayrollRun::class, 'payroll_run_id');
+}
+
 }
