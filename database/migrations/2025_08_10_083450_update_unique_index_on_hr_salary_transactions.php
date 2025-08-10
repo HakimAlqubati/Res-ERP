@@ -12,14 +12,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $table = 'hr_salary_transactions';
+        $table  = 'hr_salary_transactions';
         $schema = DB::getDatabaseName();
 
-        // 1) Find FK(s) on employee_id with their rules and targets
+        // 0) Ensure payroll_run_id column exists (add it first!)
+        if (!Schema::hasColumn($table, 'payroll_run_id')) {
+            Schema::table($table, function (Blueprint $tbl) {
+                // default(0) to allow NOT NULL on existing rows safely
+                $tbl->unsignedBigInteger('payroll_run_id')->default(0)->after('month');
+                $tbl->index('payroll_run_id', 'hst_payroll_run_id_idx'); // optional helper index
+            });
+        }
+
+        // 1) Capture FK(s) on employee_id so we can drop & recreate them
         $fkRows = DB::table('information_schema.KEY_COLUMN_USAGE as kcu')
             ->join('information_schema.REFERENTIAL_CONSTRAINTS as rc', function ($join) {
                 $join->on('kcu.CONSTRAINT_NAME', '=', 'rc.CONSTRAINT_NAME')
-                     ->on('kcu.CONSTRAINT_SCHEMA', '=', 'rc.CONSTRAINT_SCHEMA');
+                    ->on('kcu.CONSTRAINT_SCHEMA', '=', 'rc.CONSTRAINT_SCHEMA');
             })
             ->select(
                 'kcu.CONSTRAINT_NAME',
@@ -35,16 +44,15 @@ return new class extends Migration
             ->distinct()
             ->get();
 
-        // 2) Drop FK(s) first
+        // 2) Drop FK(s) first (required to change indexes they depend on)
         foreach ($fkRows as $fk) {
             DB::statement("ALTER TABLE `$table` DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
         }
 
-        // 3) Drop the old unique index (use the exact name from the error)
-        //    If name differs in your DB, add it here or query INFORMATION_SCHEMA.STATISTICS.
-        DB::statement('ALTER TABLE `hr_salary_transactions` DROP INDEX `hr_salary_transactions_employee_year_month_unique`');
+        // 3) Drop old unique (exact name from your error)
+        DB::statement("ALTER TABLE `$table` DROP INDEX `hr_salary_transactions_employee_year_month_unique`");
 
-        // 4) Create the new desired unique (adjust columns as needed)
+        // 4) Create the new unique with payroll_run_id included
         Schema::table($table, function (Blueprint $tbl) {
             $tbl->unique(
                 ['employee_id', 'year', 'month', 'payroll_run_id'],
@@ -52,14 +60,13 @@ return new class extends Migration
             );
         });
 
-        // 5) Re-create FK(s) with the same rules as before
+        // 5) Re-create FK(s) on employee_id with same rules as before
         foreach ($fkRows as $fk) {
             $deleteRule = $fk->DELETE_RULE ?: 'RESTRICT';
             $updateRule = $fk->UPDATE_RULE ?: 'RESTRICT';
             $refTable   = $fk->ref_table ?: 'hr_employees';
             $refColumn  = $fk->ref_column ?: 'id';
 
-            // Reuse the original FK name to avoid surprises
             DB::statement("
                 ALTER TABLE `$table`
                 ADD CONSTRAINT `{$fk->CONSTRAINT_NAME}`
@@ -71,14 +78,14 @@ return new class extends Migration
 
     public function down(): void
     {
-        $table = 'hr_salary_transactions';
+        $table  = 'hr_salary_transactions';
         $schema = DB::getDatabaseName();
 
-        // 1) Drop FK(s) again to be able to change indexes
+        // find & drop FKs again
         $fkRows = DB::table('information_schema.KEY_COLUMN_USAGE as kcu')
             ->join('information_schema.REFERENTIAL_CONSTRAINTS as rc', function ($join) {
                 $join->on('kcu.CONSTRAINT_NAME', '=', 'rc.CONSTRAINT_NAME')
-                     ->on('kcu.CONSTRAINT_SCHEMA', '=', 'rc.CONSTRAINT_SCHEMA');
+                    ->on('kcu.CONSTRAINT_SCHEMA', '=', 'rc.CONSTRAINT_SCHEMA');
             })
             ->select(
                 'kcu.CONSTRAINT_NAME',
@@ -98,12 +105,12 @@ return new class extends Migration
             DB::statement("ALTER TABLE `$table` DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
         }
 
-        // 2) Drop the new unique
+        // drop new unique
         Schema::table($table, function (Blueprint $tbl) {
             $tbl->dropUnique('hst_emp_year_month_run_unique');
         });
 
-        // 3) Restore the old unique
+        // restore old unique
         Schema::table($table, function (Blueprint $tbl) {
             $tbl->unique(
                 ['employee_id', 'year', 'month'],
@@ -111,7 +118,15 @@ return new class extends Migration
             );
         });
 
-        // 4) Re-create FK(s) back
+        // (optional) drop helper index & column if you want to fully revert
+        Schema::table($table, function (Blueprint $tbl) {
+            if (Schema::hasColumn($tbl->getTable(), 'payroll_run_id')) {
+                $tbl->dropIndex('hst_payroll_run_id_idx');
+                $tbl->dropColumn('payroll_run_id');
+            }
+        });
+
+        // recreate FKs
         foreach ($fkRows as $fk) {
             $deleteRule = $fk->DELETE_RULE ?: 'RESTRICT';
             $updateRule = $fk->UPDATE_RULE ?: 'RESTRICT';
