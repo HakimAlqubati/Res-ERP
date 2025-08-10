@@ -1,84 +1,90 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        $table  = 'hr_salary_transactions';
         $schema = DB::getDatabaseName();
+        $childTable = 'hr_salary_transactions';
+        $parentTable = 'hr_payroll_runs';
+        $fkName = 'hr_salary_transactions_payroll_run_id_foreign';
 
-        // 0) تأكد أن العمود موجود (لا تنشئه هنا لأن الخطأ يقول إنه موجود)
-        if (!Schema::hasColumn($table, 'payroll_run_id')) {
-            // لو فعلاً مفقود عندك (نادر بعد الخطأ)، افتح هذا البلوك وأضِفه.
-            Schema::table($table, function (Blueprint $t) {
-                $t->foreignId('payroll_run_id')->nullable()->after('payroll_id');
-            });
+        // 1) Detect parent id type (int unsigned OR bigint unsigned)
+        $ref = DB::table('information_schema.columns')
+            ->select('COLUMN_TYPE')
+            ->where('TABLE_SCHEMA', $schema)
+            ->where('TABLE_NAME', $parentTable)
+            ->where('COLUMN_NAME', 'id')
+            ->first();
+
+        if (!$ref) {
+            throw new \RuntimeException("Table `$parentTable` or column `id` not found.");
         }
 
-        // 1) أضف FK فقط إذا غير موجود
-        $fkName = 'hr_salary_transactions_payroll_run_id_foreign';
+        $colType = strtolower($ref->COLUMN_TYPE); // e.g. "int(10) unsigned" or "bigint(20) unsigned"
+        $targetSql = str_contains($colType, 'bigint') ? 'BIGINT UNSIGNED' : 'INT UNSIGNED';
+
+        // 2) Make sure both tables are InnoDB (optional but recommended)
+        foreach ([$childTable, $parentTable] as $t) {
+            $engine = DB::table('information_schema.tables')
+                ->where('TABLE_SCHEMA', $schema)
+                ->where('TABLE_NAME', $t)
+                ->value('ENGINE');
+            if (strtolower((string)$engine) !== 'innodb') {
+                DB::statement("ALTER TABLE `$t` ENGINE=InnoDB");
+            }
+        }
+
+        // 3) Align child column type to parent
+        //    Ensure column exists first
+        if (!Schema::hasColumn($childTable, 'payroll_run_id')) {
+            // If missing (unlikely per رسالتك)، أنشئه بالصيغة الصحيحة
+            DB::statement("ALTER TABLE `$childTable` ADD `payroll_run_id` $targetSql NULL AFTER `payroll_id`");
+        } else {
+            // Otherwise modify to match EXACT integer family and unsigned
+            DB::statement("ALTER TABLE `$childTable` MODIFY `payroll_run_id` $targetSql NULL");
+        }
+
+        // 4) Drop existing FK (if any) to avoid duplicates
         $fkExists = DB::table('information_schema.REFERENTIAL_CONSTRAINTS')
             ->where('CONSTRAINT_SCHEMA', $schema)
             ->where('CONSTRAINT_NAME', $fkName)
             ->exists();
-
-        if (!$fkExists) {
-            Schema::table($table, function (Blueprint $t) {
-                $t->foreign('payroll_run_id')
-                  ->references('id')->on('hr_payroll_runs')
-                  ->nullOnDelete()      // ON DELETE SET NULL
-                  ->cascadeOnUpdate();  // ON UPDATE CASCADE
-            });
+        if ($fkExists) {
+            DB::statement("ALTER TABLE `$childTable` DROP FOREIGN KEY `$fkName`");
         }
 
-        // 2) أضف الفهارس فقط إذا غير موجودة
-        $idxRunType = 'hst_run_type_idx';
-        $idxEmpYM   = 'hst_emp_year_month_idx';
-
-        $indexExists = fn(string $idx) => DB::table('information_schema.statistics')
+        // 5) Add index for the FK column (if not exists)
+        $idxName = 'hst_payroll_run_id_idx';
+        $idxExists = DB::table('information_schema.statistics')
             ->where('TABLE_SCHEMA', $schema)
-            ->where('TABLE_NAME', $table)
-            ->where('INDEX_NAME', $idx)
+            ->where('TABLE_NAME', $childTable)
+            ->where('INDEX_NAME', $idxName)
             ->exists();
-
-        if (!$indexExists($idxRunType)) {
-            Schema::table($table, function (Blueprint $t) use ($idxRunType) {
-                $t->index(['payroll_run_id', 'type'], $idxRunType);
-            });
+        if (!$idxExists) {
+            DB::statement("ALTER TABLE `$childTable` ADD INDEX `$idxName` (`payroll_run_id`)");
         }
 
-        if (!$indexExists($idxEmpYM)) {
-            Schema::table($table, function (Blueprint $t) use ($idxEmpYM) {
-                $t->index(['employee_id', 'year', 'month'], $idxEmpYM);
-            });
-        }
-
-        // (اختياري) إن أردت unique على employee_id,year,month,payroll_run_id:
-        // $uniqueName = 'hst_emp_year_month_run_unique';
-        // $hasUnique  = DB::table('information_schema.statistics')
-        //     ->where('TABLE_SCHEMA', $schema)->where('TABLE_NAME', $table)
-        //     ->where('INDEX_NAME', $uniqueName)->exists();
-        // if (!$hasUnique) {
-        //     Schema::table($table, function (Blueprint $t) use ($uniqueName) {
-        //         $t->unique(['employee_id','year','month','payroll_run_id'], $uniqueName);
-        //     });
-        // }
+        // 6) Create the FK with proper rules
+        DB::statement("
+            ALTER TABLE `$childTable`
+            ADD CONSTRAINT `$fkName`
+            FOREIGN KEY (`payroll_run_id`) REFERENCES `$parentTable`(`id`)
+            ON DELETE SET NULL ON UPDATE CASCADE
+        ");
     }
 
     public function down(): void
     {
-        $table  = 'hr_salary_transactions';
         $schema = DB::getDatabaseName();
-
-        $fkName      = 'hr_salary_transactions_payroll_run_id_foreign';
-        $idxRunType  = 'hst_run_type_idx';
-        $idxEmpYM    = 'hst_emp_year_month_idx';
-        // $uniqueName  = 'hst_emp_year_month_run_unique';
+        $childTable = 'hr_salary_transactions';
+        $fkName = 'hr_salary_transactions_payroll_run_id_foreign';
+        $idxName = 'hst_payroll_run_id_idx';
 
         // Drop FK if exists
         $fkExists = DB::table('information_schema.REFERENTIAL_CONSTRAINTS')
@@ -86,42 +92,23 @@ return new class extends Migration
             ->where('CONSTRAINT_NAME', $fkName)
             ->exists();
         if ($fkExists) {
-            Schema::table($table, function (Blueprint $t) use ($fkName) {
-                $t->dropForeign($fkName);
-            });
+            DB::statement("ALTER TABLE `$childTable` DROP FOREIGN KEY `$fkName`");
         }
 
-        // Drop indexes if exist
-        $indexExists = fn(string $idx) => DB::table('information_schema.statistics')
+        // Drop index if exists
+        $idxExists = DB::table('information_schema.statistics')
             ->where('TABLE_SCHEMA', $schema)
-            ->where('TABLE_NAME', $table)
-            ->where('INDEX_NAME', $idx)
+            ->where('TABLE_NAME', $childTable)
+            ->where('INDEX_NAME', $idxName)
             ->exists();
-
-        if ($indexExists($idxRunType)) {
-            Schema::table($table, function (Blueprint $t) use ($idxRunType) {
-                $t->dropIndex($idxRunType);
-            });
-        }
-        if ($indexExists($idxEmpYM)) {
-            Schema::table($table, function (Blueprint $t) use ($idxEmpYM) {
-                $t->dropIndex($idxEmpYM);
-            });
+        if ($idxExists) {
+            DB::statement("ALTER TABLE `$childTable` DROP INDEX `$idxName`");
         }
 
-        // (اختياري) لو أنشأت الـ unique
-        // if ($indexExists($uniqueName)) {
-        //     Schema::table($table, function (Blueprint $t) use ($uniqueName) {
-        //         $t->dropUnique($uniqueName);
-        //     });
-        // }
-
-        // لا نحذف العمود لأنّه كان موجود مسبقًا.
-        // لو تريد حذفه: تأكد أولًا أن هذا الميجريشن هو من أضافه عندك.
-        // if (Schema::hasColumn($table, 'payroll_run_id')) {
-        //     Schema::table($table, function (Blueprint $t) {
-        //         $t->dropColumn('payroll_run_id');
-        //     });
+        // لا نحذف العمود تلقائيًا (قد يكون مستخدمًا في مكان آخر)
+        // لو تريد حذفه، أضف التالي:
+        // if (Schema::hasColumn($childTable, 'payroll_run_id')) {
+        //     DB::statement("ALTER TABLE `$childTable` DROP COLUMN `payroll_run_id`");
         // }
     }
 };
