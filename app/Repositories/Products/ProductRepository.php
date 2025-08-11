@@ -262,57 +262,7 @@ class ProductRepository implements ProductRepositoryInterface
         return $final;
     }
 
-    /**
-     * يبني الـQuery الأساسي لحركات المخزون (للاستخدام من أي مكان)
-     *
-     * @param  int|string|null  $productParam  (id أو code)
-     * @param  \Carbon\Carbon   $from
-     * @param  \Carbon\Carbon   $to
-     * @param  array<int>       $storeIds
-     * @return \Illuminate\Database\Query\Builder
-     */
-    public function buildTransactionsBaseQuery($productParam, Carbon $from, Carbon $to, array $storeIds)
-    {
-        $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
-        $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
-
-        // ملاحظة: الربط مع unit_prices (rup) ملغى "فعليًا" كما في كودك الأصلي
-        // لو احتجت لاحقًا تمرير report_unit_id، ممكن نضيفه كـ parameter ونفعّل الربط.
-        $q = DB::table('inventory_transactions as it')
-            ->join('products as p', 'p.id', '=', 'it.product_id')
-            ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
-            ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
-
-            // الدخول فقط مربوط بـ Order كمصدر
-            ->leftJoin('orders as o', function ($j) use ($IN) {
-                $j->on('o.id', '=', 'it.transactionable_id')
-                    ->where('it.transactionable_type', '=', Order::class)
-                    ->where('it.movement_type', '=', $IN);
-            })
-            ->leftJoin('orders_details as od', function ($j) {
-                $j->on('od.order_id', '=', 'o.id')
-                    ->on('od.product_id', '=', 'it.product_id'); // مهم
-            })
-            ->leftJoin('units as u', 'u.id', '=', 'od.unit_id')
-
-            // وحدة التقرير (اختياري): مُعطّل الآن كما في كودك
-            ->leftJoin('unit_prices as rup', function ($j) {
-                // إلغاء الربط عمليًا عندما لا توجد وحدة تقرير
-                $j->on(DB::raw('1'), '=', DB::raw('0'));
-            })
-
-            // الفلاتر العامة
-            ->whereBetween('it.movement_date', [$from, $to])
-            ->whereIn('it.store_id', $storeIds)
-            ->when($productParam, function ($q) use ($productParam) {
-                $q->where(function ($w) use ($productParam) {
-                    $w->where('p.id', $productParam)
-                        ->orWhere('p.code', $productParam);
-                });
-            }) ;
-
-        return $q;
-    }
+ 
 
 
     public function getReportDataFromTransactions($productParam, $from_date, $to_date, $branch_id)
@@ -336,7 +286,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
         $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
-
+ 
         $q = DB::table('inventory_transactions as it')
             ->join('products as p', 'p.id', '=', 'it.product_id')
             ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
@@ -361,8 +311,10 @@ class ProductRepository implements ProductRepositoryInterface
             })
               
             ->where('it.deleted_at', null)
+            
             // ->whereBetween('it.transaction_date', [$from, $to])
-            ->whereBetween('it.movement_date', [$from, $to])
+            // ->whereBetween('it.movement_date', [$from, $to])
+            ->when($from_date && $to_date, fn($q) => $q->whereBetween('it.movement_date', [$from, $to]))
             ->whereIn('it.store_id', $storeIds)
             ->when($productParam, function ($q) use ($productParam) {
                 $q->where(function ($w) use ($productParam) {
