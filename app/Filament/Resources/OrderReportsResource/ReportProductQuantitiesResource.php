@@ -88,7 +88,7 @@ class ReportProductQuantitiesResource extends Resource
                 //     ->selectablePlaceholder('Should to select product')
                 //     ->options(Product::pluck('name', 'id')),
                 SelectFilter::make("product_id")
-                    ->multiple()
+                    // ->multiple()
                     ->label(__('lang.product'))->searchable()
                     ->getSearchResultsUsing(function (string $search): array {
                         return Product::query()
@@ -116,20 +116,28 @@ class ReportProductQuantitiesResource extends Resource
                     ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])
                         ->active()->pluck('name', 'id')),
 
-                Filter::make('date_range')
+                Filter::make('date')
                     ->form([
                         DatePicker::make('start_date')
-                            ->label('Start Date'),
+                            ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
-                            ->label('End Date'),
+                            ->label(__('lang.end_date')),
                     ])
-                    ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
 
-                        return $query->when(
-                            isset($data['start_date']) && isset($data['end_date']),
-                            fn($query) => $query->whereBetween('orders.transfer_date', [$data['start_date'], $data['end_date']])
-                        );
-                    }),
+                // Filter::make('date_range')
+                //     ->form([
+                //         DatePicker::make('start_date')
+                //             ->label('Start Date'),
+                //         DatePicker::make('end_date')
+                //             ->label('End Date'),
+                //     ])
+                //     ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
+
+                //         return $query->when(
+                //             isset($data['start_date']) && isset($data['end_date']),
+                //             fn($query) => $query->whereBetween('orders.transfer_date', [$data['start_date'], $data['end_date']])
+                //         );
+                //     }),
             ], layout: FiltersLayout::AboveContent);
     }
 

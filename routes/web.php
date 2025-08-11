@@ -718,3 +718,12 @@ Route::get('/routes-list', function () {
 Route::get('/products/{product}/export-items-pdf', function (\App\Models\Product $product) {
     return $product->exportItemsPdf();
 })->name('products.export-items-pdf');
+
+
+Route::get('/clear-opcache', function () {
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+        return 'OPcache cleared successfully ✅';
+    }
+    return 'OPcache is not enabled ❌';
+});

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repositories\Products;
 
 use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
@@ -6,6 +7,7 @@ use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetail
 use App\Http\Resources\ProductResource;
 use App\Interfaces\Products\ProductRepositoryInterface;
 use App\Models\Branch;
+use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Product;
 use Carbon\Carbon;
@@ -33,12 +35,12 @@ class ProductRepository implements ProductRepositoryInterface
 
         // Query the database to get all active products, or filter by ID and/or category ID if they're set.
         $query = Product::active()
-        // ->when($isManufacturing, function ($query) {
-        //     return $query->manufacturingCategory()->hasProductItems();
-        // })
+            // ->when($isManufacturing, function ($query) {
+            //     return $query->manufacturingCategory()->hasProductItems();
+            // })
             ->when($isManufacturing, function ($query) {
                 return $query->manufacturingCategory()
-                // ->hasProductItems()
+                    // ->hasProductItems()
                 ;
             }, function ($query) {
                 // return $query->unmanufacturingCategory();
@@ -212,15 +214,28 @@ class ProductRepository implements ProductRepositoryInterface
             ->join('orders', 'orders_details.order_id', '=', 'orders.id')
             ->join('branches', 'orders.branch_id', '=', 'branches.id')
             ->join('units', 'orders_details.unit_id', '=', 'units.id')
-            ->where('orders_details.product_id', '=', $request->input('product_id'))
-            ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
-                return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
+            // ->where('orders_details.product_id', '=', $request->input('product_id'))
+            ->where(function ($query) use ($request) {
+                $query->where('orders_details.product_id', '=', $request->input('product_id'))
+                    ->orWhere('products.code', '=', $request->input('product_id'));
             })
+            // ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
+            //     return $query->whereBetween('orders.created_at', [$from_date, $to_date]);
+            // })
+
+            ->when($from_date && $to_date, function ($query) use ($from_date, $to_date) {
+
+                $s_d = date('Y-m-d', strtotime($from_date)) . ' 00:00:00';
+                $e_d = date('Y-m-d', strtotime($to_date)) . ' 23:59:59';
+
+                return $query->whereBetween('orders.transfer_date', [$s_d, $e_d]);
+            })
+
             ->when($branch_id && is_array($branch_id), function ($query) use ($branch_id) {
                 return $query->whereIn('orders.branch_id', $branch_id);
             })
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-        // ->where('orders.active', 1)
+            // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
             ->groupBy(
                 'orders.branch_id',
@@ -247,6 +262,214 @@ class ProductRepository implements ProductRepositoryInterface
         return $final;
     }
 
+    /**
+     * يبني الـQuery الأساسي لحركات المخزون (للاستخدام من أي مكان)
+     *
+     * @param  int|string|null  $productParam  (id أو code)
+     * @param  \Carbon\Carbon   $from
+     * @param  \Carbon\Carbon   $to
+     * @param  array<int>       $storeIds
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function buildTransactionsBaseQuery($productParam, Carbon $from, Carbon $to, array $storeIds)
+    {
+        $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
+        $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
+
+        // ملاحظة: الربط مع unit_prices (rup) ملغى "فعليًا" كما في كودك الأصلي
+        // لو احتجت لاحقًا تمرير report_unit_id، ممكن نضيفه كـ parameter ونفعّل الربط.
+        $q = DB::table('inventory_transactions as it')
+            ->join('products as p', 'p.id', '=', 'it.product_id')
+            ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
+            ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
+
+            // الدخول فقط مربوط بـ Order كمصدر
+            ->leftJoin('orders as o', function ($j) use ($IN) {
+                $j->on('o.id', '=', 'it.transactionable_id')
+                    ->where('it.transactionable_type', '=', Order::class)
+                    ->where('it.movement_type', '=', $IN);
+            })
+            ->leftJoin('orders_details as od', function ($j) {
+                $j->on('od.order_id', '=', 'o.id')
+                    ->on('od.product_id', '=', 'it.product_id'); // مهم
+            })
+            ->leftJoin('units as u', 'u.id', '=', 'od.unit_id')
+
+            // وحدة التقرير (اختياري): مُعطّل الآن كما في كودك
+            ->leftJoin('unit_prices as rup', function ($j) {
+                // إلغاء الربط عمليًا عندما لا توجد وحدة تقرير
+                $j->on(DB::raw('1'), '=', DB::raw('0'));
+            })
+
+            // الفلاتر العامة
+            ->whereBetween('it.movement_date', [$from, $to])
+            ->whereIn('it.store_id', $storeIds)
+            ->when($productParam, function ($q) use ($productParam) {
+                $q->where(function ($w) use ($productParam) {
+                    $w->where('p.id', $productParam)
+                        ->orWhere('p.code', $productParam);
+                });
+            }) ;
+
+        return $q;
+    }
+
+
+    public function getReportDataFromTransactions($productParam, $from_date, $to_date, $branch_id)
+    {
+        $from = \Carbon\Carbon::parse($from_date)->startOfDay();
+        $to   = \Carbon\Carbon::parse($to_date)->endOfDay();
+
+        // 1) branch_id -> store_id(s)
+        $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
+        $storeIds = DB::table('branches')
+            ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
+            ->pluck('store_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($storeIds)) {
+            return [];
+        }
+
+        $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
+        $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
+
+        $q = DB::table('inventory_transactions as it')
+            ->join('products as p', 'p.id', '=', 'it.product_id')
+            ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
+            ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
+            // الدخول فقط مربوط بطلب (Order) كمصدر
+            ->leftJoin('orders as o', function ($j) use ($IN) {
+                $j->on('o.id', '=', 'it.transactionable_id')
+                    // ->where('it.transactionable_type', '=', Order::class)
+                    ->where('it.movement_type', '=', $IN);
+            })
+            ->leftJoin('orders_details as od', function ($j) {
+                $j->on('od.order_id', '=', 'o.id')
+                    ->on('od.product_id', '=', 'it.product_id'); // مهم
+            })
+            ->leftJoin('units as u', 'u.id', '=', 'od.unit_id')
+
+            // وحدة التقرير (اختياري): فقط لجلب package_size للوحدة المطلوبة
+            ->leftJoin('unit_prices as rup', function ($j) {
+
+                // إلغاء الربط عمليًا عندما لا توجد وحدة تقرير
+                $j->on(DB::raw('1'), '=', DB::raw('0'));
+            })
+              
+            ->where('it.deleted_at', null)
+            // ->whereBetween('it.transaction_date', [$from, $to])
+            ->whereBetween('it.movement_date', [$from, $to])
+            ->whereIn('it.store_id', $storeIds)
+            ->when($productParam, function ($q) use ($productParam) {
+                $q->where(function ($w) use ($productParam) {
+                    $w->where('p.id', $productParam)
+                        ->orWhere('p.code', $productParam);
+                });
+            }) ;
+
+        $rows = $q->selectRaw("
+        p.id   as product_id,
+      MIN(CASE WHEN it.movement_type = ? THEN u.name END) AS unit_name,
+
+        p.code as code,
+        p.name as product,
+
+        COALESCE(b.name, '') as branch,
+        COALESCE(s.name, '') as store,
+
+        -- حجم وحدة التقرير (إن وُجدت)، وإلا 1 (أي وحدة القاعدة)
+        COALESCE(rup.package_size, 1.0) as report_ps,
+
+        -- إجمالي الخروج والدخول بوحدة القاعدة
+        SUM(CASE WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0)) ELSE 0 END) AS in_qty_base,
+        SUM(CASE WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0)) ELSE 0 END) AS out_qty_base,
+
+        -- الصافي بوحدة القاعدة
+        SUM(
+            CASE
+                WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0))
+                WHEN it.movement_type = ? THEN -(it.quantity * COALESCE(it.package_size, 1.0))
+                ELSE 0
+            END
+        ) AS net_base,
+
+        -- مجموع تكلفة الدخول فقط (من it) بوحدة القاعدة
+        SUM(
+            CASE
+                WHEN it.movement_type = ?
+                THEN (
+                    ( NULLIF(it.price, 0) / NULLIF(COALESCE(it.package_size, 1.0), 0) )
+                    * (it.quantity * COALESCE(it.package_size, 1.0))
+                )
+                ELSE 0
+            END
+        ) AS in_cost_sum_base 
+    ", [$IN, $IN, $OUT, $IN, $OUT, $IN])
+
+            ->groupBy(
+                'p.id',
+                'p.code',
+                'p.name',
+                'b.name',
+                's.name',
+                'rup.package_size'
+            )
+            ->get();
+        // dd($rows[0]);
+        // dd($rows->toSql(),$rows->getBindings());
+
+        // لو حابب تعرض النتائج بوحدة التقرير (إن وُجدت)، حوِّلها بعد الجلب:
+        $rows = $rows->map(function ($r) {
+            $ps = (float) ($r->report_ps ?: 1);
+            $r->in_qty    = $ps ? (float)$r->in_qty_base  / $ps : (float)$r->in_qty_base;
+            $r->out_qty   = $ps ? (float)$r->out_qty_base / $ps : (float)$r->out_qty_base;
+            $r->net_qty   = $ps ? (float)$r->net_base     / $ps : (float)$r->net_base;
+            // بإمكانك أيضًا إخفاء *_base إذا لا تحتاجها في الإخراج
+            return $r;
+        });
+        // dd($rows[0]);
+        // إخراج
+        $final = [];
+        foreach ($rows as $val) {
+            $netBase       = (float) $val->net_base;
+            $reportPs      = (float) ($val->report_ps ?: 1.0);
+            $inQtyBase     = (float) $val->in_qty_base;
+            $inCostSumBase = (float) $val->in_cost_sum_base;
+            $outQty = (float) $val->out_qty_base;
+
+            // الكمية بوحدة التقرير
+            $netQtyOut = $reportPs > 0 ? ($netBase / $reportPs) : $netBase;
+
+            // متوسط تكلفة الدخول للوحدة القاعدية
+            $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0;
+
+            // سعر وحدة التقرير = تكلفة/قاعدة × report_ps
+            $unitPriceOut = $avgInCostPerBase * ($reportPs > 0 ? $reportPs : 1.0);
+
+            $obj               = new \stdClass();
+            $obj->code      = $val->code;
+            $obj->product      = $val->product;
+            $obj->package_size = $reportPs; // حجم عبوة وحدة التقرير (إن طُلِبت)
+            $obj->branch       = $val->branch;
+            $obj->unit         = $val?->unit_name ?? '';
+            // $obj->unit         = $reportUnitId ? ($reportUnitName ?? '') : ($val->trans_unit ?: 'base');
+            $obj->quantity     = formatQunantity($netQtyOut);
+            $obj->in_quantity = formatQunantity($inQtyBase);         // (الداخل − الخارج)
+            $obj->out_quantity     = formatQunantity($outQty);            // (الداخل − الخارج)
+            $obj->price        = formatMoneyWithCurrency($unitPriceOut); // متوسط تكلفة الدخول
+            $final[]           = $obj;
+        }
+
+        return $final;
+    }
+
+
+
+
     public function getProductsOrdersQuntities($request)
     {
         $currnetRole = getCurrentRole();
@@ -272,10 +495,12 @@ class ProductRepository implements ProductRepositoryInterface
         }
 
         // dd($branch_id);
-        $dataQuantity = $this->getReportData($request, $from_date, $to_date, $branch_id);
-        // dd($dataQuantity);
+        // $dataQuantity = $this->getReportData($request, $from_date, $to_date, $branch_id);
+        $dataQuantity2 = $this->getReportDataFromTransactions($request->product_id, $from_date, $to_date, $branch_id);
         return [
-            'dataQuantity' => $dataQuantity,
+            // 'dataQuantity' => $dataQuantity,
+            'dataQuantity' => $dataQuantity2,
+            // 'd2' => $dataQuantity2,
             'dataTotal'    => $this->getCount($request, $from_date, $to_date, $branch_id),
         ];
     }
@@ -303,18 +528,18 @@ class ProductRepository implements ProductRepositoryInterface
             //     return $query->whereIn('orders.branch_id', $branch_id);
             // })
             ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-        // ->where('orders.active', 1)
+            // ->where('orders.active', 1)
             ->whereNull('orders.deleted_at')
-        // ->groupBy(
-        //     'orders.branch_id',
-        //     'products.name',
-        //     'products.code',
-        //     'products.id',
-        //     'branches.name',
-        //     'units.name',
-        //     'orders_details.package_size',
-        //     'orders_details.price'
-        // )
+            // ->groupBy(
+            //     'orders.branch_id',
+            //     'products.name',
+            //     'products.code',
+            //     'products.id',
+            //     'branches.name',
+            //     'units.name',
+            //     'orders_details.package_size',
+            //     'orders_details.price'
+            // )
             ->groupBy('orders.branch_id', 'products.name', 'units.name')
             ->get();
         // Apply number_format() to the quantity value

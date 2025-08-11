@@ -6,6 +6,7 @@ use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesResource;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\Product;
+use App\Repositories\Products\ProductRepository;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DatePicker;
 use Filament\Pages\Actions\Action;
@@ -22,53 +23,50 @@ class ListReportProductQuantities extends ListRecords
 {
     protected static string $resource = ReportProductQuantitiesResource::class;
 
+    // public function getTableRecordKey(Model $record): string
+    // {
+    //     $attributes = $record->getAttributes();
+    //     return $attributes['product'] . '-' . $attributes['branch'] . '-' . $attributes['unit'];
+    // }
+    protected static string $view = 'filament.pages.order-reports.report-product-quantities';
+
     public function getTableRecordKey(Model $record): string
     {
         $attributes = $record->getAttributes();
         return $attributes['product'] . '-' . $attributes['branch'] . '-' . $attributes['unit'];
     }
-    // protected static string $view = 'filament.pages.order-reports.report-product-quantities';
-
-    protected function getTableFilters(): array
-    {
-        return [
-
-            SelectFilter::make("product_id")
-                ->label(__('lang.product'))
-                ->searchable()
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Product::where('active', 1)
-                    ->get()->pluck('name', 'id')),
-            SelectFilter::make("branch_id")
-                ->label(__('lang.branch'))
-                ->multiple()
-                ->query(function (Builder $q, $data) {
-                    return $q;
-                })->options(Branch::where('active', 1)
-                    ->get()->pluck('name', 'id')),
-            Filter::make('date')
-                ->form([
-                    DatePicker::make('start_date')
-                        ->label(__('lang.start_date')),
-                    DatePicker::make('end_date')
-                        ->label(__('lang.end_date')),
-                ])
-                ->query(function (Builder $query, array $data): Builder {
-                    return $query;
-                }),
-        ];
-    }
 
 
 
 
- 
+
     protected function getActions(): array
     {
         return [Action::make('Export to PDF')->label(__('lang.export_pdf'))
             ->action('exportToPdf')
             ->color('success')];
+    }
+
+
+    protected function getViewData(): array
+    {
+        $repo = app(ProductRepository::class);
+        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;
+        $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
+        $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
+        $product_id = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
+        $data = $repo->getReportDataFromTransactions($product_id, $start_date, $end_date, $branch_id);
+        // dd($product_id,$branch_id,$data[0]);       
+// dd($data);
+       return [
+        'report_data' => $data,
+        'product_id' => $product_id,
+        'start_date' => $start_date,
+        'end_date' => $end_date,
+        // 'total_quantity' => $data['total_quantity']??0,
+        // 'total_price' => 0,
+       ];
+        return [];
     }
 
     public function exportToPdf()
