@@ -68,76 +68,119 @@ class GeneralReportProductDetails extends Page
 
     public function getReportDetails($start_date, $end_date, $branch_id, $category_id)
     {
-
-        $data = DB::table('orders_details')
-            ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-            ->join('products', 'orders_details.product_id', '=', 'products.id')
-            ->join('units', 'orders_details.unit_id', '=', 'units.id')
-            // ->select('products.category_id', 'orders_details.product_id as p_id' )
-            ->when($branch_id, function ($query) use ($branch_id) {
-                return $query->where('orders.branch_id', $branch_id);
-            })
-            ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
-
-                $s_d = date('Y-m-d', strtotime($start_date)) . ' 00:00:00';
-                $e_d = date('Y-m-d', strtotime($end_date)) . ' 23:59:59';
-                return $query->whereBetween('orders.created_at', [$s_d, $e_d]);
-            })
-            // ->when($year && $month, function ($query) use ($year, $month) {
-            //     return $query->whereRaw('YEAR(orders.created_at) = ? AND MONTH(orders.created_at) = ?', [$year, $month]);
-            // })
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            // ->where('orders.active', 1)
-            ->whereNull('orders.deleted_at')
-            ->where('products.category_id', $category_id)
-            ->groupBy(
-                'orders_details.product_id',
-                'products.category_id',
-                'orders_details.unit_id',
-                'products.name',
-                'products.code',
-                'units.name',
-                'orders_details.price',
-                'orders_details.package_size',
-            )
-            ->get([
-                'products.category_id',
-                'orders_details.product_id',
-                DB::raw("IF(JSON_VALID(products.name), REPLACE(JSON_EXTRACT(products.name, '$." . app()->getLocale() . "'), '\"', ''), products.name) as product_name"),
-                'units.name as unit_name',
-                'products.code as product_code',
-                'orders_details.unit_id as unit_id',
-                DB::raw('ROUND(SUM(orders_details.available_quantity), 2) as available_quantity'),
-                // DB::raw('(SUM(orders_details.price)) as price'),
-                'orders_details.price as price',
-                'orders_details.package_size as package_size',
-            ]);
-
-        $final_result['data'] = [];
-        $total_price = 0;
-        $total_quantity = 0;
-        foreach ($data as   $val_data) {
-            $obj = new \stdClass();
-            $obj->category_id = $val_data->category_id;
-            $obj->product_id = $val_data->product_id;
-            $obj->product_name = $val_data->product_name;
-            $obj->product_code = $val_data->product_code;
-            $obj->package_size = $val_data->package_size;
-            $obj->unit_name = $val_data->unit_name;
-            $obj->unit_id = $val_data->unit_id;
-            $obj->quantity = $val_data->available_quantity;
-            $obj->price = formatMoney(($val_data->price * $val_data->available_quantity), getDefaultCurrency());
-            $obj->amount = number_format(($val_data->price * $val_data->available_quantity), 2);
-            $total_price += (($val_data->price * $val_data->available_quantity));
-            $total_quantity += $obj->quantity;
-            $obj->symbol = getDefaultCurrency();
-            $final_result['data'][] = $obj;
+        $IN  = \App\Models\InventoryTransaction::MOVEMENT_IN  ?? 'in';
+        $OUT = \App\Models\InventoryTransaction::MOVEMENT_OUT ?? 'out';
+    
+        // فرع -> متجر
+        $storeId = \App\Models\Branch::where('id', $branch_id)->value('store_id');
+        if (! $storeId) {
+            return [
+                'data' => [],
+                'total_price' => getDefaultCurrency() . ' ' . number_format(0, 2),
+                'total_quantity' => number_format(0, 2),
+            ];
         }
-        $final_result['total_price'] =  getDefaultCurrency() . ' ' . number_format($total_price, 2);
-        $final_result['total_quantity'] = number_format($total_quantity, 2);
-
-        return $final_result;
+    
+        $from = \Carbon\Carbon::parse($start_date)->startOfDay();
+        $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
+    
+        $rows = DB::table('inventory_transactions as it')
+            ->join('products as p', 'p.id', '=', 'it.product_id')
+            ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
+            ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
+    
+            // (اختياري) لجلب اسم الوحدة المستخدمة في الدخول عبر orders_details
+            ->leftJoin('orders as o', function ($j) use ($IN) {
+                $j->on('o.id', '=', 'it.transactionable_id')
+                  ->where('it.movement_type', '=', $IN);
+            })
+            ->leftJoin('orders_details as od', function ($j) {
+                $j->on('od.order_id', '=', 'o.id')
+                  ->on('od.product_id', '=', 'it.product_id');
+            })
+            ->leftJoin('units as u', 'u.id', '=', 'od.unit_id')
+    
+            ->whereNull('it.deleted_at')
+            ->where('it.store_id', $storeId)
+            ->where('p.category_id', $category_id)
+            ->whereBetween('it.movement_date', [$from, $to])
+    
+            ->selectRaw("
+                p.id   as product_id,
+                p.code as product_code,
+                MIN(it.package_size) as package_size,
+                IF(JSON_VALID(p.name), REPLACE(JSON_EXTRACT(p.name, '$." . app()->getLocale() . "'), '\"', ''), p.name) as product_name,
+    
+                MIN(CASE WHEN it.movement_type = ? THEN u.name END) AS unit_name,
+    
+                -- إجمالي الدخول والخروج والصافي بوحدة القاعدة
+                SUM(CASE WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0)) ELSE 0 END) AS in_qty_base,
+                SUM(CASE WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0)) ELSE 0 END) AS out_qty_base,
+                SUM(CASE 
+                        WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0))
+                        WHEN it.movement_type = ? THEN -(it.quantity * COALESCE(it.package_size, 1.0))
+                        ELSE 0
+                    END
+                ) AS net_base,
+    
+                -- مجموع تكلفة الدخول فقط بالقاعدة (بنفس منطق الدالة المرجعية)
+                SUM(
+                    CASE
+                        WHEN it.movement_type = ?
+                        THEN (
+                            ( NULLIF(it.price, 0) / NULLIF(COALESCE(it.package_size, 1.0), 0) )
+                            * (it.quantity * COALESCE(it.package_size, 1.0))
+                        )
+                        ELSE 0
+                    END
+                ) AS in_cost_sum_base
+            ", [$IN, $IN, $OUT, $IN, $OUT, $IN])
+    
+            ->groupBy('p.id', 'p.code', 'p.name')
+            ->get();
+    
+        $final = [];
+        $totalAmount = 0.0;
+        $totalQty = 0.0;
+    
+        foreach ($rows as $r) {
+            $inQtyBase       = (float) $r->in_qty_base;
+            $netBase         = (float) $r->net_base;
+            $inCostSumBase   = (float) $r->in_cost_sum_base;
+    
+            $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)
+            $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي
+    
+            $obj = new \stdClass();
+            $obj->category_id  = (int) $category_id;
+            $obj->product_id   = $r->product_id;
+            $obj->product_name = $r->product_name;
+            $obj->product_code = $r->product_code;
+            $obj->package_size = $r->package_size; // لا نعتمد package_size هنا (الأسعار بالقاعدة)
+            $obj->unit_name    = $r->unit_name ?? ''; // اسم وحدة الدخول إن وُجد عبر od/u
+            $obj->unit_id      = null;               // إن أردتها، إنضم بوحدة محددة
+    
+            // الكمية بالصافي (قاعدة)
+            $obj->quantity = formatQunantity($netBase);
+    
+            // السعر (نفس طريقتك: متوسط تكلفة الدخول) × الكمية = amount
+            $obj->price  = formatMoney($amountBase, getDefaultCurrency());
+            $obj->amount = number_format($amountBase, 2);
+            $obj->symbol = getDefaultCurrency();
+    
+            $totalAmount += $amountBase;
+            $totalQty    += $obj->quantity;
+    
+            $final[] = $obj;
+        }
+    
+        return [
+            'data'           => $final,
+            'total_price'    => getDefaultCurrency() . ' ' . number_format($totalAmount, 2),
+            'total_quantity' => number_format($totalQty, 2),
+        ];
     }
+    
 
     public function goBack()
     {
