@@ -70,7 +70,7 @@ class GeneralReportProductDetails extends Page
     {
         $IN  = \App\Models\InventoryTransaction::MOVEMENT_IN  ?? 'in';
         $OUT = \App\Models\InventoryTransaction::MOVEMENT_OUT ?? 'out';
-    
+
         // فرع -> متجر
         $storeId = \App\Models\Branch::where('id', $branch_id)->value('store_id');
         if (! $storeId) {
@@ -80,31 +80,31 @@ class GeneralReportProductDetails extends Page
                 'total_quantity' => number_format(0, 2),
             ];
         }
-    
+
         $from = \Carbon\Carbon::parse($start_date)->startOfDay();
         $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
-    
+
         $rows = DB::table('inventory_transactions as it')
             ->join('products as p', 'p.id', '=', 'it.product_id')
             ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
             ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
-    
+
             // (اختياري) لجلب اسم الوحدة المستخدمة في الدخول عبر orders_details
             ->leftJoin('orders as o', function ($j) use ($IN) {
                 $j->on('o.id', '=', 'it.transactionable_id')
-                  ->where('it.movement_type', '=', $IN);
+                    ->where('it.movement_type', '=', $IN);
             })
             ->leftJoin('orders_details as od', function ($j) {
                 $j->on('od.order_id', '=', 'o.id')
-                  ->on('od.product_id', '=', 'it.product_id');
+                    ->on('od.product_id', '=', 'it.product_id');
             })
             ->leftJoin('units as u', 'u.id', '=', 'od.unit_id')
-    
+
             ->whereNull('it.deleted_at')
             ->where('it.store_id', $storeId)
             ->where('p.category_id', $category_id)
             ->whereBetween('it.movement_date', [$from, $to])
-    
+
             ->selectRaw("
                 p.id   as product_id,
                 p.code as product_code,
@@ -135,22 +135,22 @@ class GeneralReportProductDetails extends Page
                     END
                 ) AS in_cost_sum_base
             ", [$IN, $IN, $OUT, $IN, $OUT, $IN])
-    
+
             ->groupBy('p.id', 'p.code', 'p.name')
             ->get();
-    
+
         $final = [];
         $totalAmount = 0.0;
         $totalQty = 0.0;
-    
+
         foreach ($rows as $r) {
             $inQtyBase       = (float) $r->in_qty_base;
             $netBase         = (float) $r->net_base;
             $inCostSumBase   = (float) $r->in_cost_sum_base;
-    
+
             $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)
             $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي
-    
+
             $obj = new \stdClass();
             $obj->category_id  = (int) $category_id;
             $obj->product_id   = $r->product_id;
@@ -159,28 +159,28 @@ class GeneralReportProductDetails extends Page
             $obj->package_size = $r->package_size; // لا نعتمد package_size هنا (الأسعار بالقاعدة)
             $obj->unit_name    = $r->unit_name ?? ''; // اسم وحدة الدخول إن وُجد عبر od/u
             $obj->unit_id      = null;               // إن أردتها، إنضم بوحدة محددة
-    
+
             // الكمية بالصافي (قاعدة)
             $obj->quantity = formatQunantity($netBase);
-    
+
             // السعر (نفس طريقتك: متوسط تكلفة الدخول) × الكمية = amount
             $obj->price  = formatMoney($amountBase, getDefaultCurrency());
             $obj->amount = number_format($amountBase, 2);
             $obj->symbol = getDefaultCurrency();
-    
+
             $totalAmount += $amountBase;
-            $totalQty    += $obj->quantity;
-    
+            $totalQty    += $obj?->quantity ?? 0;
+
             $final[] = $obj;
         }
-    
+
         return [
             'data'           => $final,
             'total_price'    => getDefaultCurrency() . ' ' . number_format($totalAmount, 2),
             'total_quantity' => number_format($totalQty, 2),
         ];
     }
-    
+
 
     public function goBack()
     {
