@@ -161,7 +161,7 @@ class GeneralReportProductDetails extends Page
             $obj->unit_id      = null;               // إن أردتها، إنضم بوحدة محددة
 
             // الكمية بالصافي (قاعدة)
-            $obj->quantity = formatQunantity($netBase);
+            $obj->quantity =  formatQunantity($netBase);
 
             // السعر (نفس طريقتك: متوسط تكلفة الدخول) × الكمية = amount
             $obj->price  = formatMoney($amountBase, getDefaultCurrency());
@@ -169,7 +169,7 @@ class GeneralReportProductDetails extends Page
             $obj->symbol = getDefaultCurrency();
 
             $totalAmount += $amountBase;
-            $totalQty    += $obj?->quantity ?? 0;
+            $totalQty    += $netBase ?? 0;
 
             $final[] = $obj;
         }
@@ -177,7 +177,7 @@ class GeneralReportProductDetails extends Page
         return [
             'data'           => $final,
             'total_price'    => getDefaultCurrency() . ' ' . number_format($totalAmount, 2),
-            'total_quantity' => number_format($totalQty, 2),
+            'total_quantity' => formatQunantity($totalQty),
         ];
     }
 
