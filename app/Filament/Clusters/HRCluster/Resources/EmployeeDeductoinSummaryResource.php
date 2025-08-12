@@ -24,7 +24,7 @@ class EmployeeDeductoinSummaryResource extends Resource
 {
     protected static ?string $model = EmployeeAttendanceReport::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-minus';
 
     protected static ?string $cluster = HRSalaryCluster::class;
 

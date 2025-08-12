@@ -21,9 +21,9 @@ class PenaltyDeductionResource extends Resource
 {
     protected static ?string $model = PenaltyDeduction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-minus-circle';
 
-    protected static ?string $cluster                             = HRSalaryCluster::class;
+    protected static ?string $cluster = HRSalaryCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 9;
     public static function form(Form $form): Form

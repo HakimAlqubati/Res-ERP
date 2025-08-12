@@ -26,9 +26,26 @@ class PayrollResource extends Resource
 {
     protected static ?string $model = PayrollRun::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $cluster = HRSalaryCluster::class;
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+    public static function getNavigationLabel(): string
+    {
+        return 'Payroll';
+    }
+    public static function getPluralLabel(): ?string
+    {
+        return 'Payroll';
+    }
+
+    public static function getLabel(): ?string
+    {
+        return 'Payroll';
+    }
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;

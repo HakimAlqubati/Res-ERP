@@ -21,7 +21,8 @@ class ListPayrolls extends ListRecords
 
             //     )
             //     ->icon('heroicon-o-play'),
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->icon('heroicon-o-plus-circle'),
         ];
     }
 
