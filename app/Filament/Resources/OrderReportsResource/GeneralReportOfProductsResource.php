@@ -174,22 +174,22 @@ class GeneralReportOfProductsResource extends Resource
             $obj->category           = $cat_name;
 
             // الكمية (الصافي) — بإمكانك تقريبها كما كان:
-            $obj->quantity = round($netQty, 0);
+            $obj->quantity = formatQunantity($netQty);
 
             // price هنا سنعرض "قيمة الفئة" بصيغة عملة (كما كنت تعرض سابقًا)
             // إن أردت عرض "سعر الوحدة" بدلًا منها ضع formatMoney($unitPrice, getDefaultCurrency())
-            $obj->price  = formatMoney($amount, getDefaultCurrency()); // للحفاظ على شكل الحقل السابق
-            $obj->amount = number_format($amount, 2);
+            $obj->price  = formatMoneyWithCurrency($amount); // للحفاظ على شكل الحقل السابق
+            $obj->amount = formatMoneyWithCurrency($amount);
             $obj->symbol = getDefaultCurrency();
 
             $total_price    += $amount;
-            $total_quantity += $obj->quantity;
+            $total_quantity += $netQty;
 
             $final_result['data'][] = $obj;
         }
 
-        $final_result['total_price']    = getDefaultCurrency() . ' ' . number_format($total_price, 2);
-        $final_result['total_quantity'] = number_format($total_quantity, 2);
+        $final_result['total_price']    = formatMoneyWithCurrency($total_price);
+        $final_result['total_quantity'] = formatQunantity($total_quantity);
 
         return $final_result;
     }
