@@ -113,7 +113,12 @@ class ReportProductQuantitiesResource extends Resource
                     }),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->searchable()
-                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN])
+                    ->options(Branch::whereIn('type', [
+                        Branch::TYPE_BRANCH,
+                        Branch::TYPE_CENTRAL_KITCHEN,
+                        Branch::TYPE_POPUP
+                    ])
+                        ->activePopups()
                         ->active()->pluck('name', 'id')),
 
                 Filter::make('date')

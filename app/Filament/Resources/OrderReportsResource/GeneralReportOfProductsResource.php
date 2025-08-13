@@ -57,7 +57,10 @@ class GeneralReportOfProductsResource extends Resource
             ->filters([
                 SelectFilter::make("branch_id")->placeholder('Select')
                     ->label(__('lang.branch'))
-                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP])->active()
+                    ->options(Branch::whereIn('type', 
+                    [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP])
+                    ->activePopups()
+                    ->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->form([
