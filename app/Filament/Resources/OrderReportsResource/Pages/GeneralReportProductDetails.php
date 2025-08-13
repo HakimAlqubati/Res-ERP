@@ -28,7 +28,7 @@ class GeneralReportProductDetails extends Page
     }
     protected static string $view = 'filament.pages.order-reports.general-report-product-details';
 
-    private function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
+    public function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
     {  
         $locale = app()->getLocale();
         // اسم المنتج مع دعم JSON locales
@@ -224,6 +224,9 @@ SQL;
             // dd($r,gettype($r));
             // $inQtyBase       = (float) $r->remaining_qty;
             $netBase         = (float) $r->remaining_qty;
+            if($netBase<=0){
+                continue;
+            }
             // $inCostSumBase   = (float) $r->in_cost_sum_base;
 
             // $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)

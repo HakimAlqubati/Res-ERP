@@ -85,117 +85,63 @@ class GeneralReportOfProductsResource extends Resource
 
 
     public static function processReportData($start_date, $end_date, $branch_id)
-    {
-        $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
-        $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
-
-        // جلب المخزن المرتبط بالفرع
+    {   // جلب المخزن المرتبط بالفرع
         $storeId = Branch::where('id', $branch_id)->value('store_id');
+        $categories = Category::where('active', 1)->pluck('name', 'id');
+
+        $final_result['data'] = [];
+        $grand_total_amount = 0.0;   // مجموع remaining_value عبر كل الفئات
+        $grand_total_qty    = 0.0;   // مجموع remaining_qty عبر كل الفئات
 
         $from = \Carbon\Carbon::parse($start_date)->startOfDay();
         $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
 
-        // تجميع على مستوى الفئة مع حسابات التكلفة كالدالة المرجعية
-        $rows = DB::table('inventory_transactions as it')
-            ->join('products as p', 'p.id', '=', 'it.product_id')
-            ->join('categories as c', 'c.id', '=', 'p.category_id')
-            ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
-            ->leftJoin('branches as b', 'b.store_id', '=', 's.id')
-            ->whereNull('it.deleted_at')
-            ->when($storeId, fn($q) => $q->where('it.store_id', $storeId))
-            // NOTE: استخدم نفس حقل التاريخ الذي تعتمد عليه في الدالة المرجعية
-            ->when($start_date && $end_date, fn($q) => $q->whereBetween('it.movement_date', [$from, $to]))
-            ->selectRaw("
-                p.category_id,
-    
-                -- إجمالي الدخول والخروج بوحدة القاعدة
-                SUM(CASE WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0)) ELSE 0 END) AS in_qty_base,
-                SUM(CASE WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0)) ELSE 0 END) AS out_qty_base,
-    
-                -- الصافي بوحدة القاعدة
-                SUM(
-                    CASE
-                        WHEN it.movement_type = ? THEN (it.quantity * COALESCE(it.package_size, 1.0))
-                        WHEN it.movement_type = ? THEN -(it.quantity * COALESCE(it.package_size, 1.0))
-                        ELSE 0
-                    END
-                ) AS net_base,
-    
-                -- مجموع تكلفة الدخول فقط بوحدة القاعدة (بنفس منطق الدالة المرجعية)
-                SUM(
-                    CASE
-                        WHEN it.movement_type = ?
-                        THEN (
-                            ( NULLIF(it.price, 0) / NULLIF(COALESCE(it.package_size, 1.0), 0) )
-                            * (it.quantity * COALESCE(it.package_size, 1.0))
-                        )
-                        ELSE 0
-                    END
-                ) AS in_cost_sum_base
-            ", [$IN, $OUT, $IN, $OUT, $IN])
-            ->groupBy('p.category_id')
-            ->get();
+        
+        foreach ($categories as $cat_id => $cat_name) {
+ 
+            // 3) جلب صفوف المنتجات داخل الفئة بنفس منطق runSourceBalanceByCategorySQL
+            $rows = app(GeneralReportProductDetails::class)->runSourceBalanceByCategorySQL(
+                (int)$storeId,
+                (int)$cat_id,
+                $from,
+                $to 
+            ); 
+            // 4) تجميع كميات وقيم الفئة
+            $cat_qty   = 0.0; // مجموع remaining_qty (بالوحدة المُدخلة لكل منتج)
+            $cat_amount = 0.0; // مجموع remaining_value
 
-        // تحويل النتائج إلى نفس بنية إخراجك السابقة (price/amount لكل فئة)
-        $data = [];
-        foreach ($rows as $r) {
-            $inQtyBase       = (float) $r->in_qty_base;
-            $outQtyBase      = (float) $r->out_qty_base;
-            $netBase         = (float) $r->net_base;
-            $inCostSumBase   = (float) $r->in_cost_sum_base;
-
-            $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)
-            $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي بتكلفة متوسط الدخول
-
-            if (! isset($data[$r->category_id])) {
-                $data[$r->category_id] = [
-                    'available_quantity' => 0.0, // سنعرضها كـ quantity
-                    'price'              => 0.0, // سنخزن المبلغ (amount) أولًا ثم ننسّقه
-                    'unit_price'         => 0.0, // سعر الوحدة (اختياري لو تحب تعرضه)
-                ];
+            foreach ($rows as $r) {
+                $r = (object)$r;
+                // نأخذ فقط السطور ذات الرصيد الإيجابي (نفس ما عملته في التفاصيل)
+                $qty = (float) ($r->remaining_qty ?? 0);
+                if ($qty <= 0) {
+                    continue;
+                }
+                $cat_qty    += $qty;
+                $cat_amount += (float) ($r->remaining_value ?? 0);
             }
 
-            $data[$r->category_id]['available_quantity'] += $netBase;
-            $data[$r->category_id]['price']              += $amountBase;     // سنعرضه كـ amount لاحقًا
-            // ممكن تحفظ متوسط سعر الوحدة على مستوى الفئة (مرجّحًا بكمية الصافي أو الدخول)
-            // هنا لن نجمّعه لأنه قد يختلف بين المنتجات؛ نحتفظ بآخر قيمة أو اتركه إذا لا تحتاج عرضه.
-            $data[$r->category_id]['unit_price']          = $avgInCostPerBase;
-        }
-
-        // جلب الفئات النشطة
-        $categories = Category::where('active', 1)->pluck('name', 'id');
-
-        $final_result['data'] = [];
-        $total_price = 0;     // إجمالي المبالغ (amount)
-        $total_quantity = 0;  // إجمالي الصافي
-
-        foreach ($categories as $cat_id => $cat_name) {
-            $netQty   = (float) ($data[$cat_id]['available_quantity'] ?? 0.0);
-            $amount   = (float) ($data[$cat_id]['price'] ?? 0.0);             // مجموع قيمة الصافي بتكلفة متوسط الدخول
-            $unitPrice = (float) ($data[$cat_id]['unit_price'] ?? 0.0);        // معلوماتي فقط
-
+            // 5) تشكيل عنصر الفئة بنفس structure السابق لديك
             $obj = new \stdClass();
             $obj->category_id        = $cat_id;
-            $obj->url_report_details = "admin/order-reports/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id&storeId=$storeId";
+            $obj->url_report_details = "admin/order-reports/general-report-products/details/$cat_id"
+                . "?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id&storeId=$storeId";
             $obj->category           = $cat_name;
 
-            // الكمية (الصافي) — بإمكانك تقريبها كما كان:
-            $obj->quantity = formatQunantity($netQty);
+            // نفس الحقول والشكل:
+            $obj->quantity = formatQunantity($cat_qty);             // الكمية = مجموع remaining_qty
+            $obj->price    = formatMoneyWithCurrency($cat_amount);  // الحقل price يعرض المبلغ كما كنت تفعل
+            $obj->amount   = formatMoneyWithCurrency($cat_amount);
+            $obj->symbol   = getDefaultCurrency();
 
-            // price هنا سنعرض "قيمة الفئة" بصيغة عملة (كما كنت تعرض سابقًا)
-            // إن أردت عرض "سعر الوحدة" بدلًا منها ضع formatMoney($unitPrice, getDefaultCurrency())
-            $obj->price  = formatMoneyWithCurrency($amount); // للحفاظ على شكل الحقل السابق
-            $obj->amount = formatMoneyWithCurrency($amount);
-            $obj->symbol = getDefaultCurrency();
-
-            $total_price    += $amount;
-            $total_quantity += $netQty;
+            $grand_total_qty    += $cat_qty;
+            $grand_total_amount += $cat_amount;
 
             $final_result['data'][] = $obj;
-        }
+        }  
 
-        $final_result['total_price']    = formatMoneyWithCurrency($total_price);
-        $final_result['total_quantity'] = formatQunantity($total_quantity);
+        $final_result['total_price']    = formatMoneyWithCurrency($grand_total_amount);
+        $final_result['total_quantity'] = formatQunantity($grand_total_qty);
 
         return $final_result;
     }

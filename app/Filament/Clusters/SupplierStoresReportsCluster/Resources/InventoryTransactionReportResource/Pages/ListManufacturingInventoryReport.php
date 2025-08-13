@@ -23,7 +23,7 @@ class ListManufacturingInventoryReport extends ListRecords
                 'storeId' => $storeId,
             ];
         }
-
+ 
         $reportService = new ManufacturingInventoryDetailReportService();
         $reportData = $reportService->getDetailedRemainingStock(
             (int) $productId,

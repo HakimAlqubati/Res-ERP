@@ -262,7 +262,7 @@ class ProductRepository implements ProductRepositoryInterface
         return $final;
     }
 
- 
+
 
 
     public function getReportDataFromTransactions($productParam, $from_date, $to_date, $branch_id)
@@ -286,7 +286,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
         $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
- 
+
         $q = DB::table('inventory_transactions as it')
             ->join('products as p', 'p.id', '=', 'it.product_id')
             ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
@@ -309,9 +309,9 @@ class ProductRepository implements ProductRepositoryInterface
                 // إلغاء الربط عمليًا عندما لا توجد وحدة تقرير
                 $j->on(DB::raw('1'), '=', DB::raw('0'));
             })
-              
+
             ->where('it.deleted_at', null)
-            
+
             // ->whereBetween('it.transaction_date', [$from, $to])
             // ->whereBetween('it.movement_date', [$from, $to])
             ->when($from_date && $to_date, fn($q) => $q->whereBetween('it.movement_date', [$from, $to]))
@@ -321,7 +321,7 @@ class ProductRepository implements ProductRepositoryInterface
                     $w->where('p.id', $productParam)
                         ->orWhere('p.code', $productParam);
                 });
-            }) ;
+            });
 
         $rows = $q->selectRaw("
         p.id   as product_id,
@@ -371,7 +371,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'rup.package_size'
             )
             ->get();
-        // dd($rows[0]);
+        dd($rows[0]);
         // dd($rows->toSql(),$rows->getBindings());
 
         // لو حابب تعرض النتائج بوحدة التقرير (إن وُجدت)، حوِّلها بعد الجلب:
@@ -413,6 +413,178 @@ class ProductRepository implements ProductRepositoryInterface
             $obj->in_quantity = formatQunantity($inQtyBase);         // (الداخل − الخارج)
             $obj->out_quantity     = formatQunantity($outQty);            // (الداخل − الخارج)
             $obj->price        = formatMoneyWithCurrency($unitPriceOut); // متوسط تكلفة الدخول
+            $final[]           = $obj;
+        }
+
+        return $final;
+    }
+
+    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
+    {
+        $from = \Carbon\Carbon::parse($from_date)->startOfDay();
+        $to   = \Carbon\Carbon::parse($to_date)->endOfDay();
+
+        // 1) branch_id -> store_id(s)
+        $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
+        $storeIds = DB::table('branches')
+            ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
+            ->pluck('store_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($storeIds)) {
+            return [];
+        }
+
+        // 2) حدد المنتج (id أو code) + جلب بيانات العرض
+        $product = null;
+        if (is_numeric($productParam)) {
+            $product = DB::table('products')->where('id', (int)$productParam)->first(['id', 'code', 'name']);
+        } else {
+            $product = DB::table('products')->where('code', $productParam)->first(['id', 'code', 'name']);
+        }
+        if (!$product) {
+            return [];
+        }
+
+        // 3) SQL: نفس كويري الرصيد باستخدام source_transaction_id مع تكييفات بسيطة:
+        // - store_id IN (...)
+        // - product_id = ?
+        // - movement_date بين from/to
+        // - جلب unit_name و unit_price و remaining_qty/remaining_value والتجميع الخارجي
+        // - أضف aliases واضحة للحقول
+        $placeholdersStores = implode(',', array_fill(0, count($storeIds), '?'));
+
+        $sql = "
+        SELECT 
+            -- تجميع خارجي على مستوى الوحدة/حجم العبوة/سعر الوحدة
+            t.unit_id,
+            t.unit_name,
+            t.package_size,
+            t.unit_price,
+            SUM(t.in_qty_base)  AS in_qty_base,
+            SUM(t.out_qty_base) AS out_qty_base,
+            SUM(t.remaining_qty_unit) AS remaining_qty_unit,
+            SUM(t.remaining_value)    AS remaining_value
+
+        FROM (
+            SELECT
+                it_in.id AS in_tx_id,
+                it_in.movement_date,
+                it_in.unit_id,
+                u.name AS unit_name,
+                COALESCE(it_in.package_size, 1.0) AS package_size,
+
+                it_in.quantity AS in_qty_unit,
+                it_in.quantity * COALESCE(it_in.package_size, 1.0) AS in_qty_base,
+
+                COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0) AS out_qty_base,
+
+                GREATEST(
+                    it_in.quantity * COALESCE(it_in.package_size, 1.0)
+                    - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+                    0
+                ) AS remaining_base,
+
+                GREATEST(
+                    it_in.quantity * COALESCE(it_in.package_size, 1.0)
+                    - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+                    0
+                ) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
+
+                CASE 
+                    WHEN it_in.price IS NULL OR it_in.price = 0 
+                    THEN COALESCE(up.price, 0)
+                    ELSE it_in.price
+                END AS unit_price,
+
+                (
+                    GREATEST(
+                        it_in.quantity * COALESCE(it_in.package_size, 1.0)
+                        - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+                        0
+                    ) / COALESCE(it_in.package_size, 1.0)
+                ) * 
+                CASE 
+                    WHEN it_in.price IS NULL OR it_in.price = 0 
+                    THEN COALESCE(up.price, 0)
+                    ELSE it_in.price
+                END AS remaining_value
+
+            FROM inventory_transactions AS it_in
+            LEFT JOIN inventory_transactions AS it_out
+              ON it_out.source_transaction_id = it_in.id
+             AND it_out.movement_type = 'out'
+             AND it_out.store_id = it_in.store_id
+             AND it_out.deleted_at IS NULL
+             -- لتقييد رصيد حتى تاريخ معيّن (اختياري):
+             -- AND it_out.movement_date <= ?
+
+            LEFT JOIN units AS u
+              ON u.id = it_in.unit_id
+
+            LEFT JOIN unit_prices AS up
+              ON up.product_id = it_in.product_id
+             AND up.unit_id    = it_in.unit_id
+
+            WHERE it_in.deleted_at IS NULL
+              AND it_in.movement_type = 'in'
+              AND it_in.store_id IN ($placeholdersStores)
+              AND it_in.product_id = ?
+              AND it_in.transactionable_type = ?
+              AND it_in.movement_date BETWEEN ? AND ?
+
+            GROUP BY
+              it_in.id, it_in.movement_date, it_in.unit_id, u.name,
+              it_in.package_size, it_in.quantity, it_in.price, up.price
+        ) AS t
+        GROUP BY t.unit_id, t.unit_name, t.unit_price, t.package_size
+        ORDER BY t.unit_id, t.package_size
+    ";
+
+        $bindings = array_merge(
+            $storeIds,
+            [
+                $product->id,
+                \App\Models\Order::class,
+                $from,
+                $to,
+            ]
+        );
+
+        $rows = collect(DB::select($sql, $bindings));
+
+        // 4) نفس الـ response السابق: code, product, package_size, branch, unit, quantity, in_quantity, out_quantity, price
+        // - quantity  = remaining_qty_unit (رصيد بوحدة الإدخال)
+        // - in_quantity  = in_qty_base
+        // - out_quantity = out_qty_base
+        // - price    = unit_price
+        // ملاحظة: عند تعدد المخازن جمعنا على الكل، لذا نترك branch/store فارغين لتجنّب الالتباس.
+        $branchName = '';
+        $storeName  = '';
+        if (count($storeIds) === 1) {
+            $branchName = DB::table('branches')->where('store_id', $storeIds[0])->value('name') ?? '';
+            $storeName  = DB::table('stores')->where('id', $storeIds[0])->value('name') ?? '';
+        }
+
+        $final = [];
+        foreach ($rows as $r) {
+            if($r->remaining_qty_unit<=0){
+                continue;
+            }
+            $obj               = new \stdClass();
+            $obj->code         = $product->code ?? '';
+            $obj->product      = $product->name ?? '';
+            $obj->package_size = (float)($r->package_size ?? 1);
+            $obj->branch       = $branchName;
+            $obj->store        = $storeName;
+            $obj->unit         = $r->unit_name ?? '';
+            $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0)); // الرصيد الحالي بوحدة الإدخال
+            $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));        // إجمالي الداخل (قاعدة)
+            $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));       // إجمالي الخارج (قاعدة)
+            $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0)); // سعر/تكلفة الوحدة
             $final[]           = $obj;
         }
 
