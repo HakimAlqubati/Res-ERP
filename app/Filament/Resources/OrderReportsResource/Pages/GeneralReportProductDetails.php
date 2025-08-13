@@ -99,7 +99,8 @@ FROM (
     ON it_out.source_transaction_id = it_in.id
    AND it_out.movement_type = 'out'
    AND it_out.store_id = it_in.store_id
-   AND it_out.deleted_at IS NULL
+   AND it_out.deleted_at IS  NULL
+   and it_out.transactionable_type != :supply_morph
 
   LEFT JOIN units AS u
     ON u.id = it_in.unit_id
@@ -137,6 +138,7 @@ SQL;
             'from_date'   => $fromDate,
             'to_date'     => $toDate,
             'order_morph'  => 'App\\Models\\Order',
+            'supply_morph' => 'App\\Models\\StockSupplyOrder'
         ]);
     }
 
