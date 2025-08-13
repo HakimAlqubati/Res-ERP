@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderReportsResource\Pages;
 
+use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesForResellerResource;
 use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesResource;
 use App\Models\Branch;
 use App\Models\Order;
@@ -19,11 +20,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 
-class ListReportProductQuantities extends ListRecords
+class ListReportProductQuantitiesForReseller extends ListRecords
 {
-    protected static string $resource = ReportProductQuantitiesResource::class;
- 
-    protected static string $view = 'filament.pages.order-reports.report-product-quantities';
+    protected static string $resource = ReportProductQuantitiesForResellerResource::class;
+
+    protected static string $view = 'filament.pages.order-reports.report-product-quantities-for-receller';
 
     public function getTableRecordKey(Model $record): string
     {
@@ -51,14 +52,22 @@ class ListReportProductQuantities extends ListRecords
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
         $product_id = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
-        $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
- 
-       return [
-        'report_data' => $data,
-        'product_id' => $product_id,
-        'start_date' => $start_date,
-        'end_date' => $end_date, 
-       ];
+        $data = [];
+        $branch = null;
+        if (!is_null($branch_id)) {
+            $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
+            $branch = Branch::find($branch_id)->name;
+        }
+
+
+        return [
+            'report_data' => $data,
+            'product_id' => $product_id,
+            'start_date' => $start_date,
+            'branch_id' => $branch_id,
+            'end_date' => $end_date,
+            'branch' => $branch,
+        ];
         return [];
     }
 

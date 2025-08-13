@@ -81,7 +81,7 @@
                     <p>({{ isset($product_id) && is_numeric($product_id) ? \App\Models\Product::find($product_id)->name : __('lang.all') }})
                     </p>
                 </th>
-                <th colspan="2" class="no_border_right_left">
+                <th colspan="3" class="no_border_right_left">
                     <p>{{ __('lang.start_date') . ': ' . $start_date }}</p>
                     <br>
                     <p>{{ __('lang.end_date') . ': ' . $end_date }}</p>
@@ -95,6 +95,7 @@
                 <th>{{ __('lang.code') }}</th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
+                <th>{{ __('lang.package_size') }}</th>
                 <th>{{ __('lang.quantity') }}</th>
                 <th>{{ __('lang.price') }}</th>
             </x-filament-tables::row>
@@ -106,6 +107,7 @@
                     <x-filament-tables::cell> {{ $data?->code }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->product }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->unit }} </x-filament-tables::cell>
+                    <x-filament-tables::cell> {{ $data?->package_size }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->price }} </x-filament-tables::cell>
 

@@ -421,8 +421,8 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
     {
-        $from = \Carbon\Carbon::parse($from_date)->startOfDay();
-        $to   = \Carbon\Carbon::parse($to_date)->endOfDay();
+        $from = $from_date ? \Carbon\Carbon::parse($from_date)->startOfDay() : null;
+        $to   = $to_date   ? \Carbon\Carbon::parse($to_date)->endOfDay()   : null;
 
         // 1) branch_id -> store_id(s)
         $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
@@ -445,8 +445,21 @@ class ProductRepository implements ProductRepositoryInterface
         } else {
             $product = DB::table('products')->where('code', $productParam)->first(['id', 'code', 'name']);
         }
-        if (!$product) {
-            return [];
+        // if (!$product) {
+        //     return [];
+        // }
+        $branchType = Branch::find($branch_id)->type ?? '';
+        $productId = null;
+        if ($productParam) {
+            if (is_numeric($productParam)) {
+                $productId = (int)$productParam;
+            } else {
+                $productId = DB::table('products')->where('code', $productParam)->value('id');
+            }
+        }
+        if ($branchType == Branch::TYPE_RESELLER) {
+            $storeId = $storeIds[0] ?? 0;
+            $productId = DB::table('inventory_transactions')->where('store_id', $storeId)->value('product_id');
         }
 
         // 3) SQL: نفس كويري الرصيد باستخدام source_transaction_id مع تكييفات بسيطة:
@@ -464,6 +477,10 @@ class ProductRepository implements ProductRepositoryInterface
             t.unit_name,
             t.package_size,
             t.unit_price,
+            t.product_id,
+        t.product_code,
+            t.product_name,
+
             SUM(t.in_qty_base)  AS in_qty_base,
             SUM(t.out_qty_base) AS out_qty_base,
             SUM(t.remaining_qty_unit) AS remaining_qty_unit,
@@ -511,8 +528,10 @@ class ProductRepository implements ProductRepositoryInterface
                     WHEN it_in.price IS NULL OR it_in.price = 0 
                     THEN COALESCE(up.price, 0)
                     ELSE it_in.price
-                END AS remaining_value
-
+                END AS remaining_value,
+                it_in.product_id,
+                p.code AS product_code,
+                p.name AS product_name
             FROM inventory_transactions AS it_in
             LEFT JOIN inventory_transactions AS it_out
               ON it_out.source_transaction_id = it_in.id
@@ -521,6 +540,9 @@ class ProductRepository implements ProductRepositoryInterface
              AND it_out.deleted_at IS NULL
              -- لتقييد رصيد حتى تاريخ معيّن (اختياري):
              -- AND it_out.movement_date <= ?
+
+             JOIN products p
+              ON p.id = it_in.product_id
 
             LEFT JOIN units AS u
               ON u.id = it_in.unit_id
@@ -532,28 +554,31 @@ class ProductRepository implements ProductRepositoryInterface
             WHERE it_in.deleted_at IS NULL
               AND it_in.movement_type = 'in'
               AND it_in.store_id IN ($placeholdersStores)
-              AND it_in.product_id = ?
+              AND ( ? IS NULL OR it_in.product_id = ? )
               AND it_in.transactionable_type = ?
-              AND it_in.movement_date BETWEEN ? AND ?
+              AND ( (? IS NULL OR it_in.movement_date >= ?)
+                AND (? IS NULL OR it_in.movement_date <= ?) )
 
             GROUP BY
               it_in.id, it_in.movement_date, it_in.unit_id, u.name,
-              it_in.package_size, it_in.quantity, it_in.price, up.price
+              it_in.package_size, it_in.quantity, it_in.price, up.price,it_in.product_id, p.code, p.name
         ) AS t
-        GROUP BY t.unit_id, t.unit_name, t.unit_price, t.package_size
+        GROUP BY t.unit_id, t.unit_name, t.unit_price, t.package_size,t.product_id, t.product_code, t.product_name
         ORDER BY t.unit_id, t.package_size
     ";
 
         $bindings = array_merge(
             $storeIds,
             [
-                $product->id,
+                $productId, // للشرط الأول
+                $productId, // للشرط الثاني
                 \App\Models\Order::class,
                 $from,
+                $from,
+                $to,
                 $to,
             ]
         );
-
         $rows = collect(DB::select($sql, $bindings));
 
         // 4) نفس الـ response السابق: code, product, package_size, branch, unit, quantity, in_quantity, out_quantity, price
@@ -571,12 +596,15 @@ class ProductRepository implements ProductRepositoryInterface
 
         $final = [];
         foreach ($rows as $r) {
-            if($r->remaining_qty_unit<=0){
+            if ($r->remaining_qty_unit <= 0) {
                 continue;
             }
             $obj               = new \stdClass();
-            $obj->code         = $product->code ?? '';
+            // $obj->code         = $product->code ?? '';
             $obj->product      = $product->name ?? '';
+            $obj->code    = $r->product_code ?? '';
+            $obj->product = $r->product_name ?? '';
+
             $obj->package_size = (float)($r->package_size ?? 1);
             $obj->branch       = $branchName;
             $obj->store        = $storeName;
