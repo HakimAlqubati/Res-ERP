@@ -68,6 +68,7 @@ class StockCostReportResource extends Resource
                         \App\Models\Order::class                 => 'Order',
                         \App\Models\StockAdjustmentDetail::class => 'Stock Adjustment',
                         \App\Models\StockIssueOrder::class       => 'Stock Issue Order',
+                        \App\Models\StockTransferOrder::class       => 'Stock Transfer Order',
                     ])->multiple()
                     ->searchable()
                     ->placeholder('All Types'),

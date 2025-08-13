@@ -176,7 +176,7 @@ class GeneralReportOfProductsResource extends Resource
 
             $obj = new \stdClass();
             $obj->category_id        = $cat_id;
-            $obj->url_report_details = "admin/order-reports/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id";
+            $obj->url_report_details = "admin/order-reports/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id&storeId=$storeId";
             $obj->category           = $cat_name;
 
             // الكمية (الصافي) — بإمكانك تقريبها كما كان:

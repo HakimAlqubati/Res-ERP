@@ -11,6 +11,7 @@ class ListStockCostReports extends ListRecords
 {
     protected static string $resource = StockCostReportResource::class;
     protected static string $view     = 'filament.pages.stock-report.stock-cost-report';
+    public $perPage = 15;
     protected function getHeaderActions(): array
     {
         return [
@@ -32,16 +33,20 @@ class ListStockCostReports extends ListRecords
         //     \App\Models\StockIssueOrder::class,
         // ];
  
-        $filters = [
-            'store_id'  => $storeId,
-            'from_date' => $fromDate,
-            'to_date'   => $toDate,
-        ];
+        
+        $perPage = $this->perPage;
+
+        if ($perPage === 'all') {
+            $perPage = 9999; // أو أي عدد كبير جدًا لضمان عرض الكل
+        }
+
+      
 
         $reportService = new StoreCostReportService(
             storeId: $storeId,
             fromDate: $fromDate??'',
             toDate: $toDate??'',
+            perPage: $perPage,
             returnableTypes:  $returnableTypes 
             // returnableTypes: [
             //     \App\Models\ReturnedOrder::class,

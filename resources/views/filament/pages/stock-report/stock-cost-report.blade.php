@@ -41,6 +41,16 @@
                 @endforeach
             </tbody>
         </x-filament-tables::table>
+        <div class="mt-4">
+            <div class="paginator_container">
+                {{-- @if (isset($reportData) && $reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}
+                    {{ $reportData->links() }}
+                {{-- @endif --}}
+            </div>
+
+
+            <x-per-page-selector />
+        </div>
     @else
         <div class="please_select_message_div text-center mt-10 text-gray-500">
             No data found, check for dates or store

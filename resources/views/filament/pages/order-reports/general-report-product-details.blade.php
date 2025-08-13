@@ -38,9 +38,9 @@
         <tbody>
             @foreach ($report_data as $data)
                 <x-filament-tables::row>
-                    <x-filament-tables::cell> {{ $data?->product_code }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $data?->product_name }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $data?->unit_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell title="{{$data->product_id}}" > {{ $data?->product_code }} </x-filament-tables::cell>
+                    <x-filament-tables::cell title="{{$data->product_id}}"> {{ $data?->product_name }} </x-filament-tables::cell>
+                    <x-filament-tables::cell title="{{$data->unit_id}}"> {{ $data?->unit_name }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->package_size }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
                     <x-filament-tables::cell> {{ $data?->price }} </x-filament-tables::cell>

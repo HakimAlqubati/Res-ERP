@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\InventoryReports;
 
 use App\Models\InventoryTransaction;
@@ -8,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class StoreCostReportService
 {
     public function __construct(
-                protected ?int $storeId,
+        protected ?int $storeId,
 
         protected string $fromDate,
         protected string $toDate,
@@ -43,10 +44,10 @@ class StoreCostReportService
                         ;
                     });
             })
-            ->groupBy('product_id',
+            ->groupBy(
+                'product_id',
                 'base_unit_id',
-            )
-        ;
+            );
 
         $total = $query->count(DB::raw('DISTINCT product_id, base_unit_id'));
 
@@ -62,7 +63,7 @@ class StoreCostReportService
                     'base_unit'      => $row?->product?->base_unit_price?->unit?->name,
                     'total_in_cost'  => formatMoneyWithCurrency($row->total_in_cost),
                     'total_out_cost' => formatMoneyWithCurrency($row->total_out_cost),
-                    'net_cost'       => formatMoney( $row->total_in_cost - $row->total_out_cost),
+                    'net_cost'       => formatMoney($row->total_in_cost - $row->total_out_cost),
                     'total_in_qty'   => formatQuantity2($row->total_in_qty),
                     'total_out_qty'  => formatQuantity2($row->total_out_qty),
                     'net_quantity'   => formatQuantity2($row->total_in_qty - $row->total_out_qty),
