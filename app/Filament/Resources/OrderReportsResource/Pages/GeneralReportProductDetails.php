@@ -27,6 +27,120 @@ class GeneralReportProductDetails extends Page
         $this->storeId = $_GET['storeId'] ?? '';
     }
     protected static string $view = 'filament.pages.order-reports.general-report-product-details';
+
+    private function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
+    {  
+        $locale = app()->getLocale();
+        // اسم المنتج مع دعم JSON locales
+        $nameExpr = "IF(JSON_VALID(p.name), REPLACE(JSON_EXTRACT(p.name, '$.\"{$locale}\"'), '\"', ''), p.name)";
+
+        $sql = <<<SQL
+SELECT
+  t.product_id,
+  t.product_code,
+  t.product_name,
+  t.unit_id,
+  t.unit_name,
+  t.package_size,
+  t.unit_price,
+  SUM(t.in_qty_base)  AS in_qty_base,
+  SUM(t.out_qty_base) AS out_qty_base,
+  SUM(t.remaining_qty_unit) AS remaining_qty,
+  SUM(t.remaining_value)    AS remaining_value
+FROM (
+  SELECT
+    it_in.id AS in_tx_id,
+    it_in.product_id,
+    p.code AS product_code,
+    {$nameExpr} AS product_name,
+    it_in.movement_date,
+    it_in.unit_id,
+    u.name AS unit_name,
+    COALESCE(it_in.package_size, 1.0) AS package_size,
+
+    it_in.quantity AS in_qty_unit,
+    it_in.quantity * COALESCE(it_in.package_size, 1.0) AS in_qty_base,
+
+    COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0) AS out_qty_base,
+
+    GREATEST(
+      it_in.quantity * COALESCE(it_in.package_size, 1.0)
+      - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+      0
+    ) AS remaining_base,
+
+    GREATEST(
+      it_in.quantity * COALESCE(it_in.package_size, 1.0)
+      - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+      0
+    ) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
+
+    CASE 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
+      THEN COALESCE(up.price, 0)
+      ELSE it_in.price
+    END AS unit_price,
+
+    (
+      GREATEST(
+        it_in.quantity * COALESCE(it_in.package_size, 1.0)
+        - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+        0
+      ) / COALESCE(it_in.package_size, 1.0)
+    ) *
+    CASE 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
+      THEN COALESCE(up.price, 0)
+      ELSE it_in.price
+    END AS remaining_value
+
+  FROM inventory_transactions AS it_in
+  LEFT JOIN inventory_transactions AS it_out
+    ON it_out.source_transaction_id = it_in.id
+   AND it_out.movement_type = 'out'
+   AND it_out.store_id = it_in.store_id
+   AND it_out.deleted_at IS NULL
+
+  LEFT JOIN units AS u
+    ON u.id = it_in.unit_id
+
+  LEFT JOIN unit_prices AS up
+    ON up.product_id = it_in.product_id
+   AND up.unit_id    = it_in.unit_id
+
+  INNER JOIN products AS p
+    ON p.id = it_in.product_id
+   AND p.category_id = :category_id
+
+  WHERE it_in.deleted_at IS NULL
+    AND it_in.movement_type = 'in'
+    AND it_in.store_id = :store_id
+    AND it_in.movement_date BETWEEN :from_date AND :to_date
+    AND it_in.transactionable_type = :order_morph
+
+  GROUP BY
+    it_in.id, it_in.product_id, p.code, p.name,
+    it_in.unit_id, u.name,
+    it_in.package_size, it_in.quantity, it_in.price, up.price, it_in.movement_date
+) AS t
+GROUP BY
+  t.product_id, t.product_code, t.product_name,
+  t.unit_id, t.unit_name, t.package_size, t.unit_price
+ORDER BY
+--   t.product_code, t.unit_id, t.package_size
+t.product_id
+SQL;
+
+        return DB::select($sql, [
+            'store_id'    => $storeId,
+            'category_id' => $categoryId,
+            'from_date'   => $fromDate,
+            'to_date'     => $toDate,
+            'order_morph'  => 'App\\Models\\Order',
+        ]);
+    }
+
+
     protected function getViewData(): array
     {
         $report_data['data'] = [];
@@ -87,63 +201,9 @@ class GeneralReportProductDetails extends Page
         $this->storeId = $storeId;
         $from = \Carbon\Carbon::parse($start_date)->startOfDay();
         $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
+        $rows = $this->runSourceBalanceByCategorySQL($storeId, $this->category_id, $from, $to);
 
-        $rows = DB::table('inventory_transactions as it')
-            ->join('products as p', 'p.id', '=', 'it.product_id')
-            ->leftJoin('branches as b', 'b.store_id', '=', 'it.store_id')
-            ->leftJoin('stores as s', 's.id', '=', 'it.store_id')
-            // الدخول فقط من الطلبات
-            ->leftJoin('orders as o', function ($j) use ($IN) {
-                $j->on('o.id', '=', 'it.transactionable_id')
-                    ->where('it.movement_type', '=', $IN);
-            })
-            ->leftJoin('orders_details as od', function ($j) {
-                $j->on('od.order_id', '=', 'o.id')
-                    ->on('od.product_id', '=', 'it.product_id');
-            })
-            ->leftJoin('unit_prices as up', function ($j) use ($IN) {
-                $j->on('up.product_id', '=', 'p.id')
-                    ->on('up.unit_id', '=', 'it.unit_id')
-                    // ->where('it.movement_type', '=', $IN)
-                    ;
-            })
-            // الوحدة مباشرة من الحركة
-            ->leftJoin('units as u', 'u.id', '=', 'it.unit_id')
-            ->whereNull('it.deleted_at')
-            ->where('it.store_id', $storeId)
-            ->where('p.category_id', $category_id)
-            ->when($start_date && $end_date, function ($query) use ($from, $to) {
-                return $query->whereBetween('it.movement_date', [$from, $to]);
-            })
-            ->selectRaw("
-        p.id   as product_id,
-        p.code as product_code,
-        IF(JSON_VALID(p.name), REPLACE(JSON_EXTRACT(p.name, '$." . app()->getLocale() . "'), '\"', ''), p.name) as product_name,
-
-        it.id as tx_id,
-        it.movement_type,
-        it.movement_date,
-        it.quantity,
-        COALESCE(it.package_size, 1.0) as package_size,
-
-        it.unit_id,
-        u.name as unit_name,
-
-        -- سعر الوحدة كما سُجل في الحركة (بنفس unit_id للحركة)
-         CASE 
-        WHEN it.price IS NULL OR it.price = 0 
-        THEN up.price 
-        ELSE it.price 
-        END as unit_price,
-
-        it.notes
-    ")
-            ->orderBy('p.id')
-            ->orderBy('it.movement_date')
-            ->orderBy('it.id')
-            ->get();
-
-            // dd($rows);
+        // dd($rows);
         // print_html_table($rows, [
         //     'column' => 'movement_type',
         //     'value'  => 'in',
@@ -151,21 +211,16 @@ class GeneralReportProductDetails extends Page
         //     'text'   => '#065F46',   // (اختياري) لون النص
         // ]);
 
-    
-        $result = $this->fifoRemainingPerInUnit($rows);
 
-        $items = collect($result['items'])
-            ->sortBy(['product_code', 'movement_date', 'source_tx_id'])
-            ->values()
-            ->all();
 
-        // print_html_table($items);
+
+
         $final = [];
         $totalAmount = 0.0;
         $totalQty = 0.0;
 
-        foreach ($items as $r) {
-            $r= (object)$r;
+        foreach ($rows as $r) {
+            $r = (object)$r;
             // dd($r,gettype($r));
             // $inQtyBase       = (float) $r->remaining_qty;
             $netBase         = (float) $r->remaining_qty;
@@ -192,6 +247,7 @@ class GeneralReportProductDetails extends Page
             $obj->amount = number_format($amountBase, 2);
             $obj->symbol = getDefaultCurrency();
 
+            $obj->unit_price = formatMoneyWithCurrency($r->unit_price);
             $totalAmount += $amountBase;
             $totalQty    += $netBase ?? 0;
 
@@ -239,124 +295,5 @@ class GeneralReportProductDetails extends Page
             ->streamDownload(function () use ($pdf) {
                 $pdf->stream("general-report-product-details" . '.pdf');
             }, "general-report-product-details" . '.pdf');
-    }
-
-    /**
-     * يحسب المتبقي لكل منتج بحسب طبقات الدخول (وحدة الدخول وسعرها الأصلي)
-     * بدون متوسط: يبقى سعر الطبقة كما سُجل عند الدخول.
-     *
-     * @param \Illuminate\Support\Collection $rows صفوف الحركات من الاستعلام أعلاه
-     * @return array نتائج مجمّعة per product & per in-layer
-     */
-    public function fifoRemainingPerInUnit($rows)
-    {
-        // layers[product_id] = queue of layers
-        // كل layer: [
-        //   'product_id','product_code','product_name',
-        //   'unit_id','unit_name','package_size',
-        //   'unit_price',        // سعر الوحدة (بنفس unit_id)
-        //   'base_qty',          // كمية الطبقة بالـ base unit = quantity * package_size
-        //   'source_tx_id', 'movement_date', 'notes'
-        // ]
-        $layers = [];
-        $negatives = []; // لتتبع أي سحوبات تتجاوز الرصيد (اختياري)
-
-        foreach ($rows as $r) {
-            $pid = $r->product_id;
-            $baseQty = (float)$r->quantity * (float)$r->package_size;
-
-            if (!isset($layers[$pid])) {
-                $layers[$pid] = [];
-            }
-
-            if ($r->movement_type === 'in') {
-                // أنشئ طبقة دخول بسعرها ووحدتها
-                $layers[$pid][] = [
-                    'product_id'   => $r->product_id,
-                    'product_code' => $r->product_code,
-                    'product_name' => $r->product_name,
-
-                    'unit_id'      => $r->unit_id,
-                    'unit_name'    => $r->unit_name,
-                    'package_size' => (float)$r->package_size,
-
-                    'unit_price'   => (float)$r->unit_price, // سعر الوحدة كما سُجل
-
-                    'base_qty'     => $baseQty,              // مخزون الطبقة بالأساس
-                    'source_tx_id' => $r->tx_id,
-                    'movement_date' => $r->movement_date,
-                    'notes'        => $r->notes,
-                ];
-            } elseif ($r->movement_type === 'out') {
-                // خصم FIFO عبر الطبقات القائمة
-                $toConsume = $baseQty;
-
-                // استهلك من الطبقات الأقدم فالأحدث
-                for ($i = 0; $i < count($layers[$pid]) && $toConsume > 0; $i++) {
-                    $available = $layers[$pid][$i]['base_qty'];
-                    if ($available <= 0) {
-                        continue;
-                    }
-                    $consume = min($available, $toConsume);
-                    $layers[$pid][$i]['base_qty'] -= $consume;
-                    $toConsume -= $consume;
-                }
-
-                // إذا بقي سحب بلا رصيد، سجّله (اختياري للتنبيه)
-                if ($toConsume > 0.0000001) {
-                    $negatives[] = [
-                        'product_id' => $pid,
-                        'tx_id'      => $r->tx_id,
-                        'missing_base_qty' => $toConsume,
-                    ];
-                }
-            }
-        }
-
-        // إبني النتائج النهائية: المتبقي لكل طبقة دخول (بالوحدة الأصلية للطبقة) وقيمتها بنفس السعر الأصلي
-        $results = [];
-
-        foreach ($layers as $pid => $productLayers) {
-            foreach ($productLayers as $ly) {
-                if ($ly['base_qty'] <= 0) {
-                    continue;
-                }
-
-                // حوّل المتبقي من base إلى وحدة الطبقة:
-                // remaining_qty_in_layer_unit = base_qty / package_size
-                $remaining_qty = $ly['package_size'] > 0 ? ($ly['base_qty'] / $ly['package_size']) : 0;
-
-                // سعر الوحدة يبقى كما دخلت الطبقة:
-                $unit_price = $ly['unit_price'];
-
-                // القيمة الإجمالية للمتبقي في هذه الطبقة:
-                // بما أن السعر للوحدة (unit_id للطبقة)، فقيمة المتبقي = remaining_qty * unit_price
-                $remaining_value = $remaining_qty * $unit_price;
-
-                $results[] = [
-                    'product_id'   => $ly['product_id'],
-                    'product_code' => $ly['product_code'],
-                    'product_name' => $ly['product_name'],
-
-                    'unit_id'      => $ly['unit_id'],
-                    'unit_name'    => $ly['unit_name'],
-                    'package_size' => $ly['package_size'],
-
-                    'remaining_qty' => round($remaining_qty, 4),
-                    'unit_price'   => round($unit_price, 4),
-                    'remaining_value' => round($remaining_value, 4),
-
-                    'source_tx_id' => $ly['source_tx_id'],
-                    'movement_date' => $ly['movement_date'],
-                    'notes'        => $ly['notes'],
-                ];
-            }
-        }
-
-        // يمكن إرجاع negatives أيضًا لو أردت التنبيه
-        return [
-            'items'     => $results,
-            'negatives' => $negatives,
-        ];
     }
 }

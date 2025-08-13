@@ -142,6 +142,10 @@ class InventoryResource extends Resource
                     ->label('Source ID')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
+                Tables\Columns\TextColumn::make('sourceTransaction.price')
+                    ->label('Source Price')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->alignCenter(),
 
 
             ])
