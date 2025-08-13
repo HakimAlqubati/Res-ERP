@@ -103,7 +103,10 @@ class GeneralReportProductDetails extends Page
             ->whereNull('it.deleted_at')
             ->where('it.store_id', $storeId)
             ->where('p.category_id', $category_id)
-            ->whereBetween('it.movement_date', [$from, $to])
+            ->when($start_date && $end_date, function ($query) use ($from, $to) {
+                return $query->whereBetween('it.movement_date', [$from, $to]);
+            })
+            
 
             ->selectRaw("
                 p.id   as product_id,
