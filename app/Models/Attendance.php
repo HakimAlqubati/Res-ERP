@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -190,8 +191,8 @@ class Attendance extends Model
         return $query->where('accepted', 1);
     }
 
-    public static function isPeriodClosed($employeeId, $periodId, $date)
-    { 
+    public static function isPeriodClosed($employeeId, $periodId, $date, $checkInRecordId = null)
+    {
         $workPeriod = \App\Models\WorkPeriod::find($periodId);
         if (! $workPeriod) {
             return false;
@@ -202,8 +203,17 @@ class Attendance extends Model
             ->where('check_date', $date)
             ->where('check_type', self::CHECKTYPE_CHECKOUT)
             ->where('accepted', 1)
+
+            ->when($checkInRecordId, function ($query) use ($checkInRecordId) {
+                return $query->where('checkinrecord_id', $checkInRecordId);
+            })
             ->orderByDesc('check_time')
             ->first();
+        if (isset($checkInRecordId) && $checkoutRecord) {
+
+            // dd('sdf');
+            // return true;
+        }
         if (! $checkoutRecord) {
             return false;
         }
@@ -214,13 +224,12 @@ class Attendance extends Model
         // إذا الشفت ليل ووقت الانصراف بعد منتصف الليل
         if ($workPeriod->day_and_night && $checkoutDateTime->lessThan($periodEndDateTime)) {
             $checkoutDateTime->addDay();
-        } 
-        
-        if($workPeriod->start_at == '00:00:00'){
+        }
+
+        if ($workPeriod->start_at == '00:00:00') {
             $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
         }
-        // dd($checkoutDateTime->greaterThan($periodEndDateTime));
+        dd($checkoutDateTime->greaterThan($periodEndDateTime),$checkoutDateTime,$periodEndDateTime);
         return $checkoutDateTime->greaterThan($periodEndDateTime);
     }
-
 }

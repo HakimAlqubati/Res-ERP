@@ -18,6 +18,7 @@ use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -52,8 +53,6 @@ class PayrollResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // dd(getMonthOptionsBasedOnSettings());
-        // dd(getMonthsArray2());
         return $form
             ->schema([
 
@@ -100,23 +99,25 @@ class PayrollResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('branch_id')->label('Branch')
                     ->relationship('branch', 'name'),
+                TrashedFilter::make(),
+                
 
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(), 
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
-                
+                    Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
-            ]) 
+            ])
         ;
     }
 
     public static function getRelations(): array
     {
-        return [ 
+        return [
             PayrollsRelationManager::class,
         ];
     }
@@ -130,5 +131,13 @@ class PayrollResource extends Resource
             'edit' => Pages\EditPayroll::route('/{record}/edit'),
             // 'runPayroll'    => RunPayroll::route('/run-payroll')
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

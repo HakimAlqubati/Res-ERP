@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource;
@@ -16,6 +17,12 @@ class ListEmployeeAttednaceReports extends ListRecords
 
     public $showDetailsModal = false;
     public $modalData        = [];
+    public function refreshData()
+    {
+        
+        // حالياً فارغة
+        // لاحقاً ضع هنا منطق إعادة جلب البيانات
+    }
     public function showDetails($date, $employeeId, $periodId)
     {
 
@@ -50,7 +57,7 @@ class ListEmployeeAttednaceReports extends ListRecords
         $totalWorked   = 0;
         $totalApproved = 0;
         $totalMinutes  = 0;
-        
+
         return [
             'report_data'   => $data,
             'show_day'      => $showDay,
@@ -62,9 +69,9 @@ class ListEmployeeAttednaceReports extends ListRecords
             'totalApproved' => $this->formatDuration($totalApproved),
             'chartData'     => $chartData['chartData'],
             'employee_name' => $chartData['employee_name'],
-            'total_actual_duration_hours' => $data['total_actual_duration_hours']??0,
-            'total_duration_hours'=> $data['total_duration_hours']??0,
-            'total_approved_overtime'=> $data['total_approved_overtime']??0,
+            'total_actual_duration_hours' => $data['total_actual_duration_hours'] ?? 0,
+            'total_duration_hours' => $data['total_duration_hours'] ?? 0,
+            'total_approved_overtime' => $data['total_approved_overtime'] ?? 0,
         ];
     }
 

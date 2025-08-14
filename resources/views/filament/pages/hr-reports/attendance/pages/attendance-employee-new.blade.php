@@ -95,9 +95,14 @@
         }
     </style>
     <div class="text-right mb-4">
+        <button type="button" class="btn btn-secondary" wire:click="refreshData">
+            🔄 {{ __('Refresh') }}
+        </button>
+    
         <button type="button" class="btn btn-info" onclick="showChartModal()">
             📊 {{ __('Show Charts') }}
         </button>
+    
         <button onclick="printReport()" class="btn btn-print">
             &#128438; {{ __('Print Report') }}
         </button>
