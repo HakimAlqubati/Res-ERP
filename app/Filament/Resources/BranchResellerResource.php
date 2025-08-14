@@ -232,6 +232,7 @@ class BranchResellerResource extends Resource
                     return null;
                 })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
+                TextColumn::make('store.name')->label(__('lang.store'))->searchable(),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
                 // ->limit(100)

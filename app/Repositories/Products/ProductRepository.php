@@ -419,10 +419,13 @@ class ProductRepository implements ProductRepositoryInterface
         return $final;
     }
 
+
+
     public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
     {
         $from = $from_date ? \Carbon\Carbon::parse($from_date)->startOfDay() : null;
         $to   = $to_date   ? \Carbon\Carbon::parse($to_date)->endOfDay()   : null;
+        $toStr = $to ? $to->toDateTimeString() : null;
 
         // 1) branch_id -> store_id(s)
         $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
@@ -438,54 +441,69 @@ class ProductRepository implements ProductRepositoryInterface
             return [];
         }
 
-        // 2) حدد المنتج (id أو code) + جلب بيانات العرض
+        // 2) معلومات المنتج (اختياري للعرض فقط)
         $product = null;
         if (is_numeric($productParam)) {
             $product = DB::table('products')->where('id', (int)$productParam)->first(['id', 'code', 'name']);
-        } else {
+        } elseif ($productParam) {
             $product = DB::table('products')->where('code', $productParam)->first(['id', 'code', 'name']);
         }
-        // if (!$product) {
-        //     return [];
-        // }
-        $branchType = Branch::find($branch_id)->type ?? '';
-        $productId = null;
-        if ($productParam) {
-            if (is_numeric($productParam)) {
-                $productId = (int)$productParam;
-            } else {
-                $productId = DB::table('products')->where('code', $productParam)->value('id');
-            }
-        }
-        if ($branchType == Branch::TYPE_RESELLER) {
-            $storeId = $storeIds[0] ?? 0;
-            $productId = DB::table('inventory_transactions')->where('store_id', $storeId)->value('product_id');
+
+        // نوع الفرع (يدعم أن يكون branch_id مصفوفة)
+        $branchType = null;
+        if (is_scalar($branch_id) && $branch_id) {
+            $branchType = Branch::whereKey($branch_id)->value('type');
         }
 
-        // 3) SQL: نفس كويري الرصيد باستخدام source_transaction_id مع تكييفات بسيطة:
-        // - store_id IN (...)
-        // - product_id = ?
-        // - movement_date بين from/to
-        // - جلب unit_name و unit_price و remaining_qty/remaining_value والتجميع الخارجي
-        // - أضف aliases واضحة للحقول
+        // productId من إدخال المستخدم (بدون override)
+        $productId = null;
+        if ($productParam !== null && $productParam !== '') {
+            $productId = is_numeric($productParam)
+                ? (int) $productParam
+                : DB::table('products')->where('code', trim((string)$productParam))->value('id');
+        }
+
+        // 3) فلتر المنتج
+        $productFilterSql = '';
+        $productBindings  = [];
+
+        if ($productId) {
+            $productFilterSql = "AND it_in.product_id = ?";
+            $productBindings  = [$productId];
+        } elseif ($branchType === Branch::TYPE_RESELLER) {
+            $allowedProductIds = DB::table('inventory_transactions')
+                ->whereNull('deleted_at')
+                ->whereIn('store_id', $storeIds)
+                ->distinct()
+                ->pluck('product_id')
+                ->all();
+
+            if (empty($allowedProductIds)) {
+                return [];
+            }
+
+            
+            $placeholdersProducts = implode(',', array_fill(0, count($allowedProductIds), '?'));
+            $productFilterSql     = "AND it_in.product_id IN ($placeholdersProducts)";
+            $productBindings      = $allowedProductIds;
+        }
+
+        // 4) SQL (Snapshot حتى تاريخ): لا نقيّد it_in بتاريخ، نقيد it_out بـ <= :to
         $placeholdersStores = implode(',', array_fill(0, count($storeIds), '?'));
 
         $sql = "
         SELECT 
-            -- تجميع خارجي على مستوى الوحدة/حجم العبوة/سعر الوحدة
             t.unit_id,
             t.unit_name,
             t.package_size,
             t.unit_price,
             t.product_id,
-        t.product_code,
+            t.product_code,
             t.product_name,
-
             SUM(t.in_qty_base)  AS in_qty_base,
             SUM(t.out_qty_base) AS out_qty_base,
             SUM(t.remaining_qty_unit) AS remaining_qty_unit,
             SUM(t.remaining_value)    AS remaining_value
-
         FROM (
             SELECT
                 it_in.id AS in_tx_id,
@@ -523,70 +541,58 @@ class ProductRepository implements ProductRepositoryInterface
                         - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
                         0
                     ) / COALESCE(it_in.package_size, 1.0)
-                ) * 
+                )
+                *
                 CASE 
                     WHEN it_in.price IS NULL OR it_in.price = 0 
                     THEN COALESCE(up.price, 0)
                     ELSE it_in.price
                 END AS remaining_value,
+
                 it_in.product_id,
                 p.code AS product_code,
                 p.name AS product_name
+
             FROM inventory_transactions AS it_in
             LEFT JOIN inventory_transactions AS it_out
               ON it_out.source_transaction_id = it_in.id
              AND it_out.movement_type = 'out'
              AND it_out.store_id = it_in.store_id
              AND it_out.deleted_at IS NULL
-             -- لتقييد رصيد حتى تاريخ معيّن (اختياري):
-             -- AND it_out.movement_date <= ?
+             AND (? IS NULL OR it_out.movement_date <= ?)
 
-             JOIN products p
-              ON p.id = it_in.product_id
-
-            LEFT JOIN units AS u
-              ON u.id = it_in.unit_id
-
-            LEFT JOIN unit_prices AS up
-              ON up.product_id = it_in.product_id
-             AND up.unit_id    = it_in.unit_id
+            JOIN products p ON p.id = it_in.product_id
+            LEFT JOIN units  u ON u.id = it_in.unit_id
+            LEFT JOIN unit_prices up
+                   ON up.product_id = it_in.product_id
+                  AND up.unit_id    = it_in.unit_id
 
             WHERE it_in.deleted_at IS NULL
               AND it_in.movement_type = 'in'
               AND it_in.store_id IN ($placeholdersStores)
-              AND ( ? IS NULL OR it_in.product_id = ? )
-              AND it_in.transactionable_type = ?
-              AND ( (? IS NULL OR it_in.movement_date >= ?)
-                AND (? IS NULL OR it_in.movement_date <= ?) )
+              {$productFilterSql}
+              -- أزلنا قيد transactionable_type لأنه غالبًا يمنع النتائج
 
             GROUP BY
               it_in.id, it_in.movement_date, it_in.unit_id, u.name,
-              it_in.package_size, it_in.quantity, it_in.price, up.price,it_in.product_id, p.code, p.name
+              it_in.package_size, it_in.quantity, it_in.price, up.price,
+              it_in.product_id, p.code, p.name
         ) AS t
-        GROUP BY t.unit_id, t.unit_name, t.unit_price, t.package_size,t.product_id, t.product_code, t.product_name
+        GROUP BY t.unit_id, t.unit_name, t.unit_price, t.package_size, t.product_id, t.product_code, t.product_name
         ORDER BY t.unit_id, t.package_size
     ";
 
+        // 5) ترتيب الـ bindings
         $bindings = array_merge(
-            $storeIds,
-            [
-                $productId, // للشرط الأول
-                $productId, // للشرط الثاني
-                \App\Models\Order::class,
-                $from,
-                $from,
-                $to,
-                $to,
-            ]
+            [$toStr, $toStr],   // لقيد it_out.movement_date
+            $storeIds,          // IN (...)
+            $productBindings    // = ? أو IN (...)
+            // لا مزيد من bindings لأننا حذفنا transactionable_type
         );
+
         $rows = collect(DB::select($sql, $bindings));
 
-        // 4) نفس الـ response السابق: code, product, package_size, branch, unit, quantity, in_quantity, out_quantity, price
-        // - quantity  = remaining_qty_unit (رصيد بوحدة الإدخال)
-        // - in_quantity  = in_qty_base
-        // - out_quantity = out_qty_base
-        // - price    = unit_price
-        // ملاحظة: عند تعدد المخازن جمعنا على الكل، لذا نترك branch/store فارغين لتجنّب الالتباس.
+        // أسماء الفرع/المخزن إن كان مخزن واحد فقط
         $branchName = '';
         $storeName  = '';
         if (count($storeIds) === 1) {
@@ -594,25 +600,23 @@ class ProductRepository implements ProductRepositoryInterface
             $storeName  = DB::table('stores')->where('id', $storeIds[0])->value('name') ?? '';
         }
 
+        // الإخراج
         $final = [];
         foreach ($rows as $r) {
-            if ($r->remaining_qty_unit <= 0) {
+            if (($r->remaining_qty_unit ?? 0) <= 0) {
                 continue;
             }
             $obj               = new \stdClass();
-            // $obj->code         = $product->code ?? '';
-            $obj->product      = $product->name ?? '';
-            $obj->code    = $r->product_code ?? '';
-            $obj->product = $r->product_name ?? '';
-
+            $obj->code         = $r->product_code ?? '';
+            $obj->product      = $r->product_name ?? '';
             $obj->package_size = (float)($r->package_size ?? 1);
             $obj->branch       = $branchName;
             $obj->store        = $storeName;
             $obj->unit         = $r->unit_name ?? '';
-            $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0)); // الرصيد الحالي بوحدة الإدخال
-            $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));        // إجمالي الداخل (قاعدة)
-            $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));       // إجمالي الخارج (قاعدة)
-            $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0)); // سعر/تكلفة الوحدة
+            $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0));
+            $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
+            $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
+            $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
             $final[]           = $obj;
         }
 
