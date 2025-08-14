@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -229,7 +230,64 @@ class Attendance extends Model
         if ($workPeriod->start_at == '00:00:00') {
             $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
         }
-        dd($checkoutDateTime->greaterThan($periodEndDateTime),$checkoutDateTime,$periodEndDateTime);
+        return $checkoutDateTime->greaterThan($periodEndDateTime);
+    }
+
+    public static function isCheckinClosed(
+        $employeeId,
+        $periodId,
+        $checkDate,
+        $currentDate,
+        $time,
+        $checkInRecordId = null
+    ) {
+
+        $workPeriod = \App\Models\WorkPeriod::find($periodId);
+        if (! $workPeriod) {
+            return false;
+        }
+        $allowedHoursAfter       = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
+        $endTime = Carbon::parse($checkDate . ' ' . $workPeriod->end_at);
+        $endTimeWithALlowedTime = $endTime->copy()
+        ->addHours($allowedHoursAfter);
+        // $allowedHoursBefore = (int) \App\Models\Setting::getSetting('hours_count_after_period_before', 1);
+        $currentTime = Carbon::createFromTimeString($currentDate . ' ' . $time);
+        if ($workPeriod->day_and_night) {
+            $endTime->addDay();
+            $endTimeWithALlowedTime->addDay();
+        } 
+        $checkoutRecord = self::where('employee_id', $employeeId)
+            ->where('period_id', $periodId)
+            ->where('check_date', $checkDate)
+            ->where('check_type', self::CHECKTYPE_CHECKOUT)
+            ->where('accepted', 1)
+            ->when($checkInRecordId, function ($query) use ($checkInRecordId) {
+                return $query->where('checkinrecord_id', $checkInRecordId);
+            })
+            ->orderByDesc('check_time')
+            ->first();
+
+        if (! $checkoutRecord) {
+            if ($currentTime->lessThan($endTimeWithALlowedTime)) {
+                return false;
+            }
+            return true;
+        }
+
+        $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
+
+        if ($currentTime->between($checkoutDateTime, $endTimeWithALlowedTime)) { 
+            return false;
+        }
+
+        return true;
+
+        dd($currentTime, $endTimeWithALlowedTime, $checkoutDateTime);
+
+
+        // if ($workPeriod->start_at == '00:00:00') {
+        //     $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
+        // }
         return $checkoutDateTime->greaterThan($periodEndDateTime);
     }
 }

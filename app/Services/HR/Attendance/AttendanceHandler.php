@@ -61,28 +61,21 @@ class AttendanceHandler
                     ->first();
 
                 if ($latstCheckIn) {
-                    $isClosed =    Attendance::isPeriodClosed(
+                    $isClosed =    Attendance::isCheckinClosed(
                         $this->employeeId,
                         $latstCheckIn->period_id,
                         $latstCheckIn->check_date,
+                        $date,
+                        $time,
                         $latstCheckIn->id
                     );
-                    dd($isClosed,$latstCheckIn);
                     if (!$isClosed) {
                         $this->workPeriod = $latstCheckIn->period;
                         if ($this->workPeriod) {
-                            $allowedHours       = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
-                            $endTimeWithALlowedTime = Carbon::createFromTimeString($this->workPeriod->end_at)->addHours($allowedHours)->format('H:i:s');
-                            $workPeriodStartTime = $this->workPeriod->start_at;
-                            $startTime = Carbon::createFromFormat('Y-m-d H:i:s', "$latstCheckIn->check_date $workPeriodStartTime");
-
-                            $currentTime = Carbon::createFromFormat('Y-m-d H:i:s', "$date $time");
-                            $periodEndDateTime = Carbon::parse("$date $endTimeWithALlowedTime");
-                            if ($currentTime->between($startTime, $periodEndDateTime)) {
-                                $this->hasWorkPeriod = true;
-                                $this->workPeriod = $latstCheckIn->period;
-                                $this->day = strtolower(Carbon::parse($latstCheckIn->check_date)->format('D'));
-                            }
+                            $this->hasWorkPeriod = true;
+                            $this->workPeriod = $latstCheckIn->period;
+                            $this->day = strtolower(Carbon::parse($latstCheckIn->check_date)->format('D'));
+                            $this->date = $latstCheckIn->check_date;
                         }
                     }
                 }
@@ -90,12 +83,7 @@ class AttendanceHandler
             $employeePeriods = $employee?->periods;
             // dd($employeePeriods);
             if (! is_null($employee) && count($employeePeriods) > 0) {
-                $day = strtolower(Carbon::parse($date)->format('D'));
-
-
-
-                // $date = date('Y-m-d', strtotime($dateTime));
-                // الآن: "wed", "sun", إلخ
+                $day = strtolower(Carbon::parse($date)->format('D')); 
 
                 $minDate = min($date, $this->previousDate, $this->nextDate);
                 $maxDate = max($date, $this->previousDate, $this->nextDate);
