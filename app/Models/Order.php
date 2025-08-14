@@ -207,11 +207,11 @@ class Order extends Model implements Auditable
 
                 $storeUsers = \App\Models\User::stores()->whereNotNull('fcm_token')->get();
                 foreach ($storeUsers as $user) {
-                    sendNotification(
-                        $user->fcm_token,
-                        '📦 طلب جديد تم إنشاؤه',
-                        "طلب رقم #{$order->id} تم إنشاؤه بنجاح."
-                    );
+                    // sendNotification(
+                    //     $user->fcm_token,
+                    //     '📦 طلب جديد تم إنشاؤه',
+                    //     "طلب رقم #{$order->id} تم إنشاؤه بنجاح."
+                    // );
                 }
             });
             OrderLog::create([
@@ -228,11 +228,11 @@ class Order extends Model implements Auditable
             if (in_array($order->status, [self::PROCESSING, self::READY_FOR_DELEVIRY]) && $order->isDirty('status')) {
                 $customer = $order->customer;
                 if ($customer && $customer->fcm_token) {
-                    sendNotification(
-                        $customer->fcm_token,
-                        '📦 تحديث حالة الطلب',
-                        "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . self::getStatusLabels()[$order->status]
-                    );
+                    // sendNotification(
+                    //     $customer->fcm_token,
+                    //     '📦 تحديث حالة الطلب',
+                    //     "تم تحديث حالة طلبك رقم #{$order->id} إلى: " . self::getStatusLabels()[$order->status]
+                    // );
                 }
             }
 
