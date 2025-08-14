@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
+use App\Models\Store;
 use App\Models\User;
 use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
 use Filament\Forms\Components\Checkbox;
@@ -126,7 +127,7 @@ class BranchResource extends Resource
                                             ->options(\App\Models\Store::active()
                                                 ->centralKitchen()->pluck('name', 'id'))
                                             ->searchable()
-                                            // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
+                                        // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
                                         // ->visible(fn(callable $get) => $get('type') === Branch::TYPE_CENTRAL_KITCHEN)
                                         ,
                                         // Select::make('categories')
@@ -328,6 +329,36 @@ class BranchResource extends Resource
 
 
 
+                Action::make('addStore')
+                    ->label('Add Store')
+                    ->icon('heroicon-o-plus-circle')
+                    ->visible(fn(Model $record) => ! $record->store && $record->type != Branch::TYPE_HQ)
+                    ->form([
+                        TextInput::make('name')
+                            ->label('Store Name')
+                            ->default(fn(Model $record) => $record->name . ' Store')
+                            ->required(),
+
+                        Toggle::make('active')
+                            ->label('Active')
+                            ->default(true),
+                    ])
+                    ->action(function (Model $record, array $data) {
+                        try {
+                            //code...
+                            $store = Store::create([
+                                'name'      => $data['name'],
+                                'active'    => $data['active'],
+                                'branch_id' => $record->id,
+                            ]);
+                            $record->update(['store_id' => $store->id]);
+                        } catch (\Throwable $th) {
+                            throw $th;
+                        }
+                    })
+                    ->modalHeading('Create and Link Store')
+                    ->color('primary')
+                    ->button(),
                 Action::make('add_area')
                     ->modalHeading('')
                     ->modalWidth('lg') // Adjust modal size
@@ -375,8 +406,7 @@ class BranchResource extends Resource
                                 ->label(__('stock.store_id'))->default($record->store_id)
                                 ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
                                 ->searchable()
-                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
-                                ,
+                                ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
 
                         ];
                     })
@@ -424,7 +454,7 @@ class BranchResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-        // ->whereIn('type', [Branch::TYPE_BRANCH])
+            // ->whereIn('type', [Branch::TYPE_BRANCH])
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

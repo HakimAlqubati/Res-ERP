@@ -9,52 +9,56 @@ use Illuminate\Support\Facades\Log;
 
 class CopyOrderOutToBranchStoreService
 {
-    public function handle(): void
+    public function handle(?int $branchId = null): void
     {
         Log::info('Starting_CopyOrderOutToBranchStoreService...', ['timestamp' => now()]);
-        DB::transaction(function () {
-            $orders = Order::with(['branch.store'])
-                ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
-                ->whereNull('deleted_at')
-                ->get();
+        Order::with(['branch.store'])
+            ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
+            ->whereNull('deleted_at')
+            ->when($branchId, function ($q) use ($branchId) {
+                $q->where('branch_id', $branchId);
+            })
+            ->whereHas('branch.store')
+            ->chunkById(200, function ($orders) {
+                foreach ($orders as $order) {
+                    $store = $order->branch?->store;
+                    if (! $store) {
+                        continue; // لا يوجد مخزن للفرع
+                    }
+                    DB::transaction(function () use ($store, $order) {
 
-            foreach ($orders as $order) {
-                $store = $order->branch?->store;
+                        InventoryTransaction::where('transactionable_type', Order::class)
+                            ->where('transactionable_id', $order->id)
+                            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+                            ->where('store_id', $store->id)
+                            ->withTrashed()
+                            ->forceDelete();
+                        $outTransactions = InventoryTransaction::where('transactionable_type', Order::class)
+                            ->where('transactionable_id', $order->id)
+                            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
+                            ->get(['id', 'product_id', 'quantity', 'unit_id', 'package_size', 'price', 'store_id']);
 
-                if (! $store) {
-                    continue; // لا يوجد مخزن للفرع
+                        foreach ($outTransactions as $out) {
+                            InventoryTransaction::create([
+                                'product_id' => $out->product_id,
+                                'movement_type' => InventoryTransaction::MOVEMENT_IN,
+                                'quantity' => $out->quantity,
+                                'unit_id' => $out->unit_id,
+                                'movement_date' => $order->created_at,
+                                'transaction_date' => $order->created_at,
+                                'package_size' => $out->package_size,
+                                'price' => $out->price,
+                                'notes' => 'Supplied from Order #' . $order->id,
+                                'store_id' => $store->id,
+                                'transactionable_type' => Order::class,
+                                'transactionable_id' => $order->id,
+                                'source_transaction_id' => $out->id,
+                            ]);
+                        }
+                    });
                 }
-
-                InventoryTransaction::where('transactionable_type', Order::class)
-                    ->where('transactionable_id', $order->id)
-                    ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
-                    ->where('store_id', $store->id)
-                    ->withTrashed()
-                    ->forceDelete();
-                $outTransactions = InventoryTransaction::where('transactionable_type', Order::class)
-                    ->where('transactionable_id', $order->id)
-                    ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
-                    ->get();
-
-                foreach ($outTransactions as $out) {
-                    InventoryTransaction::create([
-                        'product_id' => $out->product_id,
-                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
-                        'quantity' => $out->quantity,
-                        'unit_id' => $out->unit_id,
-                        'movement_date' => $order->created_at,
-                        'transaction_date' => $order->created_at,
-                        'package_size' => $out->package_size,
-                        'price' => $out->price,
-                        'notes' => 'Supplied from Order #' . $order->id,
-                        'store_id' => $store->id,
-                        'transactionable_type' => Order::class,
-                        'transactionable_id' => $order->id,
-                        'source_transaction_id' => $out->id,
-                    ]);
-                }
-            }
-        });
+            });
+        Log::info('Finished_CopyOrderOutToBranchStoreService', ['ts' => now()]);
     }
 
     public function handleForOrder(Order $order): void
