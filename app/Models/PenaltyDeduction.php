@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -104,20 +105,20 @@ class PenaltyDeduction extends Model implements Auditable
         $this->approved_at = $approvedAt;
         $this->save();
 
-        if (! $this->salaryTransaction) {
-            app(\App\Repositories\HR\Salary\SalaryTransactionRepository::class)->addDeduction(
-                $this->employee_id,
-                $this->penalty_amount,
-                $this->date,
-                $this->description,
-                $this, // reference is this PenaltyDeduction object
-                null,
-                [
-                    'month' => $this->month,
-                    'year'  => $this->year,
-                ]
-            );
-        }
+        // if (! $this->salaryTransaction) {
+        //     app(\App\Repositories\HR\Salary\SalaryTransactionRepository::class)->addDeduction(
+        //         $this->employee_id,
+        //         $this->penalty_amount,
+        //         $this->date,
+        //         $this->description,
+        //         $this, // reference is this PenaltyDeduction object
+        //         null,
+        //         [
+        //             'month' => $this->month,
+        //             'year'  => $this->year,
+        //         ]
+        //     );
+        // }
     }
 
     // Reject the penalty deduction
@@ -194,5 +195,4 @@ class PenaltyDeduction extends Model implements Auditable
     {
         return $this->morphOne(SalaryTransaction::class, 'referenceable', 'reference_type', 'reference_id');
     }
-
 }

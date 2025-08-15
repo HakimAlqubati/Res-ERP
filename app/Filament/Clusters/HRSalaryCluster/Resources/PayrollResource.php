@@ -16,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
+use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\TrashedFilter;
@@ -65,8 +66,13 @@ class PayrollResource extends Resource
                         // ->color(Color::Red)
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
-                        ->disabledOn('view')
-                        ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id'))
+                        ->disabledOn('view')->searchable()
+                        ->options(Branch::active()
+                            ->whereIn(
+                                'type',
+                                [Branch::TYPE_BRANCH]
+                            )
+                            ->select('id', 'name')->get()->pluck('name', 'id'))
                         ->required()
 
                         ->helperText('Please, choose a branch'),
@@ -100,7 +106,7 @@ class PayrollResource extends Resource
                 Tables\Filters\SelectFilter::make('branch_id')->label('Branch')
                     ->relationship('branch', 'name'),
                 TrashedFilter::make(),
-                
+
 
             ])
             ->actions([
@@ -131,6 +137,16 @@ class PayrollResource extends Resource
             'edit' => Pages\EditPayroll::route('/{record}/edit'),
             // 'runPayroll'    => RunPayroll::route('/run-payroll')
         ];
+    }
+
+    public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+            Pages\ListPayrolls::class,
+            Pages\CreatePayroll::class,
+            Pages\ViewPayroll::class,
+            Pages\EditPayroll::class,
+        ]);
     }
 
     public static function getEloquentQuery(): Builder

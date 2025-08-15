@@ -49,7 +49,9 @@ class PayrollRunService
                 'gross_salary'      => $calc['gross_salary'] ?? 0,
                 'net_salary'        => $calc['net_salary'] ?? 0,
                 'transactions'      => $calc['transactions'] ?? [],
-                'dynamic_deductions' => $calc['dynamic_deductions'] ?? [],
+                'penalties'         => $calc['penalties'] ?? [],
+                'penalty_total'     => $calc['penalty_total'] ?? 0,
+                'daily_rate_method' => $calc['daily_rate_method'] ?? null,
             ];
 
             $items[] = $row;
@@ -216,7 +218,21 @@ class PayrollRunService
             $run->status           = 'completed';
             $run->save();
         });
-
+        if (
+            !empty($rows) && count(array_unique(array_column($rows, 'status'))) === 1
+            && $rows[0]['status'] === 'skipped_existing'
+        ) {
+            return [
+                'success' => false,
+                'message' => 'No payrolls processed: all employees already have payrolls for this period.',
+                'meta'    => [
+                    'payroll_run_id' => $run->id,
+                    'branch_id'      => $input->branchId,
+                    'year'           => $input->year,
+                    'month'          => $input->month,
+                ]
+            ];
+        }
         return [
             'success' => true,
             'message' => 'Payrolls persisted successfully.',

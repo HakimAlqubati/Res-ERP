@@ -67,7 +67,10 @@ class PayrollSimulationService
                 monthDays: $monthDays,
                 totalDuration: $totalDuration,
                 totalActualDuration: $totalActualDuration,
-                totalApprovedOvertime: $totalApprovedOvertime
+                totalApprovedOvertime: $totalApprovedOvertime,
+                periodYear: $year,
+                periodMonth: $month
+
             );
  
             $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
@@ -82,7 +85,7 @@ class PayrollSimulationService
                 'working_days' => $workDays,
                 'working_hours' => $dailyHours,
                 'monthly_salary' => $monthlySalary,
-                'daily_salary' => $result['daily_rate'],
+                'daily_salary' => round($result['daily_rate'], 2),
                 'hourly_salary' => $result['hourly_rate'],
                 'month_days' => $monthDays,
 
@@ -94,7 +97,10 @@ class PayrollSimulationService
                 'tax' => $result['tax'] ?? 0,
                 'late_hours' => $result['late_hours'],
                 'transactions' => $result['transactions'] ?? [],
-                'dynamic_deductions' => $result['dynamic_deductions']?? [],
+                'dynamic_deductions' => $result['dynamic_deductions'] ?? [],
+                'penalty_total' => $result['penalty_total'] ?? 0,
+                'penalties' => $result['penalties'] ?? [],
+                'daily_rate_method' => $result['daily_rate_method']?? '',
                 'data' => [
                     'base_salary'       => $result['base_salary'],
                     'gross_salary'      => $result['gross_salary'],
@@ -177,6 +183,7 @@ class PayrollSimulationService
                 'employee_no'             => $employee->employee_no,
                 'name'                    => $employee->name,
                 'working_days'            => $workDays,
+                'daily_rate_method' => $result['daily_rate_method'] ?? '',
                 'working_hours'           => $dailyHours,
                 'monthly_salary'          => $monthlySalary,
                 'daily_salary'            => $result['daily_rate'],

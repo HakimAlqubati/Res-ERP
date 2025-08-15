@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class AdvanceRequest extends Model
 {
@@ -24,6 +25,12 @@ class AdvanceRequest extends Model
         'date',
         'deduction_starts_from',
         'reason',
+        'code',
+        'status',
+        'total_due',
+        'remaining_total',
+        'paid_installments'
+
     ];
 
     // Define the relationship with Employee
@@ -35,26 +42,39 @@ class AdvanceRequest extends Model
     {
         return $this->hasMany(EmployeeAdvanceInstallment::class, 'transaction_id');
     }
-    public static function createInstallments($employeeId, $totalAmount, $numberOfMonths, $startDate, $applicationId)
-    {
+    public static function createInstallments(
+        $employeeId,
+        $totalAmount,
+        $numberOfMonths,
+        string|\DateTimeInterface $startMonth, // "2025-09-01" (بداية الشهر)
+        $applicationId
+    ) {
         try {
-            if ($numberOfMonths <= 0) {
-                return; // Exit if no installments are specified
-            }
+            if ($numberOfMonths <= 0 || $totalAmount <= 0) return;
+            DB::transaction(function () use ($employeeId, $totalAmount, $numberOfMonths, $startMonth, $applicationId) {
+                $base = floor(($totalAmount / $numberOfMonths) * 100) / 100; // تقليم لقرشين
+                $acc  = round($base * $numberOfMonths, 2);
+                $last = round($totalAmount - $acc + $base, 2); // تعويض الفارق في الأخير
+    
+                $installmentAmount = $totalAmount / $numberOfMonths;
+                $cursor = Carbon::parse($startMonth)->startOfMonth();
+                // Loop through each month to create installments
+                for ($i = 0; $i < $numberOfMonths; $i++) {
+                    $slice = ($i === $numberOfMonths) ? $last : $base;
 
-            $installmentAmount = $totalAmount / $numberOfMonths;
-            $dueDate = Carbon::parse($startDate);
+                    EmployeeAdvanceInstallment::create([
+                        'employee_id' => $employeeId,
+                        'application_id' => $applicationId,
+                        'installment_amount' => $slice,
+                        'due_date'           => $cursor->toDateString(), // لو موجود مسبقاً
+                        'is_paid' => false,
+                        'due_month'          => $cursor->toDateString(),
+                        'status'             => 'due',
 
-            // Loop through each month to create installments
-            for ($i = 0; $i < $numberOfMonths; $i++) {
-                EmployeeAdvanceInstallment::create([
-                    'employee_id' => $employeeId,
-                    'application_id' => $applicationId,
-                    'installment_amount' => round($installmentAmount, 2),
-                    'due_date' => $dueDate->copy()->addMonths($i),
-                    'is_paid' => false,
-                ]);
-            }
+                    ]);
+                    $cursor->addMonth();
+                }
+            });
         } catch (\Throwable $th) {
             //throw $th;
         }

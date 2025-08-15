@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Enums\HR\Payroll\SalaryTransactionSubType;
@@ -11,7 +12,7 @@ class SalaryTransaction extends Model
     use SoftDeletes;
 
     protected $table = 'hr_salary_transactions';
- 
+
 
     const OPERATION_ADD = '+';
     const OPERATION_SUB = '-';
@@ -26,20 +27,40 @@ class SalaryTransaction extends Model
         'amount' => 'decimal:2',
         'year'   => 'integer',
         'month'  => 'integer',
+        'qty'         => 'decimal:2',
+        'rate'        => 'decimal:4',
+        'multiplier'  => 'decimal:3',
         // 'type'      => SalaryTransactionType::class,     // Enum رئيسي
         // 'sub_type'  => SalaryTransactionSubType::class,
     ];
 
-    
+
     // --- العملة الافتراضية (يمكن تعديلها حسب نظامك) ---
     public static function defaultCurrency()
     {
         return getDefaultCurrency();
     }
     protected $fillable = [
-        'employee_id', 'payroll_id', 'date', 'amount', 'currency', 'type','sub_type',
-        'reference_id', 'reference_type', 'description', 'created_by',
-        'status', 'operation', 'year','month','payroll_run_id'
+        'employee_id',
+        'payroll_id',
+        'date',
+        'amount',
+        'currency',
+        'type',
+        'sub_type',
+        'reference_id',
+        'reference_type',
+        'description',
+        'created_by',
+        'status',
+        'operation',
+        'year',
+        'month',
+        'payroll_run_id',
+        'qty',
+        'rate',
+        'multiplier',
+        'unit',
     ];
     // العلاقات
     public function employee()
@@ -53,9 +74,9 @@ class SalaryTransaction extends Model
     }
 
     public function run()
-{
-    return $this->belongsTo(\App\Models\PayrollRun::class, 'payroll_run_id');
-}
+    {
+        return $this->belongsTo(\App\Models\PayrollRun::class, 'payroll_run_id');
+    }
 
     // Morph relation للمرجع (خصم، سلفة، ...الخ)
     public function referenceable()
@@ -68,5 +89,4 @@ class SalaryTransaction extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-
 }

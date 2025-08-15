@@ -53,22 +53,30 @@ class CreatePayroll extends CreateRecord
 
         // Build DTO expected by your service
         $dto = new RunPayrollData(
-            branchId:        (int) $data['branch_id'],
-            year:            (int) $data['year'],
-            month:           (int) $data['month'],
-            overwriteExisting: false,                
+            branchId: (int) $data['branch_id'],
+            year: (int) $data['year'],
+            month: (int) $data['month'],
+            overwriteExisting: false,
         );
 
         $result = $service->runAndPersist($dto);
 
-        // Optional: toast summary
-        Notification::make()
-            ->title('Payroll run completed')
-            ->body("Created: {$result['meta']['created']}, Updated: {$result['meta']['updated']}")
-            ->success()
-            ->send();
+        if ($result['success']) {
+            showSuccessNotifiMessage($result['message']);
+            $this->getRedirectUrl();
+            return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
+        } else {
+            showWarningNotifiMessage($result['message']);
+            $this->halt();
+        }
+
 
         // Return the PayrollRun for Filament to redirect to View page
         return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\HR\Salary;
 
+use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\SalaryTransaction;
 
 class SalaryTransactionRepository
@@ -22,6 +23,14 @@ class SalaryTransactionRepository
         if (!isset($data['month'])) {
             $data['month'] = \Carbon\Carbon::parse($data['date'])->month;
         }
+
+        // إذا لم يُمرّر amount لكن لدينا qty & rate → احسبه
+        $hasQtyRate = isset($data['qty'], $data['rate']) && $data['qty'] !== null && $data['rate'] !== null;
+        if (!isset($data['amount']) && $hasQtyRate) {
+            $multiplier = isset($data['multiplier']) && $data['multiplier'] !== null ? (float)$data['multiplier'] : 1.0;
+            $data['amount'] = (float)$data['qty'] * (float)$data['rate'] * $multiplier;
+        }
+
 
         // تأكد أن المبلغ دائماً موجب!
         $data['amount'] = abs($data['amount']);
@@ -87,22 +96,26 @@ class SalaryTransactionRepository
         string $date,
         string $description,
         $reference = null,
-        $payrollId = null
+        $payrollId = null,
+        array $extra = []
     ): SalaryTransaction {
-        return $this->create([
-            'payroll_run_id' => $payrollRunId,
-            'employee_id'    => $employeeId,
-            'payroll_id'     => $payrollId,
-            'date'           => $date,
-            'amount'         => abs($amount), // دائماً موجب
-            'type'           => SalaryTransaction::TYPE_ALLOWANCE,
-            'operation'      => SalaryTransaction::OPERATION_ADD,
-            'description'    => $description,
-            'reference_id'   => $reference?->id ?? null,
-            'reference_type' => $reference ? get_class($reference) : null,
-            'status'         => SalaryTransaction::STATUS_APPROVED,
-            'created_by'     => auth()->id() ?? null,
-        ]);
+        return $this->create(array_merge(
+            [
+                'payroll_run_id' => $payrollRunId,
+                'employee_id'    => $employeeId,
+                'payroll_id'     => $payrollId,
+                'date'           => $date,
+                'amount'         => abs($amount), // دائماً موجب
+                'type'           => SalaryTransactionType::TYPE_ALLOWANCE,
+                'operation'      => SalaryTransaction::OPERATION_ADD,
+                'description'    => $description,
+                'reference_id'   => $reference?->id ?? null,
+                'reference_type' => $reference ? get_class($reference) : null,
+                'status'         => SalaryTransaction::STATUS_APPROVED,
+                'created_by'     => auth()->id() ?? null,
+            ],
+            $extra
+        ));
     }
 
     /**
@@ -118,9 +131,10 @@ class SalaryTransactionRepository
         string $description,
         $reference = null,
         $payrollId = null,
-        string $status = null
+        string $status = null,
+        array $extra = [],
     ): SalaryTransaction {
-        return $this->create([
+        return $this->create(array_merge([
             'payroll_run_id' => $payrollRunId,
             'employee_id'    => $employeeId,
             'payroll_id'     => $payrollId,
@@ -133,6 +147,6 @@ class SalaryTransactionRepository
             'reference_type' => $reference ? get_class($reference) : null,
             'status'         => $status ?? SalaryTransaction::STATUS_APPROVED,
             'created_by'     => auth()->id() ?? null,
-        ]);
+        ], $extra));
     }
 }

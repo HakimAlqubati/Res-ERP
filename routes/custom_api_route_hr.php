@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
-use App\Http\Controllers\API\HR\PayrollCalculationController;
 use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
@@ -14,11 +13,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('hr/payroll')
     ->middleware('auth:api')
-    ->group(function () {
-        Route::post('calculate-salary', [PayrollCalculationController::class, 'calculateSalary']);
-        Route::post('calculate-salaries/by-employee-ids', [PayrollCalculationController::class, 'calculateSalariesByEmployeeIds']);
-        Route::post('calculate-salaries/by-branch', [PayrollCalculationController::class, 'calculateSalariesByBranch']);
-        Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
+    ->group(function () { 
+         Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
         Route::post('/preview', [PayrollSimulationController::class, 'previewByBranchYearMonth']);
 
         // محاكاة الرواتب (بدون حفظ)

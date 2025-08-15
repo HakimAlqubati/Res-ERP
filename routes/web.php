@@ -2,6 +2,7 @@
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Http\Controllers\Api\HR\SalarySlipController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
@@ -782,3 +783,6 @@ Route::get('/opcache-clear', function () {
     return response('❌ OPcache not enabled', 500)
         ->header('Content-Type', 'text/plain');
 })->name('opcache.clear');
+Route::get('/salary-slip/{employee}/{year}/{month}', [SalarySlipController::class, 'show'])
+    ->whereNumber(['employee', 'year', 'month'])
+    ->name('salary.slip.show');

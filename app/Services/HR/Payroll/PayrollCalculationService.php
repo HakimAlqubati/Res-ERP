@@ -18,85 +18,7 @@ class PayrollCalculationService
         protected PayrollSimulationService $payrollSimulator
     ) {}
 
-    /**
-     * Calculate and persist payroll for a single employee within a specific PayrollRun.
-     */
-    public function calculateForEmployeeInRun(PayrollRun $run, Employee $employee): array
-    {
-        try {
-            return DB::transaction(function () use ($run, $employee) {
 
-                // Prevent duplicates within the same run
-                $exists = Payroll::withTrashed()
-                    ->where('payroll_run_id', $run->id)
-                    ->where('employee_id', $employee->id)
-                    ->exists();
-
-                if ($exists) {
-                    return [
-                        'success' => false,
-                        'message' => "Payroll already exists for employee [{$employee->name}] in run #{$run->id}.",
-                    ];
-                }
-
-                // Simulate first (non-persistent)
-                $simulationResults = $this->payrollSimulator->simulateForEmployees(
-                    [$employee->id],
-                    $run->year,
-                    $run->month
-                );
-                $simulation = $simulationResults[0] ?? null;
-
-                if (!$simulation || !$simulation['success']) {
-                    return [
-                        'success' => false,
-                        'message' => $simulation['message'] ?? 'Payroll simulation failed.',
-                    ];
-                }
-
-                $result     = $simulation['data'];
-                $netSalary  = $result['net_salary'];
-                $debtAmount = $result['debt_amount'] ?? 0;
-
-                // Persist Payroll linked to the run (no 'name' field)
-                $payroll = $this->payrollRepo->create([
-                    'payroll_run_id'         => $run->id,
-                    'employee_id'            => $employee->id,
-                    'branch_id'              => $run->branch_id, // denormalized for speed
-                    'year'                   => $run->year,
-                    'month'                  => $run->month,
-                    'period_start_date'      => $result['period_start'],
-                    'period_end_date'        => $result['period_end'],
-                    'base_salary'            => $result['base_salary'],
-                    'total_allowances'       => 0,
-                    'overtime_amount'        => $result['overtime_amount'],
-                    'total_deductions'       => $result['absence_deduction'],
-                    'gross_salary'           => $result['gross_salary'],
-                    'net_salary'             => $netSalary,
-                    'debt_amount'            => $debtAmount,
-                    'currency'               => getDefaultCurrency(),
-                    'status'                 => Payroll::STATUS_PENDING,
-                    'created_by'             => auth()->id() ?? null,
-                    'notes'                  => 'Auto payroll via simulator',
-                ]);
-
-                // Persist transactions and link to run
-                $periodEnd = Carbon::parse($result['period_end']);
-                $this->generateSalaryTransactions($run, $employee, $result, $periodEnd, $payroll);
-
-                return [
-                    'success' => true,
-                    'message' => 'Payroll calculated and saved successfully.',
-                    'data'    => $payroll,
-                ];
-            });
-        } catch (\Throwable $e) {
-            return [
-                'success' => false,
-                'message' => "Unexpected error: {$e->getMessage()}",
-            ];
-        }
-    }
 
     // إمّا: احذفها تمامًا 
     // أو: خلِّها لا تعتمد على runService
@@ -106,7 +28,7 @@ class PayrollCalculationService
         // بديل بدون أي استدعاء لـ PayrollRunService
         $simulationResults = $this->payrollSimulator->simulateForEmployees([$employee->id], $year, $month);
         $simulation = $simulationResults[0] ?? null;
- 
+
         if (!$simulation || !$simulation['success']) {
             return [
                 'success' => false,
@@ -125,9 +47,11 @@ class PayrollCalculationService
             'net_salary'       => $simulation['data']['net_salary']       ?? 0,
             // لو تحتاج معاملات مفصلة:
             'transactions'     => $simulation['transactions']     ?? [],
-            'dynamic_deductions' => $simulation['dynamic_deductions']?? [],
+            'penalties'        => $simulation['penalties']       ?? [],
+            'penalty_total'   => $simulation['penalty_total'] ?? 0,
             'period_start'     => $simulation['data']['period_start']      ?? null,
             'period_end'       => $simulation['data']['period_end']        ?? null,
+            'daily_rate_method' => $simulation['daily_rate_method'] ?? '',
         ];
     }
 
@@ -141,8 +65,13 @@ class PayrollCalculationService
      * @param Carbon     $periodStart
      * @param Payroll    $payroll
      */
-    public function generateSalaryTransactions(PayrollRun $run, Employee $employee, array $result, Carbon $periodEnd, Payroll $payroll): void
-    {
+    public function generateSalaryTransactions(
+        PayrollRun $run,
+        Employee $employee,
+        array $result,
+        Carbon $periodEnd,
+        Payroll $payroll
+    ): void {
         $transactions = $result['transactions'] ?? [];
 
         foreach ($transactions as $txn) {
@@ -151,6 +80,17 @@ class PayrollCalculationService
                 continue;
             }
 
+            $extra = [
+                'payroll_run_id' => $run->id,
+                'year'           => $run->year,
+                'month'          => $run->month,
+           
+                'unit'           => $txn['unit']        ?? null,
+                'qty'            => $txn['qty']         ?? null,
+                'rate'           => $txn['rate']        ?? null,
+                'multiplier'     => $txn['multiplier']  ?? null,
+            ];
+            
             $payload = [
                 'employeeId' => $employee->id,
                 'amount'     => $amount,
@@ -161,11 +101,7 @@ class PayrollCalculationService
                 'operation'  => $txn['operation'] ?? '+',
                 'payrollId'  => $payroll->id,
                 // Make sure repo stores this on the model -> payroll_run_id
-                'extra'      => array_merge($txn['extra'] ?? [], [
-                    'payroll_run_id' => $run->id,
-                    'year'           => $run->year,
-                    'month'          => $run->month,
-                ]),
+                'extra'      =>  $extra,
             ];
 
             if ($payload['operation'] === '-') {
@@ -194,51 +130,5 @@ class PayrollCalculationService
                 );
             }
         }
-    }
-
-    /**
-     * Bulk calculate for multiple employees in a given run.
-     */
-    public function calculateForEmployeesInRun(PayrollRun $run, array $employeeIds): array
-    {
-        $results = [];
-        $employees = Employee::whereIn('id', $employeeIds)->get();
-
-        foreach ($employees as $employee) {
-            $result = $this->calculateForEmployeeInRun($run, $employee);
-            $results[] = [
-                'success'     => $result['success'],
-                'message'     => $result['message'],
-                'employee_id' => $employee->id,
-                'employee_no' => $employee->employee_no,
-                'name'        => $employee->name,
-            ];
-        }
-
-        return $results;
-    }
-
-    /**
-     * Bulk calculate with auto run (fallback).
-     */
-    public function calculateForEmployees(array $employeeIds, int $year, int $month): array
-    {
-        $results = [];
-        $employees = Employee::whereIn('id', $employeeIds)->get();
-
-        foreach ($employees as $employee) {
-            $results[] = $this->calculateForEmployee($employee, $year, $month);
-        }
-
-        // normalize output shape (like before)
-        return array_map(function ($row) {
-            return [
-                'success' => $row['success'] ?? false,
-                'message' => $row['message'] ?? '',
-                'employee_id' => $row['data']->employee_id ?? null,
-                'employee_no' => null,
-                'name'        => null,
-            ];
-        }, $results);
     }
 }

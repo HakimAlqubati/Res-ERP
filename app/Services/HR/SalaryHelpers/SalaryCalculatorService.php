@@ -10,6 +10,9 @@ use App\Enums\HR\Payroll\SalaryTransactionType;
 use App\Models\Deduction;
 use App\Models\Employee;
 use InvalidArgumentException;
+use App\Models\PenaltyDeduction;
+use App\Services\HR\Payroll\SalaryMutableComponents;
+use App\Traits\HR\Payroll\ResetsState;
 
 /**
  * Professional, extensible salary calculator.
@@ -21,6 +24,7 @@ use InvalidArgumentException;
  */
 class SalaryCalculatorService
 {
+    use ResetsState;
     // Defaults
     public const DEFAULT_OVERTIME_MULTIPLIER = 1.5;
     public const DEFAULT_ROUND_SCALE = 2;
@@ -59,6 +63,14 @@ class SalaryCalculatorService
 
     protected array $dynamicDeductions = [];
 
+    // Period (for per-month penalties)
+    protected ?int $periodYear  = null;
+    protected ?int $periodMonth = null;
+
+    // Penalties
+    protected array $penaltyItems = [];   // list of approved penalties for the month
+    protected float $penaltyTotal = 0.0;  // sum of penalties for the month
+
     // Config
     public function __construct(
         protected string $dailyRateMethod = DailyRateMethod::ByWorkingDays->value,
@@ -91,7 +103,13 @@ class SalaryCalculatorService
         string|array $totalDuration,
         string|array $totalActualDuration,
         string|array $totalApprovedOvertime,
+        ?int $periodYear = null,
+        ?int $periodMonth = null,
     ): array {
+
+        $this->resetstate();
+
+        $this->dailyRateMethod = settingWithDefault('daily_salary_calculation_method', DailyRateMethod::ByWorkingDays->value);
         // Validate
         $this->assertPositive($salary, 'Salary');
         $this->assertPositive($workingDays, 'Working days');
@@ -111,6 +129,17 @@ class SalaryCalculatorService
         $this->totalApprovedOvertime  = is_array($totalApprovedOvertime) ? $this->sanitizeHM($totalApprovedOvertime) : $this->parseHM($totalApprovedOvertime);
         $this->lateHours              = $this->extractLateHours($employeeData);
 
+        $this->periodYear  = $periodYear;
+        $this->periodMonth = $periodMonth;
+
+        // Try to infer from employeeData if not provided
+        if (!$this->periodYear || !$this->periodMonth) {
+            throw new InvalidArgumentException('periodYear and periodMonth are required to compute penalty deductions.');
+        }
+
+        // Penalty deductions (approved in this month)
+        $this->computePenaltyDeductions();
+
         // Attendance stats
         $this->extractAttendanceStats($employeeData);
 
@@ -126,10 +155,12 @@ class SalaryCalculatorService
         $this->computeDeductions();
         $this->computeOvertime();
 
+        // dd($this->dailyRate,$this->dailyRateMethod,$this->monthDays,$this->salary);
         // Totals
         $this->baseSalary     = $this->salary;
         $this->grossSalary    = $this->round($this->baseSalary + $this->overtimeAmount);
-        $this->totalDeductions = $this->round($this->absenceDeduction + $this->lateDeduction);
+        $this->totalDeductions = $this->round($this->absenceDeduction + $this->lateDeduction
+            + $this->penaltyTotal);
         $this->netSalary      = $this->round($this->grossSalary - $this->totalDeductions);
 
         // Policy hooks (post calculation: taxes, caps, extra allowances…)
@@ -148,6 +179,47 @@ class SalaryCalculatorService
         return $this->buildResult();
     }
 
+    protected function computePenaltyDeductions(): void
+    {
+        $this->penaltyItems = [];
+        $this->penaltyTotal = 0.0;
+
+        // If period is unknown, skip silently (keeps backward compatibility)
+        if (!$this->periodYear || !$this->periodMonth) {
+            return;
+        }
+
+        // Fetch approved penalties for this employee in the given month/year
+        $penalties = PenaltyDeduction::query()
+            ->where('employee_id', $this->employee->id)
+            ->where('status', PenaltyDeduction::STATUS_APPROVED)
+            ->where('year',  $this->periodYear)
+            ->where('month', $this->periodMonth)
+            ->with(['deduction:id,name']) // to show a readable name
+            ->get();
+
+        foreach ($penalties as $p) {
+            $amount = (float)$p->penalty_amount;
+            if ($amount <= 0) continue;
+
+            $this->penaltyItems[] = [
+                'id'             => $p->id,
+                'deduction_id'   => $p->deduction_id,
+                'deduction_name' => optional($p->deduction)->name ?? 'Penalty deduction',
+                'amount'         => $this->round($amount),
+                'description'    => $p->description,
+                'date'           => $p->date,
+                'reference_type' => PenaltyDeduction::class,
+                'reference_id'   => $p->id,
+            ];
+
+            $this->penaltyTotal += $amount;
+        }
+
+        $this->penaltyTotal = $this->round($this->penaltyTotal);
+    }
+
+
     /* ===================== Core Steps ===================== */
 
     protected function computeRates(): void
@@ -157,6 +229,7 @@ class SalaryCalculatorService
             DailyRateMethod::ByMonthDays->value   => $this->salary / $this->monthDays,
             default                               => $this->salary / $this->workingDays,
         };
+        $this->dailyRate = $this->round($this->dailyRate, 2);
 
         $this->hourlyRate = $this->dailyRate / $this->dailyHours;
     }
@@ -289,11 +362,12 @@ class SalaryCalculatorService
             'overtime_hours'         => $this->round($this->overtimeHours),
 
             // Rates
-            'daily_rate'             => $this->round($this->dailyRate),
+            'daily_rate'             => $this->round($this->dailyRate, 2),
             'hourly_rate'            => $this->round($this->hourlyRate),
 
             // Attendance context
             'month_days'             => $this->monthDays,
+            'daily_rate_method'      => $this->dailyRateMethod,
             'working_days'           => $this->workingDays,
             'daily_hours'            => $this->dailyHours,
             'present_days'           => $this->presentDays,
@@ -309,6 +383,8 @@ class SalaryCalculatorService
             // Transactions (ready for persistence layer)
             'transactions'           => $transactions,
             'dynamic_deductions' => $this->dynamicDeductions,
+            'penalty_total' => $this->round($this->penaltyTotal),
+            'penalties'     => $this->penaltyItems,
         ];
     }
 
@@ -333,7 +409,6 @@ class SalaryCalculatorService
             )
             ->with('brackets')
             ->get();
-        // dd($generalDeducationTypes);
         $deduction = [];
         foreach ($generalDeducationTypes as  $deductionType) {
 
@@ -386,7 +461,7 @@ class SalaryCalculatorService
             }
 
             if (isset($deduction->has_brackets) && $deduction->has_brackets && isset($deduction->brackets)) {
- 
+
                 $deductionAmount = $deduction->calculateTax($basicSalary)['monthly_tax'] ?? 0;
             }
             // Add to total deductions
@@ -421,6 +496,11 @@ class SalaryCalculatorService
             'amount'      => $this->round($this->salary),
             'operation'   => '+',
             'description' => 'Base salary',
+
+            'unit'        => 'day',
+            'qty'         => $this->workingDays,
+            'rate'        => $this->round($this->dailyRate, 2),
+            'multiplier'  => 1.0,
         ];
 
         // Overtime (if any)
@@ -431,6 +511,11 @@ class SalaryCalculatorService
                 'amount'      => $this->round($this->overtimeAmount),
                 'operation'   => '+',
                 'description' => 'Approved overtime',
+
+                'unit'        => 'hour',
+                'qty'         => $this->round($this->overtimeHours),
+                'rate'        => $this->round($this->hourlyRate, 4),
+                'multiplier'  => $this->overtimeMultiplier,
             ];
         }
 
@@ -442,6 +527,12 @@ class SalaryCalculatorService
                 'amount'      => $this->round($this->absenceDeduction),
                 'operation'   => '-',
                 'description' => 'Absence deduction',
+
+
+                'unit'        => 'day',
+                'qty'         => $this->absentDays,
+                'rate'        => $this->round($this->dailyRate, 2),
+                'multiplier'  => 1.0,
             ];
         }
 
@@ -453,6 +544,11 @@ class SalaryCalculatorService
                 'amount'      => $this->round($this->lateDeduction),
                 'operation'   => '-',
                 'description' => 'Late deduction',
+
+                'unit'        => 'hour',
+                'qty'         => $this->round($this->lateHours),
+                'rate'        => $this->round($this->hourlyRate, 4),
+                'multiplier'  => 1.0,
             ];
         }
 
@@ -464,12 +560,17 @@ class SalaryCalculatorService
                     // minimal validation
                     if (!isset($t['type'], $t['amount'], $t['operation'])) continue;
                     $t['amount'] = $this->round((float)$t['amount']);
+
+                    // اضمن وجود مفاتيح الأعمدة الجديدة (حتى لو null)
+                    $t['unit']       = $t['unit']       ?? null;
+                    $t['qty']        = isset($t['qty']) ? (float)$t['qty'] : null;
+                    $t['rate']       = isset($t['rate']) ? (float)$t['rate'] : null;
+                    $t['multiplier'] = isset($t['multiplier']) ? (float)$t['multiplier'] : null;
                     $tx[] = $t;
                 }
             }
         }
 
-        $newTransactions = [];
         // Dynamic general deductions from property
         foreach ($this->dynamicDeductions as $key => $ded) {
             if ($key === 'result') continue;
@@ -488,58 +589,52 @@ class SalaryCalculatorService
             ];
         }
 
+        // Approved penalty deductions as transactions
+        if (!empty($this->penaltyItems)) {
+            foreach ($this->penaltyItems as $pen) {
+                $tx[] = [
+                    'type'         => SalaryTransactionType::TYPE_DEDUCTION,
+                    'sub_type'     => \Illuminate\Support\Str::slug($pen['deduction_name'] ?? 'penalty'),
+                    'amount'       => $this->round((float)$pen['amount']),
+                    'operation'    => '-',
+                    'description'  => $pen['description'] ?? ($pen['deduction_name'] ?? 'Penalty deduction'),
+                    // Helpful for persistence layer (morph reference)
+                    'reference_type' => $pen['reference_type'] ?? PenaltyDeduction::class,
+                    'reference_id'   => $pen['reference_id']  ?? $pen['id'] ?? null,
+                    'deduction_id'   => $pen['deduction_id']  ?? null,
+                ];
+            }
+        }
+
         return $tx;
     }
-}
+    protected array $defaultState = [
+        'employeeData' => [],
+        'presentDays' => 0,
+        'absentDays' => 0,
+        'totalDuration' => ['hours' => 0, 'minutes' => 0],
+        'totalActualDuration' => ['hours' => 0, 'minutes' => 0],
+        'totalApprovedOvertime' => ['hours' => 0, 'minutes' => 0],
+        'lateHours' => 0.0,
+        'dailyRate' => 0.0,
+        'hourlyRate' => 0.0,
+        'absenceDeduction' => 0.0,
+        'lateDeduction' => 0.0,
+        'overtimeHours' => 0.0,
+        'overtimeAmount' => 0.0,
+        'grossSalary' => 0.0,
+        'baseSalary' => 0.0,
+        'totalDeductions' => 0.0,
+        'netSalary' => 0.0,
+        'dynamicDeductions' => [],
+        'periodYear' => null,
+        'periodMonth' => null,
+        'penaltyItems' => [],
+        'penaltyTotal' => 0.0,
+    ];
 
-/* ===================== Policy Hook Interface & DTO ===================== */
-
-interface SalaryPolicyHookInterface
-{
-    /**
-     * Called before computing rates (can enrich $context).
-     */
-    public function beforeRates(Employee $employee, array &$context): void;
-
-    /**
-     * Adjust overtime amount if needed (caps/multipliers).
-     */
-    public function adjustOvertime(Employee $employee, array $context, float $overtimeAmount): float;
-
-    /**
-     * Adjust absence/late deductions (caps/floors).
-     * Return [absenceDeduction, lateDeduction].
-     */
-    public function adjustDeductions(Employee $employee, array $context, float $absenceDeduction, float $lateDeduction): array;
-
-    /**
-     * After totals computed; return final net salary (allow taxes, insurances…).
-     * You may also modify $mut (gross/deductions/overtime…) to reflect changes externally if you wish.
-     */
-    public function afterTotals(
-        Employee $employee,
-        array $context,
-        float $baseSalary,
-        float $grossSalary,
-        float $totalDeductions,
-        float $currentNet,
-        SalaryMutableComponents $mut
-    ): float;
-
-    /**
-     * Optional extra line-items to be persisted as transactions.
-     * Each item: ['type'=>..,'sub_type'=>..(opt),'amount'=>..,'operation'=>'+|-', 'description'=>..]
-     */
-    public function extraTransactions(Employee $employee, array $context): array;
-}
-
-final class SalaryMutableComponents
-{
-    public function __construct(
-        public float $absenceDeduction,
-        public float $lateDeduction,
-        public float $overtimeAmount,
-        public float $grossSalary,
-        public float $totalDeductions,
-    ) {}
+    protected function resetState(): void
+    {
+        $this->applyDefaults($this->defaultState);
+    }
 }
