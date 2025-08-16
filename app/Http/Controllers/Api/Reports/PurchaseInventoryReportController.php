@@ -41,6 +41,9 @@ class PurchaseInventoryReportController extends Controller
         // تحويل إلى Collection
         $collection = collect($diffReport);
 
+        $allTotalPrice = $collection->sum('price');
+
+
         // إعداد Pagination
         $page     = $request->input('page', 1);
         $perPage  = $request->input('per_page', 15);
@@ -55,6 +58,11 @@ class PurchaseInventoryReportController extends Controller
             ['path' => url()->current(), 'query' => $request->query()]
         );
 
+        // إضافة all_total_price في الاستجابة
+        $response = $paginator->toArray();
+        $response['total'] = formatMoneyWithCurrency($allTotalPrice) ;
+
+        return response()->json($response);
         return response()->json($paginator);
     }
 }

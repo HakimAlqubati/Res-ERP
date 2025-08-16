@@ -49,6 +49,13 @@ class TestController4 extends Controller
     
         $where[] = ' o.deleted_at is null ';
 
+           // ✅ NEW: استبعد أوامر الفروع من نوع RESELLER
+        // $where[] = "EXISTS (
+        //     SELECT 1
+        //     FROM branches br
+        //     WHERE br.id = o.branch_id
+        //     AND br.type != '" . Branch::TYPE_RESELLER . "'
+        // )";
         // ✅ Role-based filters
         $user = auth()->user();
 
@@ -144,7 +151,7 @@ class TestController4 extends Controller
             $status = addslashes($request->status); // حماية من حقن SQL
             $where[] = "o.status = '$status'";
         }
-
+ 
         // 🧠 Assemble WHERE clause
         $whereSql = implode(' AND ', $where);
         // dd($whereSql,$user->branch?->is_central_kitchen);

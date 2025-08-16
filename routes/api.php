@@ -134,6 +134,10 @@ Route::get('/test', function () {
     return User::role([1, 3])->pluck('id');
 });
 
+
+Route::get('/inventoryDashboardTest', [InventoryDashboardController::class, 'getSummary'])
+// ->middleware('auth:api')
+;
 Route::middleware('auth:api')->group(function () {
     Route::put('updateFcmToken', [FcmController::class, 'updateDeviceToken']);
 
@@ -161,7 +165,8 @@ Route::get('/purchaseInvoices', [PurchaseInvoiceController::class, 'index']);
 Route::get('/manufacturingReport', [ManufacturingReportController::class, 'index']);
 Route::get('/manufacturingInventoryReport', [ManufacturingInventoryReportController::class, 'show']);
 
-Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary'])->middleware('auth:api');
+Route::get('/inventoryDashboard', [InventoryDashboardController::class, 'getSummary'])
+;
 
 Route::prefix('reseller')->group(function () {
     Route::get('branchSalesBalanceReport', [ResellerReportController::class, 'branchSalesBalanceReport']);
