@@ -92,13 +92,13 @@ class TestController4 extends Controller
                         $otherBranchesCategoriesStr = implode(',', $otherBranchesCategories);
                         $branchIdsStr = implode(',', $branchIds);
                         $where[] = "(o.branch_id IN ($branchIdsStr) OR o.branch_id = {$user->branch->id})";
-                        $where[] = "EXISTS (
+                        $where[] = "(EXISTS (
                             SELECT 1
                             FROM orders_details od
                             JOIN products p ON od.product_id = p.id
                             JOIN categories c ON p.category_id = c.id
                             WHERE od.order_id = o.id AND c.is_manafacturing = 1 and c.id NOT IN ($otherBranchesCategoriesStr)
-                        ) OR o.customer_id = {$user->id}";
+                        ) OR o.customer_id = {$user->id})";
                     } else {
                         $where[] = "o.branch_id = {$user->branch->id}";
                     }
@@ -119,13 +119,13 @@ class TestController4 extends Controller
                 // You can later filter on front-end if needed
                 $categoryIds = implode(',', $customCategories);
 
-                $where[] = "EXISTS (
+                $where[] = "(EXISTS (
                     SELECT 1
                     FROM orders_details od
                     JOIN products p ON od.product_id = p.id
                     JOIN categories c ON p.category_id = c.id
                     WHERE od.order_id = o.id AND c.id IN ($categoryIds)
-                ) OR o.customer_id = {$user->id}";
+                ) OR o.customer_id = {$user->id})";
             } else {
                 $allCustomizedCategories = \App\Models\Branch::centralKitchens()
                     ->with('categories:id')
@@ -147,13 +147,20 @@ class TestController4 extends Controller
                 }
             }
         }
-        if ($request->has('status')) {
-            $status = addslashes($request->status); // حماية من حقن SQL
-            $where[] = "o.status = '$status'";
+        if ($request->filled('status')) {
+            $statuses = array_filter(array_map('trim', explode(',', $request->status)));
+            if (count($statuses) === 1) {
+                $status = addslashes($statuses[0]);
+                $where[] = "o.status = '$status'";
+            } else {
+                $escaped = array_map(fn($s) => "'" . addslashes($s) . "'", $statuses);
+                $where[] = "o.status IN (" . implode(',', $escaped) . ")";
+            }
         }
- 
         // 🧠 Assemble WHERE clause
-        $whereSql = implode(' AND ', $where);
+        $whereSql = implode(' AND ', array_map(fn($c) => "($c)", $where));
+
+        // dd($whereSql);
         // dd($whereSql,$user->branch?->is_central_kitchen);
         // 📊 Get total count
         $total = DB::table('orders as o')

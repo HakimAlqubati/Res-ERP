@@ -60,7 +60,7 @@ class PurchaseInventoryReportController extends Controller
 
         // إضافة all_total_price في الاستجابة
         $response = $paginator->toArray();
-        $response['total'] = formatMoneyWithCurrency($allTotalPrice) ;
+        $response['final_total'] = formatMoneyWithCurrency($allTotalPrice) ;
 
         return response()->json($response);
         return response()->json($paginator);
