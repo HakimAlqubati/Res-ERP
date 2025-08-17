@@ -14,6 +14,9 @@ use App\Models\PenaltyDeduction;
 use App\Services\HR\Payroll\SalaryMutableComponents;
 use App\Traits\HR\Payroll\ResetsState;
 
+use App\Models\AdvanceRequest; // NEW
+use App\Models\EmployeeAdvanceInstallment; // NEW
+
 /**
  * Professional, extensible salary calculator.
  *
@@ -70,6 +73,11 @@ class SalaryCalculatorService
     // Penalties
     protected array $penaltyItems = [];   // list of approved penalties for the month
     protected float $penaltyTotal = 0.0;  // sum of penalties for the month
+
+    // Advance installments
+    protected array $advanceItems = [];      // list of scheduled installments in the month
+    protected float $advanceInstallmentsTotal = 0.0; // sum of installments this month
+
 
     // Config
     public function __construct(
@@ -140,6 +148,9 @@ class SalaryCalculatorService
         // Penalty deductions (approved in this month)
         $this->computePenaltyDeductions();
 
+        // Advance installments (scheduled in this month)
+        $this->computeAdvanceInstallments(); // NEW
+
         // Attendance stats
         $this->extractAttendanceStats($employeeData);
 
@@ -159,8 +170,12 @@ class SalaryCalculatorService
         // Totals
         $this->baseSalary     = $this->salary;
         $this->grossSalary    = $this->round($this->baseSalary + $this->overtimeAmount);
-        $this->totalDeductions = $this->round($this->absenceDeduction + $this->lateDeduction
-            + $this->penaltyTotal);
+        $this->totalDeductions = $this->round(
+            $this->absenceDeduction +
+                $this->lateDeduction
+                + $this->penaltyTotal
+                + $this->advanceInstallmentsTotal
+        );
         $this->netSalary      = $this->round($this->grossSalary - $this->totalDeductions);
 
         // Policy hooks (post calculation: taxes, caps, extra allowances…)
@@ -385,6 +400,9 @@ class SalaryCalculatorService
             'dynamic_deductions' => $this->dynamicDeductions,
             'penalty_total' => $this->round($this->penaltyTotal),
             'penalties'     => $this->penaltyItems,
+            'advance_installments_total' => $this->round($this->advanceInstallmentsTotal), // NEW
+            'advance_installments'       => $this->advanceItems, // NEW
+
         ];
     }
 
@@ -606,6 +624,40 @@ class SalaryCalculatorService
             }
         }
 
+        // Advance installments as transactions
+        if (!empty($this->advanceItems)) {
+            foreach ($this->advanceItems as $adv) {
+                $descParts = [];
+                if (!empty($adv['code'])) {
+                    $descParts[] = $adv['code'];
+                }
+                if (!empty($adv['sequence']) && !empty($adv['months'])) {
+                    $descParts[] = "installment {$adv['sequence']}/{$adv['months']}";
+                }
+                if (!empty($adv['due_date'])) {
+                    $descParts[] = "due {$adv['due_date']}";
+                }
+                $desc = 'Advance installment';
+                if (!empty($descParts)) {
+                    $desc .= ' (' . implode(', ', $descParts) . ')';
+                }
+
+                $tx[] = [
+                    'type'          => SalaryTransactionType::TYPE_DEDUCTION,
+                    'sub_type'      => 'advance_installment',
+                    'amount'        => $this->round((float)$adv['amount']),
+                    'operation'     => '-',
+                    'description'   => $desc,
+                    // helpful references for persistence layer
+                    'reference_type' => AdvanceRequest::class,
+                    'reference_id'   => $adv['advance_request_id'] ?? null,
+                    'application_id' => $adv['application_id'] ?? null,
+                    'installment_id' => $adv['installment_id'] ?? null,
+                ];
+            }
+        }
+
+
         return $tx;
     }
     protected array $defaultState = [
@@ -631,10 +683,94 @@ class SalaryCalculatorService
         'periodMonth' => null,
         'penaltyItems' => [],
         'penaltyTotal' => 0.0,
+        'advanceItems' => [],
+        'advanceInstallmentsTotal' => 0.0,
+
     ];
 
     protected function resetState(): void
     {
         $this->applyDefaults($this->defaultState);
+    }
+
+    protected function computeAdvanceInstallments(): void
+    {
+        $this->advanceItems = [];
+        $this->advanceInstallmentsTotal = 0.0;
+
+        if (!$this->periodYear || !$this->periodMonth) {
+            return;
+        }
+
+        // حدود الشهر
+        $start = sprintf('%04d-%02d-01', $this->periodYear, $this->periodMonth);
+        // استخدام endOfMonth بدون Carbon هنا: أبسط بناء تاريخ
+        $end   = date('Y-m-t', strtotime($start));
+
+        // نأتي بأقساط هذا الموظف المجدولة وغير المسددة، والتي تاريخ استحقاقها ضمن الشهر
+        $rows = EmployeeAdvanceInstallment::query()
+            ->where('employee_id', $this->employee->id)
+            ->where('is_paid', false)
+            ->whereBetween('due_date', [$start, $end])
+            ->with([
+                // نحتاج كود السلفة والـ application_id للرجوع
+                'application:id,employee_id', // فقط لو لديك علاقة معرفة، وإلا سنجلبها يدويًا
+            ])
+            ->get([
+                'id',
+                'application_id',
+                'sequence',
+                'installment_amount',
+                'due_date',
+                'status',
+            ]);
+
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        // نجلب أكواد السلف المرتبطة عبر application_id
+        $applicationIds = $rows->pluck('application_id')->filter()->unique()->values()->all();
+
+        $codesByApp = [];
+        if (!empty($applicationIds)) {
+            // AdvanceRequest مخزن فيه application_id و code
+            $advMeta = AdvanceRequest::query()
+                ->whereIn('application_id', $applicationIds)
+                ->get(['id', 'application_id', 'code', 'number_of_months_of_deduction'])
+                ->keyBy('application_id');
+
+            foreach ($advMeta as $appId => $rec) {
+                $codesByApp[$appId] = [
+                    'code' => (string) ($rec->code ?? ''),
+                    'advance_request_id' => (int) $rec->id,
+                    'months' => (int) ($rec->number_of_months_of_deduction ?? 0),
+                ];
+            }
+        }
+
+        foreach ($rows as $r) {
+            $meta = $codesByApp[$r->application_id] ?? ['code' => '', 'advance_request_id' => null, 'months' => 0];
+
+            $amount = (float) $r->installment_amount;
+            if ($amount <= 0) {
+                continue;
+            }
+
+            $this->advanceItems[] = [
+                'installment_id' => (int) $r->id,
+                'application_id' => (int) $r->application_id,
+                'advance_request_id' => $meta['advance_request_id'],
+                'sequence' => (int) $r->sequence,
+                'months' => (int) $meta['months'],
+                'amount' => $this->round($amount),
+                'due_date' => $r->due_date,
+                'code' => $meta['code'],
+            ];
+
+            $this->advanceInstallmentsTotal += $amount;
+        }
+
+        $this->advanceInstallmentsTotal = $this->round($this->advanceInstallmentsTotal);
     }
 }

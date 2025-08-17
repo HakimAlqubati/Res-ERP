@@ -42,6 +42,8 @@ use Illuminate\Support\Str;
 
 class EmployeeApplicationResource_old extends Resource
 {
+    
+    protected static bool $shouldRegisterNavigation = false;
     protected static ?string $model = EmployeeApplication::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

@@ -72,7 +72,7 @@ class PayrollSimulationService
                 periodMonth: $month
 
             );
- 
+  
             $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
             $debt      = $result['net_salary'] < 0 ? abs($result['net_salary']) : 0;
 
