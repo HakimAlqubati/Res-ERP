@@ -14,6 +14,7 @@ use App\Models\EmployeeApplication;
 use App\Models\EmployeeApplicationV2;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
+use App\Services\HR\Attendance\AttendanceService;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
@@ -518,25 +519,15 @@ class EmployeeApplicationResource extends Resource
             ->action(function ($record, $data) {
                 DB::beginTransaction();
                 try {
-                    $employeePeriods = $record->employee?->periods;
-
-                    if (! is_null($record->employee) && count($employeePeriods) > 0) {
-                        $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
-
-                        // Decode the days array for each period
-                        $workTimePeriods = $employeePeriods->map(function ($period) {
-                            $period->days = json_decode($period->days); // Ensure days are decoded
-                            return $period;
-                        });
-
-                        // Filter periods by the day
-                        $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-                            return in_array($day, $period->days);
-                        });
-
-                        $closestPeriod = (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->findClosestPeriod($data['request_check_time'], $periodsForDay);
-
-                        (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKOUT, null, true);
+                    $employee = $record->employee;
+                    $data['request_check_date'];
+                    $data['request_check_time'];
+                    $validated = [
+                        'employee_id' => $employee->id,
+                        'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
+                    ];
+                    $result = app(AttendanceService::class)->handle($validated);
+                    if ($result) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
@@ -545,7 +536,7 @@ class EmployeeApplicationResource extends Resource
                         DB::commit();
                         showSuccessNotifiMessage('Done');
                     } else {
-                        throw new \Exception('some error');
+                        showWarningNotifiMessage('Faild');
                     }
                 } catch (\Exception $e) {
                     DB::rollBack();
@@ -660,7 +651,7 @@ class EmployeeApplicationResource extends Resource
                         $sumPaid = (float) \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->where('is_paid', true)->sum('installment_amount');
                         $cntPaid =        \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->where('is_paid', true)->count();
                         $lastDue =        \App\Models\EmployeeAdvanceInstallment::where('application_id', $record->id)->max('due_date');
- 
+
                         $adv->remaining_total   = round($sumAll - $sumPaid, 2);
                         $adv->paid_installments = $cntPaid;
                         if ($lastDue) $adv->deduction_ends_at = $lastDue;
@@ -826,26 +817,16 @@ class EmployeeApplicationResource extends Resource
                 // Logic for approving attendance fingerprint requests
                 DB::beginTransaction();
                 try {
-                    //code...
-                    $employeePeriods = $record->employee?->periods;
 
-                    if (! is_null($record->employee) && count($employeePeriods) > 0) {
-                        $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
-
-                        // Decode the days array for each period
-                        $workTimePeriods = $employeePeriods->map(function ($period) {
-                            $period->days = json_decode($period->days); // Ensure days are decoded
-                            return $period;
-                        });
-
-                        // Filter periods by the day
-                        $periodsForDay = $workTimePeriods->filter(function ($period) use ($day) {
-                            return in_array($day, $period->days);
-                        });
-
-                        $closestPeriod = (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->findClosestPeriod($data['request_check_time'], $periodsForDay);
-
-                        (new AttendanecEmployee(Attendance::ATTENDANCE_TYPE_REQUEST))->createAttendance($record->employee, $closestPeriod, $data['request_check_date'], $data['request_check_time'], 'd', Attendance::CHECKTYPE_CHECKIN, null, true);
+                    $employee = $record->employee;
+                    $data['request_check_date'];
+                    $data['request_check_time'];
+                    $validated = [
+                        'employee_id' => $employee->id,
+                        'date_time' => $data['request_check_date'] . ' ' . $data['request_check_time'],
+                    ];
+                    $result = app(AttendanceService::class)->handle($validated);
+                    if ($result) {
                         $record->update([
                             'status'      => EmployeeApplicationV2::STATUS_APPROVED,
                             'approved_by' => auth()->user()->id,
@@ -853,6 +834,8 @@ class EmployeeApplicationResource extends Resource
                         ]);
                         DB::commit();
                         showSuccessNotifiMessage('Done');
+                    } else {
+                        showWarningNotifiMessage('Faild');
                     }
                 } catch (\Exception $th) {
 

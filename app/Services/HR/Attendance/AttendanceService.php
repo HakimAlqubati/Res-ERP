@@ -18,7 +18,8 @@ class AttendanceService
         $this->handler   = $handler;
     }
 
-    public function handle(array $formData, string $attendanceType = 'rfid'): array
+    public function handle(array $formData,
+     string $attendanceType = 'rfid'): array
     {
         $employee = null;
         if (isset($formData['employee']) && $formData['employee'] instanceof Employee) {

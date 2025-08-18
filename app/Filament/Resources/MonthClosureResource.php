@@ -23,6 +23,8 @@ class MonthClosureResource extends Resource
     protected static ?string $pluralModelLabel = 'Month Closures';
     protected static ?string $modelLabel       = 'Month Closure';
     protected static ?string $slug             = 'month-closures';
+    
+    protected static bool $shouldRegisterNavigation = false;
     public static function form(Form $form): Form
     {
         return $form->schema([
