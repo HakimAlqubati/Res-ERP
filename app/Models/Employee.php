@@ -87,6 +87,7 @@ class Employee extends Model implements Auditable
         'has_employee_pass',
         'working_hours',
         'manager_id',
+        'working_days',
     ];
     // public $appends  = ['avatar_image', 'periodsCount'];
     protected $casts = [

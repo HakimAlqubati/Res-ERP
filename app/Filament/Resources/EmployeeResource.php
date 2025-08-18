@@ -149,12 +149,13 @@ class EmployeeResource extends Resource
                                         // ->nullable(),
                                         TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
 
-                                        // TextInput::make('working_days')
-                                        //     ->label('Working Days per Month')
-                                        //     ->numeric()
-                                        //     ->minValue(1)
-                                        //     ->maxValue(31)
-                                        //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
+                                        TextInput::make('working_days')
+                                            ->label('Working Days per Month')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(31)
+                                        // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
+                                        ,
 
                                         // TextInput::make('working_hours')
                                         //     ->label('Working Hours per Day')

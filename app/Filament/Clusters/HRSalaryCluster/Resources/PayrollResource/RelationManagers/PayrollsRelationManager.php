@@ -4,6 +4,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Relati
 
 use App\Models\Payroll;
 use App\Models\SalaryTransaction;
+use App\Services\HR\SalaryHelpers\SalarySlipService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -66,6 +67,11 @@ class PayrollsRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make(),
             ])
             ->actions([
+                Tables\Actions\Action::make('salarySlipPdf')
+                    ->label('Salary Slip PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('primary')
+                    ->action(fn(Payroll $record) => $this->downloadSalarySlip($record)),
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // ✅ Export transactions (no route)
@@ -90,5 +96,39 @@ class PayrollsRelationManager extends RelationManager
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+
+    /**
+     * يولّد ملف PDF لقسيمة راتب موظف معيّن ويعيد Response للتحميل.
+     */
+    protected function downloadSalarySlip(Payroll $record)
+    {
+        // 1) جهّز البيانات عبر خدمة الـ SalarySlip
+        /** @var SalarySlipService $service */
+        $service = app(SalarySlipService::class);
+
+        $payload = $service->build(
+            employeeId: $record->employee_id,
+            year: (int) $record->year,
+            month: (int) $record->month
+        );
+
+        // 2) ابنِ الـ HTML من نفس القالب القديم
+        $html = view('export.reports.hr.salaries.salary-slip', $payload)->render();
+
+        // 3) حوّل إلى PDF (barryvdh/laravel-dompdf)
+        $pdf = app('dompdf.wrapper');
+        $pdf->loadHTML($html)->setPaper('A4', 'portrait');
+
+        $safeName = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $payload['employee']?->name ?? 'Employee');
+        $filename = sprintf('SalarySlip-%s-%04d-%02d.pdf', $safeName, (int) $record->year, (int) $record->month);
+
+        // 4) رجّع Response تحميل مباشر (بدون راوت)
+        return response()->streamDownload(
+            fn() => print($pdf->output()),
+            $filename,
+            ['Content-Type' => 'application/pdf']
+        );
     }
 }
