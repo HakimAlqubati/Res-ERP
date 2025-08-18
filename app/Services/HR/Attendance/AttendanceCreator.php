@@ -38,7 +38,7 @@ class AttendanceCreator
 
                 if ($endTime->gt($checkTime)) {
 
-                    return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKIN, $existAttendance, false, $realAttendanceDate);
+                    // return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKIN, $existAttendance, false, $realAttendanceDate);
                 } else {
                     $message = __('notifications.attendance_time_is_greater_than_current_period_end_time') . ':(' . $closestPeriod?->name . ')';
 

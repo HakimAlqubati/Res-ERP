@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\Attendance;
 
 use App\Models\Employee;
@@ -19,15 +20,14 @@ class AttendanceService
 
     public function handle(array $formData, string $attendanceType = 'rfid'): array
     {
-        $rfid = $formData['rfid'] ?? null;
-
+        $employee = null;
         if (isset($formData['employee']) && $formData['employee'] instanceof Employee) {
             $employee = $formData['employee'];
         } elseif (isset($formData['employee_id'])) {
             $employee = Employee::find($formData['employee_id']);
         } elseif (isset($formData['rfid'])) {
             $employee = Employee::where('rfid', $formData['rfid'])->first();
-        }  
+        }
 
         if (! $employee) {
             return [
@@ -36,8 +36,12 @@ class AttendanceService
             ];
         }
 
-        Log::alert('zxc',[$employee, $formData, $formData['date_time']]);
-        return $this->handler->handleEmployeeAttendance($employee, $formData, $formData['date_time']);
+        Log::alert('zxc', [$employee, $formData, $formData['date_time']]);
+        return $this->handler->handleEmployeeAttendance(
+            $employee,
+            $formData,
+            $attendanceType,
+        );
 
         // TODO: Replace this with actual attendance creation logic
         return [

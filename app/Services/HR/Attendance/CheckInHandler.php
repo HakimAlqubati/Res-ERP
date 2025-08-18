@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\Attendance;
 
 use App\Models\Attendance;
@@ -7,8 +8,44 @@ use Carbon\Carbon;
 
 class CheckInHandler
 {
+    public $status = '';
+    public int $delayMinutes = 0;           // ✅ جديد
+    public int $earlyArrivalMinutes = 0;
     public function handle(array $attendanceData, $nearestPeriod, Carbon $checkTime, string $checkTimeStr, string $day, $previousRecord = null, $type = ''): array | string
     {
+        // // ✅ استخدم bounds إن كانت معلّقة على الفترة
+        $bounds = (method_exists($nearestPeriod, 'relationLoaded') && $nearestPeriod->relationLoaded('bounds'))
+            ? $nearestPeriod->getRelation('bounds')
+            : null;
+
+        $currentTimeBound = $bounds['currentTimeObj'] ?? null;
+        $periodStartTimeBound = $bounds['periodStart'] ?? null;
+        $periodEndTimeBound = $bounds['periodEnd'] ?? null;
+
+        // ✅ اضبط status + الدقائق بالاعتماد على bounds (إن وُجدت)
+        if ($currentTimeBound && $periodStartTimeBound) {
+            $ct = $currentTimeBound instanceof Carbon ? $currentTimeBound : Carbon::parse($currentTimeBound);
+            $ps = $periodStartTimeBound instanceof Carbon ? $periodStartTimeBound : Carbon::parse($periodStartTimeBound);
+
+            if ($ct->equalTo($ps)) {
+                $attendanceData['status'] = Attendance::STATUS_ON_TIME;
+                $this->delayMinutes = 0;
+                $this->earlyArrivalMinutes = 0;
+            } elseif ($ct->lessThan($ps)) {
+                // حضور مبكر
+                $attendanceData['status'] = Attendance::STATUS_EARLY_ARRIVAL;
+                $this->earlyArrivalMinutes = $ps->diffInMinutes($ct);
+                $this->delayMinutes = 0;
+            } else {
+                // تأخر عن بداية الفترة
+                $attendanceData['status'] = Attendance::STATUS_LATE_ARRIVAL;
+                $this->delayMinutes = $ct->diffInMinutes($ps);
+                $this->earlyArrivalMinutes = 0;
+            }
+        }
+        $this->status = $attendanceData['status'] ?? $this->status;
+        $this->delayMinutes = abs($this->delayMinutes);
+ 
         $date            = $attendanceData['check_date'];
         $employee        = $attendanceData['employee'];
         $realCheckDate   = $attendanceData['real_check_date'] ?? $date;
@@ -58,7 +95,6 @@ class CheckInHandler
                 'success' => true,
                 'data'    => $attendanceData,
             ];
-
         }
 
         return $attendanceData;
@@ -96,29 +132,30 @@ class CheckInHandler
     }
 
     protected function storeCheckIn($period, Carbon $checkTime, string $date, $realCheckDate): array
-    {    
-        if($period->start_at=='00:00:00' ){
+    {
+        if ($period->start_at == '00:00:00') {
             $checkTime = Carbon::parse("$realCheckDate {$checkTime->toTimeString()} ");
-        } 
+        }
         $startTime  = Carbon::parse("$date {$period->start_at}");
         $earlyLimit = Setting::getSetting('early_attendance_minutes');
-       
+
         if ($checkTime->lt($startTime)) {
             $early = $checkTime->diffInMinutes($startTime);
             return [
-                'delay_minutes'         => 0,
+                'delay_minutes'         => $this->delayMinutes,
                 'early_arrival_minutes' => $early,
-                'status'                => $early >= $earlyLimit ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME,
+                'status'                => $this->status,
+                // 'status'                => $early >= $earlyLimit ? Attendance::STATUS_EARLY_ARRIVAL : Attendance::STATUS_ON_TIME,
             ];
         }
 
         $late   = $startTime->diffInMinutes($checkTime);
-        $status = $late <= $earlyLimit ? Attendance::STATUS_ON_TIME : Attendance::STATUS_LATE_ARRIVAL;
- 
+        // $status = $late <= $earlyLimit ? Attendance::STATUS_ON_TIME : Attendance::STATUS_LATE_ARRIVAL;
+
         return [
-            'delay_minutes'         => $late,
+            'delay_minutes'         => $this->delayMinutes,
             'early_arrival_minutes' => 0,
-            'status'                => $status,
+            'status'                => $this->status,
         ];
     }
 }

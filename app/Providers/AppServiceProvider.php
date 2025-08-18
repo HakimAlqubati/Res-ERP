@@ -76,7 +76,7 @@ class AppServiceProvider extends ServiceProvider
         FilamentAsset::register([
             // Js::make('custom-script', __DIR__ . '/../../tune.js'),
             // Js::make('custom-script', ''),
-            // Css::make('main', ''),
+            Css::make('main', ''),
             // Css::make('keypad', ''),
             // Js::make('example-local-script', asset('js/tune.js')),
         ]);
