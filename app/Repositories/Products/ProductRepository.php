@@ -425,8 +425,10 @@ class ProductRepository implements ProductRepositoryInterface
     {
         $from = $from_date ? \Carbon\Carbon::parse($from_date)->startOfDay() : null;
         $to   = $to_date   ? \Carbon\Carbon::parse($to_date)->endOfDay()   : null;
+        $fromStr = $from ? $from->toDateTimeString() : null;
         $toStr = $to ? $to->toDateTimeString() : null;
 
+        // dd($toStr);
         // 1) branch_id -> store_id(s)
         $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
         $storeIds = DB::table('branches')
@@ -482,7 +484,7 @@ class ProductRepository implements ProductRepositoryInterface
                 return [];
             }
 
-            
+
             $placeholdersProducts = implode(',', array_fill(0, count($allowedProductIds), '?'));
             $productFilterSql     = "AND it_in.product_id IN ($placeholdersProducts)";
             $productBindings      = $allowedProductIds;
@@ -571,6 +573,8 @@ class ProductRepository implements ProductRepositoryInterface
               AND it_in.movement_type = 'in'
               AND it_in.store_id IN ($placeholdersStores)
               {$productFilterSql}
+              AND (? IS NULL OR it_in.movement_date >= ?)
+              AND (? IS NULL OR it_in.movement_date <= ?)
               -- أزلنا قيد transactionable_type لأنه غالبًا يمنع النتائج
 
             GROUP BY
@@ -582,14 +586,16 @@ class ProductRepository implements ProductRepositoryInterface
         ORDER BY t.unit_id, t.package_size
     ";
 
-        // 5) ترتيب الـ bindings
         $bindings = array_merge(
-            [$toStr, $toStr],   // لقيد it_out.movement_date
-            $storeIds,          // IN (...)
-            $productBindings    // = ? أو IN (...)
-            // لا مزيد من bindings لأننا حذفنا transactionable_type
+            [$toStr, $toStr],                // لقيد it_out
+            $storeIds,                       // المخازن
+            $productBindings,                // المنتج
+            [$fromStr, $fromStr, $toStr, $toStr] // قيد it_in
         );
 
+
+
+        // dd($sql, $bindings);
         $rows = collect(DB::select($sql, $bindings));
 
         // أسماء الفرع/المخزن إن كان مخزن واحد فقط

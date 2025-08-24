@@ -59,34 +59,8 @@ class ReportProductQuantitiesResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
-            ->defaultSort(null)
-            ->emptyStateHeading('Please choose a product')
-            ->emptyStateDescription('Please choose a product or maybe there is no data')
-            ->emptyStateIcon('heroicon-o-plus')
-            ->columns([
-                TextColumn::make('code')->alignCenter(true),
-                TextColumn::make('product')->limit(25)
-                    ->default('You should to select a product'),
-                TextColumn::make('branch'),
-                TextColumn::make('unit'),
-                TextColumn::make('package_size')->alignCenter(true),
-                TextColumn::make('quantity')->alignCenter(true)
-                    ->formatStateUsing(fn($state): string => formatQunantity($state)),
-                TextColumn::make('unit_price')
-                    ->hidden(fn(): bool => isStoreManager())
-                    ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state)->alignCenter(),
-                // TextColumn::make('total')->label(__('lang.total_price'))
-                //     ->hidden(fn(): bool => isStoreManager())
-                // ->formatStateUsing(fn($state): string => getDefaultCurrency() . ' ' . $state)
-
-                // ,
-            ])
-            ->filters([
-                // SelectFilter::make('product_id')
-                //     ->label('Product')->searchable()
-                //     ->selectablePlaceholder('Should to select product')
-                //     ->options(Product::pluck('name', 'id')),
+        return $table
+            ->filters([ 
                 SelectFilter::make("product_id")
                     // ->multiple()
                     ->label(__('lang.product'))->searchable()
@@ -127,69 +101,8 @@ class ReportProductQuantitiesResource extends Resource
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date')),
-                    ])
-
-                // Filter::make('date_range')
-                //     ->form([
-                //         DatePicker::make('start_date')
-                //             ->label('Start Date'),
-                //         DatePicker::make('end_date')
-                //             ->label('End Date'),
-                //     ])
-                //     ->query(function (\Illuminate\Database\Eloquent\Builder $query, array $data): \Illuminate\Database\Eloquent\Builder {
-
-                //         return $query->when(
-                //             isset($data['start_date']) && isset($data['end_date']),
-                //             fn($query) => $query->whereBetween('orders.transfer_date', [$data['start_date'], $data['end_date']])
-                //         );
-                //     }),
+                    ]) 
             ], layout: FiltersLayout::AboveContent);
     }
-
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        // return static::getModel()::query()->orderBy('product');
-        // // Extract filter values from the request
-        $updates = request()->input('components.0.updates', []);
-        $start_date = $updates['tableFilters.date_range.start_date'] ?? null;
-        $end_date = $updates['tableFilters.date_range.end_date'] ?? null;
-        // dd($updates, $start_date, $end_date);
-        // Build the query using Eloquent
-        $query = OrderDetails::query()
-            ->select(
-                'products.name AS product',
-                'products.code AS code',
-                'products.id AS product_id',
-                'branches.name AS branch',
-                'units.name AS unit',
-                'orders_details.package_size AS package_size',
-                DB::raw('SUM(orders_details.available_quantity) AS quantity'),
-                'orders_details.price as unit_price',
-                // DB::raw('SUM(orders_details.available_quantity) * orders_details.price AS total_price_'),
-                // DB::raw('SUM(orders_details.available_quantity * orders_details.price) AS total_price_')
-
-            )
-            ->join('products', 'orders_details.product_id', '=', 'products.id')
-            ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-            ->join('branches', 'orders.branch_id', '=', 'branches.id')
-            ->join('units', 'orders_details.unit_id', '=', 'units.id')
-            ->whereNull('orders.deleted_at')
-            ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
-                $query->whereBetween('orders.transfer_date', [$start_date, $end_date]);
-            })
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            // ->where('products.id', $product_id)
-            ->groupBy(
-                'orders.branch_id',
-                'products.name',
-                'products.code',
-                'products.id',
-                'branches.name',
-                'units.name',
-                'orders_details.package_size',
-                'orders_details.price'
-            )
-            ->orderByRaw('NULL');
-        return $query;
-    }
+ 
 }
