@@ -64,7 +64,7 @@ class AttendanceHandler
                     ->latest('id')->where('check_date', '>=', $this->previousDate)
                     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
                     ->first();
-
+ 
                 if ($latstCheckIn) {
                     $isClosed =    Attendance::isCheckinClosed(
                         $this->employeeId,
@@ -73,8 +73,8 @@ class AttendanceHandler
                         $date,
                         $time,
                         $latstCheckIn->id
-                    );
-                    if (!$isClosed) {
+                    );  
+                    if (!$isClosed) { 
                         $this->workPeriod = $latstCheckIn->period;
                         if ($this->workPeriod) {
                             $this->hasWorkPeriod = true;
@@ -89,6 +89,7 @@ class AttendanceHandler
                     }
                 }
             }
+            // dd($this->hasWorkPeriod,$this->workPeriod);
             $employeePeriods = $employee?->periods;
             // dd($employeePeriods);
             if (! is_null($employee) && count($employeePeriods) > 0) {
@@ -111,7 +112,7 @@ class AttendanceHandler
                 $potentialPeriods = collect();
                 $dates = [$date, $this->previousDate, $this->nextDate];
 
-                if (!$this->hasWorkPeriod) {
+                if (!$this->hasWorkPeriod) { 
                     foreach ($dates as $targetDate) {
                         $periods = $this->getPeriodsForDate($employeePeriods, $targetDate);
                         $day     = strtolower(Carbon::parse($targetDate)->format('D'));
@@ -140,6 +141,7 @@ class AttendanceHandler
                     $day = $this->day;
                     $closestPeriod = $this->workPeriod;
                 }
+                // dd($closestPeriod,$this->date,$this->targetDate);
 
 
                 // dd(
@@ -179,11 +181,12 @@ class AttendanceHandler
 
                 // dd($date, $this->date,$closestPeriod?->name);
                 $existAttendance = AttendanceFetcher::getExistingAttendance($employee, $closestPeriod, $this->date, $day, $time);
-                // dd($existAttendance);
+                // dd($existAttendance,$this->date);
                 if (isset($existAttendance['in_previous'])) {
                     $this->date = $existAttendance['in_previous']->check_date;
                 }
 
+                // dd($existAttendance);
 
                 $attendanceData = $this->attendanceCreator->handleOrCreateAttendance(
                     $employee,
@@ -194,6 +197,7 @@ class AttendanceHandler
                     $existAttendance,
                     $this->realAttendanceDate
                 ); 
+                dd($attendanceData);
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                     return $attendanceData;
                 }
