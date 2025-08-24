@@ -15,6 +15,6 @@ return [
     'order_reports' => 'Order Reports',
     'branch_orders' => 'Branch Orders',
     'resellers' => 'Resellers',
-    'manufacturing_branches' => 'Manufacturing branches',
-    'manufacturing_branch' => 'Manufacturing branch',
+    'manufacturing_branches' => 'Manufacturing Branches',
+    'manufacturing_branch' => 'Manufacturing Branch',
 ];

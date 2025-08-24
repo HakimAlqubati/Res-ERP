@@ -888,3 +888,90 @@ if (!function_exists('formatMoneyWithCurrency')) {
         return number_format((float) $qty, 2, '.', ',');
     }
 }
+ 
+if (!function_exists('print_html_table')) {
+    /**
+     * طباعة جدول HTML بسيط مع تلوين صفوف اختياري.
+     *
+     * @param array|\Illuminate\Support\Collection $data
+     * @param array|null $highlight
+     *   - قاعدة واحدة: ['column' => 'movement_type', 'value' => 'in', 'color' => '#ECFDF5', 'text' => '#065F46']
+     *   - أو مصفوفة قواعد بنفس الصيغة أعلاه
+     *
+     * @return void (يطبع دائمًا ويوقف التنفيذ)
+     */
+    function print_html_table($data, ?array $highlight = null)
+    {
+        // جهّز القواعد كـ array of rules
+        $rules = [];
+        if ($highlight) {
+            // لو أرسل قاعدة واحدة، حوّلها لمصفوفة قواعد
+            $isAssoc = array_keys($highlight) !== range(0, count($highlight) - 1);
+            $rules = $isAssoc ? [$highlight] : $highlight;
+        }
+
+        // 1) تحويل البيانات لمصفوفة associative
+        if ($data instanceof \Illuminate\Support\Collection) {
+            $data = $data->map(fn($r) => (array) $r)->values()->all();
+        } elseif (is_array($data) && !empty($data) && is_object(reset($data))) {
+            $data = array_map(fn($r) => (array) $r, $data);
+        }
+
+        if (empty($data)) {
+            echo "<p>لا توجد بيانات.</p>";
+            exit;
+        }
+
+        // دوال مساعدة بسيطة
+        $attrs = function(array $arr) {
+            $out = [];
+            foreach ($arr as $k => $v) {
+                if ($v === null || $v === '') continue;
+                $out[] = htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+            }
+            return $out ? ' ' . implode(' ', $out) : '';
+        };
+
+        $escape = fn($v) => htmlspecialchars((string) $v);
+
+        // الأعمدة من أول صف
+        $columns = array_keys($data[0]);
+
+        // بناء الجدول
+        $html  = "<table border='1' cellpadding='5' cellspacing='0' style='border-collapse:collapse;width:100%;font-family:Tahoma,Arial;font-size:13px;'>";
+        $html .= "<tr><th>#</th>";
+        foreach ($columns as $c) {
+            $html .= "<th>".$escape($c)."</th>";
+        }
+        $html .= "</tr>";
+
+        foreach ($data as $i => $row) {
+            // طبّق أبسط منطق تلوين: إذا أي قاعدة طابقت => لون الصف
+            $rowStyle = '';
+            foreach ($rules as $rule) {
+                $col   = $rule['column'] ?? null;
+                $val   = $rule['value']  ?? null;
+                $bg    = $rule['color']  ?? '#FFFDE7'; // افتراضي أصفر فاتح
+                $text  = $rule['text']   ?? null;
+
+                if ($col !== null && array_key_exists($col, $row) && (string)$row[$col] === (string)$val) {
+                    $rowStyle = "background:{$bg};" . ($text ? "color:{$text};" : "");
+                    break; // أول تطابق يكفي
+                }
+            }
+
+            $html .= "<tr".$attrs(['style' => $rowStyle]).">";
+            $html .= "<td>".($i+1)."</td>";
+            foreach ($columns as $c) {
+                $html .= "<td>".$escape($row[$c] ?? '')."</td>";
+            }
+            $html .= "</tr>";
+        }
+
+        $html .= "</table>";
+
+        echo $html;
+        exit;
+    }
+}
+

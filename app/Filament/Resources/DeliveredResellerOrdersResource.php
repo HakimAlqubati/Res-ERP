@@ -26,6 +26,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -187,20 +188,20 @@ class DeliveredResellerOrdersResource extends Resource
                     ->label(__('Print Delivery Order'))
                     ->icon('heroicon-o-printer')->button()
                     ->color('gray')
-                    ->visible(fn($record) => $record->status === Order::DELEVIRED)
+                    // ->visible(fn($record) => $record->status === Order::DELEVIRED)
                     ->action(function (Order $record) {
                         $record->load(['orderDetails.product', 'branch', 'logs.creator']);
 
                         $deliveryInfo = $record->getDeliveryInfo();
 
-                        if (!$deliveryInfo) {
-                            \Filament\Notifications\Notification::make()
-                                ->title('Cannot generate PDF')
-                                ->body('Order must be delivered first.')
-                                ->danger()
-                                ->send();
-                            return null;
-                        }
+                        // if (!$deliveryInfo) {
+                        //     \Filament\Notifications\Notification::make()
+                        //         ->title('Cannot generate PDF')
+                        //         ->body('Order must be delivered first.')
+                        //         ->danger()
+                        //         ->send();
+                        //     return null;
+                        // }
 
                         $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('export.delivery_order', compact('deliveryInfo'));
 
@@ -251,6 +252,11 @@ class DeliveredResellerOrdersResource extends Resource
                         showSuccessNotifiMessage('Done');
                     })
                     ->visible(fn($record) => $record->status === Order::DELEVIRED),
+            ])
+            ->filters([
+                SelectFilter::make('branch_id')
+                    ->label('Reseller')->searchable()
+                    ->options(Branch::active()->resellers()->get(['id', 'name'])->pluck('name', 'id')),
             ])
             ->defaultSort('id', 'desc');
     }

@@ -43,6 +43,7 @@
             font-weight: bold;
             color: #b91c1c;
             font-size: 13px;
+            margin-bottom: 0;
         }
 
         .do-title {
@@ -133,7 +134,7 @@
                                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" height="60">
                             </td>
                             <td style="font-size: 11px; line-height: 1.4;">
-                                <div style="font-weight: bold; color: #b91c1c; font-size: 13px;">
+                                <div style="font-weight: bold; color: #b91c1c; font-size: 13px; margin-bottom: 2px;">
                                     {{ settingWithDefault('company_name', 'Company Name') }}
                                 </div>
                                 {!! nl2br(e(settingWithDefault('address'))) !!}<br>
@@ -155,11 +156,11 @@
 
     <div class="section">
         <strong>To:</strong><br>
-        <div><strong>{{ $deliveryInfo['customer_name'] }}</strong></div>
+        <div><strong>{{ $deliveryInfo['customer_name'] ?? '' }}</strong></div>
         <table>
             <tr>
                 <td style="width: 300px;">
-                    {{ $deliveryInfo['branch_address'] }}
+                    {{ $deliveryInfo['branch_address'] ?? '' }}
                 </td>
             </tr>
         </table>
@@ -167,7 +168,7 @@
 
     <table class="meta-box">
         <tr>
-            <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] }}</td>
+            <td><strong>Date:</strong> {{ $deliveryInfo['do_date'] ?? '' }}</td>
             <td><strong>Order #</strong> {{ $deliveryInfo['id'] }}</td>
         </tr>
     </table>
@@ -176,10 +177,10 @@
         <thead>
             <tr>
                 <th style="width: 5%">#</th>
-                <th style="width: 55%">Code</th>
-                <th style="width: 55%">Product</th>
-                <th style="width: 20%">UNIT</th>
-                <th style="width: 20%">QTY</th>
+                <th style="width: 15%">Code</th>
+                <th style="width: 50%">Product</th>
+                <th style="width: 15%">UNIT</th>
+                <th style="width: 15%">QTY</th>
             </tr>
         </thead>
         <tbody>

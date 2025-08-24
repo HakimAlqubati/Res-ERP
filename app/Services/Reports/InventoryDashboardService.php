@@ -1,9 +1,12 @@
 <?php
+
 namespace App\Services\Reports;
 
+use App\Models\Branch;
 use App\Models\GoodsReceivedNote;
 use App\Models\Order;
 use App\Models\PurchaseInvoice;
+use App\Models\StockSupplyOrder;
 use Illuminate\Support\Carbon;
 
 class InventoryDashboardService
@@ -24,10 +27,8 @@ class InventoryDashboardService
             ->whereDate('created_at', '>=', $startOfMonth)
             ->count();
 
-        $invoicesQuery = PurchaseInvoice::
-            query()
-            ->whereDate('created_at', '>=', $startOfMonth)
-        ;
+        $invoicesQuery = PurchaseInvoice::query()
+            ->whereDate('created_at', '>=', $startOfMonth);
         $invoicesCount = $invoicesQuery->count();
         $invoicesTotal = $invoicesQuery->with('details')->get()
             ->sum(fn($invoice) => $invoice->total_amount);
@@ -47,31 +48,30 @@ class InventoryDashboardService
             })->values();
 
         // ✅ MANUFACTURING (Chocolate)
-        $manufacturingOrders = Order::with('orderDetails')
-            ->where('type', Order::TYPE_MANUFACTURING)
+        $manufacturingOrders = StockSupplyOrder::with('details')
             ->whereDate('created_at', '>=', $startOfMonth)
-            ;
-
+            ->whereHas('store.branches', function ($q) {
+                $q->where('type', Branch::TYPE_CENTRAL_KITCHEN);
+            });
         $itemsMade = (clone $manufacturingOrders)
-            ->whereDate('created_at', '>=', $startOfMonth)
             ->get()
             ->sum(fn($order) => $order->item_count);
 
         $todayValue = (clone $manufacturingOrders)
             ->whereDate('created_at', $today)
             ->get()
-            ->sum(fn($order) => $order->total_amount);
+            ->sum(fn($order) => $order->details->sum(fn($d) => $d->price * $d->quantity));
+
 
         $yesterdayValue = (clone $manufacturingOrders)
             ->whereDate('created_at', $yesterday)
             ->get()
-            ->sum(fn($order) => $order->total_amount);
+            ->sum(fn($order) => $order->details->sum(fn($d) => $d->price * $d->quantity));
+
 
         $monthToDateValue = (clone $manufacturingOrders)
-            ->whereDate('created_at', '>=', $startOfMonth)
             ->get()
-            ->sum(fn($order) => $order->total_amount);
-
+            ->sum(fn($order) => $order->details->sum(fn($d) => $d->price * $d->quantity));
         return [
             'procurement'   => array_filter([
                 'grns_entered'     => $showGrns ? [

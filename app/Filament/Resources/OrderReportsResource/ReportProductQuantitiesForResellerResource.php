@@ -6,7 +6,9 @@ use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderReportsCluster;
 use App\Filament\Clusters\ReportOrdersCluster;
+use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
+use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantitiesForReseller;
 use App\Models\Branch;
 use App\Models\FakeModelReports\ReportProductQuantities;
 use App\Models\Order;
@@ -23,12 +25,12 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
-class ReportProductQuantitiesResource extends Resource
+class ReportProductQuantitiesForResellerResource extends Resource
 {
     protected static ?string $model = ReportProductQuantities::class;
     protected static ?string $slug = 'report-product-quantities';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $cluster = OrderReportsCluster::class;
+    protected static ?string $cluster = ResellersCluster::class;
     protected static bool $shouldRegisterNavigation = true;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
@@ -38,28 +40,33 @@ class ReportProductQuantitiesResource extends Resource
      */
     public static function getLabel(): ?string
     {
-        return __('lang.report_product_quantities');
+        return 'Delevery Order Report';
     }
     public static function getNavigationLabel(): string
     {
-        return __('lang.report_product_quantities');
+        return 'Delevery Order Report';
     }
 
     public static function getPluralLabel(): ?string
     {
-        return __('lang.report_product_quantities');
+        return 'Delevery Order Report';
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListReportProductQuantities::route('/'),
+            'index' => ListReportProductQuantitiesForReseller::route('/'),
         ];
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
+            ->defaultSort(null)
+            ->emptyStateHeading('Please choose a product')
+            ->emptyStateDescription('Please choose a product or maybe there is no data')
+            ->emptyStateIcon('heroicon-o-plus')
+          
             ->filters([ 
                 SelectFilter::make("product_id")
                     // ->multiple()
@@ -86,11 +93,9 @@ class ReportProductQuantitiesResource extends Resource
                             ]);
                     }),
                 SelectFilter::make('branch_id')
-                    ->label('Branch')->searchable()
+                    ->label('Receller')->searchable()->placeholder('Choose')
                     ->options(Branch::whereIn('type', [
-                        Branch::TYPE_BRANCH,
-                        Branch::TYPE_CENTRAL_KITCHEN,
-                        Branch::TYPE_POPUP
+                        Branch::TYPE_RESELLER
                     ])
                         ->activePopups()
                         ->active()->pluck('name', 'id')),
@@ -101,7 +106,9 @@ class ReportProductQuantitiesResource extends Resource
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')
                             ->label(__('lang.end_date')),
-                    ]) 
+                    ])
+
+             
             ], layout: FiltersLayout::AboveContent);
     }
  

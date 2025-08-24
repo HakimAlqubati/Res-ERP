@@ -11,6 +11,7 @@ use App\Filament\Resources\OrderReportsResource\Pages\ListGeneralReportOfProduct
 use App\Models\Branch;
 use App\Models\Category;
 use App\Models\FakeModelReports\GeneralReportOfProducts;
+use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderDetails;
 use Filament\Forms\Components\DatePicker;
@@ -53,21 +54,16 @@ class GeneralReportOfProductsResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->defaultSort(null)
-            ->defaultView('filament.pages.order-reports.general-report-products')
-            ->emptyStateHeading('Please choose a product')
-            ->emptyStateDescription('Please choose a product or maybe there is no data')
-            ->emptyStateIcon('heroicon-o-plus')
-            ->columns([
-                TextColumn::make('category_id'),
-                TextColumn::make('available_quantity'),
-                TextColumn::make('price'),
-                TextColumn::make('total_price'),
-            ])
             ->filters([
                 SelectFilter::make("branch_id")->placeholder('Select')
                     ->label(__('lang.branch'))
-                    ->options(Branch::whereIn('type', [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP])->active()
+                    ->searchable()
+                    ->options(Branch::whereIn(
+                        'type',
+                        [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP]
+                    )
+                        ->activePopups()
+                        ->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')
                     ->form([
@@ -86,101 +82,70 @@ class GeneralReportOfProductsResource extends Resource
 
 
 
-    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
-    {
-        // Start Eloquent query on the OrderDetail model
-        $query = OrderDetails::query()
-            ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-            ->join('products', 'orders_details.product_id', '=', 'products.id')
-            ->select(
-                'products.category_id',
-                DB::raw('SUM(orders_details.available_quantity) as available_quantity'),
-                'orders_details.price as price',
-                DB::raw('SUM(orders_details.available_quantity) * orders_details.price as total_price')
-            )
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            // ->when($branch_id, function ($q) use ($branch_id) {
-            //     return $q->where('orders.branch_id', $branch_id);
-            // })
-            // ->when($start_date && $end_date, function ($q) use ($start_date, $end_date) {
-            //     $s_d = date('Y-m-d', strtotime($start_date)) . ' 00:00:00';
-            //     $e_d = date('Y-m-d', strtotime($end_date)) . ' 23:59:59';
-
-            //     return $q->whereBetween('orders.created_at', [$s_d, $e_d]);
-            // })
-            ->whereNull('orders.deleted_at')
-            ->groupBy(
-                'products.category_id',
-                'orders_details.price',
-                'orders_details.unit_id'
-            );
-        return $query;
-        return static::getModel()::query();
-    }
-
 
 
     public static function processReportData($start_date, $end_date, $branch_id)
-    {
-        // Step 1: Get the query results
-        $get_data = self::getEloquentQuery()
-            ->when($branch_id, function ($query) use ($branch_id) {
-                return $query->where('orders.branch_id', $branch_id);
-            })
-            ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
-
-                $s_d = date('Y-m-d', strtotime($start_date)) . ' 00:00:00';
-                $e_d = date('Y-m-d', strtotime($end_date)) . ' 23:59:59';
-
-                return $query->whereBetween('orders.transfer_date', [$s_d, $e_d]);
-            })
-            ->get();
-
-        $data = [];
-        $sum_price = 0;
-        $sum_qty = 0;
-
-        // Step 2: Aggregate data by category_id
-        foreach ($get_data as $val) {
-            if (!isset($data[$val->category_id])) {
-                $data[$val->category_id] = [
-                    'price' => 0,
-                    'available_quantity' => 0,
-                ];
-            }
-            $data[$val->category_id]['price'] += $val->total_price;
-            $data[$val->category_id]['available_quantity'] += $val->available_quantity;
-        }
-
-        // Step 3: Get active categories
-        $categories = Category::where('active', 1)->get(['id', 'name'])->pluck('name', 'id');
+    {   // جلب المخزن المرتبط بالفرع
+        $storeId = Branch::where('id', $branch_id)->value('store_id');
+        $categories = Category::where('active', 1)->pluck('name', 'id');
 
         $final_result['data'] = [];
-        $total_price = 0;
-        $total_quantity = 0;
+        $grand_total_amount = 0.0;   // مجموع remaining_value عبر كل الفئات
+        $grand_total_qty    = 0.0;   // مجموع remaining_qty عبر كل الفئات
 
-        // Step 4: Build the final result
+        $from = \Carbon\Carbon::parse($start_date)->startOfDay();
+        $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
+
+        
         foreach ($categories as $cat_id => $cat_name) {
-            $obj = new \stdClass();
-            $obj->category_id = $cat_id;
-            $obj->url_report_details = "admin/order-reports/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id";
-            $obj->category = $cat_name;
-            $obj->quantity = round(isset($data[$cat_id]) ? $data[$cat_id]['available_quantity'] : 0, 0);
-            $price = (isset($data[$cat_id]) ? $data[$cat_id]['price'] : '0.00');
-            $obj->price = formatMoney($price, getDefaultCurrency());
-            $obj->amount = number_format($price, 2);
-            $obj->symbol = getDefaultCurrency();
-            $total_price += $price;
-            $total_quantity += $obj->quantity;
-            $final_result['data'][] = $obj;
-        }
+ 
+            // 3) جلب صفوف المنتجات داخل الفئة بنفس منطق runSourceBalanceByCategorySQL
+            $rows = app(GeneralReportProductDetails::class)->runSourceBalanceByCategorySQL(
+                (int)$storeId,
+                (int)$cat_id,
+                $from,
+                $to 
+            ); 
+            // 4) تجميع كميات وقيم الفئة
+            $cat_qty   = 0.0; // مجموع remaining_qty (بالوحدة المُدخلة لكل منتج)
+            $cat_amount = 0.0; // مجموع remaining_value
 
-        // Step 5: Set total price and quantity
-        $final_result['total_price'] = getDefaultCurrency() . ' ' . number_format($total_price, 2);
-        $final_result['total_quantity'] = number_format($total_quantity, 2);
+            foreach ($rows as $r) {
+                $r = (object)$r;
+                // نأخذ فقط السطور ذات الرصيد الإيجابي (نفس ما عملته في التفاصيل)
+                $qty = (float) ($r->remaining_qty ?? 0);
+                if ($qty <= 0) {
+                    continue;
+                }
+                $cat_qty    += $qty;
+                $cat_amount += (float) ($r->remaining_value ?? 0);
+            }
+
+            // 5) تشكيل عنصر الفئة بنفس structure السابق لديك
+            $obj = new \stdClass();
+            $obj->category_id        = $cat_id;
+            $obj->url_report_details = "admin/order-reports/general-report-products/details/$cat_id"
+                . "?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id&storeId=$storeId";
+            $obj->category           = $cat_name;
+
+            // نفس الحقول والشكل:
+            $obj->quantity = formatQunantity($cat_qty);             // الكمية = مجموع remaining_qty
+            $obj->price    = formatMoneyWithCurrency($cat_amount);  // الحقل price يعرض المبلغ كما كنت تفعل
+            $obj->amount   = formatMoneyWithCurrency($cat_amount);
+            $obj->symbol   = getDefaultCurrency();
+
+            $grand_total_qty    += $cat_qty;
+            $grand_total_amount += $cat_amount;
+
+            $final_result['data'][] = $obj;
+        }  
+
+        $final_result['total_price']    = formatMoneyWithCurrency($grand_total_amount);
+        $final_result['total_quantity'] = formatQunantity($grand_total_qty);
 
         return $final_result;
     }
+
 
 
 

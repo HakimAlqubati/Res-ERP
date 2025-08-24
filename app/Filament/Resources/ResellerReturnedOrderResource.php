@@ -15,6 +15,10 @@ class ResellerReturnedOrderResource extends BaseReturnedOrderResource
     protected static ?string $cluster                             = ResellersCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
     protected static function getOrderSearchQuery(string $search)
     {
         return Order::where('id', 'like', "%{$search}%")

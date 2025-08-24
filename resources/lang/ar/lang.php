@@ -220,5 +220,5 @@ return [
     'remaining' => 'المتبقي',
     'manufacturing_branches' => 'الفروع التصنيعية',
     'manufacturing_branch' => 'فرع تصنيعي',
-
+    'please_select_a_receller' => 'الرجاء اختيار موزّع',
 ];

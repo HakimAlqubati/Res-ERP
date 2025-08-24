@@ -434,3 +434,14 @@ tbody:last-of-type tr .fixed_footer {
     margin-top: 1.5rem;
     /* 24px */
 }
+
+.sticky-total {
+    position: sticky;
+    bottom: 0;
+    /* Stick to bottom */
+    background: white;
+    color: #0d7c66;
+    /* Or match table bg */
+    z-index: 10;
+    /* Keep above table body */
+}

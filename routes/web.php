@@ -723,66 +723,11 @@ Route::get('/products/{product}/export-items-pdf', function (\App\Models\Product
     return $product->exportItemsPdf();
 })->name('products.export-items-pdf');
 
-Route::get('/salary-report/{employee}', [SalaryReportController::class, 'show'])
-    ->name('salary.report');
 
-Route::get('test/salary-calc/{employee}/{year}/{month}', [TestSalaryCalcController::class, 'show'])
-    ->name('test.salary-calc');
-
-Route::post('/liveness/start', [\App\Http\Controllers\AWS\EmployeeLivenessAWSController::class, 'startLivenessSession']);
-Route::get('/liveness/check', [\App\Http\Controllers\AWS\EmployeeLivenessAWSController::class, 'checkLivenessResult']);
-
-
-Route::get('/liveness', function () {
-    return view('liveness');
-});
-
-Route::get('/test-cors', function () {
-    return env('LARAVEL_CORS_ALLOWED_ORIGINS');
-});
- 
-Route::get('/react-app/{any?}', function () {
-    $path = public_path('react-app/index.html');
-    if (!File::exists($path)) {
-        abort(404);
-    }
-    return Response::file($path);
-})->where('any', '.*');
-
-Route::get('/public/react-app/{any?}', function ($any = null) {
-    // إعادة التوجيه للرابط الصحيح
-    $to = '/react-app';
-    if ($any) $to .= '/' . $any;
-    return redirect($to, 301); // 301 تعني توجيه دائم
-})->where('any', '.*');
-
-
-Route::get('/phpinfo', function () {
-    if (app()->environment('local')) {
-        return phpinfo();
-    } else {
-        abort(403, 'Unauthorized action.');
-    }
-})->name('phpinfo');
-
-Route::get('/opcache-clear', function () {
-    // حماية: اسمح فقط في لوكال أو بمفتاح صحيح
-    $allowedEnvs = ['local', 'development'];
-    $hasValidKey = request('key') && request('key') === env('OPCACHE_CLEAR_KEY');
-
-    if (! in_array(app()->environment(), $allowedEnvs) && ! $hasValidKey) {
-        abort(403, 'Forbidden');
-    }
-
+Route::get('/clear-opcache', function () {
     if (function_exists('opcache_reset')) {
         opcache_reset();
-        return response('✅ OPcache cleared', 200)
-            ->header('Content-Type', 'text/plain');
+        return 'OPcache cleared successfully ✅';
     }
-
-    return response('❌ OPcache not enabled', 500)
-        ->header('Content-Type', 'text/plain');
-})->name('opcache.clear');
-Route::get('/salary-slip/{employee}/{year}/{month}', [SalarySlipController::class, 'show'])
-    ->whereNumber(['employee', 'year', 'month'])
-    ->name('salary.slip.show');
+    return 'OPcache is not enabled ❌';
+});

@@ -4,6 +4,7 @@ use App\Http\Controllers\Analytics\BranchConsumptionAnalysisController;
 use App\Http\Controllers\Api\ProductPriceHistoryController;
 use App\Http\Controllers\Api\Reports\PurchaseInventoryReportController;
 use App\Http\Controllers\CopyOrderOutToBranchStoreController;
+use App\Http\Controllers\CopyOutToInApiController;
 use App\Http\Controllers\FcmController;
 use App\Http\Controllers\FixFifoController;
 use App\Http\Controllers\FixOrderWithFifoController;
@@ -243,4 +244,7 @@ Route::get('/updateCorrectStore',function(){
 });
 
 Route::get('employeesAttendanceOnDateToTest', [\App\Http\Controllers\Api\HR\AttendanceController::class, 'employeesAttendanceOnDateToTest']);
+ 
 Route::get('stockPosition', [PurchaseInventoryReportController::class, 'index']);
+
+Route::get('/copyOutToIn', [CopyOutToInApiController::class, 'handle']);

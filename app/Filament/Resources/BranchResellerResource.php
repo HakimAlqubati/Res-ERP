@@ -3,6 +3,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\BranchResellerResource\Pages;
+use App\FilamentTables\Actions\ManageStoreAction;
 use App\Models\Branch;
 use App\Models\City;
 use App\Models\Country;
@@ -232,6 +233,7 @@ class BranchResellerResource extends Resource
                     return null;
                 })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
+                TextColumn::make('store.name')->label(__('lang.store'))->searchable(),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
                 // ->limit(100)
@@ -320,43 +322,8 @@ class BranchResellerResource extends Resource
                         ]))
                     ->openUrlInNewTab()
                     ->visible(fn(Model $record) => $record->hasStore()),
-                Action::make('manageStore')
-                    ->label('Manage Store')
-                    ->icon('heroicon-o-pencil-square')
-                    ->hidden(fn(Model $record) =>  $record->hasStore())
-                    ->form(function (Model $record) {
-                        $store = $record->store;
-
-                        return [
-                            TextInput::make('name')
-                                ->label('Store Name')
-                                ->default($store?->name)
-                                ->required(),
-
-                            Toggle::make('active')
-                                ->label('Active')
-                                ->default($store?->active),
-                        ];
-                    })
-                    ->action(function (Model $record, array $data) {
-                        if (! $record->store) {
-                            throw new \Exception("No store linked to this branch.");
-                        }
-
-                        $record->store->update([
-                            'name'   => $data['name'],
-                            'active' => $data['active'],
-                        ]);
-
-                        \Filament\Notifications\Notification::make()
-                            ->title('Store Updated')
-                            ->body("✅ Store updated successfully.")
-                            ->success()
-                            ->send();
-                    })
-                    ->modalHeading('Edit Store Info')
-                    ->color('gray')
-                    ->button(),
+             
+                    ManageStoreAction::makeForResource(),
 
                 Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),

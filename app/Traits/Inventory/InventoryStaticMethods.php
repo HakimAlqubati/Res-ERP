@@ -17,6 +17,7 @@ trait InventoryStaticMethods
     ) {
         $query = InventoryTransaction::query() // Using Eloquent query instead of DB::table()
             ->whereNull('deleted_at')
+            // ->where('transactionable_type',  'App\\Models\\Order')
             ->where('product_id', $productId);
         if (! empty($movementType)) {
             $query->where('movement_type', $movementType);

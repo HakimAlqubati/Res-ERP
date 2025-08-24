@@ -461,7 +461,7 @@ class Order extends Model implements Auditable
     public function getDeliveryInfo(): ?array
     {
         $log = $this->logs()
-            ->where('new_status', self::DELEVIRED)
+            // ->where('new_status', self::DELEVIRED)
             ->latest('created_at')
             ->with('creator') // تأكد أن العلاقة موجودة في OrderLog
             ->first();
@@ -475,7 +475,8 @@ class Order extends Model implements Auditable
             'do_number'     => now()->format('Ymd') . str_pad($this->id, 4, '0', STR_PAD_LEFT),
             'do_date'       => $log->created_at->format('Y-m-d'),
             'delivered_by'  => $log->creator?->name ?? 'N/A',
-            'customer_name' => $this->customer?->name ?? $this->branch?->name ?? 'N/A',
+            // 'customer_name' => $this->customer?->name ?? $this->branch?->name ?? 'N/A',
+            'customer_name' =>  $this->branch?->name ?? 'N/A',
             'branch_address' => $this->branch?->address ?? 'N/A',
 
             'items' => $this->orderDetails->map(fn($item, $i) => [

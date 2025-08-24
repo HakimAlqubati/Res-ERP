@@ -17,14 +17,132 @@ class GeneralReportProductDetails extends Page
     public string $end_date;
     public $category_id;
     public $branch_id;
+    public $storeId;
     function __construct()
     {
         $this->start_date  = $_GET['start_date'] ?? '';
         $this->end_date = $_GET['end_date'] ?? '';
         $this->category_id = $_GET['category_id'] ?? '';
         $this->branch_id = $_GET['branch_id'] ?? '';
+        $this->storeId = $_GET['storeId'] ?? '';
     }
     protected static string $view = 'filament.pages.order-reports.general-report-product-details';
+
+    public function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
+    {  
+        $locale = app()->getLocale();
+        // اسم المنتج مع دعم JSON locales
+        $nameExpr = "IF(JSON_VALID(p.name), REPLACE(JSON_EXTRACT(p.name, '$.\"{$locale}\"'), '\"', ''), p.name)";
+
+        $sql = <<<SQL
+SELECT
+  t.product_id,
+  t.product_code,
+  t.product_name,
+  t.unit_id,
+  t.unit_name,
+  t.package_size,
+  t.unit_price,
+  SUM(t.in_qty_base)  AS in_qty_base,
+  SUM(t.out_qty_base) AS out_qty_base,
+  SUM(t.remaining_qty_unit) AS remaining_qty,
+  SUM(t.remaining_value)    AS remaining_value
+FROM (
+  SELECT
+    it_in.id AS in_tx_id,
+    it_in.product_id,
+    p.code AS product_code,
+    {$nameExpr} AS product_name,
+    it_in.movement_date,
+    it_in.unit_id,
+    u.name AS unit_name,
+    COALESCE(it_in.package_size, 1.0) AS package_size,
+
+    it_in.quantity AS in_qty_unit,
+    it_in.quantity * COALESCE(it_in.package_size, 1.0) AS in_qty_base,
+
+    COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0) AS out_qty_base,
+
+    GREATEST(
+      it_in.quantity * COALESCE(it_in.package_size, 1.0)
+      - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+      0
+    ) AS remaining_base,
+
+    GREATEST(
+      it_in.quantity * COALESCE(it_in.package_size, 1.0)
+      - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+      0
+    ) / COALESCE(it_in.package_size, 1.0) AS remaining_qty_unit,
+
+    CASE 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
+      THEN COALESCE(up.price, 0)
+      ELSE it_in.price
+    END AS unit_price,
+
+    (
+      GREATEST(
+        it_in.quantity * COALESCE(it_in.package_size, 1.0)
+        - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
+        0
+      ) / COALESCE(it_in.package_size, 1.0)
+    ) *
+    CASE 
+      WHEN it_in.price IS NULL OR it_in.price = 0 
+      THEN COALESCE(up.price, 0)
+      ELSE it_in.price
+    END AS remaining_value
+
+  FROM inventory_transactions AS it_in
+  LEFT JOIN inventory_transactions AS it_out
+    ON it_out.source_transaction_id = it_in.id
+   AND it_out.movement_type = 'out'
+   AND it_out.store_id = it_in.store_id
+   AND it_out.deleted_at IS  NULL
+   and it_out.transactionable_type != :supply_morph
+
+  LEFT JOIN units AS u
+    ON u.id = it_in.unit_id
+
+  LEFT JOIN unit_prices AS up
+    ON up.product_id = it_in.product_id
+   AND up.unit_id    = it_in.unit_id
+
+  INNER JOIN products AS p
+    ON p.id = it_in.product_id
+   AND p.category_id = :category_id
+
+  WHERE it_in.deleted_at IS NULL
+    AND it_in.movement_type = 'in'
+    AND it_in.store_id = :store_id
+    AND it_in.movement_date BETWEEN :from_date AND :to_date
+    AND it_in.transactionable_type = :order_morph
+
+  GROUP BY
+    it_in.id, it_in.product_id, p.code, p.name,
+    it_in.unit_id, u.name,
+    it_in.package_size, it_in.quantity, it_in.price, up.price, it_in.movement_date
+) AS t
+GROUP BY
+  t.product_id, t.product_code, t.product_name,
+  t.unit_id, t.unit_name, t.package_size, t.unit_price
+ORDER BY
+--   t.product_code, t.unit_id, t.package_size
+t.product_id
+SQL;
+
+        return DB::select($sql, [
+            'store_id'    => $storeId,
+            'category_id' => $categoryId,
+            'from_date'   => $fromDate,
+            'to_date'     => $toDate,
+            'order_morph'  => 'App\\Models\\Order',
+            'supply_morph' => 'App\\Models\\StockSupplyOrder'
+        ]);
+    }
+
+
     protected function getViewData(): array
     {
         $report_data['data'] = [];
@@ -68,76 +186,86 @@ class GeneralReportProductDetails extends Page
 
     public function getReportDetails($start_date, $end_date, $branch_id, $category_id)
     {
+        $IN  = \App\Models\InventoryTransaction::MOVEMENT_IN  ?? 'in';
+        $OUT = \App\Models\InventoryTransaction::MOVEMENT_OUT ?? 'out';
 
-        $data = DB::table('orders_details')
-            ->join('orders', 'orders_details.order_id', '=', 'orders.id')
-            ->join('products', 'orders_details.product_id', '=', 'products.id')
-            ->join('units', 'orders_details.unit_id', '=', 'units.id')
-            // ->select('products.category_id', 'orders_details.product_id as p_id' )
-            ->when($branch_id, function ($query) use ($branch_id) {
-                return $query->where('orders.branch_id', $branch_id);
-            })
-            ->when($start_date && $end_date, function ($query) use ($start_date, $end_date) {
+        // فرع -> متجر
+        $storeId = \App\Models\Branch::where('id', $branch_id)->value('store_id');
 
-                $s_d = date('Y-m-d', strtotime($start_date)) . ' 00:00:00';
-                $e_d = date('Y-m-d', strtotime($end_date)) . ' 23:59:59';
-                return $query->whereBetween('orders.created_at', [$s_d, $e_d]);
-            })
-            // ->when($year && $month, function ($query) use ($year, $month) {
-            //     return $query->whereRaw('YEAR(orders.created_at) = ? AND MONTH(orders.created_at) = ?', [$year, $month]);
-            // })
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            // ->where('orders.active', 1)
-            ->whereNull('orders.deleted_at')
-            ->where('products.category_id', $category_id)
-            ->groupBy(
-                'orders_details.product_id',
-                'products.category_id',
-                'orders_details.unit_id',
-                'products.name',
-                'products.code',
-                'units.name',
-                'orders_details.price',
-                'orders_details.package_size',
-            )
-            ->get([
-                'products.category_id',
-                'orders_details.product_id',
-                DB::raw("IF(JSON_VALID(products.name), REPLACE(JSON_EXTRACT(products.name, '$." . app()->getLocale() . "'), '\"', ''), products.name) as product_name"),
-                'units.name as unit_name',
-                'products.code as product_code',
-                'orders_details.unit_id as unit_id',
-                DB::raw('ROUND(SUM(orders_details.available_quantity), 2) as available_quantity'),
-                // DB::raw('(SUM(orders_details.price)) as price'),
-                'orders_details.price as price',
-                'orders_details.package_size as package_size',
-            ]);
-
-        $final_result['data'] = [];
-        $total_price = 0;
-        $total_quantity = 0;
-        foreach ($data as   $val_data) {
-            $obj = new \stdClass();
-            $obj->category_id = $val_data->category_id;
-            $obj->product_id = $val_data->product_id;
-            $obj->product_name = $val_data->product_name;
-            $obj->product_code = $val_data->product_code;
-            $obj->package_size = $val_data->package_size;
-            $obj->unit_name = $val_data->unit_name;
-            $obj->unit_id = $val_data->unit_id;
-            $obj->quantity = $val_data->available_quantity;
-            $obj->price = formatMoney(($val_data->price * $val_data->available_quantity), getDefaultCurrency());
-            $obj->amount = number_format(($val_data->price * $val_data->available_quantity), 2);
-            $total_price += (($val_data->price * $val_data->available_quantity));
-            $total_quantity += $obj->quantity;
-            $obj->symbol = getDefaultCurrency();
-            $final_result['data'][] = $obj;
+        if (! $storeId) {
+            return [
+                'data' => [],
+                'total_price' => getDefaultCurrency() . ' ' . number_format(0, 2),
+                'total_quantity' => number_format(0, 2),
+            ];
         }
-        $final_result['total_price'] =  getDefaultCurrency() . ' ' . number_format($total_price, 2);
-        $final_result['total_quantity'] = number_format($total_quantity, 2);
 
-        return $final_result;
+        $this->storeId = $storeId;
+        $from = \Carbon\Carbon::parse($start_date)->startOfDay();
+        $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
+        $rows = $this->runSourceBalanceByCategorySQL($storeId, $this->category_id, $from, $to);
+
+        // dd($rows);
+        // print_html_table($rows, [
+        //     'column' => 'movement_type',
+        //     'value'  => 'in',
+        //     'color'  => '#ECFDF5',   // خلفية
+        //     'text'   => '#065F46',   // (اختياري) لون النص
+        // ]);
+
+
+
+
+
+        $final = [];
+        $totalAmount = 0.0;
+        $totalQty = 0.0;
+
+        foreach ($rows as $r) {
+            $r = (object)$r;
+            // dd($r,gettype($r));
+            // $inQtyBase       = (float) $r->remaining_qty;
+            $netBase         = (float) $r->remaining_qty;
+            if($netBase<=0){
+                continue;
+            }
+            // $inCostSumBase   = (float) $r->in_cost_sum_base;
+
+            // $avgInCostPerBase = $inQtyBase > 0 ? ($inCostSumBase / $inQtyBase) : 0.0; // سعر الوحدة (قاعدة)
+            // $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي
+
+            $amountBase = $r->remaining_value;
+            $obj = new \stdClass();
+            $obj->category_id  = (int) $category_id;
+            $obj->product_id   = $r->product_id;
+            $obj->product_name = $r->product_name;
+            $obj->product_code = $r->product_code;
+            $obj->package_size = $r->package_size; // لا نعتمد package_size هنا (الأسعار بالقاعدة)
+            $obj->unit_name    = $r->unit_name ?? ''; // اسم وحدة الدخول إن وُجد عبر od/u
+            $obj->unit_id      = $r->unit_id ?? '';               // إن أردتها، إنضم بوحدة محددة
+
+            // الكمية بالصافي (قاعدة)
+            $obj->quantity =  formatQunantity($netBase);
+
+            // السعر (نفس طريقتك: متوسط تكلفة الدخول) × الكمية = amount
+            $obj->price  = formatMoney($amountBase, getDefaultCurrency());
+            $obj->amount = number_format($amountBase, 2);
+            $obj->symbol = getDefaultCurrency();
+
+            $obj->unit_price = formatMoneyWithCurrency($r->unit_price);
+            $totalAmount += $amountBase;
+            $totalQty    += $netBase ?? 0;
+
+            $final[] = $obj;
+        }
+
+        return [
+            'data'           => $final,
+            'total_price'    => getDefaultCurrency() . ' ' . number_format($totalAmount, 2),
+            'total_quantity' => formatQunantity($totalQty),
+        ];
     }
+
 
     public function goBack()
     {
