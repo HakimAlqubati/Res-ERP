@@ -2,10 +2,20 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Notifications\Notification;
+use Exception;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use App\Models\Task;
 use App\Models\TaskLog;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,11 +28,11 @@ class StepsRelationManager extends RelationManager
     protected static string $relationship = 'steps';
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {return $ownerRecord->steps->count();}
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('order')
+        return $schema
+            ->components([
+                TextInput::make('order')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -33,10 +43,10 @@ class StepsRelationManager extends RelationManager
         return $table->striped()
             ->recordTitleAttribute('order')
             ->columns([
-                Tables\Columns\TextColumn::make('order')->sortable(),
-                Tables\Columns\TextColumn::make('title')->searchable(),
+                TextColumn::make('order')->sortable(),
+                TextColumn::make('title')->searchable(),
                 
-                Tables\Columns\IconColumn::make('done')
+                IconColumn::make('done')
                     ->boolean() // Converts values to boolean, showing one icon for true, another for false
                     ->trueIcon('heroicon-o-check-circle') // Icon when true
                     ->falseIcon('heroicon-o-x-circle') // Icon when false
@@ -74,13 +84,13 @@ class StepsRelationManager extends RelationManager
                             DB::commit();
 
                             // Return success message
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Success')
                                 ->body($record->done ==1 ?'Done': 'Undone')
                                 ->success()
                                 ->send();
 
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             // Rollback the transaction in case of an error
                             DB::rollBack();
 
@@ -88,7 +98,7 @@ class StepsRelationManager extends RelationManager
                             Log::error("Error updating task status: " . $e->getMessage());
 
                             // Return error message
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Error')
                                 ->body('Failed. Please try again later.')
                                 ->danger()
@@ -100,15 +110,15 @@ class StepsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

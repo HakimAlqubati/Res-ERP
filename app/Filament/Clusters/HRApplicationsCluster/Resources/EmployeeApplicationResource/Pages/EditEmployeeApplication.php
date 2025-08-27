@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditEmployeeApplication extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

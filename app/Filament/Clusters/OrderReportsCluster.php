@@ -6,7 +6,7 @@ use Filament\Clusters\Cluster;
 
 class OrderReportsCluster extends Cluster
 {
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-shopping-bag';
     public static function getNavigationLabel(): string
     {
         return __('menu.order_reports');

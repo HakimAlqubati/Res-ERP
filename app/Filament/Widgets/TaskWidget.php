@@ -2,13 +2,13 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Support\Enums\TextSize;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use App\Models\Task;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -43,7 +43,7 @@ class TaskWidget extends BaseWidget
                 TextColumn::make('title')->sortable()->words(2)
                     // ->color(Color::Blue)
                     ->tooltip(fn($record):string=> $record->title . '  Task no #'. $record->id)
-                    ->size(TextColumnSize::Small)
+                    ->size(TextSize::Small)
                     ->color(Color::Green)
                     // ->weight(FontWeight::ExtraBold)
                     // ->description('Click')
@@ -89,7 +89,7 @@ class TaskWidget extends BaseWidget
                     ->label('Assigned By')
                     ->searchable()
                     ->tooltip(fn($record):string=>$record?->assignedby?->name?? '')
-                    ->size(TextColumnSize::Small)
+                    ->size(TextSize::Small)
                     // ->wrap()
                     ->limit(10)
                     ->sortable()
@@ -113,7 +113,7 @@ class TaskWidget extends BaseWidget
                     Task::STATUS_REJECTED => 'Rejected',
                 ]),
             ])
-            ->actions([
+            ->recordActions([
                 
                 // Action::make('Show')
                 // ->icon('heroicon-o-eye')

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Services\FixFifo\FifoAllocatorService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +38,7 @@ class ProcessFifoOrders extends Command
             Log::alert('hi', [count($allocations)]);
             // طباعة ملخص أو عدد العمليات
             $this->info("✅ Allocation complete. Total allocations: " . count($allocations));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('❌ Error: ' . $e->getMessage());
         }
 

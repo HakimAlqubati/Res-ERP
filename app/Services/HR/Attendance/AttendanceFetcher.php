@@ -18,8 +18,8 @@ class AttendanceFetcher
             ->get();
   
         if ($attendances->count() === 0) {
-            $previousDate    = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
-            $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
+            $previousDate    = Carbon::parse($date)->subDay()->format('Y-m-d');
+            $previousDayName = Carbon::parse($date)->subDay()->format('l');
 
             $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
                 ->where('accepted', 1)
@@ -90,10 +90,10 @@ class AttendanceFetcher
         $lastCheckType = $latstAttendance->check_type;
 
         $dateTimeString = $attendanceInPreviousDay->check_date . ' ' . $latstAttendance->check_time;
-        $lastCheckTime  = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
+        $lastCheckTime  = Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
         $dateTimeString  = $currentRealDate . ' ' . $currentCheckTime;
-        $currentDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
+        $currentDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
         $diff = self::calculateTimeDifference($periodEndTime, $currentCheckTime, $currentRealDate);
 

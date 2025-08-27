@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use Exception;
 use App\Models\CustomTenantModel as Tenant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -114,7 +115,7 @@ class TenantObserver
             // Update the database_created field
             $tenant->update(['database_created' => true]);
             // DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $tenant->update(['database_created' => false]);
             // Log or handle the error if needed
             Log::error('Database creation failed for tenant ID: ' . $tenant->id . '. Error: ' . $e->getMessage());

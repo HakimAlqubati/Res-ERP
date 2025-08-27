@@ -2,6 +2,11 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeRatingReportResource\Pages\ViewDetails;
 use App\Filament\Clusters\HRAttendanceReport\Resources\ListEmployeeRatingReports2;
@@ -10,12 +15,8 @@ use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\TaskRating;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -28,17 +29,17 @@ class EmployeeRatingReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
     protected static ?string $slug = 'rating-report';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRTaskReport::class;
     protected static ?string $label = 'Task performance rating';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([]);
+        return $schema
+            ->components([]);
     }
 
     public static function table(Table $table): Table
@@ -81,15 +82,15 @@ class EmployeeRatingReportResource extends Resource
 
 
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 Action::make('ViewDetails')->url(function ($record) {
 
                     return 'rating-report/view?employee_id=' . $record->employee_id;
                 }),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([]),
+            ->toolbarActions([
+                BulkActionGroup::make([]),
             ]);
     }
 

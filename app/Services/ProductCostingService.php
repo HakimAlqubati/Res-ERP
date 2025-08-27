@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Product;
+use App\Models\ProductPriceHistory;
+use App\Models\ProductItem;
 use App\Models\InventoryTransaction;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\Log;
@@ -72,7 +75,7 @@ class ProductCostingService
 
     public static function updateComponentPricesForProduct(int $productId): int
     {
-        $product = \App\Models\Product::with('productItems')->find($productId);
+        $product = Product::with('productItems')->find($productId);
 
         if (!$product || !$product->is_manufacturing) {
             return 0;
@@ -91,7 +94,7 @@ class ProductCostingService
             }
             $transaction = self::getInventoryTransactionForCost($item->product_id, $item->unit_id, $price);
 
-            \App\Models\ProductPriceHistory::create([
+            ProductPriceHistory::create([
                 'product_id'       => $product->id,
                 'product_item_id'  => $item->id,
                 'unit_id'          => $item->unit_id,
@@ -105,7 +108,7 @@ class ProductCostingService
             if (!is_null($price)) {
                 $item->price = $price;
                 $item->total_price = $price * $item->quantity;
-                $item->total_price_after_waste = \App\Models\ProductItem::calculateTotalPriceAfterWaste($item->total_price, $item->qty_waste_percentage ?? 0);
+                $item->total_price_after_waste = ProductItem::calculateTotalPriceAfterWaste($item->total_price, $item->qty_waste_percentage ?? 0);
                 $item->save();
 
                 $updatedCount++;
@@ -124,18 +127,18 @@ class ProductCostingService
         return $updatedCount;
     }
 
-    public static function getInventoryTransactionForCost(int $productId, int $unitId, float $price): ?\App\Models\InventoryTransaction
+    public static function getInventoryTransactionForCost(int $productId, int $unitId, float $price): ?InventoryTransaction
     {
-        return \App\Models\InventoryTransaction::where('product_id', $productId)
+        return InventoryTransaction::where('product_id', $productId)
             ->where('unit_id', $unitId)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->where('price', $price)
             ->whereNull('deleted_at')
             ->orderByDesc('id')
             ->first();
     }
 
-    public static function updateComponentPricesForProductInstance(\App\Models\Product $product): int
+    public static function updateComponentPricesForProductInstance(Product $product): int
     {
         if (!$product->is_manufacturing || !$product->relationLoaded('productItems')) {
             return 0;
@@ -152,7 +155,7 @@ class ProductCostingService
 
             $transaction = self::getInventoryTransactionForCost($item->product_id, $item->unit_id, $price);
 
-            \App\Models\ProductPriceHistory::create([
+            ProductPriceHistory::create([
                 'product_id'       => $product->id,
                 'product_item_id'  => $item->id,
                 'unit_id'          => $item->unit_id,
@@ -165,7 +168,7 @@ class ProductCostingService
 
             $item->price = $price;
             $item->total_price = $price * $item->quantity;
-            $item->total_price_after_waste = \App\Models\ProductItem::calculateTotalPriceAfterWaste(
+            $item->total_price_after_waste = ProductItem::calculateTotalPriceAfterWaste(
                 $item->total_price,
                 $item->qty_waste_percentage ?? 0
             );

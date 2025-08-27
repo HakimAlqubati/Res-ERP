@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -117,7 +118,7 @@ class WorkPeriod extends Model implements Auditable
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope('active', function (Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         } else if (isStuff()) {

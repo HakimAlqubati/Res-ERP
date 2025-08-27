@@ -9,6 +9,6 @@ class OrderReportCustom extends Page
 {
     protected static string $resource = OrderResource::class;
 
-    protected static string $view = 'filament.resources.order-resource.pages.order-report-custom';
+    protected string $view = 'filament.resources.order-resource.pages.order-report-custom';
  
 }

@@ -10,7 +10,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListMissingInventoryProductsReport extends ListRecords
 {
     protected static string $resource = MissingInventoryProductsReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.missing-inventory-products';
+    protected string $view = 'filament.pages.inventory-reports.missing-inventory-products';
     protected function getHeaderActions(): array
     {
         return [];

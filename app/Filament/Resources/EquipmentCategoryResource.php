@@ -2,14 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\EquipmentCategoryResource\Pages\ListEquipmentCategories;
+use App\Filament\Resources\EquipmentCategoryResource\Pages\CreateEquipmentCategory;
+use App\Filament\Resources\EquipmentCategoryResource\Pages\EditEquipmentCategory;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Resources\EquipmentCategoryResource\Pages;
 use App\Filament\Resources\EquipmentCategoryResource\RelationManagers;
 use App\Models\EquipmentCategory;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,32 +32,32 @@ class EquipmentCategoryResource extends Resource
     protected static ?string $model = EquipmentCategory::class;
 
     protected static ?string $cluster = HRServiceRequestCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
 
     protected static ?string $label = 'Equipment Category';
     protected static ?string $pluralLabel = 'Equipment Categories';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columns(3)->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->label('Name')
                         ->required()
                         ->maxLength(255),
 
-                    Forms\Components\TextInput::make('equipment_code_start_with')
+                    TextInput::make('equipment_code_start_with')
                         ->label('Code Prefix')->required()
                         ->helperText('Prefix used for equipment code generation.')
                         ->maxLength(20),
-                    Forms\Components\Toggle::make('active')
+                    Toggle::make('active')
                         ->label('Active')->inline(false)
                         ->default(true),
 
-                    Forms\Components\Textarea::make('description')
+                    Textarea::make('description')
                         ->label('Description')
                         ->rows(3),
                 ])
@@ -58,21 +69,21 @@ class EquipmentCategoryResource extends Resource
     {
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('id')->label('ID')->sortable()->searchable()->toggleable()->alignCenter(true),
-                Tables\Columns\TextColumn::make('name')->label('Name')->sortable()->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('equipment_code_start_with')->label('Code Prefix')->sortable()->toggleable()->alignCenter(true),
-                Tables\Columns\TextColumn::make('description')->label('Description')->limit(50)->toggleable()->alignCenter(true),
-                Tables\Columns\IconColumn::make('active')->label('Active')->boolean()->toggleable()->alignCenter(true),
+                TextColumn::make('id')->label('ID')->sortable()->searchable()->toggleable()->alignCenter(true),
+                TextColumn::make('name')->label('Name')->sortable()->searchable()->toggleable(),
+                TextColumn::make('equipment_code_start_with')->label('Code Prefix')->sortable()->toggleable()->alignCenter(true),
+                TextColumn::make('description')->label('Description')->limit(50)->toggleable()->alignCenter(true),
+                IconColumn::make('active')->label('Active')->boolean()->toggleable()->alignCenter(true),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -87,9 +98,9 @@ class EquipmentCategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEquipmentCategories::route('/'),
-            'create' => Pages\CreateEquipmentCategory::route('/create'),
-            'edit' => Pages\EditEquipmentCategory::route('/{record}/edit'),
+            'index' => ListEquipmentCategories::route('/'),
+            'create' => CreateEquipmentCategory::route('/create'),
+            'edit' => EditEquipmentCategory::route('/{record}/edit'),
         ];
     }
 

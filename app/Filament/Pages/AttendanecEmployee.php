@@ -2,6 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Schema;
+use Exception;
+use DateTime;
 use App\Forms\Components\KeyPadTest;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -10,7 +13,6 @@ use App\Notifications\NotificationAttendance;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\BasePage;
 use Filament\Support\Enums\Alignment;
@@ -24,7 +26,7 @@ class AttendanecEmployee extends BasePage
     use InteractsWithForms;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.attendanec-employee';
+    protected string $view = 'filament.pages.attendanec-employee';
     private $date = '';
     // private $date ;
     private $time = '';
@@ -66,12 +68,12 @@ class AttendanecEmployee extends BasePage
         $this->rfid = ''; // Clear the RFID input
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
 
         app()->setLocale('en');
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 DateTimePicker::make('date_time')
                     ->label('التاريخ والوقت')
@@ -133,7 +135,7 @@ class AttendanecEmployee extends BasePage
         $employeePeriods = $employee?->periods;
 
         if (!is_null($employee) && count($employeePeriods) > 0) {
-            $day = \Carbon\Carbon::parse($date)->format('l');
+            $day = Carbon::parse($date)->format('l');
 
             // Decode the days array for each period
             $workTimePeriods = $employee->periods->map(function ($period) {
@@ -223,8 +225,8 @@ class AttendanecEmployee extends BasePage
                 return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKOUT, $existAttendance);
             } else {
 
-                $endTime = \Carbon\Carbon::parse($closestPeriod->end_at);
-                $checkTime = \Carbon\Carbon::parse($time);
+                $endTime = Carbon::parse($closestPeriod->end_at);
+                $checkTime = Carbon::parse($time);
 
                 if ($endTime->gt($checkTime)) {
                     // $date = $existAttendance['in_previous']?->check_date;
@@ -259,7 +261,7 @@ class AttendanecEmployee extends BasePage
     {
         $checkTimeStr = $checkTime;
         // Ensure that $checkTime is a Carbon instance
-        $checkTime = \Carbon\Carbon::parse($checkTime);
+        $checkTime = Carbon::parse($checkTime);
 
         // Check if the user has created a record within the last minute
 
@@ -340,7 +342,7 @@ class AttendanecEmployee extends BasePage
             Attendance::create($attendanceData);
             // Send success notification
             return $this->sendAttendanceNotification($employee->name, $notificationMessage);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Send warning notification in case of failure
             return $this->sendWarningNotification($e->getMessage());
         }
@@ -359,8 +361,8 @@ class AttendanecEmployee extends BasePage
             ->get();
         if ($attendances->count() === 0) {
 
-            $previousDate = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
-            $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
+            $previousDate = Carbon::parse($date)->subDay()->format('Y-m-d');
+            $previousDayName = Carbon::parse($date)->subDay()->format('l');
             $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
                 ->where('period_id', $closestPeriod->id)
                 ->where('check_date', $previousDate)
@@ -409,7 +411,7 @@ class AttendanecEmployee extends BasePage
         $allowedTimeBeforePeriod = Carbon::createFromFormat('H:i:s', $nearestPeriod->start_at)->subHours((int) Setting::getSetting('hours_count_after_period_before'))->format('H:i:s');
 
         $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
-        $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
+        $startTime = Carbon::parse($nearestPeriod->start_at);
 
         if ($checkTime->gt($startTime) && $nearestPeriod?->start_at) {
             // Employee is late
@@ -449,8 +451,8 @@ class AttendanecEmployee extends BasePage
     private function storeCheckOut($nearestPeriod, $employeeId, $date, $checkTime, $previousCheckInRecord = null)
     {
 
-        $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-        $endTime = \Carbon\Carbon::parse($nearestPeriod->end_at);
+        $startTime = Carbon::parse($nearestPeriod->start_at);
+        $endTime = Carbon::parse($nearestPeriod->end_at);
         // Find the corresponding check-in record
         $checkinRecord = Attendance::where('employee_id', $employeeId)
             ->where('period_id', $nearestPeriod->id)
@@ -461,7 +463,7 @@ class AttendanecEmployee extends BasePage
 
         if ($checkinRecord) {
 
-            $checkinTime = \Carbon\Carbon::parse($checkinRecord->check_time);
+            $checkinTime = Carbon::parse($checkinRecord->check_time);
 
             // Calculate the actual duration (from check-in to check-out)
             $actualDuration = $checkinTime->diff($checkTime);
@@ -496,7 +498,7 @@ class AttendanecEmployee extends BasePage
             // Combine the date and time into one string
             $dateTimeString = $previousCheckInRecord->check_date . ' ' . $previousCheckInRecord->check_time;
 
-            $checkinTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
+            $checkinTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
             // Calculate the actual duration (from check-in to check-out)
             $actualDuration = $checkinTime->diff($checkTime);
@@ -668,7 +670,7 @@ class AttendanecEmployee extends BasePage
         $lastCheckType = $latstAttendance->check_type;
 
         $dateTimeString = $attendanceInPreviousDay->check_date . ' ' . $latstAttendance->check_time;
-        $lastCheckTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
+        $lastCheckTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
 
         $dateTimeString = $currentDateTrue . ' ' . $periodEndTime;
         $diff = $this->calculateTimeDifference($periodEndTime, $currentCheckTime, true);
@@ -735,8 +737,8 @@ class AttendanecEmployee extends BasePage
     public function calculateTimeDifference(string $currentTime, string $endTime): float
     {
         // Create DateTime objects for each time
-        $currentDateTime = new \DateTime($currentTime);
-        $periodEndDateTime = new \DateTime($endTime);
+        $currentDateTime = new DateTime($currentTime);
+        $periodEndDateTime = new DateTime($endTime);
 
         // Calculate the difference
         $diff = $currentDateTime->diff($periodEndDateTime);

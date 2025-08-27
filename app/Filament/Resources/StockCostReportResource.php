@@ -1,11 +1,20 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use App\Models\ReturnedOrder;
+use App\Models\Order;
+use App\Models\StockAdjustmentDetail;
+use App\Models\StockIssueOrder;
+use App\Models\StockTransferOrder;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\StockCostReportResource\Pages\ListStockCostReports;
 use App\Filament\Resources\StockCostReportResource\Pages;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -17,7 +26,7 @@ class StockCostReportResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getNavigationLabel(): string
     {
@@ -33,10 +42,10 @@ class StockCostReportResource extends Resource
     {
         return 'Stock Cost Report';
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -49,7 +58,7 @@ class StockCostReportResource extends Resource
             ])
             ->filters([
                 Filter::make('date')
-                    ->form([
+                    ->schema([
                         DatePicker::make('from_date')->label('From Date')->default(now()->startOfMonth()),
                         DatePicker::make('to_date')->label('To Date')->default(now()),
                     ]),
@@ -64,22 +73,22 @@ class StockCostReportResource extends Resource
                 SelectFilter::make('returnable_type')
                     ->label('Out Type')
                     ->options([
-                        \App\Models\ReturnedOrder::class         => 'Returned Order',
-                        \App\Models\Order::class                 => 'Order',
-                        \App\Models\StockAdjustmentDetail::class => 'Stock Adjustment',
-                        \App\Models\StockIssueOrder::class       => 'Stock Issue Order',
-                        \App\Models\StockTransferOrder::class       => 'Stock Transfer Order',
+                        ReturnedOrder::class         => 'Returned Order',
+                        Order::class                 => 'Order',
+                        StockAdjustmentDetail::class => 'Stock Adjustment',
+                        StockIssueOrder::class       => 'Stock Issue Order',
+                        StockTransferOrder::class       => 'Stock Transfer Order',
                     ])->multiple()
                     ->searchable()
                     ->placeholder('All Types'),
 
                     ],FiltersLayout::AboveContent)
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -94,7 +103,7 @@ class StockCostReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockCostReports::route('/'),
+            'index' => ListStockCostReports::route('/'),
 
         ];
     }

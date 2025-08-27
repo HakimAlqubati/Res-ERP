@@ -1,6 +1,7 @@
 <?php
 namespace App\Console\Commands;
 
+use Throwable;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Services\FixFifo\FifoAllocationSaver;
@@ -114,7 +115,7 @@ class AllocateAllProductsFifo extends Command
                 FifoAllocationSaver::save($allocations, $productId);
 
                 $this->info("✅ Allocation completed for product_id: {$productId}");
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Log::error("❌ Error allocating product_id={$productId}", [
                     'error' => $e->getMessage(),
                 ]);

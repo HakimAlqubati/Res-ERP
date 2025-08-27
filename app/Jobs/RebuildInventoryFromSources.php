@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\ReturnedOrder;
+use Exception;
+use DateTimeInterface;
 use App\Models\InventoryTransaction;
 use App\Models\PurchaseInvoice;
 use App\Models\GoodsReceivedNote;
@@ -45,7 +48,7 @@ class RebuildInventoryFromSources
 
             $records = collect();
 
-            $adjustmentDetails = \App\Models\StockAdjustmentDetail::where('adjustment_type', StockAdjustmentDetail::ADJUSTMENT_TYPE_INCREASE)
+            $adjustmentDetails = StockAdjustmentDetail::where('adjustment_type', StockAdjustmentDetail::ADJUSTMENT_TYPE_INCREASE)
                 ->whereNull('deleted_at')
                 ->with('store') // إذا كنت تحتاج اسم المخزن في notes
                 ->get();
@@ -66,7 +69,7 @@ class RebuildInventoryFromSources
                     'model' => $grn,
                 ]);
             }
-            $returnedOrders = \App\Models\ReturnedOrder::with(['details', 'store'])->approved()->get();
+            $returnedOrders = ReturnedOrder::with(['details', 'store'])->approved()->get();
             foreach ($returnedOrders as $order) {
                 $records->push([
                     'date' => $order->returned_date,
@@ -115,7 +118,7 @@ class RebuildInventoryFromSources
 
             DB::commit();
             Log::info('✅ Inventory rebuilt successfully in chronological order.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error('❌ Failed to rebuild inventory: ' . $e->getMessage());
         }
@@ -237,7 +240,7 @@ class RebuildInventoryFromSources
         }
     }
 
-    protected function createFromStockAdjustmentDetail(\App\Models\StockAdjustmentDetail $detail): void
+    protected function createFromStockAdjustmentDetail(StockAdjustmentDetail $detail): void
     {
         // if (!empty($this->productIds) && !in_array($detail->product_id, $this->productIds)) {
         //     return;
@@ -269,7 +272,7 @@ class RebuildInventoryFromSources
             'store_id' => $detail->store_id,
             'notes' => $notes,
             'transactionable_id' => $detail->id,
-            'transactionable_type' => \App\Models\StockAdjustmentDetail::class,
+            'transactionable_type' => StockAdjustmentDetail::class,
         ]);
     }
 
@@ -343,9 +346,9 @@ class RebuildInventoryFromSources
         }
     }
 
-    function getLastPurchasePrice(int $productId, int $storeId, string|\DateTimeInterface $date): ?array
+    function getLastPurchasePrice(int $productId, int $storeId, string|DateTimeInterface $date): ?array
     {
-        $invoice = \App\Models\PurchaseInvoice::query()
+        $invoice = PurchaseInvoice::query()
             ->where('store_id', $storeId)
             ->whereDate('date', '<=', $date)
             ->whereHas('details', function ($q) use ($productId) {
@@ -370,7 +373,7 @@ class RebuildInventoryFromSources
         ];
     }
 
-    protected function createFromReturnedOrder(\App\Models\ReturnedOrder $order): void
+    protected function createFromReturnedOrder(ReturnedOrder $order): void
     {
         foreach ($order->details as $detail) {
             // if (!empty($this->productIds) && !in_array($detail->product_id, $this->productIds)) {
@@ -409,7 +412,7 @@ class RebuildInventoryFromSources
                 'store_id' => $order->store_id,
                 'notes' => $notes,
                 'transactionable_id' => $order->original_order_id,
-                'transactionable_type' => \App\Models\ReturnedOrder::class,
+                'transactionable_type' => ReturnedOrder::class,
             ]);
         }
     }

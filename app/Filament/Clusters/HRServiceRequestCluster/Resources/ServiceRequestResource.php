@@ -1,6 +1,23 @@
 <?php
 namespace App\Filament\Clusters\HrServiceRequestCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\Action;
+use App\Models\EquipmentLog;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages\ListServiceRequests;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages\CreateServiceRequest;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages\EditServiceRequest;
+use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages\ViewServiceRequest;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CommentsRelationManager;
@@ -11,21 +28,14 @@ use App\Models\Employee;
 use App\Models\Equipment;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestLog;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -41,20 +51,20 @@ class ServiceRequestResource extends Resource
 {
     protected static ?string $model = ServiceRequest::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRServiceRequestCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('Basic data')
+                    Step::make('Basic data')
                         ->icon('heroicon-o-bars-3-center-left')
                         ->schema([
                             Fieldset::make()->schema([
@@ -95,7 +105,7 @@ class ServiceRequestResource extends Resource
                                         $branchId = $get('branch_id');
 
                                         // تحقق من وجود مناطق للفرع المحدد
-                                        $hasAreas = \App\Models\BranchArea::where('branch_id', $branchId)->exists();
+                                        $hasAreas = BranchArea::where('branch_id', $branchId)->exists();
 
                                         return $hasAreas
                                         ? 'required'
@@ -189,7 +199,7 @@ class ServiceRequestResource extends Resource
                             ]),
                         ]),
 
-                    Wizard\Step::make('Images')
+                    Step::make('Images')
                         ->icon('heroicon-o-photo')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
@@ -241,7 +251,7 @@ class ServiceRequestResource extends Resource
                         ])
                         ->toggleable(isToggledHiddenByDefault: false),
 
-                    Tables\Columns\ImageColumn::make('first_photo_url')
+                    ImageColumn::make('first_photo_url')
                         ->label('Photo')
                         ->width(50)
                         ->height(50)->disabledClick(true)
@@ -276,9 +286,9 @@ class ServiceRequestResource extends Resource
             ->filters([
                 SelectFilter::make('equipment_id')
                     ->label('Equipment')
-                    ->searchable()->options(fn() => \App\Models\Equipment::query()->pluck('name', 'id')),
+                    ->searchable()->options(fn() => Equipment::query()->pluck('name', 'id')),
             ])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
                     Action::make('Move')->button()
                         ->disabled(function ($record) {
@@ -292,7 +302,7 @@ class ServiceRequestResource extends Resource
                     //         return true;
                     //     }
                     // })
-                        ->form(function ($record) {
+                        ->schema(function ($record) {
                             return [
                                 Select::make('status')->default(function ($record) {
                                     return $record->status;
@@ -368,7 +378,7 @@ class ServiceRequestResource extends Resource
                             }
                             return false;
                         })
-                        ->form(function ($record) {
+                        ->schema(function ($record) {
                             return [
                                 Fieldset::make()->schema([
                                     Select::make('assigned_to')->label('')->columnSpanFull()
@@ -412,7 +422,7 @@ class ServiceRequestResource extends Resource
                         }
                         return false;
                     })
-                        ->form(function ($record) {
+                        ->schema(function ($record) {
                             return [
                                 Fieldset::make()->schema([
                                     Textarea::make('comment')->columnSpanFull()->required(),
@@ -477,7 +487,7 @@ class ServiceRequestResource extends Resource
                         }
                         return false;
                     })
-                        ->form([
+                        ->schema([
                             self::getMediaSpatieField(),
                         ])
                         ->action(function (array $data, $record): void {
@@ -488,7 +498,7 @@ class ServiceRequestResource extends Resource
                                 }
                             }
                             $record->logToEquipment(
-                                \App\Models\EquipmentLog::ACTION_UPDATED,
+                                EquipmentLog::ACTION_UPDATED,
                                 'New Images added to service request #' . $record->id
                             );
                             $record->logs()->create([
@@ -518,7 +528,7 @@ class ServiceRequestResource extends Resource
                         ->modalContent(function ($record) {
                             return view('filament.resources.service_requests.gallery', ['photos' => $record->photos()->orderBy('id', 'desc')->get()]);
                         }),
-                    Tables\Actions\EditAction::make()->disabled(function ($record) {
+                    EditAction::make()->disabled(function ($record) {
                         if ($record->status == ServiceRequest::STATUS_CLOSED) {
                             return true;
                         }
@@ -526,10 +536,10 @@ class ServiceRequestResource extends Resource
                     }),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
 
-                    Tables\Actions\DeleteBulkAction::make(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -545,20 +555,20 @@ class ServiceRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListServiceRequests::route('/'),
-            'create' => Pages\CreateServiceRequest::route('/create'),
-            'edit'   => Pages\EditServiceRequest::route('/{record}/edit'),
-            'view'   => Pages\ViewServiceRequest::route('/{record}'),
+            'index'  => ListServiceRequests::route('/'),
+            'create' => CreateServiceRequest::route('/create'),
+            'edit'   => EditServiceRequest::route('/{record}/edit'),
+            'view'   => ViewServiceRequest::route('/{record}'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListServiceRequests::class,
-            Pages\CreateServiceRequest::class,
-            Pages\EditServiceRequest::class,
-            Pages\ViewServiceRequest::class,
+            ListServiceRequests::class,
+            CreateServiceRequest::class,
+            EditServiceRequest::class,
+            ViewServiceRequest::class,
             // Pages\ViewEmployee::class,
         ]);
     }

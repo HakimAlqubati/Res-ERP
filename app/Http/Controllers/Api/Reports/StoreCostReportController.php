@@ -1,6 +1,10 @@
 <?php
 namespace App\Http\Controllers\Api\Reports;
 
+use App\Models\ReturnedOrder;
+use App\Models\Order;
+use App\Models\StockAdjustmentDetail;
+use App\Models\StockIssueOrder;
 use App\Http\Controllers\Controller;
 use App\Services\InventoryReports\StoreCostReportService;
 use Illuminate\Http\JsonResponse;
@@ -25,10 +29,10 @@ class StoreCostReportController extends Controller
             toDate: $validated['to_date'],
             returnableTypes: [
                 // هنا تضع أنواع الحركات التي تعتبر مرتجع من الفرع مثل:
-                \App\Models\ReturnedOrder::class,
-                \App\Models\Order::class,
-                \App\Models\StockAdjustmentDetail::class,
-                \App\Models\StockIssueOrder::class,
+                ReturnedOrder::class,
+                Order::class,
+                StockAdjustmentDetail::class,
+                StockIssueOrder::class,
             ]
         );
 

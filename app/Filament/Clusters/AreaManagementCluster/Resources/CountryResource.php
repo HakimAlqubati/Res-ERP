@@ -2,14 +2,22 @@
 
 namespace App\Filament\Clusters\AreaManagementCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CountryResource\Pages\ListCountries;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CountryResource\Pages\CreateCountry;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CountryResource\Pages\EditCountry;
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\AreaManagementCluster\Resources\CountryResource\Pages;
 use App\Filament\Clusters\AreaManagementCluster\Resources\CountryResource\RelationManagers;
 use App\Models\Country;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,21 +29,21 @@ class CountryResource extends Resource
     protected static ?string $model = Country::class;
 
 
-    protected static ?string $navigationIcon = 'heroicon-o-globe-alt';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-globe-alt';
 
     protected static ?string $cluster = AreaManagementCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->required()
                         ->unique()
                         ->maxLength(255),
-                    Forms\Components\TextInput::make('code')
+                    TextInput::make('code')
                         ->maxLength(10),
                 ])
             ]);
@@ -46,19 +54,19 @@ class CountryResource extends Resource
         return $table
             ->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('code')->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('name')->sortable()->searchable(),
+                TextColumn::make('code')->sortable(),
+                TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -73,9 +81,9 @@ class CountryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCountries::route('/'),
-            'create' => Pages\CreateCountry::route('/create'),
-            'edit' => Pages\EditCountry::route('/{record}/edit'),
+            'index' => ListCountries::route('/'),
+            'create' => CreateCountry::route('/create'),
+            'edit' => EditCountry::route('/{record}/edit'),
         ];
     }
 

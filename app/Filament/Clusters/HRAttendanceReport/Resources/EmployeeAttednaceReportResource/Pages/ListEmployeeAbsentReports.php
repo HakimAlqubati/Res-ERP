@@ -12,7 +12,7 @@ class ListEmployeeAbsentReports extends ListRecords
 
 
 
-    protected static string $view = 'filament.pages.hr-reports.attendance.pages.absent-employees';
+    protected string $view = 'filament.pages.hr-reports.attendance.pages.absent-employees';
     protected function getViewData(): array
     {
         $branchId = $this->getTable()->getFilters()['branch_id']->getState()['value'];

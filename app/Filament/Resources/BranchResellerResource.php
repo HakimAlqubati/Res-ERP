@@ -1,6 +1,22 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Illuminate\Support\Carbon;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
+use Throwable;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource;
+use Filament\Actions\EditAction;
+use App\Filament\Resources\BranchResellerResource\Pages\ListBranchResellers;
+use App\Filament\Resources\BranchResellerResource\Pages\CreateBranchReseller;
+use App\Filament\Resources\BranchResellerResource\Pages\ViewBranchReseller;
+use App\Filament\Resources\BranchResellerResource\Pages\EditBranchReseller;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\BranchResellerResource\Pages;
 use App\FilamentTables\Actions\ManageStoreAction;
@@ -9,23 +25,17 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
 use App\Models\Store;
-use App\Models\User;
-use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
+use App\Models\User; 
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -38,9 +48,9 @@ class BranchResellerResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static ?string $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon                      = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster                             = ResellersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 0;
     public static function getPluralLabel(): ?string
     {
@@ -63,13 +73,13 @@ class BranchResellerResource extends Resource
     {
         return __('menu.resellers');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Wizard::make([
-                    Wizard\Step::make('Basic data')
+                    Step::make('Basic data')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(3)->schema([
@@ -97,7 +107,7 @@ class BranchResellerResource extends Resource
                                             ->live()
                                             ->afterStateUpdated(function ($state, callable $set) {
                                                 if ($state) {
-                                                    $newEndDate = \Illuminate\Support\Carbon::parse($state)->addDay();
+                                                    $newEndDate = Carbon::parse($state)->addDay();
                                                     $set('end_date', $newEndDate);
                                                 }
                                             }),
@@ -127,7 +137,7 @@ class BranchResellerResource extends Resource
                             ]),
 
                         ]),
-                    Wizard\Step::make('Location')
+                    Step::make('Location')
                         ->icon('heroicon-o-map-pin')
                         ->schema([
                             Fieldset::make()
@@ -159,27 +169,12 @@ class BranchResellerResource extends Resource
                                     ->reactive()
                                     ->required(false),
                                 Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                LocationPickr::make('location')->label('')->columnSpanFull()
-                                    ->mapControls([
-                                        'mapTypeControl'    => true,
-                                        'scaleControl'      => true,
-                                        'streetViewControl' => true,
-                                        'rotateControl'     => true,
-                                        'fullscreenControl' => true,
-                                        'zoomControl'       => false,
-                                    ])
-                                    ->defaultZoom(5)
-                                    ->draggable()
-                                    ->clickable()
-                                    ->height('40vh')
-                                // ->defaultLocation([41.32836109345274, 19.818383186960773])
-                                    ->myLocationButtonLabel('My location'),
-                                // Add other location fields as needed (district_id, city_id, etc.)
+                              
 
                             ]),
 
                         ]),
-                    Wizard\Step::make('Images')
+                    Step::make('Images')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
@@ -268,24 +263,24 @@ class BranchResellerResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('branch_id')
+                TrashedFilter::make(),
+                SelectFilter::make('branch_id')
                     ->label('Branch')
-                    ->options(\App\Models\Branch::resellers()->active()->pluck('name', 'id')),
-                Tables\Filters\SelectFilter::make('active')
+                    ->options(Branch::resellers()->active()->pluck('name', 'id')),
+                SelectFilter::make('active')
                     ->options([
                         1 => __('lang.active'),
                         0 => __('lang.status_unactive'),
                     ])->default(1),
 
             ])
-            ->actions([
+            ->recordActions([
 
                 Action::make('addStore')
                     ->label('Add Store')
                     ->icon('heroicon-o-plus-circle')
                     ->visible(fn(Model $record) => ! $record->store)
-                    ->form([
+                    ->schema([
                         TextInput::make('name')
                             ->label('Store Name')
                             ->default(fn(Model $record) => $record->name . ' Store')
@@ -304,7 +299,7 @@ class BranchResellerResource extends Resource
                                 'branch_id' => $record->id,
                             ]);
                             $record->update(['store_id' => $store->id]);
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             throw $th;
                         }
                     })
@@ -314,7 +309,7 @@ class BranchResellerResource extends Resource
                 Action::make('viewInventory')
                     ->label('View Inventory')->button()
                     ->icon('heroicon-o-chart-bar')
-                    ->url(fn(Model $record) => \App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource::getUrl('index',
+                    ->url(fn(Model $record) => InventoryTransactionReportResource::getUrl('index',
                      ['store_id' =>
                         $record->store_id,
                         'only_available' => 1
@@ -325,11 +320,11 @@ class BranchResellerResource extends Resource
              
                     ManageStoreAction::makeForResource(),
 
-                Tables\Actions\EditAction::make(),
+                EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // Tables\Actions\RestoreAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\DeleteBulkAction::make(),
                 // Tables\Actions\ForceDeleteBulkAction::make(),
                 // Tables\Actions\RestoreBulkAction::make(),
@@ -347,10 +342,10 @@ class BranchResellerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListBranchResellers::route('/'),
-            'create' => Pages\CreateBranchReseller::route('/create'),
-            'view'   => Pages\ViewBranchReseller::route('/{record}'),
-            'edit'   => Pages\EditBranchReseller::route('/{record}/edit'),
+            'index'  => ListBranchResellers::route('/'),
+            'create' => CreateBranchReseller::route('/create'),
+            'view'   => ViewBranchReseller::route('/{record}'),
+            'edit'   => EditBranchReseller::route('/{record}/edit'),
         ];
     }
 

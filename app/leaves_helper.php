@@ -250,7 +250,7 @@ if (!function_exists('calculateAutoWeeklyLeaveDataForBranch')) {
 if (!function_exists('makeLeavesApplicationsBasedOnBranch')) {
     function makeLeavesApplicationsBasedOnBranch($data, $yearMonth, $branchId)
     {
-        $date = new \DateTime($yearMonth . '-01');
+        $date = new DateTime($yearMonth . '-01');
         $year = $date->format('Y');
         $month = $date->format('m');
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -68,7 +69,7 @@ class LeaveType extends Model implements Auditable
     /**
      * Scope to get the sum of monthly count days, defaulting null values to 4.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Builder $query
      * @return int
      */
     public function scopeGetMonthlyCountDaysSum($query)

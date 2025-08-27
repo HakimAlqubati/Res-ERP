@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages;
 
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Actions\Action;
 use App\Filament\Resources\Reports\StoresReportResource;
 use App\Models\Order;
 use App\Models\Product;
@@ -9,7 +11,6 @@ use App\Models\Store;
 use App\Models\Supplier;
 
 use Filament\Forms\Components\Builder;
-use Filament\Pages\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
@@ -19,7 +20,7 @@ use niklasravnsborg\LaravelPdf\Facades\Pdf;
 class ListStoresReport extends ListRecords
 {
     protected static string $resource = StoresReportResource::class;
-    protected static string $view = 'filament.pages.stock-report.stores-report';
+    protected string $view = 'filament.pages.stock-report.stores-report';
 
 
     protected function getTableFilters(): array
@@ -71,7 +72,7 @@ class ListStoresReport extends ListRecords
 
     protected function getTableFiltersLayout(): ?string
     {
-        return \Filament\Tables\Enums\FiltersLayout::AboveContent;
+        return FiltersLayout::AboveContent;
     }
 
     public function getStoresReportData($product_id, $store_id, $supplier_id)

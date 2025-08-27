@@ -2,6 +2,10 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInventoryTransactionTruckingReport;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\CategoryInventoryTrackingReport;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\InventorySummaryReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
@@ -11,7 +15,6 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\Unit;
 use Filament\Forms\Components\Select;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -22,7 +25,7 @@ class InventoryTransactionTruckingReportResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
     {
@@ -37,7 +40,7 @@ class InventoryTransactionTruckingReportResource extends Resource
         return 'Inventory Tracking';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
 
 
@@ -96,9 +99,9 @@ class InventoryTransactionTruckingReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventoryTransactionTruckingReport::route('/'),
-            'tracking_cat' => Pages\CategoryInventoryTrackingReport::route('/tracking_cat'),
-            'summary_report' => Pages\InventorySummaryReport::route('/summary_report'),
+            'index' => ListInventoryTransactionTruckingReport::route('/'),
+            'tracking_cat' => CategoryInventoryTrackingReport::route('/tracking_cat'),
+            'summary_report' => InventorySummaryReport::route('/summary_report'),
         ];
     }
 

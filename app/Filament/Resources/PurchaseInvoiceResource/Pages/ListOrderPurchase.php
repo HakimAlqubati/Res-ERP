@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderPurchaseResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Resources\OrderPurchaseResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -13,7 +14,7 @@ class ListOrderPurchase extends ListRecords
     protected function getActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

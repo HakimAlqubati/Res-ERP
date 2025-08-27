@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInventoryTransactionReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
@@ -12,7 +14,6 @@ use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -24,7 +25,7 @@ class InventoryTransactionReportResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
     protected static ?string $slug = 'inventory-report';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     public static function getLabel(): ?string
     {
         return 'Inventory';
@@ -38,7 +39,7 @@ class InventoryTransactionReportResource extends Resource
         return 'Inventory';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
 
@@ -92,7 +93,7 @@ class InventoryTransactionReportResource extends Resource
                     ),
                 Filter::make('show_extra_fields')
                     ->label('Show Extra')
-                    ->form([
+                    ->schema([
                         Toggle::make('only_available')
                             ->inline(false)
                             ->default(fn () => request()->get('only_available'))
@@ -106,7 +107,7 @@ class InventoryTransactionReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventoryTransactionReport::route('/'),
+            'index' => ListInventoryTransactionReport::route('/'),
         ];
     }
     public static function getNavigationBadge(): ?string

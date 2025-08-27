@@ -2,9 +2,10 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\HRCluster\Resources\AllowanceResource;
 use Filament\Actions;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -15,7 +16,7 @@ class ListAllowances extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
     public function getTabs(): array

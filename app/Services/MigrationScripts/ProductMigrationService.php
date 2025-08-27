@@ -2,6 +2,7 @@
 
 namespace App\Services\MigrationScripts;
 
+use Exception;
 use App\Models\Product;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
@@ -66,7 +67,7 @@ class ProductMigrationService
 
             DB::commit();
             Log::info("Updated package_size and order for Product ID: {$product->id}");
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::error("Error updating package_size and order for Product ID: {$product->id}. Error: {$e->getMessage()}");
         }

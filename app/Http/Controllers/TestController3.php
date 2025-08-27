@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\MultiProductsInventoryService;
+use App\Services\Products\Manufacturing\ProductManufacturingService;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\Equipment;
@@ -48,13 +50,13 @@ class TestController3 extends Controller
 
     public function currntStock()
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $inventoryService = new MultiProductsInventoryService();
         $currentStock = $inventoryService->getInventoryReport();
         return $currentStock;
     }
     public function lowStock()
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService();
+        $inventoryService = new MultiProductsInventoryService();
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantity();
         // dd($lowStockProducts);
         return $lowStockProducts;
@@ -62,7 +64,7 @@ class TestController3 extends Controller
 
     public function getProductItems($id)
     {
-        $manufacturingService = new \App\Services\Products\Manufacturing\ProductManufacturingService();
+        $manufacturingService = new ProductManufacturingService();
         $response = $manufacturingService->getProductItems($id);
         // dd($response['product_items'],$response['unit_prices']);
         return $response;

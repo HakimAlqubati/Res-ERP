@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\Setting;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Grid;
 use App\Models\Allowance;
 use App\Models\Attendance;
 use App\Models\Branch;
@@ -21,12 +26,8 @@ use App\Models\WorkPeriod;
 use App\Services\DefaultManufacturingStoreService;
 use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -511,13 +512,13 @@ if (!function_exists('getMonthArrayWithKeys')) {
 if (!function_exists('setting')) {
     function setting($key)
     {
-        return \App\Models\Setting::getSetting($key);
+        return Setting::getSetting($key);
     }
 }
 if (!function_exists('settingWithDefault')) {
     function settingWithDefault($key, $default = null)
     {
-        return \App\Models\Setting::getSetting($key, $default);
+        return Setting::getSetting($key, $default);
     }
 }
 
@@ -893,7 +894,7 @@ if (!function_exists('print_html_table')) {
     /**
      * طباعة جدول HTML بسيط مع تلوين صفوف اختياري.
      *
-     * @param array|\Illuminate\Support\Collection $data
+     * @param array|Collection $data
      * @param array|null $highlight
      *   - قاعدة واحدة: ['column' => 'movement_type', 'value' => 'in', 'color' => '#ECFDF5', 'text' => '#065F46']
      *   - أو مصفوفة قواعد بنفس الصيغة أعلاه
@@ -911,7 +912,7 @@ if (!function_exists('print_html_table')) {
         }
 
         // 1) تحويل البيانات لمصفوفة associative
-        if ($data instanceof \Illuminate\Support\Collection) {
+        if ($data instanceof Collection) {
             $data = $data->map(fn($r) => (array) $r)->values()->all();
         } elseif (is_array($data) && !empty($data) && is_object(reset($data))) {
             $data = array_map(fn($r) => (array) $r, $data);

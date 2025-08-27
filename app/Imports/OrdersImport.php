@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Throwable;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\OrderDetails;
@@ -68,7 +69,7 @@ class OrdersImport implements ToCollection, WithHeadingRow, SkipsOnFailure
 
             DB::commit();
             $this->successCount++;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             Log::error("❌ Failed to import orders: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
         }

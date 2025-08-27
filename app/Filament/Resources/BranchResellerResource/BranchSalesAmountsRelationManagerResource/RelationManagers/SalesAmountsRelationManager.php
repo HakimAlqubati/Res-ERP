@@ -2,8 +2,9 @@
 
 namespace App\Filament\Resources\BranchResellerResource\BranchSalesAmountsRelationManagerResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
@@ -26,10 +27,10 @@ class SalesAmountsRelationManager extends RelationManager
             $ownerRecord->salesAmounts()->sum('amount')
         );
     }
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 
             ]);
     }
@@ -52,12 +53,12 @@ class SalesAmountsRelationManager extends RelationManager
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

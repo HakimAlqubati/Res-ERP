@@ -2,15 +2,18 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -23,10 +26,10 @@ class PeriodHistoriesRelationManager extends RelationManager
     use CanCustomizeProcess;
     protected static string $relationship = 'periodHistories';
     protected static ?string $title = 'Shift History';
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 DatePicker::make('start_date')
                     // ->minDate(function($record){
                     //     return $record->employee->join_date?? now()->toDateString();
@@ -67,10 +70,10 @@ class PeriodHistoriesRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->action(function ($record, $data): void {
                         $recordMonth = date('m', strtotime($record->start_date));
                         $recordYear = date('Y', strtotime($record->start_date));
@@ -105,8 +108,8 @@ class PeriodHistoriesRelationManager extends RelationManager
                     }),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

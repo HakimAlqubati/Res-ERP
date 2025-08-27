@@ -1,6 +1,11 @@
 <?php
 namespace App\Services;
 
+use InvalidArgumentException;
+use App\Models\UnitPrice;
+use RuntimeException;
+use Illuminate\Support\Collection;
+use App\Models\Order;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\ProductItem;
@@ -25,7 +30,7 @@ class ManufacturingBackfillService
 
         DB::transaction(function () use ($storeId) {
             if ($storeId && ! Store::whereKey($storeId)->exists()) {
-                throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
+                throw new InvalidArgumentException("Store with ID {$storeId} does not exist.");
             }
 
             $simulatedTransactions = $this->simulateBackfill($storeId);
@@ -53,7 +58,7 @@ class ManufacturingBackfillService
         $productId = null
     ) {
         if ($storeId && ! Store::whereKey($storeId)->exists()) {
-            throw new \InvalidArgumentException("Store with ID {$storeId} does not exist.");
+            throw new InvalidArgumentException("Store with ID {$storeId} does not exist.");
         }
 
         $globalAllocatedPerSource = [];
@@ -88,7 +93,7 @@ class ManufacturingBackfillService
                     $globalAllocatedPerSource[$productKey] = [];
                 }
 
-                $packageSize = \App\Models\UnitPrice::where('product_id', $component['product_id'])
+                $packageSize = UnitPrice::where('product_id', $component['product_id'])
                     ->where('unit_id', $component['unit_id'])
                     ->value('package_size');
 
@@ -109,7 +114,7 @@ class ManufacturingBackfillService
                     );
 
                     $result = array_merge($result, $fifoAllocations);
-                } catch (\RuntimeException $e) {
+                } catch (RuntimeException $e) {
                     Log::warning("FIFO Allocation failed for product {$component['product_id']}: " . $e->getMessage());
                 }
             }
@@ -118,11 +123,11 @@ class ManufacturingBackfillService
         });
     }
 
-    public function getRawMaterialInTransactions(int $productId, int $storeId): \Illuminate\Support\Collection
+    public function getRawMaterialInTransactions(int $productId, int $storeId): Collection
     {
-        return \App\Models\InventoryTransaction::query()
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
-            ->where('transactionable_type', \App\Models\Order::class)
+        return InventoryTransaction::query()
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
+            ->where('transactionable_type', Order::class)
             ->where('product_id', $productId)
             ->where('store_id', $storeId)
             ->whereNull('deleted_at')
@@ -133,7 +138,7 @@ class ManufacturingBackfillService
 
     public function getAllRawMaterialInTransactionsByStore(int $storeId): array
     {
-        $rawMaterials = \App\Models\Product::whereHas('usedInProducts')->with('unitPrices.unit')->get();
+        $rawMaterials = Product::whereHas('usedInProducts')->with('unitPrices.unit')->get();
 
         $result = [];
 
@@ -257,7 +262,7 @@ class ManufacturingBackfillService
         }
 
         if ($requiredQty > 0) {
-            throw new \RuntimeException("Insufficient stock for product ID: $productId. Needed: $component[quantity_after_waste], Remaining: $requiredQty");
+            throw new RuntimeException("Insufficient stock for product ID: $productId. Needed: $component[quantity_after_waste], Remaining: $requiredQty");
         }
 
         return $allocated;
@@ -269,7 +274,7 @@ class ManufacturingBackfillService
         int $parentProductId, // المنتج المركب الذي يحتوي هذا المكون
         float $newPrice
     ): void {
-        $item = \App\Models\ProductItem::where('product_id', $productId)
+        $item = ProductItem::where('product_id', $productId)
             ->where('unit_id', $unitId)
             ->where('parent_product_id', $parentProductId)
             ->first();
@@ -277,7 +282,7 @@ class ManufacturingBackfillService
         if ($item) {
             $item->price                   = $newPrice;
             $item->total_price             = round($item->quantity * $newPrice, 4);
-            $item->total_price_after_waste = \App\Models\ProductItem::calculateTotalPriceAfterWaste(
+            $item->total_price_after_waste = ProductItem::calculateTotalPriceAfterWaste(
                 $item->total_price,
                 $item->qty_waste_percentage
             );
@@ -289,7 +294,7 @@ class ManufacturingBackfillService
         int $parentProductId,
         string $note = null
     ): void {
-        $unitPrices = \App\Models\UnitPrice::where('product_id', $parentProductId)
+        $unitPrices = UnitPrice::where('product_id', $parentProductId)
             ->orderBy('package_size', 'asc')
             ->get();
 

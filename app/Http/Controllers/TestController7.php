@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PurchaseInvoice;
+use App\Models\Order;
+use Exception;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\ProductPriceHistory;
@@ -43,12 +46,12 @@ class TestController7 extends Controller
     public static function getOrderOutTransactions()
     {
         $ids = InventoryTransaction::select('id')
-            ->where('transactionable_type', \App\Models\PurchaseInvoice::class)
+            ->where('transactionable_type', PurchaseInvoice::class)
             ->pluck('id');
 
         return InventoryTransaction::where('movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->select('transactionable_id', 'product_id',  'unit_id', 'package_size', 'price', 'notes', 'source_transaction_id')
-            ->where('transactionable_type', \App\Models\Order::class)
+            ->where('transactionable_type', Order::class)
             ->whereIn('source_transaction_id', $ids)
             ->get();
     }
@@ -75,7 +78,7 @@ class TestController7 extends Controller
             ->first();
 
         if (!$unitPriceTarget) {
-            throw new \Exception("الوحدة غير موجودة أو لا تملك package size معرف.");
+            throw new Exception("الوحدة غير موجودة أو لا تملك package size معرف.");
         }
 
         $targetPackageSize = floatval($unitPriceTarget->package_size ?? 1);
@@ -149,7 +152,7 @@ class TestController7 extends Controller
                 'status' => 'success',
                 'message' => '✅ تم تحديث unit_id و package_size بنجاح لجميع الجداول.',
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => '❌ حدث خطأ أثناء التحديث: ' . $e->getMessage(),

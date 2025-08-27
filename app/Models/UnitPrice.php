@@ -81,7 +81,7 @@ class UnitPrice extends Model implements Auditable
         static::saving(function (self $unitPrice) {
             // فقط إذا تم تغيير السعر
             if ($unitPrice->isDirty('price') && $unitPrice->price != 0) {
-                \App\Models\ProductPriceHistory::create([
+                ProductPriceHistory::create([
                     'product_id'     => $unitPrice->product_id,
                     'unit_id'        => $unitPrice->unit_id,
                     'old_price'      => $unitPrice->getOriginal('price') ?? 0,

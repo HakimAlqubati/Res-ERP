@@ -2,6 +2,7 @@
 
 namespace App\Services\Firebase;
 
+use Exception;
 use App\Models\User;
 use App\Notifications\FcmNotification;
 use Google\Client as GoogleClient;
@@ -32,9 +33,9 @@ class FcmClient
             $accessToken = $tokenResponse['access_token'] ?? null;
             if (!$accessToken) {
                 Log::error('Failed to retrieve access token', $tokenResponse);
-                throw new \Exception('Failed to retrieve access token');
+                throw new Exception('Failed to retrieve access token');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error fetching access token: ' . $e->getMessage());
             return ['error' => 'Could not fetch access token'];
         }

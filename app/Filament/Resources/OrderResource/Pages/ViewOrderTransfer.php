@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use Filament\Actions\Action;
 use App\Filament\Resources\TransferOrderResource;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Pages\Actions\Action;
 
 class ViewOrderTransfer extends ViewRecord
 {

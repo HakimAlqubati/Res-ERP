@@ -1,13 +1,25 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\EquipmentTypeResource\Pages\ListEquipmentTypes;
+use App\Filament\Resources\EquipmentTypeResource\Pages\CreateEquipmentType;
+use App\Filament\Resources\EquipmentTypeResource\Pages\EditEquipmentType;
 use App\Filament\Clusters\HRServiceRequestCluster;
 use App\Filament\Resources\EquipmentTypeResource\Pages;
 use App\Models\EquipmentType;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,20 +30,20 @@ class EquipmentTypeResource extends Resource
     protected static ?string $model = EquipmentType::class;
 
     protected static ?string $cluster                             = HRServiceRequestCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 3;
 
     protected static ?string $label       = 'Equipment Type';
     protected static ?string $pluralLabel = 'Equipment Types';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columns(4)->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->label('Name')
                         ->required()
                         ->maxLength(255)->live(onBlur:true)
@@ -40,7 +52,7 @@ class EquipmentTypeResource extends Resource
                         })
                         ,
 
-                    Forms\Components\TextInput::make('code')
+                    TextInput::make('code')
                         ->label('Code')
                         ->required()
                         // ->maxLength(40)
@@ -48,18 +60,18 @@ class EquipmentTypeResource extends Resource
                         ->helperText('This will be used as the Asset Tag prefix.')
                         ,
 
-                    Forms\Components\Select::make('category_id')
+                    Select::make('category_id')
                         ->label('Category')
                         ->relationship('category', 'name')
                         ->searchable()
                         ->required()
                         ->preload(),
 
-                    Forms\Components\Toggle::make('active')
+                    Toggle::make('active')
                         ->label('Active')->inline(false)
                         ->default(true),
 
-                    Forms\Components\Textarea::make('description')
+                    Textarea::make('description')
                         ->label('Description')
                         ->rows(3)->columnSpanFull(),
 
@@ -71,42 +83,42 @@ class EquipmentTypeResource extends Resource
     {
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                TextColumn::make('id')
                     ->label('ID')
                     ->sortable()
                     ->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
                     ->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label('Code')
                     ->sortable()
                     ->searchable()->toggleable(),
 
-                Tables\Columns\TextColumn::make('category.name')
+                TextColumn::make('category.name')
                     ->label('Category')
                     ->sortable()
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->label('Description')->toggleable()
                     ->limit(50),
 
-                Tables\Columns\IconColumn::make('active')
+                IconColumn::make('active')
                     ->label('Active')->alignCenter(true)->toggleable()
                     ->boolean(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -121,9 +133,9 @@ class EquipmentTypeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListEquipmentTypes::route('/'),
-            'create' => Pages\CreateEquipmentType::route('/create'),
-            'edit'   => Pages\EditEquipmentType::route('/{record}/edit'),
+            'index'  => ListEquipmentTypes::route('/'),
+            'create' => CreateEquipmentType::route('/create'),
+            'edit'   => EditEquipmentType::route('/{record}/edit'),
         ];
     }
 

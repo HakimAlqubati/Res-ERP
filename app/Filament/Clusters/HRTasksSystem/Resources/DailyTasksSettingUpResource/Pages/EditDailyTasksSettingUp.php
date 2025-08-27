@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use Filament\Actions;
@@ -15,7 +16,7 @@ class EditDailyTasksSettingUp extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -97,11 +98,11 @@ class EmployeeOvertime extends Model implements Auditable
     {
         if (auth()->check()) {
             if (isBranchManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
             } elseif (isStuff()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
                 });
             }

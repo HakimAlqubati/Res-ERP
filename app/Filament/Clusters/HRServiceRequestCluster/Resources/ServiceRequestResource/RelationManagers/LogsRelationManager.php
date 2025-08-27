@@ -2,8 +2,10 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -26,11 +28,11 @@ class LogsRelationManager extends RelationManager
     {return $ownerRecord->logs->count();}
 
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('log_type')
+        return $schema
+            ->components([
+                TextInput::make('log_type')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -42,10 +44,10 @@ class LogsRelationManager extends RelationManager
             ->recordTitleAttribute('log_type')
             ->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('log_type'),
-                Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\TextColumn::make('createdBy.name'),
-                Tables\Columns\TextColumn::make('created_at'),
+                TextColumn::make('log_type'),
+                TextColumn::make('description'),
+                TextColumn::make('createdBy.name'),
+                TextColumn::make('created_at'),
             ])
             ->filters([
                 //
@@ -53,11 +55,11 @@ class LogsRelationManager extends RelationManager
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\BulkActionGroup::make([
                 //     Tables\Actions\DeleteBulkAction::make(),
                 // ]),

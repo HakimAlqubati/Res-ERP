@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Throwable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use App\Models\Product;
@@ -119,7 +120,7 @@ class UpdateProductUnitPrices extends Command
 
             DB::commit();
             $this->info("🎉 All product price history saved and unit prices updated.");
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             $this->error("❌ Transaction failed: " . $e->getMessage());
             report($e); // اختياري لتسجيل الخطأ في logs

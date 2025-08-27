@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditStockSupplyOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
     protected function getRedirectUrl(): string

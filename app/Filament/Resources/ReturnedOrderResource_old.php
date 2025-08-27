@@ -2,6 +2,20 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use App\Services\MultiProductsInventoryService;
+use Exception;
+use Throwable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ReturnedOrderResource\Pages\ListReturnedOrders;
+use App\Filament\Resources\ReturnedOrderResource\Pages\CreateReturnedOrder;
+use App\Filament\Resources\ReturnedOrderResource\Pages\EditReturnedOrder;
+use App\Filament\Resources\ReturnedOrderResource\Pages\ViewReturnedOrder;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\ReturnedOrderResource\Pages;
 use App\Filament\Resources\ReturnedOrderResource\RelationManagers;
@@ -12,15 +26,12 @@ use App\Models\ReturnedOrder;
 use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -35,14 +46,14 @@ class ReturnedOrderResource_old extends Resource
 {
     protected static ?string $model = ReturnedOrder::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = MainOrdersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make('Returned Order Info')
                     ->schema([
                         Select::make('original_order_id')
@@ -51,13 +62,13 @@ class ReturnedOrderResource_old extends Resource
                             ->searchable()
                             ->required()->live()
                             ->getSearchResultsUsing(function (string $search) {
-                                return \App\Models\Order::where('id', 'like', "%{$search}%")
+                                return Order::where('id', 'like', "%{$search}%")
                                     ->whereIn('status', [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])
                                     ->limit(5)
                                     ->pluck('id', 'id');
                             })
                             ->afterStateUpdated(function ($state, $set) {
-                                $order = \App\Models\Order::find($state);
+                                $order = Order::find($state);
                                 if ($order && $order->branch_id) {
                                     $set('branch_id', $order->branch_id);
                                 }
@@ -162,7 +173,7 @@ class ReturnedOrderResource_old extends Resource
                                             return [];
                                         }
 
-                                        $order = \App\Models\Order::with('orderDetails')->find($orderId);
+                                        $order = Order::with('orderDetails')->find($orderId);
                                         if (! $order) {
                                             return [];
                                         }
@@ -213,9 +224,9 @@ class ReturnedOrderResource_old extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()->visible(fn($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
-                Tables\Actions\Action::make('Approve')->button()
+            ->recordActions([
+                EditAction::make()->visible(fn($record): bool => $record->status === ReturnedOrder::STATUS_CREATED),
+                Action::make('Approve')->button()
                     ->label('Approve')
                     ->color('success')
                     ->icon('heroicon-o-check')
@@ -237,14 +248,14 @@ class ReturnedOrderResource_old extends Resource
 
                                     if ($record->branch->hasStore()) {
                                         // التحقق من الكمية المتوفرة في مخزن الفرع (المصدر)
-                                        $availableQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+                                        $availableQty = MultiProductsInventoryService::getRemainingQty(
                                             $detail->product_id,
                                             $detail->unit_id,
                                             $record->branch->store_id,
                                         ); 
                                         if ($detail->quantity > $availableQty) {
                                             // أوقف العملية برمتها وأظهر إشعار
-                                            throw new \Exception("Insufficient stock in branch store ({$record->branch->name}) for product ID: {$detail->product_id}");
+                                            throw new Exception("Insufficient stock in branch store ({$record->branch->name}) for product ID: {$detail->product_id}");
                                         }
 
                                         // أولاً نُخرج الكمية من المخزن الخاص بالفرع (باعتباره مصدر المرتجع)
@@ -286,12 +297,12 @@ class ReturnedOrderResource_old extends Resource
                             });
                             showSuccessNotifiMessage('Returned order approved successfully.');
                             DB::commit();
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             DB::rollBack();
                             showWarningNotifiMessage('Failed to approve returned order: ' . $e->getMessage());
                         }
                     }),
-                Tables\Actions\Action::make('Reject')->button()
+                Action::make('Reject')->button()
                     ->label('Reject')
                     ->color('danger')
                     ->icon('heroicon-o-x-circle')
@@ -307,15 +318,15 @@ class ReturnedOrderResource_old extends Resource
                             });
                             showSuccessNotifiMessage('Returned order rejected.');
                             DB::commit();
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             DB::rollBack();
                             showWarningNotifiMessage('Failed to reject returned order: ' . $e->getMessage());
                         }
                     })
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -330,10 +341,10 @@ class ReturnedOrderResource_old extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListReturnedOrders::route('/'),
-            'create' => Pages\CreateReturnedOrder::route('/create'),
-            'edit' => Pages\EditReturnedOrder::route('/{record}/edit'),
-            'view' => Pages\ViewReturnedOrder::route('/{record}'),
+            'index' => ListReturnedOrders::route('/'),
+            'create' => CreateReturnedOrder::route('/create'),
+            'edit' => EditReturnedOrder::route('/{record}/edit'),
+            'view' => ViewReturnedOrder::route('/{record}'),
         ];
     }
     public static function getNavigationBadge(): ?string
@@ -343,9 +354,9 @@ class ReturnedOrderResource_old extends Resource
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListReturnedOrders::class,
-            Pages\CreateReturnedOrder::class,
-            Pages\EditReturnedOrder::class,
+            ListReturnedOrders::class,
+            CreateReturnedOrder::class,
+            EditReturnedOrder::class,
         ]);
     }
     public static function canEdit(Model $record): bool

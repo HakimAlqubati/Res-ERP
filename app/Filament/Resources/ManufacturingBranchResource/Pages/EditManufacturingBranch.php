@@ -1,6 +1,7 @@
 <?php
 namespace App\Filament\Resources\ManufacturingBranchResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\ManufacturingBranchResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -12,7 +13,7 @@ class EditManufacturingBranch extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Traits\Inventory;
 
+use Exception;
 use App\Models\StockOutReversal;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +14,12 @@ trait HasStockOutReversal
      *
      * @param string $reason
      * @return StockOutReversal
-     * @throws \Exception
+     * @throws Exception
      */
     public function cancelAndReverse(string $reason): StockOutReversal
     {
         if (! method_exists($this, 'inventoryTransactions')) {
-            throw new \Exception('Model does not have inventoryTransactions relation.');
+            throw new Exception('Model does not have inventoryTransactions relation.');
         }
  
 
@@ -26,7 +27,7 @@ trait HasStockOutReversal
             'reversed_type' => get_class($this),
             'reversed_id' => $this->id,
         ])->exists()) {
-            throw new \Exception('This record has already been reversed.');
+            throw new Exception('This record has already been reversed.');
         }
 
         $transactions = $this->inventoryTransactions()
@@ -34,7 +35,7 @@ trait HasStockOutReversal
             ->get();
 
         if ($transactions->isEmpty()) {
-            throw new \Exception('No stock-out transactions found to reverse.');
+            throw new Exception('No stock-out transactions found to reverse.');
         }
 
         return DB::transaction(function () use ($transactions, $reason) {

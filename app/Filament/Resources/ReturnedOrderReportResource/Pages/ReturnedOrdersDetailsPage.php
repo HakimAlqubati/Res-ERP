@@ -11,7 +11,7 @@ use Filament\Resources\Pages\Page;
 class ReturnedOrdersDetailsPage extends Page
 {
     protected static string $resource = ReturnedOrderReportResource::class;
-    protected static string $view = 'filament.pages.order-reports.returned-report-details';
+    protected string $view = 'filament.pages.order-reports.returned-report-details';
     public ?ReturnedOrder $order = null;
 
     public function mount(int $id): void

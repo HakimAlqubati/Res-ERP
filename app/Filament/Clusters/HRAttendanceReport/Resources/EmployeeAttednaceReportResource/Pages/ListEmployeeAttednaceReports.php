@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource;
 use App\Models\Employee;
 use App\Models\Holiday;
@@ -12,7 +13,6 @@ use Carbon\Carbon;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -61,7 +61,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
 
     // }
 
-    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
+    protected string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employee';
     protected function getViewData(): array
     {
         if (!isStuff()) {

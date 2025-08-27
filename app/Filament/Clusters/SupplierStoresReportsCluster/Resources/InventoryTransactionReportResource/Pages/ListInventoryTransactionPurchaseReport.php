@@ -1,16 +1,17 @@
 <?php
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionPurchaseReportResource;
 use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryTransactionPurchaseReport extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
     protected static string $resource = InventoryTransactionPurchaseReportResource::class;
     // protected static string $view = 'filament.pages.inventory-reports.inventory-report';
-    protected static string $view = 'filament.pages.inventory-reports.multi-products-inventory-purchase-report';
+    protected string $view = 'filament.pages.inventory-reports.multi-products-inventory-purchase-report';
 
     protected function getViewData(): array
     {

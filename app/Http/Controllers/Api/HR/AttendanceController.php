@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api\HR;
 
+use Exception;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Services\HR\Attendance\AttendanceService;
@@ -151,7 +152,7 @@ class AttendanceController extends Controller
                 'status' => 'success',
                 'match'  => $employeeData,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("Face recognition failed", [
                 'message' => $e->getMessage(),
                 'file'    => $file->getClientOriginalName() ?? 'unknown',

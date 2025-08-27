@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages;
 
+use Filament\Actions\Action;
 use App\Filament\Resources\Reports\StoresReportResource;
 use App\Models\Branch;
 use App\Models\Order;
@@ -11,7 +12,6 @@ use App\Models\Supplier;
 
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DatePicker;
-use Filament\Pages\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Layout;
@@ -22,7 +22,7 @@ use niklasravnsborg\LaravelPdf\Facades\Pdf;
 class ListBranchStoreReport extends ListRecords
 {
     protected static string $resource = StoresReportResource::class;
-    protected static string $view = 'filament.pages.stock-report.branch-store-report';
+    protected string $view = 'filament.pages.stock-report.branch-store-report';
 
 
     public function getTitle(): string

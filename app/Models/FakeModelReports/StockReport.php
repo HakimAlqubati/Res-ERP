@@ -2,12 +2,13 @@
 
 namespace App\Models\FakeModelReports;
 
+use Sushi\Sushi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StockReport extends Model
 {
-    use \Sushi\Sushi;
+    use Sushi;
     public $incrementing = false;
 
     protected $schema = [

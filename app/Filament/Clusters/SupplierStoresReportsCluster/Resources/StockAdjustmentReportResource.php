@@ -2,6 +2,10 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Actions\BulkActionGroup;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ListStockAdjustmentReports;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
@@ -12,8 +16,6 @@ use App\Models\StockAdjustmentDetail;
 use App\Models\StockAdjustmentReport;
 use App\Models\Store;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -28,10 +30,10 @@ class StockAdjustmentReportResource extends Resource
 {
     protected static ?string $model = StockAdjustmentDetail::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 9;
     protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
@@ -43,10 +45,10 @@ class StockAdjustmentReportResource extends Resource
     {
         return 'Stock Adjustment';
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -89,9 +91,9 @@ class StockAdjustmentReportResource extends Resource
                         Store::active()->get()->pluck('name', 'id')->toArray()
                     ),
             ], FiltersLayout::AboveContent)
-            ->actions([])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->recordActions([])
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                     // Tables\Actions\ForceDeleteBulkAction::make(),
                 ]),
@@ -122,7 +124,7 @@ class StockAdjustmentReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockAdjustmentReports::route('/'),
+            'index' => ListStockAdjustmentReports::route('/'),
         ];
     }
 

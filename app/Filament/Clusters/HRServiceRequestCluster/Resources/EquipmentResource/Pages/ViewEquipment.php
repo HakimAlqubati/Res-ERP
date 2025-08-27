@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource\Pages;
 
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\EquipmentResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
@@ -13,14 +15,14 @@ class ViewEquipment extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('createServiceRequest')
+            Action::make('createServiceRequest')
                 ->label('Report a Problem')
                 ->icon('heroicon-o-wrench')
                 ->url(fn() => route('filament.admin.h-r-service-request.resources.service-requests.create', [
                     'equipment_id' => $this->record->id,
                 ]))
                 ->openUrlInNewTab(),
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

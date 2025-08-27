@@ -1,6 +1,25 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Fieldset;
+use Throwable;
+use Exception;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\UserResource\Pages\ListUsers;
+use App\Filament\Resources\UserResource\Pages\CreateUser;
+use App\Filament\Resources\UserResource\Pages\EditUser;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Traits\Forms\HasAttendanceForm;
 use App\Filament\Traits\Forms\HasEmployeeExistingForm;
@@ -8,19 +27,15 @@ use App\Filament\Traits\Forms\HasNewUserForm;
 use App\Models\Branch;
 use App\Models\LoginAttempt;
 use App\Models\User;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Alignment;
 use Filament\Tables;
-use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -40,19 +55,19 @@ class UserResource extends Resource
 {
     use HasAttendanceForm, HasNewUserForm, HasEmployeeExistingForm;
     protected static ?string $model           = User::class;
-    protected static ?string $navigationIcon  = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'User & Roles';
+    protected static string | \BackedEnum | null $navigationIcon  = 'heroicon-o-users';
+    protected static string | \UnitEnum | null $navigationGroup = 'User & Roles';
     // protected static ?string $cluster = UserCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     public static function getNavigationLabel(): string
     {
         return __('lang.users');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 ToggleButtons::make('account_mode')
                     ->label('')
@@ -132,16 +147,16 @@ class UserResource extends Resource
                     ->copyable()->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\IconColumn::make('is_blocked')
+                IconColumn::make('is_blocked')
                     ->boolean()->alignCenter(true)
                     ->label(__("lang.is_blocked"))->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('last_login_at')->label('Last Login')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')
+                Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('role')
+                TrashedFilter::make(),
+                SelectFilter::make('role')
                     ->label('Filter by Role')
                     ->options(Role::query()->pluck('name', 'id')->toArray()) // Fetch roles as options
                     ->query(function (Builder $query, $data) {
@@ -152,7 +167,7 @@ class UserResource extends Resource
                         }
                         return $query; // Return the query unchanged if no role is selected
                     }),
-                Tables\Filters\SelectFilter::make('branch_id')
+                SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.branch'))->options(
@@ -160,15 +175,15 @@ class UserResource extends Resource
                         ->pluck('name', 'id')->toArray()
                 ),
             ])
-            ->actions([
+            ->recordActions([
                 ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
-                    Tables\Actions\Action::make('quickEdit')
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
+                    Action::make('quickEdit')
                         ->label('Quick Edit')
                         ->icon('heroicon-o-pencil-square')
-                        ->form([
+                        ->schema([
 
                             Fieldset::make()->columns(2)->schema([
 
@@ -208,14 +223,14 @@ class UserResource extends Resource
                                 } else {
                                     showWarningNotifiMessage('No changes made to the user');
                                 }
-                            } catch (\Throwable $th) {
+                            } catch (Throwable $th) {
                                 throw $th;
                                 showWarningNotifiMessage('Failed to update user', $th->getMessage());
                             }
                         }),
                     // Add a custom action for updating password
-                    Tables\Actions\Action::make('updatePassword')
-                        ->form([
+                    Action::make('updatePassword')
+                        ->schema([
                             TextInput::make('password')
                                 ->label('New Password')
                                 ->password()
@@ -236,7 +251,7 @@ class UserResource extends Resource
                         })
                         ->icon('heroicon-s-lock-closed') // Optional: Add an icon
                         ->label('Update Password'),      // Optional: Add a label
-                    Tables\Actions\Action::make("allowLogin")
+                    Action::make("allowLogin")
                         ->label(__('lang.allow_login'))
                         ->color('success')
                         // ->icon('heroicon-o-ban')
@@ -245,7 +260,7 @@ class UserResource extends Resource
                                 LoginAttempt::where('email', $record->email)
                                     ->where('successful', false)->delete();
                                 showSuccessNotifiMessage('Done');
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 // Log the exception for debugging
                                 Log::error('Error clearing login attempts', ['exception' => $e]);
 
@@ -254,11 +269,11 @@ class UserResource extends Resource
                         })->requiresConfirmation()->hidden(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                ForceDeleteBulkAction::make(),
                 // ExportBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
@@ -272,18 +287,18 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit'   => Pages\EditUser::route('/{record}/edit'),
+            'index'  => ListUsers::route('/'),
+            'create' => CreateUser::route('/create'),
+            'edit'   => EditUser::route('/{record}/edit'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListUsers::class,
-            Pages\CreateUser::class,
-            Pages\EditUser::class,
+            ListUsers::class,
+            CreateUser::class,
+            EditUser::class,
         ]);
     }
 

@@ -2,6 +2,9 @@
 
 namespace App\Repositories\Orders;
 
+use App\Models\Category;
+use App\Models\Product;
+use Exception;
 use App\Exports\OrdersExport;
 use App\Http\Controllers\TestController3;
 use App\Http\Resources\OrderResource;
@@ -43,7 +46,7 @@ class OrderRepository implements OrderRepositoryInterface
             $query->where('type', $request->type);
         }
 
-        $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+        $otherBranchesCategories = Branch::centralKitchens()
             ->where('id', '!=', auth()->user()?->branch?->id) // نستثني فرع المستخدم
             ->with('categories:id')
             ->get()
@@ -167,7 +170,7 @@ class OrderRepository implements OrderRepositoryInterface
             $description = $request->input('description');
 
             // 👇 تحديد الفئات الخاصة بالتصنيع
-            $manufacturingCategoryIds = \App\Models\Category::Manufacturing()->pluck('id')->toArray();
+            $manufacturingCategoryIds = Category::Manufacturing()->pluck('id')->toArray();
 
             // // 👇 إذا الفرع الحالي هو مطبخ مركزي
             // if (auth()->user()?->branch?->is_kitchen) {
@@ -195,12 +198,12 @@ class OrderRepository implements OrderRepositoryInterface
 
                 // Filter order details based on whether they belong to a manufacturing category.
                 $productsForThisBranch = collect($allOrderDetails)->filter(function ($item) use ($categories, $branch) {
-                    $product = \App\Models\Product::find($item['product_id']);
+                    $product = Product::find($item['product_id']);
                     $isForbidden = auth()->check() &&
                         auth()->user()->branch_id === $branch->id &&
                         in_array($product->category_id, $categories);
                     if ($isForbidden) {
-                        throw new \Exception("You cannot request the product ({$product->name}-{$product->id}) because it belongs to a manufacturing category assigned to your own branch.");
+                        throw new Exception("You cannot request the product ({$product->name}-{$product->id}) because it belongs to a manufacturing category assigned to your own branch.");
                     }
                     return $product && in_array($product->category_id, $categories);
                 })->values()->all();
@@ -289,7 +292,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'message' => $message,
                 'order' => $order,
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             return response()->json([
@@ -414,7 +417,7 @@ class OrderRepository implements OrderRepositoryInterface
                 // 'order' => $order->where('id',$orderId)->with('orderDetails')->get(),
                 'order' => Order::find($orderId),
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -483,7 +486,7 @@ class OrderRepository implements OrderRepositoryInterface
                 'orderId' => $order->id,
                 'message' => 'done successfully',
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Roll back the transaction in case of an error
             DB::rollBack();
 

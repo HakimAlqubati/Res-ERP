@@ -2,6 +2,14 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\DepartmentResource\Pages\ListDepartments;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\DepartmentResource\Pages;
 use App\Models\Department;
@@ -9,14 +17,10 @@ use App\Models\Employee;
 use App\Models\Administration;
 use App\Models\Branch;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -28,21 +32,21 @@ class DepartmentResource extends Resource
 {
     protected static ?string $model = Department::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     // protected static ?string $cluster = HRCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make('')->columns(3)->label('')->schema([
                     TextInput::make('name')->required(),
 
@@ -121,12 +125,12 @@ class DepartmentResource extends Resource
                 ToggleColumn::make('active'),
             ])
             ->filters([])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -143,7 +147,7 @@ class DepartmentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDepartments::route('/'),
+            'index' => ListDepartments::route('/'),
             // 'create' => Pages\CreateDepartment::route('/create'),
             // 'edit' => Pages\EditDepartment::route('/{record}/edit'),
         ];

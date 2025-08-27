@@ -2,10 +2,10 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Models\Product;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\MinimumProductQtyReportResource\Pages;
@@ -22,10 +22,10 @@ class MissingInventoryProductsReportResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryManagementCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 11;
 
     public static function getPluralLabel(): ?string
@@ -45,7 +45,7 @@ class MissingInventoryProductsReportResource extends Resource
             ->columns([])
             ->filters([
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('start_date')->live()
                             // ->afterStateUpdated(function (Set $set, $state) {
                             //     $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
@@ -69,13 +69,13 @@ class MissingInventoryProductsReportResource extends Resource
                     ->searchable(),
                 Filter::make('options')
                     ->label('Extra')
-                    ->form([
+                    ->schema([
                         Toggle::make('hide_zero')->inline(false)
                             ->label('Hide Zero Qty')
                             ->default(false),
                     ]),
             ], FiltersLayout::AboveContent)
-            ->actions([]);
+            ->recordActions([]);
     }
 
 

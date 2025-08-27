@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
 
+use Filament\Tables\Columns\TextColumn;
 use App\Models\ProductPriceHistory;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -36,39 +37,39 @@ class ProductPriceHistoriesRelationManager extends RelationManager
                 //     )
                 //     ->sortable()
                 //     ->limit(30)->visible(fn($livewire) => $livewire->getOwnerRecord()?->is_manufacturing),
-                Tables\Columns\TextColumn::make('old_price')
+                TextColumn::make('old_price')
                     ->label('Old Price')
                     ->formatStateUsing(fn($state) => number_format($state, 2)),
 
-                Tables\Columns\TextColumn::make('new_price')
+                TextColumn::make('new_price')
                     ->label('New Price')
                     ->formatStateUsing(fn($state) => number_format($state, 2)),
                 // Tables\Columns\TextColumn::make('source_id')
                 //     ->label('source_id'),
 
-                Tables\Columns\TextColumn::make('unit.name')
+                TextColumn::make('unit.name')
                     ->label('Unit')
 
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('note')
+                TextColumn::make('note')
                     ->label('Note')
                     ->limit(100)
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->label('Date')
                     ->date()
                     ->sortable(),
             ])
             ->filters([])
             ->headerActions([])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // Tables\Actions\RestoreAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\DeleteBulkAction::make(),
                 // Tables\Actions\RestoreBulkAction::make(),
             ]);

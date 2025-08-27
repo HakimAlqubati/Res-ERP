@@ -2,6 +2,13 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskCommentResource\Pages\ListTaskComments;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskCommentResource\Pages;
 use App\Models\Task;
@@ -9,8 +16,6 @@ use App\Models\TaskComment;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -20,20 +25,20 @@ class TaskCommentResource extends Resource
 {
     protected static ?string $model = TaskComment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     // protected static ?string $cluster = HRTasksSystem::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('task_id')->options(Task::select('id')->get()->pluck('id')),
                 Textarea::make('comment')->required(),
             ]);
@@ -52,13 +57,13 @@ class TaskCommentResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                ViewAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -73,7 +78,7 @@ class TaskCommentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTaskComments::route('/'),
+            'index' => ListTaskComments::route('/'),
             // 'create' => Pages\CreateTaskComment::route('/create'),
             // 'edit' => Pages\EditTaskComment::route('/{record}/edit'),
         ];

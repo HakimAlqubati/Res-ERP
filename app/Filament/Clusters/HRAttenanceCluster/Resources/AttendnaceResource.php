@@ -2,6 +2,31 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\Action;
+use Exception;
+use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ListAttendnaces;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\CreateAttendnace;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages\ViewAttendnace;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendnaceResource\Pages;
 use App\Models\Attendance;
@@ -12,14 +37,8 @@ use Carbon\Carbon;
 use DateTime;
 use Filament\Facades\Filament;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -38,22 +57,22 @@ class AttendnaceResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?string $modelLabel = 'Attendance Log';
     protected static ?string $pluralLabel = 'Attendance Log';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->label('Select date & time')->schema([
                     Grid::make()->columns(3)->schema([
 
-                        Forms\Components\DatePicker::make('check_date')
+                        DatePicker::make('check_date')
                             ->label('Check date')
                             ->required()
                             ->default(date('Y-m-d'))
@@ -62,7 +81,7 @@ class AttendnaceResource extends Resource
                                 $set('day', Carbon::parse($state)->format('l'));
                             }),
 
-                        Forms\Components\TimePicker::make('check_time')
+                        TimePicker::make('check_time')
                             ->label('Check time')
                             ->default(now())
                             ->required(),
@@ -71,7 +90,7 @@ class AttendnaceResource extends Resource
                 ]),
 
                 Fieldset::make()->label('Select employee and check type')->schema([
-                    Forms\Components\Select::make('employee_id')
+                    Select::make('employee_id')
                         ->label('Employee')
                         ->live()
                         ->searchable()
@@ -100,7 +119,7 @@ class AttendnaceResource extends Resource
                             }
                         })
                         ->required(),
-                    Forms\Components\ToggleButtons::make('check_type')
+                    ToggleButtons::make('check_type')
                         ->label('Check type')
                         ->inline()
                         // ->default(function(Get $get,Set $set){
@@ -113,7 +132,7 @@ class AttendnaceResource extends Resource
 
                 ]),
 
-                Forms\Components\Textarea::make('notes')
+                Textarea::make('notes')
                     ->label('Notes')
                     ->columnSpanFull()
                     ->nullable(),
@@ -128,29 +147,29 @@ class AttendnaceResource extends Resource
             ->defaultSort('id', 'desc')
             ->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('employee.name')
+                TextColumn::make('employee.name')
                     ->label('Employee')
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('check_type')
+                TextColumn::make('check_type')
                     ->label('Type')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('period.name')
+                TextColumn::make('period.name')
                     ->label('Period')
                     ->tooltip(function ($record) {
                         return $record->period->start_at . ' - ' . $record->period->end_at;
                     }),
 
-                Tables\Columns\TextColumn::make('check_date')
+                TextColumn::make('check_date')
                     ->label('Check Date')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('check_time')
+                TextColumn::make('check_time')
                     ->label('Check Time'),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->label('Status'),
-                Tables\Columns\TextColumn::make('delay_minutes')
+                TextColumn::make('delay_minutes')
                     ->formatStateUsing(function ($record) {
                         if ($record->delay_minutes <= Setting::getSetting('early_attendance_minutes')) {
                             return 0;
@@ -161,24 +180,24 @@ class AttendnaceResource extends Resource
                     ->label('Delay Minuts')->sortable()->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('delay_minutes', '>', 10)))
                     // ->summarize(fn($record): integer => 11)
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
-                Tables\Columns\TextColumn::make('day')
+                TextColumn::make('day')
                     ->label('Day'),
-                Tables\Columns\TextColumn::make('late_departure_minutes')
+                TextColumn::make('late_departure_minutes')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
-                Tables\Columns\TextColumn::make('message')
+                TextColumn::make('message')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true)->limit(50)->tooltip(fn($state): string => $state ?? 'null'),
-                Tables\Columns\TextColumn::make('early_departure_minutes')
+                TextColumn::make('early_departure_minutes')
                     ->label('Early departure minutes')->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->summarize(Sum::make()->query(fn(\Illuminate\Database\Query\Builder $query) => $query->where('early_departure_minutes', '>', 20))),
-                Tables\Columns\TextColumn::make('attendance_type')->alignCenter(true),
+                TextColumn::make('attendance_type')->alignCenter(true),
                 IconColumn::make('accepted')
                     ->label('Is Accepted?')
                     ->alignCenter(true)->toggleable(isToggledHiddenByDefault:true)->boolean(),
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
                 SelectFilter::make('accepted')->searchable()->label('Rejected')->options([
                     0 => 'Yes',
                     1 => 'No',
@@ -195,16 +214,16 @@ class AttendnaceResource extends Resource
 
                 Filter::make('month')
                     ->label('Filter by Month')
-                    ->form([
+                    ->schema([
 
-                        Forms\Components\Select::make('year')
+                        Select::make('year')
                             ->label('Year')
                             ->options(function () {
                                 $years = range(Carbon::now()->year, Carbon::now()->year - 1); // Last 10 years
                                 return array_combine($years, $years);
                             })
                             ->placeholder('Select a year'),
-                        Forms\Components\Select::make('month')
+                        Select::make('month')
                             ->label('Month')
                             ->options([
                                 '01' => 'January',
@@ -224,7 +243,7 @@ class AttendnaceResource extends Resource
 
 
 
-                        Forms\Components\DatePicker::make('check_date')
+                        DatePicker::make('check_date')
                             ->label('Date')
                             ->placeholder('Choose date'),
 
@@ -258,10 +277,10 @@ class AttendnaceResource extends Resource
                     ->label('Status')
                     ->options(Attendance::getStatuses()),
             ])
-            ->actions([
+            ->recordActions([
 
-                Tables\Actions\Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
-                    ->button()->form(function ($record) {
+                Action::make('fixCheckout')->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKOUT))
+                    ->button()->schema(function ($record) {
                         $checkInData = $record->checkinRecord;
 
                         $checkInTime = $checkInData?->check_time;
@@ -311,16 +330,16 @@ class AttendnaceResource extends Resource
                             ]);
                             DB::commit();
                             showSuccessNotifiMessage('Done');
-                        } catch (\Exception $th) {
+                        } catch (Exception $th) {
                             DB::rollBack();
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
                     }),
-                Tables\Actions\Action::make('fixCheckin')
+                Action::make('fixCheckin')
                     ->visible(fn($record): bool => (isSuperAdmin() && $record->check_type == Attendance::CHECKTYPE_CHECKIN))
                     ->button()
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
 
                         $checkInTime = $record?->check_time;
 
@@ -363,22 +382,22 @@ class AttendnaceResource extends Resource
                             ]);
                             DB::commit();
                             showSuccessNotifiMessage('Done');
-                        } catch (\Exception $th) {
+                        } catch (Exception $th) {
                             DB::rollBack();
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
                     }),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                ViewAction::make(),
+                DeleteAction::make(),
+                ForceDeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -393,10 +412,10 @@ class AttendnaceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAttendnaces::route('/'),
-            'create' => Pages\CreateAttendnace::route('/create'),
+            'index' => ListAttendnaces::route('/'),
+            'create' => CreateAttendnace::route('/create'),
             // 'edit' => Pages\EditAttendnace::route('/{record}/edit'),
-            'view' => Pages\ViewAttendnace::route('/{record}'),
+            'view' => ViewAttendnace::route('/{record}'),
             // 'employee-attendance' => Pages\EmployeeAttendance::route('/employee-attendance'),
         ];
     }

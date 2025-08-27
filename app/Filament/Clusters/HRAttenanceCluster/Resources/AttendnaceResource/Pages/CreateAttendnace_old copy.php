@@ -16,7 +16,7 @@ class CreateAttendnace_old extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
 
-        $data['day'] = \Carbon\Carbon::parse($data['check_date'])->format('l');
+        $data['day'] = Carbon::parse($data['check_date'])->format('l');
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
         

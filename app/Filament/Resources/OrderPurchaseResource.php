@@ -2,6 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\OrderPurchaseResource\Pages\CreateOrderPurchase;
 use App\Filament\Resources\OrderPurchaseResource\Pages\EditOrderPurchase;
@@ -20,15 +25,11 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\BadgeColumn;
@@ -44,7 +45,7 @@ class OrderPurchaseResource extends Resource
     protected static ?string $slug = 'purchased-orders';
     // protected static ?string $navigationIcon = 'heroicon-o-collection';
     protected static ?string $cluster = MainOrdersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     // protected static bool $shouldRegisterNavigation = false;
     public static function getPluralLabel(): ?string
@@ -60,10 +61,10 @@ class OrderPurchaseResource extends Resource
     // {
     //     return __('lang.purchased_orders');
     // }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
                     Grid::make()->columns(4)->schema([
                         Select::make('branch_id')->required()
@@ -131,7 +132,7 @@ class OrderPurchaseResource extends Resource
                                 )
                                 ->searchable()
                                 ->reactive()
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
@@ -148,7 +149,7 @@ class OrderPurchaseResource extends Resource
                                 ->label(__('lang.quantity'))
                                 ->numeric()
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $set('available_quantity', $state);
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
@@ -201,13 +202,13 @@ class OrderPurchaseResource extends Resource
 
             ])
             ->defaultSort('id', 'desc')
-            ->actions([
+            ->recordActions([
                 // ViewAction::make(),
                 // EditAction::make(),
                 // DeleteAction::make(),
                 // Tables\Actions\RestoreAction::make(),
             ])
-            ->bulkActions([]);
+            ->toolbarActions([]);
     }
 
     public static function getRelations(): array

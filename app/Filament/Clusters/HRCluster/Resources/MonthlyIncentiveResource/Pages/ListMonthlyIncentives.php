@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -13,7 +14,7 @@ class ListMonthlyIncentives extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

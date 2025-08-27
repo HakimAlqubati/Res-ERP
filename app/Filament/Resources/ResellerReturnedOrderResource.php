@@ -1,19 +1,19 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\Base\ReturnedOrderResource as BaseReturnedOrderResource;
 use App\Models\Branch;
 use App\Models\Order;
 use Filament\Facades\Filament;
-use Filament\Pages\SubNavigationPosition;
 use Illuminate\Database\Eloquent\Builder;
 
 class ResellerReturnedOrderResource extends BaseReturnedOrderResource
 {
     protected static ?string $slug                                = 'resellers-returned-orders';
     protected static ?string $cluster                             = ResellersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
     public static function shouldRegisterNavigation(): bool
     {

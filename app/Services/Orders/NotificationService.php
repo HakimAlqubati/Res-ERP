@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use App\Models\User;
@@ -24,7 +25,7 @@ class NotificationService
         foreach ($tokens as $token) {
             try {
                 sendNotification($token, $title, $body, $data);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error("FCM Notification failed: " . $e->getMessage(), [
                     'token' => $token,
                     'title' => $title,
@@ -56,7 +57,7 @@ class NotificationService
     /**
      * Send notification to a user model.
      *
-     * @param \App\Models\User $user
+     * @param User $user
      * @param string $title
      * @param string $body
      * @param array $data

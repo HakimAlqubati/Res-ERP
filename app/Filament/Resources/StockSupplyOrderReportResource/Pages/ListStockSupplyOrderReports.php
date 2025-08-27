@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\StockSupplyOrderReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
 use App\Filament\Resources\StockSupplyOrderReportResource;
 use App\Models\Store;
 use App\Services\StockSupply\Reports\StockSupplyOrderReportService;
@@ -10,9 +11,9 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListStockSupplyOrderReports extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
     protected static string $resource = StockSupplyOrderReportResource::class;
-    protected static string $view = 'filament.pages.stock-supply-order-reports.stock-supply-order-report';
+    protected string $view = 'filament.pages.stock-supply-order-reports.stock-supply-order-report';
 
 
     protected function getViewData(): array

@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Fcm;
 
+use Exception;
 use App\Interfaces\Fcm\FcmRepositoryInterface;
 use App\Models\User;
 
@@ -12,7 +13,7 @@ class FcmRepository implements FcmRepositoryInterface
         try {
             $user = User::findOrFail($userId);
             return $user->update(['fcm_token' => $fcmToken]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return false;
         }
     }

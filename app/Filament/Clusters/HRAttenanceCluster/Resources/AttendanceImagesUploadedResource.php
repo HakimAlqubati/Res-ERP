@@ -2,12 +2,13 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendanceImagesUploadedResource\Pages\ListAttendanceImagesUploadeds;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\AttendanceImagesUploadedResource\Pages;
 use App\Models\AttendanceImagesUploaded;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\ImageColumn;
@@ -21,10 +22,10 @@ class AttendanceImagesUploadedResource extends Resource
 {
     protected static ?string $model = AttendanceImagesUploaded::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 20;
     protected static ?string $pluralLabel = 'Attendance Images Uploaded';
 
@@ -58,7 +59,7 @@ class AttendanceImagesUploadedResource extends Resource
 
                 Filter::make('datetime')
                     ->label(__('lang.created_at'))
-                    ->form([
+                    ->schema([
                         DatePicker::make('created_from')->label(__('lang.from'))->default(now()),
                         DatePicker::make('created_until')->label(__('lang.to'))->default(now()),
                     ])
@@ -81,7 +82,7 @@ class AttendanceImagesUploadedResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAttendanceImagesUploadeds::route('/'),
+            'index' => ListAttendanceImagesUploadeds::route('/'),
         ];
     }
 }

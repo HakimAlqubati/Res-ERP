@@ -2,9 +2,14 @@
 
 namespace App\Filament\Resources\OrderReportsResource\Pages;
 
+use App\Models\Category;
+use App\Models\Branch;
+use App\Models\InventoryTransaction;
+use Carbon\Carbon;
+use stdClass;
+use Filament\Actions\Action;
 use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
 use App\Models\Order;
-use Filament\Pages\Actions\Action;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use niklasravnsborg\LaravelPdf\Facades\Pdf;
@@ -26,7 +31,7 @@ class GeneralReportProductDetails extends Page
         $this->branch_id = $_GET['branch_id'] ?? '';
         $this->storeId = $_GET['storeId'] ?? '';
     }
-    protected static string $view = 'filament.pages.order-reports.general-report-product-details';
+    protected string $view = 'filament.pages.order-reports.general-report-product-details';
 
     public function runSourceBalanceByCategorySQL(int $storeId, int $categoryId, string $fromDate, string $toDate): array
     {  
@@ -160,8 +165,8 @@ SQL;
             'report_data' => $report_data['data'],
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
-            'category' => \App\Models\Category::find($this->category_id)?->name,
-            'branch' => \App\Models\Branch::find($this->branch_id)?->name,
+            'category' => Category::find($this->category_id)?->name,
+            'branch' => Branch::find($this->branch_id)?->name,
             'total_quantity' =>  $total_quantity,
             'total_price' =>  $total_price
         ];
@@ -186,11 +191,11 @@ SQL;
 
     public function getReportDetails($start_date, $end_date, $branch_id, $category_id)
     {
-        $IN  = \App\Models\InventoryTransaction::MOVEMENT_IN  ?? 'in';
-        $OUT = \App\Models\InventoryTransaction::MOVEMENT_OUT ?? 'out';
+        $IN  = InventoryTransaction::MOVEMENT_IN  ?? 'in';
+        $OUT = InventoryTransaction::MOVEMENT_OUT ?? 'out';
 
         // فرع -> متجر
-        $storeId = \App\Models\Branch::where('id', $branch_id)->value('store_id');
+        $storeId = Branch::where('id', $branch_id)->value('store_id');
 
         if (! $storeId) {
             return [
@@ -201,8 +206,8 @@ SQL;
         }
 
         $this->storeId = $storeId;
-        $from = \Carbon\Carbon::parse($start_date)->startOfDay();
-        $to   = \Carbon\Carbon::parse($end_date)->endOfDay();
+        $from = Carbon::parse($start_date)->startOfDay();
+        $to   = Carbon::parse($end_date)->endOfDay();
         $rows = $this->runSourceBalanceByCategorySQL($storeId, $this->category_id, $from, $to);
 
         // dd($rows);
@@ -235,7 +240,7 @@ SQL;
             // $amountBase       = $netBase * $avgInCostPerBase; // قيمة الصافي
 
             $amountBase = $r->remaining_value;
-            $obj = new \stdClass();
+            $obj = new stdClass();
             $obj->category_id  = (int) $category_id;
             $obj->product_id   = $r->product_id;
             $obj->product_name = $r->product_name;
@@ -288,8 +293,8 @@ SQL;
             'report_data' => $data['report_data'],
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
-            'category' => \App\Models\Category::find($this->category_id)?->name,
-            'branch' => \App\Models\Branch::find($this->branch_id)?->name,
+            'category' => Category::find($this->category_id)?->name,
+            'branch' => Branch::find($this->branch_id)?->name,
             'total_quantity' =>  $data['total_quantity'],
             'total_price' =>  $data['total_price']
         ];

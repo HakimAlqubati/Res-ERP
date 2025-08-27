@@ -2,11 +2,13 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use App\Filament\Clusters\InventoryReportCluster;
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInboundOutflowReport;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Pages\SubNavigationPosition;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
@@ -17,9 +19,9 @@ class InboundOutflowReportResource extends Resource
 {
     protected static ?string $model = Product::class;
     protected static ?string $slug = 'inbound-outflow-report';
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-right-circle';
-    protected static ?string $cluster = \App\Filament\Clusters\InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrow-right-circle';
+    protected static ?string $cluster = InventoryReportCluster::class;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
     protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
@@ -35,7 +37,7 @@ class InboundOutflowReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInboundOutflowReport::route('/'),
+            'index' => ListInboundOutflowReport::route('/'),
         ];
     }
 
@@ -43,7 +45,7 @@ class InboundOutflowReportResource extends Resource
     {
         return $table->filters([
             Filter::make('transactionable_id')
-                ->form([
+                ->schema([
                     TextInput::make('transactionable_id')
                         ->label('Transaction ID')
                         ->required(),

@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use Exception;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Models\Employee;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
@@ -48,7 +50,7 @@ class WorkPeriodImport implements ToModel, WithHeadingRow, WithValidation, Skips
                 'created_by' => auth()->id(),
 
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('Error processing row: ' . json_encode($row) . ' - ' . $e->getMessage());
             return null; // Skip row with error
         }
@@ -91,7 +93,7 @@ class WorkPeriodImport implements ToModel, WithHeadingRow, WithValidation, Skips
         // Check if value is numeric (fractional day representation in Excel)
         if (is_numeric($value)) {
             // Convert numeric time (fractional day) to HH:mm:ss
-            return Carbon::parse(\PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value))->format('H:i:s');
+            return Carbon::parse(Date::excelToDateTimeObject($value))->format('H:i:s');
         }
 
         // Attempt to parse as string time

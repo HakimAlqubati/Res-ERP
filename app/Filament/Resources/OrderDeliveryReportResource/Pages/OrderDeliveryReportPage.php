@@ -10,7 +10,7 @@ class OrderDeliveryReportPage extends Page
 {
     protected static string $resource = OrderDeliveryReportResource::class;
 
-    protected static string $view = 'filament.resources.order-delivery-report-resource.pages.report-view';
+    protected string $view = 'filament.resources.order-delivery-report-resource.pages.report-view';
 
     public Collection $report;
 

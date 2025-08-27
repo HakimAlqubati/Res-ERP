@@ -20,7 +20,7 @@ class EditTask extends EditRecord
         return [
             Action::make('MoveTask')
             ->hidden()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Select::make('task_status')->default(function ($record) {
                         return $record->task_status;

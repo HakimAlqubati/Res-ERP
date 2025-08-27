@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use InvalidArgumentException;
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -78,12 +80,12 @@ class LeaveBalance extends Model implements Auditable
         $leaveType = LeaveType::find($leaveTypeId);
 
         if (!$leaveType) {
-            throw new \InvalidArgumentException('Invalid leave type ID.');
+            throw new InvalidArgumentException('Invalid leave type ID.');
         }
 
         // If the leave type is monthly, the month is required
         if ($leaveType->type == LeaveType::TYPE_MONTHLY && $leaveType->balance_period == LeaveType::BALANCE_PERIOD_MONTHLY && $month === null) {
-            throw new \InvalidArgumentException('Month is required for monthly leave types.');
+            throw new InvalidArgumentException('Month is required for monthly leave types.');
         }
 
         // Prepare the query to get the leave balance
@@ -108,11 +110,11 @@ class LeaveBalance extends Model implements Auditable
         //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
         if (auth()->check()) {
             if (isBranchManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
             } elseif (isStuff()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
                 });
             }

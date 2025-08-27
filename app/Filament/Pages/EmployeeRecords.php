@@ -10,8 +10,8 @@ class EmployeeRecords extends Page
 
 {
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static string $view = 'filament.pages.employee-records';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected string $view = 'filament.pages.employee-records';
     
     protected static ?string $slug = "employee-records";
 

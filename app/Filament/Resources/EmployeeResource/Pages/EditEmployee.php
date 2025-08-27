@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\EmployeeResource\Pages;
 
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
 use App\Filament\Resources\EmployeeResource;
 use App\Models\Employee;
 use Filament\Pages\Actions;
@@ -14,8 +16,8 @@ class EditEmployee extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
-            Actions\RestoreAction::make(),
+            DeleteAction::make(),
+            RestoreAction::make(),
         ];
     }
 

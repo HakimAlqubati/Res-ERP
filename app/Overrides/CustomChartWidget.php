@@ -2,9 +2,11 @@
 
 namespace Filament\Widgets;
 
+use Filament\Widgets\Concerns\CanPoll;
+
 class CustomChartWidget extends Widget
 {
-    use Concerns\CanPoll;
+    use CanPoll;
 
     protected ?array $cachedData = null;
 
@@ -18,7 +20,7 @@ class CustomChartWidget extends Widget
 
     protected static ?array $options = null;
 
-    protected static string $view = 'filament::widgets.chart-widget';
+    protected string $view = 'filament::widgets.chart-widget';
 
     public function mount()
     {

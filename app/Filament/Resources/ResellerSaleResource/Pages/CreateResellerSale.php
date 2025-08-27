@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ResellerSaleResource\Pages;
 
+use Exception;
+use App\Models\Branch;
 use App\Filament\Resources\ResellerSaleResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
@@ -18,7 +20,7 @@ class CreateResellerSale extends CreateRecord
     {
         try {
             parent::create($another); 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
 
             showWarningNotifiMessage('Error',       $e->getMessage());
 
@@ -28,7 +30,7 @@ class CreateResellerSale extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['store_id'] = $this->record->branch->store_id ?? \App\Models\Branch::find($data['branch_id'])?->store_id;
+        $data['store_id'] = $this->record->branch->store_id ?? Branch::find($data['branch_id'])?->store_id;
         if ($data['store_id'] == null) {
         }
         return $data;

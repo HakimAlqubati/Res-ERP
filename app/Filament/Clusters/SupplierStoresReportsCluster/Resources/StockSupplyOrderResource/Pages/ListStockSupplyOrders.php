@@ -2,11 +2,12 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockSupplyOrderResource;
 use App\Models\StockSupplyOrder;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListStockSupplyOrders extends ListRecords
@@ -16,7 +17,7 @@ class ListStockSupplyOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
     public function getTabs(): array

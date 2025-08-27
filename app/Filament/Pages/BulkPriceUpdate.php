@@ -2,22 +2,23 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Exception;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
 use App\Services\BulkPricingAdjustmentService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Facades\Log;
-use Filament\Forms\Get; // Import for reactive forms
+use Illuminate\Support\Facades\Log; // Import for reactive forms
 use Livewire\Component as Livewire; // Import for afterStateUpdated $set
 
 class BulkPriceUpdate extends Page implements HasForms
@@ -25,12 +26,12 @@ class BulkPriceUpdate extends Page implements HasForms
     use InteractsWithForms;
 
     // --- Page Configuration ---
-    protected static ?string $navigationIcon = 'heroicon-o-scale';
-    protected static ?string $navigationGroup = 'Tools';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-scale';
+    protected static string | \UnitEnum | null $navigationGroup = 'Tools';
     protected static ?string $navigationLabel = 'Bulk Price Update';
     protected static ?string $title = 'Bulk Historical Price Update';
 
-    protected static string $view = 'filament.pages.bulk-price-update';
+    protected string $view = 'filament.pages.bulk-price-update';
 
     public ?array $data = [];
 
@@ -42,10 +43,10 @@ class BulkPriceUpdate extends Page implements HasForms
     /**
      * Define the form schema.
      */
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make('Update Criteria')->columns(3)->schema([
                     Select::make('category_id')
                         ->label('Select Category')
@@ -165,7 +166,7 @@ class BulkPriceUpdate extends Page implements HasForms
                 ->success()
                 ->persistent()
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('Update Failed')
                 ->body($e->getMessage())

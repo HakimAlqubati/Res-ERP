@@ -158,9 +158,9 @@ class GoodsReceivedNote extends Model implements Auditable
                         $notes .= ' in (' . $grn->store->name . ')';
                     }
 
-                    \App\Models\InventoryTransaction::create([
+                    InventoryTransaction::create([
                         'product_id' => $detail->product_id,
-                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
                         'quantity' => $detail->quantity,
                         'package_size' => $detail->package_size,
                         'price' => getUnitPrice($detail->product_id, $detail->unit_id),
@@ -179,9 +179,9 @@ class GoodsReceivedNote extends Model implements Auditable
 
     public function getHasInventoryTransactionAttribute(): bool
     {
-        return \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+        return InventoryTransaction::where('transactionable_type', self::class)
             ->where('transactionable_id', $this->id)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->exists();;
     }
 

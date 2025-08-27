@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\StockReportResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Resources\StockReportResource;
 use App\Models\Store;
 use App\Models\Supplier;
@@ -13,11 +14,11 @@ use Filament\Tables\Filters\SelectFilter;
 class ListStockReports extends ListRecords
 {
     protected static string $resource = StockReportResource::class;
-    protected static string $view = 'filament.pages.stock-report.stock-report';
+    protected string $view = 'filament.pages.stock-report.stock-report';
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

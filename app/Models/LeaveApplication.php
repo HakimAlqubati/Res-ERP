@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -135,13 +136,13 @@ class LeaveApplication extends Model implements Auditable
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope( function (Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }
 
         if(isStuff()){
-            static::addGlobalScope( function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope( function (Builder $builder) {
                 $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
             });
         }

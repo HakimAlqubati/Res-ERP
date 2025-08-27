@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Throwable;
 use Illuminate\Database\Eloquent\Model;
 
 class Audit extends Model
@@ -36,19 +37,19 @@ class Audit extends Model
     {
         try {
             if ($this->auditable_type === 'App\\Models\\UnitPrice') {
-                $unitPrice = \App\Models\UnitPrice::find($this->auditable_id);
+                $unitPrice = UnitPrice::find($this->auditable_id);
                 return $unitPrice?->product_id;
             }
             if ($this->auditable_type === 'App\\Models\\OrderDetails') {
-                $detail = \App\Models\OrderDetails::find($this->auditable_id);
+                $detail = OrderDetails::find($this->auditable_id);
                 return $detail?->order_id;
             }
 
             if ($this->auditable_type === 'App\\Models\\PurchaseInvoiceDetail') {
-                $purchaseDetail = \App\Models\PurchaseInvoiceDetail::find($this->auditable_id);
+                $purchaseDetail = PurchaseInvoiceDetail::find($this->auditable_id);
                 return $purchaseDetail?->purchaseInvoice?->id;
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return null;
@@ -58,14 +59,14 @@ class Audit extends Model
     {
         try {
             if ($this->auditable_type === 'App\\Models\\UnitPrice') {
-                $unitPrice = \App\Models\UnitPrice::find($this->auditable_id);
+                $unitPrice = UnitPrice::find($this->auditable_id);
                 return $unitPrice?->product?->name;
             }
             
             if ($this->auditable_type === 'App\\Models\\OrderDetails') {
                 return '-';
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         return null;

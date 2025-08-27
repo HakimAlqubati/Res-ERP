@@ -2,12 +2,14 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ListStockAdjustmentSummaryReports;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages\ViewStockAdjustmentSummaryReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages;
 use App\Models\StockAdjustmentDetail;
 use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,10 +23,10 @@ class StockAdjustmentSummaryReportResource extends Resource
 {
     protected static ?string $model = StockAdjustmentDetail::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $cluster = InventoryReportCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 10;
     protected static bool $shouldRegisterNavigation = true;
@@ -71,7 +73,7 @@ class StockAdjustmentSummaryReportResource extends Resource
 
                 Filter::make('from_date')
                     ->label('From Date')
-                    ->form([
+                    ->schema([
                         DatePicker::make('from_date')->maxDate(now())
                             ->default(now()),
                     ])
@@ -81,7 +83,7 @@ class StockAdjustmentSummaryReportResource extends Resource
 
                 Filter::make('to_date')
                     ->label('To Date')
-                    ->form([
+                    ->schema([
                         DatePicker::make('to_date')
                         // ->maxDate(now())
                         ->default(now())
@@ -96,8 +98,8 @@ class StockAdjustmentSummaryReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockAdjustmentSummaryReports::route('/'),
-            'view' => Pages\ViewStockAdjustmentSummaryReport::route('/view/{categoryId}/{adjustment_type}/{storeId}/{fromDate?}/{toDate?}'),
+            'index' => ListStockAdjustmentSummaryReports::route('/'),
+            'view' => ViewStockAdjustmentSummaryReport::route('/view/{categoryId}/{adjustment_type}/{storeId}/{fromDate?}/{toDate?}'),
 
 
         ];

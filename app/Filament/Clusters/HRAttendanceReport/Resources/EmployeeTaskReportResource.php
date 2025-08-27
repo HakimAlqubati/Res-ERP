@@ -2,6 +2,11 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Support\Enums\TextSize;
+use LaraZeus\InlineChart\Tables\Columns\InlineChart;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeTaskReportResource\Widgets\TaskWidgetChart;
 use App\Filament\Clusters\HRTaskReport;
@@ -13,16 +18,12 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Actions\HeaderActionsPosition;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -37,12 +38,12 @@ class EmployeeTaskReportResource extends Resource
 {
     protected static ?string $model = Task::class;
     protected static ?string $slug = 'employee-task-report';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRTaskReport::class;
     protected static ?string $label = 'Employee tasks';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
 
     public static function table(Table $table): Table
@@ -64,7 +65,7 @@ class EmployeeTaskReportResource extends Resource
 
                 TextColumn::make('task_id')
                     ->tooltip(fn($record): string => $record->title . '  Task no #' . $record->id)
-                    ->size(TextColumnSize::Small)
+                    ->size(TextSize::Small)
                     ->color(Color::Green)
                     ->weight(FontWeight::ExtraBold)
                     // ->description('Click')
@@ -124,7 +125,7 @@ class EmployeeTaskReportResource extends Resource
 
                         return trim($formattedTime);
                     })->toggleable(isToggledHiddenByDefault: false),
-                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
+                InlineChart::make('progress')->label('Progress')
                     ->chart(TaskWidgetChart::class)
 
 
@@ -155,7 +156,7 @@ class EmployeeTaskReportResource extends Resource
                     ->getOptionLabelUsing(fn($value): ?string => Task::find($value)?->id),
 
                 Filter::make('created_at')
-                    ->form([
+                    ->schema([
                         DatePicker::make('created_from')
                             ->label('From')->default(null)
                             ->placeholder('From'),
@@ -175,7 +176,7 @@ class EmployeeTaskReportResource extends Resource
                             );
                     })
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 Action::make('pdf')->label('PDF')
                     ->button()
                     ->action(function ($record) {
@@ -240,7 +241,7 @@ class EmployeeTaskReportResource extends Resource
                     }),
             ], HeaderActionsPosition::Adaptive)
             ->selectCurrentPageOnly()
-            ->bulkActions([
+            ->toolbarActions([
                 BulkAction::make('printselected')->label('Print selected')->button()->icon('heroicon-o-printer')
 
                     // ->accessSelectedRecords()

@@ -2,11 +2,16 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Filters\SelectFilter;
+use App\Filament\Resources\AuditResource\Pages\ListAudits;
+use App\Filament\Resources\AuditResource\Pages\CreateAudit;
+use App\Filament\Resources\AuditResource\Pages\EditAudit;
+use App\Filament\Resources\AuditResource\Pages\ViewAudit;
 use App\Filament\Resources\AuditResource\Pages;
 use App\Filament\Resources\AuditResource\RelationManagers;
 use App\Models\Audit;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
@@ -21,14 +26,14 @@ class AuditResource extends Resource
 {
     protected static ?string $model = Audit::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $label = 'Audit Log';
     protected static ?string $pluralLabel = 'Audit Logs';
     protected static ?string $slug = 'audit-logs';
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -73,7 +78,7 @@ class AuditResource extends Resource
                     ->tooltip(fn($record) => $record->created_at->format('Y-m-d H:i:s')),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('auditable_type')
+                SelectFilter::make('auditable_type')
                     ->label('Model')
                     ->options(
                         fn() => Audit::query()
@@ -86,10 +91,10 @@ class AuditResource extends Resource
                     ->searchable(),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\BulkActionGroup::make([
                 //     Tables\Actions\DeleteBulkAction::make(),
                 // ]),
@@ -106,10 +111,10 @@ class AuditResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAudits::route('/'),
-            'create' => Pages\CreateAudit::route('/create'),
-            'edit' => Pages\EditAudit::route('/{record}/edit'),
-            'view' => Pages\ViewAudit::route('/{record}'),
+            'index' => ListAudits::route('/'),
+            'create' => CreateAudit::route('/create'),
+            'edit' => EditAudit::route('/{record}/edit'),
+            'view' => ViewAudit::route('/{record}'),
         ];
     }
 }

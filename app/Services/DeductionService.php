@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use DateTime;
 use App\Models\Deduction;
 use App\Models\Employee;
 use App\Models\MonthlySalaryDeductionsDetail;
@@ -120,7 +121,7 @@ class DeductionService
         $lastMonthDeductions = [];
         $totalDeductions = [];
         $lastMonthSalary = $monthSalaries->last(); // Get the last month record
-        $lastMonthName = (new \DateTime($lastMonthSalary->month))->format('F'); // e.g., 'January'
+        $lastMonthName = (new DateTime($lastMonthSalary->month))->format('F'); // e.g., 'January'
 
         // Iterate over all MonthSalary records
         foreach ($monthSalaries as $monthSalary) {
@@ -189,7 +190,7 @@ class DeductionService
 
         // Get all employees in the branch
         $employees = Employee::where('branch_id', $branchId)->pluck('id');
-        $lastMonthName = (new \DateTime($lastMonthSalary->month))->format('F'); // e.g., 'January'
+        $lastMonthName = (new DateTime($lastMonthSalary->month))->format('F'); // e.g., 'January'
 
         foreach ($monthSalaries as $monthSalary) {
             // Retrieve the deduction details for all employees in the branch and the salary month

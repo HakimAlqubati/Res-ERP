@@ -2,6 +2,10 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInventoryTransactionPurchaseReport;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\PurchaseDetails;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\OrderDetails;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
@@ -12,7 +16,6 @@ use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -24,7 +27,7 @@ class InventoryTransactionPurchaseReportResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
     protected static ?string $slug = 'inventory-p-report';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static bool $shouldRegisterNavigation = false;
     public static function shouldRegisterNavigation(): bool
     {
@@ -43,7 +46,7 @@ class InventoryTransactionPurchaseReportResource extends Resource
         return 'Store Position Report';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 7;
 
 
@@ -111,9 +114,9 @@ class InventoryTransactionPurchaseReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventoryTransactionPurchaseReport::route('/'),
-            'purchase-details' => Pages\PurchaseDetails::route('/purchase-details/{product}'),
-            'order-details' => Pages\OrderDetails::route('/order-details/{product}'),
+            'index' => ListInventoryTransactionPurchaseReport::route('/'),
+            'purchase-details' => PurchaseDetails::route('/purchase-details/{product}'),
+            'order-details' => OrderDetails::route('/order-details/{product}'),
         ];
     }
     public static function getNavigationBadge(): ?string

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CategoryResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Resources\CategoryResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ManageRecords;
@@ -13,7 +14,7 @@ class ManageCategories extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

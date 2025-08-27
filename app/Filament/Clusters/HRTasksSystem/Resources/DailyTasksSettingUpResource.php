@@ -2,6 +2,21 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use DateTime;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages\ListDailyTasksSettingUps;
+use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages\CreateDailyTasksSettingUp;
+use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages\EditDailyTasksSettingUp;
+use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages\ViewDailyTasksSettingUp;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\DailyTasksSettingUpResource\Pages;
 use App\Models\Branch;
@@ -9,8 +24,6 @@ use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
 use App\Models\User;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -18,10 +31,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
@@ -36,21 +45,21 @@ class DailyTasksSettingUpResource extends Resource
 {
     protected static ?string $model = DailyTasksSettingUp::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRTasksSystem::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
 
     public static function getTitleCasePluralModelLabel(): string
     {
         return 'Scheduled Task Setup';
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
 
                     Grid::make()->columns(4)->schema([
@@ -133,8 +142,8 @@ class DailyTasksSettingUpResource extends Resource
                             DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
-                                $date1 = new \DateTime($get('start_date'));
-                                $date2 = new \DateTime($state);
+                                $date1 = new DateTime($get('start_date'));
+                                $date2 = new DateTime($state);
 
                                 $interval = $date1->diff($date2);
 
@@ -213,7 +222,7 @@ class DailyTasksSettingUpResource extends Resource
                                 ->live(onBlur: true),
                         ])
                         ->collapseAllAction(
-                            fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
+                            fn(Action $action) => $action->label('Collapse all steps'),
                         )
                         ->orderColumn('order')
                         ->reorderable()
@@ -236,7 +245,7 @@ class DailyTasksSettingUpResource extends Resource
                 TextColumn::make('title')->searchable()->alignCenter(true),
                 TextColumn::make('schedule_type')->searchable()->sortable()->label('Type')->alignCenter(true),
                 TextColumn::make('description')->limit(30)->searchable()->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('step_count')
+                TextColumn::make('step_count')
                     ->color(Color::Blue)->alignCenter(true)->label('Steps')
                     ->searchable()->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('assignedto.name')->label('Assigned to')
@@ -263,16 +272,16 @@ class DailyTasksSettingUpResource extends Resource
                     Branch::select('name', 'id')->pluck('name', 'id')
                 ),
             ],FiltersLayout::AboveContent)
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
                 // ActionGroup::make([
                 //     Tables\Actions\EditAction::make(),
                 // Tables\Actions\ViewAction::make(),
                 // ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -302,10 +311,10 @@ class DailyTasksSettingUpResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDailyTasksSettingUps::route('/'),
-            'create' => Pages\CreateDailyTasksSettingUp::route('/create'),
-            'edit' => Pages\EditDailyTasksSettingUp::route('/{record}/edit'),
-            'view' => Pages\ViewDailyTasksSettingUp::route('/{record}'),
+            'index' => ListDailyTasksSettingUps::route('/'),
+            'create' => CreateDailyTasksSettingUp::route('/create'),
+            'edit' => EditDailyTasksSettingUp::route('/{record}/edit'),
+            'view' => ViewDailyTasksSettingUp::route('/{record}'),
         ];
     }
 

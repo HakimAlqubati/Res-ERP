@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceResource\Pages;
 
+use Filament\Actions\EditAction;
 use App\Filament\Resources\PurchaseInvoiceResource;
 use App\Models\PurchaseInvoice;
 use Filament\Pages\Actions;
@@ -15,7 +16,7 @@ class ViewPurchaseInvoice extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
     protected function mutateFormDataBeforeFill(array $data): array

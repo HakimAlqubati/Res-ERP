@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BranchResellerResource\Pages;
 
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\BranchResellerResource;
 use App\Models\Branch;
 use App\Models\Store;
@@ -15,7 +16,7 @@ class CreateBranchReseller extends CreateRecord
     protected static string $resource = BranchResellerResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['type'] = \App\Models\Branch::TYPE_RESELLER;
+        $data['type'] = Branch::TYPE_RESELLER;
         return $data;
     }
 
@@ -24,7 +25,7 @@ class CreateBranchReseller extends CreateRecord
         return $this->getResource()::getUrl('index');
     }
 
-    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
+    protected function handleRecordCreation(array $data): Model
     {
         return DB::transaction(function () use ($data) {
             $branch = Branch::create($data);

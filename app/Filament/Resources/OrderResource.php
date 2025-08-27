@@ -2,6 +2,32 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Throwable;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\ViewAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\BulkAction;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\OrdersExport2;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\LogsRelationManager;
+use App\Filament\Resources\OrderResource\Pages\ListOrders;
+use App\Filament\Resources\OrderResource\Pages\CreateOrder;
+use App\Filament\Resources\OrderResource\Pages\ViewOrder;
+use App\Filament\Resources\OrderResource\Pages\EditOrder;
+use App\Filament\Resources\OrderResource\Pages\OrderReportCustom;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Resources\OrderResource\Pages;
@@ -16,21 +42,16 @@ use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -62,21 +83,21 @@ class OrderResource extends Resource
     //     ];
     // }
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Orders';
     protected static ?string $recordTitleAttribute = 'id';
     public static function getNavigationLabel(): string
     {
         return __('lang.orders');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
                     Grid::make()->columns(3)->schema([
                         Select::make('branch_id')->required()
@@ -85,7 +106,7 @@ class OrderResource extends Resource
                         Select::make('status')->required()
                             ->label(__('lang.order_status'))
                             ->options(Order::getStatusLabels())->default(Order::ORDERED),
-                        Forms\Components\DateTimePicker::make('created_at')
+                        DateTimePicker::make('created_at')
                             ->label(__('lang.created_at')),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
@@ -139,7 +160,7 @@ class OrderResource extends Resource
                                 )
                                 ->searchable()
                                 ->reactive()
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
@@ -156,7 +177,7 @@ class OrderResource extends Resource
                                 ->label(__('lang.quantity'))
                                 ->numeric()
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $set('available_quantity', $state);
 
                                     $set('total_price', ((float) $state) * ((float)$get('price') ?? 0));
@@ -226,7 +247,7 @@ class OrderResource extends Resource
                     })
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (\Filament\Tables\Table $table) {
+                            ->using(function (Table $table) {
                                 $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
                                 if (is_numeric($total)) {
                                     return formatMoneyWithCurrency($total);
@@ -272,9 +293,9 @@ class OrderResource extends Resource
                 // Filter::make('active')->label(__('lang.active')),
                 Filter::make('created_at')
                     ->label(__('lang.created_at'))
-                    ->form([
-                        Forms\Components\DatePicker::make('created_from')->label(__('lang.from')),
-                        Forms\Components\DatePicker::make('created_until')->label(__('lang.to')),
+                    ->schema([
+                        DatePicker::make('created_from')->label(__('lang.from')),
+                        DatePicker::make('created_until')->label(__('lang.to')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -287,41 +308,41 @@ class OrderResource extends Resource
                                 fn(Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date),
                             );
                     }),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
 
             ])
-            ->actions([
-                Tables\Actions\Action::make('cancel')
+            ->recordActions([
+                Action::make('cancel')
                     ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
                     ->icon('heroicon-o-backspace')->button()->color(Color::Red)
-                    ->form([
+                    ->schema([
                         Textarea::make('cancel_reason')->required()->label('Cancel Reason')
                     ])
                     ->action(function ($record, $data) {
                         $result = $record->cancelOrder($data['cancel_reason']);
 
                         if ($result['status'] === 'success') {
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Success')
                                 ->body($result['message'])
                                 ->success()
                                 ->send();
                         } else {
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Error')
                                 ->body($result['message'])
                                 ->danger()
                                 ->send();
                         }
                     })->hidden(fn(): bool => isSuperVisor() || isStoreManager()),
-                Tables\Actions\Action::make('Move')
+                Action::make('Move')
                     ->button()->requiresConfirmation()
                     ->label(function ($record) {
                         return $record->getNextStatusLabel();
                     })
                     ->icon('heroicon-o-chevron-double-left')
 
-                    ->form(function () {
+                    ->schema(function () {
                         return [
                             Fieldset::make()->columns(2)->schema([
                                 TextInput::make('status')->label('From') // current status
@@ -352,7 +373,7 @@ class OrderResource extends Resource
                             $record->update(['status' => $nextStatus]);
                             showSuccessNotifiMessage('done', "Done Moved to {$nextStatus}");
                             DB::commit();
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             //throw $th;
 
                             Log::error('error_modify_status', [$th->getMessage()]);
@@ -372,10 +393,10 @@ class OrderResource extends Resource
 
 
 
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
+                ActionGroup::make([
+                    ViewAction::make(),
+                    EditAction::make(),
+                    DeleteAction::make(),
 
 
                 ]),
@@ -383,14 +404,14 @@ class OrderResource extends Resource
 
                 // Tables\Actions\RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                ForceDeleteBulkAction::make(),
                 BulkAction::make('exportOrdersWithDetails')
                     ->label('Export Orders + Details')
                     ->action(function ($records) {
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Exports\OrdersExport2($records),
+                        return Excel::download(
+                            new OrdersExport2($records),
                             'orders_with_details.xlsx'
                         );
                     })
@@ -401,8 +422,8 @@ class OrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\OrderDetailsRelationManager::class,
-            RelationManagers\LogsRelationManager::class,
+            OrderDetailsRelationManager::class,
+            LogsRelationManager::class,
         ];
     }
 
@@ -410,21 +431,21 @@ class OrderResource extends Resource
     {
 
         return [
-            'index' => Pages\ListOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'view' => Pages\ViewOrder::route('/{record}'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
-            'order-report-custom' => Pages\OrderReportCustom::route('/order-report-custom'),
+            'index' => ListOrders::route('/'),
+            'create' => CreateOrder::route('/create'),
+            'view' => ViewOrder::route('/{record}'),
+            'edit' => EditOrder::route('/{record}/edit'),
+            'order-report-custom' => OrderReportCustom::route('/order-report-custom'),
 
         ];
     }
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListOrders::class,
+            ListOrders::class,
             // Pages\CreateOrder::class,
-            Pages\ViewOrder::class,
-            Pages\EditOrder::class,
+            ViewOrder::class,
+            EditOrder::class,
         ]);
     }
 

@@ -1,6 +1,7 @@
 <?php
 namespace App\Traits\Inventory;
 
+use App\Services\MultiProductsInventoryService;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\DB;
 
@@ -115,7 +116,7 @@ trait InventoryStaticMethods
             return null;
         }
 
-        $remainingQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+        $remainingQty = MultiProductsInventoryService::getRemainingQty(
             $data['product_id'],
             $data['unit_id'],
             $data['store_id']

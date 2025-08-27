@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use Exception;
+use Throwable;
 use App\Models\ProductItem;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -29,11 +31,11 @@ class ProductItemsImport implements ToCollection
                     try {
                         // تأكد من وجود البيانات الأساسية
                         if (!$row[0] || !$row[1] || !$row[2]) {
-                            throw new \Exception("Missing required fields in row #" . ($index + 1));
+                            throw new Exception("Missing required fields in row #" . ($index + 1));
                         }
                         $unitPrice = getUnitPrice($row[0], $row[1]);
                         if(!$unitPrice) {
-                            throw new \Exception("Unit price not found for product ID: " . $row[0] . " and unit ID: " . $row[1]);
+                            throw new Exception("Unit price not found for product ID: " . $row[0] . " and unit ID: " . $row[1]);
                         }
 
                         ProductItem::create([
@@ -48,7 +50,7 @@ class ProductItemsImport implements ToCollection
                             'quantity_after_waste' => ProductItem::calculateQuantityAfterWaste($row[2], $row[4] ?? 0),
                         ]);
                         $this->importedCount++;
-                    } catch (\Throwable $e) {
+                    } catch (Throwable $e) {
                         Log::error("❌ Failed to import ProductItem in row #" . ($index + 1) . ": " . $e->getMessage(), [
                             'row_data' => $row->toArray(),
                             'parent_product_id' => $this->parentProductId,
@@ -63,7 +65,7 @@ class ProductItemsImport implements ToCollection
                 }
             }
             DB::commit();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error("❌ Failed to import ProductItems: " . $e->getMessage(), [
                 'parent_product_id' => $this->parentProductId,
             ]);

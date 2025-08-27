@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\CopyOutToInForOrdersJob;
 use App\Services\CopyOrderOutToBranchStoreService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -20,9 +21,9 @@ class CopyOutToInForOrders extends Command
     {
         $tenantId = $this->option('tenant') ? (int)$this->option('tenant') : null;
         $branchId = $this->option('branch_id') ? (int)$this->option('branch_id') : null;
-    
+
         // ملاحظة: لا تفعل makeCurrent هنا إذا سترسِل للـ Queue — خله داخل الـ Job
-        \App\Jobs\CopyOutToInForOrdersJob::dispatch($tenantId, $branchId);
+        CopyOutToInForOrdersJob::dispatch($tenantId, $branchId);
         $this->info('📤 Job dispatched to queue "inventory". شغّل worker: php artisan queue:work --queue=inventory');
 
 

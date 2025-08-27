@@ -1,6 +1,27 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Tables\Filters\TrashedFilter;
+use App\Exports\EmployeesExport;
+use App\Imports\EmployeeImport;
+use Throwable;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\EmployeeResource\Pages\ListEmployees;
+use App\Filament\Resources\EmployeeResource\Pages\CreateEmployee;
+use App\Filament\Resources\EmployeeResource\Pages\EditEmployee;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\CheckInstallments;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages\OrgChart;
@@ -23,26 +44,18 @@ use App\Services\S3ImageService;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 // use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Actions\Action as ActionsAction;
-use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -65,9 +78,9 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 class EmployeeResource extends Resource
 {
     protected static ?string $model                               = Employee::class;
-    protected static ?string $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon                      = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster                             = HRCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
     public static function getNavigationLabel(): string
     {
@@ -83,13 +96,13 @@ class EmployeeResource extends Resource
         return __('lang.employees');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Wizard::make([
-                    Wizard\Step::make('Personal & Employeement data')
+                    Step::make('Personal & Employeement data')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make('personal_data')->label('Personal data')
@@ -260,7 +273,7 @@ class EmployeeResource extends Resource
                                 ]),
                         ]),
 
-                    Wizard\Step::make('Employee files')
+                    Step::make('Employee files')
                         ->icon('heroicon-o-document-plus')
                         ->schema([
                             Repeater::make('files')
@@ -344,7 +357,7 @@ class EmployeeResource extends Resource
 
                         ]),
 
-                    Wizard\Step::make('Finance')
+                    Step::make('Finance')
                         ->icon('heroicon-o-banknotes')
                         ->schema([
                             Fieldset::make()->label('Set salary data and account number')->schema([
@@ -627,7 +640,7 @@ class EmployeeResource extends Resource
             ])
             ->filters([
 
-                Tables\Filters\TrashedFilter::make()
+                TrashedFilter::make()
                     ->visible(fn(): bool => (isSystemManager() || isSuperAdmin())),
                 SelectFilter::make('branch_id')
                     ->searchable()
@@ -644,15 +657,15 @@ class EmployeeResource extends Resource
                     ->label('Active'),
             ], FiltersLayout::AboveContent)
             ->headerActions([
-                ActionsAction::make('export_employees')
+                Action::make('export_employees')
                     ->label('Export to Excel')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
                     ->action(function () {
                         $data = Employee::where('active', 1)->select('id', 'employee_no', 'name', 'branch_id', 'job_title')->get();
-                        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\EmployeesExport($data), 'employees.xlsx');
+                        return Excel::download(new EmployeesExport($data), 'employees.xlsx');
                     }),
-                ActionsAction::make('export_employees_pdf')
+                Action::make('export_employees_pdf')
                     ->label('Print as PDF')
                     ->icon('heroicon-o-document-text')
                     ->color('primary')
@@ -664,15 +677,15 @@ class EmployeeResource extends Resource
                         }, 'employees.pdf');
                     }),
 
-                ActionsAction::make('import_employees')
+                Action::make('import_employees')
                     ->label('Import from Excel')
                     ->icon('heroicon-o-document-arrow-up')
                     ->visible(fn(): bool => isSystemManager() || isSuperAdmin())
-                    ->form([
+                    ->schema([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
                     ])->extraModalFooterActions([
-                    ActionsAction::make('downloadexcel')->label(__('Download Example File'))
+                    Action::make('downloadexcel')->label(__('Download Example File'))
                         ->icon('heroicon-o-arrow-down-on-square-stack')
                         ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
                         ->openUrlInNewTab(),
@@ -683,7 +696,7 @@ class EmployeeResource extends Resource
                         $file = 'public/' . $data['file'];
                         try {
                             // Create an instance of the import class
-                            $import = new \App\Imports\EmployeeImport;
+                            $import = new EmployeeImport;
 
                             // Import the file
                             Excel::import($import, $file);
@@ -694,16 +707,16 @@ class EmployeeResource extends Resource
                             } else {
                                 showWarningNotifiMessage('No employees were added. Please check your file.');
                             }
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             throw $th;
                             showWarningNotifiMessage('Error importing employees');
                         }
                     }),
 
             ])
-            ->actions([
+            ->recordActions([
 
-                ActionsAction::make('index')
+                Action::make('index')
                     ->label('AWS Indexing')->button()
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
@@ -729,13 +742,13 @@ class EmployeeResource extends Resource
                     }),
 
                 ActionGroup::make([
-                    ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
+                    Action::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
 
                         ->openUrlInNewTab(),
-                    ActionsAction::make('view_shifts')
+                    Action::make('view_shifts')
                         ->label('View Shifts')
                         ->icon('heroicon-o-clock')
                         ->color('info')
@@ -755,13 +768,13 @@ class EmployeeResource extends Resource
                             ]);
                         }),
                     // Add the Change Branch action
-                    \Filament\Tables\Actions\Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
+                    Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
                         ->label('Change Branch') // Label for the action button
                         ->visible(isSystemManager() || isSuperAdmin())
                                                              // ->icon('heroicon-o-annotation') // Icon for the button
                         ->modalHeading('Change Employee Branch') // Modal heading
                         ->modalButton('Save')                    // Button inside the modal
-                        ->form([
+                        ->schema([
                             Select::make('branch_id')
                                 ->label('Select New Branch')
                                 ->options(Branch::all()->pluck('name', 'id')) // Assuming you have a `Branch` model with `id` and `name`
@@ -786,16 +799,16 @@ class EmployeeResource extends Resource
                                 'branch_id' => $newBranchId,
                             ]);
                         }),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
+                    EditAction::make(),
+                    ViewAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
                 // ExportBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
@@ -812,9 +825,9 @@ class EmployeeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'             => Pages\ListEmployees::route('/'),
-            'create'            => Pages\CreateEmployee::route('/create'),
-            'edit'              => Pages\EditEmployee::route('/{record}/edit'),
+            'index'             => ListEmployees::route('/'),
+            'create'            => CreateEmployee::route('/create'),
+            'edit'              => EditEmployee::route('/{record}/edit'),
             'org_chart'         => OrgChart::route('/org_chart'),
                                                                                                  // 'view' => Pages\ViewEmployee::route('/{record}'),
             'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here
@@ -825,9 +838,9 @@ class EmployeeResource extends Resource
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListEmployees::class,
-            Pages\CreateEmployee::class,
-            Pages\EditEmployee::class,
+            ListEmployees::class,
+            CreateEmployee::class,
+            EditEmployee::class,
             // Pages\ViewEmployee::class,
         ]);
     }

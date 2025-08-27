@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Reports;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Models\Category;
+use Filament\Forms\Components\DatePicker;
 use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
@@ -12,7 +15,6 @@ use App\Models\PurchaseInvoice;
 use App\Models\Store;
 use App\Models\Supplier;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -25,9 +27,9 @@ class PurchaseInvoiceReportResource extends Resource
     protected static ?string $model = PurchaseInvoiceReport::class;
     protected static ?string $slug = 'purchase-invoice-reports';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
 
     /**
@@ -123,15 +125,15 @@ class PurchaseInvoiceReportResource extends Resource
                     ->multiple()
                     ->searchable()
                     ->options(function () {
-                        return \App\Models\Category::active()->pluck('name', 'id')->toArray();
+                        return Category::active()->pluck('name', 'id')->toArray();
                     }),
 
 
                 Filter::make('date')
-                    ->form([
-                        \Filament\Forms\Components\DatePicker::make('from')
+                    ->schema([
+                        DatePicker::make('from')
                             ->label(__('lang.start_date')),
-                        \Filament\Forms\Components\DatePicker::make('to')
+                        DatePicker::make('to')
                             ->label(__('lang.end_date')),
                     ])
                     ->query(function (Builder $query, array $data) {

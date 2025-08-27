@@ -2,6 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\UnitPrice;
+use Filament\Actions\Action;
+use Exception;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -19,10 +22,10 @@ class ProductUnitConverter extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
-    protected static ?string $navigationGroup = 'Inventory Management';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-arrows-right-left';
+    protected static string | \UnitEnum | null $navigationGroup = 'Inventory Management';
     protected static ?string $title = 'Product Unit Converter';
-    protected static string $view = 'filament.pages.product-unit-converter';
+    protected string $view = 'filament.pages.product-unit-converter';
 
     // Form properties
     public ?int $selectedProductId = null;
@@ -83,7 +86,7 @@ class ProductUnitConverter extends Page implements HasForms
                     if (!$productId) {
                         return [];
                     }
-                    return \App\Models\UnitPrice::where('product_id', $productId)
+                    return UnitPrice::where('product_id', $productId)
                         ->whereNull('unit_prices.deleted_at')
                         ->join('units', 'unit_prices.unit_id', '=', 'units.id')
                         ->pluck('units.name', 'units.id')
@@ -107,7 +110,7 @@ class ProductUnitConverter extends Page implements HasForms
                 ->label('To Unit')
                 ->options(function (callable $get) {
                     $fromUnitId = $get('fromUnitId');
-                    $query = \App\Models\Unit::query();
+                    $query = Unit::query();
                     // if ($fromUnitId) {
                     //     $query->where('id', '!=', $fromUnitId);
                     // }
@@ -132,7 +135,7 @@ class ProductUnitConverter extends Page implements HasForms
     protected function getFormActions(): array
     {
         return [
-            \Filament\Forms\Components\Actions\Action::make('convert')
+            Action::make('convert')
                 ->label('Apply Conversion')
                 ->submit('submitConversion')
                 ->color('primary')
@@ -178,7 +181,7 @@ class ProductUnitConverter extends Page implements HasForms
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Notification::make()
                 ->title('An Error Occurred')
                 ->body('Failed to apply conversion: ' . $e->getMessage())

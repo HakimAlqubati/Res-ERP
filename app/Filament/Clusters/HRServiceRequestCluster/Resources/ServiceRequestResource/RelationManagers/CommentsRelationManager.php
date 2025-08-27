@@ -2,15 +2,20 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use App\Models\Task;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -23,10 +28,10 @@ class CommentsRelationManager extends RelationManager
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {return $ownerRecord->comments->count();}
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
                     Textarea::make('comment')->columnSpanFull()->required(),
                     Hidden::make('user_id')->default(auth()->user()->id),
@@ -65,15 +70,15 @@ class CommentsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('comment')
             ->columns([
-                Tables\Columns\TextColumn::make('comment')->wrap(),
-                Tables\Columns\TextColumn::make('user.name'),
-                Tables\Columns\TextColumn::make('created_at'),
+                TextColumn::make('comment')->wrap(),
+                TextColumn::make('user.name'),
+                TextColumn::make('created_at'),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()->label('New')
+                CreateAction::make()->label('New')
                 // ->action(function (Model $ownerRecord,array $data, $record): void {
 
                 //     $comment = $record->comments()->create([
@@ -101,11 +106,11 @@ class CommentsRelationManager extends RelationManager
                 // })
                 ,
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
                 Action::make('AddPhotos')
-                    ->form([
+                    ->schema([
 
                         FileUpload::make('image_path')
                             ->disk('public')
@@ -169,8 +174,8 @@ class CommentsRelationManager extends RelationManager
                     }),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Reports;
 
+use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
@@ -11,7 +12,6 @@ use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\DatePicker;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -23,9 +23,9 @@ class StoresReportResource extends Resource
 {
     protected static ?string $model = StoreReportReport::class;
     protected static ?string $slug = 'stores-report';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     protected static bool $shouldRegisterNavigation = false;
     /**
@@ -59,7 +59,7 @@ class StoresReportResource extends Resource
                     return $q;
                 })->options(Store::active()->get()->pluck('name', 'id')),
             Filter::make('date')
-                ->form([
+                ->schema([
                     DatePicker::make('start_date')
                         ->label(__('lang.start_date')),
                     DatePicker::make('end_date')

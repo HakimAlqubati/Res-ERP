@@ -2,6 +2,19 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages\ListMonthlyIncentives;
+use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages\CreateMonthlyIncentive;
+use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages\EditMonthlyIncentive;
+use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages\ViewMonthlyIncentive;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\RelationManagers;
@@ -9,8 +22,6 @@ use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\MonthlyIncentive;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -22,10 +33,10 @@ class MonthlyIncentiveResource extends Resource
 {
     protected static ?string $model = MonthlyIncentive::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRSalarySettingCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 7;
 
     public static function getModelLabel(): string
@@ -36,13 +47,13 @@ class MonthlyIncentiveResource extends Resource
     {
         return 'Bonus';
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\Textarea::make('description'),
-                Forms\Components\Toggle::make('active')->default(true),
+        return $schema
+            ->components([
+                TextInput::make('name')->required(),
+                Textarea::make('description'),
+                Toggle::make('active')->default(true),
             ]);
     }
 
@@ -50,19 +61,19 @@ class MonthlyIncentiveResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('description'),
+                TextColumn::make('name')->sortable()->searchable(),
+                TextColumn::make('description'),
                 // Tables\Columns\IconColumn::make('active'),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -77,10 +88,10 @@ class MonthlyIncentiveResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMonthlyIncentives::route('/'),
-            'create' => Pages\CreateMonthlyIncentive::route('/create'),
-            'edit' => Pages\EditMonthlyIncentive::route('/{record}/edit'),
-            'view' => Pages\ViewMonthlyIncentive::route('/{record}'),
+            'index' => ListMonthlyIncentives::route('/'),
+            'create' => CreateMonthlyIncentive::route('/create'),
+            'edit' => EditMonthlyIncentive::route('/{record}/edit'),
+            'view' => ViewMonthlyIncentive::route('/{record}'),
         ];
     }
 

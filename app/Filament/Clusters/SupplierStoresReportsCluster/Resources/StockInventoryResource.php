@@ -1,6 +1,23 @@
 <?php
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use App\Models\Category;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\ListStockInventories;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\CreateStockInventory;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages\EditStockInventory;
+use App\Models\UnitPrice;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers\DetailsRelationManager;
@@ -11,15 +28,11 @@ use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
@@ -35,10 +48,10 @@ class StockInventoryResource extends Resource
 {
     protected static ?string $model = StockInventory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster                             = InventoryManagementCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 9;
 
     public static function getNavigationLabel(): string
@@ -56,11 +69,11 @@ class StockInventoryResource extends Resource
     {
         return 'Stocktake';
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        $operaion = $form->getOperation();
-        return $form
-            ->schema([
+        $operaion = $schema->getOperation();
+        return $schema
+            ->components([
                 Fieldset::make()->label('')->schema([
                     Grid::make()->columns(4)->schema([
                         DatePicker::make('inventory_date')
@@ -91,7 +104,7 @@ class StockInventoryResource extends Resource
                                         return $item;
                                     }
 
-                                    $service = new \App\Services\MultiProductsInventoryService(
+                                    $service = new MultiProductsInventoryService(
                                         null,
                                         $productId,
                                         $unitId,
@@ -117,14 +130,14 @@ class StockInventoryResource extends Resource
                         $operaion == 'create' ?
                         Select::make('category_id')->visibleOn('create')
                             ->label('Category')
-                            ->options(\App\Models\Category::pluck('name', 'id'))
+                            ->options(Category::pluck('name', 'id'))
                             ->live()
                             ->afterStateUpdated(function (callable $set, callable $get, $state) {
                                 if (! $state) {
                                     return;
                                 }
 
-                                $products = \App\Models\Product::where('category_id', $state)
+                                $products = Product::where('category_id', $state)
                                     ->where('active', 1)
                                     ->get();
 
@@ -208,7 +221,7 @@ class StockInventoryResource extends Resource
                                     $unitId      = $unitPrice?->unit_id;
                                     $packageSize = $unitPrice?->package_size ?? 1;
 
-                                    $service = new \App\Services\MultiProductsInventoryService(
+                                    $service = new MultiProductsInventoryService(
                                         null,
                                         $productId,
                                         $unitId,
@@ -280,7 +293,7 @@ class StockInventoryResource extends Resource
                                         ->toArray();
                                 })
                                 ->getOptionLabelUsing(fn($value) =>
-                                    \App\Models\Product::find($value)?->code . ' - ' . \App\Models\Product::find($value)?->name
+                                    Product::find($value)?->code . ' - ' . Product::find($value)?->name
                                 )
                                 ->reactive()
                                 ->afterStateUpdated(function (callable $set, callable $get, $state) {
@@ -301,7 +314,7 @@ class StockInventoryResource extends Resource
 
                             Select::make('unit_id')->label('Unit')
                                 ->options(function (callable $get) {
-                                    $product = \App\Models\Product::find($get('product_id'));
+                                    $product = Product::find($get('product_id'));
                                     if (! $product) {
                                         return [];
                                     }
@@ -316,7 +329,7 @@ class StockInventoryResource extends Resource
                                 ->extraAttributes(fn($get) => [
                                     'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
                                 ])
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     static::handleUnitSelection($set, $get, $state);
                                 })->columnSpan(2)->required(),
                             TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
@@ -370,9 +383,9 @@ class StockInventoryResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\Filter::make('inventory_date_range')
-                    ->form([
+                TrashedFilter::make(),
+                Filter::make('inventory_date_range')
+                    ->schema([
                         DatePicker::make('from')->label('From Date'),
                         DatePicker::make('to')->label('To Date'),
                     ])
@@ -382,20 +395,20 @@ class StockInventoryResource extends Resource
                             ->when($data['to'], fn($q, $date) => $q->whereDate('inventory_date', '<=', $date));
                     }),
             ], FiltersLayout::AboveContent)
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->label('Finalize')
                     ->button()
                     ->hidden(fn($record): bool => $record->finalized),
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->visible(fn($record): bool => $record->finalized)
                     ->button()
                     ->icon('heroicon-o-eye')->color('success'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -410,18 +423,18 @@ class StockInventoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListStockInventories::route('/'),
+            'index'  => ListStockInventories::route('/'),
             // 'new-create' => StockInventoryReactPage::route('/new-create'),
-            'create' => Pages\CreateStockInventory::route('/create'),
-            'edit'   => Pages\EditStockInventory::route('/{record}/edit'),
+            'create' => CreateStockInventory::route('/create'),
+            'edit'   => EditStockInventory::route('/{record}/edit'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListStockInventories::class,
-            Pages\CreateStockInventory::class,
+            ListStockInventories::class,
+            CreateStockInventory::class,
             // Pages\EditStockInventory::class,
         ]);
     }
@@ -487,7 +500,7 @@ class StockInventoryResource extends Resource
 
     public static function getProductUnits($productId)
     {
-        $product = \App\Models\Product::find($productId);
+        $product = Product::find($productId);
         if (! $product) {
             return collect();
         }
@@ -502,11 +515,11 @@ class StockInventoryResource extends Resource
             return;
         }
 
-        $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
+        $unitPrice = UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)
             ->first();
 
-        $service = new \App\Services\MultiProductsInventoryService(
+        $service = new MultiProductsInventoryService(
             null,
             $productId,
             $unitId,

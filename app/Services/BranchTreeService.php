@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Collection;
 use App\Models\Branch;
 use App\Models\Employee;
 
@@ -122,7 +123,7 @@ class BranchTreeService
      * Recursively build the tree structure for an employee.
      *
      * @param Employee $employee
-     * @param \Illuminate\Support\Collection $employees
+     * @param Collection $employees
      * @return array
      */
     protected static function buildEmployeeTree($employee, $employees)

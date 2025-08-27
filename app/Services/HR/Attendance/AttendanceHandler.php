@@ -29,7 +29,7 @@ class AttendanceHandler
 
         $employeePeriods = $employee?->periods;
         if (! is_null($employee) && count($employeePeriods) > 0) {
-            $day = \Carbon\Carbon::parse($date)->format('l');
+            $day = Carbon::parse($date)->format('l');
 
             // Decode the days array for each period
             $workTimePeriods = $employee->periods->map(function ($period) {
@@ -159,8 +159,8 @@ class AttendanceHandler
                 return $this->createAttendance($employee, $closestPeriod, $date, $time, $day, Attendance::CHECKTYPE_CHECKOUT, $existAttendance);
             } else {
 
-                $endTime   = \Carbon\Carbon::parse($closestPeriod->end_at);
-                $checkTime = \Carbon\Carbon::parse($time);
+                $endTime   = Carbon::parse($closestPeriod->end_at);
+                $checkTime = Carbon::parse($time);
 
                 if ($endTime->gt($checkTime)) {
 

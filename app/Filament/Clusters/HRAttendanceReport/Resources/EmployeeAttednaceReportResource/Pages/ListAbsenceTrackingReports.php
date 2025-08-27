@@ -25,7 +25,7 @@ class ListAbsenceTrackingReports extends ListRecords
 
 
 
-    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-tracking-employee';
+    protected string $view = 'filament.pages.hr-reports.attendance.pages.attendance-tracking-employee';
     protected function getViewData(): array
     {
 

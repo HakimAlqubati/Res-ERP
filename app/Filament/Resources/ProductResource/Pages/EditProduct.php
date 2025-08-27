@@ -2,6 +2,11 @@
 
 namespace App\Filament\Resources\ProductResource\Pages;
 
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use App\Models\ProductPriceHistory;
+use Carbon\Carbon;
 use App\Filament\Resources\ProductResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -22,10 +27,10 @@ class EditProduct extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
-            Actions\DeleteAction::make(),
+            EditAction::make(),
+            DeleteAction::make(),
             // Actions\ForceDeleteAction::make(),
-            Actions\RestoreAction::make(),
+            RestoreAction::make(),
             // ...
         ];
     }
@@ -44,7 +49,7 @@ class EditProduct extends EditRecord
         string $sourceType = 'auto_update',
         ?int $sourceId = null
     ): void {
-        \App\Models\ProductPriceHistory::create([
+        ProductPriceHistory::create([
             'product_id' => $productId,
             'product_item_id' => $productItemId,
             'unit_id' => $unitId,
@@ -53,7 +58,7 @@ class EditProduct extends EditRecord
             'note' => $note,
             'source_type' => $sourceType,
             'source_id' => $sourceId,
-            'date' => \Carbon\Carbon::now(),
+            'date' => Carbon::now(),
         ]);
     }
 }

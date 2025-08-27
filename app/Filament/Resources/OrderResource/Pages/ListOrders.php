@@ -2,6 +2,10 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
+use Throwable;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Resources\OrderResource;
 use App\Imports\OrdersImport;
 use App\Models\Branch;
@@ -9,7 +13,6 @@ use App\Models\Order;
 use Filament\Forms\Components\FileUpload;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -26,11 +29,11 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
-            Actions\Action::make('importOrders')
+            CreateAction::make(),
+            Action::make('importOrders')
                 ->label('Import Orders')
                 ->icon('heroicon-o-arrow-up-tray')
-                ->form([
+                ->schema([
                     FileUpload::make('file')
                         ->label('Upload Excel File')
                         ->required()
@@ -45,7 +48,7 @@ class ListOrders extends ListRecords
                     $import = new OrdersImport();
 
                     try {
-                        \Maatwebsite\Excel\Facades\Excel::import($import, $filePath);
+                        Excel::import($import, $filePath);
 
 
                         $count = $import->getSuccessfulImportsCount();
@@ -54,7 +57,7 @@ class ListOrders extends ListRecords
                         } else {
                             showWarningNotifiMessage("⚠️ No orders were added. Please check your file format.");
                         }
-                    } catch (\Throwable $e) {
+                    } catch (Throwable $e) {
                         showWarningNotifiMessage('❌ Failed to import orders: ' . $e->getMessage());
                     }
                 })->hidden()

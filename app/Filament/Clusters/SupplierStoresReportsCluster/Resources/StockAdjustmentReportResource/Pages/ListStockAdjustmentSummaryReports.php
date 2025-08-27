@@ -2,16 +2,18 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
+use Illuminate\Database\Eloquent\Model;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentSummaryReportResource;
 use App\Services\Inventory\StockAdjustmentByCategoryReportService;
 use Filament\Resources\Pages\ListRecords;
 
 class ListStockAdjustmentSummaryReports extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
 
     protected static string $resource = StockAdjustmentSummaryReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.adjustment-summary-report';
+    protected string $view = 'filament.pages.inventory-reports.adjustment-summary-report';
 
     protected function getViewData(): array
     {
@@ -40,7 +42,7 @@ class ListStockAdjustmentSummaryReports extends ListRecords
         ];
     }
 
-    public function getTableRecordKey($record): string
+    public function getTableRecordKey(Model|array $record): string
     {
         return $record['category'] . '-' . $record['adjustment_type'] . '-' . $record['store'];
     }

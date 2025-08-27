@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\TestinfoList;
 
 // use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
-
+use Filament\Schemas\Schema;
 use App\Filament\Resources\OrderReportsResource\Pages\ListReportProductQuantities;
 use App\Filament\Resources\UnitResource\Pages\ListUnits;
 use App\Models\Branch;
@@ -13,7 +13,6 @@ use App\Models\User;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DatePicker;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -24,7 +23,7 @@ class TestinfoListResource extends Resource
 {
     protected static ?string $model = User::class;
     protected static ?string $slug = 'test-info-list';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     /**
      * @deprecated Use `getModelLabel()` instead.
@@ -44,10 +43,10 @@ class TestinfoListResource extends Resource
     }
 
   
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
-            ->schema([
+        return $schema
+            ->components([
                 TextEntry::make('title')
                     ->columnSpanFull(),
                 
@@ -73,7 +72,7 @@ class TestinfoListResource extends Resource
                 })->options(Branch::where('active', 1)
                     ->get()->pluck('name', 'id')),
             Filter::make('date')
-                ->form([
+                ->schema([
                     DatePicker::make('start_date')
                         ->label(__('lang.start_date')),
                     DatePicker::make('end_date')

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Spatie\Permission\Models\Role;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,7 +21,7 @@ class UserType extends Model
 
     public function getRoleNamesAttribute(): string
     {
-        $roles = \Spatie\Permission\Models\Role::whereIn('id', $this->role_ids ?? [])->pluck('name')->toArray();
+        $roles = Role::whereIn('id', $this->role_ids ?? [])->pluck('name')->toArray();
         return implode(', ', $roles);
     }
 
@@ -29,7 +31,7 @@ class UserType extends Model
         // dd(auth()->check());
         if (auth()->check()) {
             if (isBranchManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->whereIn('id', [2, 3, 4]);
                 });
             }

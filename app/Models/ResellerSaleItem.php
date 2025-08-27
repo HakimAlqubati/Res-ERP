@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FifoMethodService;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -73,7 +74,7 @@ class ResellerSaleItem extends Model
             DB::transaction(function () use ($item, $sale) {
                 DB::transaction(function () use ($item, $sale) {
                     // 1. استدعاء خدمة FIFO
-                    $fifoService = new \App\Services\FifoMethodService($sale);
+                    $fifoService = new FifoMethodService($sale);
 
                     $allocations = $fifoService->getAllocateFifo(
                         $item->product_id,
@@ -84,7 +85,7 @@ class ResellerSaleItem extends Model
                     );
                     Log::info('fofo__', [$allocations]);
                     if (empty($allocations)) {
-                        throw new \Exception("FIFO allocation failed: No available stock to fulfill the requested quantity.");
+                        throw new Exception("FIFO allocation failed: No available stock to fulfill the requested quantity.");
                     }
 
 
@@ -100,9 +101,9 @@ class ResellerSaleItem extends Model
         $sale = $item->sale;
 
         foreach ($allocations as $alloc) {
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id'           => $item->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
@@ -113,7 +114,7 @@ class ResellerSaleItem extends Model
                 'notes'                => 'Reseller Sale #' . $sale->id,
 
                 'transactionable_id'   => $sale->id,
-                'transactionable_type' => \App\Models\ResellerSale::class,
+                'transactionable_type' => ResellerSale::class,
                 'source_transaction_id' => $alloc['transaction_id'],
             ]);
 

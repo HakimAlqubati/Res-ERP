@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\BranchResellerResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Resources\BranchResellerResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -23,7 +24,7 @@ class EditBranchReseller extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

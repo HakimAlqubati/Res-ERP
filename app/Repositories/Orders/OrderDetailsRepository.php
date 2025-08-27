@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Orders;
 
+use Exception;
 use App\Exports\OrdersExport;
 use App\Http\Resources\OrderResource;
 use App\Interfaces\Orders\OrderDetailsRepositoryInterface;
@@ -77,7 +78,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
                                 ->where('unit_id', $orderDetailData['unit_id'])
                                 ->first(); 
                             if (is_null($unitPrice)) {
-                                throw new \Exception('No unit price');
+                                throw new Exception('No unit price');
                             }
                             DB::table('orders_details')
                                 ->where('id', $orderDetailData['id'])
@@ -111,7 +112,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
 
                         default:
 
-                            throw new \Exception('Invalid operation: ' . $orderDetailData['operation']);
+                            throw new Exception('Invalid operation: ' . $orderDetailData['operation']);
 
                             // Return an error response if the operation is invalid.
                             $responses[] = [
@@ -120,7 +121,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
                                 'message' => 'Invalid operation: ' . $orderDetailData['operation'],
                             ];
                     }
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $responses[] = [
                         'success' => false,
                         'id' => $orderDetailData['id'] ?? null,
@@ -138,7 +139,7 @@ class OrderDetailsRepository implements OrderDetailsRepositoryInterface
             DB::commit();
 
             return response()->json($responses);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             Log::critical("Transaction failed in updateWithFifo", [
                 'error' => $e->getMessage(),

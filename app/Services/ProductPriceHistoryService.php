@@ -38,13 +38,13 @@ class ProductPriceHistoryService
             $actualPrice = $tx->price;
 
             if ($sourceType === 'GoodsReceivedNote') {
-                $grn = \App\Models\GoodsReceivedNote::with('purchaseInvoice')->find($tx->transactionable_id);
+                $grn = GoodsReceivedNote::with('purchaseInvoice')->find($tx->transactionable_id);
                 $hasPurchaseInvoice = $grn?->purchase_invoice_id !== null;
                 if ($hasPurchaseInvoice) {
                     $purchaseInvoiceId = $grn->purchase_invoice_id;
 
                     // 🔁 جلب السعر من الفاتورة المرتبطة
-                    $detail = \App\Models\PurchaseInvoiceDetail::where('purchase_invoice_id', $purchaseInvoiceId)
+                    $detail = PurchaseInvoiceDetail::where('purchase_invoice_id', $purchaseInvoiceId)
                         ->where('product_id', $tx->product_id)
                         ->where('unit_id', $tx->unit_id)
                         ->where('package_size', $tx->package_size)

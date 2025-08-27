@@ -2,15 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\SupplierResource\Pages\ListSuppliers;
+use App\Filament\Resources\SupplierResource\Pages\CreateSupplier;
+use App\Filament\Resources\SupplierResource\Pages\EditSupplier;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Resources\SupplierResource\Pages;
 use App\Models\Supplier;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -26,20 +36,20 @@ use Illuminate\Support\Facades\Hash;
 class SupplierResource extends Resource
 {
     protected static ?string $model = Supplier::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Supplier & Roles';
     protected static ?string $cluster = SupplierCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     public static function getNavigationLabel(): string
     {
         return __('lang.suppliers');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Fieldset::make()->schema([
                     TextInput::make('name')->label(__('lang.name'))->required(),
@@ -78,21 +88,21 @@ class SupplierResource extends Resource
                     ->searchable(isIndividual: true, isGlobal: false),
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')
+                Filter::make('active')
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make()->hidden(
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make()->hidden(
                     (getCurrentRole() != 1)
                 ),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
                 // ExportBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
@@ -106,9 +116,9 @@ class SupplierResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSuppliers::route('/'),
-            'create' => Pages\CreateSupplier::route('/create'),
-            'edit' => Pages\EditSupplier::route('/{record}/edit'),
+            'index' => ListSuppliers::route('/'),
+            'create' => CreateSupplier::route('/create'),
+            'edit' => EditSupplier::route('/{record}/edit'),
         ];
     }
 

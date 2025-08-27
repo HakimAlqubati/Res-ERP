@@ -2,6 +2,26 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TimePicker;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BooleanColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\BulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Imports\WorkPeriodImport;
+use Throwable;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\ListWorkPeriods;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\CreateWorkPeriod;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages\EditWorkPeriod;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
 use App\Models\Attendance;
@@ -9,17 +29,12 @@ use App\Models\Branch;
 use App\Models\WorkPeriod;
 use Filament\Forms;
 use Illuminate\Database\Eloquent\Collection;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,12 +47,12 @@ class WorkPeriodResource extends Resource
 {
     protected static ?string $model = WorkPeriod::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?string $label = 'Work shifts';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
     protected static function getFormSchema(): array
@@ -46,7 +61,7 @@ class WorkPeriodResource extends Resource
 
             Fieldset::make()->schema([
                 Grid::make()->columns(3)->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->label('Name')
                         ->required()
                         ->columnSpan(1)
@@ -61,7 +76,7 @@ class WorkPeriodResource extends Resource
                     //     // ->disabled()
                     //     ->inline(false)
                     //     ->default(true),
-                    Forms\Components\Select::make('branch_id')
+                    Select::make('branch_id')
                         ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
                         ->label('Branch')->required()
                         ->searchable(),
@@ -76,7 +91,7 @@ class WorkPeriodResource extends Resource
                 Textarea::make('description')->columnSpanFull()
                     ->label('Description'),
                 Grid::make()->columns(2)->schema([
-                    Forms\Components\TimePicker::make('start_at')
+                    TimePicker::make('start_at')
                         ->label('Start time')
                         ->columnSpan(1)
                         ->required()
@@ -84,7 +99,7 @@ class WorkPeriodResource extends Resource
                         ->prefixIconColor('success')
                         ->default('08:00:00'),
 
-                    Forms\Components\TimePicker::make('end_at')
+                    TimePicker::make('end_at')
                         ->label('End time')
                         ->columnSpan(1)
                         ->required()
@@ -94,7 +109,7 @@ class WorkPeriodResource extends Resource
                 ]),
 
                 Grid::make()->columns(2)->schema([
-                    Forms\Components\Select::make('days')
+                    Select::make('days')
                         ->label('Days')
                         ->multiple()
                         ->options([
@@ -118,10 +133,10 @@ class WorkPeriodResource extends Resource
             ]),
         ];
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema(static::getFormSchema());
+        return $schema
+            ->components(static::getFormSchema());
     }
 
     public static function table(Table $table): Table
@@ -130,28 +145,28 @@ class WorkPeriodResource extends Resource
             ->striped()
             ->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                TextColumn::make('id')
                     ->label('id')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('branch.name')
+                TextColumn::make('branch.name')
                     ->label('Branch')->searchable()->sortable(),
 
-                Tables\Columns\BooleanColumn::make('active')->alignCenter(true)
+                BooleanColumn::make('active')->alignCenter(true)
                     ->label('Active'),
-                Tables\Columns\BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
+                BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
                     ->label('Day and Night'),
 
-                Tables\Columns\TextColumn::make('start_at')
+                TextColumn::make('start_at')
                     ->label('Start Time')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('end_at')
+                TextColumn::make('end_at')
                     ->label('End Time')
                     ->sortable(),
 
@@ -160,40 +175,40 @@ class WorkPeriodResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::select('id', 'name')->where('active', 1)->pluck('name', 'id')),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
                 Action::make('copy')
                     ->label('Copy')
                     ->hidden(fn(): bool => isBranchManager())
                     ->button()
                     ->icon('heroicon-o-clipboard-document-list')
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         return [
 
                             Fieldset::make()->label('')->columnSpan(3)->schema([
-                                Forms\Components\TextInput::make('name')->unique()
+                                TextInput::make('name')->unique()
                                     ->label('Name')
                                     ->required()
                                     ->default($record->name . ' - Copy'), // Appending " - Copy" for distinction
-                                Forms\Components\Textarea::make('description')
+                                Textarea::make('description')
                                     ->label('Description')
                                     ->default($record->description),
-                                Forms\Components\Toggle::make('active')
+                                Toggle::make('active')
                                     ->label('Active')->inline()
                                     ->default($record->active),
 
-                                Forms\Components\TimePicker::make('start_at')
+                                TimePicker::make('start_at')
                                     ->label('Start Time')
                                     ->required()
                                     ->default($record->start_at),
-                                Forms\Components\TimePicker::make('end_at')
+                                TimePicker::make('end_at')
                                     ->label('End Time')
                                     ->required()
                                     ->default($record->end_at),
-                                Forms\Components\Select::make('branch_id')
+                                Select::make('branch_id')
                                     ->options(Branch::where('active', 1)->pluck('name', 'id'))
                                     ->label('Branch')
                                     ->default($record->branch_id),
@@ -220,10 +235,10 @@ class WorkPeriodResource extends Resource
 
                     ->color('warning')
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make()
-                    Tables\Actions\BulkAction::make('delete')
+                    BulkAction::make('delete')
                         ->label('Bulk Delete')
                         ->icon('heroicon-o-trash')
                         ->action(function (Collection $records) {
@@ -241,14 +256,14 @@ class WorkPeriodResource extends Resource
                         })
                         // ->action(fn(Collection $records) => $records->each->delete())
                         ->deselectRecordsAfterCompletion(),
-                    Tables\Actions\RestoreBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ])
             ->headerActions([
                 Action::make('import_work_peirods')
                     ->label('Import from Excel')
                     ->icon('heroicon-o-document-arrow-up')
-                    ->form([
+                    ->schema([
                         FileUpload::make('file')
                             ->label('Select Excel file'),
                     ])->extraModalFooterActions([
@@ -263,7 +278,7 @@ class WorkPeriodResource extends Resource
                         $file = 'public/' . $data['file'];
                         try {
                             // Create an instance of the import class
-                            $import = new \App\Imports\WorkPeriodImport;
+                            $import = new WorkPeriodImport;
 
                             // Import the file
                             Excel::import($import, $file);
@@ -274,7 +289,7 @@ class WorkPeriodResource extends Resource
                             } else {
                                 showWarningNotifiMessage('No shifts were added. Please check your file.');
                             }
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             throw $th;
                             showWarningNotifiMessage('Error importing shifts');
                         }
@@ -293,9 +308,9 @@ class WorkPeriodResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWorkPeriods::route('/'),
-            'create' => Pages\CreateWorkPeriod::route('/create'),
-            'edit' => Pages\EditWorkPeriod::route('/{record}/edit'),
+            'index' => ListWorkPeriods::route('/'),
+            'create' => CreateWorkPeriod::route('/create'),
+            'edit' => EditWorkPeriod::route('/{record}/edit'),
         ];
     }
 

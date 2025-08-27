@@ -2,6 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Illuminate\Support\Carbon;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\Action;
+use Throwable;
+use Filament\Notifications\Notification;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\BranchResource\Pages\ManageBranches;
+use App\Filament\Resources\BranchResource\Pages\EditBranch;
+use App\Filament\Resources\BranchResource\Pages\CreateBranch;
 use App\Filament\Resources\BranchResource\Pages;
 use App\Filament\Resources\BranchResource\RelationManagers\AreasRelationManager;
 use App\Models\Branch;
@@ -12,8 +31,6 @@ use App\Models\Store;
 use App\Models\User; 
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -21,11 +38,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -40,19 +54,19 @@ class BranchResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
-    protected static ?string $navigationGroup = 'Branches';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
+    protected static string | \UnitEnum | null $navigationGroup = 'Branches';
     public static function getNavigationLabel(): string
     {
         return __('lang.branches');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Wizard::make([
-                    Wizard\Step::make('Basic data')
+                    Step::make('Basic data')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(2)->schema([
@@ -123,7 +137,7 @@ class BranchResource extends Resource
 
                                         Select::make('store_id')
                                             ->label(__('stock.store_id'))
-                                            ->options(\App\Models\Store::active()
+                                            ->options(Store::active()
                                                 ->centralKitchen()->pluck('name', 'id'))
                                             ->searchable()
                                         // ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN)
@@ -153,7 +167,7 @@ class BranchResource extends Resource
                                             ->live()
                                             ->afterStateUpdated(function ($state, callable $set) {
                                                 if ($state) {
-                                                    $newEndDate = \Illuminate\Support\Carbon::parse($state)->addDay();
+                                                    $newEndDate = Carbon::parse($state)->addDay();
                                                     $set('end_date', $newEndDate);
                                                 }
                                             }),
@@ -177,7 +191,7 @@ class BranchResource extends Resource
                             ]),
 
                         ]),
-                    Wizard\Step::make('Location')
+                    Step::make('Location')
                         ->icon('heroicon-o-map-pin')
                         ->schema([
                             Fieldset::make()
@@ -214,7 +228,7 @@ class BranchResource extends Resource
                                 ]),
 
                         ]),
-                    Wizard\Step::make('Images')
+                    Step::make('Images')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
@@ -299,15 +313,15 @@ class BranchResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('active')
+                TrashedFilter::make(),
+                SelectFilter::make('active')
                     ->options([
                         1 => __('lang.active'),
                         0 => __('lang.status_unactive'),
                     ])->default(1),
 
             ])
-            ->actions([
+            ->recordActions([
 
 
 
@@ -316,7 +330,7 @@ class BranchResource extends Resource
                     ->label('Add Store')
                     ->icon('heroicon-o-plus-circle')
                     ->visible(fn(Model $record) => ! $record->store && $record->type != Branch::TYPE_HQ)
-                    ->form([
+                    ->schema([
                         TextInput::make('name')
                             ->label('Store Name')
                             ->default(fn(Model $record) => $record->name . ' Store')
@@ -335,7 +349,7 @@ class BranchResource extends Resource
                                 'branch_id' => $record->id,
                             ]);
                             $record->update(['store_id' => $store->id]);
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             throw $th;
                         }
                     })
@@ -347,7 +361,7 @@ class BranchResource extends Resource
                     ->modalWidth('lg') // Adjust modal size
                     ->button()
                     ->icon('heroicon-o-plus')
-                    ->label('Add area')->form([
+                    ->label('Add area')->schema([
                         Repeater::make('branch_areas')
                             ->minItems(1)
                             ->maxItems(1)
@@ -378,7 +392,7 @@ class BranchResource extends Resource
                     ->icon('heroicon-o-pencil-square')
                     ->modalHeading(__('Quick Edit Branch'))
                     ->modalWidth('lg')
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         return [
                             TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
                             Select::make('manager_id')
@@ -387,7 +401,7 @@ class BranchResource extends Resource
                                     ->pluck('name', 'id')),
                             Select::make('store_id')
                                 ->label(__('stock.store_id'))->default($record->store_id)
-                                ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
+                                ->options(Store::active()->centralKitchen()->pluck('name', 'id'))
                                 ->searchable()
                                 ->requiredIf('type', Branch::TYPE_CENTRAL_KITCHEN),
 
@@ -395,28 +409,28 @@ class BranchResource extends Resource
                     })
                     ->action(function (Model $record, array $data) {
                         $record->update($data);
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title(__('Updated successfully'))
                             ->success()
                             ->send();
                     }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\ForceDeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                ForceDeleteBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageBranches::route('/'),
-            'edit' => Pages\EditBranch::route('/{record}/edit'),
-            'create' => Pages\CreateBranch::route('/create'),
+            'index' => ManageBranches::route('/'),
+            'edit' => EditBranch::route('/{record}/edit'),
+            'create' => CreateBranch::route('/create'),
 
 
         ];

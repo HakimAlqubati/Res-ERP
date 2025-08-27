@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryWithUsageReportResource\Pages\ListInventoryWithUsageReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryWithUsageReportResource\Pages;
@@ -10,7 +12,6 @@ use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -23,7 +24,7 @@ class InventoryWithUsageReportResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
     protected static ?string $slug = 'inventory-with-usage-report';
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
 protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
     {
@@ -41,7 +42,7 @@ protected static bool $shouldRegisterNavigation = false;
     }
 
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
 
     public static function table(Table $table): Table
@@ -81,7 +82,7 @@ protected static bool $shouldRegisterNavigation = false;
                     ->options(Store::active()->where('is_central_kitchen', 1)->get()->pluck('name', 'id')->toArray()),
                 Filter::make('show_extra_fields')
                     ->label('Show Smallest Unit')
-                    ->form([
+                    ->schema([
                         Toggle::make('only_smallest_unit')
                             ->inline(false)
                             ->label(new HtmlString('Show Only Smallest Unit<br>Show Total'))
@@ -92,7 +93,7 @@ protected static bool $shouldRegisterNavigation = false;
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventoryWithUsageReport::route('/'),
+            'index' => ListInventoryWithUsageReport::route('/'),
         ];
     }
 

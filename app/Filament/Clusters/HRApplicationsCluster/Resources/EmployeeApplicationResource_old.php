@@ -2,6 +2,24 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteAction;
+use Exception;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages\ListEmployeeApplications;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages\CreateEmployeeApplication;
+use Filament\Actions\Action;
+use Throwable;
 use App\Filament\Clusters\HRApplicationsCluster;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\EmployeeApplicationResource\Pages;
 use App\Filament\Pages\AttendanecEmployee2 as AttendanecEmployee;
@@ -15,22 +33,15 @@ use App\Models\LeaveType;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -44,11 +55,11 @@ class EmployeeApplicationResource_old extends Resource
 {
     protected static ?string $model = EmployeeApplication::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected ?bool $hasDatabaseTransactions = true;
 
     protected static ?string $cluster = HRApplicationsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
     protected static ?string $label = 'Request';
@@ -56,10 +67,10 @@ class EmployeeApplicationResource_old extends Resource
 
     protected static ?string $pluralModelLabel = 'Requests';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->label('')->columns(2)->schema([
                     Select::make('employee_id')
                         ->label('Employee')
@@ -123,12 +134,12 @@ class EmployeeApplicationResource_old extends Resource
 
                     ->schema(function ($get, $set) {
 
-                        $form = [];
+                        $schema = [];
                         if (in_array($get('application_type'), [
                             EmployeeApplication::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
                             EmployeeApplication::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
                         ])) {
-                            $form = [
+                            $schema = [
                                 DatePicker::make('detail_date')->maxDate(now()->toDateString())
                                     ->label('Date')->required()
                                     ->default('Y-m-d'),
@@ -297,7 +308,7 @@ class EmployeeApplicationResource_old extends Resource
 
                                             DatePicker::make('detail_to_date')
                                                 ->label('To Date')
-                                                ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                                                ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                                                 ->reactive()
                                                 ->required()
                                                 ->afterStateUpdated(function ($state, callable $set, $get) {
@@ -341,8 +352,8 @@ class EmployeeApplicationResource_old extends Resource
                         }
 
                         return [
-                            Fieldset::make()->columns(count($form))->schema(
-                                $form
+                            Fieldset::make()->columns(count($schema))->schema(
+                                $schema
                             ),
                         ];
                     }),
@@ -389,7 +400,7 @@ class EmployeeApplicationResource_old extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
                 SelectFilter::make('status')->options([
                     EmployeeApplication::STATUS_PENDING => EmployeeApplication::STATUS_PENDING,
                     EmployeeApplication::STATUS_REJECTED => EmployeeApplication::STATUS_REJECTED,
@@ -399,9 +410,9 @@ class EmployeeApplicationResource_old extends Resource
                     ->label('Branch')
                     ->options(Branch::select('name', 'id')->pluck('name', 'id')),
             ])
-            ->actions([
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\DeleteAction::make()->using(function ($record) {
+            ->recordActions([
+                RestoreAction::make(),
+                DeleteAction::make()->using(function ($record) {
 
                     DB::beginTransaction();
                     try {
@@ -427,13 +438,13 @@ class EmployeeApplicationResource_old extends Resource
                             $transaction->update(['is_canceled' => 1, 'cancel_reason' => 'Application deleted', 'canceled_at' => now()]);
                         }
                         DB::commit();
-                    } catch (\Exception $th) {
+                    } catch (Exception $th) {
                         DB::rollBack();
                         return Notification::make()->title($th->getMessage())->warning()->send();
                         //throw $th;
                     }
                 }),
-                Tables\Actions\ForceDeleteAction::make()->using(function ($record) {
+                ForceDeleteAction::make()->using(function ($record) {
                     DB::beginTransaction();
                     try {
                         $transaction = ApplicationTransaction::where('application_id', $record->id)->whereIn('transaction_type_id', [1, 2, 3, 4])->first();
@@ -442,7 +453,7 @@ class EmployeeApplicationResource_old extends Resource
                             $transaction->forceDelete();
                         }
                         DB::commit();
-                    } catch (\Exception $th) {
+                    } catch (Exception $th) {
                         DB::rollBack();
                         return Notification::make()->title($th->getMessage())->warning()->send();
                         //throw $th;
@@ -557,10 +568,10 @@ class EmployeeApplicationResource_old extends Resource
                     ->visible(fn($record): bool => ($record->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -575,8 +586,8 @@ class EmployeeApplicationResource_old extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployeeApplications::route('/'),
-            'create' => Pages\CreateEmployeeApplication::route('/create'),
+            'index' => ListEmployeeApplications::route('/'),
+            'create' => CreateEmployeeApplication::route('/create'),
             // 'edit' => Pages\EditEmployeeApplication::route('/{record}/edit'),
         ];
     }
@@ -633,7 +644,7 @@ class EmployeeApplicationResource_old extends Resource
                     $employeePeriods = $record->employee?->periods;
 
                     if (!is_null($record->employee) && count($employeePeriods) > 0) {
-                        $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+                        $day = Carbon::parse($data['request_check_time'])->format('l');
 
                         // Decode the days array for each period
                         $workTimePeriods = $employeePeriods->map(function ($period) {
@@ -657,17 +668,17 @@ class EmployeeApplicationResource_old extends Resource
                     }
                     // ApplicationTransaction::createTransactionFromApplication($record);
 
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     Log::error('Error approving attendance request: ' . $e->getMessage());
                     return Notification::make()->body($e->getMessage())->send();
                     // Handle the exception (log it, return an error message, etc.)
                     // Optionally, you could return a user-friendly error message
-                    throw new \Exception($e->getMessage());
-                    throw new \Exception('There was an error processing the attendance request. Please try again later.');
+                    throw new Exception($e->getMessage());
+                    throw new Exception('There was an error processing the attendance request. Please try again later.');
                 }
             })
             // ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
 
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
                     ->where('check_date', $record?->detail_date)
@@ -708,7 +719,7 @@ class EmployeeApplicationResource_old extends Resource
                 ]);
             })
             // ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
                 ];
@@ -738,7 +749,7 @@ class EmployeeApplicationResource_old extends Resource
 
                     // Show success notification
                     Notification::make()->success()->title('The application has been approved successfully.')->send();
-                } catch (\Throwable $th) {
+                } catch (Throwable $th) {
                     // Show error notification
                     DB::rollBack();
 
@@ -750,7 +761,7 @@ class EmployeeApplicationResource_old extends Resource
             })
 
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 // $details= json_decode($record->details) ;
 
                 $detailDate = $record?->detail_date;
@@ -796,7 +807,7 @@ class EmployeeApplicationResource_old extends Resource
                 ]);
             })
             // ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
                 ];
@@ -848,7 +859,7 @@ class EmployeeApplicationResource_old extends Resource
                 }
             })
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 $leaveTypeId = $record?->detail_leave_type_id;
                 $toDate = $record?->detail_to_date;
                 $fromDate = $record?->detail_from_date;
@@ -886,7 +897,7 @@ class EmployeeApplicationResource_old extends Resource
                 ]);
             })
             // ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
                 ];
@@ -905,7 +916,7 @@ class EmployeeApplicationResource_old extends Resource
                 $employeePeriods = $record->employee?->periods;
 
                 if (!is_null($record->employee) && count($employeePeriods) > 0) {
-                    $day = \Carbon\Carbon::parse($data['request_check_time'])->format('l');
+                    $day = Carbon::parse($data['request_check_time'])->format('l');
 
                     // Decode the days array for each period
                     $workTimePeriods = $employeePeriods->map(function ($period) {
@@ -930,7 +941,7 @@ class EmployeeApplicationResource_old extends Resource
                 // ApplicationTransaction::createTransactionFromApplication($record);
             })
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Fieldset::make()->label('Request data')->columns(2)->schema([
                         DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
@@ -946,7 +957,7 @@ class EmployeeApplicationResource_old extends Resource
             ->icon('heroicon-m-newspaper')
 
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
 
                 $attendance = Attendance::where('employee_id', $record?->employee_id)
                     ->where('check_date', $record?->detail_date)
@@ -981,7 +992,7 @@ class EmployeeApplicationResource_old extends Resource
             ->icon('heroicon-m-newspaper')
 
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Fieldset::make()->label('Request data')->columns(2)->schema([
                         DatePicker::make('request_check_date')->default($record?->detail_date)->label('Date'),
@@ -1000,7 +1011,7 @@ class EmployeeApplicationResource_old extends Resource
             ->icon('heroicon-m-newspaper')
 
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 $leaveTypeId = $record?->detail_leave_type_id;
                 $toDate = $record?->detail_to_date;
                 $fromDate = $record?->detail_from_date;
@@ -1032,7 +1043,7 @@ class EmployeeApplicationResource_old extends Resource
             ->icon('heroicon-m-newspaper')
 
             ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 // $details= json_decode($record->details) ;
 
                 $detailDate = $record?->detail_date;
@@ -1080,7 +1091,7 @@ class EmployeeApplicationResource_old extends Resource
                 ]);
             })
             // ->disabledForm()
-            ->form(function ($record) {
+            ->schema(function ($record) {
                 return [
                     Textarea::make('rejected_reason')->label('Reason for Rejection')->placeholder('Please provide a reason...')->required(),
                 ];

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditLeaveBalance extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

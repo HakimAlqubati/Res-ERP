@@ -4,6 +4,8 @@
 
 namespace App\Traits\Inventory;
 
+use App\Services\MultiProductsInventoryService;
+use App\Services\FifoMethodService;
 use App\Models\InventoryTransaction;
 use App\Models\StockTransferOrder;
 use Exception;
@@ -18,17 +20,17 @@ trait HasStockTransferInventoryTransactions
             $productName = $detail->product->name . ' ' . $detail->product->code ?? "Unknown Product";
             $storeName = $this->fromStore->name ?? "Unknown Store";
             // Check if quantity is available before proceeding
-            $availableQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+            $availableQty = MultiProductsInventoryService::getRemainingQty(
                 $detail->product_id,
                 $detail->unit_id,
                 $this->from_store_id
             );
 
             if ($detail['quantity'] > $availableQty) {
-                throw new \Exception("Cannot transfer '{$productName}': not enough stock in '{$storeName}'.");
+                throw new Exception("Cannot transfer '{$productName}': not enough stock in '{$storeName}'.");
             }
 
-            $fifoService = new \App\Services\FifoMethodService($this);
+            $fifoService = new FifoMethodService($this);
 
             $allocations = $fifoService->getAllocateFifo(
                 $detail->product_id,
@@ -40,7 +42,7 @@ trait HasStockTransferInventoryTransactions
                 $this->processFifoTransferAllocation($allocations, $detail);
             } else {
 
-                throw new \Exception("Cannot transfer product '{$productName}': insufficient stock in '{$storeName}'.");
+                throw new Exception("Cannot transfer product '{$productName}': insufficient stock in '{$storeName}'.");
             }
             Log::info('allocation', [$allocations]);
         }
@@ -50,9 +52,9 @@ trait HasStockTransferInventoryTransactions
     {
         foreach ($allocations as $alloc) {
 
-            $outTransaction =  \App\Models\InventoryTransaction::create([
+            $outTransaction =  InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
@@ -70,9 +72,9 @@ trait HasStockTransferInventoryTransactions
             ]);
 
             // 🟩 حركة الإدخال
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                'movement_type'        => InventoryTransaction::MOVEMENT_IN,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],

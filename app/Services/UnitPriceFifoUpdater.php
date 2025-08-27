@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\UnitPrice;
 use App\Models\ProductPriceHistory;
@@ -85,7 +86,7 @@ class UnitPriceFifoUpdater
         $count = 0;
 
         // 🔵 أولًا: جلب الحركات ExcelImport فقط
-        $excelImports = \App\Models\InventoryTransaction::where('product_id', $productId)
+        $excelImports = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', 'in')
             ->where('transactionable_type', 'ExcelImport')
             ->orderBy('movement_date', 'ASC')
@@ -116,7 +117,7 @@ class UnitPriceFifoUpdater
         }
 
         // 🔵 ثم: جلب باقي الحركات (PurchaseInvoice, StockSupplyOrder, GoodsReceivedNote)
-        $otherTransactions = \App\Models\InventoryTransaction::where('product_id', $productId)
+        $otherTransactions = InventoryTransaction::where('product_id', $productId)
             ->where('movement_type', 'in')
             ->whereIn('transactionable_type', [
                 'App\Models\PurchaseInvoice',

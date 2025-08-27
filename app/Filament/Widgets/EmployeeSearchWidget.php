@@ -2,10 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Actions\Action;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use App\Models\MonthSalary;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -54,7 +54,7 @@ class EmployeeSearchWidget extends BaseWidget
             ->filters([
             
             ])
-            ->actions([
+            ->recordActions([
             Action::make('salarySlip')->button()->color('success')
             ->action(function($record){
                 $employeeId = auth()->user()->employee->id;

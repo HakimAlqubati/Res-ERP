@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AttendanceImagesUploaded;
 use App\Filament\Pages\AttendanecEmployee2;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -180,7 +181,7 @@ class EmployeeAWSController extends Controller
         // );
         // Store image details in attendance_images_uploaded table
 
-        $uploadedImage = \App\Models\AttendanceImagesUploaded::create([
+        $uploadedImage = AttendanceImagesUploaded::create([
             'img_url' => $path,
             'datetime' => now(),
         ]);

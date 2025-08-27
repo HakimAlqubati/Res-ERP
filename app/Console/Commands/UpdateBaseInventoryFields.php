@@ -1,6 +1,7 @@
 <?php
 namespace App\Console\Commands;
 
+use Throwable;
 use App\Models\InventoryTransaction;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -80,7 +81,7 @@ class UpdateBaseInventoryFields extends Command
             DB::commit();
 
             $this->info("✅ Done. Updated $updatedCount transactions.");
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             $this->error('❌ Failed to update transactions: ' . $e->getMessage());
         }

@@ -2,6 +2,24 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages\ListMonthSalaries;
+use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages\CreateMonthSalary;
+use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages\ViewMonthSalary;
+use ZipArchive;
+use Exception;
+use Filament\Forms\Components\CheckboxList;
 use App\Exports\SalariesExport;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages;
@@ -14,16 +32,12 @@ use App\Models\MonthlySalaryDeductionsDetail;
 use App\Models\MonthlySalaryIncreaseDetail;
 use App\Models\MonthSalary;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -33,11 +47,11 @@ class MonthSalaryResource extends Resource
 {
     protected static ?string $model = MonthSalary::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRSalaryCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
     public static function getNavigationLabel(): string
@@ -54,12 +68,12 @@ class MonthSalaryResource extends Resource
         return 'Payroll';
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         // dd(getMonthOptionsBasedOnSettings());
         // dd(getMonthsArray2());
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Fieldset::make()->label('Set Branch, Month and payment date')->columns(3)->schema([
                     TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
@@ -96,10 +110,10 @@ class MonthSalaryResource extends Resource
                         // ->searchable()
                         ->default(now()->format('F')),
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
-                    Forms\Components\DatePicker::make('payment_date')->required()
+                    DatePicker::make('payment_date')->required()
                         ->default(date('Y-m-d')),
                 ]),
-                Forms\Components\Textarea::make('notes')->label('Notes')->columnSpanFull(),
+                Textarea::make('notes')->label('Notes')->columnSpanFull(),
             ]);
     }
 
@@ -116,14 +130,14 @@ class MonthSalaryResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Title')->searchable(),
-                Tables\Columns\TextColumn::make('notes')->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('branch.name')->label('Branch')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('createdBy.name')->label('Created by')->searchable()->sortable()
+                TextColumn::make('name')->label('Title')->searchable(),
+                TextColumn::make('notes')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('branch.name')->label('Branch')->searchable()->sortable(),
+                TextColumn::make('createdBy.name')->label('Created by')->searchable()->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('payment_date')->date()
+                TextColumn::make('payment_date')->date()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\ToggleColumn::make('approved')->toggleable(isToggledHiddenByDefault: true)->disabled(),
+                ToggleColumn::make('approved')->toggleable(isToggledHiddenByDefault: true)->disabled(),
             ])
             ->filters([
                 SelectFilter::make('branch_id')
@@ -131,9 +145,9 @@ class MonthSalaryResource extends Resource
                     ->multiple()
                     ->label(__('lang.branch'))->options([Branch::get()->pluck('name', 'id')->toArray()]),
             ])
-            ->actions([
-                Tables\Actions\DeleteAction::make()->button(),
-                Tables\Actions\ViewAction::make()->button(),
+            ->recordActions([
+                DeleteAction::make()->button(),
+                ViewAction::make()->button(),
                 Action::make('excel_download')
                     ->button()
                     ->color('info')
@@ -145,7 +159,7 @@ class MonthSalaryResource extends Resource
                     ->button()->label('Bulk salary slip')
                     ->color('primary') // Use primary color for bulk action
                     ->icon('heroicon-o-archive-box-arrow-down') // Icon for bulk salary slips                
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         return static::bulkSalarySlipForm($record);
                     })
 
@@ -158,7 +172,7 @@ class MonthSalaryResource extends Resource
                     ->color('success') // Use secondary color for single employee action
                     ->icon('heroicon-o-document-arrow-down') // Icon for employee salary slip
 
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         $employeeIds = $record?->details->pluck('employee_id')->toArray();
 
                         return [
@@ -183,9 +197,9 @@ class MonthSalaryResource extends Resource
                         return generateSalarySlipPdf_($employeeId, $record->id);
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -200,9 +214,9 @@ class MonthSalaryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMonthSalaries::route('/'),
-            'create' => Pages\CreateMonthSalary::route('/create'),
-            'view' => Pages\ViewMonthSalary::route('/{record}'),
+            'index' => ListMonthSalaries::route('/'),
+            'create' => CreateMonthSalary::route('/create'),
+            'view' => ViewMonthSalary::route('/{record}'),
         ];
     }
 
@@ -296,9 +310,9 @@ class MonthSalaryResource extends Resource
     {
         $zipFileName = 'salary_slips.zip';
         $zipFilePath = storage_path('app/public/' . $zipFileName);
-        $zip = new \ZipArchive();
+        $zip = new ZipArchive();
 
-        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
             foreach ($employeeIds as $employeeId) {
                 $pdfContent = generateSalarySlipPdf($employeeId, $record->id); // Generate the PDF content
                 $employeeName = Employee::find($employeeId)->name;
@@ -314,7 +328,7 @@ class MonthSalaryResource extends Resource
             // Provide the ZIP file for download
             return response()->download($zipFilePath)->deleteFileAfterSend(true);
         } else {
-            throw new \Exception('Could not create ZIP file.');
+            throw new Exception('Could not create ZIP file.');
         }
     }
 
@@ -328,7 +342,7 @@ class MonthSalaryResource extends Resource
 
         return [
             Hidden::make('month')->default($record?->month),
-            Forms\Components\CheckboxList::make('employee_ids')
+            CheckboxList::make('employee_ids')
                 ->searchable()
                 ->required()->columns(3)
                 ->label('Select Employees')->bulkToggleable()

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -58,7 +59,7 @@ class Circular extends Model implements Auditable
 
         if (!isSuperAdmin() && !isSystemManager()) {
 
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope('active', function (Builder $builder) {
                 $userType = auth()->user()->user_type;
                 $branchId = auth()->user()->branch_id;
                 // dd($branchId,$userType);

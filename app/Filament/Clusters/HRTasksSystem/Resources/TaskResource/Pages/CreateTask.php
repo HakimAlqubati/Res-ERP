@@ -2,6 +2,9 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages;
 
+use App\Models\Task;
+use Exception;
+use Filament\Notifications\Notification;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource;
 use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
@@ -32,7 +35,7 @@ class CreateTask extends CreateRecord
                 }
 
                 // Create the task
-                $task = \App\Models\Task::create($taskData);
+                $task = Task::create($taskData);
                 foreach ($steps as $step) {
                     $task->steps()->create([
                         'title' => $step['title'],
@@ -48,9 +51,9 @@ class CreateTask extends CreateRecord
 
             // Redirect to the task list page
             $this->redirect($this->getRedirectUrl());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack(); // Rollback transaction in case of failure
-            \Filament\Notifications\Notification::make()
+            Notification::make()
                 ->title('Error')
                 ->body('Task creation failed: ' . $e->getMessage())
                 ->danger()
@@ -72,7 +75,7 @@ class CreateTask extends CreateRecord
      */
     private function handleDailyTaskSetup($task)
     {
-        $dailyTask = \App\Models\DailyTasksSettingUp::create([
+        $dailyTask = DailyTasksSettingUp::create([
             'title'        => $task->title,
             'schedule_type' => $task->schedule_type,
             'description'  => $task->description,
@@ -91,7 +94,7 @@ class CreateTask extends CreateRecord
             'start_date'    => $task->start_date,
             'recur_count'   => $this->data['recur_count'],
             'end_date'      => $task->end_date,
-            'recurrence_pattern' => json_encode(\App\Filament\Clusters\HRTasksSystem\Resources\TaskResource::getRequrPatternKeysAndValues($this->data)),
+            'recurrence_pattern' => json_encode(TaskResource::getRequrPatternKeysAndValues($this->data)),
         ]);
 
         // Copy steps from the original task

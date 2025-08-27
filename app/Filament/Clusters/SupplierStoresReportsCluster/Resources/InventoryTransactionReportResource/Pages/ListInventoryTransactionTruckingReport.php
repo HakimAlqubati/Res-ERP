@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionTruckingReportResource;
 use App\Models\InventoryTransaction;
@@ -12,9 +13,9 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInventoryTransactionTruckingReport extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
     protected static string $resource = InventoryTransactionTruckingReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.inventory-trucking-report';
+    protected string $view = 'filament.pages.inventory-reports.inventory-trucking-report';
     public $perPage = 50;
     protected function getViewData(): array
     {

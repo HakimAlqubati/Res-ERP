@@ -9,7 +9,7 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewAudit extends ViewRecord
 {
     protected static string $resource = AuditResource::class;
-    protected static string $view = 'filament.pages.audit-logs.audit-logs';
+    protected string $view = 'filament.pages.audit-logs.audit-logs';
     protected function getHeaderActions(): array
     {
         return [

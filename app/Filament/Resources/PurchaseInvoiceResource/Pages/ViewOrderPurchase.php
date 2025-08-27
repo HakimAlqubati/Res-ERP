@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderPurchaseResource\Pages;
 
+use Filament\Actions\EditAction;
 use App\Filament\Resources\OrderPurchaseResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -14,7 +15,7 @@ class ViewOrderPurchase extends ViewRecord
     protected function getActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

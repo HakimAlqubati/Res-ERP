@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource;
 use App\Models\ServiceRequestLog;
 use Filament\Actions;
@@ -14,7 +15,7 @@ class ViewServiceRequest extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
   

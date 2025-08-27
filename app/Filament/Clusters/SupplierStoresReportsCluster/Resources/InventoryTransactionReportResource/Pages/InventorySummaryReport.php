@@ -12,7 +12,7 @@ class InventorySummaryReport extends Page
 {
     protected static string $resource = InventoryTransactionTruckingReportResource::class;
 
-    protected static string $view = 'filament.clusters.inventory-report-cluster.resources.inventory-transaction-trucking-report-resource.pages.inventory-summary-report';
+    protected string $view = 'filament.clusters.inventory-report-cluster.resources.inventory-transaction-trucking-report-resource.pages.inventory-summary-report';
 
     public ?int $selectedCategory = null;
     public  $showWithoutZero = 0;

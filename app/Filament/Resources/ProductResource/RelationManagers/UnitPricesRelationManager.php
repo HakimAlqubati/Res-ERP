@@ -2,12 +2,20 @@
 
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
 use App\Models\Unit;
 use App\Models\UnitPrice;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -22,10 +30,10 @@ class UnitPricesRelationManager extends RelationManager
     protected static ?string $model = UnitPrice::class;
     protected static ?string $recordTitleAttribute = 'product_id';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('product_id')->hidden(1),
                 Select::make('unit_id')
                     ->searchable()
@@ -46,27 +54,27 @@ class UnitPricesRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('unit.name'),
-                Tables\Columns\TextColumn::make('price'),
+                TextColumn::make('unit.name'),
+                TextColumn::make('price'),
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->using(function (HasRelationshipTable $livewire, array $data): Model {
                         // dd($data);
                         return $livewire->getRelationship()->create($data);
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
     public static function getEloquentQuery(): Builder

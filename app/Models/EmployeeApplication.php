@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -207,11 +208,11 @@ class EmployeeApplication extends Model
         //    dd(auth()->user(),auth()->user()->has_employee,auth()->user()->employee);
         if (auth()->check()) {
             if (isBranchManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
             } elseif ((isStuff() || isFinanceManager()) && auth()->user()->has_employee) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('employee_id', auth()->user()->employee->id); // Add your default query here
                 });
             }

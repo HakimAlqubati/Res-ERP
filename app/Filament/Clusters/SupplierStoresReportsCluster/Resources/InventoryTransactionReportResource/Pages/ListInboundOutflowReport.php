@@ -2,15 +2,16 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InboundOutflowReportResource;
 use App\Services\Inventory\InboundOutflowReportService;
 use Filament\Resources\Pages\ListRecords;
 
 class ListInboundOutflowReport extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
     protected static string $resource = InboundOutflowReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.inbound-outflow-report';
+    protected string $view = 'filament.pages.inventory-reports.inbound-outflow-report';
 
     protected function getViewData(): array
     {

@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\CreateAction;
 use App\Models\PurchaseInvoice;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -19,11 +21,11 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
 
     protected static ?string $recordTitleAttribute = 'purchase_invoice_id';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('purchase_invoice_id')
+        return $schema
+            ->components([
+                TextInput::make('purchase_invoice_id')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -49,13 +51,13 @@ class PurchaseInvoiceDetailsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\DeleteBulkAction::make(),
             ]);
     }

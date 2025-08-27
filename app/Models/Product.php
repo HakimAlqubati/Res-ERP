@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Services\MultiProductsInventoryService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\Product\HasScopedUnitPrices;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -54,8 +57,8 @@ class Product extends Model implements Auditable
     /**
      * Scope to filter products with at least 2 unit prices.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeWithMinimumUnitPrices($query, $count = 2)
     {
@@ -220,7 +223,7 @@ class Product extends Model implements Auditable
 
     public static function generateProductCode($categoryId): string
     {
-        $category = \App\Models\Category::find($categoryId);
+        $category = Category::find($categoryId);
         if (!$category || !$category->code_starts_with) {
             return '';
         }
@@ -284,7 +287,7 @@ class Product extends Model implements Auditable
 
                 // 3. التحقق من الكمية المتبقية في المخزون
                 // نفترض أن لديك كلاس MultiProductsInventoryService
-                $inventoryService = new \App\Services\MultiProductsInventoryService(
+                $inventoryService = new MultiProductsInventoryService(
                     null,
                     $product->id,
                     $smallestUnit->unit_id,
@@ -308,7 +311,7 @@ class Product extends Model implements Auditable
 
 
 
-    public function exportItemsPdf(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    public function exportItemsPdf(): BinaryFileResponse
     {
         $items = DB::select("
         SELECT 

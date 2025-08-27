@@ -37,17 +37,17 @@ class EmployeeAttendance extends BasePage
     //              ->maxLength(255),
     //      ];
     //  }
- 
+
     //  public function submit()
     //  {
     //      $data = $this->form->getState();
- 
+
     //      // Store the attendance entry
     //      Attendance::create([
     //          'nrfid' => $data['nrfid'],
     //          'attended_at' => now(),
     //      ]);
- 
+
     //      $this->notify('success', 'Attendance recorded successfully!');
     //  }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
+use Filament\Tables\Columns\TextColumn;
+use Carbon\Carbon;
 use App\Models\OrderLog;
 use Filament\Forms;
 use Filament\Tables;
@@ -23,7 +25,7 @@ class LogsRelationManager extends RelationManager
         return $table
             ->defaultSort('id', 'asc')
             ->columns([
-                Tables\Columns\TextColumn::make('log_type')
+                TextColumn::make('log_type')
                     ->label('Type')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
@@ -33,22 +35,22 @@ class LogsRelationManager extends RelationManager
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('message')
+                TextColumn::make('message')
                     ->label('Notes')
                     ->wrap(),
 
-                Tables\Columns\TextColumn::make('new_status')
+                TextColumn::make('new_status')
                     ->label('New Status')
                     ->badge()
                     ->color('primary')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('creator.name')
+                TextColumn::make('creator.name')
                     ->label('Created By'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Created At')
-                    ->formatStateUsing(fn($state) => \Carbon\Carbon::parse($state)->format('d-m-Y h:i A'))
+                    ->formatStateUsing(fn($state) => Carbon::parse($state)->format('d-m-Y h:i A'))
 
                     // ->since()
                     ->sortable(),
@@ -56,8 +58,8 @@ class LogsRelationManager extends RelationManager
             ->defaultSort('created_at', 'asc')
             ->filters([])
             ->headerActions([])
-            ->actions([])
-            ->bulkActions([]);
+            ->recordActions([])
+            ->toolbarActions([]);
     }
     public static function modifyQueryUsing(Builder $query): Builder
     {

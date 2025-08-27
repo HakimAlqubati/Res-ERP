@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\FifoMethodService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
@@ -46,7 +47,7 @@ class StockIssueOrderDetail extends Model implements Auditable
         static::created(function ($stockIssueDetail) {
             $order = $stockIssueDetail->order;
             $storeId = $order->store_id;
-            $fifoService = new \App\Services\FifoMethodService($order);
+            $fifoService = new FifoMethodService($order);
             $allocations = $fifoService->getAllocateFifo(
                 $stockIssueDetail->product_id,
                 $stockIssueDetail->unit_id,
@@ -86,9 +87,9 @@ class StockIssueOrderDetail extends Model implements Auditable
     {
         $order = $detail->order;
         foreach ($allocations as $alloc) {
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],

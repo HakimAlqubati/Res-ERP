@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Throwable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -92,7 +93,7 @@ class CustomTenantModel extends Tenant
             DB::unprepared($sql);
             DB::commit();
             showSuccessNotifiMessage('Done');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             DB::rollBack();
             showWarningNotifiMessage($th->getMessage());
             throw $th;
@@ -109,7 +110,7 @@ class CustomTenantModel extends Tenant
             DB::unprepared($sql);
             DB::commit();
             showSuccessNotifiMessage('Done');
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             DB::rollBack();
             showWarningNotifiMessage($th->getMessage());
             throw $th;

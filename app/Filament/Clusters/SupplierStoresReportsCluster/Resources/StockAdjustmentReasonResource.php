@@ -2,6 +2,15 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\Pages\ListStockAdjustmentReasons;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\Pages\CreateStockAdjustmentReason;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\Pages\EditStockAdjustmentReason;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\InventorySettingsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
@@ -9,12 +18,9 @@ use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustment
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\RelationManagers;
 use App\Models\StockAdjustmentReason;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -27,19 +33,19 @@ class StockAdjustmentReasonResource extends Resource
 {
     protected static ?string $model = StockAdjustmentReason::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventorySettingsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     public static function getModelLabel(): string
     {
         return 'Stock Adjustment Reason';
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columns(2)->schema([
                     TextInput::make('name')
                         ->label('Reason Name')
@@ -70,12 +76,12 @@ class StockAdjustmentReasonResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -90,9 +96,9 @@ class StockAdjustmentReasonResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockAdjustmentReasons::route('/'),
-            'create' => Pages\CreateStockAdjustmentReason::route('/create'),
-            'edit' => Pages\EditStockAdjustmentReason::route('/{record}/edit'),
+            'index' => ListStockAdjustmentReasons::route('/'),
+            'create' => CreateStockAdjustmentReason::route('/create'),
+            'edit' => EditStockAdjustmentReason::route('/{record}/edit'),
         ];
     }
 

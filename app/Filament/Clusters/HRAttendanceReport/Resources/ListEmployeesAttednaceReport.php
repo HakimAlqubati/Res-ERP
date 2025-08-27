@@ -16,11 +16,11 @@ use Illuminate\Support\Facades\Log;
 class ListEmployeesAttednaceReport extends ListRecords
 {
     protected static string $resource = EmployeesAttednaceReportResource::class;
-    protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed';
+    protected string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed';
 
     public $showDetailsModal = false;
     public $modalData = [];
-    public function getTableRecordKey(Model $record): string
+    public function getTableRecordKey(Model|array $record): string
     {
         $attributes = $record->getAttributes();
 

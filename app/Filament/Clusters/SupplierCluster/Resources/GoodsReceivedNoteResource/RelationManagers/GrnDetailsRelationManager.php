@@ -2,8 +2,11 @@
 
 namespace App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -14,11 +17,11 @@ class GrnDetailsRelationManager extends RelationManager
 {
     protected static string $relationship = 'grnDetails';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('product')
+        return $schema
+            ->components([
+                TextInput::make('product')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -29,10 +32,10 @@ class GrnDetailsRelationManager extends RelationManager
         return $table->striped()
             ->recordTitleAttribute('product')
             ->columns([
-                Tables\Columns\TextColumn::make('product.name')->label('Product'),
-                Tables\Columns\TextColumn::make('product.code')->label('Code'),
-                Tables\Columns\TextColumn::make('unit.name')->label('Unit'),
-                Tables\Columns\TextColumn::make('quantity')->label('Quantity')->alignCenter(true),
+                TextColumn::make('product.name')->label('Product'),
+                TextColumn::make('product.code')->label('Code'),
+                TextColumn::make('unit.name')->label('Unit'),
+                TextColumn::make('quantity')->label('Quantity')->alignCenter(true),
             ])
             ->filters([
                 //
@@ -40,12 +43,12 @@ class GrnDetailsRelationManager extends RelationManager
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

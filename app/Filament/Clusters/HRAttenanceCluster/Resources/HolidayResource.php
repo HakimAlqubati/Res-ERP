@@ -2,14 +2,26 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DatePicker;
+use Carbon\Carbon;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BooleanColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayResource\Pages\ListHolidays;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayResource\Pages\CreateHoliday;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayResource\Pages\EditHoliday;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\HolidayResource\RelationManagers;
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\Holiday;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -20,23 +32,23 @@ class HolidayResource extends Resource
 {
     protected static ?string $model = Holiday::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRLeaveManagementCluster::class;
     protected static ?string $label = 'Public Holidays';
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                     ->label('Holiday Name')
                     ->unique(Holiday::class, 'name', ignoreRecord: true)
                     ->required(),
 
-                Forms\Components\DatePicker::make('from_date')
+                DatePicker::make('from_date')
                     ->label('From Date')
                     ->reactive()
                     ->default(date('Y-m-d'))
@@ -53,9 +65,9 @@ class HolidayResource extends Resource
                         }
                     }),
 
-                Forms\Components\DatePicker::make('to_date')
+                DatePicker::make('to_date')
                     ->label('To Date')
-                    ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                    ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                     ->reactive()
                     ->required()
                     ->afterStateUpdated(function ($state, callable $set, $get) {
@@ -70,7 +82,7 @@ class HolidayResource extends Resource
                         }
                     }),
 
-                Forms\Components\TextInput::make('count_days')->disabled()
+                TextInput::make('count_days')->disabled()
                     ->label('Number of Days')
                     ->helperText('Type how many days this holiday will be ?')
                     ->numeric()
@@ -78,7 +90,7 @@ class HolidayResource extends Resource
                     ->required(),
 
 
-                Forms\Components\Toggle::make('active')
+                Toggle::make('active')
                     ->label('Active')
                     ->default(true),
 
@@ -89,25 +101,25 @@ class HolidayResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Holiday'),
-                Tables\Columns\TextColumn::make('from_date')->label('From Date')->date(),
-                Tables\Columns\TextColumn::make('to_date')->label('To Date')->date(),
-                Tables\Columns\TextColumn::make('count_days')->label('Number of Days'),
-                Tables\Columns\BooleanColumn::make('active')
+                TextColumn::make('name')->label('Holiday'),
+                TextColumn::make('from_date')->label('From Date')->date(),
+                TextColumn::make('to_date')->label('To Date')->date(),
+                TextColumn::make('count_days')->label('Number of Days'),
+                BooleanColumn::make('active')
                     ->label('Active')
                     ->boolean(),
-                Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime(),
+                TextColumn::make('created_at')->label('Created At')->dateTime(),
 
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -122,9 +134,9 @@ class HolidayResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListHolidays::route('/'),
-            'create' => Pages\CreateHoliday::route('/create'),
-            'edit' => Pages\EditHoliday::route('/{record}/edit'),
+            'index' => ListHolidays::route('/'),
+            'create' => CreateHoliday::route('/create'),
+            'edit' => EditHoliday::route('/{record}/edit'),
         ];
     }
 

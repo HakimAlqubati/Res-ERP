@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockAdjustmentReasonResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -13,7 +14,7 @@ class ListStockAdjustmentReasons extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->icon('heroicon-o-plus-circle'),
+            CreateAction::make()->icon('heroicon-o-plus-circle'),
         ];
     }
 }

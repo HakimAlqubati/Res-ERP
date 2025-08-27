@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\UnitPriceFifoUpdater;
 use App\Services\ProductCostingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -84,7 +85,7 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 $notes .= ' in (' . $purchaseInvoiceDetail->purchaseInvoice->store->name . ')';
             }
 
-            \App\Services\UnitPriceFifoUpdater::updateIfInventoryIsZero(
+            UnitPriceFifoUpdater::updateIfInventoryIsZero(
                 $purchaseInvoiceDetail->product_id,
                 $purchaseInvoiceDetail->unit_id,
                 $purchaseInvoiceDetail->price,
@@ -93,11 +94,11 @@ class PurchaseInvoiceDetail extends Model implements Auditable
                 $invoice->date ?? now(),
                 'Updated from Purchase Invoice #' . $purchaseInvoiceDetail->purchase_invoice_id
             );
-                                        
+
             // Add a record to the inventory transactions table
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id' => $purchaseInvoiceDetail->product_id,
-                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
                 'quantity' => $purchaseInvoiceDetail->quantity,
                 'package_size' => $purchaseInvoiceDetail->package_size,
                 'price' => $purchaseInvoiceDetail->price,
@@ -121,10 +122,10 @@ class PurchaseInvoiceDetail extends Model implements Auditable
     }
     public function inventoryTransactions()
     {
-        return \App\Models\InventoryTransaction::query()
+        return InventoryTransaction::query()
             ->where('product_id', $this->product_id)
             ->where('unit_id', $this->unit_id)
             ->where('transactionable_id', $this->purchase_invoice_id)
-            ->where('transactionable_type', \App\Models\PurchaseInvoice::class);
+            ->where('transactionable_type', PurchaseInvoice::class);
     }
 }

@@ -2,6 +2,16 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\DatePicker;
+use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderDetailsRelationManager;
+use App\Filament\Resources\OrderResource\Pages\ListTransferOrders;
+use App\Filament\Resources\OrderResource\Pages\CreateOrder;
+use App\Filament\Resources\OrderResource\Pages\ViewOrder;
+use App\Filament\Resources\OrderResource\Pages\EditOrder;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
@@ -11,8 +21,6 @@ use App\Models\OrderTransfer;
 use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -28,7 +36,7 @@ class TransferOrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Orders';
     protected static ?string $recordTitleAttribute = 'orders.id';
 
@@ -36,17 +44,17 @@ class TransferOrderResource extends Resource
     protected static ?string $navigationLabel = 'Transfers list';
     public static ?string $slug = 'transfers-list';
     protected static ?string $cluster = MainOrdersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function getNavigationLabel(): string
     {
         return __('lang.transfers_list');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('id')->label('Order id'),
                 TextInput::make('customer.name')->label('customer'),
                 TextInput::make('status')->label('Status'),
@@ -102,9 +110,9 @@ class TransferOrderResource extends Resource
                     ->label(__('lang.branch'))->relationship('branch', 'name'),
                 Filter::make('created_at')
                     ->label(__('lang.created_at'))
-                    ->form([
-                        Forms\Components\DatePicker::make('created_from')->label(__('lang.from')),
-                        Forms\Components\DatePicker::make('created_until')->label(__('lang.to')),
+                    ->schema([
+                        DatePicker::make('created_from')->label(__('lang.from')),
+                        DatePicker::make('created_until')->label(__('lang.to')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -119,12 +127,12 @@ class TransferOrderResource extends Resource
                     }),
 
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make(),
+            ->recordActions([
+                ViewAction::make(),
                 // Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
                 // ExportBulkAction::make()
             ]);
     }
@@ -132,17 +140,17 @@ class TransferOrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\OrderDetailsRelationManager::class,
+            OrderDetailsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTransferOrders::route('/'),
-            'create' => Pages\CreateOrder::route('/create'),
-            'view' => Pages\ViewOrder::route('/{record}'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
+            'index' => ListTransferOrders::route('/'),
+            'create' => CreateOrder::route('/create'),
+            'view' => ViewOrder::route('/{record}'),
+            'edit' => EditOrder::route('/{record}/edit'),
         ];
     }
 

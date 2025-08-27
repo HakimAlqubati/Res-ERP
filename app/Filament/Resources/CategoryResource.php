@@ -2,17 +2,28 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\CategoryResource\Pages\ManageCategories;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Resources\CategoryResource\Pages;
 use App\Filament\Resources\CategoryResource\RelationManagers;
 use App\Models\Category;
 use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -24,29 +35,29 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     // protected static ?string $navigationGroup = 'Categories';
     protected static ?string $recordTitleAttribute = 'name';
     protected static ?string $cluster = ProductUnitCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     public static function getNavigationLabel(): string
     {
         return __('lang.categories');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
                     Grid::make()->columns(3)->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->unique(ignoreRecord: true)
                             ->required()->label(__('lang.name')),
                         // Forms\Components\TextInput::make('code')
                         //     ->unique(ignoreRecord: true)
                         //     ->required()->label(__("lang.code")),
-                        Forms\Components\TextInput::make('code_starts_with')
+                        TextInput::make('code_starts_with')
                             ->label('Code Starts With')
                             ->maxLength(5)
                             ->unique(ignoreRecord: true)
@@ -55,7 +66,7 @@ class CategoryResource extends Resource
                             ->minLength(2)
                             ->rule('regex:/^[0-9]{2}$/')
                             ->placeholder(function () {
-                                $lastCode = \App\Models\Category::query()
+                                $lastCode = Category::query()
                                     ->whereRaw('code_starts_with REGEXP "^[0-9]{2}$"') // فقط الأرقام
                                     ->orderByDesc('code_starts_with')
                                     ->value('code_starts_with');
@@ -83,7 +94,7 @@ class CategoryResource extends Resource
                         Toggle::make('has_description')
                             ->label('Has Description')->inline(false)->live(),
                     ]),
-                    Forms\Components\Textarea::make('description')
+                    Textarea::make('description')
                         ->visible(fn($get): bool => $get('has_description'))
                         ->label(__("lang.description"))->columnSpanFull()
                         ->rows(10)
@@ -98,19 +109,19 @@ class CategoryResource extends Resource
         return $table
             ->defaultSort('id', 'desc')->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                TextColumn::make('id')
                     ->sortable()->label(__('lang.id'))
                     ->searchable(isIndividual: true, isGlobal: false)->searchable(),
-                Tables\Columns\TextColumn::make('name')->label(__('lang.name'))
+                TextColumn::make('name')->label(__('lang.name'))
                     ->searchable(isIndividual: true, isGlobal: false),
                 // Tables\Columns\TextColumn::make('code')->label(__('lang.code'))
                 //     ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\TextColumn::make('code_starts_with')
+                TextColumn::make('code_starts_with')
                     ->label('Prefix Code')->sortable()
                     ->searchable()
                     ->tooltip('Used to auto-generate product codes')
                     ->alignCenter(true)->toggleable(),
-                Tables\Columns\TextColumn::make('branch_names')
+                TextColumn::make('branch_names')
                     ->label('Customized for Branches') 
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -119,38 +130,38 @@ class CategoryResource extends Resource
                 //     ->toggleable(isToggledHiddenByDefault: true)
                 //     ->alignCenter(true),
 
-                Tables\Columns\TextColumn::make('description')->label(__('lang.description'))->toggleable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('description')->label(__('lang.description'))->toggleable()->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('products')->label('Number of products'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('active')
+                SelectFilter::make('active')
                     ->options([
                         1 => __('lang.active'),
                         0 => __('lang.status_unactive'),
                     ]),
 
-                Tables\Filters\SelectFilter::make('is_manafacturing')
+                SelectFilter::make('is_manafacturing')
                     ->options([
                         1 => __('lang.category.is_manafacturing'),
                     ]),
 
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ManageCategories::route('/'),
+            'index' => ManageCategories::route('/'),
         ];
     }
 

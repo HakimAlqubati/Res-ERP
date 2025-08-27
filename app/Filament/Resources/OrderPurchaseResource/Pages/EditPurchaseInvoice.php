@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceResource\Pages;
 
+use Filament\Actions\ViewAction;
 use App\Filament\Resources\PurchaseInvoiceResource;
 use App\Models\PurchaseInvoice;
 use Filament\Pages\Actions;
@@ -15,7 +16,7 @@ class EditPurchaseInvoice extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(),
+            ViewAction::make(),
 
 
         ];

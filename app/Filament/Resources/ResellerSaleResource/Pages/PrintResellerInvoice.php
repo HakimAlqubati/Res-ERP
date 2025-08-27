@@ -9,7 +9,7 @@ class PrintResellerInvoice extends Page
 {
     protected static string $resource = ResellerSaleResource::class;
 
-    protected static string $view = 'filament.pages.stock-report.print-reseller-invoice';
+    protected string $view = 'filament.pages.stock-report.print-reseller-invoice';
     public ResellerSale $record;
 
     public function mount($record): void

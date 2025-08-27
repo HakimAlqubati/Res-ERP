@@ -2,20 +2,24 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\RelationshipRepeater;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\EmployeeFileTypeResource\Pages\ListEmployeeFileTypes;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeFileTypeResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\EmployeeFileTypeResource\RelationManagers;
 use App\Models\EmployeeFileType;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\HasManyRepeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -29,15 +33,15 @@ class EmployeeFileTypeResource extends Resource
 {
     protected static ?string $model = EmployeeFileType::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
                     Grid::make()->columns(3)->schema([
                         TextInput::make('name')->required()->columnSpan(1),
@@ -48,7 +52,7 @@ class EmployeeFileTypeResource extends Resource
                     Textarea::make('description')->columnSpanFull(),
                 ]),
                 Fieldset::make('Dynamic Fields')->schema([
-                    HasManyRepeater::make('dynamicFields')
+                    RelationshipRepeater::make('dynamicFields')
                         ->relationship('dynamicFields') // Define the relationship for the dynamic fields
                         ->columnSpanFull()
                         ->schema([
@@ -85,12 +89,12 @@ class EmployeeFileTypeResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -105,7 +109,7 @@ class EmployeeFileTypeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployeeFileTypes::route('/'),
+            'index' => ListEmployeeFileTypes::route('/'),
             // 'create' => Pages\CreateEmployeeFileType::route('/create'),
             // 'edit' => Pages\EditEmployeeFileType::route('/{record}/edit'),
         ];

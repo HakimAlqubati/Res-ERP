@@ -2,6 +2,18 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\StoreResource\Pages\ListStores;
+use App\Filament\Resources\StoreResource\Pages\CreateStore;
+use App\Filament\Resources\StoreResource\Pages\EditStore;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
@@ -11,13 +23,10 @@ use App\Models\Store;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -32,9 +41,9 @@ class StoreResource extends Resource
 {
     protected static ?string $model = Store::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
     public static function getNavigationLabel(): string
     {
@@ -47,10 +56,10 @@ class StoreResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columns(4)->schema([
                     TextInput::make('name')->label(__('lang.name'))->required(),
                     Select::make('storekeeper_id')->searchable()
@@ -86,17 +95,17 @@ class StoreResource extends Resource
             ])
             ->filters([
                 
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
             ])
-            ->actions([
+            ->recordActions([
 
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                RestoreBulkAction::make(),
 
             ]);
     }
@@ -111,9 +120,9 @@ class StoreResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStores::route('/'),
-            'create' => Pages\CreateStore::route('/create'),
-            'edit' => Pages\EditStore::route('/{record}/edit'),
+            'index' => ListStores::route('/'),
+            'create' => CreateStore::route('/create'),
+            'edit' => EditStore::route('/{record}/edit'),
         ];
     }
 

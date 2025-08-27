@@ -12,9 +12,9 @@ class TopProductsChart extends ChartWidget
 {
     use CanPoll; 
 
-    protected static ?string $heading = 'Top Products Ordered';
+    protected ?string $heading = 'Top Products Ordered';
     protected static ?int $sort = 1;
-    protected static string $color = 'info';
+    protected string $color = 'info';
     protected int | string | array $columnSpan = 'full';
     protected function getData(): array
     {

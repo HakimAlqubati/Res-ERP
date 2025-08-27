@@ -2,6 +2,22 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Actions\Action;
+use Throwable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\ListStockIssueOrders;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\CreateStockIssueOrder;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\EditStockIssueOrder;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockIssueOrderResource\Pages\ViewStockIssueOrder;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryManagementCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
@@ -17,14 +33,11 @@ use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
@@ -40,15 +53,15 @@ class StockIssueOrderResource extends Resource
 {
     protected static ?string $model = StockIssueOrder::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = InventoryManagementCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 7;
-    public static function form(Forms\Form $form): Forms\Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->label('')
                     ->columns(3)
                     ->schema([
@@ -115,14 +128,14 @@ class StockIssueOrderResource extends Resource
 
                                 Select::make('unit_id')->label('Unit')
                                     ->options(function (callable $get) {
-                                        $product = \App\Models\Product::find($get('product_id'));
+                                        $product = Product::find($get('product_id'));
                                         if (! $product) return [];
 
                                         return $product?->outUnitPrices?->pluck('unit.name', 'unit_id') ?? [];
                                     })
                                     ->searchable()
                                     ->reactive()
-                                    ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                    ->afterStateUpdated(function (Set $set, $state, $get) {
                                         $unitPrice = UnitPrice::where(
                                             'product_id',
                                             $get('product_id')
@@ -204,12 +217,12 @@ class StockIssueOrderResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\ActionGroup::make([
+            ->recordActions([
+                ActionGroup::make([
 
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\Action::make('cancelAndReverse')
+                    EditAction::make(),
+                    ViewAction::make(),
+                    Action::make('cancelAndReverse')
                         ->label('Cancel & Reverse')
                         ->color('danger')
                         ->icon('heroicon-o-x-circle')
@@ -224,25 +237,25 @@ class StockIssueOrderResource extends Resource
                                 showSuccessNotifiMessage(
                                     'Stock Issue Order cancelled and reversed successfully.'
                                 );
-                            } catch (\Throwable $e) {
+                            } catch (Throwable $e) {
                                 report($e);
                                 showWarningNotifiMessage(
                                     'Failed to cancel and reverse the stock issue order: ' . $e->getMessage()
                                 );
                             }
                         })
-                        ->form([
-                            Forms\Components\Textarea::make('reason')
+                        ->schema([
+                            Textarea::make('reason')
                                 ->label('Reason for cancellation')
                                 ->required()
                                 ->columnSpanFull(),
                         ]),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -257,10 +270,10 @@ class StockIssueOrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockIssueOrders::route('/'),
-            'create' => Pages\CreateStockIssueOrder::route('/create'),
-            'edit' => Pages\EditStockIssueOrder::route('/{record}/edit'),
-            'view' => Pages\ViewStockIssueOrder::route('/{record}'),
+            'index' => ListStockIssueOrders::route('/'),
+            'create' => CreateStockIssueOrder::route('/create'),
+            'edit' => EditStockIssueOrder::route('/{record}/edit'),
+            'view' => ViewStockIssueOrder::route('/{record}'),
 
         ];
     }
@@ -269,10 +282,10 @@ class StockIssueOrderResource extends Resource
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListStockIssueOrders::class,
-            Pages\CreateStockIssueOrder::class,
-            Pages\EditStockIssueOrder::class,
-            Pages\ViewStockIssueOrder::class,
+            ListStockIssueOrders::class,
+            CreateStockIssueOrder::class,
+            EditStockIssueOrder::class,
+            ViewStockIssueOrder::class,
         ]);
     }
 

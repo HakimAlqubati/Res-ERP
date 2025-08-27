@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\PurchaseInvoiceResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Resources\PurchaseInvoiceResource;
 use App\Models\PurchaseInvoice;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ListPurchaseInvoices extends ListRecords
@@ -16,7 +17,7 @@ class ListPurchaseInvoices extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
     public function getTabs(): array

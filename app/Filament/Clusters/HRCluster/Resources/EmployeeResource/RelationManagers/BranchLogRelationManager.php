@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\BulkActionGroup;
 use App\Models\Attendance;
 use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
@@ -11,7 +13,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -26,10 +27,10 @@ class BranchLogRelationManager extends RelationManager
     protected static string $relationship = 'branchLogs';
     protected static ?string $title = 'Branch Logs';
     // protected static ?string $badge = count($this->ownerRecord->periods);
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
               
             ]);
     }
@@ -61,8 +62,8 @@ class BranchLogRelationManager extends RelationManager
             ])
            
             
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

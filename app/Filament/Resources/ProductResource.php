@@ -1,6 +1,43 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Placeholder;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Utilities\Get;
+use Closure;
+use App\Models\OrderDetails;
+use App\Models\PurchaseInvoiceDetail;
+use App\Models\InventoryTransaction;
+use App\Models\StockIssueOrderDetail;
+use App\Imports\ProductItemsQuantityImport;
+use Throwable;
+use App\Exports\ProductsExport;
+use Filament\Tables\Columns\CheckboxColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ActionGroup;
+use App\Imports\ProductItemsImport;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\BulkAction;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\ProductResource\Pages\ManageProducts;
+use App\Filament\Resources\ProductResource\Pages\CreateProduct;
+use App\Filament\Resources\ProductResource\Pages\EditProduct;
+use App\Filament\Resources\ProductResource\Pages\ViewProduct;
+use App\Filament\Resources\ProductResource\RelationManagers\ProductPriceHistoriesRelationManager;
+use App\Models\GoodsReceivedNoteDetail;
 use App\Filament\Clusters\ProductUnitCluster;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
@@ -15,30 +52,18 @@ use App\Services\MigrationScripts\ProductMigrationService;
 use App\Services\ProductCostingService;
 use Exception;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Actions\Action as ActionsAction;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\Wizard\Step;
-use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Exceptions\Halt;
 use Filament\Tables;
-use Filament\Tables\Actions\Action as ActionTable;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\BulkAction;
-use Filament\Tables\Actions\ForceDeleteBulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -57,9 +82,9 @@ class ProductResource extends Resource
 {
     protected static ?string $model                               = Product::class;
     protected static ?string $cluster                             = ProductUnitCluster::class;
-    protected static ?string $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon                      = 'heroicon-o-rectangle-stack';
     protected static ?string $recordTitleAttribute                = 'name';
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
     // protected static ?string $navigationGroup = 'Products - units';
 
@@ -77,15 +102,15 @@ class ProductResource extends Resource
         return __('lang.products');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Fieldset::make()->columns(2)->schema([
-                \Filament\Forms\Components\Placeholder::make('name_above')
+                Placeholder::make('name_above')
                     ->label(__('lang.name'))
                     ->content(fn($record) => $record?->name ?? '-')
                     ->visibleOn('edit'),
-                \Filament\Forms\Components\Placeholder::make('code_above')
+                Placeholder::make('code_above')
                     ->label(__('lang.code'))
                     ->content(fn($record) => $record?->code ?? '-')
                     ->visibleOn('edit'),
@@ -109,7 +134,7 @@ class ProductResource extends Resource
                                     })->pluck('name', 'id');
                                 })
                                 ->afterStateUpdated(function ($set, $state) {
-                                    $set('code', \App\Models\Product::generateProductCode($state));
+                                    $set('code', Product::generateProductCode($state));
                                 }),
                             TextInput::make('code')->required()
                                 ->unique(ignoreRecord: true)
@@ -119,7 +144,7 @@ class ProductResource extends Resource
                                 ->placeholder('Code generates automatically')
                                 ->disabled()
                                 ->dehydrated()
-                                ->default(fn($get) => \App\Models\Product::generateProductCode($get('category_id'))),
+                                ->default(fn($get) => Product::generateProductCode($get('category_id'))),
                             Grid::make()->columns(4)->schema([
                                 TextInput::make('sku')
                                     ->label('SKU')
@@ -193,7 +218,7 @@ class ProductResource extends Resource
                                         ->options(
                                             function (callable $get) {
 
-                                                $unitPrices = \App\Models\Product::find($get('product_id'))?->manufacturingUnitPrices?->toArray() ?? [];
+                                                $unitPrices = Product::find($get('product_id'))?->manufacturingUnitPrices?->toArray() ?? [];
 
                                                 if ($unitPrices) {
                                                     return array_column($unitPrices, 'unit_name', 'unit_id');
@@ -204,7 +229,7 @@ class ProductResource extends Resource
                                         )
                                         ->searchable()
                                         ->reactive()
-                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $unitPrice = UnitPrice::where(
                                                 'product_id',
                                                 $get('product_id')
@@ -229,7 +254,7 @@ class ProductResource extends Resource
                                         ->numeric()
                                         ->default(1)
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
 
                                             $currentPrice = (float) $get('price');
                                             if ($currentPrice <= 0) {
@@ -256,7 +281,7 @@ class ProductResource extends Resource
                                         ->numeric()
                                         ->default(1)
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $res = ((float) $state) * ((float) $get('quantity'));
                                             $res = round($res, 8);
                                             if ($get('qty_waste_percentage') == 0) {
@@ -281,7 +306,7 @@ class ProductResource extends Resource
                                     // ->suffixIconColor(Color::Green)
                                     // ->suffixIcon('heroicon-o-percent-badge')
                                         ->live(onBlur: true)
-                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
 
                                             $res = ProductItem::calculateTotalPriceAfterWaste($totalPrice ?? 0, $state ?? 0);
@@ -323,9 +348,9 @@ class ProductResource extends Resource
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('allUnitPrices')
 
-                                ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                ->rules(function (Get $get, callable $livewire) {
                                     return [
-                                        function (string $attribute, $value, \Closure $fail) use ($get) {
+                                        function (string $attribute, $value, Closure $fail) use ($get) {
                                             $units = $get('units') ?? [];
 
                                             // validation مع رسالة رسمية
@@ -333,7 +358,7 @@ class ProductResource extends Resource
                                         },
                                     ];
                                 })
-                                ->deleteAction(function (ActionsAction $action) {
+                                ->deleteAction(function (Action $action) {
                                     $action->before(function (array $arguments, Repeater $component, $record) {
                                         $unitPriceRecordId = null;
                                         if (str_starts_with($arguments['item'], 'record-')) {
@@ -368,11 +393,11 @@ class ProductResource extends Resource
                                             if ($isNew) {
                                                 return false;
                                             }
-                                            return ProductResource::isProductLocked($livewire->form->getRecord(), $record) || $get('usage_scope') == \App\Models\UnitPrice::USAGE_NONE;;
+                                            return ProductResource::isProductLocked($livewire->form->getRecord(), $record) || $get('usage_scope') == UnitPrice::USAGE_NONE;;
                                         })
                                         ->live(onBlur: true)
 
-                                        ->afterStateHydrated(function (\Filament\Forms\Set $set, \Filament\Forms\Get $get) {
+                                        ->afterStateHydrated(function (Set $set, Get $get) {
                                             $units = $get('../../units') ?? [];
 
                                             // نحاول نجيب بيانات هذا الصف الحالي
@@ -400,7 +425,7 @@ class ProductResource extends Resource
                                             }
                                         })
 
-                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $units = $get('../../units') ?? [];
                                             if (count($units) < 2) {
                                                 return; // لازم يكون فيه أكثر من وحدة عشان نوزع الأسعار
@@ -448,9 +473,9 @@ class ProductResource extends Resource
                                     // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(onBlur: true)
-                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                        ->rules(function (Get $get, callable $livewire) {
                                             return [
-                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                                function (string $attribute, $value, Closure $fail) use ($get, $livewire) {
                                                     $productId = $livewire->form->getRecord()?->id ?? null;
                                                     $unitId    = $get('unit_id');
                                                     $record    = $livewire->form->getRecord();
@@ -483,12 +508,12 @@ class ProductResource extends Resource
                                         if ($isNew) {
                                             return false;
                                         }
-                                        return ProductResource::isProductLocked($livewire->form->getRecord(), $record) || $get('usage_scope') == \App\Models\UnitPrice::USAGE_NONE;;
+                                        return ProductResource::isProductLocked($livewire->form->getRecord(), $record) || $get('usage_scope') == UnitPrice::USAGE_NONE;;
                                     }),
                                     Select::make('usage_scope')
                                         ->label('Usage')
-                                        ->options(\App\Models\UnitPrice::USAGE_SCOPES)
-                                        ->default(\App\Models\UnitPrice::USAGE_ALL)
+                                        ->options(UnitPrice::USAGE_SCOPES)
+                                        ->default(UnitPrice::USAGE_ALL)
                                         ->disableOptionWhen(function (string $value, callable $get, $record, $livewire) {
                                             return \App\Filament\Resources\ProductResource::shouldDisableUsageScopeOption(
                                                 $value,
@@ -530,7 +555,7 @@ class ProductResource extends Resource
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
                                 ->relationship('allUnitPrices')
-                                ->deleteAction(function (ActionsAction $action) {
+                                ->deleteAction(function (Action $action) {
                                     $action->before(function (array $arguments, Repeater $component, $record) {
                                         $unitPriceRecordId = null;
                                         if (str_starts_with($arguments['item'], 'record-')) {
@@ -542,9 +567,9 @@ class ProductResource extends Resource
                                         }
                                     });
                                 })
-                                ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                ->rules(function (Get $get, callable $livewire) {
                                     return [
-                                        function (string $attribute, $value, \Closure $fail) use ($get) {
+                                        function (string $attribute, $value, Closure $fail) use ($get) {
                                             $units = $get('units') ?? [];
 
                                             // validation مع رسالة رسمية
@@ -569,10 +594,10 @@ class ProductResource extends Resource
                                             }
 
                                             $isUsed =
-                                            \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-                                            \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-                                            \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-                                            \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+                                            OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                            PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                            InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                            StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
 
                                             return $isUsed;
                                         })
@@ -595,9 +620,9 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')
                                         ->numeric()->default(1)->required()
                                         ->minValue(0)
-                                        ->rules(function (\Filament\Forms\Get $get, callable $livewire) {
+                                        ->rules(function (Get $get, callable $livewire) {
                                             return [
-                                                function (string $attribute, $value, \Closure $fail) use ($get, $livewire) {
+                                                function (string $attribute, $value, Closure $fail) use ($get, $livewire) {
                                                     $productId = $livewire->form->getRecord()?->id ?? null;
                                                     $unitId    = $get('unit_id');
                                                     $record    = $livewire->form->getRecord();
@@ -666,11 +691,11 @@ class ProductResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->headerActions([
-                ActionTable::make('import_items_quantities')
+                Action::make('import_items_quantities')
                     ->label('Import Quantities')
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('info')
-                    ->form([
+                    ->schema([
                         FileUpload::make('file')
                             ->label('Upload Excel file')
                             ->required()
@@ -679,20 +704,20 @@ class ProductResource extends Resource
                     ])
                     ->action(function (array $data) {
                         $filePath = 'public/' . $data['file'];
-                        $import   = new \App\Imports\ProductItemsQuantityImport();
+                        $import   = new ProductItemsQuantityImport();
 
                         try {
                             Excel::import($import, $filePath);
                             showSuccessNotifiMessage("✅ تم تعديل كميات المكونات بنجاح.");
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             showWarningNotifiMessage("❌ فشل الاستيراد: " . $e->getMessage());
                         }
                     })
                     ->requiresConfirmation(),
-                ActionTable::make('import_products')
+                Action::make('import_products')
                     ->label('Import Products')
                     ->icon('heroicon-o-arrow-up-tray')
-                    ->form([
+                    ->schema([
                         FileUpload::make('file')
                             ->label('Upload Excel file')
                             ->required()
@@ -706,29 +731,29 @@ class ProductResource extends Resource
                         $import   = new ProductImport();
 
                         try {
-                            \Maatwebsite\Excel\Facades\Excel::import($import, $filePath);
+                            Excel::import($import, $filePath);
 
                             if ($import->getSuccessfulImportsCount() > 0) {
                                 showSuccessNotifiMessage("✅ Imported {$import->getSuccessfulImportsCount()} products successfully.");
                             } else {
                                 showWarningNotifiMessage("⚠️ No products were added. Please check your file.");
                             }
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             showWarningNotifiMessage('❌ Failed to import products: ' . $e->getMessage());
                         }
                     }),
 
-                ActionTable::make('export')
+                Action::make('export')
                     ->label('Export to Excel')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('warning')
                     ->action(function () {
                         $data = Product::where('active', 1)->select('id', 'name', 'description', 'code')->get();
-                        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ProductsExport($data), 'products.xlsx');
+                        return Excel::download(new ProductsExport($data), 'products.xlsx');
                     }),
             ])
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                TextColumn::make('id')
                     ->label(__('lang.id'))
                     ->copyable()
                     ->copyMessage(__('lang.product_id_copied'))
@@ -736,39 +761,39 @@ class ProductResource extends Resource
                     ->sortable()->searchable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: true),
-                Tables\Columns\TextColumn::make('code')
+                TextColumn::make('code')
                     ->label(__('lang.code'))->copyable()
                     ->searchable(isIndividual: false, isGlobal: true),
 
-                Tables\Columns\TextColumn::make('name')->copyable()
+                TextColumn::make('name')->copyable()
                     ->label(__('lang.name'))
                     ->toggleable()
 
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->tooltip(fn(Model $record): string => "By {$record->name}"),
 
-                Tables\Columns\TextColumn::make('waste_stock_percentage')
+                TextColumn::make('waste_stock_percentage')
                     ->label('Waste %')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(true),
-                Tables\Columns\TextColumn::make('minimum_stock_qty')
+                TextColumn::make('minimum_stock_qty')
                     ->label('Min. Qty')->sortable()
                     ->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('formatted_unit_prices')
+                TextColumn::make('formatted_unit_prices')
                     ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
                     ->limit(50)->tooltip(fn($state) => $state)
                     // ->alignCenter(true)
                 ,
-                Tables\Columns\TextColumn::make('description')->searchable()
+                TextColumn::make('description')->searchable()
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.description')),
                 IconColumn::make('is_manufacturing')->boolean()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label(__('lang.is_manufacturing')),
-                Tables\Columns\TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
+                TextColumn::make('category.name')->searchable()->label(__('lang.category'))->alignCenter(true)
                     ->searchable(isIndividual: false, isGlobal: true)->toggleable(),
-                Tables\Columns\CheckboxColumn::make('active')->label('Active?')
+                CheckboxColumn::make('active')->label('Active?')
                     ->sortable()->label(__('lang.active'))->toggleable()->alignCenter(true)
                     ->updateStateUsing(function (Product $record, $state) {
                         try {
@@ -781,19 +806,19 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)->default('-')->alignCenter(true),
             ])
             ->filters([
-                Tables\Filters\Filter::make('active')->label(__('lang.active'))
+                Filter::make('active')->label(__('lang.active'))
                     ->query(fn(Builder $query): Builder => $query->whereNotNull('active')),
                 SelectFilter::make('category_id')
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.category'))->relationship('category', 'name'),
                 // New Filter for Manufacturing Products
-                Tables\Filters\Filter::make('is_manufacturing')
+                Filter::make('is_manufacturing')
                     ->label(__('lang.is_manufacturing'))
                     ->query(fn(Builder $query): Builder => $query->whereHas('category', fn($q) => $q->where('is_manafacturing', true))),
 
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\Filter::make('smallest_package_not_one')
+                TrashedFilter::make(),
+                Filter::make('smallest_package_not_one')
                     ->label('Min Package Size ≠ 1')
                     ->query(function (Builder $query) {
                         $query->whereIn('id', function ($q) {
@@ -805,8 +830,8 @@ class ProductResource extends Resource
                         });
                     }),
             ])
-            ->actions([
-                Tables\Actions\Action::make('updateUnitPrice')
+            ->recordActions([
+                Action::make('updateUnitPrice')
                     ->label('Update Unit Price')->button()->action(function ($record) {
                     $update = ProductMigrationService::updatePackageSizeForProduct($record->id);
                     if ($update) {
@@ -817,14 +842,14 @@ class ProductResource extends Resource
                 })->hidden(),
 
                 ActionGroup::make([
-                    Tables\Actions\Action::make('exportItemsPdf')
+                    Action::make('exportItemsPdf')
                         ->label('Export Items PDF')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('danger')
                     // ->visible(fn($record) => $record->productItems()->exists())
                         ->url(fn($record) => route('products.export-items-pdf', $record->id))
                         ->openUrlInNewTab(),
-                    Tables\Actions\Action::make('updateComponentPrices')
+                    Action::make('updateComponentPrices')
                         ->label('Update Price')
                         ->icon('heroicon-o-currency-dollar')->button()
                         ->color('info')->visible(fn($record): bool => $record->is_manufacturing)
@@ -837,12 +862,12 @@ class ProductResource extends Resource
                             }
                         }),
 
-                    Tables\Actions\Action::make('import_items')
+                    Action::make('import_items')
                         ->label('Import Items')
                         ->icon('heroicon-o-arrow-up-tray')->button()
                         ->visible(fn($record) => $record->is_manufacturing)
-                        ->form([
-                            \Filament\Forms\Components\FileUpload::make('file')
+                        ->schema([
+                            FileUpload::make('file')
                                 ->label('Upload Excel file')
                                 ->required()
                                 ->disk('public')
@@ -851,7 +876,7 @@ class ProductResource extends Resource
                         ->color('success')
                         ->action(function (array $data, $record) {
                             $filePath = 'public/' . $data['file'];
-                            $import   = new \App\Imports\ProductItemsImport($record->id);
+                            $import   = new ProductItemsImport($record->id);
 
                             try {
                                 Excel::import($import, $filePath);
@@ -871,17 +896,17 @@ class ProductResource extends Resource
                                 if ($imported === 0 && $failed === 0) {
                                     showWarningNotifiMessage("⚠️ لم يتم استيراد أي عنصر. تأكد من الملف.");
                                 }
-                            } catch (\Throwable $e) {
+                            } catch (Throwable $e) {
                                 showWarningNotifiMessage("❌ فشل الاستيراد: " . $e->getMessage());
                             }
                         }),
 
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\RestoreAction::make(),
+                    EditAction::make(),
+                    DeleteAction::make(),
+                    RestoreAction::make(),
                 ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkAction::make('updateComponentPrices')
                     ->label('Update Price')
                     ->icon('heroicon-o-currency-dollar')->button()
@@ -931,7 +956,7 @@ class ProductResource extends Resource
                         }
 
                         // توليد وتصدير Excel
-                        return Excel::download(new class($data) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings
+                        return Excel::download(new class($data) implements FromCollection, WithHeadings
             {
                             public function __construct(public array $data)
                 {}
@@ -953,30 +978,30 @@ class ProductResource extends Resource
                 // ForceDeleteAction::make(),
                 ForceDeleteBulkAction::make(),
 
-                Tables\Actions\DeleteBulkAction::make(),
+                DeleteBulkAction::make(),
                 // ExportBulkAction::make(),
                 // Tables\Actions\ForceDeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ManageProducts::route('/'),
-            'create' => Pages\CreateProduct::route('/create'),
-            'edit'   => Pages\EditProduct::route('/{record}/edit'),
-            'view'   => Pages\ViewProduct::route('/{record}'),
+            'index'  => ManageProducts::route('/'),
+            'create' => CreateProduct::route('/create'),
+            'edit'   => EditProduct::route('/{record}/edit'),
+            'view'   => ViewProduct::route('/{record}'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ManageProducts::class,
-            Pages\CreateProduct::class,
-            Pages\EditProduct::class,
-            Pages\ViewProduct::class,
+            ManageProducts::class,
+            CreateProduct::class,
+            EditProduct::class,
+            ViewProduct::class,
             // Pages\ViewEmployee::class,
         ]);
     }
@@ -985,7 +1010,7 @@ class ProductResource extends Resource
     {
         return [
             // RelationManagers\UnitPricesRelationManager::class,
-            RelationManagers\ProductPriceHistoriesRelationManager::class,
+            ProductPriceHistoriesRelationManager::class,
             // RelationManagers\FinalProductCostingHistoriesRelationManager::class,
 
         ];
@@ -1057,10 +1082,10 @@ class ProductResource extends Resource
         }
 
         $isUsed =
-        \App\Models\OrderDetails::where('product_id', $productId)->exists() ||
-        \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
-        \App\Models\InventoryTransaction::where('product_id', $productId)->exists() ||
-        \App\Models\StockIssueOrderDetail::where('product_id', $productId)->exists();
+        OrderDetails::where('product_id', $productId)->exists() ||
+        PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
+        InventoryTransaction::where('product_id', $productId)->exists() ||
+        StockIssueOrderDetail::where('product_id', $productId)->exists();
 
         if ($isUsed) {
             showWarningNotifiMessage(__('⚠️ Cannot delete this unit because it is already used in orders, invoices, or inventory.'));
@@ -1085,10 +1110,10 @@ class ProductResource extends Resource
 
         if ($oldPackageSize !== null && floatval($newValue) != floatval($oldPackageSize)) {
             $isUsed =
-            \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+            OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+            PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+            InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+            StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
 
             if ($isUsed) {
                 $fail(__('Package size modification is not allowed because this unit is already used in orders, invoices, or inventory.'));
@@ -1098,7 +1123,7 @@ class ProductResource extends Resource
     public static function validateUnitsPackageSizeOrder(array $units, callable $fail = null): void
     {
         $filteredUnits = collect($units)
-            ->filter(fn($unit) => ($unit['usage_scope'] ?? 'all') !== \App\Models\UnitPrice::USAGE_NONE)
+            ->filter(fn($unit) => ($unit['usage_scope'] ?? 'all') !== UnitPrice::USAGE_NONE)
 
             ->values(); // إعادة ترتيب الفهرس
         $packageSizes = $filteredUnits
@@ -1163,21 +1188,21 @@ class ProductResource extends Resource
             return false;
         }
 
-        return \App\Models\OrderDetails::where('product_id', $productId)
+        return OrderDetails::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)->exists()
-        || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)
+        || PurchaseInvoiceDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
             ->exists()
-        || \App\Models\InventoryTransaction::where('product_id', $productId)
+        || InventoryTransaction::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
             ->exists()
-        || \App\Models\StockIssueOrderDetail::where('product_id', $productId)
+        || StockIssueOrderDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
                 ->exists()
-        || \App\Models\GoodsReceivedNoteDetail::where('product_id', $productId)
+        || GoodsReceivedNoteDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
                 ->exists()
-        || \App\Models\ProductItem::where('product_id', $productId)
+        || ProductItem::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
                 ->exists();
     }
@@ -1200,18 +1225,18 @@ class ProductResource extends Resource
 
         // السماح دائمًا بالقيمة الحالية و بـ none
         $currentValue = $record->usage_scope ?? null;
-        if ($optionValue === \App\Models\UnitPrice::USAGE_NONE || $optionValue === $currentValue) {
+        if ($optionValue === UnitPrice::USAGE_NONE || $optionValue === $currentValue) {
             return false;
         }
 
         // إذا الوحدة مستخدمة، نمنع تغيير الخيار لأي شيء آخر غير القيمة الحالية أو none
         $isUsed =
-        \App\Models\OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || \App\Models\PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || \App\Models\GoodsReceivedNoteDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || \App\Models\InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || \App\Models\StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || \App\Models\ProductItem::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        || PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        || GoodsReceivedNoteDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        || InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        || StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+        || ProductItem::where('product_id', $productId)->where('unit_id', $unitId)->exists()
         ;
 
         return $isUsed;

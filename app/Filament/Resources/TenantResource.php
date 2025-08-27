@@ -2,17 +2,25 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\EditAction;
+use Exception;
+use Throwable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\TenantResource\Pages\ListTenants;
+use App\Filament\Resources\TenantResource\Pages\CreateTenant;
+use App\Filament\Resources\TenantResource\Pages\EditTenant;
 use App\Filament\Resources\TenantResource\Pages;
 use App\Models\CustomTenantModel;
 use App\Observers\TenantObserver;
 use Dompdf\FrameDecorator\Text;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
@@ -32,7 +40,7 @@ class TenantResource extends Resource
 {
     protected static ?string $model = CustomTenantModel::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getNavigationLabel(): string
     {
@@ -45,10 +53,10 @@ class TenantResource extends Resource
     }
     protected static ?string $label = 'Tenant';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make('')->label('')->columns(3)->schema([
                     TextInput::make('name')->required()->unique(ignoreRecord: true)
                         ->live(onBlur: true)
@@ -103,9 +111,9 @@ class TenantResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('create_database')->hidden()
+            ->recordActions([
+                EditAction::make(),
+                Action::make('create_database')->hidden()
                     ->label('Create Database')->button()
                     ->requiresConfirmation()
 
@@ -113,7 +121,7 @@ class TenantResource extends Resource
                         try {
                             TenantObserver::createDatabase($record);
                             showSuccessNotifiMessage('Done');
-                        } catch (\Exception $th) {
+                        } catch (Exception $th) {
                             throw $th;
                             showWarningNotifiMessage($th->getMessage());
                         }
@@ -122,7 +130,7 @@ class TenantResource extends Resource
                     ->color('success')
                     ->visible(fn($record) => !$record->database_created),
 
-                Tables\Actions\Action::make('setModules')->label('Set Modules')->button()->form([
+                Action::make('setModules')->label('Set Modules')->button()->schema([
                     Select::make('modules')->default(fn($record) => $record->modules)
                         ->label('Modules')->columnSpanFull()
                         ->options(CustomTenantModel::getModules())
@@ -134,12 +142,12 @@ class TenantResource extends Resource
                         try {
                             $record->update(['modules' => $data['modules']]);
                             showSuccessNotifiMessage('done');
-                        } catch (\Exception $th) {
+                        } catch (Exception $th) {
                             showWarningNotifiMessage('error', $th->getMessage());
                             throw $th;
                         }
                     })->color(Color::Green),
-                Tables\Actions\Action::make('importDatabase')
+                Action::make('importDatabase')
                     // ->form([
                     //     FileUpload::make('sqlfile')->label('SQL File')
                     //         ->visibility('public')
@@ -151,14 +159,14 @@ class TenantResource extends Resource
                             // (new CustomTenantModel)->importDatabaseByForm($record->database, $sql);
                             (new CustomTenantModel)->importDatabase($record);
                             showSuccessNotifiMessage('done');
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
                     })->hidden(),
 
                 // Inside the `table` method:
-                Tables\Actions\Action::make('download_backup')
+                Action::make('download_backup')
                     ->label('Download Backup')
                     ->requiresConfirmation()
                     ->button()
@@ -191,16 +199,16 @@ class TenantResource extends Resource
 
                             // Return the file as a downloadable response
                             return Response::download(storage_path('app/' . $backupPath));
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
                     })->hidden(),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -215,9 +223,9 @@ class TenantResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTenants::route('/'),
-            'create' => Pages\CreateTenant::route('/create'),
-            'edit' => Pages\EditTenant::route('/{record}/edit'),
+            'index' => ListTenants::route('/'),
+            'create' => CreateTenant::route('/create'),
+            'edit' => EditTenant::route('/{record}/edit'),
         ];
     }
     public static function getNavigationBadge(): ?string
@@ -252,7 +260,7 @@ class TenantResource extends Resource
 
             DB::commit();
             return "Database {$dbName} created and migrations applied successfully.";
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             DB::rollBack();
             return $th->getMessage();
         }

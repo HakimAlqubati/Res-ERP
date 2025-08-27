@@ -2,6 +2,25 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Spatie\Permission\Models\Role;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use DateTime;
+use Filament\Actions\Action;
+use LaraZeus\InlineChart\Tables\Columns\InlineChart;
+use Filament\Support\Enums\TextSize;
+use Throwable;
+use Filament\Tables\Enums\RecordActionsPosition;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\CreateAction;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages\ListTasks;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages\CreateTask;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\Pages\TaskStepsPage;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeTaskReportResource\Widgets\TaskWidgetChart;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\CommentsRelationManager;
 use App\Filament\Clusters\HRTasksSystem;
@@ -20,9 +39,7 @@ use App\Models\UserType;
 use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
@@ -31,20 +48,13 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\TextColumn\TextColumnSize;
-use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use function Laravel\Prompts\form;
@@ -61,11 +71,11 @@ class TaskResource extends Resource implements HasShieldPermissions
 {
     protected static ?string $model = Task::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRTasksSystem::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
     public static function getNavigationBadge(): ?string
@@ -101,21 +111,21 @@ class TaskResource extends Resource implements HasShieldPermissions
             'move_status',
         ];
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
 
                     Grid::make()->columns(7)->schema([
-                        Forms\Components\TextInput::make('title')
+                        TextInput::make('title')
                             ->required()
                             ->disabledOn('edit')
                             ->autofocus()
                             ->columnSpan(2)
                             ->maxLength(255),
-                        Forms\Components\Select::make('assigned_by')
+                        Select::make('assigned_by')
                             ->label('Assign by')
                             ->disabledOn('edit')
                             ->required()
@@ -126,13 +136,13 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->get()->pluck('name', 'id'))->searchable()
                             ->selectablePlaceholder(false),
                         // Select Role to assign task
-                        Forms\Components\Select::make('role')
+                        Select::make('role')
                             ->label('Select Role')
                             ->hiddenOn('edit')
                             ->options(function () {
                                 return UserType::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id');
                                 // Fetch all available roles (assuming you have a Role model)
-                                return \Spatie\Permission\Models\Role::pluck('name', 'id')->toArray();
+                                return Role::pluck('name', 'id')->toArray();
                             })->live()
                             ->afterStateUpdated(function (Get $get, Set $set, $state) {
 
@@ -160,7 +170,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             ->disabledOn('edit')->inline(false)
                             ->hidden(fn(): bool => isStuff()),
                         // The assigned_to field that will populate with users based on the selected role
-                        Forms\Components\Select::make('assigned_to_multi')
+                        Select::make('assigned_to_multi')
                             ->label('Assign to')
                             ->columnSpanFull()
                             ->required()
@@ -171,7 +181,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ]),
                     Fieldset::make()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
                         Grid::make()->columns(4)->schema([
-                            Forms\Components\ToggleButtons::make('schedule_type')
+                            ToggleButtons::make('schedule_type')
                                 ->label('')
                                 ->columnSpan(2)
                                 ->inline()
@@ -199,8 +209,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                                     ->displayFormat('d/m/Y')
                                     ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
-                                        $date1 = new \DateTime($state);
-                                        $date2 = new \DateTime($get('end_date'));
+                                        $date1 = new DateTime($state);
+                                        $date2 = new DateTime($get('end_date'));
 
                                         $interval = $date1->diff($date2);
 
@@ -246,8 +256,8 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->minDate(fn(Get $get) => $get('start_date') ?? date('Y-m-d')) // Dynamically set minDate based on start_date
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
-                                    $date1 = new \DateTime($get('start_date'));
-                                    $date2 = new \DateTime($state);
+                                    $date1 = new DateTime($get('start_date'));
+                                    $date2 = new DateTime($state);
 
                                     $interval = $date1->diff($date2);
 
@@ -308,7 +318,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         ]),
                     ]),
 
-                    Forms\Components\Textarea::make('description')
+                    Textarea::make('description')
                         // ->required()
                         ->disabledOn('edit')
                         ->maxLength(65535)
@@ -417,7 +427,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->live(onBlur: true),
                         ])
                         ->collapseAllAction(
-                            fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Collapse all steps'),
+                            fn(Action $action) => $action->label('Collapse all steps'),
                         )
                         ->orderColumn('order')
                         ->reorderable()
@@ -439,9 +449,9 @@ class TaskResource extends Resource implements HasShieldPermissions
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable()->alignCenter(true)
+                TextColumn::make('id')->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: false),
-                \LaraZeus\InlineChart\Tables\Columns\InlineChart::make('progress')->label('Progress')
+                InlineChart::make('progress')->label('Progress')
                     ->chart(TaskWidgetChart::class)
 
 
@@ -449,16 +459,16 @@ class TaskResource extends Resource implements HasShieldPermissions
                     ->maxHeight(100)->alignCenter(true)
                     ->description('')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('title')->sortable()->wrap()->words(4)
+                TextColumn::make('title')->sortable()->wrap()->words(4)
                     ->color(Color::Blue)
-                    ->size(TextColumnSize::Large)
+                    ->size(TextSize::Large)
                     ->weight(FontWeight::ExtraBold)
                     ->description('Click')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('step_count')->label('Steps')
+                TextColumn::make('step_count')->label('Steps')
                     ->color(Color::Blue)->alignCenter(true)
                     ->searchable(),
-                Tables\Columns\TextColumn::make('views')->label('Views')->sortable()
+                TextColumn::make('views')->label('Views')->sortable()
                     ->color(Color::Blue)->alignCenter(true)
                     ->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('task_status')->label('Status')
@@ -481,17 +491,17 @@ class TaskResource extends Resource implements HasShieldPermissions
                     })
                     ->toggleable(isToggledHiddenByDefault: false),
 
-                Tables\Columns\TextColumn::make('assigned.name')
+                TextColumn::make('assigned.name')
                     ->label('Assigned To')
                     ->searchable()->wrap()->limit(20)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: false),
-                Tables\Columns\TextColumn::make('createdby.name')
+                TextColumn::make('createdby.name')
                     ->label('created By')
                     ->searchable()->wrap()->limit(20)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('assignedby.name')
+                TextColumn::make('assignedby.name')
                     ->label('Assigned By')
                     ->searchable()->wrap()->limit(20)
                     ->sortable()
@@ -503,11 +513,11 @@ class TaskResource extends Resource implements HasShieldPermissions
 
                 // ->toggleable(isToggledHiddenByDefault: false)
                 // ,
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('due_date')
+                TextColumn::make('due_date')
                     ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -536,7 +546,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                 // ->default(0),
             ])
             ->selectable()
-            ->actions([
+            ->recordActions([
 
                 Action::make('viewGallery')
                     ->hidden(function ($record) {
@@ -569,7 +579,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
                     })
-                    ->form([
+                    ->schema([
 
                         FileUpload::make('file_path')
                             ->disk('public')
@@ -660,7 +670,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return false;
                     })
                     // ->requiresConfirmation()
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         // dd($record->assigned->name);
                         return [
                             TextInput::make('task_employee')->disabled()->columnSpanFull(),
@@ -737,7 +747,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return 'success';
                         }
                     })
-                    ->form(function () {
+                    ->schema(function () {
                         return [
                             Fieldset::make()->columns(2)->schema([
                                 TextInput::make('task_status')->label('From') // current status
@@ -785,7 +795,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                                 ->success()
                                 ->send();
                             DB::commit();
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             //throw $th;
 
                             Notification::make()
@@ -824,7 +834,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             return true;
                         }
                     })
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         return [
                             Fieldset::make()->schema([
                                 Textarea::make('comment')->columnSpanFull()->required(),
@@ -853,7 +863,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                         return false;
                     })
                     ->color(Task::COLOR_REJECTED)
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         $defaultForm = [
                             Fieldset::make()->visible(fn(): bool => (setting('show_warning_message') && $record->rejection_count == (setting('task_rejection_times_red_card') - 1)))->schema([
                                 TextInput::make('message')->label('')
@@ -913,7 +923,7 @@ class TaskResource extends Resource implements HasShieldPermissions
                             }
                             Notification::make()->title('Rejected')->send();
                             DB::commit();
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             //throw $th;
                             DB::rollBack();
                             Notification::make()->title('Error')->warning()->body($th->getMessage())->send();
@@ -925,17 +935,17 @@ class TaskResource extends Resource implements HasShieldPermissions
                 //     Tables\Actions\ViewAction::make(),
                 // ])->iconButton(),
 
-            ], position: ActionsPosition::AfterColumns)
-            ->bulkActions([
+            ], position: RecordActionsPosition::AfterColumns)
+            ->toolbarActions([
                 // Tables\Actions\BulkActionGroup::make([
 
-                Tables\Actions\ForceDeleteBulkAction::make(),
-                Tables\Actions\DeleteBulkAction::make()
+                ForceDeleteBulkAction::make(),
+                DeleteBulkAction::make()
                     ->hidden(fn(): bool => (isStuff() || isBranchManager())),
                 // ]),
             ])
             ->emptyStateActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ]);
     }
 
@@ -951,10 +961,10 @@ class TaskResource extends Resource implements HasShieldPermissions
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTasks::route('/'),
-            'create' => Pages\CreateTask::route('/create'),
-            'edit' => Pages\EditTask::route('/{record}/edit'),
-            'task_steps' => Pages\TaskStepsPage::route('/{record}/task_steps'),
+            'index' => ListTasks::route('/'),
+            'create' => CreateTask::route('/create'),
+            'edit' => EditTask::route('/{record}/edit'),
+            'task_steps' => TaskStepsPage::route('/{record}/task_steps'),
         ];
     }
     public static function getEloquentQuery(): Builder
@@ -1078,9 +1088,9 @@ class TaskResource extends Resource implements HasShieldPermissions
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListTasks::class,
+            ListTasks::class,
             // Pages\CreateTask::class,
-            Pages\EditTask::class,
+            EditTask::class,
         ]);
     }
 }

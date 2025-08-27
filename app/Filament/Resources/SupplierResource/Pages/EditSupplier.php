@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\SupplierResource\Pages;
 
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
 use App\Filament\Resources\SupplierResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -14,8 +16,8 @@ class EditSupplier extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
-            Actions\RestoreAction::make(),
+            DeleteAction::make(),
+            RestoreAction::make(),
         ];
     }
 

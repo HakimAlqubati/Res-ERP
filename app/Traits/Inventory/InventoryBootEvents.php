@@ -1,6 +1,7 @@
 <?php
 namespace App\Traits\Inventory;
 
+use App\Services\MultiProductsInventoryService;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\Log;
 
@@ -77,9 +78,9 @@ trait InventoryBootEvents
                 $wasteQuantity = round(($transaction->quantity * $wastePercentage) / 100, 2);
 
                 if ($wasteQuantity > 0) {
-                    \App\Models\InventoryTransaction::create([
+                    InventoryTransaction::create([
                         'product_id'           => $transaction->product_id,
-                        'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                        'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
                         'quantity'             => $wasteQuantity,
                         'unit_id'              => $transaction->unit_id,
                         'movement_date'        => $transaction->transaction_date ?? now(),
@@ -102,7 +103,7 @@ trait InventoryBootEvents
                 // );
             }
 
-            $availableQty = \App\Services\MultiProductsInventoryService::getRemainingQty(
+            $availableQty = MultiProductsInventoryService::getRemainingQty(
                 $transaction->product_id,
                 $transaction->unit_id,
                 $transaction->store_id

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\MainOrdersCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\Pages\ListPendingApprovalPreviousOrderDetailsReports;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\Pages;
 use App\Filament\Clusters\MainOrdersCluster\Resources\PendingApprovalPreviousOrderDetailsReportResource\RelationManagers;
@@ -10,7 +12,6 @@ use App\Models\FakeModelReports\PendingApprovalPreviousOrderDetailsReport;
 use Filament\Forms;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -23,10 +24,10 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
 {
     protected static ?string $model = PendingApprovalPreviousOrderDetailsReport::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = OrderReportsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
 
     public static function getLabel(): ?string
@@ -56,7 +57,7 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
             ->filters([
                 Filter::make('show_extra_fields')
                     ->label('')
-                    ->form([
+                    ->schema([
                         Toggle::make('group_by_order')
                             ->inline(false)
                             ->label('Group by Order')
@@ -74,7 +75,7 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPendingApprovalPreviousOrderDetailsReports::route('/'),
+            'index' => ListPendingApprovalPreviousOrderDetailsReports::route('/'),
         ];
     }
 }

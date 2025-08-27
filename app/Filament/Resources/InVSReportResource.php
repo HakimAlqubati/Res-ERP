@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Resources\InVSReportResource\Pages\ListInVSReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Resources\InVSReportResource\Pages;
 use App\Models\StockSupplyOrder;
@@ -10,7 +12,6 @@ use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -24,7 +25,7 @@ class InVSReportResource extends Resource
 {
     protected static ?string $model = StockSupplyOrder::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static bool $shouldRegisterNavigation = false;
     public static function getNavigationLabel(): string
     {
@@ -41,7 +42,7 @@ class InVSReportResource extends Resource
         return 'In VS Out';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 10;
     public static function table(Table $table): Table
     {
@@ -50,7 +51,7 @@ class InVSReportResource extends Resource
 
             ->filters([
                 Filter::make('date')
-                    ->form([
+                    ->schema([
                         DatePicker::make('to_date')->live()
 
                             ->label('To Date')
@@ -75,7 +76,7 @@ class InVSReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInVSReport::route('/'),
+            'index' => ListInVSReport::route('/'),
 
         ];
     }

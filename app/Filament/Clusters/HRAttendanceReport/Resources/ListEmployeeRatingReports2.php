@@ -13,7 +13,7 @@ class ListEmployeeRatingReports2 extends ListRecords
 
     // protected static string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees';
     
-    public function getTableRecordKey(Model $record): string
+    public function getTableRecordKey(Model|array $record): string
     {
         $attributes = $record->getAttributes();
 

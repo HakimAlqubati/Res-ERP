@@ -2,22 +2,26 @@
 
 namespace App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages;
 
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Section;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource;
 use App\Models\GoodsReceivedNote;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceDetail;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Support\Facades\DB;
 
-class EditGoodsReceivedNoteV2 extends EditRecord implements Forms\Contracts\HasForms
+class EditGoodsReceivedNoteV2 extends EditRecord implements HasForms
 {
-    use Forms\Concerns\InteractsWithForms;
+    use InteractsWithForms;
 
     protected static string $resource = GoodsReceivedNoteResource::class;
 
@@ -31,8 +35,8 @@ class EditGoodsReceivedNoteV2 extends EditRecord implements Forms\Contracts\HasF
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
-            Actions\Action::make('Approve')
+            DeleteAction::make(),
+            Action::make('Approve')
                 ->label('Approve')
                 ->requiresConfirmation()
                 ->action(fn() => $this->approve()),
@@ -63,7 +67,7 @@ class EditGoodsReceivedNoteV2 extends EditRecord implements Forms\Contracts\HasF
     protected function getFormSchema(): array
     {
         return [
-            Card::make([
+            Section::make([
                 Repeater::make('items')
                     ->label('Items for Approval')
                     ->schema([

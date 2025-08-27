@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Branch;
+use Exception;
 use App\Http\Controllers\Controller;
 use App\Models\StockSupplyOrder;
 use App\Models\StockSupplyOrderDetail;
@@ -15,7 +17,7 @@ class StockSupplyOrderController extends Controller
     public function index(Request $request)
     {
 
-        $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+        $otherBranchesCategories = Branch::centralKitchens()
             ->where('id', '!=', auth()->user()->branch->id) // نستثني فرع المستخدم
             ->with('categories:id')
             ->get()
@@ -137,7 +139,7 @@ class StockSupplyOrderController extends Controller
                 'message' => 'Supply order created successfully',
                 'data' => $order->load(['store', 'details.product', 'details.unit'])
             ], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -158,7 +160,7 @@ class StockSupplyOrderController extends Controller
                 'status' => 'success',
                 'data' => $order
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Supply order not found'
@@ -226,7 +228,7 @@ class StockSupplyOrderController extends Controller
                 'message' => 'Supply order updated successfully',
                 'data' => $order->load(['store', 'details.product', 'details.unit'])
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => 'error',
@@ -246,7 +248,7 @@ class StockSupplyOrderController extends Controller
                 'status' => 'success',
                 'message' => 'Supply order deleted successfully'
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to delete supply order',
@@ -289,7 +291,7 @@ class StockSupplyOrderController extends Controller
                 'message' => 'Supply order cancelled successfully',
                 'data' => $order->load(['store', 'details.product', 'details.unit'])
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Failed to cancel supply order',

@@ -2,6 +2,7 @@
 
 namespace App\Traits\Inventory;
 
+use App\Models\GoodsReceivedNote;
 use App\Models\PurchaseInvoice;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,7 @@ trait CanCancelPurchaseInvoice
         $hasGrnTransactions = false;
 
         if ($grn) {
-            $hasGrnTransactions = InventoryTransaction::where('transactionable_type', \App\Models\GoodsReceivedNote::class)
+            $hasGrnTransactions = InventoryTransaction::where('transactionable_type', GoodsReceivedNote::class)
                 ->where('transactionable_id', $grn->id)
                 ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                 ->exists();

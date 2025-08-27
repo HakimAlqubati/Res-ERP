@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -142,18 +143,18 @@ class ServiceRequest extends Model implements Auditable, HasMedia
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope('active', function (Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }
         if (isStuff()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope('active', function (Builder $builder) {
                 $builder->where('assigned_to', auth()->user()->employee->id)
                     ->orWhere('created_by', auth()->user()->id)
                 ; // Add your default query here
             });
         } elseif (isFinanceManager() && auth()->user()->has_employee) {
-            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope(function (Builder $builder) {
                 $builder->where('assigned_to', auth()->user()->employee->id)
                     ->orWhere('created_by', auth()->user()->id)
                 ; // Add your default query here
@@ -162,7 +163,7 @@ class ServiceRequest extends Model implements Auditable, HasMedia
 
         static::created(function ($request) {
             $request->logToEquipment(
-                \App\Models\EquipmentLog::ACTION_SERVICED,
+                EquipmentLog::ACTION_SERVICED,
                 'Service request created: ' . $request->name
             );
         });
@@ -170,7 +171,7 @@ class ServiceRequest extends Model implements Auditable, HasMedia
         static::updated(function ($request) {
             if ($request->isDirty('status')) {
                 $request->logToEquipment(
-                    \App\Models\EquipmentLog::ACTION_UPDATED,
+                    EquipmentLog::ACTION_UPDATED,
                     'Status changed to ' . $request->status . ' for request: ' . $request->name
                 );
             }

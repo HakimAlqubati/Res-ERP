@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Foundation\AliasLoader;
+use Barryvdh\Debugbar\Facades\Debugbar;
 use App\Models\CustomTenantModel;
 use App\Models\Employee;
 
@@ -41,8 +43,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $loader = \Illuminate\Foundation\AliasLoader::getInstance();
-        $loader->alias('Debugbar', \Barryvdh\Debugbar\Facades\Debugbar::class);
+        $loader = AliasLoader::getInstance();
+        $loader->alias('Debugbar', Debugbar::class);
         // $this->app->bind(BaseNotification::class, NotificationAttendanceCheck::class);
     }
 
@@ -64,9 +66,9 @@ class AppServiceProvider extends ServiceProvider
         // NotificationAttendance::configureUsing(function (NotificationAttendance $notification): void {
         //     $notification->view('filament.notifications.notification');
         // });
-        
-        
-        
+
+
+
         // Notifications::alignment(Alignment::Start);
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
             $switch

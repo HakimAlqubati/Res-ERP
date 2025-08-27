@@ -2,6 +2,11 @@
 
 namespace App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages;
 
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Exception;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource;
 use App\Filament\Resources\PurchaseInvoiceResource;
 use App\Models\GoodsReceivedNote;
@@ -16,7 +21,6 @@ use Filament\Resources\Pages\Page;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
@@ -25,9 +29,9 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
-class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
+class EditGoodsReceivedNoteV3 extends Page implements HasForms
 {
-    use Forms\Concerns\InteractsWithForms;
+    use InteractsWithForms;
     public array $formData = [];
 
     public ?GoodsReceivedNote $record;
@@ -116,7 +120,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                         ->live(onBlur: true)
                         ->minValue(1)
                         ->rule('gte:1')
-                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                        ->afterStateUpdated(function (Set $set, $state, $get) {
                             $set('total_price', ((float) $state) * ((float)$get('quantity')));
                         }),
                     TextInput::make('total_price')->numeric()->label('Total')->disabled(),
@@ -165,7 +169,7 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
                 ->send();
             DB::commit();
             $this->redirect(PurchaseInvoiceResource::getUrl('index'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
 
             Notification::make()
@@ -183,16 +187,16 @@ class EditGoodsReceivedNoteV3 extends Page implements Forms\Contracts\HasForms
     {
         foreach ($data['units'] as $item) {
             if ((float) $item['price'] <= 0) {
-                throw new \Exception("Price Cannot be Zero");
+                throw new Exception("Price Cannot be Zero");
             }
         }
     }
 protected function validateInvoiceNo(string $invoiceNo)
 {
     if (PurchaseInvoice::where('invoice_no', $invoiceNo)->exists()) {
-        throw new \Exception("Invoice number already exists!");
+        throw new Exception("Invoice number already exists!");
     }
 }
 
-    protected static string $view = 'filament.pages.edit-goods-received-note-v3';
+    protected string $view = 'filament.pages.edit-goods-received-note-v3';
 }

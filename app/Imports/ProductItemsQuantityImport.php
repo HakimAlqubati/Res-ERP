@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Throwable;
 use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\Unit;
@@ -63,7 +64,7 @@ class ProductItemsQuantityImport implements ToCollection
             }
 
             DB::commit();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             Log::error("فشل في تعديل كميات المكونات من ملف الإكسل", [
                 'error' => $e->getMessage(),
