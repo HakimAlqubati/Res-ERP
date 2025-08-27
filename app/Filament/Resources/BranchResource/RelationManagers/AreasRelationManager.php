@@ -94,10 +94,10 @@ class AreasRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('name'),
                 TextColumn::make('description'),
-                SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
-                    ->circular()->alignCenter(true)->getStateUsing(function () {
-                        return null;
-                    })->limit(3),
+                // SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
+                //     ->circular()->alignCenter(true)->getStateUsing(function () {
+                //         return null;
+                //     })->limit(3),
             ])
             ->filters([
                 //

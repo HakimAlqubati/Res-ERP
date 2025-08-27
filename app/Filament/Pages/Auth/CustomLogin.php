@@ -5,5 +5,5 @@ use Filament\Auth\Pages\Login;
 
 class CustomLogin extends Login
 {
-    protected static string $view = 'filament.login';
+    // protected static string $view = 'filament.login';
 }

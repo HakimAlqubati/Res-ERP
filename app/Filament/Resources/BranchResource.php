@@ -277,10 +277,10 @@ class BranchResource extends Resource
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                    ->circular()->alignCenter(true)->getStateUsing(function () {
-                        return null;
-                    })->limit(3),
+                // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                //     ->circular()->alignCenter(true)->getStateUsing(function () {
+                //         return null;
+                //     })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('type_title')->label(__('lang.branch_type')),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),

@@ -36,7 +36,7 @@ use App\Models\TaskCard;
 use App\Models\TaskLog;
 use App\Models\User;
 use App\Models\UserType;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
+// use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
@@ -67,7 +67,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
 
-class TaskResource extends Resource implements HasShieldPermissions
+class TaskResource extends Resource 
 {
     protected static ?string $model = Task::class;
 

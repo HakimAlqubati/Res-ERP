@@ -216,10 +216,10 @@ class ServiceRequestResource extends Resource
             ->paginated([10, 25, 50, 100])
 
             ->columns([
-                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                    ->circular()->alignCenter(true)->getStateUsing(function () {
-                    return null;
-                })->limit(3),
+                // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                //     ->circular()->alignCenter(true)->getStateUsing(function () {
+                //     return null;
+                // })->limit(3),
                 TextColumn::make('id')->sortable()->searchable(isIndividual: false)->sortable()->alignCenter(),
                 TextColumn::make('equipment.name')->label('Equipment')->sortable()->searchable()->alignCenter(),
                 TextColumn::make('description')->searchable(isIndividual: true)->sortable()

@@ -32,8 +32,7 @@ use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Pages\CustomLogin;
-use App\Filament\Pages\Auth\CustomLogin as CustomLogin2;
+use App\Filament\Pages\CustomLogin; 
 use App\Filament\Pages\Dashboard as PagesDashboard;
 use App\Filament\Pages\EmployeeRecords;
 use App\Filament\Pages\InventoryReportLinks;
@@ -41,13 +40,13 @@ use App\Filament\Resources\ApprovalResource;
 use App\Filament\Resources\BranchResource;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\SettingResource;
-use App\Filament\Resources\Shield\RoleResource;
+// use App\Filament\Resources\Shield\RoleResource;
 use App\Filament\Resources\SystemSettingResource;
 use App\Filament\Resources\TenantResource;
 use App\Filament\Resources\UserResource;
 use App\Filament\Resources\VisitLogResource;
 use App\Models\CustomTenantModel;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+// use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Coolsam\Modules\ModulesPlugin;
 use Filament\Enums\ThemeMode;
 use Filament\FontProviders\GoogleFontProvider;
@@ -143,7 +142,7 @@ class AdminPanelProvider extends PanelProvider
                         NavigationGroup::make(__('lang.user_and_roles'))
                             ->items(array_merge(
                                 (isSuperAdmin() || isSystemManager() || isBranchManager()) ?   UserResource::getNavigationItems() : [],
-                                isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
+                                // isSuperAdmin() || isSystemManager() ? RoleResource::getNavigationItems() : []
                             )),
                         NavigationGroup::make(__('lang.branches'))
                             ->items(array_merge(
@@ -227,8 +226,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->path('admin')
             ->login()
-            ->login(CustomLogin::class)
-            // ->login(CustomLogin2::class)
+            // ->login(CustomLogin::class) 
             ->defaultThemeMode(ThemeMode::Light)
             ->colors([
                 'primary' => Color::Green,
@@ -285,22 +283,22 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->plugins([
-                FilamentShieldPlugin::make()
-                    ->gridColumns([
-                        'default' => 1,
-                        'sm' => 2,
-                        'lg' => 3
-                    ])
-                    ->sectionColumnSpan(1)
-                    ->checkboxListColumns([
-                        'default' => 1,
-                        'sm' => 2,
-                        'lg' => 4,
-                    ])
-                    ->resourceCheckboxListColumns([
-                        'default' => 1,
-                        'sm' => 2,
-                    ]),
+                // FilamentShieldPlugin::make()
+                //     ->gridColumns([
+                //         'default' => 1,
+                //         'sm' => 2,
+                //         'lg' => 3
+                //     ])
+                //     ->sectionColumnSpan(1)
+                //     ->checkboxListColumns([
+                //         'default' => 1,
+                //         'sm' => 2,
+                //         'lg' => 4,
+                //     ])
+                //     ->resourceCheckboxListColumns([
+                //         'default' => 1,
+                //         'sm' => 2,
+                //     ]),
             ])->spa()
             ->databaseNotifications()->globalSearch(false)
             ->databaseTransactions()

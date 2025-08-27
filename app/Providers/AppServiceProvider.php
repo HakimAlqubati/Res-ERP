@@ -70,10 +70,10 @@ class AppServiceProvider extends ServiceProvider
 
 
         // Notifications::alignment(Alignment::Start);
-        LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
-            $switch
-                ->locales(['ar', 'en']); // also accepts a closure
-        });
+        // LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
+        //     $switch
+        //         ->locales(['ar', 'en']); // also accepts a closure
+        // });
 
         FilamentAsset::register([
             // Js::make('custom-script', __DIR__ . '/../../tune.js'),

@@ -291,10 +291,10 @@ class EquipmentResource extends Resource
     {
         return $table->striped()->defaultSort('id', 'desc')
             ->columns([
-                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                    ->circular()->alignCenter(true)->getStateUsing(function () {
-                    return null;
-                })->limit(3),
+                // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                //     ->circular()->alignCenter(true)->getStateUsing(function () {
+                //     return null;
+                // })->limit(3),
                 TextColumn::make('name')->toggleable()
                     ->searchable()
                     ->sortable()->toggleable(isToggledHiddenByDefault: false),
