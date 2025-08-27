@@ -233,13 +233,13 @@ class BranchResellerResource extends Resource
                     return null;
                 })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
-                TextColumn::make('store.name')->label(__('lang.store'))->searchable(),
+                TextColumn::make('store.name')->label(__('lang.store'))->searchable()->toggleable(),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
                 // ->limit(100)
                     ->words(5)->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('user.name')->label(__('lang.account_manager')),
+                TextColumn::make('user.name')->label(__('lang.account_manager'))->toggleable(),
 
                 TextColumn::make('user.email')->label('Email')->copyable()->toggleable(isToggledHiddenByDefault: true),
 
@@ -257,12 +257,12 @@ class BranchResellerResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('total_sales')
-                    ->label('Total Sales')
+                    ->label('Total Sales')->toggleable()
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
 
                 TextColumn::make('total_paid')
-                    ->label('Total Paid')
+                    ->label('Total Paid')->toggleable()
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
 
