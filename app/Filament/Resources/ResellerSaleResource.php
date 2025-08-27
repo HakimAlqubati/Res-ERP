@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use App\Filament\Clusters\ResellersCluster;
@@ -52,7 +53,7 @@ class ResellerSaleResource extends Resource
                 Fieldset::make(__('lang.reseller_sale_info'))->schema([
                     Grid::make(2)->schema([
                         Select::make('branch_id')
-                            ->label(__('lang.branch'))
+                            ->label(__('lang.reseller'))
                             ->options(
                                 \App\Models\Branch::resellers()->active()->pluck('name', 'id')
                             )
@@ -163,33 +164,50 @@ class ResellerSaleResource extends Resource
                         TextInput::make('quantity')
                             ->label(__('lang.quantity'))
                             ->disabledOn('edit')
-                            ->default(1)->live(onBlur: true)
-                            ->afterStateUpdated(function ($set, $state, $get) {
-                                $sellingPrice = \App\Models\UnitPrice::where('product_id', $get('product_id'))->where('unit_id', $get('unit_id'))->first()?->selling_price ?? 0;
-
-                                $total = ((float) ($sellingPrice ?? 0)) * $state;
-                                $total = round($total, 2);
-                                $set('total_price', $total ?? 0);
-                            })
-                            ->numeric()->minValue(0.1)
+                            ->default(1)
+                            ->numeric()
+                            ->minValue(0.1)
                             ->required()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $state,   $get) {
+                                $qty = (float) ($state ?? 0);
+
+                                // فضّل قيمة unit_price المدخلة يدويًا أولًا
+                                $unitPrice = (float) ($get('unit_price') ?? 0);
+
+                                // إن لم تكن موجودة استخدم السعر الافتراضي من UnitPrice
+                                if ($unitPrice <= 0) {
+                                    $unitPrice = (float) (\App\Models\UnitPrice::query()
+                                        ->where('product_id', $get('product_id'))
+                                        ->where('unit_id', $get('unit_id'))
+                                        ->value('selling_price') ?? 0);
+
+                                    // اختياري: تعبئة الحقل للمستخدم
+                                    if ($unitPrice > 0) {
+                                        $set('unit_price', $unitPrice);
+                                    }
+                                }
+
+                                $set('total_price', round($qty * $unitPrice, 2));
+                            }),
 
                         TextInput::make('unit_price')
                             ->label(__('lang.unit_price'))
-                            ->numeric()->readOnly()
+                            ->numeric()
                             ->required()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $state,   $get) {
+                                $qty       = (float) ($get('quantity') ?? 0);
+                                $unitPrice = (float) ($state ?? 0);
+                                $set('total_price', round($qty * $unitPrice, 2));
+                            }),
 
                         TextInput::make('total_price')
                             ->label(__('lang.total_price'))
                             ->numeric()
                             ->dehydrated()
-                            ->readOnly()
-                        // ->afterStateHydrated(function ($state, callable $set, callable $get) {
-                        //     $set('total_price', round($get('quantity') * $get('unit_price'), 2));
-                        // })
-                            ->disabled(),
+                            ->readOnly()->disabled(),
+
                     ]),
             ]);
     }
@@ -200,7 +218,7 @@ class ResellerSaleResource extends Resource
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->searchable()->toggleable()->alignCenter(),
-                TextColumn::make('branch.name')->label(__('lang.branch'))->toggleable(),
+                TextColumn::make('branch.name')->label(__('lang.reseller'))->toggleable(),
                 TextColumn::make('store.name')->label(__('lang.store'))->toggleable(),
                 TextColumn::make('sale_date')->date('Y-m-d')->toggleable(),
                 TextColumn::make('total_amount')
@@ -223,7 +241,8 @@ class ResellerSaleResource extends Resource
                 Tables\Actions\Action::make('print_invoice')
                     ->label('Print')
                     ->icon('heroicon-o-printer')
-                    ->url(fn(ResellerSale $record) =>
+                    ->url(
+                        fn(ResellerSale $record) =>
                         \App\Filament\Resources\ResellerSaleResource::getUrl(name: 'print', parameters: ['record' => $record])
                     )->button()
                     ->openUrlInNewTab(),
