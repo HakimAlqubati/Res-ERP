@@ -276,7 +276,7 @@ class BranchResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
+    { 
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),

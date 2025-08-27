@@ -62,7 +62,7 @@ class GeneralReportOfProductsResource extends Resource
                         'type',
                         [Branch::TYPE_BRANCH, Branch::TYPE_CENTRAL_KITCHEN, Branch::TYPE_POPUP]
                     )
-                        ->activePopups()
+                        ->withPopupsActiveAndExpired()
                         ->active()
                         ->get()->pluck('name', 'id')),
                 Filter::make('date')

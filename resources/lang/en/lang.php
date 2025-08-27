@@ -238,4 +238,9 @@ return [
     'manufacturing_branches'                      => 'Manufacturing branches',
     'manufacturing_branch'                        => 'Manufacturing branch',
     'please_select_a_receller'                    => 'Please select a receller',
+    
+    'expired'  => 'Expired',
+    'upcoming' => 'Upcoming',
+    'active'   => 'Active',
+    'normal'   => 'Normal',
 ];
