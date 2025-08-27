@@ -34,7 +34,7 @@ use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class RoleResource extends Resource
-//  implements HasShieldPermissions
+ implements HasShieldPermissions
 {
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -52,51 +52,49 @@ class RoleResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([Grid::make()]);
+
+        return $schema
+            ->components([
+                Grid::make()
+                    ->schema([
+                        Section::make()
+                            ->schema([
+                                TextInput::make('name')
+                                    ->label(__('filament-shield::filament-shield.field.name'))
+                                    ->unique(ignoreRecord: true)
+                                    ->required()
+                                    ->maxLength(255),
+
+                                TextInput::make('guard_name')
+                                    ->label(__('filament-shield::filament-shield.field.guard_name'))
+                                    ->default(Utils::getFilamentAuthGuard())
+                                    ->nullable()
+                                    ->maxLength(255),
+
+                                ShieldSelectAllToggle::make('select_all')
+                                    ->onIcon('heroicon-s-shield-check')
+                                    ->offIcon('heroicon-s-shield-exclamation')
+                                    ->label(__('filament-shield::filament-shield.field.select_all.name'))
+                                    ->helperText(fn(): HtmlString => new HtmlString(__('filament-shield::filament-shield.field.select_all.message')))
+                                    ->dehydrated(fn($state): bool => $state),
+
+                            ])
+                            ->columns([
+                                'sm' => 2,
+                                'lg' => 3,
+                            ]),
+                    ]),
+                Tabs::make('Permissions')
+                    ->contained()
+                    ->tabs([
+                        static::getTabFormComponentForResources(),
+                        static::getTabFormComponentForPage(),
+                        static::getTabFormComponentForWidget(),
+                        static::getTabFormComponentForCustomPermissions(),
+                    ])
+                    ->columnSpan('full'),
+            ]);
     }
-
-    //     return $schema
-    //         ->components([
-    //             Grid::make()
-    //                 ->schema([
-    //                     Section::make()
-    //                         ->schema([
-    //                             TextInput::make('name')
-    //                                 ->label(__('filament-shield::filament-shield.field.name'))
-    //                                 ->unique(ignoreRecord: true)
-    //                                 ->required()
-    //                                 ->maxLength(255),
-
-    //                             TextInput::make('guard_name')
-    //                                 ->label(__('filament-shield::filament-shield.field.guard_name'))
-    //                                 ->default(Utils::getFilamentAuthGuard())
-    //                                 ->nullable()
-    //                                 ->maxLength(255),
-
-    //                             ShieldSelectAllToggle::make('select_all')
-    //                                 ->onIcon('heroicon-s-shield-check')
-    //                                 ->offIcon('heroicon-s-shield-exclamation')
-    //                                 ->label(__('filament-shield::filament-shield.field.select_all.name'))
-    //                                 ->helperText(fn (): HtmlString => new HtmlString(__('filament-shield::filament-shield.field.select_all.message')))
-    //                                 ->dehydrated(fn ($state): bool => $state),
-
-    //                         ])
-    //                         ->columns([
-    //                             'sm' => 2,
-    //                             'lg' => 3,
-    //                         ]),
-    //                 ]),
-    //             Tabs::make('Permissions')
-    //                 ->contained()
-    //                 ->tabs([
-    //                     static::getTabFormComponentForResources(),
-    //                     static::getTabFormComponentForPage(),
-    //                     static::getTabFormComponentForWidget(),
-    //                     static::getTabFormComponentForCustomPermissions(),
-    //                 ])
-    //                 ->columnSpan('full'),
-    //         ]);
-    // }
 
     public static function table(Table $table): Table
     {
@@ -151,14 +149,12 @@ class RoleResource extends Resource
 
     public static function getCluster(): ?string
     {
-        return '';
-        // return Utils::getResourceCluster() ?? static::$cluster;
+        return Utils::getResourceCluster() ?? static::$cluster;
     }
 
     public static function getModel(): string
     {
-        return '';
-        // return Utils::getRoleModel();
+        return Utils::getRoleModel();
     }
 
     public static function getModelLabel(): string
@@ -173,13 +169,11 @@ class RoleResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
         return Utils::isResourceNavigationRegistered();
     }
 
     public static function getNavigationGroup(): ?string
     {
-        return '';
         return Utils::isResourceNavigationGroupEnabled()
             ? __('filament-shield::filament-shield.nav.group')
             : '';
@@ -197,13 +191,11 @@ class RoleResource extends Resource
 
     public static function getNavigationSort(): ?int
     {
-        return 1;
         return Utils::getResourceNavigationSort();
     }
 
     public static function getSlug(?Panel $panel = null): string
     {
-        return '';
         return Utils::getResourceSlug();
     }
 

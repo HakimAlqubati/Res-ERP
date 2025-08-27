@@ -19,8 +19,7 @@ class Dashboard extends \Filament\Pages\Dashboard
         return 2;
     }
     public function getWidgets(): array
-    { 
-        return [];
+    {  
         if (! isSuperAdmin() && ! isFinanceManager() && ! isSystemManager() && ! isSuperVisor()
             && ! isBranchManager()
         ) {

@@ -205,7 +205,7 @@ class EmployeeResource extends Resource
                                                         return Str::random(15) . "." . $file->getClientOriginalExtension();
                                                     })
                                                 // ->imagePreviewHeight('250')
-                                                    ->resize(5)
+                                                    // ->resize(5)
                                                     ->maxSize(333)
                                                     ->columnSpan(2)
                                                     ->reactive(),
@@ -361,7 +361,7 @@ class EmployeeResource extends Resource
                         ->icon('heroicon-o-banknotes')
                         ->schema([
                             Fieldset::make()->label('Set salary data and account number')->schema([
-                                Grid::make()->label('')->columns(4)->schema([
+                                Grid::make()->columns(4)->schema([
                                     TextInput::make('salary')
                                         ->numeric()
                                         ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
@@ -513,8 +513,8 @@ class EmployeeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'asc')
             ->columns([
-                ImageColumn::make('avatar_image')->label('')
-                    ->circular(),
+                // ImageColumn::make('avatar_image')->label('')
+                //     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault:true)->hidden(),
                 TextColumn::make('employee_no')
@@ -720,7 +720,7 @@ class EmployeeResource extends Resource
                     ->label('AWS Indexing')->button()
                     ->icon('heroicon-o-user-plus')
                     ->color('success')
-                    ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
+                    // ->visible(fn($record): bool => $record->avatar && Storage::disk('s3')->exists($record->avatar))
                     ->action(function ($record) {
                         $response = S3ImageService::indexEmployeeImage($record->id);
 

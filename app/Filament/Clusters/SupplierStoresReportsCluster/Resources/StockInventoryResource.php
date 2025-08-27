@@ -74,8 +74,12 @@ class StockInventoryResource extends Resource
         $operaion = $schema->getOperation();
         return $schema
             ->components([
-                Fieldset::make()->label('')->schema([
-                    Grid::make()->columns(4)->schema([
+                Fieldset::make()->label('')
+                ->columnSpanFull()
+                ->schema([
+                    Grid::make()->columns(4)
+                    ->columnSpanFull()  
+                    ->schema([
                         DatePicker::make('inventory_date')
                             ->required()->default(now())
                             ->label('Inventory Date')->disabledOn('edit'),
@@ -252,7 +256,7 @@ class StockInventoryResource extends Resource
 
                     ]),
 
-                    Repeater::make('details')
+                    Repeater::make('details')->columnSpanFull()
                     // ->hidden(function ($record) use ($operaion) {
                     //     return $record?->finalized && $operaion === 'edit';
                     // })

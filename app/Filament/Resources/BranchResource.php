@@ -31,6 +31,7 @@ use App\Models\Store;
 use App\Models\User; 
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -232,7 +233,7 @@ class BranchResource extends Resource
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                SpatieMediaLibraryFileUpload::make('images')
+                                FileUpload::make('images')
                                     ->disk('public')
                                     ->label('')
                                     ->directory('branches')

@@ -77,23 +77,23 @@ trait HasEmployeeExistingForm
                     Grid::make()->columns(3)->schema([
                         TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                         TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email()->required(),
-                        PhoneInput::make('phone_number')->disabled()
-                        // ->numeric()
-                            ->initialCountry('MY')
-                            ->onlyCountries([
-                                'MY',
-                                'US',
-                                'YE',
-                                'AE',
-                                'SA',
-                            ])
-                            ->displayNumberFormat(PhoneInputNumberType::E164)
-                            ->autoPlaceholder('aggressive')
-                        // ->validateFor(
-                        //     country: 'MY',
-                        //     lenient: true, // default: false
-                        // )
-                        ,
+                        // PhoneInput::make('phone_number')->disabled()
+                        // // ->numeric()
+                        //     ->initialCountry('MY')
+                        //     ->onlyCountries([
+                        //         'MY',
+                        //         'US',
+                        //         'YE',
+                        //         'AE',
+                        //         'SA',
+                        //     ])
+                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
+                        //     ->autoPlaceholder('aggressive')
+                        // // ->validateFor(
+                        // //     country: 'MY',
+                        // //     lenient: true, // default: false
+                        // // )
+                        // ,
 
                     ]),
                     Fieldset::make()->columns(3)->label('Set user type, role and manager')->schema([

@@ -37,25 +37,25 @@ trait HasNewUserForm
                     Fieldset::make()->label('Personal data')->schema([
                         TextInput::make('name')->required()->unique(ignoreRecord: true),
                         TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-                        PhoneInput::make('phone_number')
-                        // ->numeric()
-                            ->initialCountry('MY')
-                            ->onlyCountries([
-                                'MY',
-                                'US',
-                                'YE',
-                                'AE',
-                                'SA',
-                            ])
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->displayNumberFormat(PhoneInputNumberType::E164)
-                            ->autoPlaceholder('aggressive')
-                        // ->validateFor(
-                        //     country: 'MY',
-                        //     lenient: true, // default: false
-                        // )
-                        ,
+                        // PhoneInput::make('phone_number')
+                        // // ->numeric()
+                        //     ->initialCountry('MY')
+                        //     ->onlyCountries([
+                        //         'MY',
+                        //         'US',
+                        //         'YE',
+                        //         'AE',
+                        //         'SA',
+                        //     ])
+                        //     ->required()
+                        //     ->unique(ignoreRecord: true)
+                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
+                        //     ->autoPlaceholder('aggressive')
+                        // // ->validateFor(
+                        // //     country: 'MY',
+                        // //     lenient: true, // default: false
+                        // // )
+                        // ,
                         Select::make('gender')
                             ->label('Gender')
                             ->options([

@@ -14,4 +14,17 @@ class ListStockInventoryQuickLinks extends ListRecords
     {
         return '';
     }
+    // عدد أعمدة منطقة الودجت أعلى الجدول (مثلاً 4 أعمدة)
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return 4;
+    }
+
+    public function getColumnStart() {
+        return 1;
+    }
+    public function getColumnSpan(): int|array
+    {
+        return 3;
+    }
 }

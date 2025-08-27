@@ -10,8 +10,7 @@ use Spatie\Permission\Models\Role;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use DateTime;
-use Filament\Actions\Action;
-use LaraZeus\InlineChart\Tables\Columns\InlineChart;
+use Filament\Actions\Action; 
 use Filament\Support\Enums\TextSize;
 use Throwable;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -395,7 +394,7 @@ class TaskResource extends Resource
                         ->columnSpanFull()
                         ->imagePreviewHeight('250')
                         ->image()
-                        ->resize(5)
+                        // ->resize(5)
                         ->loadingIndicatorPosition('left')
                         // ->panelAspectRatio('2:1')
                         ->panelLayout('integrated')
@@ -450,15 +449,7 @@ class TaskResource extends Resource
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false),
-                InlineChart::make('progress')->label('Progress')
-                    ->chart(TaskWidgetChart::class)
-
-
-                    ->maxWidth(80)
-                    ->maxHeight(100)->alignCenter(true)
-                    ->description('')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: false), 
                 TextColumn::make('title')->sortable()->wrap()->words(4)
                     ->color(Color::Blue)
                     ->size(TextSize::Large)
@@ -588,7 +579,7 @@ class TaskResource extends Resource
                             ->columnSpanFull()
                             ->image()
                             ->multiple()
-                            ->resize(5)
+                            // ->resize(5)
                             ->downloadable()
                             ->previewable()
                             ->imagePreviewHeight('250')

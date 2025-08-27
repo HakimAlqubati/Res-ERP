@@ -1,0 +1,15 @@
+server:
+  command: "php artisan octane:roadrunner --max-requests=1000"
+
+http:
+  address: "127.0.0.1:8000"
+  pool:
+    num_workers: 4
+    supervisor:
+      max_worker_memory: 128
+
+rpc:
+  listen: "tcp://127.0.0.1:6001"
+
+logs:
+  mode: production

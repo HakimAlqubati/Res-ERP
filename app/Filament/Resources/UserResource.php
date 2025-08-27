@@ -191,14 +191,14 @@ class UserResource extends Resource
                                     ->required()
                                     ->default(fn($record) => $record->name)
                                     ->unique(ignoreRecord: true),
-                                PhoneInput::make('phone_number')
-                                    ->label('Phone')
-                                    ->required()
-                                    ->default(fn($record) => $record->phone_number)
-                                    ->unique(ignoreRecord: true)
-                                    ->initialCountry('MY')
-                                    ->onlyCountries(['MY', 'US', 'YE', 'AE', 'SA'])
-                                    ->displayNumberFormat(PhoneInputNumberType::E164),
+                                // PhoneInput::make('phone_number')
+                                //     ->label('Phone')
+                                //     ->required()
+                                //     ->default(fn($record) => $record->phone_number)
+                                //     ->unique(ignoreRecord: true)
+                                //     ->initialCountry('MY')
+                                //     ->onlyCountries(['MY', 'US', 'YE', 'AE', 'SA'])
+                                //     ->displayNumberFormat(PhoneInputNumberType::E164),
                                 TextInput::make('email')
                                     ->email()
                                     ->default(fn($record) => $record->email)

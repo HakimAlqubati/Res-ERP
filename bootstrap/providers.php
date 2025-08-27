@@ -9,4 +9,5 @@ return [
     Barryvdh\DomPDF\ServiceProvider::class,
     Mccarlosen\LaravelMpdf\LaravelMpdfServiceProvider::class,
     OwenIt\Auditing\AuditingServiceProvider::class,
+    Laravel\Octane\OctaneServiceProvider::class,
 ];

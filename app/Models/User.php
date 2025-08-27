@@ -4,7 +4,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
-// use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,7 +25,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     Notifiable,
     HasRoles,
     SoftDeletes,
-    // HasPanelShield,
+    HasPanelShield,
     DynamicConnection,
     \OwenIt\Auditing\Auditable;
 
@@ -119,7 +119,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
     }
 
     public function getFirstRoleAttribute()
-    { 
+    {
         return $this->roles->first();
     }
 
