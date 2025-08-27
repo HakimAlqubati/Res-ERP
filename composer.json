@@ -6,24 +6,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "arbermustafa/filament-locationpickr-field": "^2.0",
         "arcanedev/log-viewer": "^11.0",
         "barryvdh/laravel-dompdf": "^3.0",
-        "bezhansalleh/filament-language-switch": "^3.1",
-        "bezhansalleh/filament-shield": "^3.2",
         "calebporzio/sushi": "^2.4",
         "carlos-meneses/laravel-mpdf": "^2.1",
-        "coolsam/modules": "4",
-        "filament/filament": "^3.2",
-        "filament/forms": "^3.2",
-        "filament/spatie-laravel-media-library-plugin": "^3.2",
-        "filament/tables": "^3.2",
+        "filament/filament": "^4.0",
+        "filament/forms": "^4.0",
+        "filament/tables": "^4.0",
         "google/apiclient": "^2.18",
-        "hugomyb/filament-media-action": "^3.1",
         "irazasyed/larasupport": "^1.1",
-        "joshembling/image-optimizer": "^1.4",
         "kreait/firebase-php": "^7.18",
-        "lara-zeus/inline-chart": "^1.1",
         "laravel-notification-channels/fcm": "^5.1",
         "laravel/framework": "^11.9",
         "laravel/passport": "^12.0",
@@ -31,7 +23,6 @@
         "league/flysystem-aws-s3-v3": "^3.29",
         "league/flysystem-ftp": "^3.29",
         "maatwebsite/excel": "^3.1",
-        "mokhosh/filament-rating": "^1.1",
         "nwidart/laravel-modules": "^11.0",
         "owen-it/laravel-auditing": "^14.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
@@ -40,12 +31,12 @@
         "spatie/laravel-medialibrary": "^11.12",
         "spatie/laravel-multitenancy": "4.0",
         "spatie/laravel-permission": "^6.9",
-        "spatie/laravel-translatable": "^6.8",
-        "ysfkaya/filament-phone-input": "^3.1"
+        "spatie/laravel-translatable": "^6.8"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",
         "fakerphp/faker": "^1.23",
+        "filament/upgrade": "4.0",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
         "mockery/mockery": "^1.6",
@@ -61,12 +52,14 @@
         },
         "files": [
             "app/helpers.php",
-            "app/fifo_helpers.php",
-            "app/auth_helpers.php",
-            "app/attendance_helper.php",
-            "app/payroll_helper.php",
-            "app/leaves_helper.php",
-            "app/Overrides/CustomChartWidget.php"
+            "app/auth_helpers.php"
+        ],
+          "exclude-from-classmap": [
+        "node_modules/",
+        "public/",
+        "public/uploads/",
+        "storage/",
+        "bootstrap/cache/"
         ]
     },
     "autoload-dev": {
@@ -74,24 +67,7 @@
             "Tests\\": "tests/"
         }
     },
-    "scripts": {
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
-        ],
-        "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ]
-    },
+    "scripts": {},
     "extra": {
         "laravel": {
             "dont-discover": []
@@ -104,8 +80,10 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true,
-            "wikimedia/composer-merge-plugin": true
-        }
+            "wikimedia/composer-merge-plugin": false
+
+        },
+        "exclude-from-classmap": ["node_modules/", "public/", "storage/", "bootstrap/cache/"]
     },
     "minimum-stability": "stable",
     "prefer-stable": true

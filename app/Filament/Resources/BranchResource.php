@@ -9,8 +9,7 @@ use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
 use App\Models\Store;
-use App\Models\User;
-use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
+use App\Models\User; 
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
@@ -210,23 +209,7 @@ class BranchResource extends Resource
                                         ->reactive()
                                         ->required(false),
                                     Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                    LocationPickr::make('location')->label('')->columnSpanFull()
-                                        ->mapControls([
-                                            'mapTypeControl'    => true,
-                                            'scaleControl'      => true,
-                                            'streetViewControl' => true,
-                                            'rotateControl'     => true,
-                                            'fullscreenControl' => true,
-                                            'zoomControl'       => false,
-                                        ])
-                                        ->defaultZoom(5)
-                                        ->draggable()
-                                        ->clickable()
-                                        ->height('40vh')
-                                        // ->defaultLocation([41.32836109345274, 19.818383186960773])
-                                        ->myLocationButtonLabel('My location'),
-                                    // Add other location fields as needed (district_id, city_id, etc.)
-
+                                    
 
                                 ]),
 
