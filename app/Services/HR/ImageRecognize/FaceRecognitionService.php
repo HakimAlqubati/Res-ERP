@@ -7,7 +7,7 @@ use App\Repositories\HR\ImageRecognize\EmployeeRecognitionRepository;
 use Aws\Rekognition\RekognitionClient;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;  
+use Illuminate\Support\Facades\Storage;
 
 class FaceRecognitionService
 {
@@ -62,8 +62,7 @@ class FaceRecognitionService
                     'MaxFaces'           => (int) $this->config['max_faces'],
                 ]);
                 Log::info('Rekognition API call succeeded', [
-                    'attempt'   => $attempt,
-                    'threshold' => $threshold,
+                    $result
                 ]);
             } catch (\Throwable $e) {
                 // في حال أخطاء مؤقتة من AWS، انتظر وأعد المحاولة
@@ -119,7 +118,7 @@ class FaceRecognitionService
     {
         $prefix   = trim($this->config['upload_prefix'] ?? 'uploads', '/');
         $ext      = $file->getClientOriginalExtension();
-        $timestamp= now()->format('Ymd_His_u');
+        $timestamp = now()->format('Ymd_His_u');
         $path     = "{$prefix}/identify_face_{$timestamp}.{$ext}";
 
         Storage::disk('s3')->put($path, fopen($file->getRealPath(), 'r'), [
