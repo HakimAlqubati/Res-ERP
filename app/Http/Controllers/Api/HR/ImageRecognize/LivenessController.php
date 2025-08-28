@@ -15,50 +15,83 @@ class LivenessController extends Controller
             'image' => 'required|file|image|mimes:jpg,jpeg,png|max:5120',
         ]);
 
+        $base = config('services.python.base_url');
+        if (!$base) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Python base URL is not configured (services.python.base_url).',
+            ], 500);
+        }
+
+        $pythonUrl = rtrim($base, '/') . '/api/liveness';
+
+        // قيود آمنة على المدخلات
+        $maxAttemptsReq = (int)$request->input('max_attempts', 3);
+        $baseDelayMsReq = (int)$request->input('base_delay_ms', 200);
+
+        $maxAttempts = max(1, min($maxAttemptsReq, 6));      // 1..6
+        $baseDelayMs = max(50, min($baseDelayMsReq, 2000));  // 50..2000 ms
+
         $file = $request->file('image');
-        $pythonUrl = rtrim(config('services.python.base_url'), '/') . '/api/liveness';
-
-        // تحكم ديناميكي من الكلاينت إن رغبت: ?max_attempts=5&base_delay_ms=250
-        $maxAttempts = max(1, (int)$request->input('max_attempts', 3));
-        $baseDelayMs = max(0, (int)$request->input('base_delay_ms', 200));
-
         $attempt = 0;
         $lastResult = null;
+        $lastHttpStatus = null;
 
         while ($attempt < $maxAttempts) {
             $attempt++;
 
             try {
-                $resp = Http::timeout(10)
+                $resp = Http::timeout(15)
+                    ->acceptJson()
                     ->asMultipart()
                     ->attach(
                         'image',
-                        file_get_contents($file->getRealPath()),
+                        fopen($file->getRealPath(), 'r'),
                         $file->getClientOriginalName()
                     )
                     ->post($pythonUrl);
 
+                $lastHttpStatus = $resp->status();
+
                 if (!$resp->ok()) {
                     Log::warning('Python liveness non-200', [
-                        'status' => $resp->status(),
-                        'body'   => $resp->body(),
-                        'attempt'=> $attempt,
+                        'status'  => $resp->status(),
+                        'body'    => $resp->body(),
+                        'attempt' => $attempt,
                     ]);
-                    $lastResult = ['status' => $resp->status(), 'body' => $resp->body()];
+                    $lastResult = [
+                        'status' => $resp->status(),
+                        'body'   => mb_substr($resp->body(), 0, 2000),
+                    ];
                 } else {
-                    $json = $resp->json();
-                    $lastResult = $json;
+                    // JSON آمن
+                    $json = null;
+                    try {
+                        $json = $resp->json();
+                    } catch (\Throwable $e) {
+                        $json = null;
+                    }
 
-                    // إذا رجعت مثل:
-                    // { "landmarks": {...}, "liveness": false, "score": 0.66 }
-                    // نعيد المحاولة تلقائياً حتى maxAttempts أو حتى liveness=true
-                    if (isset($json['liveness']) && $json['liveness'] === true) {
-                        return response()->json([
-                            'status'   => 'ok',
-                            'attempts' => $attempt,
-                            'result'   => $json,
-                             'message'  => 'Liveness  confirmed after ('.$attempt.') retries.',
-                        ], 200);
+                    if (!is_array($json)) {
+                        Log::warning('Python liveness invalid JSON', [
+                            'attempt' => $attempt,
+                            'body'    => mb_substr($resp->body(), 0, 500),
+                        ]);
+                        $lastResult = ['error' => 'Invalid JSON from Python service'];
+                    } else {
+                        $lastResult = $json;
+
+                        // نجاح مؤكد
+                        if (array_key_exists('liveness', $json) && $json['liveness'] === true) {
+                            return response()->json([
+                                'status'    => 'ok',
+                                'attempts'  => $attempt,
+                                'result'    => $json,
+                                'message'   => "Liveness confirmed after {$attempt} attempt(s).",
+                            ], 200);
+                        }
+
+                        // إن كانت liveness=false أو غير موجودة، سنعيد المحاولة (حتى حدّ المحاولات)
                     }
                 }
             } catch (\Throwable $e) {
@@ -67,20 +100,35 @@ class LivenessController extends Controller
                     'error'   => $e->getMessage(),
                 ]);
                 $lastResult = ['error' => $e->getMessage()];
+                $lastHttpStatus = null;
             }
 
-            // backoff بسيط مع jitter خفيف بين المحاولات
+            // Exponential backoff + jitter
             if ($attempt < $maxAttempts) {
-                usleep(($baseDelayMs + random_int(0, $baseDelayMs)) * 1000);
+                $expDelay = $baseDelayMs * (2 ** ($attempt - 1)); // 200, 400, 800, ...
+                $jitter   = random_int(0, (int)($baseDelayMs * 0.5));
+                $sleepMs  = min($expDelay + $jitter, 8000); // سقف 8 ثوانٍ لكل انتظار
+                usleep($sleepMs * 1000);
             }
         }
 
-        // لم تتحقق الـ liveness بعد كل المحاولات
+        // لم تتحقق liveness
+        // إن كان السبب أعطال من خدمة بايثون (non-200/timeout)، أرجع 502.
+        if (($lastHttpStatus && $lastHttpStatus >= 500) || isset($lastResult['error'])) {
+            return response()->json([
+                'status'    => 'upstream_error',
+                'attempts'  => $attempt,
+                'result'    => $lastResult,
+                'message'   => 'Python service did not confirm liveness.',
+            ], 502);
+        }
+
+        // خلاف ذلك، عدم تحقق liveness بعد المحاولات
         return response()->json([
-            'status'   => 'no_match',
-            'attempts' => $attempt,
-            'result'   => $lastResult,
-            'message'  => 'Liveness not confirmed after ('.$attempt.') retries.',
-        ], 200);
+            'status'    => 'no_match',
+            'attempts'  => $attempt,
+            'result'    => $lastResult,
+            'message'   => "Liveness not confirmed after {$attempt} attempt(s).",
+        ], 422);
     }
 }
