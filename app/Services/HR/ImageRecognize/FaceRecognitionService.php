@@ -61,6 +61,10 @@ class FaceRecognitionService
                     'FaceMatchThreshold' => $threshold,
                     'MaxFaces'           => (int) $this->config['max_faces'],
                 ]);
+                Log::info('Rekognition API call succeeded', [
+                    'attempt'   => $attempt,
+                    'threshold' => $threshold,
+                ]);
             } catch (\Throwable $e) {
                 // في حال أخطاء مؤقتة من AWS، انتظر وأعد المحاولة
                 $this->sleepWithBackoff($attempt, $backoffMs, $jitterMs);
