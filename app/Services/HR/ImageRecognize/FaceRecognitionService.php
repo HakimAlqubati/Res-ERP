@@ -47,7 +47,7 @@ class FaceRecognitionService
             'MaxFaces'           => (int) $this->config['max_faces'],
         ]);
 
-        Log::info('rekognition_result', [$result]);
+        Log::info('rekognition_result_new_service', [$result]);
 
         $matches = $result['FaceMatches'] ?? [];
         if (empty($matches)) {
