@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\FaceRecognition;
+namespace App\Services\HR\ImageRecognize;
 
 use App\DTOs\HR\ImageRecognize\EmployeeMatch;
 use Aws\Rekognition\RekognitionClient;
