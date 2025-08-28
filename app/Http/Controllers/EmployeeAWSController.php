@@ -210,6 +210,7 @@ class EmployeeAWSController extends Controller
                 'MaxFaces' => 1,
             ]);
 
+            Log::info('rekognition_result', [$result]);
             $rekognitionId = null;
             $name = 'No match found';
 
