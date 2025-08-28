@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
 use App\Http\Controllers\Api\HR\ImageRecognize\EmployeeIdentificationController;
+use App\Http\Controllers\Api\HR\ImageRecognize\LivenessController;
 use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
@@ -37,7 +38,8 @@ Route::prefix('hr')
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
         Route::post('/identifyEmployee', [EmployeeIdentificationController::class, 'identify'])
             // ->name('employees.identify')
-            ;
+        ;
+        Route::post('/liveness', [LivenessController::class, 'check']);
     });
 
 Route::prefix('aws/employee-liveness')->group(function () {

@@ -60,13 +60,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/helpers.php",
-            "app/fifo_helpers.php",
-            "app/auth_helpers.php",
-            "app/attendance_helper.php",
-            "app/payroll_helper.php",
-            "app/leaves_helper.php",
-            "app/Overrides/CustomChartWidget.php"
+            "app/helpers.php", 
+            "app/auth_helpers.php"
         ]
     },
     "autoload-dev": {
@@ -74,24 +69,7 @@
             "Tests\\": "tests/"
         }
     },
-    "scripts": {
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
-        ],
-        "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ]
-    },
+    "scripts": {},
     "extra": {
         "laravel": {
             "dont-discover": []
@@ -104,7 +82,7 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true,
-            "wikimedia/composer-merge-plugin": true
+            "wikimedia/composer-merge-plugin": false
         }
     },
     "minimum-stability": "stable",

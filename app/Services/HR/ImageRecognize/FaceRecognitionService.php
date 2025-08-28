@@ -21,7 +21,7 @@ class FaceRecognitionService
 
     public function identify(UploadedFile $file): EmployeeMatch
     {
-        // 1) رفع الصورة إلى S3 باسم منظم
+        // 1) رفع الصورة مرة واحدة فقط
         $path = $this->uploadToS3($file);
 
         // 2) تأكيد الحجم > 0
@@ -31,47 +31,84 @@ class FaceRecognitionService
             return EmployeeMatch::notFound();
         }
 
-        // 3) البحث عبر Rekognition
+        // 3) البحث مع إعادة المحاولة الذكية
+        $bucket = $this->config['bucket'];
         $collectionId = $this->config['collection_id'];
-        $bucket       = $this->config['bucket'];
 
-        $result = $this->rekognition->searchFacesByImage([
-            'CollectionId'       => $collectionId,
-            'Image'              => [
-                'S3Object' => [
-                    'Bucket' => $bucket,
-                    'Name'   => $path,
-                ],
-            ],
-            'FaceMatchThreshold' => (float) $this->config['face_match_threshold'],
-            'MaxFaces'           => (int) $this->config['max_faces'],
-        ]);
+        $maxRetries   = (int) $this->config['max_retries'];
+        $backoffMs    = (int) $this->config['retry_backoff_ms'];
+        $jitterMs     = (int) $this->config['retry_jitter_ms'];
 
-        Log::info('rekognition_result', ['matches' => $result['FaceMatches'] ?? []]);
+        $baseThreshold = (float) $this->config['face_match_threshold'];
+        $step          = (float) $this->config['threshold_step'];
+        $minThreshold  = (float) $this->config['min_threshold'];
 
-        $matches = $result['FaceMatches'] ?? [];
-        if (empty($matches)) {
-            return EmployeeMatch::notFound();
-        }
+        $attempt = 0;
+        $result  = null;
 
-        // أفضل تطابق
-        $top = $matches[0];
-        $rekognitionId = $top['Face']['FaceId'] ?? null;
-        $similarity    = isset($top['Similarity']) ? (float) $top['Similarity'] : null;
-        $confidence    = isset($top['Face']['Confidence']) ? (float) $top['Face']['Confidence'] : null;
+        do {
+            $threshold = $this->thresholdForAttempt($attempt, $baseThreshold, $step, $minThreshold);
 
-        if (!$rekognitionId) {
-            return EmployeeMatch::notFound();
-        }
+            try {
+                $result = $this->rekognition->searchFacesByImage([
+                    'CollectionId'       => $collectionId,
+                    'Image'              => [
+                        'S3Object' => [
+                            'Bucket' => $bucket,
+                            'Name'   => $path,
+                        ],
+                    ],
+                    'FaceMatchThreshold' => $threshold,
+                    'MaxFaces'           => (int) $this->config['max_faces'],
+                ]);
+            } catch (\Throwable $e) {
+                // في حال أخطاء مؤقتة من AWS، انتظر وأعد المحاولة
+                $this->sleepWithBackoff($attempt, $backoffMs, $jitterMs);
+                Log::warning('Rekognition call failed; will retry if attempts left', [
+                    'attempt'   => $attempt,
+                    'max'       => $maxRetries,
+                    'message'   => $e->getMessage(),
+                ]);
+                $attempt++;
+                continue;
+            }
 
-        // 4) ربط RekognitionId → DynamoDB → Employee
-        [$name, $employeeId, $employee] = $this->repo->resolveByRekognitionId($rekognitionId);
+            $matches = $result['FaceMatches'] ?? [];
 
-        if (!$employeeId && !$name) {
-            return new EmployeeMatch(false, 'No mapping found', null, null, $similarity, $confidence);
-        }
+            Log::info('rekognition_attempt', [
+                'attempt'    => $attempt,
+                'threshold'  => $threshold,
+                'matchCount' => count($matches),
+            ]);
 
-        return new EmployeeMatch(true, $name, $employeeId, $employee, $similarity, $confidence);
+            // وجدنا تطابق → اخرج فورًا
+            if (!empty($matches)) {
+                $top = $matches[0];
+                $rekognitionId = $top['Face']['FaceId'] ?? null;
+                $similarity    = isset($top['Similarity']) ? (float) $top['Similarity'] : null;
+                $confidence    = isset($top['Face']['Confidence']) ? (float) $top['Face']['Confidence'] : null;
+
+                if ($rekognitionId) {
+                    [$name, $employeeId, $employee] = $this->repo->resolveByRekognitionId($rekognitionId);
+
+                    if ($employeeId || $name) {
+                        return new EmployeeMatch(true, $name, $employeeId, $employee, $similarity, $confidence);
+                    }
+
+                    return new EmployeeMatch(false, 'No mapping found', null, null, $similarity, $confidence);
+                }
+            }
+
+            // لا يوجد تطابق → انتظر ثم أعد المحاولة إن بقيت محاولات
+            if ($attempt < $maxRetries) {
+                $this->sleepWithBackoff($attempt, $backoffMs, $jitterMs);
+            }
+
+            $attempt++;
+        } while ($attempt <= $maxRetries);
+
+        // بعد كل المحاولات: لا يوجد تطابق
+        return EmployeeMatch::notFound();
     }
 
     protected function uploadToS3(UploadedFile $file): string
@@ -84,8 +121,6 @@ class FaceRecognitionService
         Storage::disk('s3')->put($path, fopen($file->getRealPath(), 'r'), [
             'visibility'  => $this->config['visibility'] ?? 'private',
             'ContentType' => $file->getMimeType(),
-            // بإمكانك إضافة Metadata عند الحاجة
-            //'Metadata'    => ['source' => 'identifyEmployee'],
         ]);
 
         Log::info('S3 Upload Info', [
@@ -94,5 +129,22 @@ class FaceRecognitionService
         ]);
 
         return $path;
+    }
+
+    /** عتبة المحاولة: تقل تدريجيًا ولكن لا تقل عن حد أدنى */
+    protected function thresholdForAttempt(int $attempt, float $base, float $step, float $min): float
+    {
+        $thr = $base - ($attempt * $step);
+        return max($thr, $min);
+    }
+
+    /** انتظار بأسلوب Exponential Backoff + Jitter (محاولة 0 لا تنتظر) */
+    protected function sleepWithBackoff(int $attempt, int $backoffMs, int $jitterMs): void
+    {
+        if ($attempt <= 0) return;
+        $exp = $backoffMs * (2 ** ($attempt - 1));
+        $jitter = random_int(0, max(0, $jitterMs));
+        $sleepMs = $exp + $jitter;
+        usleep($sleepMs * 1000);
     }
 }
