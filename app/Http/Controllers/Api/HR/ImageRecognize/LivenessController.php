@@ -57,7 +57,7 @@ class LivenessController extends Controller
                             'status'   => 'ok',
                             'attempts' => $attempt,
                             'result'   => $json,
-                             'message'  => 'Liveness not confirmed after'.$attempt.' retries.',
+                             'message'  => 'Liveness  confirmed after ('.$attempt.') retries.',
                         ], 200);
                     }
                 }
@@ -80,7 +80,7 @@ class LivenessController extends Controller
             'status'   => 'no_match',
             'attempts' => $attempt,
             'result'   => $lastResult,
-            'message'  => 'Liveness not confirmed after'.$attempt.' retries.',
+            'message'  => 'Liveness not confirmed after ('.$attempt.') retries.',
         ], 200);
     }
 }
