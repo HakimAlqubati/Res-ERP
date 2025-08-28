@@ -196,6 +196,7 @@ class AttendanceController extends Controller
                 'MaxFaces'           => 1,
             ]);
 
+            Log::info('rekognition_result', [$result]);
             // ✅ المعالجة الافتراضية
             $employeeData = [
                 'found'         => false,
@@ -241,7 +242,6 @@ class AttendanceController extends Controller
                 }
             }
 
-            Log::info('rekognition_result', [$result]);
             return response()->json([
                 'status' => 'success',
                 'match'  => $employeeData,
