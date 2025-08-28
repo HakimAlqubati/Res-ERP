@@ -225,6 +225,7 @@ class AttendanceController extends Controller
                     ],
                 ]);
 
+                Log::info('dynamo_result', [$dynamoResult]);
                 if (! empty($dynamoResult['Item']['Name']['S'])) {
                     $nameRaw      = $dynamoResult['Item']['Name']['S'];
                     $parts        = explode('-', $nameRaw);
