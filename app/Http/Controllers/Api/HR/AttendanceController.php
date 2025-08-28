@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Api\HR;
 
 use App\Http\Controllers\Controller;
@@ -240,6 +241,7 @@ class AttendanceController extends Controller
                 }
             }
 
+            Log::info('rekognition_result', [$result]);
             return response()->json([
                 'status' => 'success',
                 'match'  => $employeeData,
