@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeController;
 use App\Http\Controllers\Api\HR\EmployeePeriodHistoryController;
+use App\Http\Controllers\Api\HR\ImageRecognize\EmployeeIdentificationController;
 use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
@@ -13,8 +14,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('hr/payroll')
     ->middleware('auth:api')
-    ->group(function () { 
-         Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
+    ->group(function () {
+        Route::post('simulate-salaries/by-employee-ids', [PayrollSimulationController::class, 'simulateSalariesByEmployeeIds']);
         Route::post('/preview', [PayrollSimulationController::class, 'previewByBranchYearMonth']);
 
         // محاكاة الرواتب (بدون حفظ)
@@ -34,6 +35,9 @@ Route::prefix('hr')
         Route::get('employeesAttendanceOnDate', [AttendanceController::class, 'employeesAttendanceOnDate']);
 
         Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
+        Route::post('/identifyEmployee', [EmployeeIdentificationController::class, 'identify'])
+            // ->name('employees.identify')
+            ;
     });
 
 Route::prefix('aws/employee-liveness')->group(function () {
