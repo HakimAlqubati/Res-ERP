@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -178,11 +179,14 @@ class ProductResource extends Resource
 
                                 ->label('Product Items')
                                 ->schema([
+                                    Hidden::make('unitPricesCache')
+                                        ->dehydrated(false)
+                                        ->default([]),
                                     Select::make('product_id')
                                         ->label(__('lang.product'))
                                         ->searchable()
                                         ->required()
-                                    // ->disabledOn('edit')
+                                        // ->disabledOn('edit')
                                         ->options(function () {
                                             return Product::where('active', 1)
                                                 ->get()
@@ -205,16 +209,27 @@ class ProductResource extends Resource
                                         })
                                         ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                         ->reactive()
-                                        ->afterStateUpdated(function ($set, $state) {
+                                        // ->afterStateUpdated(function ($set, $state) {
 
+                                        //     $set('unit_id', null);
+                                        // })
+                                        ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, $state) {
                                             $set('unit_id', null);
+
+                                            // جهّز خريطة الأسعار للواجهة (مثال مبسّط: unit_id => ['price' => ...])
+                                            $prices = \App\Models\UnitPrice::where('product_id', $state)
+                                                ->get(['unit_id', 'price'])
+                                                ->mapWithKeys(fn($r) => [$r->unit_id => ['price' => (float) $r->price]])
+                                                ->toArray();
+
+                                            $set('unitPricesCache', $prices);
                                         })
                                         ->searchable()->columnSpan(3),
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
                                         ->placeholder('Select')
                                         ->required()
-                                    // ->disabledOn('edit')
+                                        // ->disabledOn('edit')
                                         ->options(
                                             function (callable $get) {
 
@@ -227,26 +242,55 @@ class ProductResource extends Resource
                                                 return [];
                                             }
                                         )
-                                        ->searchable()
+                                        // ->searchable()
                                         ->reactive()
-                                        ->afterStateUpdated(function (Set $set, $state, $get) {
-                                            $unitPrice = UnitPrice::where(
-                                                'product_id',
-                                                $get('product_id')
-                                            )->where('unit_id', $state)->first() ?? null;
-                                            $set('price', ($unitPrice->price ?? 0));
-                                            $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
-                                            $set('total_price', $total);
-                                            // if ($get('qty_waste_percentage') <= 0) {
-                                            //     $set('total_price_after_waste', $total);
-                                            // } else {
-                                            // }
-                                            // $set('total_price_after_waste', $total);
-                                            $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
-                                            // $set('package_size', $unitPrice->package_size ?? 0);
-                                            $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
-                                            static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
-                                        })->columnSpan(1),
+                                        ->afterStateUpdatedJs(<<<'JS'
+                                        // احصل على سعر الوحدة من الكاش:
+                                        const map = $get('unitPricesCache') ?? {};
+                                        const price = Number(map?.[$state]?.price ?? 0);
+                                        $set('price', price);
+                                
+                                        // معطيات أخرى من نفس صف الـ Repeater:
+                                        const qty   = Number($get('quantity') ?? 0);
+                                        const waste = Number($get('qty_waste_percentage') ?? 0);
+                                
+                                        // حساب الإجمالي:
+                                        const total = +(price * qty).toFixed(8);
+                                        $set('total_price', total);
+                                
+                                        // دوال مساعدة (مطابقة لدوال PHP على قد ما نقدر)
+                                        const calcAfterWaste = (val, w) => +(val * (1 - (w / 100))).toFixed(8);
+                                
+                                        $set('total_price_after_waste', calcAfterWaste(total, waste));
+                                        $set('quantity_after_waste',    calcAfterWaste(qty,   waste));
+                                
+                                        // لو تحتاج تحدث إجمالي نهائي يعتمد على كل العناصر:
+                                        const items = $get('../../productItems') ?? [];
+                                        // بإمكانك هنا إعادة حساب أي حقل تجميعي على مستوى الأعلى
+                                        // مثال: مجموع Net Price لكل العناصر:
+                                        const sumNet = +(items.reduce((s, it) => s + Number(it?.total_price_after_waste ?? 0), 0)).toFixed(8);
+                                        // لو عندك حقل أعلى اسمه final_price:
+                                         $set('../../final_price', sumNet);
+                                      JS)
+                                        // ->afterStateUpdated(function (Set $set, $state, $get) {
+                                        //     $unitPrice = UnitPrice::where(
+                                        //         'product_id',
+                                        //         $get('product_id')
+                                        //     )->where('unit_id', $state)->first() ?? null;
+                                        //     $set('price', ($unitPrice->price ?? 0));
+                                        //     $total = ((float) ($unitPrice->price ?? 0)) * ((float) $get('quantity'));
+                                        //     $set('total_price', $total);
+                                        //     // if ($get('qty_waste_percentage') <= 0) {
+                                        //     //     $set('total_price_after_waste', $total);
+                                        //     // } else {
+                                        //     // }
+                                        //     // $set('total_price_after_waste', $total);
+                                        //     $set('total_price_after_waste', ProductItem::calculateTotalPriceAfterWaste($total ?? 0, $get('qty_waste_percentage') ?? 0));
+                                        //     // $set('package_size', $unitPrice->package_size ?? 0);
+                                        //     $set('quantity_after_waste', ProductItem::calculateQuantityAfterWaste($get('quantity') ?? 0, $get('qty_waste_percentage') ?? 0));
+                                        //     static::updateFinalPriceEachUnit($set, $get, $get('../../productItems'));
+                                        // })
+                                        ->columnSpan(1),
                                     // TextInput::make('package_size')->numeric()->default(1)->required()
                                     // ->label(__('lang.package_size'))->readOnly(),
                                     TextInput::make('quantity')
@@ -297,14 +341,14 @@ class ProductResource extends Resource
                                     TextInput::make('qty_waste_percentage')
                                         ->label('Waste %')
                                         ->default(0)
-                                    // ->maxLength(2)
-                                    // ->minLength(1)
+                                        // ->maxLength(2)
+                                        // ->minLength(1)
                                         ->maxValue(100)
                                         ->minValue(0)
                                         ->numeric()
                                         ->required()
-                                    // ->suffixIconColor(Color::Green)
-                                    // ->suffixIcon('heroicon-o-percent-badge')
+                                        // ->suffixIconColor(Color::Green)
+                                        // ->suffixIcon('heroicon-o-percent-badge')
                                         ->live(onBlur: true)
                                         ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $totalPrice = (float) $get('total_price');
@@ -332,7 +376,7 @@ class ProductResource extends Resource
                                 })
                                 ->columns(9)                         // Adjusts how fields are laid out in each row
                                 ->createItemButtonLabel('Add Item'), // Custom button label
-                                                                 // ->minItems(1)
+                            // ->minItems(1)
 
                         ]),
 
@@ -342,7 +386,7 @@ class ProductResource extends Resource
 
                             Repeater::make('units')->label(__('lang.units_prices'))
                                 ->columns(5)
-                            // ->hiddenOn(Pages\EditProduct::class)
+                                // ->hiddenOn(Pages\EditProduct::class)
 
                                 ->columnSpanFull()->minItems(1)
                                 ->collapsible()->defaultItems(0)
@@ -384,10 +428,9 @@ class ProductResource extends Resource
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
                                                 return false;
-                                            } 
+                                            }
                                             return ProductResource::isProductLocked($livewire->form->getRecord(), $record);
-                                        })
-                                    ,
+                                        }),
                                     TextInput::make('price')->numeric()->default(1)->required()
                                         ->label(__('lang.price'))
                                         ->disabled(function (callable $get, $livewire, $record) {
@@ -472,7 +515,7 @@ class ProductResource extends Resource
                                     TextInput::make('package_size')
 
                                         ->numeric()->default(0)->required()->minValue(0)
-                                    // ->maxLength(4)
+                                        // ->maxLength(4)
                                         ->label(__('lang.package_size'))
                                         ->live(onBlur: true)
                                         ->rules(function (Get $get, callable $livewire) {
@@ -506,12 +549,12 @@ class ProductResource extends Resource
                                                 $set('price', round(($firstPrice / $firstPackageSize) * $state, 8));
                                             }
                                         })->disabled(function (callable $get, $livewire, $record) {
-                                        $isNew = is_null($get('id'));
-                                        if ($isNew) {
-                                            return false;
-                                        }
-                                        return ProductResource::isProductLocked($livewire->form->getRecord(), $record) || $get('usage_scope') == UnitPrice::USAGE_NONE;;
-                                    }),
+                                            $isNew = is_null($get('id'));
+                                            if ($isNew) {
+                                                return false;
+                                            }
+                                            return ProductResource::isProductLocked($livewire->form->getRecord(), $record) || $get('usage_scope') == UnitPrice::USAGE_NONE;;
+                                        }),
                                     Select::make('usage_scope')
                                         ->label('Usage')
                                         ->options(UnitPrice::USAGE_SCOPES)
@@ -547,7 +590,7 @@ class ProductResource extends Resource
 
                             Repeater::make('units')->label(__('lang.units_prices'))
                                 ->columns(4)
-                            // ->hiddenOn(Pages\EditProduct::class)
+                                // ->hiddenOn(Pages\EditProduct::class)
                                 ->helperText(function (callable $get, $livewire, $record) {
                                     if (static::isProductLocked($livewire->form->getRecord(), $record)) {
                                         return '⚠️ You cannot edit units because this product has related transactions.' . "\n" . 'However, you are allowed to add new units that will be used for manufacturing';
@@ -596,10 +639,10 @@ class ProductResource extends Resource
                                             }
 
                                             $isUsed =
-                                            OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-                                            PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-                                            InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-                                            StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+                                                OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                                PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                                InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                                                StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
 
                                             return $isUsed;
                                         })
@@ -646,8 +689,8 @@ class ProductResource extends Resource
                                         })
                                         ->extraInputAttributes(function (callable $get, $livewire, $record) {
                                             return static::isProductLocked($livewire->form->getRecord(), $record)
-                                            ? ['readonly' => true]
-                                            : [];
+                                                ? ['readonly' => true]
+                                                : [];
                                         })
                                         ->label(__('lang.package_size')),
                                     TextInput::make('price')
@@ -659,8 +702,8 @@ class ProductResource extends Resource
                                         ->required()
                                         ->extraInputAttributes(function (callable $get, $livewire, $record) {
                                             return static::isProductLocked($livewire->form->getRecord(), $record)
-                                            ? ['readonly' => true]
-                                            : [];
+                                                ? ['readonly' => true]
+                                                : [];
                                         })
                                         ->label(__('lang.price')),
                                     TextInput::make('selling_price')
@@ -672,8 +715,7 @@ class ProductResource extends Resource
                                             // يمكن تعديل هذا الحساب حسب منطقك إن كان هناك ربط بالهامش أو غيره
                                             $finalPrice = $livewire->form->getRecord()->final_price ?? 0;
                                             return $finalPrice > 0 ? round($finalPrice * 1.2, 2) : null;
-                                        })
-                                        ,
+                                        }),
 
                                 ])->orderColumn('order')
                                 ->reorderable()
@@ -723,7 +765,7 @@ class ProductResource extends Resource
                         FileUpload::make('file')
                             ->label('Upload Excel file')
                             ->required()
-                        // ->acceptedFileTypes(['.xlsx', '.xls'])
+                            // ->acceptedFileTypes(['.xlsx', '.xls'])
                             ->disk('public')
                             ->directory('product_imports'),
                     ])
@@ -784,7 +826,7 @@ class ProductResource extends Resource
                 TextColumn::make('formatted_unit_prices')
                     ->label('Unit Prices')->toggleable(isToggledHiddenByDefault: false)
                     ->limit(50)->tooltip(fn($state) => $state)
-                    // ->alignCenter(true)
+                // ->alignCenter(true)
                 ,
                 TextColumn::make('description')->searchable()
                     ->searchable(isIndividual: false, isGlobal: true)
@@ -835,20 +877,20 @@ class ProductResource extends Resource
             ->recordActions([
                 Action::make('updateUnitPrice')
                     ->label('Update Unit Price')->button()->action(function ($record) {
-                    $update = ProductMigrationService::updatePackageSizeForProduct($record->id);
-                    if ($update) {
-                        showSuccessNotifiMessage('Done');
-                    } else {
-                        showWarningNotifiMessage('Faild');
-                    }
-                })->hidden(),
+                        $update = ProductMigrationService::updatePackageSizeForProduct($record->id);
+                        if ($update) {
+                            showSuccessNotifiMessage('Done');
+                        } else {
+                            showWarningNotifiMessage('Faild');
+                        }
+                    })->hidden(),
 
                 ActionGroup::make([
                     Action::make('exportItemsPdf')
                         ->label('Export Items PDF')
                         ->icon('heroicon-o-document-arrow-down')
                         ->color('danger')
-                    // ->visible(fn($record) => $record->productItems()->exists())
+                        // ->visible(fn($record) => $record->productItems()->exists())
                         ->url(fn($record) => route('products.export-items-pdf', $record->id))
                         ->openUrlInNewTab(),
                     Action::make('updateComponentPrices')
@@ -939,7 +981,7 @@ class ProductResource extends Resource
 
                 BulkAction::make('exportProductsWithUnits')
                     ->label('Export with Unit Prices')
-                // ->icon('heroicon-o-download')
+                    // ->icon('heroicon-o-download')
                     ->action(function (Collection $records): BinaryFileResponse {
                         $data = [];
 
@@ -959,17 +1001,16 @@ class ProductResource extends Resource
 
                         // توليد وتصدير Excel
                         return Excel::download(new class($data) implements FromCollection, WithHeadings
-            {
-                            public function __construct(public array $data)
-                {}
+                        {
+                            public function __construct(public array $data) {}
 
                             public function collection()
-                {
+                            {
                                 return collect($this->data);
                             }
 
                             public function headings(): array
-                {
+                            {
                                 return ['product_id', 'product_name', 'product_code', 'category', 'unit'];
                             }
                         }, 'products_with_units.xlsx');
@@ -1075,7 +1116,7 @@ class ProductResource extends Resource
     }
 
     public static function validateUnitDeletion($unitPriceRecordId, ?Model $record = null): void
-    { 
+    {
         $productId = $record?->id ?? null;
 
         if (! $productId) {
@@ -1084,10 +1125,10 @@ class ProductResource extends Resource
         }
 
         $isUsed =
-        OrderDetails::where('product_id', $productId)->exists() ||
-        PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
-        InventoryTransaction::where('product_id', $productId)->exists() ||
-        StockIssueOrderDetail::where('product_id', $productId)->exists();
+            OrderDetails::where('product_id', $productId)->exists() ||
+            PurchaseInvoiceDetail::where('product_id', $productId)->exists() ||
+            InventoryTransaction::where('product_id', $productId)->exists() ||
+            StockIssueOrderDetail::where('product_id', $productId)->exists();
 
         if ($isUsed) {
             showWarningNotifiMessage(__('⚠️ Cannot delete this unit because it is already used in orders, invoices, or inventory.'));
@@ -1112,10 +1153,10 @@ class ProductResource extends Resource
 
         if ($oldPackageSize !== null && floatval($newValue) != floatval($oldPackageSize)) {
             $isUsed =
-            OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
-            StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
+                OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists() ||
+                StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists();
 
             if ($isUsed) {
                 $fail(__('Package size modification is not allowed because this unit is already used in orders, invoices, or inventory.'));
@@ -1180,7 +1221,7 @@ class ProductResource extends Resource
     protected static function isProductLocked(
         $record,
         $unitPrice = null
-    ): bool { 
+    ): bool {
         if (! $record) {
             return false;
         }
@@ -1192,21 +1233,21 @@ class ProductResource extends Resource
 
         return OrderDetails::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)->exists()
-        || PurchaseInvoiceDetail::where('product_id', $productId)
+            || PurchaseInvoiceDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
             ->exists()
-        || InventoryTransaction::where('product_id', $productId)
+            || InventoryTransaction::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
             ->exists()
-        || StockIssueOrderDetail::where('product_id', $productId)
+            || StockIssueOrderDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
-                ->exists()
-        || GoodsReceivedNoteDetail::where('product_id', $productId)
+            ->exists()
+            || GoodsReceivedNoteDetail::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
-                ->exists()
-        || ProductItem::where('product_id', $productId)
+            ->exists()
+            || ProductItem::where('product_id', $productId)
             ->where('unit_id', $unitPrice->unit_id)
-                ->exists();
+            ->exists();
     }
 
     public static function shouldDisableUsageScopeOption(
@@ -1233,13 +1274,12 @@ class ProductResource extends Resource
 
         // إذا الوحدة مستخدمة، نمنع تغيير الخيار لأي شيء آخر غير القيمة الحالية أو none
         $isUsed =
-        OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || GoodsReceivedNoteDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        || ProductItem::where('product_id', $productId)->where('unit_id', $unitId)->exists()
-        ;
+            OrderDetails::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+            || PurchaseInvoiceDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+            || GoodsReceivedNoteDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+            || InventoryTransaction::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+            || StockIssueOrderDetail::where('product_id', $productId)->where('unit_id', $unitId)->exists()
+            || ProductItem::where('product_id', $productId)->where('unit_id', $unitId)->exists();
 
         return $isUsed;
     }
