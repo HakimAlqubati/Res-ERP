@@ -374,10 +374,12 @@ class ProductResource extends Resource
                                 ->schema([
                                     Select::make('unit_id')->required()
                                         ->label(__('lang.unit'))
-                                        ->searchable()->distinct()
+                                        // ->searchable()
+                                        ->distinct()
                                         ->options(function () {
                                             return Unit::pluck('name', 'id');
-                                        })->searchable()
+                                        })
+                                        // ->searchable()
                                         ->disabled(function (callable $get, $livewire, $record) {
                                             $isNew = is_null($get('id'));
                                             if ($isNew) {
