@@ -44,7 +44,7 @@ class LivenessController extends Controller
         $pythonUrl = rtrim($base, '/') . '/api/liveness';
 
         // قيود آمنة على المدخلات
-        $maxAttemptsReq = (int) $request->input('max_attempts', 3);
+        $maxAttemptsReq = (int) $request->input('max_attempts', 1);
         $baseDelayMsReq = (int) $request->input('base_delay_ms', 200);
         $minScoreReq    = (float) $request->input('min_score', 0.70);
 
