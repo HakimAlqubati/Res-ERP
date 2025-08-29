@@ -138,43 +138,25 @@ class StockInventoryResource extends Resource
                                     ->label('Category')
                                     ->options(Category::pluck('name', 'id'))
                                     ->live()
-                                    ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                        if (! $state) {
-                                            return;
-                                        }
+                                    ->afterStateUpdatedJs(<<<'JS'
+    (async () => {
+        if ($state === $get('category_id_prev')) return;
 
-                                        $products = Product::where('category_id', $state)
-                                            ->where('active', 1)
-                                            ->get();
+        const ok = window.confirm('This will replace all current items with products from the selected category. Continue?');
 
-                                        $storeId = $get('store_id');
+         if (!ok) {
+            const prev = $get('category_id_prev');
+            $set('category_id', prev ?? null);
+            return;
+        }
 
-                                        $details = $products->map(function ($product) use ($storeId) {
-                                            $unitPrice   = $product->unitPrices()->first();
-                                            $unitId      = $unitPrice?->unit_id;
-                                            $packageSize = $unitPrice?->package_size ?? 0;
+        const storeId = $get('store_id');
+        const details = await $wire.getCategoryDetails($state, storeId);
 
-                                            $service = new MultiProductsInventoryService(
-                                                null,
-                                                $product->id,
-                                                $unitId,
-                                                $storeId
-                                            );
-
-                                            $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
-
-                                            return [
-                                                'product_id'        => $product->id,
-                                                'unit_id'           => $unitId,
-                                                'package_size'      => $packageSize,
-                                                'system_quantity'   => $remainingQty,
-                                                'physical_quantity' => $remainingQty,
-                                                'difference'        => $remainingQty - $remainingQty,
-                                            ];
-                                        })->toArray();
-
-                                        $set('details', $details);
-                                    }) :
+        $set('details', Array.isArray(details) ? details : []);
+        $set('category_id_prev', $state);
+    })();
+JS) :
                                     Toggle::make('edit_enabled')
                                     ->label('Edit')
                                     ->inline(false)
@@ -182,7 +164,7 @@ class StockInventoryResource extends Resource
                                     ->helperText('Enable this option to allow editing inventory details')
                                     ->dehydrated()
                                     ->columnSpan(1),
-                               
+
 
                             ]),
 
@@ -312,28 +294,19 @@ class StockInventoryResource extends Resource
                                     ->afterStateUpdatedJs(<<<'JS'
                                     (async () => {
                                         let data = ($get('rowInventoryCache') ?? {})[$state];
-                                        if (!data) {
-                                            const productId = $get('product_id');
-                                            const storeId   = $get('../../store_id');
-                                            data = await $wire.getInventoryRowData(productId, $state, storeId);
-                                            // خزّنه في الكاش حتى لا نعاود الطلب
-                                            const cache = $get('rowInventoryCache') ?? {};
-                                            cache[$state] = data ?? { package_size: 0, remaining_qty: 0 };
-                                            $set('rowInventoryCache', cache);
-                                        }
-                                
+                            
                                         const pkg = Number(data?.package_size ?? 0);
                                         const rem = Number(data?.remaining_qty ?? 0);
-                                
+                            
                                         $set('package_size', pkg);
                                         $set('system_quantity', rem);
                                         $set('physical_quantity', rem);
-                                
+                            
                                         const diff = +(Number($get('physical_quantity') ?? rem) - rem).toFixed(4);
                                         $set('difference', diff);
                                     })();
                                 JS)
-                                
+
                                     ->columnSpan(2)->required(),
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
                                     ->label(__('lang.package_size')),
@@ -549,15 +522,5 @@ class StockInventoryResource extends Resource
         $milliseconds = round(($duration - $seconds) * 1000, 2);
         // showSuccessNotifiMessage('( '. $seconds.'Seconds ) ('. $milliseconds .' Milliseconds)');
 
-    }
-    public function getInventoryRowData($productId, $unitId, $storeId)
-    {
-        $unitPrice   = \App\Models\UnitPrice::where('product_id', $productId)->where('unit_id', $unitId)->first();
-        $packageSize = (float) ($unitPrice?->package_size ?? 0);
-
-        $service      = new \App\Services\MultiProductsInventoryService(null, $productId, $unitId, $storeId);
-        $remainingQty = (float) ($service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0);
-
-        return ['package_size' => $packageSize, 'remaining_qty' => $remainingQty];
     }
 }
