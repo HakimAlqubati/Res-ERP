@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -28,6 +29,7 @@ use App\Services\MultiProductsInventoryService;
 use App\Services\Stock\StockInventory\InventoryProductCacheService;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -75,293 +77,365 @@ class StockInventoryResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->label('')
-                ->columnSpanFull()
-                ->schema([
-                    Grid::make()->columns(4)
-                    ->columnSpanFull()  
+                    ->columnSpanFull()
                     ->schema([
-                        DatePicker::make('inventory_date')
-                            ->required()->default(now())
-                            ->label('Inventory Date')->disabledOn('edit'),
-                        Select::make('store_id')->label(__('lang.store'))
-                            ->default(getDefaultStore())
-                            ->disabledOn('edit')
-                            ->live()
-                            ->options(
-                                Store::active()
-                                    ->withManagedStores()
-                                    ->get(['name', 'id'])->pluck('name', 'id')
-                            )->required()
-                            ->afterStateUpdated(function (callable $get, callable $set) {
-                                $details = $get('details');
-                                $storeId = $get('store_id');
+                        Grid::make()->columns(4)
+                            ->columnSpanFull()
+                            ->schema([
+                                DatePicker::make('inventory_date')
+                                    ->required()->default(now())
+                                    ->label('Inventory Date')->disabledOn('edit'),
+                                Select::make('store_id')->label(__('lang.store'))
+                                    ->default(getDefaultStore())
+                                    ->disabledOn('edit')
+                                    ->live()
+                                    ->options(
+                                        Store::active()
+                                            ->withManagedStores()
+                                            ->get(['name', 'id'])->pluck('name', 'id')
+                                    )->required()
+                                    ->afterStateUpdated(function (callable $get, callable $set) {
+                                        $details = $get('details');
+                                        $storeId = $get('store_id');
 
-                                if (! is_array($details) || ! $storeId) {
-                                    return;
-                                }
+                                        if (! is_array($details) || ! $storeId) {
+                                            return;
+                                        }
 
-                                $updatedDetails = collect($details)->map(function ($item) use ($storeId) {
-                                    $productId = $item['product_id'] ?? null;
-                                    $unitId    = $item['unit_id'] ?? null;
+                                        $updatedDetails = collect($details)->map(function ($item) use ($storeId) {
+                                            $productId = $item['product_id'] ?? null;
+                                            $unitId    = $item['unit_id'] ?? null;
 
-                                    if (! $productId || ! $unitId) {
-                                        return $item;
-                                    }
+                                            if (! $productId || ! $unitId) {
+                                                return $item;
+                                            }
 
-                                    $service = new MultiProductsInventoryService(
-                                        null,
-                                        $productId,
-                                        $unitId,
-                                        $storeId
-                                    );
+                                            $service = new MultiProductsInventoryService(
+                                                null,
+                                                $productId,
+                                                $unitId,
+                                                $storeId
+                                            );
 
-                                    $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+                                            $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
 
-                                    $item['system_quantity']   = $remainingQty;
-                                    $item['physical_quantity'] = $remainingQty;
-                                    $item['difference']        = 0;
+                                            $item['system_quantity']   = $remainingQty;
+                                            $item['physical_quantity'] = $remainingQty;
+                                            $item['difference']        = 0;
 
-                                    return $item;
-                                })->toArray();
+                                            return $item;
+                                        })->toArray();
 
-                                $set('details', $updatedDetails);
-                            }),
+                                        $set('details', $updatedDetails);
+                                    }),
 
-                        Select::make('responsible_user_id')->searchable()->default(auth()->id())
-                            ->relationship('responsibleUser', 'name')->disabledOn('edit')
-                            ->required()
-                            ->label('Responsible'),
-                        $operaion == 'create' ?
-                        Select::make('category_id')->visibleOn('create')
-                            ->label('Category')
-                            ->options(Category::pluck('name', 'id'))
-                            ->live()
-                            ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                if (! $state) {
-                                    return;
-                                }
+                                Select::make('responsible_user_id')->searchable()->default(auth()->id())
+                                    ->relationship('responsibleUser', 'name')->disabledOn('edit')
+                                    ->required()
+                                    ->label('Responsible'),
+                                $operaion == 'create' ?
+                                    Select::make('category_id')->visibleOn('create')
+                                    ->label('Category')
+                                    ->options(Category::pluck('name', 'id'))
+                                    ->live()
+                                    ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                        if (! $state) {
+                                            return;
+                                        }
 
-                                $products = Product::where('category_id', $state)
-                                    ->where('active', 1)
-                                    ->get();
+                                        $products = Product::where('category_id', $state)
+                                            ->where('active', 1)
+                                            ->get();
 
-                                $storeId = $get('store_id');
+                                        $storeId = $get('store_id');
 
-                                $details = $products->map(function ($product) use ($storeId) {
-                                    $unitPrice   = $product->unitPrices()->first();
-                                    $unitId      = $unitPrice?->unit_id;
-                                    $packageSize = $unitPrice?->package_size ?? 0;
+                                        $details = $products->map(function ($product) use ($storeId) {
+                                            $unitPrice   = $product->unitPrices()->first();
+                                            $unitId      = $unitPrice?->unit_id;
+                                            $packageSize = $unitPrice?->package_size ?? 0;
 
-                                    $service = new MultiProductsInventoryService(
-                                        null,
-                                        $product->id,
-                                        $unitId,
-                                        $storeId
-                                    );
+                                            $service = new MultiProductsInventoryService(
+                                                null,
+                                                $product->id,
+                                                $unitId,
+                                                $storeId
+                                            );
 
-                                    $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
+                                            $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
 
-                                    return [
-                                        'product_id'        => $product->id,
-                                        'unit_id'           => $unitId,
-                                        'package_size'      => $packageSize,
-                                        'system_quantity'   => $remainingQty,
-                                        'physical_quantity' => $remainingQty,
-                                        'difference'        => $remainingQty - $remainingQty,
-                                    ];
-                                })->toArray();
+                                            return [
+                                                'product_id'        => $product->id,
+                                                'unit_id'           => $unitId,
+                                                'package_size'      => $packageSize,
+                                                'system_quantity'   => $remainingQty,
+                                                'physical_quantity' => $remainingQty,
+                                                'difference'        => $remainingQty - $remainingQty,
+                                            ];
+                                        })->toArray();
 
-                                $set('details', $details);
-                            }) :
-                        Toggle::make('edit_enabled')
-                            ->label('Edit')
-                            ->inline(false)
-                            ->default(false)->live()
-                            ->helperText('Enable this option to allow editing inventory details')
-                            ->dehydrated()
-                            ->columnSpan(1),
-                        Select::make('product_selector')
-                            ->label('Add Products')
-                            ->multiple()
-                            ->searchable()->columnSpanFull()
-                            ->visible(fn($record) => blank($record)) // فقط في وضع الإضافة
-                            ->options(function () {
-                                return InventoryProductCacheService::getDefaultOptions()
-                                    ->mapWithKeys(fn($product) => [
-                                        $product->id => "{$product->code} - {$product->name}",
-                                    ])
-                                    ->toArray();
-                            })
-                            ->getSearchResultsUsing(function ($search) {
-                                if (empty($search)) {
-                                    return [];
-                                }
-                                return InventoryProductCacheService::search($search)
-                                    ->mapWithKeys(fn($product) => [
-                                        $product->id => "{$product->code} - {$product->name}",
-                                    ])
-                                    ->toArray();
-                            })
-                            ->getOptionLabelUsing(fn($value) =>
-                                optional(Product::find($value))
-                                ?->code . ' - ' . optional(Product::find($value))?->name
-                            )
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                $details = $get('details') ?? [];
-                                $storeId = $get('store_id');
+                                        $set('details', $details);
+                                    }) :
+                                    Toggle::make('edit_enabled')
+                                    ->label('Edit')
+                                    ->inline(false)
+                                    ->default(false)->live()
+                                    ->helperText('Enable this option to allow editing inventory details')
+                                    ->dehydrated()
+                                    ->columnSpan(1),
+                                Select::make('product_selector')
+                                    ->label('Add Products')
+                                    ->multiple()
+                                    ->searchable()->columnSpanFull()
+                                    ->visible(fn($record) => blank($record)) // فقط في وضع الإضافة
+                                    ->options(function () {
+                                        return InventoryProductCacheService::getDefaultOptions()
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}",
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getSearchResultsUsing(function ($search) {
+                                        if (empty($search)) {
+                                            return [];
+                                        }
+                                        return InventoryProductCacheService::search($search)
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}",
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getOptionLabelUsing(
+                                        fn($value) =>
+                                        optional(Product::find($value))
+                                            ?->code . ' - ' . optional(Product::find($value))?->name
+                                    )
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $details = $get('details') ?? [];
+                                        $storeId = $get('store_id');
 
-                                $existingProductIds = collect($details)->pluck('product_id')->all();
+                                        $existingProductIds = collect($details)->pluck('product_id')->all();
 
-                                $newProductIds = array_diff($state, $existingProductIds);
+                                        $newProductIds = array_diff($state, $existingProductIds);
 
-                                foreach ($newProductIds as $productId) {
-                                    $product = Product::find($productId);
-                                    if (! $product) {
-                                        continue;
-                                    }
+                                        foreach ($newProductIds as $productId) {
+                                            $product = Product::find($productId);
+                                            if (! $product) {
+                                                continue;
+                                            }
 
-                                    $unitPrice   = $product->supplyOutUnitPrices->first();
-                                    $unitId      = $unitPrice?->unit_id;
-                                    $packageSize = $unitPrice?->package_size ?? 1;
+                                            $unitPrice   = $product->supplyOutUnitPrices->first();
+                                            $unitId      = $unitPrice?->unit_id;
+                                            $packageSize = $unitPrice?->package_size ?? 1;
 
-                                    $service = new MultiProductsInventoryService(
-                                        null,
-                                        $productId,
-                                        $unitId,
-                                        $storeId
-                                    );
+                                            $service = new MultiProductsInventoryService(
+                                                null,
+                                                $productId,
+                                                $unitId,
+                                                $storeId
+                                            );
 
-                                    $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
+                                            $remainingQty = $service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0;
 
-                                    $details[] = [
-                                        'product_id'        => $productId,
-                                        'unit_id'           => $unitId,
-                                        'package_size'      => $packageSize,
-                                        'system_quantity'   => $remainingQty,
-                                        'physical_quantity' => $remainingQty,
-                                        'difference'        => 0,
-                                    ];
-                                }
+                                            $details[] = [
+                                                'product_id'        => $productId,
+                                                'unit_id'           => $unitId,
+                                                'package_size'      => $packageSize,
+                                                'system_quantity'   => $remainingQty,
+                                                'physical_quantity' => $remainingQty,
+                                                'difference'        => 0,
+                                            ];
+                                        }
 
-                                // (اختياري) لحذف المنتجات غير المختارة
-                                $remainingProductIds = $state;
-                                $details             = collect($details)
-                                    ->filter(fn($item) => in_array($item['product_id'], $remainingProductIds))
-                                    ->values()
-                                    ->toArray();
+                                        // (اختياري) لحذف المنتجات غير المختارة
+                                        $remainingProductIds = $state;
+                                        $details             = collect($details)
+                                            ->filter(fn($item) => in_array($item['product_id'], $remainingProductIds))
+                                            ->values()
+                                            ->toArray();
 
-                                $set('details', $details);
-                            }),
+                                        $set('details', $details);
+                                    }),
 
-                    ]),
+                            ]),
 
-                    Repeater::make('details')->columnSpanFull()
-                    // ->hidden(function ($record) use ($operaion) {
-                    //     return $record?->finalized && $operaion === 'edit';
-                    // })
-                        ->hidden(fn($get, $record) => $operaion === 'edit' && (! $get('edit_enabled') || $record?->finalized))
-
-                        ->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
-                        ->relationship('details')
-                        ->label('Inventory Details')->columnSpanFull()
-                        ->schema([
-                            Select::make('product_id')
-                                ->required()->columnSpan(2)->distinct()
-                                ->label('Product')->searchable()
-                                ->options(function () {
-                                    // افتراضيًا أول 5 منتجات
-                                    return InventoryProductCacheService::getDefaultOptions()
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}",
-                                        ])
-                                        ->toArray();
-                                })
-                            // ->options(function () {
-                            //     return Product::where('active', 1)
-                            //         ->limit(5)
-                            //         ->get(['name', 'id', 'code'])
-                            //         ->mapWithKeys(fn($product) => [
-                            //             $product->id => "{$product->code} - {$product->name}",
-                            //         ]);
+                        Repeater::make('details')->columnSpanFull()
+                            // ->hidden(function ($record) use ($operaion) {
+                            //     return $record?->finalized && $operaion === 'edit';
                             // })
-                            // ->debounce(300)
-                                ->getSearchResultsUsing(function ($search) {
-                                    if (empty($search)) {
-                                        return [];
-                                    }
-                                    return InventoryProductCacheService::search($search)
-                                        ->mapWithKeys(fn($product) => [
-                                            $product->id => "{$product->code} - {$product->name}",
-                                        ])
-                                        ->toArray();
-                                })
-                                ->getOptionLabelUsing(fn($value) =>
-                                    Product::find($value)?->code . ' - ' . Product::find($value)?->name
-                                )
-                                ->reactive()
-                                ->afterStateUpdated(function (callable $set, callable $get, $state) {
-                                    if (! $state) {
-                                        $set('unit_id', null);
-                                        return;
-                                    }
+                            ->hidden(fn($get, $record) => $operaion === 'edit' && (! $get('edit_enabled') || $record?->finalized))
 
-                                    // استخدم نفس دالة جلب الوحدات كما في unit_id Select
-                                    $units = static::getProductUnits($state);
+                            ->collapsible()->collapsed(fn(): bool => $operaion === 'edit')
+                            ->relationship('details')
+                            ->label('Inventory Details')->columnSpanFull()
+                            ->schema([
+                                Hidden::make('rowInventoryCache')->default([])->dehydrated(false),
+                                Hidden::make('rowUnitsCache')->default([])->dehydrated(false),
+                                Select::make('product_id')
+                                    ->required()->columnSpan(2)->distinct()
+                                    ->label('Product')->searchable()
+                                    ->options(function () {
+                                        // افتراضيًا أول 5 منتجات
+                                        return InventoryProductCacheService::getDefaultOptions()
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}",
+                                            ])
+                                            ->toArray();
+                                    })
+                                    // ->options(function () {
+                                    //     return Product::where('active', 1)
+                                    //         ->limit(5)
+                                    //         ->get(['name', 'id', 'code'])
+                                    //         ->mapWithKeys(fn($product) => [
+                                    //             $product->id => "{$product->code} - {$product->name}",
+                                    //         ]);
+                                    // })
+                                    // ->debounce(300)
+                                    ->getSearchResultsUsing(function ($search) {
+                                        if (empty($search)) {
+                                            return [];
+                                        }
+                                        return InventoryProductCacheService::search($search)
+                                            ->mapWithKeys(fn($product) => [
+                                                $product->id => "{$product->code} - {$product->name}",
+                                            ])
+                                            ->toArray();
+                                    })
+                                    ->getOptionLabelUsing(
+                                        fn($value) =>
+                                        Product::find($value)?->code . ' - ' . Product::find($value)?->name
+                                    )
+                                    ->reactive()
+                                    // ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                    //     if (! $state) {
+                                    //         $set('unit_id', null);
+                                    //         return;
+                                    //     }
 
-                                    // اختيار أول وحدة في القائمة
-                                    $firstUnitId = $units->first()?->unit_id;
+                                    //     // استخدم نفس دالة جلب الوحدات كما في unit_id Select
+                                    //     $units = static::getProductUnits($state);
 
-                                    $set('unit_id', $firstUnitId);
-                                    static::handleUnitSelection($set, $get, $firstUnitId);
-                                })->placeholder('Select a Product'),
+                                    //     // اختيار أول وحدة في القائمة
+                                    //     $firstUnitId = $units->first()?->unit_id;
 
-                            Select::make('unit_id')->label('Unit')
-                                ->options(function (callable $get) {
-                                    $product = Product::find($get('product_id'));
-                                    if (! $product) {
-                                        return [];
-                                    }
+                                    //     $set('unit_id', $firstUnitId);
+                                    //     static::handleUnitSelection($set, $get, $firstUnitId);
+                                    // })
+                                    ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                        if (! $state) {
+                                            $set('unit_id', null);
+                                            $set('rowInventoryCache', []);
+                                            $set('rowUnitsCache', []);
+                                            return;
+                                        }
 
-                                    // تظهر فقط وحدات supplyOutUnitPrices (كما هو في منطقك الحالي)
-                                    return $product->supplyOutUnitPrices
-                                        ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
-                                })
-                            // ->searchable()
-                                ->reactive()
-                                ->placeholder('Select a Unit')
-                                ->extraAttributes(fn($get) => [
-                                    'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
-                                ])
-                                ->afterStateUpdated(function (Set $set, $state, $get) {
-                                    static::handleUnitSelection($set, $get, $state);
-                                })->columnSpan(2)->required(),
-                            TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
-                                ->label(__('lang.package_size')),
+                                        // 1) جهّز قائمة وحدات المنتج (supplyOutUnitPrices) وكوّن كاش وحدات
+                                        $product   = \App\Models\Product::find($state);
+                                        $units     = $product?->supplyOutUnitPrices ?? collect();
+                                        $unitsList = $units->pluck('unit.name', 'unit_id')->toArray();
+                                        $set('rowUnitsCache', $unitsList);
 
-                            TextInput::make('physical_quantity')
-                            // ->default(0)
-                                ->numeric()
-                                ->live(onBlur: true)
-                                ->afterStateUpdated(function ($set, $state, $get) {
+                                        // 2) حمّل بيانات الكميات المتبقية + package_size للوحدات من السيرفر لمخزن محدد
+                                        $storeId = $get('../../store_id');
 
-                                    $difference = static::getDifference($get('system_quantity'), $state);
-                                    $set('difference', $difference);
-                                })->minValue(0)
-                                ->label('Physical Qty')
-                                ->required(),
+                                        $cache = [];
+                                        foreach ($units as $u) {
+                                            $unitId = $u->unit_id;
+                                            // يفضّل استعمال كاشك، أو خدمة تجمع الدُفعة Bulk لتقليل الرحلات:
+                                            // مثال سريع فردي (استعمل كاشك إن وُجد):
+                                            $packageSize = (float) ($u->package_size ?? 0);
 
-                            TextInput::make('system_quantity')->readOnly()
-                                ->numeric()
-                                ->label('System Qty')
-                                ->required(),
-                            TextInput::make('difference')->readOnly()
-                            // ->rule('not_in:0', 'Now Allowed')
+                                            $service      = new \App\Services\MultiProductsInventoryService(null, $state, $unitId, $storeId);
+                                            $remainingQty = (float) ($service->getInventoryForProduct($state)[0]['remaining_qty'] ?? 0);
 
-                                ->numeric(),
-                        ])->addActionLabel('Add Item')
-                        ->columns(8),
-                ]),
+                                            $cache[$unitId] = [
+                                                'package_size'  => $packageSize,
+                                                'remaining_qty' => $remainingQty,
+                                            ];
+                                        }
+                                        $set('rowInventoryCache', $cache);
+
+                                        // 3) اضبط أول وحدة افتراضيًا
+                                        $firstUnitId = array_key_first($unitsList);
+                                        $set('unit_id', $firstUnitId);
+                                        // لا حاجة لاستدعاء handleUnitSelection هنا، سنترك الحساب للـ JS عندما يتغيّر unit_id.
+                                    })
+                                    ->placeholder('Select a Product'),
+
+                                Select::make('unit_id')->label('Unit')
+                                    ->options(function (callable $get) {
+                                        $product = Product::find($get('product_id'));
+                                        if (! $product) {
+                                            return [];
+                                        }
+
+                                        // تظهر فقط وحدات supplyOutUnitPrices (كما هو في منطقك الحالي)
+                                        return $product->supplyOutUnitPrices
+                                            ->pluck('unit.name', 'unit_id')?->toArray() ?? [];
+                                    })
+                                    // ->searchable()
+                                    ->reactive()
+                                    ->placeholder('Select a Unit')
+                                    ->extraAttributes(fn($get) => [
+                                        'wire:key' => 'unit_id_' . ($get('product_id') ?? 'empty'),
+                                    ])
+                                    // ->afterStateUpdated(function (Set $set, $state, $get) {
+                                    //     static::handleUnitSelection($set, $get, $state);
+                                    // })
+                                    ->afterStateUpdatedJs(<<<'JS'
+                                    (async () => {
+                                        let data = ($get('rowInventoryCache') ?? {})[$state];
+                                        if (!data) {
+                                            const productId = $get('product_id');
+                                            const storeId   = $get('../../store_id');
+                                            data = await $wire.getInventoryRowData(productId, $state, storeId);
+                                            // خزّنه في الكاش حتى لا نعاود الطلب
+                                            const cache = $get('rowInventoryCache') ?? {};
+                                            cache[$state] = data ?? { package_size: 0, remaining_qty: 0 };
+                                            $set('rowInventoryCache', cache);
+                                        }
+                                
+                                        const pkg = Number(data?.package_size ?? 0);
+                                        const rem = Number(data?.remaining_qty ?? 0);
+                                
+                                        $set('package_size', pkg);
+                                        $set('system_quantity', rem);
+                                        $set('physical_quantity', rem);
+                                
+                                        const diff = +(Number($get('physical_quantity') ?? rem) - rem).toFixed(4);
+                                        $set('difference', diff);
+                                    })();
+                                JS)
+                                
+                                    ->columnSpan(2)->required(),
+                                TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
+                                    ->label(__('lang.package_size')),
+
+                                TextInput::make('physical_quantity')
+                                    // ->default(0)
+                                    ->numeric()
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdatedJs(<<<'JS'
+                                    const sys = Number($get('system_quantity') ?? 0);
+                                    const ph  = Number($state ?? 0);
+                                    const diff = +(ph - sys).toFixed(4);
+                                    $set('difference', diff);
+                                JS)
+                                    ->minValue(0)
+                                    ->label('Physical Qty')
+                                    ->required(),
+
+                                TextInput::make('system_quantity')->readOnly()
+                                    ->numeric()
+                                    ->label('System Qty')
+                                    ->required(),
+                                TextInput::make('difference')->readOnly()
+                                    // ->rule('not_in:0', 'Now Allowed')
+
+                                    ->numeric(),
+                            ])->addActionLabel('Add Item')
+                            ->columns(8),
+                    ]),
             ]);
     }
 
@@ -549,5 +623,14 @@ class StockInventoryResource extends Resource
         // showSuccessNotifiMessage('( '. $seconds.'Seconds ) ('. $milliseconds .' Milliseconds)');
 
     }
+    public function getInventoryRowData($productId, $unitId, $storeId)
+    {
+        $unitPrice   = \App\Models\UnitPrice::where('product_id', $productId)->where('unit_id', $unitId)->first();
+        $packageSize = (float) ($unitPrice?->package_size ?? 0);
 
+        $service      = new \App\Services\MultiProductsInventoryService(null, $productId, $unitId, $storeId);
+        $remainingQty = (float) ($service->getInventoryForProduct($productId)[0]['remaining_qty'] ?? 0);
+
+        return ['package_size' => $packageSize, 'remaining_qty' => $remainingQty];
+    }
 }
