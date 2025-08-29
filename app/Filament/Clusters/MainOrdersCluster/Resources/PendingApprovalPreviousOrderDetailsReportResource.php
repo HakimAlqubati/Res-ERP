@@ -13,6 +13,7 @@ use Filament\Forms;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -24,7 +25,7 @@ class PendingApprovalPreviousOrderDetailsReportResource extends Resource
 {
     protected static ?string $model = PendingApprovalPreviousOrderDetailsReport::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::ArrowsRightLeft;
 
     protected static ?string $cluster = OrderReportsCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;

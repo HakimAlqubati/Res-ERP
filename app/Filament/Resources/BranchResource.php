@@ -79,7 +79,7 @@ class BranchResource extends Resource
                                     })
                                         ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
-                                Grid::make()->columns(4)->schema([
+                                Grid::make()->columns(4)->columnSpanFull()->schema([
 
                                     //     ->label(__('lang.active')),
                                     // Select::make('type')

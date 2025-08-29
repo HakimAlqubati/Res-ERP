@@ -26,7 +26,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
-use Filament\Resources\Resource; 
+use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -38,7 +39,7 @@ abstract class BaseReturnedOrderResource extends Resource
     protected static ?string $model = ReturnedOrder::class;
     abstract protected static function getOrderSearchQuery(string $search);
 
-    protected static string | \BackedEnum | null $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon                      = Heroicon::ReceiptRefund;
     // protected static ?string $cluster                             = MainOrdersCluster::class;
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     // protected static ?int $navigationSort                         = 2;

@@ -229,13 +229,13 @@ class AdminPanelProvider extends PanelProvider
             // ->login(CustomLogin::class) 
             ->defaultThemeMode(ThemeMode::Light)
             ->colors([
-                'primary' => Color::Green,
+                // 'primary' => Color::Green,
                 'danger' => Color::Rose,
                 'gray' => Color::Gray,
                 'info' => Color::Blue,
                 'success' => Color::Emerald,
                 'warning' => Color::Orange,
-                'primary' => 'rgb(0, 100, 46)',
+                'primary' => '#03381c',
                 // 'primary' => 'rgb(99, 102, 241)'
             ])
             // ->font('Inter', provider: GoogleFontProvider::class)

@@ -50,6 +50,7 @@ use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\IconColumn;
@@ -86,7 +87,7 @@ class OrderResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $model = Order::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::BuildingStorefront;
     // protected static ?string $navigationGroup = 'Orders';
     protected static ?string $recordTitleAttribute = 'id';
     public static function getNavigationLabel(): string

@@ -19,6 +19,7 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -31,7 +32,7 @@ class GeneralReportOfProductsResource extends Resource
 {
     protected static ?string $model = GeneralReportOfProducts::class;
     protected static ?string $slug = 'general-report-products';
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
     protected static ?string $cluster = OrderReportsCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;

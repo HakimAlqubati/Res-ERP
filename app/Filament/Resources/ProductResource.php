@@ -145,7 +145,7 @@ class ProductResource extends Resource
                                 ->disabled()
                                 ->dehydrated()
                                 ->default(fn($get) => Product::generateProductCode($get('category_id'))),
-                            Grid::make()->columns(4)->schema([
+                            Grid::make()->columns(4)->columnSpanFull()->schema([
                                 TextInput::make('sku')
                                     ->label('SKU')
                                     ->placeholder('SKU code')

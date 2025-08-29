@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -111,93 +112,94 @@ class EmployeeResource extends Resource
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make('personal_data')->label('Personal data')
-
                                 ->schema([
-                                    Grid::make()->columns(3)->schema([
-                                        TextInput::make('name')->label('Full name')
-                                            ->rules([
-                                                fn(): Closure => function (string $attribute, $value, Closure $fail) {
-                                                    // dd('dd',$value);
-                                                    if (count(explode(" ", $value)) < 2) {
-                                                        $fail('The :attribute must be two words at least.');
-                                                    }
-                                                },
-                                            ])
-                                            ->columnSpan(1)->required(),
-                                        TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
+                                    Grid::make()->columns(3)
+                                        ->columnSpanFull()
+                                        ->schema([
+                                            TextInput::make('name')->label('Full name')
+                                                ->rules([
+                                                    fn(): Closure => function (string $attribute, $value, Closure $fail) {
+                                                        // dd('dd',$value);
+                                                        if (count(explode(" ", $value)) < 2) {
+                                                            $fail('The :attribute must be two words at least.');
+                                                        }
+                                                    },
+                                                ])
+                                                ->columnSpan(1)->required(),
+                                            TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
 
-                                        TextInput::make('phone_number')
-                                            ->unique(ignoreRecord: true)
-                                            ->columnSpan(1)
+                                            TextInput::make('phone_number')
+                                                ->unique(ignoreRecord: true)
+                                                ->columnSpan(1)
 
-                                        // ->numeric()
-                                            ->maxLength(14)->minLength(8),
+                                                // ->numeric()
+                                                ->maxLength(14)->minLength(8),
 
-                                        // PhoneInput::make('phone_number')
-                                        //     // ->numeric()
-                                        //     ->hidden()
-                                        //     ->initialCountry('MY')
-                                        //     ->onlyCountries([
-                                        //         'MY',
-                                        //         'US',
-                                        //         'YE',
-                                        //         'AE',
-                                        //         'SA',
-                                        //         'PK',
-                                        //     ])
-                                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
-                                        //     ->autoPlaceholder('aggressive')
-                                        //     ->unique(ignoreRecord: true)
-                                        //     ->validateFor(
-                                        //         country: 'MY',
-                                        //         lenient: true, // default: false
-                                        //     ),
-                                        Select::make('gender')
-                                            ->label('Gender')
-                                            ->options([
-                                                1 => 'Male',
-                                                0 => 'Female',
-                                            ])
-                                            ->required(),
-                                        // TextInput::make('nationality')
-                                        // ->label('Nationality')
-                                        // ->nullable(),
-                                        TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
+                                            // PhoneInput::make('phone_number')
+                                            //     // ->numeric()
+                                            //     ->hidden()
+                                            //     ->initialCountry('MY')
+                                            //     ->onlyCountries([
+                                            //         'MY',
+                                            //         'US',
+                                            //         'YE',
+                                            //         'AE',
+                                            //         'SA',
+                                            //         'PK',
+                                            //     ])
+                                            //     ->displayNumberFormat(PhoneInputNumberType::E164)
+                                            //     ->autoPlaceholder('aggressive')
+                                            //     ->unique(ignoreRecord: true)
+                                            //     ->validateFor(
+                                            //         country: 'MY',
+                                            //         lenient: true, // default: false
+                                            //     ),
+                                            Select::make('gender')
+                                                ->label('Gender')
+                                                ->options([
+                                                    1 => 'Male',
+                                                    0 => 'Female',
+                                                ])
+                                                ->required(),
+                                            // TextInput::make('nationality')
+                                            // ->label('Nationality')
+                                            // ->nullable(),
+                                            TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
 
-                                        Select::make('nationality')
-                                            ->label('Nationality')->live()
-                                            ->required()
-                                            ->options(getNationalities())
-                                            ->searchable(),
+                                            Select::make('nationality')
+                                                ->label('Nationality')->live()
+                                                ->required()
+                                                ->options(getNationalities())
+                                                ->searchable(),
 
-                                        TextInput::make('mykad_number')->label('MyKad no.')->numeric()
-                                            ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
+                                            TextInput::make('mykad_number')->label('MyKad no.')->numeric()
+                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
 
-                                        Fieldset::make()->label('')
-                                            ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
-                                            ->schema([
-                                                TextInput::make('passport_no')->label('Passport no.')->numeric(),
-                                                Toggle::make('has_employee_pass')->label('Has employement pass')->inline(false)->live(),
+                                            Fieldset::make()->label('')
+                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
+                                                ->schema([
+                                                    TextInput::make('passport_no')->label('Passport no.')->numeric(),
+                                                    Toggle::make('has_employee_pass')->label('Has employement pass')->inline(false)->live(),
 
-                                            ]),
+                                                ]),
 
-                                    ]),
-                                    Fieldset::make()->label('Employee address')->schema([
+                                        ]),
+                                    Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
                                         Textarea::make('address')->label('')->columnSpanFull(),
                                     ]),
                                     Fieldset::make()->label('Upload avatar image')
                                         ->columnSpanFull()
                                         ->schema([
-                                            Grid::make()->columns(2)->schema([
+                                            Grid::make()->columnSpanFull()->schema([
                                                 FileUpload::make('avatar')
                                                     ->image()
                                                     ->label('')
-                                                // ->avatar()
+                                                    // ->avatar()
                                                     ->imageEditor()
 
                                                     ->circleCropper()
-                                                // ->disk('public')
-                                                // ->directory('employees')
+                                                    // ->disk('public')
+                                                    // ->directory('employees')
                                                     ->visibility('public')
                                                     ->imageEditorAspectRatios([
                                                         '16:9',
@@ -209,7 +211,7 @@ class EmployeeResource extends Resource
                                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                                         return Str::random(15) . "." . $file->getClientOriginalExtension();
                                                     })
-                                                // ->imagePreviewHeight('250')
+                                                    // ->imagePreviewHeight('250')
                                                     // ->resize(5)
                                                     ->maxSize(333)
                                                     ->columnSpan(2)
@@ -217,9 +219,9 @@ class EmployeeResource extends Resource
                                             ]),
                                         ]),
                                 ]),
-                            Fieldset::make('Employeement')->label('Employeement')
+                            Fieldset::make('Employeement')->label('Employeement')->columnSpanFull()
                                 ->schema([
-                                    Grid::make()->columns(4)->schema([
+                                    Grid::make()->columns(4)->columnSpanFull()->schema([
                                         TextInput::make('employee_no')->default((Employee::withTrashed()->latest()->first()?->id) + 1)->disabled()->columnSpan(1)->label('Employee number')->unique(ignoreRecord: true),
                                         TextInput::make('job_title')->columnSpan(1)->required(),
                                         Select::make('position_id')->columnSpan(1)->label('Position type')
@@ -233,7 +235,7 @@ class EmployeeResource extends Resource
                                         Select::make('branch_id')->columnSpan(1)->label('Branch')
                                             ->searchable()
                                             ->required()
-                                        // ->disabledOn('edit')
+                                            // ->disabledOn('edit')
                                             ->live()
                                             ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
                                         Toggle::make('is_ceo')->label('is_ceo')
@@ -249,7 +251,7 @@ class EmployeeResource extends Resource
                                                 $branchId = $get('branch_id');
                                                 // if ($branchId) {
                                                 return Employee::active()
-                                                // ->forBranch($branchId)
+                                                    // ->forBranch($branchId)
                                                     ->pluck('name', 'id');
                                                 // }
                                                 return [];
@@ -263,7 +265,7 @@ class EmployeeResource extends Resource
                                                 $branchId = $get('branch_id');
                                                 // if ($branchId) {
                                                 return Department::where('active', 1)
-                                                // ->forBranch($branchId)
+                                                    // ->forBranch($branchId)
                                                     ->select('id', 'name')->get()->pluck('name', 'id');
                                                 // }
                                                 return Department::where('active', 1)
@@ -286,8 +288,8 @@ class EmployeeResource extends Resource
                                 ->columns(2)
                                 ->defaultItems(0)
                                 ->schema([
-                                    Fieldset::make('File Details')->schema([
-                                        Grid::make()->columns(2)->schema([
+                                    Fieldset::make('File Details')->columnSpanFull()->schema([
+                                        Grid::make()->columns(2)->columnSpanFull()->schema([
                                             Select::make('file_type_id')
                                                 ->label('File Type')
                                                 ->required()
@@ -312,13 +314,13 @@ class EmployeeResource extends Resource
                                                 ->label('Attach File')
                                                 ->downloadable()
                                                 ->previewable()
-                                            // ->required()
+                                                // ->required()
                                                 ->imageEditor()
                                                 ->circleCropper(),
                                         ]),
                                     ]),
 
-                                    Fieldset::make('Additional Fields')
+                                    Fieldset::make('Additional Fields')->columnSpanFull()
                                         ->schema(function (Get $get) {
                                             // Fetch the dynamic fields for the current file_type_id
                                             $fileTypeId = $get('file_type_id');
@@ -365,135 +367,136 @@ class EmployeeResource extends Resource
                     Step::make('Finance')
                         ->icon('heroicon-o-banknotes')
                         ->schema([
-                            Fieldset::make()->label('Set salary data and account number')->schema([
-                                Grid::make()->columns(4)->schema([
-                                    TextInput::make('salary')
-                                        ->numeric()
-                                        ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
-                                    TextInput::make('tax_identification_number')
-                                        ->label('Tax Identification Number(TIN)')->required()
-                                        ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
-                                            || ($get('has_employee_pass') == 1)
-                                        ))
-                                        ->numeric()
-                                        ->disabled(fn(): bool => isBranchManager()),
-                                    // TextInput::make('bank_account_number')
-                                    //     ->columnSpan(2)
-                                    //     ->label('Bank account number')->nullable(),
-                                    Toggle::make('discount_exception_if_absent')->columnSpan(1)
-                                        ->disabled(fn(): bool => isBranchManager())
-                                        ->label('No salary deduction for absences')->default(0)->inline(false)
-                                    // ->isInline(false)
-                                    ,
-                                    Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
-                                        ->disabled(fn(): bool => isBranchManager())
-                                        ->label('Exempt from late attendance deduction')->default(0)->inline(false)
-                                    // ->isInline(false)
-                                    ,
+                            Fieldset::make()->label('Set salary data and account number')
+                                ->columnSpanFull()
+                                ->schema([
+                                    Grid::make()->columns(4)->columnSpanFull()->schema([
+                                        TextInput::make('salary')
+                                            ->numeric()
+                                            ->inputMode('decimal')->disabled(fn(): bool => isBranchManager()),
+                                        TextInput::make('tax_identification_number')
+                                            ->label('Tax Identification Number(TIN)')->required()
+                                            ->visible(fn($get): bool => ($get('nationality') != null && ($get('nationality') == setting('default_nationality'))
+                                                || ($get('has_employee_pass') == 1)
+                                            ))
+                                            ->numeric()
+                                            ->disabled(fn(): bool => isBranchManager()),
+                                        // TextInput::make('bank_account_number')
+                                        //     ->columnSpan(2)
+                                        //     ->label('Bank account number')->nullable(),
+                                        Toggle::make('discount_exception_if_absent')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label('No salary deduction for absences')->default(0)->inline(false)
+                                        // ->isInline(false)
+                                        ,
+                                        Toggle::make('discount_exception_if_attendance_late')->columnSpan(1)
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label('Exempt from late attendance deduction')->default(0)->inline(false)
+                                        // ->isInline(false)
+                                        ,
 
-                                    Repeater::make('bank_information')
-                                        ->disabled(fn(): bool => isBranchManager())
-                                        ->label('Bank Information')
-                                        ->columns(2)
+                                        Repeater::make('bank_information')
+                                            ->disabled(fn(): bool => isBranchManager())
+                                            ->label('Bank Information')
+                                            ->columns(2)
 
+                                            ->schema([
+                                                TextInput::make('bank')
+                                                    ->label('Bank Name')
+                                                    ->required()
+                                                    ->placeholder('Enter bank name'),
+                                                TextInput::make('number')
+                                                    ->label('Bank Account Number')
+                                                    ->required()
+                                                    ->placeholder('Enter bank account number'),
+                                            ])
+                                            ->collapsed()
+                                            ->minItems(0)         // Set the minimum number of items
+                                            // Optional: set the maximum number of items
+                                            ->defaultItems(1)     // Default number of items when the form loads
+                                            ->columnSpan('full'), // Adjust the span as necessary
+                                    ]),
+                                    Fieldset::make()->columnSpanFull()->label('Shift - RFID')->columnSpanFull()->schema([
+                                        Grid::make()->columns(2)->columnSpanFull()->schema([
+                                            // CheckboxList::make('periods')
+                                            //     ->label('Work Periods')
+                                            //     ->relationship('periods', 'name')
+
+                                            //     ->columns(2)
+                                            //     ->helperText('Select the employee\'s work periods.')
+
+                                            // ,
+
+                                            TextInput::make('rfid')->label('Employee RFID')
+                                                ->unique(ignoreRecord: true),
+                                        ]),
+                                    ]),
+                                    Fieldset::make()->columns(3)->label('Finance')->columnSpanFull()
+                                        ->disabled(fn(): bool => isBranchManager())
                                         ->schema([
-                                            TextInput::make('bank')
-                                                ->label('Bank Name')
-                                                ->required()
-                                                ->placeholder('Enter bank name'),
-                                            TextInput::make('number')
-                                                ->label('Bank Account Number')
-                                                ->required()
-                                                ->placeholder('Enter bank account number'),
-                                        ])
-                                        ->collapsed()
-                                        ->minItems(0)         // Set the minimum number of items
-                                                          // Optional: set the maximum number of items
-                                        ->defaultItems(1)     // Default number of items when the form loads
-                                        ->columnSpan('full'), // Adjust the span as necessary
+                                            Repeater::make('Monthly deductions') 
+                                                ->defaultItems(0)
+                                                ->relationship('deductions')
+                                                ->schema([
+
+                                                    Select::make('deduction_id')
+                                                        ->label('Deducation')
+                                                        ->options(
+                                                            Deduction::where('active', 1)
+                                                                ->where('is_penalty', 0)
+                                                                ->where('is_specific', 1)
+                                                                ->get()->pluck('name', 'id')
+                                                        )
+                                                        ->required(),
+                                                    Toggle::make('is_percentage')->live()->default(true)
+                                                    // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                                    ,
+                                                    TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-calculator')
+                                                        ->suffixIconColor('success'),
+                                                    TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-percent-badge')
+                                                        ->suffixIconColor('success'),
+
+                                                ]),
+                                            Repeater::make('Monthly allowances')
+                                                ->defaultItems(0)
+                                                ->relationship('allowances')
+                                                ->schema([
+
+                                                    Select::make('allowance_id')
+                                                        ->label('Allowance')
+                                                        ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
+                                                        ->required(),
+                                                    Toggle::make('is_percentage')->live()->default(true)
+                                                    // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                                    ,
+                                                    TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-calculator')
+                                                        ->suffixIconColor('success'),
+                                                    TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-percent-badge')
+                                                        ->suffixIconColor('success'),
+
+                                                ]),
+                                            Repeater::make('Monthly bonus')
+                                                ->defaultItems(0)
+                                                ->label('Monthly bonus')
+                                                ->relationship('monthlyIncentives')
+                                                ->schema([
+
+                                                    Select::make('monthly_incentive_id')
+                                                        ->label('Monthly bonus')
+                                                        ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
+                                                        ->required(),
+                                                    TextInput::make('amount')
+                                                        ->default(0)->minValue(0)
+                                                        ->numeric(),
+
+                                                ]),
+
+                                        ]),
                                 ]),
-                                Fieldset::make()->label('Shift - RFID')->schema([
-                                    Grid::make()->columns(2)->schema([
-                                        // CheckboxList::make('periods')
-                                        //     ->label('Work Periods')
-                                        //     ->relationship('periods', 'name')
-
-                                        //     ->columns(2)
-                                        //     ->helperText('Select the employee\'s work periods.')
-
-                                        // ,
-
-                                        TextInput::make('rfid')->label('Employee RFID')
-                                            ->unique(ignoreRecord: true),
-                                    ]),
-                                ]),
-                                Fieldset::make()->columns(3)->label('Finance')
-                                    ->disabled(fn(): bool => isBranchManager())
-                                    ->schema([
-                                        Repeater::make('Monthly deductions')
-
-                                            ->defaultItems(0)
-                                            ->relationship('deductions')
-                                            ->schema([
-
-                                                Select::make('deduction_id')
-                                                    ->label('Deducation')
-                                                    ->options(
-                                                        Deduction::where('active', 1)
-                                                            ->where('is_penalty', 0)
-                                                            ->where('is_specific', 1)
-                                                            ->get()->pluck('name', 'id')
-                                                    )
-                                                    ->required(),
-                                                Toggle::make('is_percentage')->live()->default(true)
-                                                // ->helperText('Set allowance as a salary percentage or fixed amount')
-                                                ,
-                                                TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
-                                                    ->suffixIcon('heroicon-o-calculator')
-                                                    ->suffixIconColor('success'),
-                                                TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
-                                                    ->suffixIcon('heroicon-o-percent-badge')
-                                                    ->suffixIconColor('success'),
-
-                                            ]),
-                                        Repeater::make('Monthly allowances')
-                                            ->defaultItems(0)
-                                            ->relationship('allowances')
-                                            ->schema([
-
-                                                Select::make('allowance_id')
-                                                    ->label('Allowance')
-                                                    ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
-                                                    ->required(),
-                                                Toggle::make('is_percentage')->live()->default(true)
-                                                // ->helperText('Set allowance as a salary percentage or fixed amount')
-                                                ,
-                                                TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
-                                                    ->suffixIcon('heroicon-o-calculator')
-                                                    ->suffixIconColor('success'),
-                                                TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
-                                                    ->suffixIcon('heroicon-o-percent-badge')
-                                                    ->suffixIconColor('success'),
-
-                                            ]),
-                                        Repeater::make('Monthly bonus')
-                                            ->defaultItems(0)
-                                            ->label('Monthly bonus')
-                                            ->relationship('monthlyIncentives')
-                                            ->schema([
-
-                                                Select::make('monthly_incentive_id')
-                                                    ->label('Monthly bonus')
-                                                    ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
-                                                    ->required(),
-                                                TextInput::make('amount')
-                                                    ->default(0)->minValue(0)
-                                                    ->numeric(),
-
-                                            ]),
-
-                                    ]),
-                            ]),
                         ]),
                 ])->columnSpanFull()->skippable(),
 
@@ -521,7 +524,7 @@ class EmployeeResource extends Resource
                 // ImageColumn::make('avatar_image')->label('')
                 //     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
-                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault:true)->hidden(),
+                TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->label('Employee No.')
@@ -563,7 +566,7 @@ class EmployeeResource extends Resource
                     ->searchable(isIndividual: false, isGlobal: false),
                 TextColumn::make('salary')->sortable()->label('Salary')
                     ->sortable()->searchable()
-                // ->money(fn(): string => getDefaultCurrency())
+                    // ->money(fn(): string => getDefaultCurrency())
                     ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->toggleable(isToggledHiddenByDefault: false)
                     ->searchable(isIndividual: false, isGlobal: false)->alignCenter(true),
@@ -575,7 +578,7 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
 
                     ->color('info') // لإظهار أن النص قابل للنقر
-                                // اختياري: أيقونة مشاهدة
+                // اختياري: أيقونة مشاهدة
 
                 ,
 
@@ -690,11 +693,11 @@ class EmployeeResource extends Resource
                         FileUpload::make('file')
                             ->label('Select Excel file'),
                     ])->extraModalFooterActions([
-                    Action::make('downloadexcel')->label(__('Download Example File'))
-                        ->icon('heroicon-o-arrow-down-on-square-stack')
-                        ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
-                        ->openUrlInNewTab(),
-                ])
+                        Action::make('downloadexcel')->label(__('Download Example File'))
+                            ->icon('heroicon-o-arrow-down-on-square-stack')
+                            ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
+                            ->openUrlInNewTab(),
+                    ])
                     ->color('success')
                     ->action(function ($data) {
 
@@ -776,7 +779,7 @@ class EmployeeResource extends Resource
                     Action::make('changeBranch')->icon('heroicon-o-arrow-path-rounded-square')
                         ->label('Change Branch') // Label for the action button
                         ->visible(isSystemManager() || isSuperAdmin())
-                                                             // ->icon('heroicon-o-annotation') // Icon for the button
+                        // ->icon('heroicon-o-annotation') // Icon for the button
                         ->modalHeading('Change Employee Branch') // Modal heading
                         ->modalButton('Save')                    // Button inside the modal
                         ->schema([
@@ -834,7 +837,7 @@ class EmployeeResource extends Resource
             'create'            => CreateEmployee::route('/create'),
             'edit'              => EditEmployee::route('/{record}/edit'),
             'org_chart'         => OrgChart::route('/org_chart'),
-                                                                                                 // 'view' => Pages\ViewEmployee::route('/{record}'),
+            // 'view' => Pages\ViewEmployee::route('/{record}'),
             'checkInstallments' => CheckInstallments::route('/{employeeId}/check-installments'), // Pass employee ID here
 
         ];
@@ -858,7 +861,7 @@ class EmployeeResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-        // ->where('role_id',8)
+            // ->where('role_id',8)
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);
