@@ -13,36 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 class CreateStockInventory extends CreateRecord
 {
     protected static string $resource = StockInventoryResource::class; 
-    public function getCategoryDetails($categoryId, $storeId)
-    {
-        $products = Product::where('category_id', $categoryId)
-            ->where('active', 1)
-            ->get();
-
-        $details = [];
-
-        foreach ($products as $product) {
-            $unitPrice   = $product->unitPrices()->first();
-            $unitId      = $unitPrice?->unit_id;
-            $packageSize = (float) ($unitPrice?->package_size ?? 0);
-
-            $service      = new MultiProductsInventoryService(null, $product->id, $unitId, $storeId);
-            $remainingQty = (float) ($service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0);
-
-            $details[] = [
-                'product_id'        => $product->id,
-                'unit_id'           => $unitId,
-                'package_size'      => $packageSize,
-                'system_quantity'   => $remainingQty,
-                'physical_quantity' => $remainingQty,
-                'difference'        => 0,
-            ];
-        }
-
-        // Livewire سيحوّلها تلقائياً إلى JSON
-        return $details;
-    }
-
+   
     public function getInventoryRowData($productId, $unitId, $storeId): array
     {
         $service = new \App\Services\MultiProductsInventoryService(null, $productId, $unitId, $storeId);

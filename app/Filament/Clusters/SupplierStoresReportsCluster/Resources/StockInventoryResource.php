@@ -138,25 +138,57 @@ class StockInventoryResource extends Resource
                                     ->label('Category')
                                     ->options(Category::pluck('name', 'id'))
                                     ->live()
-                                    ->afterStateUpdatedJs(<<<'JS'
-    (async () => {
-        if ($state === $get('category_id_prev')) return;
+                                    ->afterStateUpdated(function (callable $set, callable $get, $state) {
+                                        if (! $state) {
+                                            return;
+                                        }
 
-        const ok = window.confirm('This will replace all current items with products from the selected category. Continue?');
+                                        $products = Product::where('category_id', $state)
+                                            ->where('active', 1)
+                                            ->get();
 
-         if (!ok) {
-            const prev = $get('category_id_prev');
-            $set('category_id', prev ?? null);
-            return;
-        }
+                                        $storeId = $get('store_id');
 
-        const storeId = $get('store_id');
-        const details = await $wire.getCategoryDetails($state, storeId);
+                                        $details = $products->map(function ($product) use ($storeId) {
+                                            $unitPrices = $product->supplyOutUnitPrices ?? collect();
+                                            $rowCache   = [];
+                                        
+                                            $firstUnit  = $unitPrices->first();
+                                            $firstUnitId = $firstUnit?->unit_id ?? null;
+                                        
+                                            foreach ($unitPrices as $unitPrice) {
+                                                $unitId = $unitPrice->unit_id;
+                                                $service = new MultiProductsInventoryService(
+                                                    null,
+                                                    $product->id,
+                                                    $unitId,
+                                                    $storeId
+                                                );
+                                                $remainingQty = $service->getInventoryForProduct($product->id)[0]['remaining_qty'] ?? 0;
+                                        
+                                                $rowCache[$unitId] = [
+                                                    'package_size'  => $unitPrice->package_size ?? 0,
+                                                    'remaining_qty' => $remainingQty,
+                                                ];
+                                            }
+                                        
+                                            return [
+                                                'product_id'        => $product->id,
+                                                'unit_id'           => $firstUnitId,
+                                                'package_size'      => $rowCache[$firstUnitId]['package_size'] ?? 0,
+                                                'system_quantity'   => $rowCache[$firstUnitId]['remaining_qty'] ?? 0,
+                                                'physical_quantity' => $rowCache[$firstUnitId]['remaining_qty'] ?? 0,
+                                                'difference'        => 0,
+                                                'rowInventoryCache' => $rowCache, // ✅ كاش لكل الوحدات
+                                                'rowUnitsCache'     => $unitPrices->pluck('unit.name', 'unit_id')->toArray(), // ✅ كاش أسماء الوحدات
+                                            ];
+                                        })->toArray();
+                                        
+                                        $set('details', $details);
+                                        
 
-        $set('details', Array.isArray(details) ? details : []);
-        $set('category_id_prev', $state);
-    })();
-JS) :
+                                        $set('details', $details);
+                                    }) :
                                     Toggle::make('edit_enabled')
                                     ->label('Edit')
                                     ->inline(false)
@@ -294,14 +326,23 @@ JS) :
                                     ->afterStateUpdatedJs(<<<'JS'
                                     (async () => {
                                         let data = ($get('rowInventoryCache') ?? {})[$state];
-                            
+                                        if (!data) {
+                                            const productId = $get('product_id');
+                                            const storeId   = $get('../../store_id');
+                                            data = await $wire.getInventoryRowData(productId, $state, storeId);
+                                            // خزّنه في الكاش حتى لا نعاود الطلب
+                                            const cache = $get('rowInventoryCache') ?? {};
+                                            cache[$state] = data ?? { package_size: 0, remaining_qty: 0 };
+                                            $set('rowInventoryCache', cache);
+                                        }
+                                
                                         const pkg = Number(data?.package_size ?? 0);
                                         const rem = Number(data?.remaining_qty ?? 0);
-                            
+                                
                                         $set('package_size', pkg);
                                         $set('system_quantity', rem);
                                         $set('physical_quantity', rem);
-                            
+                                
                                         const diff = +(Number($get('physical_quantity') ?? rem) - rem).toFixed(4);
                                         $set('difference', diff);
                                     })();
