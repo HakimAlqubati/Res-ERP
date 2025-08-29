@@ -64,9 +64,9 @@
 
     @if (count($reportData) > 0)
         <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+            <table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead class="fixed-header">
-                    <x-filament-tables::row class="header_report">
+                    <tr class="header_report">
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                         <th colspan="6" class="no_border_right_left text-center">
                             <h3 class="text-lg font-bold">Inbound → Outflow Report</h3>
@@ -77,8 +77,8 @@
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Logo"
                                 class="logo-left circle-image" style="display: inline-block;">
                         </th>
-                    </x-filament-tables::row>
-                    <x-filament-tables::row>
+                    </tr>
+                    <tr>
                         <th>IN ID</th>
                         <th>Product</th>
                         <th>Qty</th>
@@ -88,36 +88,36 @@
                         <th>Price</th>
                         <th>Date</th>
                         <th>OUT Transactions</th>
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
                 <tbody>
                     @foreach ($reportData as $record)
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                        <tr>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['in_transaction_id'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['product_name'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['quantity'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['real_time_remaining_qty'] ?? 'N/A' }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['unit_name'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['package_size'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['price'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 {{ $record['transaction_date'] }}
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                            </td>
+                            <td class="border border-gray-300 px-4 py-2">
                                 <table class="teal-striped-table w-full text-sm border mt-2">
                                     <thead>
                                         <tr>
@@ -143,11 +143,11 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
-            </x-filament-tables::table>
+            </table>
         </div>
     @else
         <div class="please_select_message_div text-center">

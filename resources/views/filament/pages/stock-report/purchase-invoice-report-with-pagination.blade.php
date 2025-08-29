@@ -31,18 +31,18 @@
         </button>
     </div>
     {{-- @if (isset($branch_id)) --}}
-    <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
+    <table class="w-full text-sm text-left pretty reports" id="report-table">
         <thead style="top:64px;" class="fixed-header">
 
-            <x-filament-tables::row>
+            <tr>
                 <th colspan="4">
                     {{ __('lang.store') }}: ({{ $purchase_invoice_data['store_name'] }})
                 </th>
                 <th colspan="{{ $show_invoice_no == true ? '5' : '4' }}">
                     {{ __('lang.supplier') }}: ({{ $purchase_invoice_data['supplier_name'] }})
                 </th>
-            </x-filament-tables::row>
-            <x-filament-tables::row>
+            </tr>
+            <tr>
                 <th>{{ __('lang.product_code') }} </th>
                 <th>{{ __('lang.product') }}</th>
                 <th>{{ __('lang.unit') }}</th>
@@ -56,7 +56,7 @@
                     <th>{{ __('lang.unit_price') }}</th>
                     <th>{{ __('lang.total_amount') }}</th>
                 @endif
-            </x-filament-tables::row>
+            </tr>
         </thead>
         <tbody>
             @php
@@ -71,40 +71,40 @@
                     $total_sub_total += $sub_total;
                     $sum_unit_price += $unit_price;
                 @endphp
-                <x-filament-tables::row>
-                    <x-filament-tables::cell> {{ $invoice_item->product_code }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $invoice_item->product_name }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $invoice_item->unit_name }} </x-filament-tables::cell>
-                    <x-filament-tables::cell> {{ $invoice_item->quantity }} </x-filament-tables::cell>
+                <tr>
+                    <td> {{ $invoice_item->product_code }} </td>
+                    <td> {{ $invoice_item->product_name }} </td>
+                    <td> {{ $invoice_item->unit_name }} </td>
+                    <td> {{ $invoice_item->quantity }} </td>
                     @if ($show_invoice_no == true)
-                        <x-filament-tables::cell>
+                        <td>
                             {{ '(' . $invoice_item->purchase_invoice_id . ') ' . $invoice_item->invoice_no }}
-                        </x-filament-tables::cell>
+                        </td>
                     @endif
-                    <x-filament-tables::cell>
+                    <td>
                         {{ $invoice_item->supplier_name }}
-                    </x-filament-tables::cell>
-                    <x-filament-tables::cell>
+                    </td>
+                    <td>
                         {{ $invoice_item->purchase_date }}
-                    </x-filament-tables::cell>
+                    </td>
                     @if (!isStoreManager())
-                        <x-filament-tables::cell> {{ formatMoneyWithCurrency($unit_price) }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ formatMoneyWithCurrency($sub_total) }} </x-filament-tables::cell>
+                        <td> {{ formatMoneyWithCurrency($unit_price) }} </td>
+                        <td> {{ formatMoneyWithCurrency($sub_total) }} </td>
                     @endif
-                </x-filament-tables::row>
+                </tr>
             @endforeach
 
         </tbody>
 
         @if (!isStoreManager())
             <tbody>
-                <x-filament-tables::row class="fixed_footer">
-                    <x-filament-tables::cell colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}
-                    </x-filament-tables::cell>
-                    {{-- <x-filament-tables::cell> {{ formatMoneyWithCurrency($sum_unit_price) }} </x-filament-tables::cell> --}}
-                    <x-filament-tables::cell> {{ $total_amount }}
-                    </x-filament-tables::cell>
-                </x-filament-tables::row>
+                <tr class="fixed_footer">
+                    <td colspan="{{ $show_invoice_no ? '8' : '7' }}"> {{ __('lang.total') }}
+                    </td>
+                    {{-- <td> {{ formatMoneyWithCurrency($sum_unit_price) }} </td> --}}
+                    <td> {{ $total_amount }}
+                    </td>
+                </tr>
             </tbody>
         @endif
 
@@ -119,7 +119,7 @@
 
 
 
-    </x-filament-tables::table>
+    </table>
     <div class="mt-4">
         <div class="paginator_container">
             {{ $purchase_invoice_data['results']->links() }}

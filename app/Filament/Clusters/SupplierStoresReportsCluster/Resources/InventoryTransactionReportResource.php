@@ -49,7 +49,7 @@ class InventoryTransactionReportResource extends Resource
 
 
 
-        return $table
+        return $table->deferFilters(false)
             ->filters([
 
                 SelectFilter::make("category_id")

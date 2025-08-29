@@ -2,9 +2,9 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (isset($employee_id) && is_numeric($employee_id))
-        <x-filament-tables::table class="w-full text-sm text-left pretty  ">
+        <table class="w-full text-sm text-left pretty  ">
             <thead>
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ 'Attendance employee report' }}</p>
                         <p>({{ isset($employee_id) && is_numeric($employee_id) ? \App\Models\Employee::find($employee_id)->name : __('lang.choose_branch') }})
@@ -19,8 +19,8 @@
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                         <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                     </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th rowspan="2">{{ __('Date') }}</th>
                     <th colspan="2">{{ __('Shift data') }}</th>
 
@@ -29,8 +29,8 @@
                     {{-- <th rowspan="2">{{ __('Early departure (hour)') }}</th>
                     <th rowspan="2">{{ __('Delay time (minute)') }}</th> --}}
 
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th>{{ __('From') }}</th>
                     <th>{{ __('To') }}</th>
                     <th>{{ __('Attendance') }}</th>
@@ -39,22 +39,22 @@
                     <th>{{ __('Status') }}</th>
                     <th>{{ __('Supposed') }}</th>
                     <th>{{ __('Actual') }}</th>
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
 
                 @foreach ($report_data as $date => $data)
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell rowspan="{{ count($data) }}">
+                    <tr>
+                        <td rowspan="{{ count($data) }}">
                             {{ $date }}
-                        </x-filament-tables::cell>
+                        </td>
 
 
 
 
                         @foreach ($data as $val_data)
                             @if (is_array($val_data) && count($val_data) == 1)
-                                <x-filament-tables::cell colspan="8">
+                                <td colspan="8">
                                     @if (isset($val_data[0]->check_type) &&
                                             is_array($val_data) &&
                                             count($val_data) == 1 &&
@@ -70,73 +70,73 @@
                                     @if (is_array($val_data) && count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
                                         <p>{{ $val_data[0]->leave_type_name }}</p>
                                     @endif
-                                </x-filament-tables::cell>
+                                </td>
                             @elseif (is_array($val_data) && count($val_data) >= 2)
-                                <x-filament-tables::cell>
+                                <td>
                                     {{ $val_data[0]->period_start_at }}
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell>
+                                <td>
                                     {{ $val_data[0]->period_end_at }}
 
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell>
+                                <td>
                                     @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                             {{ $val_data[0]->check_time }}
                                         @endif
                                     @endif
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell>
+                                <td>
                                     @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                             {{ $val_data[0]->status }}
                                         @endif
                                     @endif
-                                </x-filament-tables::cell>
+                                </td>
 
 
-                                <x-filament-tables::cell>
+                                <td>
                                     @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->check_time }}
                                         @endif
                                     @endif
 
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell>
+                                <td>
                                     @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->status }}
                                         @endif
                                     @endif
-                                </x-filament-tables::cell>
+                                </td>
 
 
 
-                                <x-filament-tables::cell>
+                                <td>
                                     @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->supposed_duration_hourly }}
                                         @endif
                                     @endif
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell>
+                                <td>
                                     @if (is_array($val_data) && count($val_data) >= 2)
                                         @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                             {{ $val_data[1]->actual_duration_hourly }}
                                         @endif
                                     @endif
-                                </x-filament-tables::cell>
+                                </td>
                             @endif
                         @break
                     @endforeach
 
-                </x-filament-tables::row>
+                </tr>
                 @if (count($data) > 1)
                     @php
                         $index = 0;
@@ -144,9 +144,9 @@
                     {{-- @for ($i = 1; $i < count($data); $i++) --}}
                     @foreach ($data as $val_data)
                         @if ($index > 0)
-                            <x-filament-tables::row>
+                            <tr>
                                 @if (is_array($val_data) && count($val_data) == 1)
-                                    <x-filament-tables::cell colspan="8">
+                                    <td colspan="8">
                                         @if (isset($val_data[0]->check_type) &&
                                                 is_array($val_data) &&
                                                 count($val_data) == 1 &&
@@ -162,70 +162,70 @@
                                         @if (is_array($val_data) && count($val_data) == 1 && $val_data[0]->check_type == 'ApprovedLeaveApplication')
                                             <p>{{ $val_data[0]->leave_type_name }}</p>
                                         @endif
-                                    </x-filament-tables::cell>
+                                    </td>
                                 @elseif (is_array($val_data) && count($val_data) >= 2)
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $val_data[0]->period_start_at }}
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $val_data[0]->period_end_at }}
 
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                                 {{ $val_data[0]->check_time }}
                                             @endif
                                         @endif
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[0]->check_type) && $val_data[0]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKIN)
                                                 {{ $val_data[0]->status }}
                                             @endif
                                         @endif
-                                    </x-filament-tables::cell>
+                                    </td>
 
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->check_time }}
                                             @endif
                                         @endif
 
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->status }}
                                             @endif
                                         @endif
-                                    </x-filament-tables::cell>
+                                    </td>
 
 
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->supposed_duration_hourly }}
                                             @endif
                                         @endif
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         @if (is_array($val_data) && count($val_data) >= 2)
                                             @if (isset($val_data[1]->check_type) && $val_data[1]->check_type == \App\Models\Attendance::CHECKTYPE_CHECKOUT)
                                                 {{ $val_data[1]->actual_duration_hourly }}
                                             @endif
                                         @endif
-                                    </x-filament-tables::cell>
+                                    </td>
                                 @endif
-                            </x-filament-tables::row>
+                            </tr>
                         @endif
                         @php
                             $index += 1;
@@ -236,7 +236,7 @@
             @endforeach
         </tbody>
 
-    </x-filament-tables::table>
+    </table>
 @else
     <div class="please_select_message_div" style="text-align: center;">
 

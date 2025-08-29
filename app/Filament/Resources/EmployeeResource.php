@@ -55,6 +55,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -78,7 +79,7 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 class EmployeeResource extends Resource
 {
     protected static ?string $model                               = Employee::class;
-    protected static string | \BackedEnum | null $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon                      = Heroicon::UserGroup;
     protected static ?string $cluster                             = HRCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
@@ -91,6 +92,10 @@ class EmployeeResource extends Resource
         return __('lang.employees');
     }
 
+    public static function getModelLabel(): string
+    {
+        return 'Employee';
+    }
     public static function getLabel(): ?string
     {
         return __('lang.employees');
@@ -637,7 +642,7 @@ class EmployeeResource extends Resource
                     ->falseIcon('heroicon-o-x-mark')
                     ->toggleable(isToggledHiddenByDefault: true)->alignCenter(true),
 
-            ])
+            ])->deferFilters(false)
             ->filters([
 
                 TrashedFilter::make()

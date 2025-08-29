@@ -982,45 +982,7 @@ if (!function_exists('calculateTotalMissingHours')) {
         ];
     }
 }
-if (!function_exists('getEndOfMonthDate')) {
-    function getEndOfMonthDate($year = null, $month = null)
-    {
-        if (!$year) {
-            $year = date('Y');
-        }
-        if (!$month) {
-            $month = date('m');
-        }
 
-        // Fetch settings
-        $useStandard = setting('use_standard_end_of_month'); // Default: true (standard month end)
-        $customDay = setting('end_of_month_day'); // Default custom end day: 30
-
-        if ($useStandard) {
-
-            // Standard mode: Use the actual end of the month (e.g., 28, 30, or 31)
-            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            // Calculate the start date (30 days before the end date)
-            $startDate = $endDate->copy()->startOfMonth();
-        } else {
-            // Custom mode: Use the user-defined day, ensuring it does not exceed the real last day
-            $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
-            $endDate = Carbon::createFromDate($year, $month, min($customDay, $lastDay));
-            $endTemp = $endDate->copy(); // Creates a separate instance
-            $previousMonth = $endTemp->subMonth(); // This no longer affects $endDate
-            $daysInMonth = $previousMonth->daysInMonth; // Get the days in the previous month
-            $daysInMonth -= 1;
-            $startDate = $endDate->copy()->subDays($daysInMonth);
-        }
-
-
-        return [
-            'year' => $year,
-            'start_month' => $startDate->toDateString(),
-            'end_month' => $endDate->toDateString(),
-        ];
-    }
-}
 if (!function_exists('getMonthOptionsBasedOnSettings')) {
     function getMonthOptionsBasedOnSettings()
     {

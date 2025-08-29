@@ -61,7 +61,7 @@ class ReportProductQuantitiesForResellerResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped()->deferFilters(false)
             ->defaultSort(null)
             ->emptyStateHeading('Please choose a product')
             ->emptyStateDescription('Please choose a product or maybe there is no data')

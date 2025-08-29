@@ -23,6 +23,7 @@ use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\MonthlyIncentive;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,7 +34,7 @@ class MonthlyIncentiveResource extends Resource
 {
     protected static ?string $model = MonthlyIncentive::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::PlusCircle;
 
     protected static ?string $cluster = HRSalarySettingCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;

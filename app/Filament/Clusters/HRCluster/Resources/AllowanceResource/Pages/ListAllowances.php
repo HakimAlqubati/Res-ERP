@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages;
 use Filament\Actions\CreateAction;
 use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\HRCluster\Resources\AllowanceResource;
+use App\Models\Allowance;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,16 +23,19 @@ class ListAllowances extends ListRecords
     public function getTabs(): array
     {
         return [
-            'Apply to all allownces' => Tab::make()
+            // تطبق على الجميع = is_specific = 0
+            'Apply to all allowances' => Tab::make()
                 ->icon('heroicon-o-rectangle-stack')
-                ->badge(fn(Builder $query) => $query->where('is_specific', 1)->count())
+                ->badge(Allowance::query()->where('is_specific', 0)->count())
                 ->badgeColor('warning')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 0)),
-            'Custom allownces' => Tab::make()
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_specific', 0)),
+
+            // مخصّصة = is_specific = 1
+            'Custom allowances' => Tab::make()
                 ->icon('heroicon-o-rectangle-stack')
-                ->badge(fn(Builder $query) => $query->where('is_specific', 0)->count())
+                ->badge(Allowance::query()->where('is_specific', 1)->count())
                 ->badgeColor('success')
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('is_specific', 1)),
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('is_specific', 1)),
         ];
     }
 }

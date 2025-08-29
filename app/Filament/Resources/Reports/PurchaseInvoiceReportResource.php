@@ -8,7 +8,7 @@ use Filament\Forms\Components\DatePicker;
 use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
-use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListPurchaseInvoiceReport;
+use App\Filament\Resources\Reports\Pages\ListPurchaseInvoiceReport;
 use App\Models\FakeModelReports\PurchaseInvoiceReport;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;

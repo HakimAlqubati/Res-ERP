@@ -1,6 +1,6 @@
 <?php
 
-namespace Filament\Widgets;
+namespace App\Overrides;
 
 use Filament\Widgets\Concerns\CanPoll;
 

@@ -33,25 +33,7 @@ class ListEmployeeAttednaceReports extends ListRecords implements HasForms
         $this->showDetailsModal = true; // This opens the modal
     }
 
-    protected function getForms(): array
-    {
-
-        return array_merge(
-            parent::getForms(),
-
-            [
-                //merge your own form with default ones
-                'customForm' => $this->makeForm()->disabled()
-                    ->fill([
-                        'hi' => 'drgin',
-                    ])
-                    ->schema([
-                        TextInput::make('hi'),
-                    ])
-                    ->model(EmployeeAttednaceReportResource::class),
-            ]
-        );
-    }
+    
 
     // public function mount(): void
 

@@ -14,9 +14,7 @@ use Filament\Actions\DeleteBulkAction;
 use App\Filament\Resources\ReturnedOrderResource\Pages\ListReturnedOrders;
 use App\Filament\Resources\ReturnedOrderResource\Pages\CreateReturnedOrder;
 use App\Filament\Resources\ReturnedOrderResource\Pages\EditReturnedOrder;
-use App\Filament\Resources\ReturnedOrderResource\Pages\ViewReturnedOrder;
-use App\Filament\Clusters\MainOrdersCluster;
-use App\Filament\Resources\ReturnedOrderResource\Pages;
+use App\Filament\Resources\ReturnedOrderResource\Pages\ViewReturnedOrder;  
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\ReturnedOrder;
@@ -28,16 +26,14 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
-use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Resources\Resource; 
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-abstract class ReturnedOrderResource extends Resource
+abstract class BaseReturnedOrderResource extends Resource
 {
     protected static ?string $model = ReturnedOrder::class;
     abstract protected static function getOrderSearchQuery(string $search);
@@ -198,7 +194,7 @@ abstract class ReturnedOrderResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()->defaultSort('id', 'desc')
+        return $table->striped()->defaultSort('id', 'desc')->deferFilters(false)
             ->columns([
                 TextColumn::make('id')->label('#')->alignCenter(true)->toggleable(),
                 TextColumn::make('order.id')->label('Original Order ID')->sortable()->alignCenter(true)->toggleable(),

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages;
+namespace App\Filament\Resources\Reports\Pages;
 
 use Filament\Actions\Action;
 use App\Filament\Resources\Reports\PurchaseInvoiceReportResource;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages;
+namespace App\Filament\Resources\Reports\Pages;
 
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Actions\Action;

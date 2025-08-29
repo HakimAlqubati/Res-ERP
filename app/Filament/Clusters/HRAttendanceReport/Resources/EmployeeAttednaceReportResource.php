@@ -50,7 +50,7 @@ class EmployeeAttednaceReportResource extends Resource
     {
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
 
-        return $table
+        return $table->deferFilters(false)
             ->emptyStateHeading('No data')
             ->columns([])
             ->filters([

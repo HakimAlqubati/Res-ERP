@@ -22,6 +22,7 @@ use Filament\Forms;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -32,7 +33,7 @@ class AllowanceResource extends Resource
 {
     protected static ?string $model = Allowance::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::CurrencyDollar;
 
     protected static ?string $cluster = HRSalarySettingCluster::class;
 

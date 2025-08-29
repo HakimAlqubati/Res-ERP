@@ -14,9 +14,9 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (isset($product) && $product != null)
-        <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped" id="report-table">
+        <table class="w-full text-sm text-left pretty reports table-striped" id="report-table">
             <thead class="fixed-header">
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
 
                     <th colspan="2" title="{{ $product->id }}"
                         class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
@@ -29,8 +29,8 @@
                         <img class="circle-image" src="{{ asset('/storage/' . setting('company_logo') . '') }}"
                             alt="">
                     </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th>{{ 'Date' }}</th>
                     <th>{{ 'Transaction Type' }}</th>
                     <th>{{ 'Transaction ID' }}</th>
@@ -39,28 +39,28 @@
                     <th>{{ 'Qty' }}</th>
                     <th>{{ 'Store' }}</th>
                     <th colspan="2">{{ 'Notes' }}</th>
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
                 @php
                     $totalQty = 0;
                 @endphp
                 @foreach ($reportData as $data)
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell> {{ $data->movement_date }} </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+                    <tr>
+                        <td> {{ $data->movement_date }} </td>
+                        <td>
                             {{ $data->formatted_transactionable_type }}
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data->transactionable_id }} </x-filament-tables::cell>
-                        <x-filament-tables::cell title="{{ $data->unit_id }}">
+                        </td>
+                        <td> {{ $data->transactionable_id }} </td>
+                        <td title="{{ $data->unit_id }}">
                             {{ $data->unit_id ? \App\Models\Unit::find($data->unit_id)->name : '' }}
-                        </x-filament-tables::cell>
+                        </td>
 
-                        <x-filament-tables::cell> {{ $data->package_size }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data->quantity }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data->store->name ?? '' }} </x-filament-tables::cell>
-                        <x-filament-tables::cell colspan="2"> {{ $data->notes }} </x-filament-tables::cell>
-                    </x-filament-tables::row>
+                        <td> {{ $data->package_size }} </td>
+                        <td> {{ $data->quantity }} </td>
+                        <td> {{ $data->store->name ?? '' }} </td>
+                        <td colspan="2"> {{ $data->notes }} </td>
+                    </tr>
                     @php
                         $totalQty += $data->quantity;
                     @endphp
@@ -68,15 +68,15 @@
             </tbody>
             @if ($unitId && !is_null($unitId) && isset($movementType) && !is_null($movementType))
                 <tfoot>
-                    <x-filament-tables::row class="font-bold bg-gray-100">
-                        <x-filament-tables::cell colspan="5" class="text-right">Total
-                            Quantity:</x-filament-tables::cell>
-                        <x-filament-tables::cell>{{ $totalQty }}</x-filament-tables::cell>
-                        <x-filament-tables::cell colspan="2"></x-filament-tables::cell>
-                    </x-filament-tables::row>
+                    <tr class="font-bold bg-gray-100">
+                        <td colspan="5" class="text-right">Total
+                            Quantity:</td>
+                        <td>{{ $totalQty }}</td>
+                        <td colspan="2"></td>
+                    </tr>
                 </tfoot>
             @endif
-        </x-filament-tables::table>
+        </table>
 
         {{-- Pagination Links --}}
         <div class="mt-4">

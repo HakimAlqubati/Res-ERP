@@ -7,7 +7,7 @@ use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\InventoryReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Models\FakeModelReports\StoreReportReport;
-use App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages\ListStoresReport;
+use App\Filament\Resources\Reports\Pages\ListStoresReport;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\Store;

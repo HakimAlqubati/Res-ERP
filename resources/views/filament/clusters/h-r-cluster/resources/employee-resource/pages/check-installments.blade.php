@@ -1,35 +1,35 @@
 <x-filament-panels::page>
 
 
-    <x-filament-tables::table class="w-full text-sm text-left pretty  reports" style="padding-top: 200px;">
+    <table class="w-full text-sm text-left pretty  reports" style="padding-top: 200px;">
         <thead>
-            <x-filament-tables::row>
+            <tr>
                 <th>Installment ID</th>
                 <th>Installment Amount</th>
                 <th>Due Date</th>
                 <th>Is Paid</th>
-            </x-filament-tables::row>
+            </tr>
         </thead>
         <tbody>
 
             @foreach ($this->getTableQuery() as $item)
-                <x-filament-tables::row>
+                <tr>
 
-                    <x-filament-tables::cell>
+                    <td>
                         {{ $item->id }}
-                    </x-filament-tables::cell>
-                    <x-filament-tables::cell>
+                    </td>
+                    <td>
                         {{ $item->installment_amount }}
-                    </x-filament-tables::cell>
-                    <x-filament-tables::cell>
+                    </td>
+                    <td>
                         {{ $item->due_date }}
-                    </x-filament-tables::cell>
-                    <x-filament-tables::cell>
+                    </td>
+                    <td>
                         {{ $item->is_paid }}
-                    </x-filament-tables::cell>
+                    </td>
 
-                </x-filament-tables::row>
+                </tr>
             @endforeach
         </tbody>
-    </x-filament-tables::table>
+    </table>
 </x-filament-panels::page>

@@ -35,10 +35,10 @@
     @if ($storeId)
         @if (count($reportData) > 0)
             <div id="reportContent">
-                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border"
+                <table class="w-full text-sm text-left pretty reports table-striped border"
                     id="report-table">
                     <thead class="fixed-header">
-                        <x-filament-tables::row class="header_report">
+                        <tr class="header_report">
                             <th colspan="3"
                                 class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                             </th>
@@ -54,8 +54,8 @@
                                     src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
                                     class="logo-left circle-image">
                             </th>
-                        </x-filament-tables::row>
-                        <x-filament-tables::row>
+                        </tr>
+                        <tr>
                             <th>Product Code</th>
                             <th>Product Name</th>
                             <th>Unit Name</th>
@@ -67,50 +67,50 @@
                             <th id="totalPriceHeader" class="cursor-pointer select-none">
                                 Total Price <span id="sortIcon">⇅</span>
                             </th>
-                        </x-filament-tables::row>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach ($reportData as $productReport)
                             @foreach ($productReport as $data)
-                                <x-filament-tables::row>
-                                    <x-filament-tables::cell class="border px-4 py-2"
-                                        title="{{ $data['product_id'] }}">{{ $data['product_code'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell class="border px-4 py-2"
-                                        title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2">{{ $data['unit_name'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2">{{ $data['package_size'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2 text-red-600">{{ $data['ordered_quantity'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2 text-red-600">{{ $data['used_quantity'] ?? '-' }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2 font-bold">{{ $data['remaining_qty'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2 font-bold">{{  $data['price'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="border px-4 py-2 font-bold">{{  $data['total_price'] }}</x-filament-tables::cell>
-                                </x-filament-tables::row>
+                                <tr>
+                                    <td class="border px-4 py-2"
+                                        title="{{ $data['product_id'] }}">{{ $data['product_code'] }}</td>
+                                    <td class="border px-4 py-2"
+                                        title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</td>
+                                    <td
+                                        class="border px-4 py-2">{{ $data['unit_name'] }}</td>
+                                    <td
+                                        class="border px-4 py-2">{{ $data['package_size'] }}</td>
+                                    <td
+                                        class="border px-4 py-2 text-red-600">{{ $data['ordered_quantity'] }}</td>
+                                    <td
+                                        class="border px-4 py-2 text-red-600">{{ $data['used_quantity'] ?? '-' }}</td>
+                                    <td
+                                        class="border px-4 py-2 font-bold">{{ $data['remaining_qty'] }}</td>
+                                    <td
+                                        class="border px-4 py-2 font-bold">{{  $data['price'] }}</td>
+                                    <td
+                                        class="border px-4 py-2 font-bold">{{  $data['total_price'] }}</td>
+                                </tr>
                             @endforeach
                         @endforeach
                     </tbody>
                     @if (isset($showSmallestUnit) && $showSmallestUnit)
                         <tbody>
-                            <x-filament-tables::row class="fixed_footer">
-                                <x-filament-tables::cell colspan="7">
+                            <tr class="fixed_footer">
+                                <td colspan="7">
                                     <strong>Total </strong>
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border px-4 py-2 font-bold">
+                                </td>
+                                <td class="border px-4 py-2 font-bold">
                                     {{ $final_price }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border px-4 py-2 font-bold">
+                                </td>
+                                <td class="border px-4 py-2 font-bold">
                                     {{ $final_total_price }}
-                                </x-filament-tables::cell>
-                            </x-filament-tables::row>
+                                </td>
+                            </tr>
                         </tbody>
                     @endif
-                </x-filament-tables::table>
+                </table>
             </div>
 
             <div class="mt-4">

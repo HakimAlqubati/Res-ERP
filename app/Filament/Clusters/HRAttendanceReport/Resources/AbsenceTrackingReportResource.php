@@ -49,7 +49,7 @@ class AbsenceTrackingReportResource extends Resource
             ->emptyStateHeading('No data')
             ->columns([
                 // Define table columns here
-            ])
+            ])->deferFilters(false)
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                     ->select('name', 'id')

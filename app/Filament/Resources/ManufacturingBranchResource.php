@@ -30,6 +30,7 @@ use App\Models\Country;
 use App\Models\District;
 use App\Models\User; 
 use Filament\Facades\Filament;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -162,7 +163,7 @@ class ManufacturingBranchResource extends Resource
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                SpatieMediaLibraryFileUpload::make('images')
+                                FileUpload::make('images')
                                     ->disk('public')
                                     ->label('')
                                     ->directory('branches')

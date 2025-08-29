@@ -103,7 +103,7 @@ class DeliveredResellerOrdersResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->deferFilters(false)
             ->striped()
             ->paginated([10, 25, 50, 100])
             ->columns([

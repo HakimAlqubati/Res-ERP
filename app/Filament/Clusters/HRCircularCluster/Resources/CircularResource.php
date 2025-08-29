@@ -98,7 +98,7 @@ class CircularResource extends Resource
                                         ->columnSpanFull()
                                         ->imagePreviewHeight('250')
                                         ->image()
-                                        ->resize(5)
+                                        // ->resize(5)
                                         ->loadingIndicatorPosition('left')
                                     // ->panelAspectRatio('2:1')
                                         ->panelLayout('integrated')

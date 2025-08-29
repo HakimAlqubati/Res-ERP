@@ -1,5 +1,5 @@
 <?php
-namespace App\Filament\Clusters\HrServiceRequestCluster\Resources;
+namespace App\Filament\Clusters\HRServiceRequestCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
@@ -203,7 +203,7 @@ class ServiceRequestResource extends Resource
                         ->icon('heroicon-o-photo')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                self::getMediaSpatieField(),
+                                // self::getMediaSpatieField(),
                             ]),
                         ]),
                 ])->skippable()->columnSpanFull(),
@@ -488,7 +488,7 @@ class ServiceRequestResource extends Resource
                         return false;
                     })
                         ->schema([
-                            self::getMediaSpatieField(),
+                            // self::getMediaSpatieField(),
                         ])
                         ->action(function (array $data, $record): void {
                             // إضافة الصور إلى media collection
@@ -610,40 +610,40 @@ class ServiceRequestResource extends Resource
         return true;
     }
 
-    public static function getMediaSpatieField()
-    {
-        return SpatieMediaLibraryFileUpload::make('images')
-            ->disk('public')
-            ->label('')
-            ->directory('service-requests')
-            ->columnSpanFull()
-            ->image()
-            ->multiple()
-            ->downloadable()
-            ->appendFiles()
-            ->previewable()
-            ->imagePreviewHeight('250')
-            ->loadingIndicatorPosition('right')
-            ->panelLayout('integrated')
-            ->removeUploadedFileButtonPosition('right')
-            ->uploadButtonPosition('right')
-            ->uploadProgressIndicatorPosition('right')
-            ->panelLayout('grid')
-            ->reorderable()
-            ->openable()
-            ->downloadable(true)
-            ->previewable(true)
-            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                return (string) str($file->getClientOriginalName())->prepend('service-');
-            })
-            ->imageEditor()
-            ->imageEditorAspectRatios([
-                '16:9',
-                '4:3',
-                '1:1',
-            ])->maxSize(800)
-            ->imageEditorMode(2)
-            ->imageEditorEmptyFillColor('#fff000')
-            ->circleCropper();
-    }
+    // public static function getMediaSpatieField()
+    // {
+    //     return SpatieMediaLibraryFileUpload::make('images')
+    //         ->disk('public')
+    //         ->label('')
+    //         ->directory('service-requests')
+    //         ->columnSpanFull()
+    //         ->image()
+    //         ->multiple()
+    //         ->downloadable()
+    //         ->appendFiles()
+    //         ->previewable()
+    //         ->imagePreviewHeight('250')
+    //         ->loadingIndicatorPosition('right')
+    //         ->panelLayout('integrated')
+    //         ->removeUploadedFileButtonPosition('right')
+    //         ->uploadButtonPosition('right')
+    //         ->uploadProgressIndicatorPosition('right')
+    //         ->panelLayout('grid')
+    //         ->reorderable()
+    //         ->openable()
+    //         ->downloadable(true)
+    //         ->previewable(true)
+    //         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+    //             return (string) str($file->getClientOriginalName())->prepend('service-');
+    //         })
+    //         ->imageEditor()
+    //         ->imageEditorAspectRatios([
+    //             '16:9',
+    //             '4:3',
+    //             '1:1',
+    //         ])->maxSize(800)
+    //         ->imageEditorMode(2)
+    //         ->imageEditorEmptyFillColor('#fff000')
+    //         ->circleCropper();
+    // }
 }
