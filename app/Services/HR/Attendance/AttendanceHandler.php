@@ -196,8 +196,7 @@ class AttendanceHandler
                     $day,
                     $existAttendance,
                     $this->realAttendanceDate
-                ); 
-                dd($attendanceData);
+                );  
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                     return $attendanceData;
                 }
