@@ -75,7 +75,7 @@ class MonthSalaryResource extends Resource
         return $schema
             ->components([
 
-                Fieldset::make()->label('Set Branch, Month and payment date')->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->label('Set Branch, Month and payment date')->columns(3)->schema([
                     TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
                         ->disabled()
                         // ->extraAttributes(['class' => 'text-red-600'])
