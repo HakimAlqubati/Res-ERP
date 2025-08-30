@@ -44,7 +44,9 @@ class FifoInventoryReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->filters([
+        return $table
+        ->deferFilters(false)
+        ->filters([
 
 
             SelectFilter::make('product_id')

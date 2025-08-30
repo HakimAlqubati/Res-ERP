@@ -59,7 +59,9 @@
             "app/helpers.php",
             "app/auth_helpers.php",
             "app/attendance_helper.php",
-            "app/fifo_helpers.php"
+            "app/fifo_helpers.php",
+            "app/payroll_helper.php"
+
         ],
         "exclude-from-classmap": [
             "node_modules/",

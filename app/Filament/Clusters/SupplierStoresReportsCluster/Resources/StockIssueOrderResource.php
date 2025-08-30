@@ -62,7 +62,7 @@ class StockIssueOrderResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->label('')
+                Fieldset::make()->label('')->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         DatePicker::make('order_date')
@@ -220,7 +220,7 @@ class StockIssueOrderResource extends Resource
             ->recordActions([
                 ActionGroup::make([
 
-                    EditAction::make(),
+                    // EditAction::make(),
                     ViewAction::make(),
                     Action::make('cancelAndReverse')
                         ->label('Cancel & Reverse')
@@ -272,7 +272,7 @@ class StockIssueOrderResource extends Resource
         return [
             'index' => ListStockIssueOrders::route('/'),
             'create' => CreateStockIssueOrder::route('/create'),
-            'edit' => EditStockIssueOrder::route('/{record}/edit'),
+            // 'edit' => EditStockIssueOrder::route('/{record}/edit'),
             'view' => ViewStockIssueOrder::route('/{record}'),
 
         ];

@@ -63,7 +63,8 @@
             .tile-grid {
                 display: grid;
                 gap: 1rem;
-                justify-content: center;
+                place-items: center;
+                /* توسيط أفقي + عمودي */
             }
 
             @media (min-width: 1024px) {
@@ -93,13 +94,15 @@
                         <div class="badge">{{ \App\Models\Branch::count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.area-management.resources.countries.index') }}" class="quick-link">
+                    <a href="{{ route('filament.admin.area-management.resources.countries.index') }}"
+                        class="quick-link">
                         <x-heroicon-o-globe-alt />
                         <div class="label">{{ __('Area Management') }}</div>
                         <div class="badge">{{ \App\Models\Country::count() }}</div>
                     </a>
                 </div>
             </x-filament::fieldset>
+
 
             {{-- Inventory Section --}}
             <x-filament::fieldset label="{{ __('Inventory Management') }}">
@@ -122,19 +125,22 @@
                         <div class="badge">{{ \App\Models\Supplier::count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.supplier-stores-reports.resources.stores.index') }}" class="quick-link">
+                    <a href="{{ route('filament.admin.supplier-stores-reports.resources.stores.index') }}"
+                        class="quick-link">
                         <x-heroicon-o-home-modern />
                         <div class="label">{{ __('Stores') }}</div>
                         <div class="badge">{{ \App\Models\Store::count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.supplier.resources.purchase-invoices.index') }}" class="quick-link">
+                    <a href="{{ route('filament.admin.supplier.resources.purchase-invoices.index') }}"
+                        class="quick-link">
                         <x-heroicon-o-receipt-percent />
                         <div class="label">{{ __('Purchases') }}</div>
                         <div class="badge">{{ \App\Models\PurchaseInvoice::count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-report.index') }}" class="quick-link">
+                    <a href="{{ route('filament.admin.inventory-report.resources.inventory-report.index') }}"
+                        class="quick-link">
                         <x-heroicon-o-newspaper />
                         <div class="label">{{ __('Inventory') }}</div>
                     </a>
@@ -150,7 +156,8 @@
                         <div class="badge">{{ \App\Models\Employee::active()->count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.h-r-attenance.resources.attendnaces.index') }}" class="quick-link">
+                    <a href="{{ route('filament.admin.h-r-attenance.resources.attendnaces.index') }}"
+                        class="quick-link">
                         <x-heroicon-o-calendar-days />
                         <div class="label">{{ __('Attendance') }}</div>
                         <div class="badge">{{ \App\Models\Attendance::count() }}</div>
@@ -174,7 +181,8 @@
                         <div class="badge">{{ \App\Models\Circular::count() }}</div>
                     </a>
 
-                    <a href="{{ route('filament.admin.h-r-salary.resources.month-salaries.index') }}" class="quick-link">
+                    <a href="{{ route('filament.admin.h-r-salary.resources.month-salaries.index') }}"
+                        class="quick-link">
                         <x-heroicon-o-banknotes />
                         <div class="label">{{ __('Payroll') }}</div>
                         <div class="badge">{{ \App\Models\MonthSalary::count() }}</div>

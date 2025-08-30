@@ -56,7 +56,7 @@ class GeneralReportOfProductsResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->deferFilters(false)
             ->filters([
                 SelectFilter::make("branch_id")->placeholder('Select')
                     ->label(__('lang.branch'))

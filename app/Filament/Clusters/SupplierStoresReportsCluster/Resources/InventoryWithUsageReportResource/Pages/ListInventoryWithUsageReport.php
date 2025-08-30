@@ -23,6 +23,7 @@ class ListInventoryWithUsageReport extends ListRecords
             return ['storeId' => null, 'reportData' => [], 'pagination' => null];
         }
 
+        $productId = (int) $productId; 
         $reportService = new InventoryWithUsageReportService(
             storeId: $storeId,
             categoryId: $categoryId,

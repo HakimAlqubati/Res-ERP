@@ -46,7 +46,7 @@ class InventoryTransactionTruckingReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->deferFilters(false)
             ->filters([
 
                 SelectFilter::make("product_id")

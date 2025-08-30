@@ -49,7 +49,7 @@ class StockTransferOrderResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
-                    Grid::make()->schema([
+                    Grid::make()->columnSpanFull()->schema([
                         Select::make('from_store_id')
                             ->label('From Store')
                             ->options(Store::active()->get(['name', 'id'])->pluck('name', 'id'))
@@ -93,7 +93,7 @@ class StockTransferOrderResource extends Resource
                             ->columnSpanFull(),
                     ])->columns(4),
 
-                    Grid::make()->schema([
+                    Grid::make()->columnSpanFull()->schema([
                         Select::make('product_selector')
                             ->label('Add Products')
                             ->multiple()
@@ -154,7 +154,7 @@ class StockTransferOrderResource extends Resource
                                 $set('details', $details);
                             }),
 
-                        Repeater::make('details')
+                        Repeater::make('details')->columnSpanFull()
                             ->label('Transfer Details')
                             ->relationship()
                             ->schema([

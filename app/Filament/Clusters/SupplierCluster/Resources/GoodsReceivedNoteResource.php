@@ -178,7 +178,7 @@ class GoodsReceivedNoteResource extends Resource
                                             $unitPrice = UnitPrice::where(
                                                 'product_id',
                                                 $get('product_id')
-                                            ) 
+                                            )
                                                 ->where('unit_id', $state)->first();
                                             $set('package_size',  $unitPrice->package_size ?? 0);
                                         })->columnSpan(2)->required(),
@@ -212,7 +212,7 @@ class GoodsReceivedNoteResource extends Resource
                         ]),
 
 
-                ])
+                ])->columnSpanFull()
             ]);
     }
 

@@ -1100,7 +1100,7 @@ class ProductResource extends Resource
         $updatedUnits = array_map(function ($unit) use ($totalNetPrice) {
             $packageSize = $unit['package_size'] ?? 1;
             $basePrice   = $packageSize * $totalNetPrice;
-            $markup      = getDefaultSellingMarkup();
+            $markup      = 1;
             return array_merge($unit, [
                 'price'         => round($basePrice, 4),
                 'selling_price' => round($basePrice * (1 + $markup), 4),

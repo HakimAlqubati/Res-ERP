@@ -64,7 +64,7 @@ class ResellerSaleResource extends Resource
         return $schema
             ->components([
                 Fieldset::make(__('lang.reseller_sale_info'))->schema([
-                    Grid::make(2)->schema([
+                    Grid::make(2)->columnSpanFull()->schema([
                         Select::make('branch_id')
                             ->label(__('lang.reseller'))
                             ->options(
@@ -89,7 +89,7 @@ class ResellerSaleResource extends Resource
                 Repeater::make('items')
                     ->label(__('lang.items'))
                     ->relationship()
-                    ->defaultItems(1)
+                    ->defaultItems(1)->columnSpanFull()
                     ->columns(6)
                     ->disabledOn('edit')
                     ->columnSpanFull()

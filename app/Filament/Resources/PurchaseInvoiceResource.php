@@ -88,8 +88,8 @@ class PurchaseInvoiceResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(4)->schema([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
                             ->required(fn(): bool => settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false))
@@ -119,7 +119,7 @@ class PurchaseInvoiceResource extends Resource
 
 
                     ]),
-                    Grid::make()->columns(3)->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         Select::make('supplier_id')->label(__('lang.supplier'))
                             ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
@@ -161,7 +161,7 @@ class PurchaseInvoiceResource extends Resource
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
                         })->hiddenOn('view'),
-                    Repeater::make('units')->hiddenOn(['view', 'edit'])
+                    Repeater::make('units')->columnSpanFull()->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(9)
                         ->defaultItems(1)
