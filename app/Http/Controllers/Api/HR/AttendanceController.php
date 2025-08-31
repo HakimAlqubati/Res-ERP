@@ -28,22 +28,31 @@ class AttendanceController extends Controller
         $this->attendanceFetcher = new AttendanceFetcher(new EmployeePeriodHistoryService());
         $this->employeesAttendanceOnDateService = $employeesAttendanceOnDateService;
     }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'rfid'      => 'required|string|max:255',
-            'date_time' => 'nullable|date',
+            'rfid'        => 'nullable|string|max:255',
+            'employee_id' => 'nullable|integer|exists:employees,id',
+            'date_time'   => 'nullable|date',
         ]);
-
+    
+        // لازم واحد منهم يكون موجود
+        if (empty($validated['rfid']) && empty($validated['employee_id'])) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Either rfid or employee_id is required.',
+            ], 422);
+        }
+    
         $result = $this->attendanceService->handle($validated);
-
+    
         return response()->json([
-            'status'  => $result['success'] ? true : false,
+            'status'  => $result['success'],
             'message' => $result['message'],
             'data'    => $result['data'] ?? '',
         ], $result['success'] ? 200 : 422);
     }
+    
 
     public function employeeAttendance(Request $request)
     {
