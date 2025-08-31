@@ -325,28 +325,36 @@ class StockInventoryResource extends Resource
                                     // })
                                     ->afterStateUpdatedJs(<<<'JS'
                                     (async () => {
-                                        let data = ($get('rowInventoryCache') ?? {})[$state];
-                                        if (!data) {
-                                            const productId = $get('product_id');
-                                            const storeId   = $get('../../store_id');
-                                            data = await $wire.getInventoryRowData(productId, $state, storeId);
-                                            // خزّنه في الكاش حتى لا نعاود الطلب
-                                            const cache = $get('rowInventoryCache') ?? {};
-                                            cache[$state] = data ?? { package_size: 0, remaining_qty: 0 };
-                                            $set('rowInventoryCache', cache);
-                                        }
-                                
-                                        const pkg = Number(data?.package_size ?? 0);
-                                        const rem = Number(data?.remaining_qty ?? 0);
-                                
-                                        $set('package_size', pkg);
-                                        $set('system_quantity', rem);
+                                      let data = ($get('rowInventoryCache') ?? {})[$state];
+                                      if (!data) {
+                                        const productId = $get('product_id');
+                                        const storeId   = $get('../../store_id');
+                                        data = await $wire.getInventoryRowData(productId, $state, storeId);
+                                        const cache = $get('rowInventoryCache') ?? {};
+                                        cache[$state] = data ?? { package_size: 0, remaining_qty: 0 };
+                                        $set('rowInventoryCache', cache);
+                                      }
+                                    
+                                      const pkg = Number(data?.package_size ?? 0);
+                                      const rem = Number(data?.remaining_qty ?? 0);
+                                    
+                                      const prevSys = Number($get('system_quantity'));
+                                      const prevPh  = Number($get('physical_quantity'));
+                                      const userEdited = !Number.isNaN(prevPh) && prevPh !== prevSys;
+                                    
+                                      $set('package_size', pkg);
+                                      $set('system_quantity', rem);
+                                    
+                                      // لا تلمس physical إذا كان المستخدم عدّلها سابقًا
+                                      if (!userEdited) {
                                         $set('physical_quantity', rem);
-                                
-                                        const diff = +(Number($get('physical_quantity') ?? rem) - rem).toFixed(4);
-                                        $set('difference', diff);
+                                      }
+                                    
+                                      const ph = Number($get('physical_quantity') ?? rem);
+                                      $set('difference', +(ph - rem).toFixed(4));
                                     })();
-                                JS)
+                                    JS)
+                                    
 
                                     ->columnSpan(2)->required(),
                                 TextInput::make('package_size')->type('number')->readOnly()->columnSpan(1)
