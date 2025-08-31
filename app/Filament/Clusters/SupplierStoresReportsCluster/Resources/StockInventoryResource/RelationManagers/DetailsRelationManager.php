@@ -114,7 +114,7 @@ class DetailsRelationManager extends RelationManager
                             ->toArray();
 
                         return [
-                            Grid::make()->columns(2)->schema([
+                            Grid::make()->columns(2)->columnSpanFull()->schema([
                                 Select::make('reason_id')
                                     ->label('Reason')->default(StockAdjustmentReason::getFirstId())
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
@@ -149,7 +149,7 @@ class DetailsRelationManager extends RelationManager
                                     )->required(),
 
                             ]),
-                            Repeater::make('stock_adjustment_details')
+                            Repeater::make('stock_adjustment_details')->columnSpanFull()
                                 // ->relationship('details')
                                 ->schema([
                                     Grid::make()->columns(5)->schema([
