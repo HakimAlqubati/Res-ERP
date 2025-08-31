@@ -32,7 +32,7 @@ class AttendanceController extends Controller
     {
         $validated = $request->validate([
             'rfid'        => 'nullable|string|max:255',
-            'employee_id' => 'nullable|integer|exists:employees,id',
+            'employee_id' => 'nullable|integer|exists:hr_employees,id',
             'date_time'   => 'nullable|date',
         ]);
     
