@@ -187,7 +187,7 @@ class StockInventoryResource extends Resource
                                         $set('details', $details);
                                         
 
-                                        $set('details', $details);
+                                        // $set('details', $details);
                                     }) :
                                     Toggle::make('edit_enabled')
                                     ->label('Edit')
