@@ -44,7 +44,7 @@ class StockAdjustmentSummaryReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-
+            ->deferFilters(false)
             ->paginated(false)
             ->filters([
                 SelectFilter::make('product.category_id')
@@ -85,9 +85,8 @@ class StockAdjustmentSummaryReportResource extends Resource
                     ->label('To Date')
                     ->schema([
                         DatePicker::make('to_date')
-                        // ->maxDate(now())
-                        ->default(now())
-                        ,
+                            // ->maxDate(now())
+                            ->default(now()),
                     ])
                     ->indicateUsing(function (array $data): ?string {
                         return $data['to_date'] ? 'To: ' . $data['to_date'] : null;

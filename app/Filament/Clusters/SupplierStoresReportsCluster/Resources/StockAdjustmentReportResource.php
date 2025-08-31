@@ -55,7 +55,7 @@ class StockAdjustmentReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        return $table->striped()->deferFilters(false)
             ->columns([
                 TextColumn::make('id')->searchable()->label('ID')->toggleable()->sortable(),
                 TextColumn::make('product.code')->searchable()->label('Code')->toggleable()->sortable(),
