@@ -152,7 +152,7 @@ class DetailsRelationManager extends RelationManager
                             Repeater::make('stock_adjustment_details')->columnSpanFull()
                                 // ->relationship('details')
                                 ->schema([
-                                    Grid::make()->columns(5)->schema([
+                                    Grid::make()->columns(5)->columnSpanFull()->schema([
                                         Select::make('product_id')
                                             ->label('Product')
                                             ->required()->searchable()
