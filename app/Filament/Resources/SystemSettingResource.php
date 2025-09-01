@@ -2,6 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use App\Filament\Resources\SystemSettingResource\Pages\ListSystemSettings;
+use App\Filament\Resources\SystemSettingResource\Pages\CreateSystemSetting;
+use App\Filament\Resources\SystemSettingResource\Pages\EditSystemSetting;
 use App\Filament\Resources\SystemSettingResource\Pages;
 use App\Filament\Resources\SystemSettingResource\RelationManagers;
 use App\Models\SystemSetting;
@@ -9,7 +14,6 @@ use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Forms\Components\Toggle;
 // use Filament\Resources\Form;
 use Filament\Resources\Resource;
@@ -24,7 +28,7 @@ class SystemSettingResource extends Resource
 {
     protected static ?string $model = SystemSetting::class;
     protected static ?string $slug = 'system-settings';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getNavigationLabel(): string
     {
@@ -32,10 +36,10 @@ class SystemSettingResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('website_name')->label(__('system_settings.website_name')),
                 TextInput::make('currency_symbol')->label(__('system_settings.currency_symbol')),
                 TextInput::make('limit_days_orders')->numeric()->label(__('system_settings.limit_days_orders')),
@@ -80,10 +84,10 @@ class SystemSettingResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\DeleteBulkAction::make(),
             ]);
     }
@@ -98,9 +102,9 @@ class SystemSettingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListSystemSettings::route('/'),
-            'create' => Pages\CreateSystemSetting::route('/create'),
-            'edit' => Pages\EditSystemSetting::route('/{record}/edit'),
+            'index' => ListSystemSettings::route('/'),
+            'create' => CreateSystemSetting::route('/create'),
+            'edit' => EditSystemSetting::route('/{record}/edit'),
         ];
     }
     public static function canCreate(): bool

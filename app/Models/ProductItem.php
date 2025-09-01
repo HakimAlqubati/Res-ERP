@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
-class ProductItem extends Model implements \OwenIt\Auditing\Contracts\Auditable
+class ProductItem extends Model implements Auditable
 {
     use \OwenIt\Auditing\Auditable;
     protected $fillable = [

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\Pages;
 
+use App\Models\EmployeeAdvanceInstallment;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Resources\EmployeeResource;
 use App\Models\Employee;
@@ -14,7 +15,7 @@ class CheckInstallments extends Page
 
     protected static string $resource = EmployeeResource::class;
     protected static ?string $cluster = HRCluster::class;
-    protected static string $view = 'filament.clusters.h-r-cluster.resources.employee-resource.pages.check-installments';
+    protected string $view = 'filament.clusters.h-r-cluster.resources.employee-resource.pages.check-installments';
 
     public Employee $employee;
 
@@ -25,7 +26,7 @@ class CheckInstallments extends Page
 
     protected function getTableQuery()
     {
-        $query = \App\Models\EmployeeAdvanceInstallment::where('employee_id', $this->employee->id);
+        $query = EmployeeAdvanceInstallment::where('employee_id', $this->employee->id);
     
         return $query->get();
     }

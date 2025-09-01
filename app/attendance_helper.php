@@ -178,12 +178,12 @@ if (!function_exists('searchEmployeePeriod')) {
         }
 
         // Convert the input time to a Carbon instance
-        $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
+        $checkTime = Carbon::createFromFormat('H:i:s', $time);
 
         // Sort periods based on proximity to check-in or check-out
         $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
-            $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
-            $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
+            $startTime = Carbon::createFromFormat('H:i:s', $period->start_at);
+            $endTime = Carbon::createFromFormat('H:i:s', $period->end_at);
 
             if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
                 // For check-in, find the nearest start time
@@ -202,8 +202,8 @@ if (!function_exists('searchEmployeePeriod')) {
         }
 
         // Determine whether the check is early or late, and calculate the number of minutes
-        $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $nearestPeriod->start_at);
-        $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at);
+        $startTime = Carbon::createFromFormat('H:i:s', $nearestPeriod->start_at);
+        $endTime = Carbon::createFromFormat('H:i:s', $nearestPeriod->end_at);
 
         $minutesDifference = 0;
         $checkStatus = '';
@@ -257,12 +257,12 @@ if (!function_exists('attendanceEmployee')) {
         }
 
         // Convert the input time to a Carbon instance
-        $checkTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
+        $checkTime = Carbon::createFromFormat('H:i:s', $time);
 
         // Sort periods based on proximity to check-in or check-out
         $nearestPeriod = $periodsForDay->sortBy(function ($period) use ($checkTime, $checkType) {
-            $startTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->start_at);
-            $endTime = \Carbon\Carbon::createFromFormat('H:i:s', $period->end_at);
+            $startTime = Carbon::createFromFormat('H:i:s', $period->start_at);
+            $endTime = Carbon::createFromFormat('H:i:s', $period->end_at);
 
             if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
                 // For check-in, find the nearest start time
@@ -284,8 +284,8 @@ if (!function_exists('attendanceEmployee')) {
         $data = [];
         $data['period_id'] = $nearestPeriod->id;
         $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
-        $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-        $endTime = \Carbon\Carbon::parse($nearestPeriod->end_at);
+        $startTime = Carbon::parse($nearestPeriod->start_at);
+        $endTime = Carbon::parse($nearestPeriod->end_at);
 
         // Handle check-in scenario
         if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
@@ -317,7 +317,7 @@ if (!function_exists('attendanceEmployee')) {
                 ->first();
 
             if ($checkinRecord) {
-                $checkinTime = \Carbon\Carbon::parse($checkinRecord->check_time);
+                $checkinTime = Carbon::parse($checkinRecord->check_time);
 
                 // Calculate the actual duration (from check-in to check-out)
                 $actualDuration = $checkinTime->diff($checkTime);
@@ -1257,7 +1257,7 @@ if (!function_exists('timeToHoursForEarlyDeparture')) {
     {
         // Check if the time is in "H:i:s" format
         if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
-            $carbonTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
+            $carbonTime = Carbon::createFromFormat('H:i:s', $time);
 
             return $carbonTime->hour
                 + ($carbonTime->minute / 60)
@@ -1274,7 +1274,7 @@ if (!function_exists('timeToHoursForEarlyDeparture')) {
         }
 
         // If format is invalid
-        throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
+        throw new InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
     }
 }
 
@@ -1283,7 +1283,7 @@ if (!function_exists('timeToHoursForLateArrival')) {
     {
         // Check if the time is in "H:i:s" format
         if (preg_match('/^\d{1,2}:\d{1,2}:\d{1,2}$/', $time)) {
-            $carbonTime = \Carbon\Carbon::createFromFormat('H:i:s', $time);
+            $carbonTime = Carbon::createFromFormat('H:i:s', $time);
 
             return $carbonTime->hour
                 + ($carbonTime->minute / 60)
@@ -1300,6 +1300,6 @@ if (!function_exists('timeToHoursForLateArrival')) {
         }
 
         // If format is invalid
-        throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
+        throw new InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
     }
 }

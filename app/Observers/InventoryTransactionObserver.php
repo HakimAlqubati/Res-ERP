@@ -2,6 +2,8 @@
 
 namespace App\Observers;
 
+use App\Models\ProductItem;
+use Throwable;
 use App\Models\InventoryTransaction;
 use App\Models\PurchaseInvoice;
 use App\Services\ProductCostingService;
@@ -14,7 +16,7 @@ class InventoryTransactionObserver
 
         // ✅ تحديث أسعار المنتجات المركبة بعد إضافة حركة شراء جديدة
         if ($inventoryTransaction->movement_type === InventoryTransaction::MOVEMENT_IN && $inventoryTransaction->transactionable_type === PurchaseInvoice::class) {
-            $parentProducts = \App\Models\ProductItem::where('product_id', $inventoryTransaction->product_id)
+            $parentProducts = ProductItem::where('product_id', $inventoryTransaction->product_id)
                 ->pluck('parent_product_id')
                 ->unique();
 
@@ -28,7 +30,7 @@ class InventoryTransactionObserver
                 try {
                     // $count = \App\Services\ProductCostingService::updateComponentPricesForProduct($parentProductId);
                     // Log::info("✅ [InventoryTxn→PurchaseInvoice #{$inventoryTransaction->transactionable_id}] Updated {$count} components for composite product ID {$parentProductId}");
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     // Log::error("❌ Error updating costing for composite product ID {$parentProductId}: {$e->getMessage()}");
                 }
             }

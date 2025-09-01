@@ -65,9 +65,9 @@ class StockSupplyOrderDetail extends Model implements Auditable
             }
 
             // Subtract from inventory transactions
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id' => $stockSupplyDetail->product_id,
-                'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                'movement_type' => InventoryTransaction::MOVEMENT_IN,
                 'quantity' =>  $stockSupplyDetail->quantity,
                 'unit_id' => $stockSupplyDetail->unit_id,
                 'movement_date' => $stockSupplyDetail->order->date ?? now(),

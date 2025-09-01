@@ -1,17 +1,17 @@
 <?php
 namespace App\Filament\Traits\Forms;
 
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
 use App\Models\Branch;
 use Spatie\Permission\Models\Role as Role;
 use App\Models\User;
 use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
@@ -37,25 +37,25 @@ trait HasNewUserForm
                     Fieldset::make()->label('Personal data')->schema([
                         TextInput::make('name')->required()->unique(ignoreRecord: true),
                         TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-                        PhoneInput::make('phone_number')
-                        // ->numeric()
-                            ->initialCountry('MY')
-                            ->onlyCountries([
-                                'MY',
-                                'US',
-                                'YE',
-                                'AE',
-                                'SA',
-                            ])
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->displayNumberFormat(PhoneInputNumberType::E164)
-                            ->autoPlaceholder('aggressive')
-                        // ->validateFor(
-                        //     country: 'MY',
-                        //     lenient: true, // default: false
-                        // )
-                        ,
+                        // PhoneInput::make('phone_number')
+                        // // ->numeric()
+                        //     ->initialCountry('MY')
+                        //     ->onlyCountries([
+                        //         'MY',
+                        //         'US',
+                        //         'YE',
+                        //         'AE',
+                        //         'SA',
+                        //     ])
+                        //     ->required()
+                        //     ->unique(ignoreRecord: true)
+                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
+                        //     ->autoPlaceholder('aggressive')
+                        // // ->validateFor(
+                        // //     country: 'MY',
+                        // //     lenient: true, // default: false
+                        // // )
+                        // ,
                         Select::make('gender')
                             ->label('Gender')
                             ->options([

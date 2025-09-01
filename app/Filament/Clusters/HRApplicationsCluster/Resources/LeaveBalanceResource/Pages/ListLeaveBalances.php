@@ -2,17 +2,19 @@
 
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Exception;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use Filament\Actions;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Validation\Rules\Unique;
@@ -25,7 +27,7 @@ class ListLeaveBalances extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('Bulk create'),
+            CreateAction::make()->label('Bulk create'),
             Action::make('Individual create')
                 ->visible(function () {
                     if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
@@ -42,11 +44,11 @@ class ListLeaveBalances extends ListRecords
                         LeaveBalance::create($data); // Save the data to the database
 
                         Notification::make()->body('Leave balance created successfully.')->send(); // Success message
-                    } catch (\Exception $e) {
+                    } catch (Exception $e) {
                         Notification::make()->body('Error creating leave balance: ' . $e->getMessage())->send(); // Error message
                     }
                 })
-                ->form(function () {
+                ->schema(function () {
                     return [
                         Fieldset::make()->columns(5)->schema([
                             Select::make('employee_id')

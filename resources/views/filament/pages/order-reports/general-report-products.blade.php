@@ -1,13 +1,13 @@
 <x-filament::page>
     {{ $this->getTableFiltersForm() }}
     @if (isset($branch_id) && is_numeric($branch_id))
-        <x-filament-tables::table class="w-full text-sm text-left pretty  reports" id="report-table">
+        <table class="w-full text-sm text-left pretty  reports" id="report-table">
             <thead class="fixed-header" style="top:64px;">
 
 
 
 
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                         <p>{{ __('lang.general_report_of_products') }}</p>
                         <p>({{ isset($branch_id) && is_numeric($branch_id) ? \App\Models\Branch::find($branch_id)->name : __('lang.choose_branch') }})
@@ -22,42 +22,42 @@
                         class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
                         <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                     </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th>{{ __('lang.category') }}</th>
 
                     <th>{{ __('lang.quantity') }}</th>
                     @if (!isStoreManager())
                         <th>{{ __('lang.price') }}</th>
                     @endif
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
 
                 @foreach ($report_data as $data)
-                    <x-filament-tables::row>
+                    <tr>
 
-                        <x-filament-tables::cell>
+                        <td>
                             <a target="_blank" href="{{ url($data?->url_report_details) }}">
                                 {{ $data?->category }}</a>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $data?->quantity }} </x-filament-tables::cell>
+                        </td>
+                        <td> {{ $data?->quantity }} </td>
                         @if (!isStoreManager())
-                            <x-filament-tables::cell> {{  $data?->amount }}
-                            </x-filament-tables::cell>
+                            <td> {{  $data?->amount }}
+                            </td>
                         @endif
-                    </x-filament-tables::row>
+                    </tr>
                 @endforeach
                 @if (!isStoreManager())
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell> {{ __('lang.total') }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $total_quantity }} </x-filament-tables::cell>
-                        <x-filament-tables::cell> {{ $total_price }} </x-filament-tables::cell>
-                    </x-filament-tables::row>
+                    <tr>
+                        <td> {{ __('lang.total') }} </td>
+                        <td> {{ $total_quantity }} </td>
+                        <td> {{ $total_price }} </td>
+                    </tr>
                 @endif
             </tbody>
 
-        </x-filament-tables::table>
+        </table>
     @else
         <div class="please_select_message_div" style="text-align: center;">
 

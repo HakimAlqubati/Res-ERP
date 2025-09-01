@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Exception;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryTransaction;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class InventoryTransactionController extends Controller
             $transaction = InventoryTransaction::create($validated);
             DB::commit();
             return response()->json(['data' => $transaction, 'message' => 'Transaction created successfully'], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error creating transaction', 'error' => $e->getMessage()], 500);
         }
@@ -61,7 +62,7 @@ class InventoryTransactionController extends Controller
             $transaction->update($validated);
             DB::commit();
             return response()->json(['data' => $transaction, 'message' => 'Transaction updated successfully']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error updating transaction', 'error' => $e->getMessage()], 500);
         }
@@ -76,7 +77,7 @@ class InventoryTransactionController extends Controller
             $transaction->delete();
             DB::commit();
             return response()->json(['message' => 'Transaction deleted successfully']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Error deleting transaction', 'error' => $e->getMessage()], 500);
         }

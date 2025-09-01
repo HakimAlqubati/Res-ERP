@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
+class MonthSalary extends Model implements Auditable
 {
     use HasFactory, SoftDeletes,DynamicConnection, \OwenIt\Auditing\Auditable;
     protected $table = 'hr_month_salaries';
@@ -61,7 +63,7 @@ class MonthSalary extends Model implements \OwenIt\Auditing\Contracts\Auditable
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope('active', function (Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }

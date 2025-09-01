@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Imports\ImportCategories;
 use App\Imports\ImportItemTypes;
 use App\Imports\ImportProducts;
@@ -47,7 +48,7 @@ class ImportController extends Controller
          
         try {
             Excel::import(new ImportProducts, $request->file('file')->store('files'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Print or log the exception
             echo "Exception: " . $e->getMessage();
         }
@@ -60,7 +61,7 @@ class ImportController extends Controller
          
         try {
             Excel::import(new ImportPurchaseInvoiceDetails, $request->file('file')->store('files'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Print or log the exception
             echo "Exception: " . $e->getMessage();
         }
@@ -70,10 +71,10 @@ class ImportController extends Controller
 
     public function importCategories(Request $request)
     {
-         
+
         try {
             Excel::import(new ImportCategories, $request->file('file')->store('files'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Print or log the exception
             echo "Exception: " . $e->getMessage();
         }
@@ -86,7 +87,7 @@ class ImportController extends Controller
          
         try {
             Excel::import(new ImportUnits, $request->file('file')->store('files'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Print or log the exception
             echo "Exception: " . $e->getMessage();
         }
@@ -96,10 +97,10 @@ class ImportController extends Controller
 
     public function importItemTypes(Request $request)
     {
-         
+
         try {
             Excel::import(new ImportItemTypes, $request->file('file')->store('files'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Print or log the exception
             echo "Exception: " . $e->getMessage();
         }
@@ -109,10 +110,10 @@ class ImportController extends Controller
 
     public function importUnitPrices(Request $request)
     {
-         
+
         try {
             Excel::import(new ImportUnitPrices, $request->file('file')->store('files'));
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Print or log the exception
             echo "Exception: " . $e->getMessage();
         }

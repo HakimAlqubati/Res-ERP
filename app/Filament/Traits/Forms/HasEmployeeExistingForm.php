@@ -1,18 +1,18 @@
 <?php
 namespace App\Filament\Traits\Forms;
 
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Grid;
 use App\Models\Branch;
 use App\Models\Employee;
 use Spatie\Permission\Models\Role as Role;
 use App\Models\User;
 use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
@@ -77,23 +77,23 @@ trait HasEmployeeExistingForm
                     Grid::make()->columns(3)->schema([
                         TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                         TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email()->required(),
-                        PhoneInput::make('phone_number')->disabled()
-                        // ->numeric()
-                            ->initialCountry('MY')
-                            ->onlyCountries([
-                                'MY',
-                                'US',
-                                'YE',
-                                'AE',
-                                'SA',
-                            ])
-                            ->displayNumberFormat(PhoneInputNumberType::E164)
-                            ->autoPlaceholder('aggressive')
-                        // ->validateFor(
-                        //     country: 'MY',
-                        //     lenient: true, // default: false
-                        // )
-                        ,
+                        // PhoneInput::make('phone_number')->disabled()
+                        // // ->numeric()
+                        //     ->initialCountry('MY')
+                        //     ->onlyCountries([
+                        //         'MY',
+                        //         'US',
+                        //         'YE',
+                        //         'AE',
+                        //         'SA',
+                        //     ])
+                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
+                        //     ->autoPlaceholder('aggressive')
+                        // // ->validateFor(
+                        // //     country: 'MY',
+                        // //     lenient: true, // default: false
+                        // // )
+                        // ,
 
                     ]),
                     Fieldset::make()->columns(3)->label('Set user type, role and manager')->schema([

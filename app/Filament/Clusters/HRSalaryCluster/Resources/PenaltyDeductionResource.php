@@ -1,6 +1,23 @@
 <?php
 namespace App\Filament\Clusters\HRSalaryCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Tables\Columns\TextColumn;
+use App\Models\User;
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Throwable;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages\ListPenaltyDeductions;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages\CreatePenaltyDeduction;
+use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages\EditPenaltyDeduction;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalaryCluster\Resources\PenaltyDeductionResource\Pages;
 use App\Models\Deduction;
@@ -8,9 +25,6 @@ use App\Models\Employee;
 use App\Models\PenaltyDeduction;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
@@ -28,10 +42,10 @@ class PenaltyDeductionResource extends Resource
     protected static ?int $navigationSort                         = 9;
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->label('')->columns(4)->schema([
-                    Forms\Components\Select::make('year')
+                    Select::make('year')
                         ->options([
                             date('Y') - 1 => date('Y') - 1,
                             date('Y')     => date('Y'),
@@ -40,7 +54,7 @@ class PenaltyDeductionResource extends Resource
                         ->default(date('Y'))
                         ->required(),
 
-                    Forms\Components\Select::make('month')
+                    Select::make('month')
                         ->options(getMonthArrayWithKeys())
                         ->default(date('m'))
                         ->required(),
@@ -65,7 +79,7 @@ class PenaltyDeductionResource extends Resource
                         ->searchable()
                         ->preload()->live()
                         ->required(),
-                    Forms\Components\Select::make('deduction_id')->label('Deduction')
+                    Select::make('deduction_id')->label('Deduction')
                         ->live()->afterStateUpdated(function ($get, $set, $state) {
                         $deduction     = Deduction::find($state);
                         $defaultAmount = 0;
@@ -84,7 +98,7 @@ class PenaltyDeductionResource extends Resource
                 Fieldset::make()->label('')->columns(4)->schema([
 
                     DatePicker::make('date')->label('Date')->default(now()->toDateString())->maxDate(now()->toDateString()),
-                    Forms\Components\Select::make('deduction_type')
+                    Select::make('deduction_type')
                         ->options(PenaltyDeduction::getDeductionTypeOptions())->default(PenaltyDeduction::DEDUCTION_TYPE_FIXED_AMOUNT)
                         ->required()
                         ->live()
@@ -94,7 +108,7 @@ class PenaltyDeductionResource extends Resource
                             }
                         }),
 
-                    Forms\Components\TextInput::make('percentage')->label('Specify percentage')
+                    TextInput::make('percentage')->label('Specify percentage')
                         ->helperText('Percentage of employee basic salary')
                         ->visible(fn($get): bool => $get('deduction_type') == PenaltyDeduction::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE)
                         ->numeric()->minValue(0.5)
@@ -111,7 +125,7 @@ class PenaltyDeductionResource extends Resource
                         ->numeric()
                         ->required(),
 
-                    Forms\Components\Textarea::make('description')
+                    Textarea::make('description')
                         ->label('Reason')->columnSpanFull()
                         ->required(),
                 ]),
@@ -123,32 +137,32 @@ class PenaltyDeductionResource extends Resource
         return $table->defaultSort('id', 'desc')->striped()
             ->recordUrl(null)
             ->columns([
-                Tables\Columns\TextColumn::make('id')
+                TextColumn::make('id')
                     ->alignCenter(true)->label('ID#')->searchable()->wrap()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('employee.name')
+                TextColumn::make('employee.name')
                     ->label('Employee')
                     ->searchable()->toggleable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('deduction.name')
+                TextColumn::make('deduction.name')
                     ->label('Deduction')
                     ->searchable()->toggleable()
 
                     ->sortable(),
-                Tables\Columns\TextColumn::make('penalty_amount')
+                TextColumn::make('penalty_amount')
                     ->label('Amount')->toggleable()
                     // ->money('MY')
                     ->alignCenter(true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('month')
+                TextColumn::make('month')
                     ->label('Month')
                     ->getStateUsing(function ($record) {
                         return getMonthArrayWithKeys()[$record->month];
                     })->toggleable()
                     ->alignCenter(true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()->toggleable()
                     ->alignCenter(true)
                     ->color(fn(string $state): string => match ($state) {
@@ -157,14 +171,14 @@ class PenaltyDeductionResource extends Resource
                         'pending'                         => 'warning',
                     })
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date')->toggleable()
+                TextColumn::make('date')->toggleable()
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_by')
+                TextColumn::make('created_by')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->formatStateUsing(fn($record) => $record->created_by ? \App\Models\User::find($record->created_by)?->name : '-')
+                    ->formatStateUsing(fn($record) => $record->created_by ? User::find($record->created_by)?->name : '-')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->toggleable()
+                TextColumn::make('created_at')->toggleable()
                     ->date()
                     ->sortable(),
             ])
@@ -174,9 +188,9 @@ class PenaltyDeductionResource extends Resource
                 SelectFilter::make('deduction_id')
                     ->options(Deduction::penalty()->get()->pluck('name', 'id')),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()->visible(fn($record): bool => $record->status == PenaltyDeduction::STATUS_PENDING),
-                Tables\Actions\Action::make('approve')
+            ->recordActions([
+                EditAction::make()->visible(fn($record): bool => $record->status == PenaltyDeduction::STATUS_PENDING),
+                Action::make('approve')
                     ->requiresConfirmation()->button()
                     ->color('success')
                     ->icon('heroicon-o-check')
@@ -188,23 +202,23 @@ class PenaltyDeductionResource extends Resource
                             $record->approvePenalty(auth()->id(), now());
                             showSuccessNotifiMessage('Done');
                             DB::commit();
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             DB::rollBack();
                             showWarningNotifiMessage('Faild', $th->getMessage());
                             throw $th;
                         }
                     }),
-                Tables\Actions\Action::make('reject')->button()
+                Action::make('reject')->button()
                     ->requiresConfirmation()
                     ->color('danger')
                     ->icon('heroicon-o-x-mark')
                     ->visible(fn($record) => $record->status === 'pending')
-                    ->form([
-                        Forms\Components\DateTimePicker::make('rejected_at')
+                    ->schema([
+                        DateTimePicker::make('rejected_at')
                             ->label('Rejected At')
                             ->default(now())
                             ->required(),
-                        Forms\Components\Textarea::make('rejected_reason')
+                        Textarea::make('rejected_reason')
                             ->label('Rejection Reason')
                             ->required()
                             ->maxLength(255),
@@ -215,16 +229,16 @@ class PenaltyDeductionResource extends Resource
                             $record->rejectPenalty(auth()->id(), $data['rejected_reason'], $data['rejected_at']);
                             showSuccessNotifiMessage('Done');
                             DB::commit();
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             DB::rollBack();
                             showWarningNotifiMessage('Failed', $th->getMessage());
                             throw $th;
                         }
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

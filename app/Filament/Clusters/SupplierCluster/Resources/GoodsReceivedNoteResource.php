@@ -2,6 +2,23 @@
 
 namespace App\Filament\Clusters\SupplierCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\EditAction;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\Action;
+use Throwable;
+use App\Models\InventoryTransaction;
+use Exception;
+use Filament\Actions\BulkActionGroup;
+use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages\ListGoodsReceivedNotes;
+use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages\CreateGoodsReceivedNote;
+use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages\EditGoodsReceivedNote;
+use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages\EditGoodsReceivedNoteV3;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\RelationManagers;
@@ -13,18 +30,13 @@ use App\Models\Supplier;
 use App\Models\UnitPrice;
 
 use Filament\Forms;
-use Filament\Forms\Components\Card;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -41,9 +53,9 @@ class GoodsReceivedNoteResource extends Resource
 {
     protected static ?string $model = GoodsReceivedNote::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
 
     public static function getNavigationLabel(): string
@@ -62,13 +74,13 @@ class GoodsReceivedNoteResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        $isEditOperation = $form->getOperation() == 'edit';
+        $isEditOperation = $schema->getOperation() == 'edit';
 
-        return $form
-            ->schema([
-                Card::make([
+        return $schema
+            ->components([
+                Section::make([
                     Grid::make(3)
                         ->schema([
                             TextInput::make('grn_number')
@@ -153,7 +165,7 @@ class GoodsReceivedNoteResource extends Resource
                                     Select::make('unit_id')
                                         ->label(__('lang.unit'))
                                         ->options(function (callable $get) {
-                                            $product = \App\Models\Product::find($get('product_id'));
+                                            $product = Product::find($get('product_id'));
                                             if (!$product)
                                                 return [];
 
@@ -162,11 +174,11 @@ class GoodsReceivedNoteResource extends Resource
                                         })
                                         // ->searchable()
                                         ->reactive()
-                                        ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                        ->afterStateUpdated(function (Set $set, $state, $get) {
                                             $unitPrice = UnitPrice::where(
                                                 'product_id',
                                                 $get('product_id')
-                                            ) 
+                                            )
                                                 ->where('unit_id', $state)->first();
                                             $set('package_size',  $unitPrice->package_size ?? 0);
                                         })->columnSpan(2)->required(),
@@ -200,7 +212,7 @@ class GoodsReceivedNoteResource extends Resource
                         ]),
 
 
-                ])
+                ])->columnSpanFull()
             ]);
     }
 
@@ -249,8 +261,8 @@ class GoodsReceivedNoteResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make()
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn($record): bool => $record->status == GoodsReceivedNote::STATUS_CREATED),
                 // Tables\Actions\Action::make('Reject')
                 //     ->label('Reject')
@@ -285,14 +297,14 @@ class GoodsReceivedNoteResource extends Resource
                 //         ]);
                 //     })
                 //     ->requiresConfirmation(),
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('cancel')
+                ActionGroup::make([
+                    Action::make('cancel')
                         ->label('Cancel')->button()
                         ->color('danger')
                         ->icon('heroicon-o-x-circle')
                         ->requiresConfirmation()
-                        ->form([
-                            Forms\Components\Textarea::make('reason')
+                        ->schema([
+                            Textarea::make('reason')
                                 ->label('Cancellation Reason')
                                 ->required()
                                 ->rows(3)->columnSpanFull(),
@@ -311,7 +323,7 @@ class GoodsReceivedNoteResource extends Resource
                                 }
                                 if ($result['status'])
                                     showSuccessNotifiMessage('Success', $result['message']);
-                            } catch (\Throwable $e) {
+                            } catch (Throwable $e) {
                                 DB::rollBack();
                                 showWarningNotifiMessage('Error', $e->getMessage());
                                 DB::rollBack();
@@ -319,7 +331,7 @@ class GoodsReceivedNoteResource extends Resource
                             }
                         })
                         ->visible(fn(GoodsReceivedNote $record) => ! $record->cancelled),
-                    Tables\Actions\Action::make('create_inventory')
+                    Action::make('create_inventory')
                         ->label('Create Inventory')
                         ->icon('heroicon-o-plus-circle')->button()
                         ->color('success')
@@ -332,9 +344,9 @@ class GoodsReceivedNoteResource extends Resource
                                     $notes .= ' in (' . $record->store->name . ')';
                                 }
                                 foreach ($record->grnDetails as $detail) {
-                                    \App\Models\InventoryTransaction::moveToStore([
+                                    InventoryTransaction::moveToStore([
                                         'product_id' => $detail->product_id,
-                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
                                         'quantity' => $detail->quantity,
                                         'unit_id' => $detail->unit_id,
                                         'package_size' => $detail->package_size,
@@ -348,13 +360,13 @@ class GoodsReceivedNoteResource extends Resource
                                 }
                                 DB::commit();
                                 showSuccessNotifiMessage('Done');
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 DB::rollBack();
                                 showWarningNotifiMessage($e->getMessage());
                             }
                         })->hidden()
                 ]),
-                Tables\Actions\Action::make('Approve')
+                Action::make('Approve')
                     ->label(fn($record): string =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? 'Approved' : 'Approve')
                     ->disabled(fn($record): bool =>  $record->status == GoodsReceivedNote::STATUS_APPROVED ? true : false)
                     ->color('success')->button()
@@ -368,7 +380,7 @@ class GoodsReceivedNoteResource extends Resource
                         ]);
                     })
                     ->requiresConfirmation(),
-                Tables\Actions\Action::make('CreatePurchaseInvoice')
+                Action::make('CreatePurchaseInvoice')
                     ->label('Input Prices')
                     ->color('primary')
                     ->icon('heroicon-o-clipboard-document-check')
@@ -383,8 +395,8 @@ class GoodsReceivedNoteResource extends Resource
                     }),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
@@ -400,11 +412,11 @@ class GoodsReceivedNoteResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListGoodsReceivedNotes::route('/'),
-            'create' => Pages\CreateGoodsReceivedNote::route('/create'),
-            'edit' => Pages\EditGoodsReceivedNote::route('/{record}/edit'),
+            'index' => ListGoodsReceivedNotes::route('/'),
+            'create' => CreateGoodsReceivedNote::route('/create'),
+            'edit' => EditGoodsReceivedNote::route('/{record}/edit'),
             // 'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV2::route('/{record}/create-purchase-invoice'),
-            'create-purchase-invoice' => Pages\EditGoodsReceivedNoteV3::route('/{record}/create-purchase-invoice'),
+            'create-purchase-invoice' => EditGoodsReceivedNoteV3::route('/{record}/create-purchase-invoice'),
         ];
     }
 
@@ -416,9 +428,9 @@ class GoodsReceivedNoteResource extends Resource
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListGoodsReceivedNotes::class,
-            Pages\CreateGoodsReceivedNote::class,
-            Pages\EditGoodsReceivedNote::class,
+            ListGoodsReceivedNotes::class,
+            CreateGoodsReceivedNote::class,
+            EditGoodsReceivedNote::class,
         ]);
     }
 

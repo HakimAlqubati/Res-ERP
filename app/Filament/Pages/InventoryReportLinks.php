@@ -24,10 +24,10 @@ use Illuminate\Contracts\Support\Htmlable;
 
 class InventoryReportLinks extends Page
 {
-    protected static ?string $navigationIcon  = 'heroicon-o-squares-2x2';
+    protected static string | \BackedEnum | null $navigationIcon  = 'heroicon-o-squares-2x2';
     protected static ?string $navigationLabel = 'Inventory Reports';
     protected static ?string $slug            = 'inventory-reports-links';
-    protected static string $view             = 'filament.pages.inventory-report-links';
+    protected string $view             = 'filament.pages.inventory-report-links';
 
     public function getTitle(): string | Htmlable
     {

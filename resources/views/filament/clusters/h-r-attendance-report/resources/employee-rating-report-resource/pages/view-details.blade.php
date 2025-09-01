@@ -1,10 +1,10 @@
 <x-filament-panels::page>
 
-    <x-filament-tables::table class="w-full text-sm text-left pretty  ">
+    <table class="w-full text-sm text-left pretty  ">
         <thead>
 
 
-            <x-filament-tables::row>
+            <tr>
                 <th>
                     <p>
                         Employee no: {{ $employee_data?->employee_no }}
@@ -20,27 +20,27 @@
                         Branch: {{ $employee_data?->branch?->name }}
                     </p>
                 </th>
-            </x-filament-tables::row>
-            <x-filament-tables::row>
+            </tr>
+            <tr>
                 <th>{{ 'Task id' }}</th>
                 <th>{{ 'Rating value' }}</th>
                 <th>{{ 'Rater comment' }}</th>
-            </x-filament-tables::row>
+            </tr>
         </thead>
         <tbody>
             @foreach ($data as $item)
-                <x-filament-tables::row>
-                    <x-filament-tables::cell> {{ $item->task_id }} </x-filament-tables::cell>
+                <tr>
+                    <td> {{ $item->task_id }} </td>
 
-                    <x-filament-tables::cell> {{ $item->rating_value }} /10</x-filament-tables::cell>
+                    <td> {{ $item->rating_value }} /10</td>
 
-                    <x-filament-tables::cell> {{ $item->ratter_comment }} </x-filament-tables::cell>
+                    <td> {{ $item->ratter_comment }} </td>
 
-                </x-filament-tables::row>
+                </tr>
             @endforeach
         </tbody>
 
-    </x-filament-tables::table>
+    </table>
 
 
 </x-filament-panels::page>

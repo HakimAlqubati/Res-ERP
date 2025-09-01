@@ -2,6 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Actions\Action;
+use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf;
+use App\Filament\Resources\DeliveredResellerOrdersResource\Pages\ListDeliveredResellerOrders;
+use App\Filament\Resources\DeliveredResellerOrdersResource\Pages\ViewDeliveredResellerOrders;
 use App\Filament\Clusters\HRServiceRequestCluster\Resources\ServiceRequestResource\RelationManagers\LogsRelationManager;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Clusters\ResellersCluster\Resources\DeliveredResellerOrdersResource\RelationManagers\PaymentsRelationManager;
@@ -14,13 +23,9 @@ use App\Models\Order;
 use App\Models\Store;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -35,10 +40,10 @@ class DeliveredResellerOrdersResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = ResellersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
     public static function getNavigationBadge(): ?string
     {
@@ -68,10 +73,10 @@ class DeliveredResellerOrdersResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columnSpanFull()->schema([
                     Grid::make()->columns(3)->schema([
                         Select::make('branch_id')->required()
@@ -80,7 +85,7 @@ class DeliveredResellerOrdersResource extends Resource
                         DatePicker::make('delivered_at')
                             ->label(__('lang.delivered_at'))
                             ->visibleOn('view'),
-                        Forms\Components\DateTimePicker::make('created_at')
+                        DateTimePicker::make('created_at')
                             ->label(__('lang.created_at')),
                         Select::make('stores')->multiple()->required()
                             ->label(__('lang.store'))
@@ -98,7 +103,7 @@ class DeliveredResellerOrdersResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->deferFilters(false)
             ->striped()
             ->paginated([10, 25, 50, 100])
             ->columns([
@@ -163,7 +168,7 @@ class DeliveredResellerOrdersResource extends Resource
                     ->state(function ($record) {
                         return optional(
                             $record->logs()
-                                ->where('new_status', \App\Models\Order::DELEVIRED)
+                                ->where('new_status', Order::DELEVIRED)
                                 ->latest('created_at')
                                 ->first()
                         )?->created_at;
@@ -175,16 +180,16 @@ class DeliveredResellerOrdersResource extends Resource
                     ->state(function ($record) {
                         return optional(
                             $record->logs()
-                                ->where('new_status', \App\Models\Order::DELEVIRED)
+                                ->where('new_status', Order::DELEVIRED)
                                 ->latest('created_at')
                                 ->with('creator')
                                 ->first()
                         )?->creator?->name;
                     }),
             ])
-            ->actions([
+            ->recordActions([
 
-                Tables\Actions\Action::make('print_delivery_order')
+                Action::make('print_delivery_order')
                     ->label(__('Print Delivery Order'))
                     ->icon('heroicon-o-printer')->button()
                     ->color('gray')
@@ -203,7 +208,7 @@ class DeliveredResellerOrdersResource extends Resource
                         //     return null;
                         // }
 
-                        $pdf = \Mccarlosen\LaravelMpdf\Facades\LaravelMpdf::loadView('export.delivery_order', compact('deliveryInfo'));
+                        $pdf = LaravelMpdf::loadView('export.delivery_order', compact('deliveryInfo'));
 
                         return response()->streamDownload(
                             fn() => print($pdf->output()),
@@ -211,13 +216,13 @@ class DeliveredResellerOrdersResource extends Resource
                         );
                     }),
 
-                Tables\Actions\Action::make('add_payment')->button()
+                Action::make('add_payment')->button()
                     ->label(__('Add Payment'))
                     ->icon('heroicon-o-banknotes')
                     ->visible(fn(): bool => isSuperAdmin())
                     ->color('success')
                     ->modalHeading('Add Payment to Order')
-                    ->form([
+                    ->schema([
                         Fieldset::make()->columns(2)->schema([
                             TextInput::make('amount')
                                 ->label('Amount')
@@ -275,8 +280,8 @@ class DeliveredResellerOrdersResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDeliveredResellerOrders::route('/'),
-            'view' => Pages\ViewDeliveredResellerOrders::route('/{record}'),
+            'index' => ListDeliveredResellerOrders::route('/'),
+            'view' => ViewDeliveredResellerOrders::route('/{record}'),
         ];
     }
 

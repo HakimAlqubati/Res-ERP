@@ -2,6 +2,7 @@
 
 namespace App\Services\Analytics;
 
+use Illuminate\Support\Collection;
 use App\Models\Branch;
 use App\Models\Order;
 use Carbon\Carbon;
@@ -16,10 +17,8 @@ class BranchConsumptionAnalysisService
      * @param array $categoryIds
      * @param string $startDate
      * @param string $endDate
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
-
-
     public function getBranchConsumption(
         $productIds = [],
         $categoryIds = [],

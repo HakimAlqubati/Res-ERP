@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Collection;
+use Throwable;
+use App\Services\WrongStoreProductReportService;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\StockIssueOrder;
@@ -48,7 +51,7 @@ class TestController8 extends Controller
         }
         return $allocations;
     }
-    protected function getMergedAndSortedTransactions(): \Illuminate\Support\Collection
+    protected function getMergedAndSortedTransactions(): Collection
     {
         $merged = collect();
 
@@ -100,7 +103,7 @@ class TestController8 extends Controller
                 'status' => 'success',
                 'message' => "✅ GRN #$grnId prices synced successfully.",
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => '❌ Error syncing GRN prices.',
@@ -118,7 +121,7 @@ class TestController8 extends Controller
                 'status' => 'success',
                 'message' => '✅ All GRNs synced successfully.',
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => '❌ Error syncing all GRNs.',
@@ -157,7 +160,7 @@ class TestController8 extends Controller
         );
     }
 
-    public function wrongStoreReport(\App\Services\WrongStoreProductReportService $reportService)
+    public function wrongStoreReport(WrongStoreProductReportService $reportService)
     {
         $movementType = request()->get('movement_type', 'in'); // 'in' or 'out'
         $report = $reportService->getReport($movementType);
@@ -243,7 +246,7 @@ class TestController8 extends Controller
                    'status' => true,
                 'message' => 'تم حفظ الحركات بنجاح.',
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'status' => false,
                 'message' => $e->getMessage(),

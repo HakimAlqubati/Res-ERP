@@ -1,8 +1,9 @@
 <?php
 
 namespace App\Filament\Pages\Auth;
-use Filament\Pages\Auth\Login as BaseLogin;
-class CustomLogin extends BaseLogin
+use Filament\Auth\Pages\Login;
+
+class CustomLogin extends Login
 {
-    protected static string $view = 'filament.login';
+    // protected static string $view = 'filament.login';
 }

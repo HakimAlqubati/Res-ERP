@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use Exception;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\Http\Controllers\Controller;
 use App\Services\PurchasedReports\PurchaseInvoiceReportService;
 use Carbon\Carbon;
@@ -33,7 +35,7 @@ class PurchaseReportController extends Controller
             if ($dateTo) {
                 $dateTo = Carbon::createFromFormat('d-m-Y', $dateTo)->format('Y-m-d');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['status' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
         }
 
@@ -51,12 +53,12 @@ class PurchaseReportController extends Controller
             $categoryIds,
             $perPage
         );
-        $totalPages = $data['results'] instanceof \Illuminate\Pagination\LengthAwarePaginator
+        $totalPages = $data['results'] instanceof LengthAwarePaginator
         ? $data['results']->lastPage()
         : 1;
         return response()->json([
             'status'                 => true,
-            'itemCount'              => $data['results'] instanceof \Illuminate\Pagination\LengthAwarePaginator
+            'itemCount'              => $data['results'] instanceof LengthAwarePaginator
             ? $data['results']->total()
             : (is_countable($data['results']) ? count($data['results']) : 0),
             'itemCountInCurrentPage' => is_countable($data['results']) ? count($data['results']) : 0,

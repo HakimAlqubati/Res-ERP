@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Exception;
 use App\Http\Resources\UserResource;
 use App\Mail\MailableOtp;
 use App\Models\EmailOtp;
@@ -77,7 +79,7 @@ class AuthController extends Controller
         $request->validate(['username' => 'required|email']);
 
         $email = $request->input('username');
-        $user = \App\Models\User::where('email', $email)->first();
+        $user = User::where('email', $email)->first();
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
@@ -112,7 +114,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid or expired OTP'], 401);
         }
 
-        $user = \App\Models\User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
@@ -156,7 +158,7 @@ class AuthController extends Controller
                 //     'branch_name' => $user->branch->name,
                 // ]
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update branch',

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Services\FifoMethodService;
+use App\Services\CopyOrderOutToBranchStoreService;
 use App\Models\Scopes\OrderScopes;
 use App\Services\ProductCostingService;
 use Exception;
@@ -182,8 +184,8 @@ class Order extends Model implements Auditable
             $this->save();
 
             // Delete related inventory transactions
-            \App\Models\InventoryTransaction::where('transactionable_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
+            InventoryTransaction::where('transactionable_id', $this->id)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->delete();
 
             DB::commit();
@@ -205,7 +207,7 @@ class Order extends Model implements Auditable
             // Send notification to users with role ID = 5
             DB::afterCommit(function () use ($order) {
 
-                $storeUsers = \App\Models\User::stores()->whereNotNull('fcm_token')->get();
+                $storeUsers = User::stores()->whereNotNull('fcm_token')->get();
                 foreach ($storeUsers as $user) {
                     sendNotification(
                         $user->fcm_token,
@@ -242,7 +244,7 @@ class Order extends Model implements Auditable
                 $order->getOriginal('status') !== self::READY_FOR_DELEVIRY
             ) {
                 foreach ($order->orderDetails as $detail) {
-                    $fifoService = new \App\Services\FifoMethodService($order);
+                    $fifoService = new FifoMethodService($order);
 
                     $allocations = $fifoService->getAllocateFifo(
                         $detail->product_id,
@@ -297,7 +299,7 @@ class Order extends Model implements Auditable
 
         static::saved(function (Order $order) {
             if (in_array($order->status, [Order::READY_FOR_DELEVIRY, Order::DELEVIRED])) {
-                app(\App\Services\CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
+                app(CopyOrderOutToBranchStoreService::class)->handleForOrder($order);
             }
         });
     }
@@ -307,9 +309,9 @@ class Order extends Model implements Auditable
     {
         $order = $detail->order;
         foreach ($allocations as $alloc) {
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
@@ -335,9 +337,9 @@ class Order extends Model implements Auditable
         $targetStoreId = $order->branch->store->id;
 
         foreach ($allocations as $alloc) {
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                'movement_type'        => InventoryTransaction::MOVEMENT_IN,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],
@@ -360,17 +362,17 @@ class Order extends Model implements Auditable
         $branchStoreId = $order->branch?->store_id;
         if ($branchStoreId) {
             // ✅ إذا يوجد مخزن للفرع، نقوم بإنشاء أمر تحويل مخزني معتمد
-            $transferOrder = \App\Models\StockTransferOrder::create([
+            $transferOrder = StockTransferOrder::create([
                 'from_store_id' => $allocations[0]['store_id'], // نفترض الكل من نفس المخزن
                 'to_store_id'   => $branchStoreId,
                 'date'          => $order->order_date ?? now(),
-                'status'        => \App\Models\StockTransferOrder::STATUS_APPROVED,
+                'status'        => StockTransferOrder::STATUS_APPROVED,
                 'notes'         => "Auto transfer for Order #{$order->id}",
             ]);
 
             foreach ($allocations as $alloc) {
                 // تفاصيل التحويل
-                \App\Models\StockTransferOrderDetail::create([
+                StockTransferOrderDetail::create([
                     'stock_transfer_order_id' => $transferOrder->id,
                     'product_id'              => $detail->product_id,
                     'unit_id'                 => $alloc['target_unit_id'],

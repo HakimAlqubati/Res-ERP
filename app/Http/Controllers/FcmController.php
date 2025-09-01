@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\Fcm\FcmRepository;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Google\Client as GoogleClient;
@@ -21,7 +23,7 @@ class FcmController extends Controller
             ], 401);
         }
 
-        $fcmRepository = new \App\Repositories\Fcm\FcmRepository();
+        $fcmRepository = new FcmRepository();
         $success = $fcmRepository->updateDeviceToken($user->id, $request->fcm_token);
 
         if ($success) {
@@ -45,7 +47,7 @@ class FcmController extends Controller
             'body' => 'required|string',
         ]);
 
-        $user = \App\Models\User::find($request->user_id);
+        $user = User::find($request->user_id);
         $fcm = $user->fcm_token;
 
         if (!$fcm) {

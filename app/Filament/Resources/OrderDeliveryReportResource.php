@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Resources\OrderDeliveryReportResource\Pages\DeliveryAndInvoicingReportPage;
+use App\Filament\Resources\OrderDeliveryReportResource\Pages\SalesAndPaymentsReportPage;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\OrderDeliveryReportResource\Pages;
 use Filament\Resources\Resource;
 use App\Models\Order;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Navigation\NavigationItem; // <-- أضف هذا الاستيراد
 
 class OrderDeliveryReportResource extends Resource
@@ -21,7 +23,7 @@ class OrderDeliveryReportResource extends Resource
 
     // 👇 تضمين داخل نفس الـ Cluster
     protected static ?string $cluster = ResellersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
 
 
@@ -29,8 +31,8 @@ class OrderDeliveryReportResource extends Resource
     {
         return [
             // المسارات تبقى كما هي
-            'index' => Pages\DeliveryAndInvoicingReportPage::route('/'),
-            'sales-payments' => Pages\SalesAndPaymentsReportPage::route('/sales-payments'),
+            'index' => DeliveryAndInvoicingReportPage::route('/'),
+            'sales-payments' => SalesAndPaymentsReportPage::route('/sales-payments'),
         ];
     }
 
@@ -39,13 +41,13 @@ class OrderDeliveryReportResource extends Resource
     {
         return [
             NavigationItem::make('Delivery & Invoicing')
-                ->url(Pages\DeliveryAndInvoicingReportPage::getUrl())
+                ->url(DeliveryAndInvoicingReportPage::getUrl())
                 ->icon('heroicon-o-truck')
                 ->group('Reports')->openUrlInNewTab()
                 ->sort(1),
 
             NavigationItem::make('Sales & Payments')
-                ->url(Pages\SalesAndPaymentsReportPage::getUrl())
+                ->url(SalesAndPaymentsReportPage::getUrl())
                 ->icon('heroicon-o-currency-dollar')
                 ->group('Reports')
                 ->openUrlInNewTab()

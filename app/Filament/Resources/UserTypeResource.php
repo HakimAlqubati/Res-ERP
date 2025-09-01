@@ -2,13 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\UserTypeResource\Pages\ListUserTypes;
+use App\Filament\Resources\UserTypeResource\Pages\CreateUserType;
+use App\Filament\Resources\UserTypeResource\Pages\EditUserType;
 use App\Filament\Resources\UserTypeResource\Pages;
 use App\Filament\Resources\UserTypeResource\RelationManagers;
 use App\Models\Role;
 use App\Models\UserType;
 use Filament\Forms;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -19,24 +30,24 @@ class UserTypeResource extends Resource
 {
     protected static ?string $model = UserType::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $slug = 'user-types';
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
+        return $schema
+            ->components([
+                TextInput::make('name')
                 ->required()
                 ->maxLength(255),
 
-            Forms\Components\Textarea::make('description'),
+            Textarea::make('description'),
 
             Select::make('role_ids')
             ->label('Roles')
             ->options(\Spatie\Permission\Models\Role::get()->pluck('name','id'))->multiple()->required(),
             
 
-            Forms\Components\Toggle::make('active')
+            Toggle::make('active')
                 ->label('Is Active')
                 ->default(true),
             ]);
@@ -46,21 +57,21 @@ class UserTypeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->sortable(),
-                Tables\Columns\TextColumn::make('name')->searchable(),
-                Tables\Columns\TextColumn::make('role_names')->label('Roles'),
-                Tables\Columns\IconColumn::make('active')->boolean(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime(),
+                TextColumn::make('id')->sortable(),
+                TextColumn::make('name')->searchable(),
+                TextColumn::make('role_names')->label('Roles'),
+                IconColumn::make('active')->boolean(),
+                TextColumn::make('created_at')->dateTime(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -75,9 +86,9 @@ class UserTypeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListUserTypes::route('/'),
-            'create' => Pages\CreateUserType::route('/create'),
-            'edit' => Pages\EditUserType::route('/{record}/edit'),
+            'index' => ListUserTypes::route('/'),
+            'create' => CreateUserType::route('/create'),
+            'edit' => EditUserType::route('/{record}/edit'),
         ];
     }
 }

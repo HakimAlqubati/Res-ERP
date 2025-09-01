@@ -2,6 +2,18 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\BulkAction;
+use Filament\Schemas\Components\Grid;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use App\Models\StockInventory;
+use App\Models\InventoryTransaction;
+use App\Services\FifoMethodService;
+use Throwable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use App\Models\Product;
 use App\Models\StockAdjustment;
 use App\Models\StockAdjustmentDetail;
@@ -13,10 +25,8 @@ use App\Models\StockSupplyOrderDetail;
 use App\Models\Store;
 use App\Services\MultiProductsInventoryService;
 use Filament\Forms;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -34,32 +44,32 @@ class DetailsRelationManager extends RelationManager
     protected static string $relationship = 'details';
     protected static ?string $title = '';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([]);
+        return $schema
+            ->components([]);
     }
 
     public function table(Table $table): Table
     {
         return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('product.name')->searchable()->toggleable()
+                TextColumn::make('product.name')->searchable()->toggleable()
                     ->getStateUsing(function ($record) {
                         $product = $record->product;
                         return $product ? "{$product->code}-{$product->name}" : 'N/A';
                     }),
-                Tables\Columns\TextColumn::make('unit.name')->searchable()->toggleable(),
-                Tables\Columns\TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size'))->toggleable(),
-                Tables\Columns\TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable()
+                TextColumn::make('unit.name')->searchable()->toggleable(),
+                TextColumn::make('package_size')->alignCenter(true)->label(__('lang.package_size'))->toggleable(),
+                TextColumn::make('system_quantity')->alignCenter(true)->toggleable()->sortable()
                     ->label('System Qty'),
-                Tables\Columns\TextColumn::make('physical_quantity')
+                TextColumn::make('physical_quantity')
                     ->label('Physical Qty')
                     ->alignCenter(true)->toggleable()->sortable(),
-                Tables\Columns\TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
+                TextColumn::make('difference')->alignCenter(true)->toggleable()->sortable(),
                 IconColumn::make('is_adjustmented')->boolean()->alignCenter(true)->label(__('stock.is_adjustmented'))
                     ->toggleable()->sortable(),
-                Tables\Columns\TextColumn::make('remaining_quantity')->label('Real Qty in Stock')
+                TextColumn::make('remaining_quantity')->label('Real Qty in Stock')
                     ->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $product = $record->product;
@@ -84,14 +94,14 @@ class DetailsRelationManager extends RelationManager
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
 
-            ->bulkActions([
-                Tables\Actions\BulkAction::make('createStockAdjustment')
-                    ->form(function (Collection $records) {
+            ->toolbarActions([
+                BulkAction::make('createStockAdjustment')
+                    ->schema(function (Collection $records) {
 
                         $defaultValues = $records
                             ->filter(fn($record) => !$record->is_adjustmented)
@@ -104,8 +114,8 @@ class DetailsRelationManager extends RelationManager
                             ->toArray();
 
                         return [
-                            Grid::make()->columns(2)->schema([
-                                Forms\Components\Select::make('reason_id')
+                            Grid::make()->columns(2)->columnSpanFull()->schema([
+                                Select::make('reason_id')
                                     ->label('Reason')->default(StockAdjustmentReason::getFirstId())
                                     ->options(StockAdjustmentReason::active()->pluck('name', 'id'))->searchable()
                                     ->required()
@@ -125,7 +135,7 @@ class DetailsRelationManager extends RelationManager
                                             $set("stock_adjustment_details.{$index}.notes", $note);
                                         }
                                     }),
-                                Forms\Components\Select::make('store_id')
+                                Select::make('store_id')
                                     ->label(__('lang.store'))
                                    
                                     ->default(function () {
@@ -139,11 +149,11 @@ class DetailsRelationManager extends RelationManager
                                     )->required(),
 
                             ]),
-                            Repeater::make('stock_adjustment_details')
+                            Repeater::make('stock_adjustment_details')->columnSpanFull()
                                 // ->relationship('details')
                                 ->schema([
-                                    Grid::make()->columns(5)->schema([
-                                        Forms\Components\Select::make('product_id')
+                                    Grid::make()->columns(5)->columnSpanFull()->schema([
+                                        Select::make('product_id')
                                             ->label('Product')
                                             ->required()->searchable()
                                             ->options(function () {
@@ -168,14 +178,14 @@ class DetailsRelationManager extends RelationManager
                                             })
                                             ->getOptionLabelUsing(fn($value): ?string => Product::find($value)?->code . ' - ' . Product::find($value)?->name)
                                             ->columnSpan(2),
-                                        Forms\Components\Select::make('unit_id')
+                                        Select::make('unit_id')
                                             ->label('Unit')
                                             ->required()
                                             ->options($records->pluck('unit.name', 'unit_id')->toArray()),
-                                        Forms\Components\TextInput::make('quantity')
+                                        TextInput::make('quantity')
                                             ->minValue(0)
                                             ->required(),
-                                        Forms\Components\TextInput::make('package_size')
+                                        TextInput::make('package_size')
                                             ->required(),
 
                                     ]),
@@ -221,21 +231,21 @@ class DetailsRelationManager extends RelationManager
                                     'created_by' => auth()->id(),
                                     'adjustment_date' => now(),
                                     'source_id' => $records->first()->stock_inventory_id ?? null,
-                                    'source_type' => \App\Models\StockInventory::class,
+                                    'source_type' => StockInventory::class,
                                 ]);
                                 $notes = "Stock adjustment for product ({$stockAdjustment->product->name}) "
                                     . "in unit '{$stockAdjustment->unit->name}' at store '{$stockAdjustment->store->name}', "
                                     . "adjusted by " . auth()->user()?->name . " on " . now()->format('Y-m-d H:i');
 
                                 $type = $detail['quantity'] > 0
-                                    ? \App\Models\InventoryTransaction::MOVEMENT_IN
-                                    : \App\Models\InventoryTransaction::MOVEMENT_OUT;
+                                    ? InventoryTransaction::MOVEMENT_IN
+                                    : InventoryTransaction::MOVEMENT_OUT;
 
                                 if ($type == 'in') {
 
-                                    \App\Models\InventoryTransaction::create([
+                                    InventoryTransaction::create([
                                         'product_id' => $detail['product_id'],
-                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
                                         'quantity' => abs((float) $detail['quantity']),
                                         'unit_id' => $detail['unit_id'],
                                         'movement_date' => now(),
@@ -245,10 +255,10 @@ class DetailsRelationManager extends RelationManager
                                         'price' => getUnitPrice($detail['product_id'], $detail['unit_id']), // إن أحببت
                                         'notes' => $notes,
                                         'transactionable_id' => $stockAdjustment->id,
-                                        'transactionable_type' => \App\Models\StockAdjustmentDetail::class,
+                                        'transactionable_type' => StockAdjustmentDetail::class,
                                     ]);
                                 } else {
-                                    $fifoService = new \App\Services\FifoMethodService($stockAdjustment);
+                                    $fifoService = new FifoMethodService($stockAdjustment);
                                     $allocations = $fifoService->getAllocateFifo(
                                         $detail['product_id'],
                                         $detail['unit_id'],
@@ -320,7 +330,7 @@ class DetailsRelationManager extends RelationManager
                             }
                             showSuccessNotifiMessage('done', 'Stock adjustment created successfully.');
                             DB::commit();
-                        } catch (\Throwable $th) {
+                        } catch (Throwable $th) {
                             //throw $th;
                             DB::rollBack();
                             showWarningNotifiMessage('Faild', $th->getMessage());
@@ -328,9 +338,9 @@ class DetailsRelationManager extends RelationManager
                     })
                     ->color('success')->icon('heroicon-o-plus')
                     ->deselectRecordsAfterCompletion(),
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
-                        ->action(function (Collection $records, Tables\Actions\DeleteBulkAction $action) {
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()
+                        ->action(function (Collection $records, DeleteBulkAction $action) {
                             $nonAdjustmented = $records->filter(fn($record) => !$record->is_adjustmented);
                             $adjustmented = $records->filter(fn($record) => $record->is_adjustmented);
 
@@ -354,9 +364,9 @@ class DetailsRelationManager extends RelationManager
     public static function moveFromInventory($allocations, $detail)
     {
         foreach ($allocations as $alloc) {
-            \App\Models\InventoryTransaction::create([
+            InventoryTransaction::create([
                 'product_id'           => $detail->product_id,
-                'movement_type'        => \App\Models\InventoryTransaction::MOVEMENT_OUT,
+                'movement_type'        => InventoryTransaction::MOVEMENT_OUT,
                 'quantity'             => $alloc['deducted_qty'],
                 'unit_id'              => $alloc['target_unit_id'],
                 'package_size'         => $alloc['target_unit_package_size'],

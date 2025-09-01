@@ -11,7 +11,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListReturnedOrderReports extends ListRecords
 {
     protected static string $resource = ReturnedOrderReportResource::class;
-    protected static string $view = 'filament.pages.order-reports.returned-orders-report';
+    protected string $view = 'filament.pages.order-reports.returned-orders-report';
     public function getViewData(): array
     {
         $branchId = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? null;

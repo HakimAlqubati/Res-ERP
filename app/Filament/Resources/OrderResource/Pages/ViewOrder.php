@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\OrderResource\Pages;
 
+use Filament\Actions\EditAction;
+use Filament\Actions\Action;
 use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Pages\Actions\Action;
-use Filament\Pages\Actions\EditAction;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 
 class ViewOrder extends ViewRecord

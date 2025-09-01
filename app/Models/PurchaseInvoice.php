@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Services\ProductCostingService;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -65,8 +66,8 @@ class PurchaseInvoice extends Model implements Auditable
     /**
      * Scope to filter purhchase invoices with details only.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeWithDetails($query)
     {
@@ -136,9 +137,9 @@ class PurchaseInvoice extends Model implements Auditable
     public function getHasInventoryTransactionAttribute(): bool
     {
         // تحقق من الإدخالات المباشرة
-        $hasDirectInventory = \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+        $hasDirectInventory = InventoryTransaction::where('transactionable_type', self::class)
             ->where('transactionable_id', $this->id)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->exists();
 
         if ($hasDirectInventory) {
@@ -149,9 +150,9 @@ class PurchaseInvoice extends Model implements Auditable
         $grn = $this->grn;
 
         if ($grn) {
-            return \App\Models\InventoryTransaction::where('transactionable_type', \App\Models\GoodsReceivedNote::class)
+            return InventoryTransaction::where('transactionable_type', GoodsReceivedNote::class)
                 ->where('transactionable_id', $grn->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                 ->exists();
         }
 
@@ -168,7 +169,7 @@ class PurchaseInvoice extends Model implements Auditable
 
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
     public function getCreatorNameAttribute()
     {

@@ -6,7 +6,7 @@ use Filament\Clusters\Cluster;
 
 class HrClusteReport extends Cluster
 {
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-squares-2x2';
     protected static ?string $clusterBreadcrumb = 'HR';
     public static function getNavigationLabel(): string
     {

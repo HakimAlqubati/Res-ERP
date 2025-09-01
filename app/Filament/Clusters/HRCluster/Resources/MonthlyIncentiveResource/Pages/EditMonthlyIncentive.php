@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRCluster\Resources\MonthlyIncentiveResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditMonthlyIncentive extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
     protected function getRedirectUrl(): string

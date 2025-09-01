@@ -2,6 +2,10 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages\ListEmployeeAbsentReports;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 use App\Models\Attendance;
@@ -9,8 +13,6 @@ use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -24,7 +26,7 @@ class EmployeeAbsentsReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label = 'Absence Report';
@@ -32,12 +34,12 @@ class EmployeeAbsentsReportResource extends Resource
     // {
     //     return isStuff() ? 'My attendance' : 'Attendance by employee';
     // }
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -61,7 +63,7 @@ class EmployeeAbsentsReportResource extends Resource
                         }
                     })
                     ->searchable(),
-                    Filter::make('filter_date')->label('')->form([
+                    Filter::make('filter_date')->label('')->schema([
                         DatePicker::make('date')
                             ->label('Date')->default(date('Y-m-d')),
                         TimePicker::make('current_time')
@@ -72,8 +74,8 @@ class EmployeeAbsentsReportResource extends Resource
                     ]),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
             ;
     }
@@ -95,7 +97,7 @@ class EmployeeAbsentsReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployeeAbsentReports::route('/'),
+            'index' => ListEmployeeAbsentReports::route('/'),
         ];
     }
 

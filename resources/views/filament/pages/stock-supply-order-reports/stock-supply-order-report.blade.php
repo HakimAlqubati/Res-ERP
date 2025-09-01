@@ -24,9 +24,9 @@
     @if (!empty($store))
         @if ($store && !empty($reportData))
 
-            <x-filament-tables::table class="w-full text-sm text-left border reports table-striped" id="report-table">
+            <table class="w-full text-sm text-left border reports table-striped" id="report-table">
                 <thead class="fixed-header" style="top:64px;">
-                    <x-filament-tables::row class="header_report">
+                    <tr class="header_report">
                         <th class="no_border_right text-center">
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo"
                                 class="logo-img-report circle-image">
@@ -40,29 +40,29 @@
                         <th class="no_border_left text-center">
                             <img class="circle-image" src="{{ asset('storage/workbench.png') }}" alt="">
                         </th>
-                    </x-filament-tables::row>
-                    <x-filament-tables::row class="bg-blue-50 text-xs text-gray-700">
+                    </tr>
+                    <tr class="bg-blue-50 text-xs text-gray-700">
                         <th class="px-4 py-2">Product</th>
                         <th class="px-4 py-2">Product Code</th>
                         <th class="px-4 py-2">Unit</th>
                         <th class="px-4 py-2">Total Quantity</th>
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
                 <tbody>
                     @foreach ($reportData as $row)
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell
-                                class="border px-4 py-1 text-center">{{ $row['product_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell
-                                class="border px-4 py-1 text-center">{{ $row['product_code'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell
-                                class="border px-4 py-1 text-center">{{ $row['unit_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell
-                                class="border px-4 py-1 text-center">{{ $row['total_quantity'] }}</x-filament-tables::cell>
-                        </x-filament-tables::row>
+                        <tr>
+                            <td
+                                class="border px-4 py-1 text-center">{{ $row['product_name'] }}</td>
+                            <td
+                                class="border px-4 py-1 text-center">{{ $row['product_code'] }}</td>
+                            <td
+                                class="border px-4 py-1 text-center">{{ $row['unit_name'] }}</td>
+                            <td
+                                class="border px-4 py-1 text-center">{{ $row['total_quantity'] }}</td>
+                        </tr>
                     @endforeach
                 </tbody>
-            </x-filament-tables::table>
+            </table>
         @else
             <div class="please_select_message_div text-center">
                 <h1 class="please_select_message_text">No supply data found for store ({{ $store }}).</h1>

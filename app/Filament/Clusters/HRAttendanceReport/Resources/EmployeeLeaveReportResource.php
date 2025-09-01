@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Actions\Action;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRTaskReport;
 use App\Models\Branch;
@@ -16,10 +18,8 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Colors\Color;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\TextColumn\TextColumnSize;
 use Filament\Tables\Enums\FiltersLayout;
@@ -32,12 +32,12 @@ class EmployeeLeaveReportResource extends Resource
 {
     protected static ?string $model = Task::class;
     protected static ?string $slug = 'employee-leave-report';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRTaskReport::class;
     protected static ?string $label = 'Employee leave';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
 
     public static function table(Table $table): Table
@@ -113,10 +113,10 @@ class EmployeeLeaveReportResource extends Resource
                     ->searchable(),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 Action::make('details')->hidden()
 
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         // Retrieve installments for the given advance_id
                         $installments = EmployeeApplication::find($record->advance_id)->advanceInstallments;
 

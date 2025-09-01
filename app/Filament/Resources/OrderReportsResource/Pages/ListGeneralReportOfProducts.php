@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\OrderReportsResource\Pages;
 
+use stdClass;
+use Filament\Actions\Action;
 use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
 
 use App\Models\Branch;
@@ -14,17 +16,16 @@ use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Support\Facades\DB;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
-use Filament\Pages\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 
 class ListGeneralReportOfProducts extends ListRecords
 {
     protected static string $resource = GeneralReportOfProductsResource::class;
-    protected static string $view = 'filament.pages.order-reports.general-report-products';
+    protected string $view = 'filament.pages.order-reports.general-report-products';
 
 
 
-    public function getTableRecordKey(Model $record): string
+    public function getTableRecordKey(Model|array $record): string
     {
         $attributes = $record->getAttributes();
         return $attributes['category_id'];
@@ -135,7 +136,7 @@ class ListGeneralReportOfProducts extends ListRecords
         $total_price = 0;
         $total_quantity = 0;
         foreach ($categories as $cat_id => $cat_name) {
-            $obj = new \stdClass();
+            $obj = new stdClass();
             $obj->category_id = $cat_id;
             $obj->url_report_details = "admin/general-report-products/details/$cat_id?start_date=$start_date&end_date=$end_date&branch_id=$branch_id&category_id=$cat_id'";
             $obj->category = $cat_name;

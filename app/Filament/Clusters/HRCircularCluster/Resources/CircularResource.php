@@ -2,24 +2,32 @@
 
 namespace App\Filament\Clusters\HRCircularCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages\ListCirculars;
+use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages\CreateCircular;
+use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages\EditCircular;
+use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages\ViewCircular;
 use App\Filament\Clusters\HRCircularCluster;
 use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages;
 use App\Models\Branch;
 use App\Models\Circular;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -29,20 +37,20 @@ class CircularResource extends Resource
 {
     protected static ?string $model = Circular::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRCircularCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?string $modelLabel = 'Engagement';
     protected static ?string $pluralLabel = 'Engagement';
 
     protected static ?int $navigationSort = 1;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('Basic data')
+                    Step::make('Basic data')
                         ->schema([
                             Fieldset::make()->schema([
                                 Grid::make()->columns(2)->schema([
@@ -77,7 +85,7 @@ class CircularResource extends Resource
                                 ]),
                             ]),
                         ]),
-                    Wizard\Step::make('Images')->hiddenOn('view')
+                    Step::make('Images')->hiddenOn('view')
                         ->schema([
                             Fieldset::make()->label('')->schema([
 
@@ -90,7 +98,7 @@ class CircularResource extends Resource
                                         ->columnSpanFull()
                                         ->imagePreviewHeight('250')
                                         ->image()
-                                        ->resize(5)
+                                        // ->resize(5)
                                         ->loadingIndicatorPosition('left')
                                     // ->panelAspectRatio('2:1')
                                         ->panelLayout('integrated')
@@ -132,7 +140,7 @@ class CircularResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('viewGallery')
                     ->hidden(function ($record) {
                         return $record->photos_count <= 0 ? true : false;
@@ -152,11 +160,11 @@ class CircularResource extends Resource
                         return view('filament.resources.circulars.gallery', ['photos' => $record->photos]);
                     }),
                 // Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make(),
+                ViewAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -171,10 +179,10 @@ class CircularResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCirculars::route('/'),
-            'create' => Pages\CreateCircular::route('/create'),
-            'edit' => Pages\EditCircular::route('/{record}/edit'),
-            'view' => Pages\ViewCircular::route('/{record}'),
+            'index' => ListCirculars::route('/'),
+            'create' => CreateCircular::route('/create'),
+            'edit' => EditCircular::route('/{record}/edit'),
+            'view' => ViewCircular::route('/{record}'),
         ];
     }
 

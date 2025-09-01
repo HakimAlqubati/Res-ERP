@@ -1,6 +1,28 @@
 <?php
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use DateTime;
+use DateInterval;
+use Filament\Schemas\Components\Grid;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\Action;
+use Filament\Support\Enums\Size;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\BulkAction;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages\ListEmployeeOvertimes;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages\CreateEmployeeOvertime;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages;
 use App\Models\Branch;
@@ -8,8 +30,6 @@ use App\Models\Employee;
 use App\Models\EmployeeOvertime;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -19,11 +39,7 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
-use Filament\Support\Enums\ActionSize;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
@@ -42,7 +58,7 @@ class EmployeeOvertimeResource extends Resource
 {
     protected static ?string $model = EmployeeOvertime::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster                             = HRAttenanceCluster::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -68,10 +84,10 @@ class EmployeeOvertimeResource extends Resource
         return isStuff() ? 'My Overtime' : 'Staff Overtime';
     }
     protected static ?int $navigationSort = 10;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema(
+        return $schema
+            ->components(
                 [
 
                     Fieldset::make()
@@ -474,7 +490,7 @@ class EmployeeOvertimeResource extends Resource
             ])
             ->selectable()
             ->filters([
-                Tables\Filters\TrashedFilter::make()->visible(fn(): bool => isSuperAdmin()),
+                TrashedFilter::make()->visible(fn(): bool => isSuperAdmin()),
                 SelectFilter::make('branch_id')
                     ->label('Branch')->multiple()
                     ->options(Branch::where('active', 1)->get()->pluck('name', 'id')),
@@ -488,7 +504,7 @@ class EmployeeOvertimeResource extends Resource
                     ),
 
                 Filter::make('date')
-                    ->form([
+                    ->schema([
                         DatePicker::make('created_from')
                             ->label('From')->default(null)
                             ->placeholder('From'),
@@ -519,10 +535,10 @@ class EmployeeOvertimeResource extends Resource
                     ->hidden(fn() => isStuff() || isMaintenanceManager())
                     ->searchable(),
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 Action::make('Edit')->visible(fn(): bool => (isSuperAdmin() || isBranchManager()))
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         return [
                             TextInput::make('hours')->default($record->hours),
                         ];
@@ -554,7 +570,7 @@ class EmployeeOvertimeResource extends Resource
                 })
                     ->button()
                     ->requiresConfirmation()
-                    ->size(ActionSize::Small)
+                    ->size(Size::Small)
                     ->hidden(function ($record) {
                         // if ($record->approved == 1) {
                         //     return true;
@@ -573,16 +589,16 @@ class EmployeeOvertimeResource extends Resource
                     }),
 
                 ActionGroup::make([
-                    Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\ForceDeleteAction::make()->visible(fn(): bool => (isSuperAdmin())),
-                    Tables\Actions\RestoreAction::make()->visible(fn(): bool => (isSuperAdmin())),
+                    DeleteAction::make(),
+                    ForceDeleteAction::make()->visible(fn(): bool => (isSuperAdmin())),
+                    RestoreAction::make()->visible(fn(): bool => (isSuperAdmin())),
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
-                    Tables\Actions\RestoreBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
+                    RestoreBulkAction::make()->visible(fn(): bool => (isSuperAdmin())),
                     BulkAction::make('Approve')
                         ->requiresConfirmation()
                         ->icon('heroicon-o-check-badge')

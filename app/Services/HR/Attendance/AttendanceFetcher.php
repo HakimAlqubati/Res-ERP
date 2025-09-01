@@ -18,8 +18,8 @@ class AttendanceFetcher
             ->get();
             // dd($attendances,$employee,$closestPeriod,$date,$day);
         if ($attendances->count() === 0) {
-            $previousDate    = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
-            $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
+            $previousDate    = Carbon::parse($date)->subDay()->format('Y-m-d');
+            $previousDayName = Carbon::parse($date)->subDay()->format('l');
 
             $attendanceInPreviousDay = Attendance::where('employee_id', $employee->id)
                 ->where('accepted', 1)

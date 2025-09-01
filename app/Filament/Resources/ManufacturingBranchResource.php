@@ -1,30 +1,45 @@
 <?php
+
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use App\Models\Store;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Resources\ManufacturingBranchResource\Pages\ListManufacturingBranches;
+use App\Filament\Resources\ManufacturingBranchResource\Pages\CreateManufacturingBranch;
+use App\Filament\Resources\ManufacturingBranchResource\Pages\EditManufacturingBranch;
 use App\Filament\Clusters\ManufacturingBranchesCluster;
 use App\Filament\Resources\ManufacturingBranchResource\Pages;
 use App\Models\Branch;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\District;
-use App\Models\User;
-use ArberMustafa\FilamentLocationPickrField\Forms\Components\LocationPickr;
+use App\Models\User; 
 use Filament\Facades\Filament;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -36,10 +51,10 @@ class ManufacturingBranchResource extends Resource
 {
     protected static ?string $model = Branch::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster                             = ManufacturingBranchesCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 0;
     public static function getPluralLabel(): ?string
     {
@@ -63,13 +78,13 @@ class ManufacturingBranchResource extends Resource
         return __('menu.manufacturing_branches');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Wizard::make([
-                    Wizard\Step::make('Basic data')
+                    Step::make('Basic data')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(3)->schema([
@@ -79,7 +94,7 @@ class ManufacturingBranchResource extends Resource
                                     ->options(User::whereHas('roles', function ($q) {
                                         $q->where('id', 7);
                                     })
-                                            ->get(['name', 'id'])->pluck('name', 'id'))
+                                        ->get(['name', 'id'])->pluck('name', 'id'))
                                     ->searchable(),
                                 Toggle::make('active')
                                     ->inline(false)->default(true),
@@ -92,13 +107,12 @@ class ManufacturingBranchResource extends Resource
 
                                     Select::make('store_id')
                                         ->label(__('stock.store_id'))
-                                        ->options(\App\Models\Store::active()
-                                                ->centralKitchen()->pluck('name', 'id'))
-                                        ->searchable()
-                                    ,
+                                        ->options(Store::active()
+                                            ->centralKitchen()->pluck('name', 'id'))
+                                        ->searchable(),
                                     Select::make('categories')
                                         ->label(__('stock.customized_manufacturing_categories'))
-                                    // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
+                                        // ->options(\App\Models\Category::Manufacturing()->pluck('name', 'id'))
                                         ->relationship('categories', 'name')
 
                                         ->searchable()->multiple(),
@@ -110,63 +124,46 @@ class ManufacturingBranchResource extends Resource
                             ]),
 
                         ]),
-                    Wizard\Step::make('Location')
+                    Step::make('Location')
                         ->icon('heroicon-o-map-pin')
                         ->schema([
                             Fieldset::make()
                                 ->relationship('location')
                                 ->columns(3)->schema([
-                                Select::make('country_id')
-                                    ->label(__('Country'))->searchable()
-                                // ->relationship('city', 'name')
-                                    ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
-                                    ->reactive()
-                                    ->required(false),
-                                Select::make('city_id')
-                                    ->label(__('City'))->searchable()
-                                // ->relationship('city', 'name')
-                                    ->options(function (callable $get) {
-                                        $countryId = $get('country_id');
-                                        return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
-                                    })
-                                    ->reactive()
-                                    ->required(false),
+                                    Select::make('country_id')
+                                        ->label(__('Country'))->searchable()
+                                        // ->relationship('city', 'name')
+                                        ->options(Country::get(['id', 'name'])->pluck('name', 'id'))
+                                        ->reactive()
+                                        ->required(false),
+                                    Select::make('city_id')
+                                        ->label(__('City'))->searchable()
+                                        // ->relationship('city', 'name')
+                                        ->options(function (callable $get) {
+                                            $countryId = $get('country_id');
+                                            return $countryId ? City::where('country_id', $countryId)->pluck('name', 'id') : [];
+                                        })
+                                        ->reactive()
+                                        ->required(false),
 
-                                Select::make('district_id')
-                                    ->label(__('District'))
-                                    ->searchable()
-                                    ->options(function (callable $get) {
-                                        $cityId = $get('city_id');
-                                        return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
-                                    })
-                                    ->reactive()
-                                    ->required(false),
-                                Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
-                                LocationPickr::make('location')->label('')->columnSpanFull()
-                                    ->mapControls([
-                                        'mapTypeControl'    => true,
-                                        'scaleControl'      => true,
-                                        'streetViewControl' => true,
-                                        'rotateControl'     => true,
-                                        'fullscreenControl' => true,
-                                        'zoomControl'       => false,
-                                    ])
-                                    ->defaultZoom(5)
-                                    ->draggable()
-                                    ->clickable()
-                                    ->height('40vh')
-                                // ->defaultLocation([41.32836109345274, 19.818383186960773])
-                                    ->myLocationButtonLabel('My location'),
-                                // Add other location fields as needed (district_id, city_id, etc.)
-
-                            ]),
+                                    Select::make('district_id')
+                                        ->label(__('District'))
+                                        ->searchable()
+                                        ->options(function (callable $get) {
+                                            $cityId = $get('city_id');
+                                            return $cityId ? District::where('city_id', $cityId)->pluck('name', 'id') : [];
+                                        })
+                                        ->reactive()
+                                        ->required(false),
+                                    Textarea::make('address')->label(__('lang.address'))->columnSpanFull(),
+                                ]),
 
                         ]),
-                    Wizard\Step::make('Images')
+                    Step::make('Images')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                SpatieMediaLibraryFileUpload::make('images')
+                                FileUpload::make('images')
                                     ->disk('public')
                                     ->label('')
                                     ->directory('branches')
@@ -211,15 +208,15 @@ class ManufacturingBranchResource extends Resource
         return $table->striped()
             ->columns([
                 TextColumn::make('id')->label(__('lang.branch_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
-                    ->circular()->alignCenter(true)->getStateUsing(function () {
-                    return null;
-                })->limit(3),
+                // SpatieMediaLibraryImageColumn::make('')->label('')->size(50)
+                //     ->circular()->alignCenter(true)->getStateUsing(function () {
+                //         return null;
+                //     })->limit(3),
                 TextColumn::make('name')->label(__('lang.name'))->searchable(),
                 TextColumn::make('type_title')->label(__('lang.branch_type')),
                 IconColumn::make('active')->boolean()->label(__('lang.active'))->alignCenter(true),
                 TextColumn::make('address')->label(__('lang.address'))
-                // ->limit(100)
+                    // ->limit(100)
                     ->words(5)->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('user.name')->label(__('lang.branch_manager')),
@@ -247,81 +244,81 @@ class ManufacturingBranchResource extends Resource
 
             ])
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
-                Tables\Filters\SelectFilter::make('active')
+                TrashedFilter::make(),
+                SelectFilter::make('active')
                     ->options([
                         1 => __('lang.active'),
                         0 => __('lang.status_unactive'),
                     ])->default(1),
 
             ])
-            ->actions([
+            ->recordActions([
 
                 Action::make('add_area')
                     ->modalHeading('')
                     ->modalWidth('lg') // Adjust modal size
                     ->button()
                     ->icon('heroicon-o-plus')
-                    ->label('Add area')->form([
-                    Repeater::make('branch_areas')
-                        ->minItems(1)
-                        ->maxItems(1)
-                        ->disableItemCreation(true)
-                        ->disableItemDeletion(true)
+                    ->label('Add area')->schema([
+                        Repeater::make('branch_areas')
+                            ->minItems(1)
+                            ->maxItems(1)
+                            ->disableItemCreation(true)
+                            ->disableItemDeletion(true)
 
-                        ->schema([
-                            TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
-                            Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
-                        ])
-                        ->afterStateUpdated(function ($state, $record) {
+                            ->schema([
+                                TextInput::make('name')->label('Area name')->required()->helperText('Type the name of area'),
+                                Textarea::make('description')->label('Description')->helperText('More information about the area, like floor, location ...etc'),
+                            ])
+                            ->afterStateUpdated(function ($state, $record) {
 
-                                                                                     // Custom logic to handle saving without deleting existing records
-                            $branch        = $record;                                // Get the branch being updated
-                            $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
+                                // Custom logic to handle saving without deleting existing records
+                                $branch        = $record;                                // Get the branch being updated
+                                $existingAreas = $branch->areas->pluck('id')->toArray(); // Existing area IDs
 
-                            foreach ($state as $areaData) {
-                                if (! isset($areaData['id'])) {
-                                    // If it's a new area, create it
-                                    $branch->areas()->create($areaData);
-                                } else {
+                                foreach ($state as $areaData) {
+                                    if (! isset($areaData['id'])) {
+                                        // If it's a new area, create it
+                                        $branch->areas()->create($areaData);
+                                    } else {
+                                    }
                                 }
-                            }
-                        }),
-                ]),
+                            }),
+                    ]),
                 Action::make('quick_edit')
                     ->label(__('Quick Edit'))
                     ->icon('heroicon-o-pencil-square')
                     ->modalHeading(__('Quick Edit Branch'))
                     ->modalWidth('lg')
-                    ->form(function ($record) {
+                    ->schema(function ($record) {
                         return [
                             TextInput::make('name')->required()->label(__('lang.name'))->default($record->name),
                             Select::make('manager_id')
                                 ->label(__('lang.branch_manager'))->default($record->manager_id)
                                 ->options(User::whereHas('roles', fn($q) => $q->where('id', 7))
-                                        ->pluck('name', 'id')),
+                                    ->pluck('name', 'id')),
                             Select::make('store_id')
                                 ->label(__('stock.store_id'))->default($record->store_id)
-                                ->options(\App\Models\Store::active()->centralKitchen()->pluck('name', 'id'))
+                                ->options(Store::active()->centralKitchen()->pluck('name', 'id'))
                                 ->searchable(),
 
                         ];
                     })
                     ->action(function (Model $record, array $data) {
                         $record->update($data);
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title(__('Updated successfully'))
                             ->success()
                             ->send();
                     }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
+                RestoreAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\ForceDeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                ForceDeleteBulkAction::make(),
+                RestoreBulkAction::make(),
             ]);
     }
 
@@ -335,9 +332,9 @@ class ManufacturingBranchResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListManufacturingBranches::route('/'),
-            'create' => Pages\CreateManufacturingBranch::route('/create'),
-            'edit'   => Pages\EditManufacturingBranch::route('/{record}/edit'),
+            'index'  => ListManufacturingBranches::route('/'),
+            'create' => CreateManufacturingBranch::route('/create'),
+            'edit'   => EditManufacturingBranch::route('/{record}/edit'),
         ];
     }
 

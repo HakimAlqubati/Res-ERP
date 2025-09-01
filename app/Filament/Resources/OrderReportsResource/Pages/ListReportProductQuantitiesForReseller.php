@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderReportsResource\Pages;
 
+use Filament\Actions\Action;
 use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesForResellerResource;
 use App\Filament\Resources\OrderReportsResource\ReportProductQuantitiesResource;
 use App\Models\Branch;
@@ -10,7 +11,6 @@ use App\Models\Product;
 use App\Repositories\Products\ProductRepository;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DatePicker;
-use Filament\Pages\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\Filter;
@@ -24,9 +24,9 @@ class ListReportProductQuantitiesForReseller extends ListRecords
 {
     protected static string $resource = ReportProductQuantitiesForResellerResource::class;
 
-    protected static string $view = 'filament.pages.order-reports.report-product-quantities-for-receller';
+    protected string $view = 'filament.pages.order-reports.report-product-quantities-for-receller';
 
-    public function getTableRecordKey(Model $record): string
+    public function getTableRecordKey(Model|array $record): string
     {
         $attributes = $record->getAttributes();
         return $attributes['product'] . '-' . $attributes['branch'] . '-' . $attributes['unit'];

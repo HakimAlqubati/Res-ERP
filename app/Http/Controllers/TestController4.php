@@ -80,7 +80,7 @@ class TestController4 extends Controller
                         ->pluck('id')->toArray();
 
                     if (count($branchIds)) {
-                        $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                        $otherBranchesCategories = Branch::centralKitchens()
                             ->where('id', '!=', auth()->user()?->branch?->id)
                             ->with('categories:id')
                             ->get()
@@ -127,7 +127,7 @@ class TestController4 extends Controller
                     WHERE od.order_id = o.id AND c.id IN ($categoryIds)
                 ) OR o.customer_id = {$user->id})";
             } else {
-                $allCustomizedCategories = \App\Models\Branch::centralKitchens()
+                $allCustomizedCategories = Branch::centralKitchens()
                     ->with('categories:id')
                     ->get()
                     ->pluck('categories')
@@ -282,7 +282,7 @@ AND (
 )
 ";
 
-                $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                $otherBranchesCategories = Branch::centralKitchens()
                     ->where('id', '!=', auth()->user()?->branch?->id)
                     ->with('categories:id')
                     ->get()
@@ -315,7 +315,7 @@ AND (
             }
         }
         if (isStoreManager() && !isBranchManager()) {
-            $allCustomizedCategories = \App\Models\Branch::centralKitchens()
+            $allCustomizedCategories = Branch::centralKitchens()
                 ->with('categories:id')
                 ->get()
                 ->pluck('categories')

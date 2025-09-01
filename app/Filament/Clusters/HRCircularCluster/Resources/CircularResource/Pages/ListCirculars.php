@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource;
 use App\Models\Branch;
 use Filament\Actions;
@@ -27,7 +28,7 @@ class ListCirculars extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label(function(){
+            CreateAction::make()->label(function(){
             if(isStuff()){
                  return 'Share insight';
              }

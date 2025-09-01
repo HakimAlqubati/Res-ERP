@@ -11,7 +11,7 @@ class DeliveryAndInvoicingReportPage extends Page
 {
     protected static string $resource = OrderDeliveryReportResource::class;
 
-    protected static string $view = 'filament.resources.order-delivery-report-resource.pages.delivery-and-invoicing';
+    protected string $view = 'filament.resources.order-delivery-report-resource.pages.delivery-and-invoicing';
 
     public Collection $report;
 

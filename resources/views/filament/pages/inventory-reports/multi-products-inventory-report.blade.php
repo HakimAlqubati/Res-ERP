@@ -30,9 +30,9 @@
         @if (count($reportData) > 0)
             <div id="reportContent">
 
-                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+                <table class="w-full text-sm text-left pretty reports table-striped border">
                     <thead class="fixed-header">
-                        <x-filament-tables::row class="header_report">
+                        <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
 
                                 <div style="width: 100%;">
@@ -50,45 +50,45 @@
                                     src="{{ asset('/storage/' . setting('company_logo') . '') }}" alt=""
                                     class="logo-left circle-image">
                             </th>
-                        </x-filament-tables::row>
-                        <x-filament-tables::row>
+                        </tr>
+                        <tr>
                             <th>Product Code</th>
                             <th>Product Name</th>
                             <th>Unit ID</th>
                             <th>Unit Name</th>
                             <th>Package Size</th>
                             <th>Quantity in Stock</th>
-                        </x-filament-tables::row>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach ($reportData as $productReport)
                             @foreach ($productReport as $data)
-                                <x-filament-tables::row>
-                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2"
+                                <tr>
+                                    <td class="border border-gray-300 px-4 py-2"
                                         title="{{ $data['product_id'] }}">
                                         <strong>{{ $data['product_code'] }}</strong>
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2"
+                                    </td>
+                                    <td class="border border-gray-300 px-4 py-2"
                                         title="{{ $data['product_id'] }}">
                                         <strong>{{ $data['product_name'] }}</strong>
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                    </td>
+                                    <td class="border border-gray-300 px-4 py-2">
                                         {{ $data['unit_id'] }}
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                    </td>
+                                    <td class="border border-gray-300 px-4 py-2">
                                         {{ $data['unit_name'] }}
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                    </td>
+                                    <td class="border border-gray-300 px-4 py-2">
                                         {{ $data['package_size'] }}
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
+                                    </td>
+                                    <td class="border border-gray-300 px-4 py-2 font-bold">
                                         {{ formatQunantity($data['remaining_qty']) }}
-                                    </x-filament-tables::cell>
-                                </x-filament-tables::row>
+                                    </td>
+                                </tr>
                             @endforeach
                         @endforeach
                     </tbody>
-                </x-filament-tables::table>
+                </table>
 
 
             </div>

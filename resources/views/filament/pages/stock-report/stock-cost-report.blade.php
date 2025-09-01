@@ -8,9 +8,9 @@
 
     @if ($reportData && $reportData->items() && count($reportData->items()))
 
-        <x-filament-tables::table class="w-full text-sm text-left border reports table-striped" id="reportContent">
+        <table class="w-full text-sm text-left border reports table-striped" id="reportContent">
             <thead class="fixed-header" style="top:64px;">
-                <x-filament-tables::row class="header_report bg-blue-50 text-xs text-gray-700">
+                <tr class="header_report bg-blue-50 text-xs text-gray-700">
                     <th class="px-4 py-2">Product</th>
                     <th class="px-4 py-2">Unit</th>
                     <th class="px-4 py-2">In Qty</th>
@@ -18,29 +18,29 @@
                     <th class="px-4 py-2">In Cost</th>
                     <th class="px-4 py-2">Out Cost</th>
                     <th class="px-4 py-2">Net Cost</th>
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
                 @foreach ($reportData as $row)
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell
-                            class="border px-4 py-1 text-center">{{ $row['product'] }}</x-filament-tables::cell>
-                        <x-filament-tables::cell
-                            class="border px-4 py-1 text-center">{{ $row['base_unit'] }}</x-filament-tables::cell>
-                        <x-filament-tables::cell
-                            class="border px-4 py-1 text-center">{{ $row['total_in_qty'] }}</x-filament-tables::cell>
-                        <x-filament-tables::cell
-                            class="border px-4 py-1 text-center">{{ $row['total_out_qty'] }}</x-filament-tables::cell>
-                        <x-filament-tables::cell
-                            class="border px-4 py-1 text-center">{{ $row['total_in_cost'] }}</x-filament-tables::cell>
-                        <x-filament-tables::cell
-                            class="border px-4 py-1 text-center">{{ $row['total_out_cost'] }}</x-filament-tables::cell>
-                        <x-filament-tables::cell
-                            class="px-4 py-1 font-semibold">{{ $row['net_cost'] }}</x-filament-tables::cell>
-                    </x-filament-tables::row>
+                    <tr>
+                        <td
+                            class="border px-4 py-1 text-center">{{ $row['product'] }}</td>
+                        <td
+                            class="border px-4 py-1 text-center">{{ $row['base_unit'] }}</td>
+                        <td
+                            class="border px-4 py-1 text-center">{{ $row['total_in_qty'] }}</td>
+                        <td
+                            class="border px-4 py-1 text-center">{{ $row['total_out_qty'] }}</td>
+                        <td
+                            class="border px-4 py-1 text-center">{{ $row['total_in_cost'] }}</td>
+                        <td
+                            class="border px-4 py-1 text-center">{{ $row['total_out_cost'] }}</td>
+                        <td
+                            class="px-4 py-1 font-semibold">{{ $row['net_cost'] }}</td>
+                    </tr>
                 @endforeach
             </tbody>
-        </x-filament-tables::table>
+        </table>
         <div class="mt-4">
             <div class="paginator_container">
                 {{-- @if (isset($reportData) && $reportData instanceof \Illuminate\Pagination\LengthAwarePaginator) --}}

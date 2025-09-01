@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\EmployeeResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Resources\EmployeeResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Icons\Heroicon;
 
 class ListEmployees extends ListRecords
 {
@@ -13,7 +15,7 @@ class ListEmployees extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make()->icon(Heroicon::OutlinedUserPlus),
         ];
     }
 

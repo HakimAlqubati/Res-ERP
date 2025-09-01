@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Models\Category;
+use App\Models\Store;
 use App\Http\Controllers\Controller;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
@@ -14,7 +16,7 @@ class InventoryReportController extends Controller
 {
     public function minimumStockReport()
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService(storeId: getDefaultStore());
+        $inventoryService = new MultiProductsInventoryService(storeId: getDefaultStore());
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination();
 
         return response()->json([
@@ -25,7 +27,7 @@ class InventoryReportController extends Controller
 
     public function minimumStockReportToSupply()
     {
-        $inventoryService = new \App\Services\MultiProductsInventoryService(storeId: getDefaultStore());
+        $inventoryService = new MultiProductsInventoryService(storeId: getDefaultStore());
         $lowStockProducts = $inventoryService->getProductsBelowMinimumQuantityًWithPagination(1000);
         return $lowStockProducts;
         foreach ($lowStockProducts as $product) {
@@ -107,8 +109,8 @@ class InventoryReportController extends Controller
 
                 $item->formatted_transactionable_type = class_basename($item->transactionable_type);
                 $item->unit->name;
-                $item->movement_date    = \Carbon\Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
-                $item->transaction_date = \Carbon\Carbon::parse($item->transaction_date)->format('Y-m-d');
+                $item->movement_date    = Carbon::parse($item->movement_date)->format('Y-m-d'); // force it here
+                $item->transaction_date = Carbon::parse($item->transaction_date)->format('Y-m-d');
                 $item->quantity         = formatQunantity($item->quantity);
                 $item->store = $item?->store?->name??'';
                 return $item;
@@ -121,8 +123,8 @@ class InventoryReportController extends Controller
     {
         $filters = [
 
-            'categories'     => \App\Models\Category::active()->pluck('name', 'id')->toArray(),
-            'stores'         => \App\Models\Store::active()
+            'categories'     => Category::active()->pluck('name', 'id')->toArray(),
+            'stores'         => Store::active()
                 ->centralKitchenStores()
                 ->pluck('name', 'id')->toArray(),
             'movement_types' => InventoryTransaction::getMovementTypes(),

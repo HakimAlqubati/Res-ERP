@@ -1,0 +1,25 @@
+# Laravel Useful Commands (after removing composer scripts)
+#  إعادة توليد الـ autoload وتحسينه
+composer dump-autoload -o
+
+# اكتشاف الباكجات
+php artisan package:discover
+
+# توليد مفتاح التشفير (أول مرة)
+php artisan key:generate
+
+# ترقية Filament
+php artisan filament:upgrade
+
+# نشر أصول Laravel
+php artisan vendor:publish --tag=laravel-assets --force
+
+# تشغيل المايغريشن
+php artisan migrate --graceful
+
+# إنشاء ملف البيئة .env (لو مشروع جديد)
+# على Linux / Mac
+cp .env.example .env
+
+# على Windows
+copy .env.example .env

@@ -11,7 +11,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +46,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                     ->label('Filter by Day'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
             ->actions([
                 Tables\Actions\Action::make('edit')->label('Edit')->button()
@@ -114,8 +113,8 @@ class PeriodHistoriesRelationManager extends RelationManager
                     }),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

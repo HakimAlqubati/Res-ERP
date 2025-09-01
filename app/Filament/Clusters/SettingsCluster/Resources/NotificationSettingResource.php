@@ -2,6 +2,13 @@
 
 namespace App\Filament\Clusters\SettingsCluster\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages\ListNotificationSettings;
+use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages\CreateNotificationSetting;
+use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages\EditNotificationSetting;
 use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\RelationManagers;
@@ -10,7 +17,6 @@ use Filament\Forms;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -24,16 +30,16 @@ class NotificationSettingResource extends Resource
 {
     protected static ?string $model = NotificationSetting::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-bell-alert';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-bell-alert';
 
     protected static ?string $slug = 'notification-settings';
     // protected static ?string $cluster = SettingsCluster::class;
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     // protected static ?int $navigationSort = 2;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Select::make('type')
                     ->label('Notification Type')
                     ->required()
@@ -88,12 +94,12 @@ class NotificationSettingResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -108,9 +114,9 @@ class NotificationSettingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListNotificationSettings::route('/'),
-            'create' => Pages\CreateNotificationSetting::route('/create'),
-            'edit' => Pages\EditNotificationSetting::route('/{record}/edit'),
+            'index' => ListNotificationSettings::route('/'),
+            'create' => CreateNotificationSetting::route('/create'),
+            'edit' => EditNotificationSetting::route('/{record}/edit'),
         ];
     }
 }

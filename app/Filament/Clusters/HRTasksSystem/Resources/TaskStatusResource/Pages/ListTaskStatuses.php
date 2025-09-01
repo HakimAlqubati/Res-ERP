@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskStatusResource\Pages;
 
+use Filament\Actions\CreateAction;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskStatusResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
@@ -13,7 +14,7 @@ class ListTaskStatuses extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRCluster\Resources\DeductionResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditDeduction extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
     protected function getRedirectUrl(): string

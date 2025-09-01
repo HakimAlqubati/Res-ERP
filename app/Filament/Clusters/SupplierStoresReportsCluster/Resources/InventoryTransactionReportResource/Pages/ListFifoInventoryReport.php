@@ -2,15 +2,16 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\FifoInventoryReportResource;
 use App\Services\Inventory\FifoInventoryDetailReportService;
 use Filament\Resources\Pages\ListRecords;
 
 class ListFifoInventoryReport extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
     protected static string $resource = FifoInventoryReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.fifo-inventory-report';
+    protected string $view = 'filament.pages.inventory-reports.fifo-inventory-report';
 
     protected function getViewData(): array
     {

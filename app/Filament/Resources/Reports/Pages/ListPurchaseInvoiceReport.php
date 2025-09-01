@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\PurchaseInvoiceReportResource\Reports\Pages;
+namespace App\Filament\Resources\Reports\Pages;
 
+use Filament\Actions\Action;
 use App\Filament\Resources\Reports\PurchaseInvoiceReportResource;
 use App\Models\Product;
 use App\Models\PurchaseInvoice;
@@ -9,7 +10,6 @@ use App\Models\Store;
 use App\Models\Supplier;
 use App\Services\PurchasedReports\PurchaseInvoiceReportService;
 use Filament\Forms\Components\Builder;
-use Filament\Pages\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Layout;
@@ -20,7 +20,7 @@ use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf  as PDF;
 class ListPurchaseInvoiceReport extends ListRecords
 {
     protected static string $resource = PurchaseInvoiceReportResource::class;
-    protected static string $view = 'filament.pages.stock-report.purchase-invoice-report-with-pagination';
+    protected string $view = 'filament.pages.stock-report.purchase-invoice-report-with-pagination';
     public $perPage = 15;
     protected $updatesQueryString = ['perPage'];
 

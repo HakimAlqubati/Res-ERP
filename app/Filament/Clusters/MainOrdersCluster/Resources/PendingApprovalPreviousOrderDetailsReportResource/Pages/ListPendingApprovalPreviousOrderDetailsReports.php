@@ -13,9 +13,9 @@ use Illuminate\Database\Eloquent\Model;
 class ListPendingApprovalPreviousOrderDetailsReports extends ListRecords
 {
     protected static string $resource = PendingApprovalPreviousOrderDetailsReportResource::class;
-    protected static string $view = 'filament.pages.order-reports.pending-approval-previous-order-details-report';
+    protected string $view = 'filament.pages.order-reports.pending-approval-previous-order-details-report';
 
-    public function getTableRecordKey(Model $record): string
+    public function getTableRecordKey(Model|array $record): string
     {
         $attributes = $record->getAttributes();
         return $attributes['product_id'];

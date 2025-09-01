@@ -11,7 +11,7 @@ class CategoryInventoryTrackingReport extends Page
 {
     protected static string $resource = InventoryTransactionTruckingReportResource::class;
 
-    protected static string $view = 'filament.clusters.inventory-report-cluster.resources.inventory-transaction-trucking-report-resource.pages.category-inventory-tracking-report';
+    protected string $view = 'filament.clusters.inventory-report-cluster.resources.inventory-transaction-trucking-report-resource.pages.category-inventory-tracking-report';
 
     public ?int $selectedCategory = null;
 

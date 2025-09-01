@@ -127,9 +127,9 @@ return [
     'ordered_product'                             => 'Orderd product from (Branch)',
     'employees'                                   => 'Employees',
     'tasks_ms'                                    => 'Task management',
-    'departments_and_employees'                   => 'Humen Resource',
+    'departments_and_employees'                   => 'Human Resource',
     'attenance_management'                        => 'Attenance management',
-    'attednance_reports'                          => 'Attednance reports',
+    'attednance_reports'                          => 'Attendance Reports',
     'month'                                       => [
         'january'   => 'January',
         'february'  => 'February',
@@ -238,4 +238,9 @@ return [
     'manufacturing_branches'                      => 'Manufacturing branches',
     'manufacturing_branch'                        => 'Manufacturing branch',
     'please_select_a_receller'                    => 'Please select a receller',
+    
+    'expired'  => 'Expired',
+    'upcoming' => 'Upcoming',
+    'active'   => 'Active',
+    'normal'   => 'Normal',
 ];

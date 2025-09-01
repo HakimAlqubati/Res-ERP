@@ -2,21 +2,29 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Spatie\Permission\Models\Role;
+use Filament\Schemas\Components\Grid;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\SettingResource\Pages\CreateSetting;
+use App\Filament\Clusters\SettingsCluster;
 use App\Filament\Resources\SettingResource\Pages;
 use App\Models\Attendance;
 use App\Models\Setting;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Tabs;
-use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
+use Filament\Forms\Form; 
+use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -27,17 +35,17 @@ class SettingResource extends Resource
 {
     protected static ?string $model = Setting::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static ?string $modelLabel  = 'System Settings';
     protected static ?string $pluralLabel = 'System Settings';
     // protected static ?string $cluster = SettingsCluster::class;
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     // protected static ?int $navigationSort = 1;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Tabs::make('settings')->columnSpanFull()
                     ->tabs([
                         Tab::make('Company Info')->hidden(function () {
@@ -355,12 +363,12 @@ class SettingResource extends Resource
                                         ->default(false),
                                     Select::make('grn_entry_role_id')->multiple()
                                         ->label('Role Allowed to Create GRN')
-                                        ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
+                                        ->options(Role::pluck('name', 'id')->toArray())
                                         ->searchable()
                                         ->required(),
                                     Select::make('grn_approver_role_id')->multiple()
                                         ->label('Role Allowed to Approve GRN')
-                                        ->options(\Spatie\Permission\Models\Role::pluck('name', 'id')->toArray())
+                                        ->options(Role::pluck('name', 'id')->toArray())
                                         ->searchable()
                                         ->required(),
                                     // Toggle::make('grn_affects_inventory')->inline(false)
@@ -423,7 +431,7 @@ class SettingResource extends Resource
 
                                 ]),
                             ]),
-                        Tabs\Tab::make('Users Settings')
+                        Tab::make('Users Settings')
                             ->label(__('lang.users_settings'))
                             ->icon('heroicon-o-users')
                             ->schema([
@@ -509,12 +517,12 @@ class SettingResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -531,7 +539,7 @@ class SettingResource extends Resource
         return [
             // 'index' => Pages\ListSettings::route('/'),
             // 'create' => Pages\CreateSetting::route('/create'),
-            'index' => Pages\CreateSetting::route('/'),
+            'index' => CreateSetting::route('/'),
             // 'edit' => Pages\EditSetting::route('/'),
         ];
     }

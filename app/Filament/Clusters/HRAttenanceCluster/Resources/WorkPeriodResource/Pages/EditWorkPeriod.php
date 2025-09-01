@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WorkPeriodResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditWorkPeriod extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

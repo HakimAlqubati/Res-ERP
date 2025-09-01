@@ -5,12 +5,12 @@ namespace App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeTaskReportR
 use App\Models\Task;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Database\Eloquent\Model;
-use LaraZeus\InlineChart\InlineChartWidget;
+// use LaraZeus\InlineChart\InlineChartWidget;
 
-class TaskWidgetChart extends InlineChartWidget
+class TaskWidgetChart
 {
     protected static ?string $heading = 'Chart';
- 
+
     protected function getData(): array
     {
         $task = Task::find($this->record->id);

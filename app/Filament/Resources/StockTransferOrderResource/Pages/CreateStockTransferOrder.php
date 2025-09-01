@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\StockTransferOrderResource\Pages;
 
+use App\Models\StockTransferOrder;
 use App\Filament\Resources\StockTransferOrderResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
@@ -16,7 +17,7 @@ class CreateStockTransferOrder extends CreateRecord
     protected function afterCreate(): void
     {
         // الحالة كانت approved؟ نفذ الحركة
-        if ($this->record->status === \App\Models\StockTransferOrder::STATUS_APPROVED) {
+        if ($this->record->status === StockTransferOrder::STATUS_APPROVED) {
             $this->record->createInventoryTransactionsFromTransfer();
         }
     }

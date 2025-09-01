@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Mail\MailableEmployee;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -513,8 +514,8 @@ class Employee extends Model implements Auditable
      * Employee::employeeTypesManagers()->get(); // Gets all employees who are managers
      * Employee::employeeTypesManagers()->where('active', 1)->get(); // Gets active manager employees
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeEmployeeTypesManagers($query)
     {
@@ -525,11 +526,11 @@ class Employee extends Model implements Auditable
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope('active', function (Builder $builder) {
                 $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         } elseif (isStuff()) {
-            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope(function (Builder $builder) {
                 // dd(auth()->user()->employee->id);
                 // $builder->where('id', auth()->user()->employee->id); // Add your default query here
             });
@@ -565,7 +566,7 @@ class Employee extends Model implements Auditable
         static::created(function ($employee) {
             // Only create user if not already linked
             if (! $employee->user_id) {
-                $user = \App\Models\User::create([
+                $user = User::create([
                     'name'     => $employee->name,
                     'email'    => $employee->email,
                     'password' => bcrypt('123456'),

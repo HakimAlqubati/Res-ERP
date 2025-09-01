@@ -2,11 +2,26 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Tables\Filters\Filter;
+use Filament\Actions\Action;
+use Exception;
+use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
+use Throwable;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\RestoreBulkAction; 
+use App\Filament\Resources\PurchaseInvoiceResource\Pages\CreatePurchaseInvoice;
+use App\Filament\Resources\PurchaseInvoiceResource\Pages\EditPurchaseInvoice;
+use App\Filament\Resources\PurchaseInvoiceResource\Pages\ViewPurchaseInvoice;
 use App\Filament\Clusters\InventoryCluster;
 use App\Filament\Clusters\SupplierCluster;
 use App\Filament\Clusters\SupplierCluster\Resources\PurchaseInvoiceResource\RelationManagers\DetailsRelationManager;
-use App\Filament\Resources\PurchaseInvoiceResource\Pages;
-use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers;
+use App\Filament\Resources\PurchaseInvoiceResource\Pages\ListPurchaseInvoices;
 use App\Filament\Resources\PurchaseInvoiceResource\RelationManagers\PurchaseInvoiceDetailsRelationManager;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
@@ -22,18 +37,13 @@ use Closure;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Notifications\Actions\ActionGroup;
+use Filament\Forms\Components\Toggle; 
 use Filament\Pages\Page;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\FontWeight;
@@ -56,9 +66,9 @@ class PurchaseInvoiceResource extends Resource
 {
     protected static ?string $model = PurchaseInvoice::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $cluster = SupplierCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     public static function getPluralLabel(): ?string
     {
@@ -74,12 +84,12 @@ class PurchaseInvoiceResource extends Resource
     {
         return __('lang.purchase_invoice');
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(4)->schema([
+        return $schema
+            ->components([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         TextInput::make('invoice_no')
                             ->label(__('lang.invoice_no'))
                             ->required(fn(): bool => settingWithDefault('purchase_invoice_no_required_and_disabled_on_edit', false))
@@ -109,7 +119,7 @@ class PurchaseInvoiceResource extends Resource
 
 
                     ]),
-                    Grid::make()->columns(3)->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         Select::make('supplier_id')->label(__('lang.supplier'))
                             ->getSearchResultsUsing(fn(string $search): array => Supplier::where('name', 'like', "%{$search}%")->limit(10)->pluck('name', 'id')->toArray())
                             ->getOptionLabelUsing(fn($value): ?string => Supplier::find($value)?->name)
@@ -151,7 +161,7 @@ class PurchaseInvoiceResource extends Resource
                         ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                             return (string) str($file->getClientOriginalName())->prepend('purchase-invoice-');
                         })->hiddenOn('view'),
-                    Repeater::make('units')->hiddenOn(['view', 'edit'])
+                    Repeater::make('units')->columnSpanFull()->hiddenOn(['view', 'edit'])
                         ->createItemButtonLabel(__('lang.add_item'))
                         ->columns(9)
                         ->defaultItems(1)
@@ -207,7 +217,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->label(__('lang.unit'))
                                 ->disabledOn('edit')
                                 ->options(function (callable $get) {
-                                    $product = \App\Models\Product::find($get('product_id'));
+                                    $product = Product::find($get('product_id'));
                                     if (! $product) return [];
 
                                     return $product->supplyUnitPrices
@@ -215,7 +225,7 @@ class PurchaseInvoiceResource extends Resource
                                 })
                                 ->searchable()
                                 ->reactive()
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $unitPrice = UnitPrice::where(
                                         'product_id',
                                         $get('product_id')
@@ -238,7 +248,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->default(1)
                                 ->disabledOn('edit')
                                 ->live(onBlur: true)
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $total = round(((float) $state) * ((float)$get('price') ?? 0), 2);
                                     $set('total_price', $total);
                                 })->columnSpan(1)->required(),
@@ -250,7 +260,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->disabledOn('edit')
                                 ->live(onBlur: true)
 
-                                ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                                ->afterStateUpdated(function (Set $set, $state, $get) {
                                     $total = round(((float) $state) * ((float)$get('quantity')), 2);
                                     $set('total_price', $total);
                                 })->columnSpan(1)->required(),
@@ -264,7 +274,7 @@ class PurchaseInvoiceResource extends Resource
                                 ->minValue(0)
                                 ->maxValue(100)
                                 ->default(function (callable $get) {
-                                    $product = \App\Models\Product::find($get('product_id'));
+                                    $product = Product::find($get('product_id'));
                                     return $product?->waste_stock_percentage ?? 0;
                                 })
                                 ->live(onBlur: true)
@@ -308,7 +318,7 @@ class PurchaseInvoiceResource extends Resource
                     })
                     ->summarize(
                         Summarizer::make()
-                            ->using(function (\Filament\Tables\Table $table) {
+                            ->using(function (Table $table) {
                                 $total  = $table->getRecords()->sum(fn($record) => $record->total_amount);
                                 if (is_numeric($total)) {
                                     return formatMoneyWithCurrency($total);
@@ -379,8 +389,8 @@ class PurchaseInvoiceResource extends Resource
                 SelectFilter::make('supplier_id')
                     ->label('Supplier')
                     ->options(Supplier::get()->pluck('name', 'id')),
-                Tables\Filters\Filter::make('date_range')
-                    ->form([
+                Filter::make('date_range')
+                    ->schema([
                         DatePicker::make('from')->label('From Date'),
                         DatePicker::make('to')->label('To Date'),
                     ])
@@ -404,9 +414,9 @@ class PurchaseInvoiceResource extends Resource
                     }),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\Action::make('create_inventory')
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    Action::make('create_inventory')
                         ->label('Create Inventory')
                         ->icon('heroicon-o-plus-circle')->button()
                         ->color('success')
@@ -415,9 +425,9 @@ class PurchaseInvoiceResource extends Resource
                             DB::beginTransaction();
                             try {
                                 foreach ($record->details as $detail) {
-                                    \App\Models\InventoryTransaction::moveToStore([
+                                    InventoryTransaction::moveToStore([
                                         'product_id' => $detail->product_id,
-                                        'movement_type' => \App\Models\InventoryTransaction::MOVEMENT_IN,
+                                        'movement_type' => InventoryTransaction::MOVEMENT_IN,
                                         'quantity' => $detail->quantity,
                                         'unit_id' => $detail->unit_id,
                                         'package_size' => $detail->package_size,
@@ -431,14 +441,14 @@ class PurchaseInvoiceResource extends Resource
                                 }
                                 DB::commit();
                                 showSuccessNotifiMessage('Done');
-                            } catch (\Exception $e) {
+                            } catch (Exception $e) {
                                 DB::rollBack();
                                 showWarningNotifiMessage($e->getMessage());
                             }
                         })->hidden(),
-                    Tables\Actions\EditAction::make()
+                    EditAction::make()
                         ->icon('heroicon-s-pencil'),
-                    Tables\Actions\Action::make('download')
+                    Action::make('download')
                         ->label(__('lang.download_attachment'))
                         ->action(function ($record) {
                             if (strlen($record['attachment']) > 0) {
@@ -452,10 +462,10 @@ class PurchaseInvoiceResource extends Resource
                         })->hidden(fn($record) => !(strlen($record['attachment']) > 0))
                         // ->icon('heroicon-o-download')
                         ->color('green'),
-                    Tables\Actions\Action::make('cancel')
+                    Action::make('cancel')
                         ->label('Cancel')->hidden(fn($record): bool => $record->cancelled)
                         ->icon('heroicon-o-backspace')->button()->color(Color::Red)
-                        ->form([
+                        ->schema([
                             Textarea::make('cancel_reason')->required()->label('Cancel Reason')
                         ])
                         ->action(function ($record, $data) {
@@ -463,27 +473,27 @@ class PurchaseInvoiceResource extends Resource
                                 $result = $record->handleCancellation($record, $data['cancel_reason']);
 
                                 if ($result['status'] === 'success') {
-                                    \Filament\Notifications\Notification::make()
+                                    Notification::make()
                                         ->title('Success')
                                         ->body($result['message'])
                                         ->success()
                                         ->send();
                                 } else {
-                                    \Filament\Notifications\Notification::make()
+                                    Notification::make()
                                         ->title('Error')
                                         ->body($result['message'])
                                         ->danger()
                                         ->send();
                                 }
-                            } catch (\Throwable $th) {
+                            } catch (Throwable $th) {
                                 throw $th;
                             }
                         })->hidden(fn(): bool => isSuperVisor())
                 ]),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-                Tables\Actions\RestoreBulkAction::make()
+            ->toolbarActions([
+                DeleteBulkAction::make(),
+                RestoreBulkAction::make()
             ]);
     }
 
@@ -498,20 +508,20 @@ class PurchaseInvoiceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPurchaseInvoices::route('/'),
-            'create' => Pages\CreatePurchaseInvoice::route('/create'),
-            'edit' => Pages\EditPurchaseInvoice::route('/{record}/edit'),
-            'view' => Pages\ViewPurchaseInvoice::route('/{record}'),
+            'index' => ListPurchaseInvoices::route('/'),
+            'create' => CreatePurchaseInvoice::route('/create'),
+            'edit' => EditPurchaseInvoice::route('/{record}/edit'),
+            'view' => ViewPurchaseInvoice::route('/{record}'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListPurchaseInvoices::class,
-            Pages\CreatePurchaseInvoice::class,
-            Pages\EditPurchaseInvoice::class,
-            Pages\ViewPurchaseInvoice::class,
+            ListPurchaseInvoices::class,
+            CreatePurchaseInvoice::class,
+            EditPurchaseInvoice::class,
+            ViewPurchaseInvoice::class,
         ]);
     }
 

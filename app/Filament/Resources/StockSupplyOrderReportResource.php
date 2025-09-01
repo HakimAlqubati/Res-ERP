@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Resources\StockSupplyOrderReportResource\Pages\ListStockSupplyOrderReports;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Resources\StockSupplyOrderReportResource\Pages;
 use App\Filament\Resources\StockSupplyOrderReportResource\RelationManagers;
@@ -11,7 +13,6 @@ use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -25,7 +26,7 @@ class StockSupplyOrderReportResource extends Resource
 {
     protected static ?string $model = StockSupplyOrder::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static bool $shouldRegisterNavigation = false;
     public static function getNavigationLabel(): string
     {
@@ -42,16 +43,16 @@ class StockSupplyOrderReportResource extends Resource
         return 'Stock Supply';
     }
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 10;
     public static function table(Table $table): Table
     {
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
         return $table
-
+            ->deferFilters(false)
             ->filters([
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('start_date')->live()
                             ->afterStateUpdated(function ($set, $state) {
                                 $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
@@ -82,7 +83,7 @@ class StockSupplyOrderReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockSupplyOrderReports::route('/'),
+            'index' => ListStockSupplyOrderReports::route('/'),
 
         ];
     }

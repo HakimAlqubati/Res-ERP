@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\BranchResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Resources\BranchResource;
 use App\Models\Branch;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ManageRecords;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
 class ManageBranches extends ManageRecords
@@ -16,7 +17,7 @@ class ManageBranches extends ManageRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
     public function getTabs(): array

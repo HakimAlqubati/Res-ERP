@@ -2,10 +2,12 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskLogRelationManagerResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\BulkActionGroup;
 use App\Models\Task;
 use App\Models\TaskLog;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -27,11 +29,11 @@ class LogsRelationManager extends RelationManager
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {return $ownerRecord->logs->count();}
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('log_type')
+        return $schema
+            ->components([
+                TextInput::make('log_type')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -160,12 +162,12 @@ return '';
             ->headerActions([
                 // Tables\Actions\CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

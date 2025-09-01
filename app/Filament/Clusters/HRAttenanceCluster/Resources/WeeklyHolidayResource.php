@@ -2,15 +2,24 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\Pages\ListWeeklyHolidays;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\Pages\CreateWeeklyHoliday;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\Pages\EditWeeklyHoliday;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\Pages;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\WeeklyHolidayResource\RelationManagers;
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\WeeklyHoliday;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,22 +30,22 @@ class WeeklyHolidayResource extends Resource
 {
     protected static ?string $model = WeeklyHoliday::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRLeaveManagementCluster::class;
     protected static ?string $label = 'Weekend';
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
-                    Forms\Components\TextInput::make('description')
+                    TextInput::make('description')
                         ->label('Description')
                         ->nullable(),
 
-                    Forms\Components\Select::make('days')
+                    Select::make('days')
                         ->label('Weekly Holiday Days')
                         ->multiple()
                         ->options([
@@ -57,22 +66,22 @@ class WeeklyHolidayResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('description')->label('Description'),
-                Tables\Columns\TextColumn::make('days')
+                TextColumn::make('description')->label('Description'),
+                TextColumn::make('days')
                     ->label('Days')
                     ->formatStateUsing(fn($state) => implode(', ', explode(',', $state))), // Display as comma-separated list
-                Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime(),
+                TextColumn::make('created_at')->label('Created At')->dateTime(),
 
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -92,9 +101,9 @@ class WeeklyHolidayResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWeeklyHolidays::route('/'),
-            'create' => Pages\CreateWeeklyHoliday::route('/create'),
-            'edit' => Pages\EditWeeklyHoliday::route('/{record}/edit'),
+            'index' => ListWeeklyHolidays::route('/'),
+            'create' => CreateWeeklyHoliday::route('/create'),
+            'edit' => EditWeeklyHoliday::route('/{record}/edit'),
         ];
     }
 

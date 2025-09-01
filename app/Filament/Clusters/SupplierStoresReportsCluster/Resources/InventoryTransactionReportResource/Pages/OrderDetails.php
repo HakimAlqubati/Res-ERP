@@ -9,8 +9,8 @@ use App\Services\PurchasedReports\PurchaseInvoiceProductSummaryReportService;
 class OrderDetails extends Page
 {
     protected static string $resource = InventoryTransactionPurchaseReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.order-details';
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+    protected string $view = 'filament.pages.inventory-reports.order-details';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?string $title = 'Order Product Details';
 
     public $reportData = [];

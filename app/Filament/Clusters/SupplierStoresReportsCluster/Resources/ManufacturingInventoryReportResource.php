@@ -2,12 +2,13 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListManufacturingInventoryReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -18,9 +19,9 @@ class ManufacturingInventoryReportResource extends Resource
 {
     protected static ?string $model = Product::class;
     protected static ?string $slug = 'manufacturing-inventory-report';
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
 
     public static function getLabel(): ?string
@@ -54,7 +55,7 @@ class ManufacturingInventoryReportResource extends Resource
 
             Filter::make('options')
                 ->label('Extra')
-                ->form([
+                ->schema([
                     Toggle::make('only_smallest_unit')
                         ->label('Only Smallest Unit')
                         ->default(false),
@@ -65,7 +66,7 @@ class ManufacturingInventoryReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListManufacturingInventoryReport::route('/'),
+            'index' => ListManufacturingInventoryReport::route('/'),
         ];
     }
 

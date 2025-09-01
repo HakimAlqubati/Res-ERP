@@ -2,9 +2,9 @@
     {{ $this->getTableFiltersForm() }}
 
     @if (!empty($reportData) && count($reportData) > 0)
-        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
+        <table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
             <thead>
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
                     <th colspan="3" class="no_border_right">
                         <h3>{{ __('Inventory Minimum Stock Report') }}</h3>
                     </th>
@@ -12,40 +12,40 @@
                         style="text-align: center; vertical-align: middle; border: none;">
                         <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                     </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th>{{ __('lang.product_code') }}</th>
                     <th>{{ __('lang.product') }}</th>
                     <th>{{ __('lang.unit_name') }}</th>
                     <th>{{ __('lang.qty_in_stock') }}</th>
                     <th>{{ __('stock.minimum_quantity') }}</th>
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
                 @foreach ($reportData as $data)
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell>
+                    <tr>
+                        <td>
                             <strong>{{ $data['product_code'] }}</strong>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+                        </td>
+                        <td>
                             <strong>{{ $data['product_name'] }}</strong>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+                        </td>
+                        <td>
                             {{ $data['unit_name'] }}
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+                        </td>
+                        <td>
                             <span
                                 class="{{ $data['remaining_qty'] < $data['minimum_quantity'] ? 'text-red-500 font-bold' : '' }}">
                                 {{ $data['remaining_qty'] }}
                             </span>
-                        </x-filament-tables::cell>
-                        <x-filament-tables::cell>
+                        </td>
+                        <td>
                             {{ $data['minimum_quantity'] }}
-                        </x-filament-tables::cell>
-                    </x-filament-tables::row>
+                        </td>
+                    </tr>
                 @endforeach
             </tbody>
-        </x-filament-tables::table>
+        </table>
         <div class="mb-4 text-sm text-gray-700">
 
             {{ $reportData->links('vendor.pagination.tailwind') }}

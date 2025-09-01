@@ -1,10 +1,13 @@
 <?php
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
 use App\Models\EmployeePeriodDay;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -17,7 +20,7 @@ class EmployeePeriodDaysRelationManager extends RelationManager
     protected static ?string $title                = 'Shift Days (Weekly)';
     protected static ?string $recordTitleAttribute = 'day_of_week';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
         return $form->schema([
             Select::make('day_of_week')
@@ -59,9 +62,9 @@ class EmployeePeriodDaysRelationManager extends RelationManager
                     ->label('End Date'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('Assign Day')
-                    ->mutateFormDataUsing(function (array $data, $livewire): array {
+                    ->mutateDataUsing(function (array $data, $livewire): array {
                         $data['employee_id'] = $livewire->ownerRecord->id;
                         return $data;
                     })
@@ -81,9 +84,9 @@ class EmployeePeriodDaysRelationManager extends RelationManager
                         }
                     }),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make()
                     ->requiresConfirmation()
                     ->modalHeading('Delete Day')
                     ->modalDescription('Are you sure you want to unassign this day from this period?'),

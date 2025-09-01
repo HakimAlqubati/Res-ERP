@@ -24,16 +24,16 @@
         </button>
     </div>
 
-    <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
+    <table class="w-full text-sm text-left pretty reports" id="report-table">
         <thead>
-            <x-filament-tables::row class="header_report">
+            <tr class="header_report">
                 <th rowspan="2">{{ __('Employee') }}</th>
                 <th colspan="2">{{ __('Shift data') }}</th>
                 <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
                 <th colspan="3">{{ __('Work Hours Summary') }}</th>
-            </x-filament-tables::row>
+            </tr>
 
-            <x-filament-tables::row class="fixed-header">
+            <tr class="fixed-header">
                 <th class="internal_cell">{{ __('From') }}</th>
                 <th class="internal_cell">{{ __('To') }}</th>
                 <th class="internal_cell">{{ __('Check-in') }}</th>
@@ -52,7 +52,7 @@
                 <th class="internal_cell">{{ __('Supposed') }}</th>
                 <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                 <th class="internal_cell">{{ __('Approved') }}</th>
-            </x-filament-tables::row>
+            </tr>
         </thead>
 
         <tbody id="report-body">
@@ -62,57 +62,57 @@
                     $data = array_values($data_);
                 @endphp
 
-                <x-filament-tables::row>
-                    <x-filament-tables::cell>{{ $data[0]['employee_name'] }}</x-filament-tables::cell>
+                <tr>
+                    <td>{{ $data[0]['employee_name'] }}</td>
                     @if (count($data[0]['periods']) > 0 && !isset($data[0]['leave']))
-                        <x-filament-tables::cell colspan="9">
-                            <x-filament-tables::table>
+                        <td colspan="9">
+                            <table>
                                 @foreach ($data[0]['periods'] as $item)
-                                    <x-filament-tables::row>
-                                        <x-filament-tables::cell
-                                            class="internal_cell">{{ $item['start_at'] }}</x-filament-tables::cell>
-                                        <x-filament-tables::cell
-                                            class="internal_cell">{{ $item['end_at'] }}</x-filament-tables::cell>
+                                    <tr>
+                                        <td
+                                            class="internal_cell">{{ $item['start_at'] }}</td>
+                                        <td
+                                            class="internal_cell">{{ $item['end_at'] }}</td>
 
                                         @if (isset($item['attendances']['checkin']))
-                                            <x-filament-tables::cell
-                                                class="internal_cell">{{ $item['attendances']['checkin'][0]['check_time'] }}</x-filament-tables::cell>
-                                            <x-filament-tables::cell
-                                                class="internal_cell status_cell">{{ $item['attendances']['checkin'][0]['status'] }}</x-filament-tables::cell>
+                                            <td
+                                                class="internal_cell">{{ $item['attendances']['checkin'][0]['check_time'] }}</td>
+                                            <td
+                                                class="internal_cell status_cell">{{ $item['attendances']['checkin'][0]['status'] }}</td>
                                         @endif
                                         @if (isset($item['attendances']['checkout']))
-                                            <x-filament-tables::cell
-                                                class="internal_cell">{{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}</x-filament-tables::cell>
-                                            <x-filament-tables::cell
-                                                class="internal_cell status_cell">{{ $item['attendances']['checkout'][0]['status'] }}</x-filament-tables::cell>
-                                            <x-filament-tables::cell
-                                                class="internal_cell">{{ $item['attendances']['checkout'][0]['supposed_duration_hourly'] }}</x-filament-tables::cell>
-                                            <x-filament-tables::cell
-                                                class="internal_cell">{{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}</x-filament-tables::cell>
+                                            <td
+                                                class="internal_cell">{{ $item['attendances']['checkout']['lastcheckout']['check_time'] }}</td>
+                                            <td
+                                                class="internal_cell status_cell">{{ $item['attendances']['checkout'][0]['status'] }}</td>
+                                            <td
+                                                class="internal_cell">{{ $item['attendances']['checkout'][0]['supposed_duration_hourly'] }}</td>
+                                            <td
+                                                class="internal_cell">{{ $item['attendances']['checkout']['lastcheckout']['approved_overtime'] }}</td>
                                         @endif
-                                    </x-filament-tables::row>
+                                    </tr>
                                 @endforeach
-                            </x-filament-tables::table>
-                        </x-filament-tables::cell>
+                            </table>
+                        </td>
                     @elseif (isset($data[0]['leave']))
-                        <x-filament-tables::cell
-                            colspan="9">{{ $data[0]['leave']['transaction_description'] }}</x-filament-tables::cell>
+                        <td
+                            colspan="9">{{ $data[0]['leave']['transaction_description'] }}</td>
                     @else
-                        <x-filament-tables::cell colspan="9">No periods available</x-filament-tables::cell>
+                        <td colspan="9">No periods available</td>
                     @endif
-                </x-filament-tables::row>
+                </tr>
             @endforeach
         </tbody>
 
         <tfoot>
-            <x-filament-tables::row>
+            <tr>
                 <th colspan="7" class="text-right font-bold">{{ __('Total') }}</th>
                 <td class="text-center">{{ $totalSupposed }}</td>
                 <td class="text-center">{{ $totalWorked }}</td>
                 <td class="text-center">{{ $totalApproved }}</td>
-            </x-filament-tables::row>
+            </tr>
         </tfoot>
-    </x-filament-tables::table>
+    </table>
 
     <script>
         let sortDirection = {

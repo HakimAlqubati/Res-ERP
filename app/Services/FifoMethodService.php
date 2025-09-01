@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use Exception;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Product;
@@ -25,7 +26,7 @@ class FifoMethodService
         $requestedQty,
         $storeId = null
     ) { 
-        $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
+        $targetUnit = UnitPrice::where('product_id', $productId)
             ->where('unit_id', $unitId)->with('unit')
             ->first();
         $product = Product::find($productId);
@@ -44,7 +45,7 @@ class FifoMethodService
             $productName = $targetUnit->product->name ?? 'Unknown Product';
             $unitName    = $targetUnit->unit->name ?? 'Unknown Unit';
             Log::info("❌ Requested quantity ($requestedQty) exceeds available inventory ($inventoryRemainingQty) for product: $productName (unit: $unitName)");
-            throw new \Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
+            throw new Exception("❌ Requested quantity ($requestedQty'-'$unitName) exceeds available inventory ($inventoryRemainingQty) for product: $productName");
         }
 
         $allocations = [];

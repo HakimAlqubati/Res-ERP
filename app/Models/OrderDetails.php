@@ -126,7 +126,7 @@ class OrderDetails extends Model implements Auditable
             $orderDetail->orderd_product_id = $orderDetail->product_id;
             $orderDetail->ordered_unit_id = $orderDetail->unit_id;
             if (is_null($orderDetail->package_size)) {
-                $unitPrice = \App\Models\UnitPrice::where('product_id', $orderDetail->product_id)
+                $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
                     ->where('unit_id', $orderDetail->unit_id)
                     ->first();
 
@@ -136,7 +136,7 @@ class OrderDetails extends Model implements Auditable
         });
         static::updated(function ($orderDetail) {
             if (is_null($orderDetail->package_size)) {
-                $unitPrice = \App\Models\UnitPrice::where('product_id', $orderDetail->product_id)
+                $unitPrice = UnitPrice::where('product_id', $orderDetail->product_id)
                     ->where('unit_id', $orderDetail->unit_id)
                     ->first();
 
@@ -203,7 +203,7 @@ class OrderDetails extends Model implements Auditable
                 $customizedCategoriesIds = $branch->categories()->pluck('categories.id')->toArray();
 
                 // التخصصات المخصصة لفروع المطابخ المركزية الأخرى
-                $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+                $otherBranchesCategories = Branch::centralKitchens()
                     ->where('id', '!=', $branch->id) // نستثني فرع المستخدم
                     ->with('categories:id')
                     ->get()
@@ -263,7 +263,7 @@ class OrderDetails extends Model implements Auditable
             return 0;
         }
 
-        $returnedQty =  \App\Models\ReturnedOrderDetail::whereHas('returnedOrder', function ($query) {
+        $returnedQty =  ReturnedOrderDetail::whereHas('returnedOrder', function ($query) {
             $query->where('original_order_id', $this->order_id)
                 ->approved();
         })

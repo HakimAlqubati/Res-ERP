@@ -2,6 +2,14 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRTasksSystem\Resources\TasksMenuResource\Pages\ListTasksMenus;
+use App\Filament\Clusters\HRTasksSystem\Resources\TasksMenuResource\Pages\CreateTasksMenu;
+use App\Filament\Clusters\HRTasksSystem\Resources\TasksMenuResource\Pages\EditTasksMenu;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TasksMenuResource\Pages;
 use App\Filament\Clusters\HRTasksSystem\Resources\TasksMenuResource\RelationManagers;
@@ -11,8 +19,6 @@ use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -24,17 +30,17 @@ class TasksMenuResource extends Resource
 {
     protected static ?string $model = TasksMenu::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     // protected static ?string $cluster = HRTasksSystem::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
     
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 TextInput::make('name')->label('Title')
                     ->required()
                     ->maxLength(255),
@@ -56,12 +62,12 @@ class TasksMenuResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -81,9 +87,9 @@ class TasksMenuResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTasksMenus::route('/'),
-            'create' => Pages\CreateTasksMenu::route('/create'),
-            'edit' => Pages\EditTasksMenu::route('/{record}/edit'),
+            'index' => ListTasksMenus::route('/'),
+            'create' => CreateTasksMenu::route('/create'),
+            'edit' => EditTasksMenu::route('/{record}/edit'),
         ];
     }
 }

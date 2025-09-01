@@ -13,4 +13,12 @@ class Allowance extends Model implements Auditable
     protected $table = 'hr_allowances';
     protected $fillable = ['name', 'description', 'is_monthly', 'active','is_specific', 'amount', 'percentage','is_percentage'];
     protected $auditInclude = ['name', 'description', 'is_monthly', 'active','is_specific', 'amount', 'percentage','is_percentage'];
+    protected $casts = [
+        'is_monthly'   => 'boolean',
+        'active'       => 'boolean',
+        'is_specific'  => 'boolean',
+        'is_percentage'=> 'boolean',
+        'amount'       => 'decimal:2',
+        'percentage'   => 'decimal:2',
+    ];
 }

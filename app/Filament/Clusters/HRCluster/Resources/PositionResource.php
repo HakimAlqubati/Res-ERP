@@ -2,19 +2,24 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\PositionResource\Pages\ListPositions;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\PositionResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\PositionResource\RelationManagers;
 use App\Models\Position;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,16 +30,16 @@ class PositionResource extends Resource
 {
     protected static ?string $model = Position::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Briefcase;
 
     protected static ?string $cluster = HRCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
                     Grid::make()->columns(2)->schema([
                         TextInput::make('title')->required()->columnSpan(1),
@@ -49,7 +54,7 @@ class PositionResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->striped()
             ->columns([
                 TextColumn::make('id')->searchable()->sortable(),
                 TextColumn::make('title')->searchable(),
@@ -58,12 +63,12 @@ class PositionResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -78,7 +83,7 @@ class PositionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPositions::route('/'),
+            'index' => ListPositions::route('/'),
             // 'create' => Pages\CreatePosition::route('/create'),
             // 'edit' => Pages\EditPosition::route('/{record}/edit'),
         ];

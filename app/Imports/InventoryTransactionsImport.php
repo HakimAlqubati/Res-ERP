@@ -2,6 +2,8 @@
 
 namespace App\Imports;
 
+use App\Models\Branch;
+use Throwable;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\Unit;
@@ -40,7 +42,7 @@ class InventoryTransactionsImport implements ToCollection, WithHeadingRow
 
                 if ($category) {
 
-                    $customizedBranch = \App\Models\Branch::whereHas(
+                    $customizedBranch = Branch::whereHas(
                         'categories',
                         fn($q) =>
                         $q->where('categories.id', $category->id)
@@ -54,7 +56,7 @@ class InventoryTransactionsImport implements ToCollection, WithHeadingRow
                     }
                 }
 
-                $unitPrice = \App\Models\UnitPrice::where('product_id', $productId)
+                $unitPrice = UnitPrice::where('product_id', $productId)
                     ->where('unit_id', $unit->id)
                     ->first();
 
@@ -75,7 +77,7 @@ class InventoryTransactionsImport implements ToCollection, WithHeadingRow
             }
             DB::commit();
             Log::info('✅ All inventory transactions imported successfully.');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             Log::error('❌ Failed to import inventory transactions: ' . $e->getMessage(), [
                 'exception' => $e

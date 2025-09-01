@@ -2,6 +2,7 @@
 
 namespace App\Services\Orders;
 
+use Exception;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Services\MultiProductsInventoryService;
@@ -49,7 +50,7 @@ class OrderInventoryAllocator
                 Log::error("\u274C Insufficient total stock across stores for product", [$orderDetail->product?->name, $orderDetail->unit?->name]);
                 Log::info('total_available', [$totalAvailable]);
                 Log::info('required_qty', [$requiredQty]);
-                throw new \Exception("\u274C Insufficient total stock across stores for product {$orderDetail->product?->name}");
+                throw new Exception("\u274C Insufficient total stock across stores for product {$orderDetail->product?->name}");
             }
 
             // Step 3: Deduct from stores

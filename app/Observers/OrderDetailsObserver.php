@@ -9,7 +9,7 @@ class OrderDetailsObserver
     /**
      * Handle the OrderDetails "created" event.
      *
-     * @param  \App\Models\OrderDetails  $orderDetails
+     * @param OrderDetails $orderDetails
      * @return void
      */
     public function created(OrderDetails $orderDetails)
@@ -20,7 +20,7 @@ class OrderDetailsObserver
     /**
      * Handle the OrderDetails "updated" event.
      *
-     * @param  \App\Models\OrderDetails  $orderDetails
+     * @param OrderDetails $orderDetails
      * @return void
      */
     public function updated(OrderDetails $orderDetails)
@@ -31,7 +31,7 @@ class OrderDetailsObserver
     /**
      * Handle the OrderDetails "deleted" event.
      *
-     * @param  \App\Models\OrderDetails  $orderDetails
+     * @param OrderDetails $orderDetails
      * @return void
      */
     public function deleted(OrderDetails $orderDetails)
@@ -42,7 +42,7 @@ class OrderDetailsObserver
     /**
      * Handle the OrderDetails "restored" event.
      *
-     * @param  \App\Models\OrderDetails  $orderDetails
+     * @param OrderDetails $orderDetails
      * @return void
      */
     public function restored(OrderDetails $orderDetails)
@@ -53,7 +53,7 @@ class OrderDetailsObserver
     /**
      * Handle the OrderDetails "force deleted" event.
      *
-     * @param  \App\Models\OrderDetails  $orderDetails
+     * @param OrderDetails $orderDetails
      * @return void
      */
     public function forceDeleted(OrderDetails $orderDetails)

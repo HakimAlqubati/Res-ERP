@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages;
 
+use Exception;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\ApplicationTransaction;
 use App\Models\Employee;
@@ -222,7 +223,7 @@ class CreateMonthSalary extends CreateRecord
 
                 // Commit the transaction if all is successful
                 DB::commit();
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Rollback the transaction on any failure
                 DB::rollBack();
                 $this->record->delete();
@@ -246,7 +247,7 @@ class CreateMonthSalary extends CreateRecord
                         'amount' => $value['allowance_amount'],
                     ]);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error("Failed to create allowance details for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
             }
         }
@@ -268,7 +269,7 @@ class CreateMonthSalary extends CreateRecord
                         'percentage_value' => $value['percentage_value'],
                     ]);
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 Log::error("Failed to create deduction details for employee ID: {$employee->id}", ['exception' => $e->getMessage()]);
             }
         }

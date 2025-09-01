@@ -12,7 +12,7 @@ class ViewDetails extends Page
 { 
     protected static string $resource = EmployeeRatingReportResource::class;
 
-    protected static string $view = 'filament.clusters.h-r-attendance-report.resources.employee-rating-report-resource.pages.view-details';
+    protected string $view = 'filament.clusters.h-r-attendance-report.resources.employee-rating-report-resource.pages.view-details';
     protected function getViewData(): array
     {
         $emp_id= $_GET['employee_id'];

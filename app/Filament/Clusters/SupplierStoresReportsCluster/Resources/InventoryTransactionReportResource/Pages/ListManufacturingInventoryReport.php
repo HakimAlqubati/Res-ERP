@@ -9,7 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListManufacturingInventoryReport extends ListRecords
 {
     protected static string $resource = ManufacturingInventoryReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.manufacturing-inventory-report';
+    protected string $view = 'filament.pages.inventory-reports.manufacturing-inventory-report';
 
     protected function getViewData(): array
     {

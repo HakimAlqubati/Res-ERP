@@ -2,18 +2,27 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages\ListAllowances;
+use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages\CreateAllowance;
+use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages\EditAllowance;
+use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages\ViewAllowance;
 use App\Filament\Clusters\HRCluster\Resources\AllowanceResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\Allowance;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -24,24 +33,24 @@ class AllowanceResource extends Resource
 {
     protected static ?string $model = Allowance::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::CurrencyDollar;
 
     protected static ?string $cluster = HRSalarySettingCluster::class;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 5;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columns(3)->label('')->schema([
-                    Forms\Components\TextInput::make('name')->required(),
-                    Forms\Components\TextInput::make('description')->columnSpan(2),
+                    TextInput::make('name')->required(),
+                    TextInput::make('description')->columnSpan(2),
                 ]),
                 Fieldset::make()->label('')->columns(4)->schema([
-                    Forms\Components\Toggle::make('is_specific')->default(false)->label('Custom')
+                    Toggle::make('is_specific')->default(false)->label('Custom')
                         ->helperText('This means for specific employee or for general'),
-                    Forms\Components\Toggle::make('active')->default(true),
+                    Toggle::make('active')->default(true),
                     // Forms\Components\Toggle::make('is_percentage')->live()->default(true)
                     //     ->helperText('Set allowance as a salary percentage or fixed amount')
                     // ,
@@ -66,23 +75,23 @@ class AllowanceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('description'),
-                Tables\Columns\ToggleColumn::make('is_specific')->label('Custom')->disabled()->hidden(),
+                TextColumn::make('name')->sortable()->searchable(),
+                TextColumn::make('description'),
+                ToggleColumn::make('is_specific')->label('Custom')->disabled()->hidden(),
                 ToggleColumn::make('is_percentage')->disabled(),
                 TextColumn::make('amount'),
                 TextColumn::make('percentage')->suffix(' % '),
-                Tables\Columns\ToggleColumn::make('active')->disabled(fn():bool=>isBranchManager()),
+                ToggleColumn::make('active')->disabled(fn():bool=>isBranchManager()),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -97,10 +106,10 @@ class AllowanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAllowances::route('/'),
-            'create' => Pages\CreateAllowance::route('/create'),
-            'edit' => Pages\EditAllowance::route('/{record}/edit'),
-            'view' => Pages\ViewAllowance::route('/{record}'),
+            'index' => ListAllowances::route('/'),
+            'create' => CreateAllowance::route('/create'),
+            'edit' => EditAllowance::route('/{record}/edit'),
+            'view' => ViewAllowance::route('/{record}'),
         ];
     }
 

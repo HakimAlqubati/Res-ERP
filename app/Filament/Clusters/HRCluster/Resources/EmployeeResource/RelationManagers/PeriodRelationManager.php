@@ -9,14 +9,10 @@ use App\Models\WorkPeriod;
 use Carbon\Carbon;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
@@ -27,10 +23,10 @@ class PeriodRelationManager extends RelationManager
     protected static string $relationship = 'periods';
     protected static ?string $title       = 'Shifts';
     // protected static ?string $badge = count($this->ownerRecord->periods);
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 // Grid::make()->columnSpanFull()->columns(1)->schema([
                 //     ToggleButtons::make('periods')
                 //         ->label('Work Periods')
@@ -99,9 +95,9 @@ class PeriodRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\Action::make('createOne')->label('Add shifts')
+                Action::make('createOne')->label('Add shifts')
                     ->icon('heroicon-o-plus')
-                    ->form(
+                    ->schema(
 
                         [Grid::make()->columnSpanFull()->columns(1)->schema([
                             Fieldset::make()->columns(2)->columnSpanFull()
@@ -266,7 +262,7 @@ class PeriodRelationManager extends RelationManager
                             // Send notification after the operation is complete
                             Notification::make()->title('Done')->success()->send();
                             DB::commit();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             // Handle the exception
                             DB::rollBack();
                             Log::alert('Error adding new periods: ' . $e->getMessage());
@@ -275,14 +271,13 @@ class PeriodRelationManager extends RelationManager
                         }
                     }),
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 $this->assignDaysAction(),
                 Action::make('Delete')->requiresConfirmation()
                     ->color('warning')
                     ->button()
-
                     ->databaseTransaction()
                     ->icon('heroicon-o-x-mark')
                     ->action(function ($record) {
@@ -332,7 +327,7 @@ class PeriodRelationManager extends RelationManager
                             });
                             // Optionally, send a success notification
                             Notification::make()->title('Deleted')->success()->send();
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             // Handle the exception
                             Notification::make()->title('Error')->icon('heroicon-o-x-circle')
                                 ->body($e->getMessage())->danger()->persistent()->send();
@@ -341,8 +336,8 @@ class PeriodRelationManager extends RelationManager
                         }
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

@@ -2,13 +2,14 @@
 
 namespace App\Exports;
 
+use Illuminate\Support\Collection;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 
 class SalariesExport implements FromView
 {
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     private $data = [];
     private $deducationTypes = [];

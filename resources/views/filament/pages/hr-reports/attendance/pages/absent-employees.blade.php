@@ -4,45 +4,45 @@
 
     {{-- التحقق من وجود بيانات الفرع --}}
     @if (!empty($branch_id))
-        <x-filament-tables::table class="w-full text-sm text-left pretty reports">
+        <table class="w-full text-sm text-left pretty reports">
             <thead class="fixed-header" style="top:64px;">
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
                     <th colspan="2" class="no_border_right_left">
                         <p>{{ __('Employee Absence Report') }}</p>
                     </th>
                     <th colspan="2" class="no_border_right_left">
                         <p>{{ __('Date: ') . $date }}</p>
                     </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th>{{ __('No.') }}</th>
                     <th>{{ __('Employee Name') }}</th>
                     <th>{{ __('Start Time') }}</th>
                     <th>{{ __('End Time') }}</th>
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
                 @if (count($report_data) > 0)
                     @php $rowNumber = 1; @endphp
                     @foreach ($report_data as $employee)
                         @foreach ($employee['periods'] as $period)
-                            <x-filament-tables::row>
-                                <x-filament-tables::cell>{{ $rowNumber++ }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $employee['name'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $period['start_at'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $period['end_at'] }}</x-filament-tables::cell>
-                            </x-filament-tables::row>
+                            <tr>
+                                <td>{{ $rowNumber++ }}</td>
+                                <td>{{ $employee['name'] }}</td>
+                                <td>{{ $period['start_at'] }}</td>
+                                <td>{{ $period['end_at'] }}</td>
+                            </tr>
                         @endforeach
                     @endforeach
                 @else
-                    <x-filament-tables::row>
-                        <x-filament-tables::cell colspan="4" style="text-align: center;">
+                    <tr>
+                        <td colspan="4" style="text-align: center;">
                             {{ __('No employees absent for this date.') }}
-                        </x-filament-tables::cell>
-                    </x-filament-tables::row>
+                        </td>
+                    </tr>
                 @endif
             </tbody>
-        </x-filament-tables::table>
+        </table>
     @else
         <div class="please_select_message_div" style="text-align: center;">
             <h1 class="please_select_message_text">{{ __('Please select a Branch') }}</h1>

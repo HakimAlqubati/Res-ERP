@@ -15,9 +15,9 @@
 
     @if (count($reportData) > 0)
         <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+            <table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead class="fixed-header">
-                    <x-filament-tables::row class="header_report">
+                    <tr class="header_report">
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                         <th colspan="2" class="no_border_right_left text-center">
                             <h3 class="text-lg font-bold">Stock Adjustment Summary Report</h3>
@@ -26,14 +26,14 @@
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Logo"
                                 class="logo-left circle-image" style="display: inline-block;">
                         </th>
-                    </x-filament-tables::row>
-                    <x-filament-tables::row>
+                    </tr>
+                    <tr>
                         <th>Category</th>
                         <th>Adjustment Type</th>
                         <th>Product Count</th>
                         <th>Store</th>
                         <th>Total Price</th>
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
                 <tbody>
                     @foreach ($reportData as $record)
@@ -52,52 +52,52 @@
 
                             @endphp
 
-                            <x-filament-tables::row
+                            <tr
                                 x-on:click="window.open('{{ $url }}', '_blank', 'noopener,noreferrer')"
                                 class="cursor-pointer hover:bg-gray-100 transition">
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                <td class="border border-gray-300 px-4 py-2">
                                     {{ $record['category'] }}
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                <td class="border border-gray-300 px-4 py-2">
                                     {{ ucfirst($record['adjustment_type']) }}
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 text-center">
+                                <td class="border border-gray-300 px-4 py-2 text-center">
                                     {{ $record['product_count'] }}
-                                </x-filament-tables::cell>
+                                </td>
 
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                <td class="border border-gray-300 px-4 py-2">
                                     {{ $record['store'] }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2">
+                                </td>
+                                <td class="border border-gray-300 px-4 py-2">
                                     {{ $record['total_price'] }}
-                                </x-filament-tables::cell>
+                                </td>
                                 {{-- @if ($loop->last && isset($record['final_total_price']))
-                                <x-filament-tables::cell class="border border-gray-300 px-4 py-2 font-bold">
+                                <td class="border border-gray-300 px-4 py-2 font-bold">
                                     Final Total Price: {{ $record['final_total_price'] }}
-                                </x-filament-tables::cell>
+                                </td>
                             @endif --}}
 
-                            </x-filament-tables::row>
+                            </tr>
                         @endif
                     @endforeach
                 </tbody>
                 @if (isset($reportData[count($reportData) - 1]['final_total_price']))
                     <tbody>
-                        <x-filament-tables::row class="bg-gray-100 font-bold">
-                            <x-filament-tables::cell colspan="4"
+                        <tr class="bg-gray-100 font-bold">
+                            <td colspan="4"
                                 class="text-right px-4 py-3 border-t border-gray-400">
                                 Final Total Price
-                            </x-filament-tables::cell>
-                            <x-filament-tables::cell class="px-4 py-3 border-t border-gray-400">
+                            </td>
+                            <td class="px-4 py-3 border-t border-gray-400">
                                 {{ $reportData[count($reportData) - 1]['final_total_price'] }}
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
+                            </td>
+                        </tr>
                     </tbody>
                 @endif
 
-            </x-filament-tables::table>
+            </table>
         </div>
     @else
         <div class="please_select_message_div text-center">

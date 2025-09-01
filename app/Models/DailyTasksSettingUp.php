@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -75,11 +76,11 @@ class DailyTasksSettingUp extends Model
 
         if (auth()->check()) {
             if (isBranchManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
             } else if (isFinanceManager()) {
-                static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope(function (Builder $builder) {
                     $builder->where('assigned_to', auth()->user()->employee->id)
                         ->orWhere('assigned_by', auth()->user()->id)
                     ; // Add your default query here

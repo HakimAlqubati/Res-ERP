@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderReportsResource;
 
+use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\MainOrdersCluster;
 use App\Filament\Clusters\OrderCluster;
 use App\Filament\Clusters\OrderReportsCluster;
@@ -13,8 +14,8 @@ use App\Models\Order;
 use App\Models\OrderDetails;
 use App\Models\Product;
 use Filament\Forms\Components\DatePicker;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -27,10 +28,10 @@ class ReportProductQuantitiesResource extends Resource
 {
     protected static ?string $model = ReportProductQuantities::class;
     protected static ?string $slug = 'report-product-quantities';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedClipboardDocumentCheck;
     protected static ?string $cluster = OrderReportsCluster::class;
     protected static bool $shouldRegisterNavigation = true;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
 
     /**
@@ -59,7 +60,7 @@ class ReportProductQuantitiesResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return $table->deferFilters(false)
             ->filters([ 
                 SelectFilter::make("product_id")
                     // ->multiple()
@@ -96,7 +97,7 @@ class ReportProductQuantitiesResource extends Resource
                         ->active()->pluck('name', 'id')),
 
                 Filter::make('date')
-                    ->form([
+                    ->schema([
                         DatePicker::make('start_date')
                             ->label(__('lang.start_date')),
                         DatePicker::make('end_date')

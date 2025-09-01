@@ -72,7 +72,7 @@ class StockSupplyOrder extends Model implements Auditable
     }
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
     public function cancelledBy()
     {
@@ -82,27 +82,27 @@ class StockSupplyOrder extends Model implements Auditable
     public function hasOutboundTransactionsFromInbound(): bool
     {
         // Step 1: Get IDs of inbound transactions created from this supply order
-        $inboundTransactionIds = \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+        $inboundTransactionIds = InventoryTransaction::where('transactionable_type', self::class)
             ->where('transactionable_id', $this->id)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->pluck('id');
 
         // Step 2: Check if any outbound transaction used these as source_transaction_id
-        return \App\Models\InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
+        return InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
+            ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
             ->exists();
     }
 
     protected function hasOutboundTransactions(): Attribute
     {
         return Attribute::get(function () {
-            $inboundTransactionIds = \App\Models\InventoryTransaction::where('transactionable_type', self::class)
+            $inboundTransactionIds = InventoryTransaction::where('transactionable_type', self::class)
                 ->where('transactionable_id', $this->id)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
                 ->pluck('id');
 
-            return \App\Models\InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
-                ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_OUT)
+            return InventoryTransaction::whereIn('source_transaction_id', $inboundTransactionIds)
+                ->where('movement_type', InventoryTransaction::MOVEMENT_OUT)
                 ->exists();
         });
     }

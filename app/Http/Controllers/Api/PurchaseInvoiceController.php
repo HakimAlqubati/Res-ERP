@@ -1,6 +1,8 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use Exception;
+use App\Models\PurchaseInvoiceDetail;
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseInvoice;
 use Carbon\Carbon;
@@ -40,7 +42,7 @@ class PurchaseInvoiceController extends Controller
             try {
                 $fromDate = Carbon::createFromFormat('d-m-Y', $request->from_date)->format('Y-m-d');
                 $query->whereDate('date', '>=', $fromDate);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return response()->json(['success' => false, 'message' => 'Invalid from_date format. Use d-m-Y.']);
             }
         }
@@ -49,14 +51,14 @@ class PurchaseInvoiceController extends Controller
             try {
                 $toDate = Carbon::createFromFormat('d-m-Y', $request->to_date)->format('Y-m-d');
                 $query->whereDate('date', '<=', $toDate);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 return response()->json(['success' => false, 'message' => 'Invalid to_date format. Use d-m-Y.']);
             }
         }
         $invoiceIds = (clone $query)->pluck('id');
 
 // جلب جميع التفاصيل الخاصة بهذه الفواتير
-        $details = \App\Models\PurchaseInvoiceDetail::whereIn('purchase_invoice_id', $invoiceIds)->get();
+        $details = PurchaseInvoiceDetail::whereIn('purchase_invoice_id', $invoiceIds)->get();
 
 // جمع إجمالي السعر المحسوب
         $totalAmount = $details->sum(fn($detail) => $detail->quantity * $detail->price);

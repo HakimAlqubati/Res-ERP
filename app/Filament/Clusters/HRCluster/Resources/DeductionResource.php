@@ -2,21 +2,30 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages\ListDeductions;
+use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages\CreateDeduction;
+use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages\EditDeduction;
+use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages\ViewDeduction;
 use App\Filament\Clusters\HRCluster\Resources\DeductionResource\Pages;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Clusters\HRSalarySettingCluster;
 use App\Models\Deduction;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -28,19 +37,19 @@ class DeductionResource extends Resource
 {
     protected static ?string $model = Deduction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::MinusCircle;
 
     protected static ?string $cluster = HRSalarySettingCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 6;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
 
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->columns(4)
                     ->label('')->schema([
-                        Forms\Components\TextInput::make('name')->required()
+                        TextInput::make('name')->required()
                             ->columnSpan(fn($get): int => ($get('is_penalty') || $get('is_specific')) ? 4 : 1),
                         Select::make('condition_applied_v2')->live()
                             ->label('Condition applied')
@@ -56,20 +65,20 @@ class DeductionResource extends Resource
                             // ->visible(fn($get): bool => $get('condition_applied_v2') != Deduction::CONDITION_ALL)
                             ->hidden()
                             ->required(),
-                        Forms\Components\TextInput::make('description')->columnSpan(4),
+                        TextInput::make('description')->columnSpan(4),
                     ]),
                 Fieldset::make()->label('')->columns(6)->schema([
-                    Forms\Components\Toggle::make('is_penalty')
+                    Toggle::make('is_penalty')
                         ->live()->hidden(fn($get): bool => ($get('is_specific')))
                         ->default(false),
 
-                    Forms\Components\Toggle::make('is_specific')
+                    Toggle::make('is_specific')
                         ->label('Custom')
                         ->default(false)
                         ->helperText('This means for specific employee or for general')
                         ->hidden(fn($get): bool => ($get('is_penalty')))->live(),
-                    Forms\Components\Toggle::make('active')->default(true),
-                    Forms\Components\Toggle::make('has_brackets')->default(false)->live()
+                    Toggle::make('active')->default(true),
+                    Toggle::make('has_brackets')->default(false)->live()
                         ->hidden(fn($get): bool => ($get('is_penalty') || $get('is_specific'))),
                     Radio::make('is_percentage')->label('')->live()
                         ->helperText('Set deduction as a salary percentage or fixed amount')->options([
@@ -126,8 +135,8 @@ class DeductionResource extends Resource
         return $table
             ->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable()->wrap(),
-                Tables\Columns\TextColumn::make('description')->wrap()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('name')->sortable()->searchable()->wrap(),
+                TextColumn::make('description')->wrap()->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('is_penalty')->alignCenter(true)
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-mark'),
@@ -149,17 +158,17 @@ class DeductionResource extends Resource
                         }
                         return $record->amount ?? 0;
                     }),
-                Tables\Columns\ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
+                ToggleColumn::make('active')->disabled(fn(): bool => isBranchManager()),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -174,10 +183,10 @@ class DeductionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDeductions::route('/'),
-            'create' => Pages\CreateDeduction::route('/create'),
-            'edit' => Pages\EditDeduction::route('/{record}/edit'),
-            'view' => Pages\ViewDeduction::route('/{record}'),
+            'index' => ListDeductions::route('/'),
+            'create' => CreateDeduction::route('/create'),
+            'edit' => EditDeduction::route('/{record}/edit'),
+            'view' => ViewDeduction::route('/{record}'),
         ];
     }
 

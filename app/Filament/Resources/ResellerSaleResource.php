@@ -1,6 +1,24 @@
 <?php
+
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Exception;
+use App\Models\ResellerSalePaidAmount;
+use Filament\Notifications\Notification;
+use Throwable;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ResellerSaleResource\Pages\ListResellerSales;
+use App\Filament\Resources\ResellerSaleResource\Pages\CreateResellerSale;
+use App\Filament\Resources\ResellerSaleResource\Pages\EditResellerSale;
+use App\Filament\Resources\ResellerSaleResource\Pages\PrintResellerInvoice;
 use App\Filament\Clusters\ResellersCluster;
 use App\Filament\Resources\ResellerSaleResource\Pages;
 use App\Models\Branch;
@@ -8,14 +26,10 @@ use App\Models\Product;
 use App\Models\ResellerSale;
 use App\Models\UnitPrice;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -29,10 +43,10 @@ class ResellerSaleResource extends Resource
 {
     protected static ?string $model = ResellerSale::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster                             = ResellersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
 
     public static function getLabel(): ?string
@@ -45,16 +59,16 @@ class ResellerSaleResource extends Resource
         return __('lang.reseller_sales');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make(__('lang.reseller_sale_info'))->schema([
-                    Grid::make(2)->schema([
+                    Grid::make(2)->columnSpanFull()->schema([
                         Select::make('branch_id')
-                            ->label(__('lang.branch'))
+                            ->label(__('lang.reseller'))
                             ->options(
-                                \App\Models\Branch::resellers()->active()->pluck('name', 'id')
+                                Branch::resellers()->active()->pluck('name', 'id')
                             )
                             ->disabledOn('edit')
                             ->required()->preload()
@@ -75,7 +89,7 @@ class ResellerSaleResource extends Resource
                 Repeater::make('items')
                     ->label(__('lang.items'))
                     ->relationship()
-                    ->defaultItems(1)
+                    ->defaultItems(1)->columnSpanFull()
                     ->columns(6)
                     ->disabledOn('edit')
                     ->columnSpanFull()
@@ -89,7 +103,7 @@ class ResellerSaleResource extends Resource
                                     return;
                                 }
 
-                                $product = \App\Models\Product::find($state);
+                                $product = Product::find($state);
                                 if (! $product) {
                                     return;
                                 }
@@ -129,7 +143,7 @@ class ResellerSaleResource extends Resource
                         Select::make('unit_id')
                             ->label(__('lang.unit'))
                             ->options(function (callable $get) {
-                                $product = \App\Models\Product::find($get('product_id'));
+                                $product = Product::find($get('product_id'));
                                 if (! $product) {
                                     return [];
                                 }
@@ -138,7 +152,7 @@ class ResellerSaleResource extends Resource
                             })
                             ->searchable()
                             ->reactive()
-                            ->afterStateUpdated(function (\Filament\Forms\Set $set, $state, $get) {
+                            ->afterStateUpdated(function (Set $set, $state, $get) {
                                 $unitPrice = UnitPrice::where(
                                     'product_id',
                                     $get('product_id')
@@ -163,33 +177,50 @@ class ResellerSaleResource extends Resource
                         TextInput::make('quantity')
                             ->label(__('lang.quantity'))
                             ->disabledOn('edit')
-                            ->default(1)->live(onBlur: true)
-                            ->afterStateUpdated(function ($set, $state, $get) {
-                                $sellingPrice = \App\Models\UnitPrice::where('product_id', $get('product_id'))->where('unit_id', $get('unit_id'))->first()?->selling_price ?? 0;
-
-                                $total = ((float) ($sellingPrice ?? 0)) * $state;
-                                $total = round($total, 2);
-                                $set('total_price', $total ?? 0);
-                            })
-                            ->numeric()->minValue(0.1)
+                            ->default(1)
+                            ->numeric()
+                            ->minValue(0.1)
                             ->required()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $state,   $get) {
+                                $qty = (float) ($state ?? 0);
+
+                                // فضّل قيمة unit_price المدخلة يدويًا أولًا
+                                $unitPrice = (float) ($get('unit_price') ?? 0);
+
+                                // إن لم تكن موجودة استخدم السعر الافتراضي من UnitPrice
+                                if ($unitPrice <= 0) {
+                                    $unitPrice = (float) (UnitPrice::query()
+                                        ->where('product_id', $get('product_id'))
+                                        ->where('unit_id', $get('unit_id'))
+                                        ->value('selling_price') ?? 0);
+
+                                    // اختياري: تعبئة الحقل للمستخدم
+                                    if ($unitPrice > 0) {
+                                        $set('unit_price', $unitPrice);
+                                    }
+                                }
+
+                                $set('total_price', round($qty * $unitPrice, 2));
+                            }),
 
                         TextInput::make('unit_price')
                             ->label(__('lang.unit_price'))
-                            ->numeric()->readOnly()
+                            ->numeric()
                             ->required()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($set, $state,   $get) {
+                                $qty       = (float) ($get('quantity') ?? 0);
+                                $unitPrice = (float) ($state ?? 0);
+                                $set('total_price', round($qty * $unitPrice, 2));
+                            }),
 
                         TextInput::make('total_price')
                             ->label(__('lang.total_price'))
                             ->numeric()
                             ->dehydrated()
-                            ->readOnly()
-                        // ->afterStateHydrated(function ($state, callable $set, callable $get) {
-                        //     $set('total_price', round($get('quantity') * $get('unit_price'), 2));
-                        // })
-                            ->disabled(),
+                            ->readOnly()->disabled(),
+
                     ]),
             ]);
     }
@@ -200,7 +231,7 @@ class ResellerSaleResource extends Resource
             ->striped()->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->searchable()->toggleable()->alignCenter(),
-                TextColumn::make('branch.name')->label(__('lang.branch'))->toggleable(),
+                TextColumn::make('branch.name')->label(__('lang.reseller'))->toggleable(),
                 TextColumn::make('store.name')->label(__('lang.store'))->toggleable(),
                 TextColumn::make('sale_date')->date('Y-m-d')->toggleable(),
                 TextColumn::make('total_amount')
@@ -219,21 +250,22 @@ class ResellerSaleResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\Action::make('print_invoice')
+            ->recordActions([
+                Action::make('print_invoice')
                     ->label('Print')
                     ->icon('heroicon-o-printer')
-                    ->url(fn(ResellerSale $record) =>
+                    ->url(
+                        fn(ResellerSale $record) =>
                         \App\Filament\Resources\ResellerSaleResource::getUrl(name: 'print', parameters: ['record' => $record])
                     )->button()
                     ->openUrlInNewTab(),
 
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('add_payment')
+                EditAction::make(),
+                Action::make('add_payment')
                     ->label(__('lang.add_payment')) // استخدم مفتاح ترجمة إن وجد
                     ->icon('heroicon-o-banknotes')
                     ->button()
-                    ->form(function (ResellerSale $record) {
+                    ->schema(function (ResellerSale $record) {
                         $remaining = $record->remaining_amount;
 
                         $remaining = round($remaining, 2);
@@ -267,11 +299,11 @@ class ResellerSaleResource extends Resource
 
                             $amount = round($data['amount'], 2);
                             if ($amount > $remaining || $amount <= 0) {
-                                throw new \Exception("Invalid payment amount. Remaining is: {$remaining}");
+                                throw new Exception("Invalid payment amount. Remaining is: {$remaining}");
                             }
 
                             DB::transaction(function () use ($data, $record, $amount) {
-                                \App\Models\ResellerSalePaidAmount::create([
+                                ResellerSalePaidAmount::create([
                                     'reseller_sale_id' => $record->id,
                                     'amount'           => $amount,
                                     'paid_at'          => $data['paid_at'],
@@ -280,14 +312,14 @@ class ResellerSaleResource extends Resource
                                 ]);
                             });
 
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title(__('lang.payment_added_successfully'))
                                 ->success()
                                 ->send();
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             report($e);
 
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title(__('lang.error_while_adding_payment'))
                                 ->body($e->getMessage())
                                 ->danger()
@@ -295,9 +327,9 @@ class ResellerSaleResource extends Resource
                         }
                     }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -312,10 +344,10 @@ class ResellerSaleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListResellerSales::route('/'),
-            'create' => Pages\CreateResellerSale::route('/create'),
-            'edit'   => Pages\EditResellerSale::route('/{record}/edit'),
-            'print'  => Pages\PrintResellerInvoice::route('/{record}/print'),
+            'index'  => ListResellerSales::route('/'),
+            'create' => CreateResellerSale::route('/create'),
+            'edit'   => EditResellerSale::route('/{record}/edit'),
+            'print'  => PrintResellerInvoice::route('/{record}/print'),
         ];
     }
     public static function getNavigationBadge(): ?string
@@ -332,9 +364,9 @@ class ResellerSaleResource extends Resource
     public static function getRecordSubNavigation(Page $page): array
     {
         return $page->generateNavigationItems([
-            Pages\ListResellerSales::class,
-            Pages\CreateResellerSale::class,
-            Pages\EditResellerSale::class,
+            ListResellerSales::class,
+            CreateResellerSale::class,
+            EditResellerSale::class,
         ]);
     }
 }

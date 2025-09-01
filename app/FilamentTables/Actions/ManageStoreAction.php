@@ -1,7 +1,7 @@
 <?php
 namespace App\FilamentTables\Actions;
 
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;

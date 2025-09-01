@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
+use Filament\Schemas\Components\Fieldset;
+use Exception;
 use App\Services\MultiProductsInventoryService;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -29,11 +32,11 @@ class OrderDetailsRelationManager extends RelationManager
     {
         return __('lang.order_details');
     }
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('purchase_invoice_id'),
+        return $schema
+            ->components([
+                TextInput::make('purchase_invoice_id'),
             ]);
     }
 
@@ -41,31 +44,31 @@ class OrderDetailsRelationManager extends RelationManager
     {
         return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('id')->label(__('lang.id'))->alignCenter(true)->searchable()
+                TextColumn::make('id')->label(__('lang.id'))->alignCenter(true)->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 // Tables\Columns\TextColumn::make('ordered_product.name')->label(__('lang.ordered_product')),
                 // Tables\Columns\TextColumn::make('product.name')->label(__('lang.product_approved_by_store')),
-                Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code'))->alignCenter(true)->searchable(),
-                Tables\Columns\TextColumn::make('product_id')->label(__('lang.product_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('product.name')->label(__('lang.product')),
+                TextColumn::make('product.code')->label(__('lang.product_code'))->alignCenter(true)->searchable(),
+                TextColumn::make('product_id')->label(__('lang.product_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('product.name')->label(__('lang.product')),
                 // Tables\Columns\TextColumn::make('product.code')->label(__('lang.product_code')),
-                Tables\Columns\TextColumn::make('unit_id')->label(__('lang.unit_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('unit.name')->label(__('lang.unit')),
-                Tables\Columns\TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch'))->alignCenter(true),
+                TextColumn::make('unit_id')->label(__('lang.unit_id'))->alignCenter(true)->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('package_size')->label(__('lang.package_size'))->alignCenter(true),
+                TextColumn::make('unit.name')->label(__('lang.unit')),
+                TextColumn::make('quantity')->label(__('lang.ordered_quantity_by_branch'))->alignCenter(true),
                 // Tables\Columns\TextColumn::make('quantity')->label(__('lang.quantity'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification'))->alignCenter(true),
-                Tables\Columns\TextColumn::make('returned_quantity')
+                TextColumn::make('available_quantity')->label(__('lang.quantity_after_modification'))->alignCenter(true),
+                TextColumn::make('returned_quantity')
                     ->label('Returned Qty')
                     ->getStateUsing(fn($record) => $record->returned_quantity)
                     ->alignCenter(),
 
-                Tables\Columns\TextColumn::make('remaining_after_return')
+                TextColumn::make('remaining_after_return')
                     ->label('Qty After Returned')
                     ->getStateUsing(fn($record) => $record->remaining_after_return)
                     ->alignCenter(),
 
-                Tables\Columns\TextColumn::make('remaining_quantity')->label(__('stock.remaining_quantity'))
+                TextColumn::make('remaining_quantity')->label(__('stock.remaining_quantity'))
                     ->alignCenter(true)
                     ->getStateUsing(function ($record) {
                         $product = $record->product;
@@ -83,7 +86,7 @@ class OrderDetailsRelationManager extends RelationManager
 
                         return $remainingQty;
                     }),
-                Tables\Columns\TextColumn::make('price')->label(__('lang.unit_price'))
+                TextColumn::make('price')->label(__('lang.unit_price'))
                     ->summarize(Sum::make()->query(function (\Illuminate\Database\Query\Builder $query) {
                         return $query->select('price');
                     }))->sortable()
@@ -92,7 +95,7 @@ class OrderDetailsRelationManager extends RelationManager
                         return formatMoneyWithCurrency($state);
                     })
                     ->hidden(fn(): bool => isStoreManager()),
-                Tables\Columns\TextColumn::make('total_unit_price')->label(__('lang.total'))->alignCenter(true)
+                TextColumn::make('total_unit_price')->label(__('lang.total'))->alignCenter(true)
                     ->summarize(Sum::make())->hidden(fn(): bool => isStoreManager())
                     ->formatStateUsing(function ($state) {
                         return formatMoneyWithCurrency($state);
@@ -104,10 +107,10 @@ class OrderDetailsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\Action::make('edit')->button()->form([
+            ->recordActions([
+                Action::make('edit')->button()->schema([
                     Fieldset::make()->schema([
                         TextInput::make('available_quantity')->label(__('lang.quantity'))
                             ->numeric()->minValue(0)
@@ -118,7 +121,7 @@ class OrderDetailsRelationManager extends RelationManager
                         try {
                             $record->update($data);
                             showSuccessNotifiMessage('done');
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             showWarningNotifiMessage('faild', $e->getMessage());
                             throw $e;
                         }
@@ -164,7 +167,7 @@ class OrderDetailsRelationManager extends RelationManager
                 // Tables\Actions\DeleteAction::make(),
                 // Tables\Actions\ViewAction::make(),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 // Tables\Actions\DeleteBulkAction::make(),
             ]);
     }

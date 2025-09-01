@@ -132,7 +132,7 @@ class Attendance extends Model
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope(function (\Illuminate\Database\Eloquent\Builder $builder) {
+            static::addGlobalScope(function (Builder $builder) {
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }

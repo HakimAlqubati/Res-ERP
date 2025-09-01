@@ -24,30 +24,30 @@
         @else
             <div class="overflow-x-auto rounded shadow-sm">
                 {{-- The table ID 'report-table' is important for the script --}}
-                <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
+                <table class="w-full text-sm text-left pretty reports" id="report-table">
                     <thead>
-                        <x-filament-tables::row>
+                        <tr>
                             <th>#</th>
                             <th>Reseller</th>
                             <th>Delivery Total</th>
                             <th>Returned Total</th>
                             <th>Invoiced Total</th>
                             <th>Balance</th>
-                        </x-filament-tables::row>
+                        </tr>
                     </thead>
                     <tbody>
                         @foreach ($report as $index => $row)
-                            <x-filament-tables::row class="{{ $row['balance'] > 0 ? 'bg-yellow-100' : '' }}">
-                                <x-filament-tables::cell>{{ $index + 1 }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $row['branch'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['do_total']) }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['returned_total']) }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['invoiced_total']) }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($row['balance']) }}</x-filament-tables::cell>
-                            </x-filament-tables::row>
+                            <tr class="{{ $row['balance'] > 0 ? 'bg-yellow-100' : '' }}">
+                                <td>{{ $index + 1 }}</td>
+                                <td>{{ $row['branch'] }}</td>
+                                <td>{{ formatMoneyWithCurrency($row['do_total']) }}</td>
+                                <td>{{ formatMoneyWithCurrency($row['returned_total']) }}</td>
+                                <td>{{ formatMoneyWithCurrency($row['invoiced_total']) }}</td>
+                                <td>{{ formatMoneyWithCurrency($row['balance']) }}</td>
+                            </tr>
                         @endforeach
                     </tbody>
-                </x-filament-tables::table>
+                </table>
             </div>
         @endif
     </div>

@@ -486,13 +486,13 @@ if (!function_exists('getDaysMonthReal')) {
 if (!function_exists('getEmployeeOvertimes')) {
     function getEmployeeOvertimes($date, $employee)
     {
-        $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
+        $month = Carbon::parse($date)->month; // Get the month from the given date
 
         // Filter the overtimes to only include those that match the same month
         $overtimesForMonth = $employee->overtimesofMonth($date)
             ->get() // Retrieve the collection first
             ->filter(function ($overtime) use ($month) {
-                return \Carbon\Carbon::parse($overtime->date)->month == $month;
+                return Carbon::parse($overtime->date)->month == $month;
             });
 
         $totalHours = $overtimesForMonth->sum(function ($overtime) {
@@ -530,13 +530,13 @@ if (!function_exists('getLeaveMonthlyBalance')) {
 if (!function_exists('getEmployeeOvertimesOfSpecificDate')) {
     function getEmployeeOvertimesOfSpecificDate($date, $employee)
     {
-        $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
+        $month = Carbon::parse($date)->month; // Get the month from the given date
 
         // Filter the overtimes to only include those that match the same month
         $overtimesForMonth = $employee->overtimesByDate($date)
             ->get() // Retrieve the collection first
             ->filter(function ($overtime) use ($month) {
-                return \Carbon\Carbon::parse($overtime->date)->month == $month;
+                return Carbon::parse($overtime->date)->month == $month;
             });
 
         $totalHours = $overtimesForMonth->sum(function ($overtime) {
@@ -550,11 +550,11 @@ if (!function_exists('getEmployeeOvertimesOfSpecificDate')) {
 if (!function_exists('getEmployeeOvertimesV2')) {
     function getEmployeeOvertimesV2($date, $employee)
     {
-        $month = \Carbon\Carbon::parse($date)->month; // Get the month from the given date
+        $month = Carbon::parse($date)->month; // Get the month from the given date
 
         // Filter the overtimes to only include those that match the same month
         $overtimesForMonth = $employee->overtimes->filter(function ($overtime) use ($month) {
-            return \Carbon\Carbon::parse($overtime->date)->month == $month;
+            return Carbon::parse($overtime->date)->month == $month;
         });
 
         $totalHours = $overtimesForMonth->sum(function ($overtime) {
@@ -688,7 +688,7 @@ if (!function_exists('generateSalarySlipPdf_')) {
             return response()->streamDownload(function () use ($pdfContent) {
                 echo $pdfContent;
             }, $data->month . '-salary-slip_' . $employee->name . '.pdf');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             dd($e->getMessage());
         }
     }
@@ -809,9 +809,9 @@ if (!function_exists('generateBulkSalarySlipPdf')) {
         $mergedPdf = new Pdf; // For merging PDFs, consider libraries like `setasign/fpdi`.
 
         $zipFilePath = storage_path('app/public/salary_slips.zip'); // Temporary storage for ZIP file
-        $zip = new \ZipArchive();
+        $zip = new ZipArchive();
 
-        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+        if ($zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
             foreach ($employeeIds as $employeeId) {
                 $employee = Employee::find($employeeId);
                 $branch = $employee->branch;
@@ -860,7 +860,7 @@ if (!function_exists('generateBulkSalarySlipPdf')) {
 
             return response()->download($zipFilePath)->deleteFileAfterSend(true);
         } else {
-            throw new \Exception('Failed to create ZIP file.');
+            throw new Exception('Failed to create ZIP file.');
         }
     }
 }
@@ -982,45 +982,7 @@ if (!function_exists('calculateTotalMissingHours')) {
         ];
     }
 }
-if (!function_exists('getEndOfMonthDate')) {
-    function getEndOfMonthDate($year = null, $month = null)
-    {
-        if (!$year) {
-            $year = date('Y');
-        }
-        if (!$month) {
-            $month = date('m');
-        }
 
-        // Fetch settings
-        $useStandard = setting('use_standard_end_of_month'); // Default: true (standard month end)
-        $customDay = setting('end_of_month_day'); // Default custom end day: 30
-
-        if ($useStandard) {
-
-            // Standard mode: Use the actual end of the month (e.g., 28, 30, or 31)
-            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            // Calculate the start date (30 days before the end date)
-            $startDate = $endDate->copy()->startOfMonth();
-        } else {
-            // Custom mode: Use the user-defined day, ensuring it does not exceed the real last day
-            $lastDay = Carbon::createFromDate($year, $month, 1)->endOfMonth()->day;
-            $endDate = Carbon::createFromDate($year, $month, min($customDay, $lastDay));
-            $endTemp = $endDate->copy(); // Creates a separate instance
-            $previousMonth = $endTemp->subMonth(); // This no longer affects $endDate
-            $daysInMonth = $previousMonth->daysInMonth; // Get the days in the previous month
-            $daysInMonth -= 1;
-            $startDate = $endDate->copy()->subDays($daysInMonth);
-        }
-
-
-        return [
-            'year' => $year,
-            'start_month' => $startDate->toDateString(),
-            'end_month' => $endDate->toDateString(),
-        ];
-    }
-}
 if (!function_exists('getMonthOptionsBasedOnSettings')) {
     function getMonthOptionsBasedOnSettings()
     {
@@ -1055,9 +1017,9 @@ if (!function_exists('getMonthOptionsBasedOnWithStatis')) {
     function getMonthOptionsBasedOnWithStatis()
     {
         $options = [];
-        $currentDate = new \DateTime();
+        $currentDate = new DateTime();
         for ($i = 0; $i < 12; $i++) {
-            $monthDate = (clone $currentDate)->sub(new \DateInterval("P{$i}M")); // Subtract months
+            $monthDate = (clone $currentDate)->sub(new DateInterval("P{$i}M")); // Subtract months
             $monthName = $monthDate->format('F Y'); // Full month name with year
             $monthNameOnly = $monthDate->format('F'); // Full month name
             // $monthValue = $monthDate->format('Y-m'); // Value in Y-m format

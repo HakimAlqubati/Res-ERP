@@ -2,7 +2,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-
+use Illuminate\Database\Eloquent\Builder;
 use App\Traits\DynamicConnection;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use Filament\Models\Contracts\FilamentUser;
@@ -245,7 +245,7 @@ class User extends Authenticatable implements FilamentUser, Auditable
         // dd(auth()->check());
         if (auth()->check()) {
             if (isBranchManager()) {
-                static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
+                static::addGlobalScope('active', function (Builder $builder) {
                     $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
                 });
             }

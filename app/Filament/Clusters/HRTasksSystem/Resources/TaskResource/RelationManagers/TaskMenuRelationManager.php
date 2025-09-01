@@ -2,12 +2,19 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources\TaskResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use App\Models\Task;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\CheckboxColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,11 +25,11 @@ class TaskMenuRelationManager extends RelationManager
 {
     protected static string $relationship = 'task_menu';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('id')
+        return $schema
+            ->components([
+                TextInput::make('id')
                     ->required()
                     ->maxLength(255),
             ]);
@@ -33,16 +40,16 @@ class TaskMenuRelationManager extends RelationManager
         return $table
             // ->recordTitleAttribute('id')
             ->columns([
-                Tables\Columns\TextColumn::make('menuTask.name'),
+                TextColumn::make('menuTask.name'),
                 CheckboxColumn::make('done')->disabled(),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('done')->action(function ($record) {
                     if ($record->done == 0) {
                         return $record->update([
@@ -75,12 +82,12 @@ class TaskMenuRelationManager extends RelationManager
                             return 'heroicon-m-x-mark';
                         }
                     }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

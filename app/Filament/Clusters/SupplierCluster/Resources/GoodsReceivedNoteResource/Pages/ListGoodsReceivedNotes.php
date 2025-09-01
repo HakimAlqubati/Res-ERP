@@ -2,11 +2,12 @@
 
 namespace App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Clusters\SupplierCluster\Resources\GoodsReceivedNoteResource;
 use App\Models\GoodsReceivedNote;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 class ListGoodsReceivedNotes extends ListRecords
 {
@@ -15,7 +16,7 @@ class ListGoodsReceivedNotes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 

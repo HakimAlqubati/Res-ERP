@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\InventoryTransaction;
+use Carbon\Carbon;
 use App\Models\Product;
 use App\Models\ProductItem;
 use App\Models\UnitPrice;
@@ -129,7 +131,7 @@ class ManufacturedProductPriceUpdaterService
 
         // أضف أول سعر من ExcelImport (كالمعتاد)
         foreach ($product->unitPrices as $unitPrice) {
-            $firstInventoryTransaction = \App\Models\InventoryTransaction::where('product_id', $product->id)
+            $firstInventoryTransaction = InventoryTransaction::where('product_id', $product->id)
                 ->where('unit_id', $unitPrice->unit_id)
                 ->where('transactionable_type', 'ExcelImport')
                 ->orderBy('movement_date', 'ASC')
@@ -150,8 +152,8 @@ class ManufacturedProductPriceUpdaterService
         }
 
         // تحويل التاريخين إلى كائنات Carbon
-        $start = \Carbon\Carbon::parse('2025-05-01')->startOfDay();
-        $end = \Carbon\Carbon::parse(now()->toDateString())->endOfDay();
+        $start = Carbon::parse('2025-05-01')->startOfDay();
+        $end = Carbon::parse(now()->toDateString())->endOfDay();
 
         // دورة عبر كل يوم
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {

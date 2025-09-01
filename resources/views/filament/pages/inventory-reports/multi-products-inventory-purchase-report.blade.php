@@ -35,10 +35,10 @@
 
         @if (!empty($reportData))
             <div id="reportContent">
-                <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border"
+                <table class="w-full text-sm text-left pretty reports table-striped border"
                     id="report-table">
                     <thead class="fixed-header">
-                        <x-filament-tables::row class="header_report">
+                        <tr class="header_report">
                             <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
 
 
@@ -50,9 +50,9 @@
                                 <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
                                     class="logo-left circle-image">
                             </th>
-                        </x-filament-tables::row>
+                        </tr>
 
-                        <x-filament-tables::row>
+                        <tr>
                             <th>Product Code</th>
                             <th>Product Name</th>
                             <th>Unit</th>
@@ -62,34 +62,34 @@
                             <th id="totalPriceHeader" class="cursor-pointer select-none">
                                 Total Price <span id="sortIcon">⇅</span>
                             </th>
-                        </x-filament-tables::row>
+                        </tr>
                     </thead>
 
                     <tbody>
                         @foreach ($reportData as $data)
-                            <x-filament-tables::row>
-                                <x-filament-tables::cell>{{ $data['product_code'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell
-                                    title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $data['unit_name'] }}</x-filament-tables::cell>
+                            <tr>
+                                <td>{{ $data['product_code'] }}</td>
+                                <td
+                                    title="{{ $data['product_id'] }}">{{ $data['product_name'] }}</td>
+                                <td>{{ $data['unit_name'] }}</td>
 
-                                <x-filament-tables::cell>{{ $data['difference'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($data['unit_price']) }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ formatMoneyWithCurrency($data['price']) }}</x-filament-tables::cell>
-                            </x-filament-tables::row>
+                                <td>{{ $data['difference'] }}</td>
+                                <td>{{ formatMoneyWithCurrency($data['unit_price']) }}</td>
+                                <td>{{ formatMoneyWithCurrency($data['price']) }}</td>
+                            </tr>
                         @endforeach
                     </tbody>
                     <tbody>
-                        <x-filament-tables::row class="font-bold bg-gray-100 fixed_footer">
-                            <x-filament-tables::cell colspan="5" class="text-right">Total </x-filament-tables::cell>
+                        <tr class="font-bold bg-gray-100 fixed_footer">
+                            <td colspan="5" class="text-right">Total </td>
 
-                            <x-filament-tables::cell>
+                            <td>
                                 {{ formatMoneyWithCurrency(array_sum(array_column($reportData, 'price'))) }}
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
+                            </td>
+                        </tr>
                     </tbody>
 
-                </x-filament-tables::table>
+                </table>
             </div>
         @else
             <div class="please_select_message_div text-center">

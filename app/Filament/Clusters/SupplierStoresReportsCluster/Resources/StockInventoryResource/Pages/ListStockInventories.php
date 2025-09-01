@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource\Pages;
 
+use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\StockInventoryResource;
 use App\Models\Category;
 use Filament\Actions;
@@ -15,13 +17,13 @@ class ListStockInventories extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->icon('heroicon-o-plus-circle')
                 ->label('New Stocktake'),
-            Actions\Action::make('print')
+            Action::make('print')
 
                 ->label('Print Stocktake Template')
-                ->form([
+                ->schema([
                     Select::make('category_id')->label('Category')->columnSpanFull()
                         ->options(Category::active()->pluck('name', 'id'))
                         ->placeholder('All Categories')->searchable()

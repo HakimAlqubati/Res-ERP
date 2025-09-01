@@ -2,6 +2,10 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Set;
+use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages\ListAbsenceTrackingReports;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 use App\Models\Attendance;
@@ -10,9 +14,6 @@ use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Form;
-use Filament\Forms\Set;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -26,18 +27,18 @@ class AbsenceTrackingReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label = 'Absence Tracking Report';
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([ // Define form schema if needed
+        return $schema
+            ->components([ // Define form schema if needed
                 // You can define form components here
             ]);
     }
@@ -48,7 +49,7 @@ class AbsenceTrackingReportResource extends Resource
             ->emptyStateHeading('No data')
             ->columns([
                 // Define table columns here
-            ])
+            ])->deferFilters(false)
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                     ->select('name', 'id')
@@ -60,21 +61,21 @@ class AbsenceTrackingReportResource extends Resource
                     })
                     ->searchable(),
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('start_date')->live()
                             ->afterStateUpdated(function (Set $set, $state) {
                                 $endNextMonth = Carbon::parse($state)->endOfMonth()->format('Y-m-d');
                                 $set('end_date', $endNextMonth);
                             })
-                            ->label('Start Date')->default(\Carbon\Carbon::now()->startOfMonth()->toDateString()),
+                            ->label('Start Date')->default(Carbon::now()->startOfMonth()->toDateString()),
                         DatePicker::make('end_date')
-                            ->default(\Carbon\Carbon::now()->endOfMonth()->toDateString())
+                            ->default(Carbon::now()->endOfMonth()->toDateString())
                             ->label('End Date'),
 
                     ]),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
             ]);
     }
@@ -95,7 +96,7 @@ class AbsenceTrackingReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAbsenceTrackingReports::route('/'),
+            'index' => ListAbsenceTrackingReports::route('/'),
         ];
     }
 }

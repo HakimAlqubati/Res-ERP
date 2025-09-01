@@ -1,6 +1,19 @@
 <?php
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Grid;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\Action;
+use Exception;
+use Filament\Actions\BulkActionGroup;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages\ListLeaveBalances;
+use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages\CreateLeaveBalance;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\Branch;
@@ -12,11 +25,7 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Notifications\Notification;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -29,7 +38,7 @@ class LeaveBalanceResource extends Resource
 {
     protected static ?string $model = LeaveBalance::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster     = HRLeaveManagementCluster::class;
     protected static ?string $modelLabel  = 'Leave balance';
@@ -58,8 +67,8 @@ class LeaveBalanceResource extends Resource
     protected static ?int $navigationSort                         = 2;
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema(
+        return $schema
+            ->components(
                 [
 
                     Fieldset::make('basic')
@@ -154,35 +163,35 @@ class LeaveBalanceResource extends Resource
         return $table
             ->paginated([10, 25, 50, 100])
             ->columns([
-                Tables\Columns\TextColumn::make('employee.employee_no')
+                TextColumn::make('employee.employee_no')
                     ->label('Employee no')
                     ->numeric()
                     ->searchable()->alignCenter(true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('employee.name')
+                TextColumn::make('employee.name')
                     ->numeric()
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('leaveType.name')
+                TextColumn::make('leaveType.name')
                     ->numeric()
                     ->alignCenter(true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('year')
+                TextColumn::make('year')
                     ->alignCenter(true)
                     ->sortable(),
-                Tables\Columns\TextColumn::make('month')
+                TextColumn::make('month')
                     ->alignCenter(true)
                     ->sortable()
                     ->formatStateUsing(function ($state) {
                         return getMonthArrayWithKeys()[$state] ?? '';
                     }),
-                Tables\Columns\TextColumn::make('balance')->alignCenter(true)
+                TextColumn::make('balance')->alignCenter(true)
                     ->numeric()
                     ->sortable(),
 
             ])->striped()
             ->filters([
-                Tables\Filters\TrashedFilter::make()->hidden(),
+                TrashedFilter::make()->hidden(),
                 SelectFilter::make('branch_id')
                     ->searchable()
                     ->multiple()
@@ -210,10 +219,10 @@ class LeaveBalanceResource extends Resource
                     ->multiple()
                     ->label('Month')->options(getMonthArrayWithKeys()),
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()
-                    ->form(function ($record) {
+                Action::make('editBalance')->visible(fn(): bool => isSuperAdmin())->button()
+                    ->schema(function ($record) {
                         return [
                             TextInput::make('balance', $record->balance)->default($record->balance),
                         ];
@@ -233,8 +242,8 @@ class LeaveBalanceResource extends Resource
                 }),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

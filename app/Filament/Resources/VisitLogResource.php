@@ -2,11 +2,19 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\VisitLogResource\Pages\ListVisitLogs;
 use App\Filament\Resources\VisitLogResource\Pages;
 use App\Filament\Resources\VisitLogResource\RelationManagers;
 use App\Models\VisitLog;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,24 +25,24 @@ class VisitLogResource extends Resource
 {
     protected static ?string $model = VisitLog::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\Select::make('user_id')
+        return $schema
+            ->components([
+                Select::make('user_id')
                     ->label('User')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->required(),
-                Forms\Components\TextInput::make('route_name')
+                TextInput::make('route_name')
                     ->required(),
-                Forms\Components\TextInput::make('date')
+                TextInput::make('date')
                     ->required(),
-                Forms\Components\TextInput::make('time')
+                TextInput::make('time')
                     ->required(),
-                Forms\Components\DateTimePicker::make('visited_at')
+                DateTimePicker::make('visited_at')
                     ->required(),
             ]);
     }
@@ -43,21 +51,21 @@ class VisitLogResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user.name')->label('User'),
-                Tables\Columns\TextColumn::make('route_name')->label('Route Name'),
-                Tables\Columns\TextColumn::make('date')->label('Date'),
-                Tables\Columns\TextColumn::make('time')->label('Time'),
-                Tables\Columns\TextColumn::make('visited_at')->label('Visited At'),
+                TextColumn::make('user.name')->label('User'),
+                TextColumn::make('route_name')->label('Route Name'),
+                TextColumn::make('date')->label('Date'),
+                TextColumn::make('time')->label('Time'),
+                TextColumn::make('visited_at')->label('Visited At'),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -72,7 +80,7 @@ class VisitLogResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListVisitLogs::route('/'),
+            'index' => ListVisitLogs::route('/'),
             // 'create' => Pages\CreateVisitLog::route('/create'),
             // 'edit' => Pages\EditVisitLog::route('/{record}/edit'),
         ];

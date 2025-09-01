@@ -2,12 +2,15 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\StockReportResource\Pages\ListStockReports;
 use App\Models\FakeModelReports\StockReport;
 use App\Filament\Resources\StockReportResource\Pages;
 use App\Filament\Resources\StockReportResource\RelationManagers;
  
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Filament\Tables;
@@ -18,12 +21,12 @@ class StockReportResource extends Resource
 {
     protected static ?string $model = StockReport::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -37,11 +40,11 @@ class StockReportResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                DeleteBulkAction::make(),
             ]);
     }
 
@@ -55,7 +58,7 @@ class StockReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListStockReports::route('/'),
+            'index' => ListStockReports::route('/'),
             // 'create' => Pages\CreateStockReport::route('/create'),
             // 'edit' => Pages\EditStockReport::route('/{record}/edit'),
         ];

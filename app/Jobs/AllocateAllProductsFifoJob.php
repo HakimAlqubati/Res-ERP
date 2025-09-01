@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use Throwable;
 use App\Models\Order;
 use App\Services\FixFifo\FifoAllocationSaver;
 use App\Services\FixFifo\FifoAllocatorService;
@@ -67,7 +68,7 @@ class AllocateAllProductsFifoJob implements ShouldQueue
             $allocations = $fifoService->allocate($productId);
             try {
                 FifoAllocationSaver::save($allocations, $productId);
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 Log::error("❌ Error allocating product_id={$productId}", [
                     'error' => $e->getMessage(),
                 ]);

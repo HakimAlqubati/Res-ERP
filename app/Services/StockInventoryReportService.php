@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\UnitPrice;
 use App\Models\Product;
 use App\Models\StockInventory;
 use App\Models\StockInventoryDetail;
@@ -47,7 +48,7 @@ class StockInventoryReportService
                 $product->smallest_unit_name = '';
                 $product->store_name = '—';
             } else {
-                $smallestUnit = \App\Models\UnitPrice::where('product_id', $product->id)
+                $smallestUnit = UnitPrice::where('product_id', $product->id)
                     ->with('unit')
                     ->orderBy('package_size', 'asc')
                     ->first();

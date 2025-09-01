@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use Illuminate\Support\Collection;
 use App\Models\Branch;
 use App\Models\Order;
 use App\Models\OrderDetails;
@@ -15,7 +16,7 @@ use stdClass;
 class OrdersExport implements FromView
 {
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public $id;
     function __construct($id)

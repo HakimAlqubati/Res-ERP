@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use App\Models\UnitPrice;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -98,7 +99,7 @@ class BulkPricingAdjustmentService
                 return $report;
             });
             return $updateReport;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('فشل تحديث الأسعار الشامل: ' . $e->getMessage(), ['exception' => $e]);
         }
     }

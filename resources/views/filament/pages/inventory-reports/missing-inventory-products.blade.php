@@ -40,10 +40,10 @@
                 📥 Export to Excel
             </button>
         </div>
-        <x-filament-tables::table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
+        <table class="w-full text-sm text-left pretty table-striped reports" id="report-table">
             <thead class="fixed-header">
                 {{-- رأس احترافي --}}
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
                     <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}"></th>
                     <th colspan="{{ $storeId == 'all' ? 3 : 2 }}" class="no_border_right_left text-center">
                         <h3 class="text-lg font-bold">
@@ -57,9 +57,9 @@
                         <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt="Company Logo"
                             class="logo-left circle-image" style="max-height: 60px;">
                     </th>
-                </x-filament-tables::row>
+                </tr>
 
-                <x-filament-tables::row>
+                <tr>
                     <th>Product Code</th>
                     <th>Name</th>
                     <th>Category</th>
@@ -67,25 +67,25 @@
                     @if ($storeId === 'all')
                         <th>In Store</th>
                     @endif
-                </x-filament-tables::row>
+                </tr>
             </thead>
             <tbody>
                 @foreach ($reportData as $product)
-                    <x-filament-tables::row @class([
+                    <tr @class([
                         'qty_zero' => $product->remaining_qty <= 0, // Tailwind class for light red background
                     ])>
-                        <x-filament-tables::cell>{{ $product->code ?? '-' }}</x-filament-tables::cell>
-                        <x-filament-tables::cell>{{ $product->name }}</x-filament-tables::cell>
-                        <x-filament-tables::cell>{{ $product->category->name ?? '—' }}</x-filament-tables::cell>
-                        <x-filament-tables::cell>{{ $product->remaining_qty . ' ' . $product->smallest_unit_name }}</x-filament-tables::cell>
+                        <td>{{ $product->code ?? '-' }}</td>
+                        <td>{{ $product->name }}</td>
+                        <td>{{ $product->category->name ?? '—' }}</td>
+                        <td>{{ $product->remaining_qty . ' ' . $product->smallest_unit_name }}</td>
                         @if ($storeId == 'all')
-                            <x-filament-tables::cell>{{ $product->store_name }}</x-filament-tables::cell>
+                            <td>{{ $product->store_name }}</td>
                         @endif
 
-                    </x-filament-tables::row>
+                    </tr>
                 @endforeach
             </tbody>
-        </x-filament-tables::table>
+        </table>
         <!-- Pagination Links -->
         <div class="mt-4">
             <div class="paginator_container">

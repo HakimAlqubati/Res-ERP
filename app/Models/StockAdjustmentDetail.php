@@ -72,6 +72,6 @@ class StockAdjustmentDetail extends Model implements Auditable
     }
     public function inventoryTransaction()
     {
-        return $this->morphOne(\App\Models\InventoryTransaction::class, 'transactionable');
+        return $this->morphOne(InventoryTransaction::class, 'transactionable');
     }
 }

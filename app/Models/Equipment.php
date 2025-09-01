@@ -128,15 +128,15 @@ class Equipment extends Model implements Auditable, HasMedia
 
         static::created(function ($equipment) {
             $equipment->addLog(
-                \App\Models\EquipmentLog::ACTION_CREATED,
+                EquipmentLog::ACTION_CREATED,
                 'Equipment created',
                 $equipment->created_by
             );
         });
         static::updated(function ($equipment) {
-            \App\Models\EquipmentLog::create([
+            EquipmentLog::create([
                 'equipment_id' => $equipment->id,
-                'action'       => \App\Models\EquipmentLog::ACTION_UPDATED,
+                'action'       => EquipmentLog::ACTION_UPDATED,
                 'description'  => 'Equipment updated',
                 'performed_by' => auth()->id(),
             ]);

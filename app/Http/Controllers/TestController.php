@@ -2,6 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use InvalidArgumentException;
+use DateTime;
+use DateInterval;
+use DatePeriod;
+use Exception;
 use App\Models\DailyTasksSettingUp;
 use App\Models\Employee;
 use App\Models\Task;
@@ -283,23 +288,23 @@ class TestController extends Controller
             // Ensure $dayRecurrenceEach is a positive integer
             $dayRecurrenceEach = (int) $dayRecurrenceEach;
             if ($dayRecurrenceEach <= 0) {
-                throw new \InvalidArgumentException("Invalid day recurrence interval.");
+                throw new InvalidArgumentException("Invalid day recurrence interval.");
             }
 
             // Validate date formats
             if (!strtotime($startDate) || !strtotime($endDate)) {
-                throw new \InvalidArgumentException("Invalid start or end date format.");
+                throw new InvalidArgumentException("Invalid start or end date format.");
             }
 
-            $start = new \DateTime($startDate);
-            $end = new \DateTime($endDate);
+            $start = new DateTime($startDate);
+            $end = new DateTime($endDate);
 
             // Add one day to the end date to ensure it includes the end date in the period
             $end->modify('+1 day');
 
             // Instantiate DateInterval and DatePeriod
-            $interval = new \DateInterval("P{$dayRecurrenceEach}D");
-            $datePeriod = new \DatePeriod($start, $interval, $end);
+            $interval = new DateInterval("P{$dayRecurrenceEach}D");
+            $datePeriod = new DatePeriod($start, $interval, $end);
 
             $dates = [];
             foreach ($datePeriod as $date) {
@@ -307,7 +312,7 @@ class TestController extends Controller
             }
 
             return $dates;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error('generateDailyRecurrenceDates error: ' . $e->getMessage());
             return ['error' => 'Date generation failed'];
         }
@@ -319,8 +324,8 @@ class TestController extends Controller
     public function generateMonthlyRecurrenceDates($startDate, $endDate, $dayOfEvery, $everyMonths, $task)
     {
         // dd($startDate,$endDate,$dayOfEvery,$everyMonths,$task);
-        $start = new \DateTime($startDate);
-        $end = new \DateTime($endDate);
+        $start = new DateTime($startDate);
+        $end = new DateTime($endDate);
 
         $dates = [];
 
@@ -365,11 +370,11 @@ class TestController extends Controller
 
         // Check if the order and day are valid
         if (!array_key_exists($order, $orders) || !array_key_exists($day, $daysOfWeek)) {
-            throw new \InvalidArgumentException("Invalid order or day.");
+            throw new InvalidArgumentException("Invalid order or day.");
         }
 
-        $start = new \DateTime($startDate);
-        $end = new \DateTime($endDate);
+        $start = new DateTime($startDate);
+        $end = new DateTime($endDate);
         $end->modify('last day of this month'); // Ensure we consider the last month
 
         $dates = [];
@@ -378,7 +383,7 @@ class TestController extends Controller
         // Loop through each month between the start and end date
         while ($start <= $end) {
             // Set to the first day of the month
-            $firstDayOfMonth = new \DateTime($start->format('Y-m-01'));
+            $firstDayOfMonth = new DateTime($start->format('Y-m-01'));
 
             // Find the first occurrence of the specified day
             $firstOccurrence = $firstDayOfMonth->modify("first $dayOfWeek of this month");
@@ -388,7 +393,7 @@ class TestController extends Controller
             $desiredDate->modify("+{$orders[$order]} week");
 
             // Check if the desired date is within the range
-            if ($desiredDate >= new \DateTime($startDate) && $desiredDate <= new \DateTime($endDate)) {
+            if ($desiredDate >= new DateTime($startDate) && $desiredDate <= new DateTime($endDate)) {
                 $dates[] = $desiredDate->format('Y-m-d');
             }
 
@@ -404,12 +409,12 @@ class TestController extends Controller
      */
     public function generateWeeklyDatesBasedOnSpecificDays($startDate, $endDate, $weekRecurEvery, $weeklyDays)
     {
-        $start = new \DateTime($startDate);
-        $end = new \DateTime($endDate);
+        $start = new DateTime($startDate);
+        $end = new DateTime($endDate);
         $end = $end->modify('+1 day'); // Include end date
 
         $dates = [];
-        $interval = new \DateInterval("P{$weekRecurEvery}W"); // Weekly interval
+        $interval = new DateInterval("P{$weekRecurEvery}W"); // Weekly interval
 
         // Loop through each week
         for ($current = $start; $current < $end; $current->add($interval)) {
@@ -466,7 +471,7 @@ class TestController extends Controller
 
                 //         // Create the task
                 $task = Task::create($taskData);
-                
+
                 if (!empty($schedule['steps']) && is_array($schedule['steps'])) {
                     $task->steps()->createMany($schedule['steps']);
                 }
@@ -482,7 +487,7 @@ class TestController extends Controller
             // DB::commit();
 
             return response()->json(['message' => 'Daily tasks created successfully.'], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback the transaction if something goes wrong
             // DB::rollBack();
 
@@ -536,7 +541,7 @@ class TestController extends Controller
             DB::commit();
 
             return response()->json(['message' => 'Daily tasks created successfully.'], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Rollback the transaction if something goes wrong
             DB::rollBack();
 
@@ -589,7 +594,7 @@ class TestController extends Controller
 
             // Return a success response
             return response()->json(['message' => 'Weekly tasks created successfully.'], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log the error
             Log::error('Weekly task creation failed: ' . $e->getMessage(), ['data' => $data]);
 
@@ -633,15 +638,15 @@ class TestController extends Controller
                         'created_by' => 1, // Default to authenticated user
                         'updated_by' => 1,
                     ];
-    
+
                     // Create the task
                     $task = Task::create($taskData);
-    
+
                     // Add steps if they exist
                     if (!empty($schedule['steps']) && is_array($schedule['steps'])) {
                         $task->steps()->createMany($schedule['steps']);
                     }
-    
+
                     $tasksCreated = true; // Set flag to true
                 }
             }
@@ -654,7 +659,7 @@ class TestController extends Controller
             } else {
                 return response()->json(['message' => 'No monthly tasks found for the current date.'], 200);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollBack();
             // Log the error with detailed information
             Log::error('Monthly task creation failed', [

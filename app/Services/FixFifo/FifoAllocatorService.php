@@ -2,6 +2,11 @@
 
 namespace App\Services\FixFifo;
 
+use App\Models\Product;
+use App\Models\StockIssueOrder;
+use App\Models\StockAdjustmentDetail;
+use Illuminate\Support\Str;
+use Exception;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\ProductPriceHistory;
@@ -16,9 +21,9 @@ class FifoAllocatorService
     public function allocate(int $productId): array
     {
 
-        $product = \App\Models\Product::find($productId);
+        $product = Product::find($productId);
 
-        
+
         if (! $product) {
             // خيار 1: تجاهل المنتج
             return [];
@@ -114,11 +119,11 @@ class FifoAllocatorService
         foreach ($allOrders as $order) {
             // $transactionableType = isset($order->stock_issue_order_id) ? \App\Models\StockIssueOrder::class : \App\Models\Order::class;
             $transactionableType = match ($order->source_type ?? null) {
-                'stock_issue' => \App\Models\StockIssueOrder::class,
-                'adjustment_decrease' => \App\Models\StockAdjustmentDetail::class,
-                default => \App\Models\Order::class,
+                'stock_issue' => StockIssueOrder::class,
+                'adjustment_decrease' => StockAdjustmentDetail::class,
+                default => Order::class,
             };
-            $targetUnit = \App\Models\UnitPrice::where('product_id', $productId)
+            $targetUnit = UnitPrice::where('product_id', $productId)
                 ->where('unit_id', $order->unit_id)->with('unit')
                 ->first();
             // حساب الكمية المطلوبة فعليًا من الطلب بناءً على المتاح × حجم العبوة
@@ -150,7 +155,7 @@ class FifoAllocatorService
                     'Stock deducted for ' . class_basename($transactionableType)
                         . ' #%s from %s #%s with price %s',
                     $order->order_id,
-                    \Illuminate\Support\Str::headline(class_basename($supply->transactionable_type ?? 'Unknown')),
+                    Str::headline(class_basename($supply->transactionable_type ?? 'Unknown')),
                     $supply->transactionable_id ?? 'N/A',
                     number_format($orderedPrice, 2)
                 );
@@ -175,15 +180,15 @@ class FifoAllocatorService
 
 
                 $sourceTransaction =
-                    \App\Models\InventoryTransaction::find($supply->id);
+                    InventoryTransaction::find($supply->id);
 
                 if (! $sourceTransaction) {
-                    throw new \Exception("⛔ InventoryTransaction not found for supply ID: {$supply->id}");
+                    throw new Exception("⛔ InventoryTransaction not found for supply ID: {$supply->id}");
                 }
 
                 $notes = sprintf(
                     'Updated by FIFO from %s #%s',
-                    \Illuminate\Support\Str::headline(class_basename($sourceTransaction->transactionable_type)),
+                    Str::headline(class_basename($sourceTransaction->transactionable_type)),
                     $sourceTransaction->transactionable_id
                 );
 

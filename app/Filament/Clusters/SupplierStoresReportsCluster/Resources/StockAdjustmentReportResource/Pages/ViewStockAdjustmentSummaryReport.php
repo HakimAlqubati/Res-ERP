@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 class ViewStockAdjustmentSummaryReport extends Page
 {
     protected static string $resource = StockAdjustmentSummaryReportResource::class;
-    protected static string $view = 'filament.pages.inventory-reports.stock-adjustment-summary-details';
+    protected string $view = 'filament.pages.inventory-reports.stock-adjustment-summary-details';
 
     public string $category;
     public string $adjustment_type;

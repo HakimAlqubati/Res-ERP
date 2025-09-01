@@ -2,18 +2,25 @@
 
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Carbon\Carbon;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationResource\Pages\ListLeaveApplications;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationResource\Pages\CreateLeaveApplication;
+use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationResource\Pages\EditLeaveApplication;
 use App\Filament\Clusters\HRAttenanceCluster;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\LeaveApplicationResource\Pages;
 use App\Models\Employee;
 use App\Models\LeaveApplication;
 use App\Models\LeaveType;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -24,17 +31,17 @@ class LeaveApplicationResource extends Resource
 {
     protected static ?string $model = LeaveApplication::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     // protected static ?string $cluster = HRAttenanceCluster::class;
 
     // protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
     // protected static ?int $navigationSort = 7;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->label('')->schema([
                     Grid::make()->columns(3)->schema([
                         DatePicker::make('from_date')
@@ -56,7 +63,7 @@ class LeaveApplicationResource extends Resource
 
                         DatePicker::make('to_date')
                             ->label('To Date')
-                            ->default(\Carbon\Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
+                            ->default(Carbon::tomorrow()->addDays(1)->format('Y-m-d'))
                             ->reactive()
                             ->required()
                             ->afterStateUpdated(function ($state, callable $set, $get) {
@@ -151,12 +158,12 @@ class LeaveApplicationResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -171,9 +178,9 @@ class LeaveApplicationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListLeaveApplications::route('/'),
-            'create' => Pages\CreateLeaveApplication::route('/create'),
-            'edit' => Pages\EditLeaveApplication::route('/{record}/edit'),
+            'index' => ListLeaveApplications::route('/'),
+            'create' => CreateLeaveApplication::route('/create'),
+            'edit' => EditLeaveApplication::route('/{record}/edit'),
         ];
     }
 

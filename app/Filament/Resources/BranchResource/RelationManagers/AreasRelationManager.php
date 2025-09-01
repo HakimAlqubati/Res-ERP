@@ -2,12 +2,20 @@
 
 namespace App\Filament\Resources\BranchResource\RelationManagers;
 
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\CreateAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
@@ -18,16 +26,16 @@ class AreasRelationManager extends RelationManager
 {
     protected static string $relationship = 'areas';
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Wizard::make([
-                    Wizard\Step::make('Basic data')
+                    Step::make('Basic data')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
-                                Forms\Components\TextInput::make('name')
+                                TextInput::make('name')
                                     ->required()
                                     ->columnSpanFull()
                                     ->maxLength(255),
@@ -35,7 +43,7 @@ class AreasRelationManager extends RelationManager
                                     ->columnSpanFull(),
                             ])
                         ]),
-                    Wizard\Step::make('Images')
+                    Step::make('Images')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
                             Fieldset::make()->columns(1)->schema([
@@ -84,26 +92,26 @@ class AreasRelationManager extends RelationManager
         return $table->striped()
             ->recordTitleAttribute('name')
             ->columns([
-                Tables\Columns\TextColumn::make('name'),
-                Tables\Columns\TextColumn::make('description'),
-                SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
-                    ->circular()->alignCenter(true)->getStateUsing(function () {
-                        return null;
-                    })->limit(3),
+                TextColumn::make('name'),
+                TextColumn::make('description'),
+                // SpatieMediaLibraryImageColumn::make('')->label('Images')->size(50)
+                //     ->circular()->alignCenter(true)->getStateUsing(function () {
+                //         return null;
+                //     })->limit(3),
             ])
             ->filters([
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

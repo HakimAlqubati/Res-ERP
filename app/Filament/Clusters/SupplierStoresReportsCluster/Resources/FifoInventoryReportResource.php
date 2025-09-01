@@ -2,6 +2,8 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListFifoInventoryReport;
 use App\Filament\Clusters\InventoryReportCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages;
@@ -9,7 +11,6 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -21,9 +22,9 @@ class FifoInventoryReportResource extends Resource
 {
     protected static ?string $model = Product::class;
     protected static ?string $slug = 'fifo-inventory-report';
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $cluster = InventoryReportCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     protected static bool $shouldRegisterNavigation = false;
     public static function getLabel(): ?string
@@ -43,7 +44,9 @@ class FifoInventoryReportResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->filters([
+        return $table
+        ->deferFilters(false)
+        ->filters([
 
 
             SelectFilter::make('product_id')
@@ -60,7 +63,7 @@ class FifoInventoryReportResource extends Resource
 
             Filter::make('options')
                 ->label('Extra')
-                ->form([
+                ->schema([
                     Toggle::make('only_smallest_unit')
                         ->label('Only Smallest Unit')->inline(false)
                         ->default(false),
@@ -71,7 +74,7 @@ class FifoInventoryReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListFifoInventoryReport::route('/'),
+            'index' => ListFifoInventoryReport::route('/'),
         ];
     }
 

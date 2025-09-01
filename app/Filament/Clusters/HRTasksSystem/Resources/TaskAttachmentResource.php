@@ -2,11 +2,15 @@
 
 namespace App\Filament\Clusters\HRTasksSystem\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRTasksSystem\Resources\TaskAttachmentResource\Pages\ListTaskAttachments;
 use App\Filament\Clusters\HRTasksSystem;
 use App\Filament\Clusters\HRTasksSystem\Resources\TaskAttachmentResource\Pages;
 use App\Models\TaskAttachment;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -15,8 +19,8 @@ class TaskAttachmentResource extends Resource
 {
     protected static ?string $model = TaskAttachment::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
     // protected static ?string $cluster = HRTasksSystem::class;
 
@@ -24,10 +28,10 @@ class TaskAttachmentResource extends Resource
     {
         return static::getModel()::count();
     }
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -41,12 +45,12 @@ class TaskAttachmentResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -61,7 +65,7 @@ class TaskAttachmentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListTaskAttachments::route('/'),
+            'index' => ListTaskAttachments::route('/'),
             // 'create' => Pages\CreateTaskAttachment::route('/create'),
             // 'edit' => Pages\EditTaskAttachment::route('/{record}/edit'),
         ];

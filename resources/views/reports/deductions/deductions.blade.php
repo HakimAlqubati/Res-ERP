@@ -109,56 +109,56 @@
 
             <h3>Current Month Deductions - {{ $last_month_name }}</h3>
 
-            <x-filament-tables::table>
+            <table>
                 <thead>
-                    <x-filament-tables::row>
+                    <tr>
                         <th>Deduction Name</th>
                         <th>Deduction Amount</th>
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
                 <tbody>
                     @forelse ($lastMonthDeductions as $deduction)
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell
-                                class='td'>{{ $deduction['deduction_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell
-                                class='td'>{{ number_format($deduction['deduction_amount'], 2) }}</x-filament-tables::cell>
-                        </x-filament-tables::row>
+                        <tr>
+                            <td
+                                class='td'>{{ $deduction['deduction_name'] }}</td>
+                            <td
+                                class='td'>{{ number_format($deduction['deduction_amount'], 2) }}</td>
+                        </tr>
                     @empty
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell class='td' colspan="2">No deductions found for the last
-                                month.</x-filament-tables::cell>
-                        </x-filament-tables::row>
+                        <tr>
+                            <td class='td' colspan="2">No deductions found for the last
+                                month.</td>
+                        </tr>
                     @endforelse
                 </tbody>
-            </x-filament-tables::table>
+            </table>
 
 
 
             <h2>Total Deductions (Year To Date)</h2>
-            <x-filament-tables::table>
+            <table>
                 <thead>
-                    <x-filament-tables::row>
+                    <tr>
                         <th>Deduction Name</th>
                         <th>Total Deduction Amount</th>
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
                 <tbody>
                     @forelse ($totalDeductions as $deduction)
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell
-                                class='td'>{{ $deduction['deduction_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell
-                                class='td'>{{ number_format($deduction['deduction_amount'], 2) }}</x-filament-tables::cell>
-                        </x-filament-tables::row>
+                        <tr>
+                            <td
+                                class='td'>{{ $deduction['deduction_name'] }}</td>
+                            <td
+                                class='td'>{{ number_format($deduction['deduction_amount'], 2) }}</td>
+                        </tr>
                     @empty
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell class='td' colspan="2">No deductions
-                                found.</x-filament-tables::cell>
-                        </x-filament-tables::row>
+                        <tr>
+                            <td class='td' colspan="2">No deductions
+                                found.</td>
+                        </tr>
                     @endforelse
                 </tbody>
-            </x-filament-tables::table>
+            </table>
         </div>
     @else
         <div class="please_select_message_div" style="text-align: center;">

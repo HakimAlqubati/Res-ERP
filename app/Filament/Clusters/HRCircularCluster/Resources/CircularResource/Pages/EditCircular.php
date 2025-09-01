@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRCircularCluster\Resources\CircularResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditCircular extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 

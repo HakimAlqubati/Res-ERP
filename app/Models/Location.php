@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use OwenIt\Auditing\Contracts\Auditable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Model;
 
-class Location extends Model implements HasMedia, \OwenIt\Auditing\Contracts\Auditable
+class Location extends Model implements HasMedia, Auditable
 {
     use InteractsWithMedia, \OwenIt\Auditing\Auditable;
 

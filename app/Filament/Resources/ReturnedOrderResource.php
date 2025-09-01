@@ -1,19 +1,19 @@
 <?php
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\MainOrdersCluster;
-use App\Filament\Resources\Base\BaseReturnedOrderResource as BaseReturnedOrderResource;
+use App\Filament\Resources\Base\BaseReturnedOrderResource ;
 use App\Models\Branch;
 use App\Models\Order;
 use Filament\Facades\Filament;
-use Filament\Pages\SubNavigationPosition;
 use Illuminate\Database\Eloquent\Builder;
 
 class ReturnedOrderResource extends BaseReturnedOrderResource
 {
 
     protected static ?string $cluster                             = MainOrdersCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
     
     protected static function getOrderSearchQuery(string $search)

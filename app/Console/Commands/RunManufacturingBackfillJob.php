@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use App\Jobs\ManufacturingBackfillJob;
 use App\Services\ManufacturingBackfillService;
 
@@ -55,7 +56,7 @@ class RunManufacturingBackfillJob extends Command
         try {
             $manufacturingBackfillService->handleFromSimulation($storeId);
             $this->info('Manufacturing backfill process completed successfully.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('An error occurred: ' . $e->getMessage());
         }
     }

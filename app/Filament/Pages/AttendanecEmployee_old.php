@@ -2,13 +2,13 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Schemas\Schema;
 use App\Models\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\BasePage;
 use Filament\Support\Enums\Alignment;
@@ -22,7 +22,7 @@ class AttendanecEmployee_old extends BasePage
     use InteractsWithForms;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static string $view = 'filament.pages.attendanec-employee';
+    protected string $view = 'filament.pages.attendanec-employee';
     private $date = '';
     // private $date ;
     private $time = '';
@@ -49,12 +49,12 @@ class AttendanecEmployee_old extends BasePage
         static::$formActionsAlignment = Alignment::End;
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
 
         app()->setLocale('ar');
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 DateTimePicker::make('date_time')
                     ->label('التاريخ والوقت')
                     ->timezone('Asia/Kuala_Lumpur')
@@ -111,7 +111,7 @@ class AttendanecEmployee_old extends BasePage
         $employeePeriods = $employee?->periods;
 
         if (!is_null($employee) && count($employeePeriods) > 0) {
-            $day = \Carbon\Carbon::parse($date)->format('l');
+            $day = Carbon::parse($date)->format('l');
 
             // Decode the days array for each period
             $workTimePeriods = $employee->periods->map(function ($period) {
@@ -208,8 +208,8 @@ class AttendanecEmployee_old extends BasePage
         if ($attendanceCount === 0) {
 
             // dupple Check for periods from the previous night
-            $previousDate = \Carbon\Carbon::parse($date)->subDay()->format('Y-m-d');
-            $previousDayName = \Carbon\Carbon::parse($date)->subDay()->format('l');
+            $previousDate = Carbon::parse($date)->subDay()->format('Y-m-d');
+            $previousDayName = Carbon::parse($date)->subDay()->format('l');
             // $previousDay = \Carbon\Carbon::parse($previousDay)->format('l');
             $previousDayPeriods = $employee->periods->filter(function ($period) use ($previousDayName) {
                 return in_array($previousDayName, $period->days);
@@ -245,11 +245,11 @@ class AttendanecEmployee_old extends BasePage
     {
 
         $allowedLateMinutes = $nearestPeriod?->allowed_count_minutes_late;
-        $startTime = \Carbon\Carbon::parse($nearestPeriod->start_at);
-        $endTime = \Carbon\Carbon::parse($nearestPeriod->end_at);
+        $startTime = Carbon::parse($nearestPeriod->start_at);
+        $endTime = Carbon::parse($nearestPeriod->end_at);
 
         // Ensure that $checkTime is a Carbon instance
-        $checkTime = \Carbon\Carbon::parse($checkTime);
+        $checkTime = Carbon::parse($checkTime);
 
         // Handle check-in scenario
         if ($checkType == Attendance::CHECKTYPE_CHECKIN) {
@@ -282,7 +282,7 @@ class AttendanecEmployee_old extends BasePage
                 ->first();
 
             if ($checkinRecord) {
-                $checkinTime = \Carbon\Carbon::parse($checkinRecord->check_time);
+                $checkinTime = Carbon::parse($checkinRecord->check_time);
 
                 // Calculate the actual duration (from check-in to check-out)
                 $actualDuration = $checkinTime->diff($checkTime);

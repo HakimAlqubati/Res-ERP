@@ -2,15 +2,24 @@
 
 namespace App\Filament\Clusters\AreaManagementCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\ListCities;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\CreateCity;
+use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages\EditCity;
 use App\Filament\Clusters\AreaManagementCluster;
 use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\Pages;
 use App\Filament\Clusters\AreaManagementCluster\Resources\CityResource\RelationManagers;
 use App\Models\City;
 use App\Models\Country;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -21,21 +30,21 @@ class CityResource extends Resource
 {
     protected static ?string $model = City::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static ?string $cluster = AreaManagementCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->schema([
-                    Forms\Components\TextInput::make('name')
+                    TextInput::make('name')
                         ->required()
                         ->maxLength(255),
 
-                    Forms\Components\Select::make('country_id')
+                    Select::make('country_id')
                         ->label('Country')
                         ->options(Country::all()->pluck('name', 'id'))
                         ->searchable()
@@ -48,22 +57,22 @@ class CityResource extends Resource
     {
         return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('country.name')
+                TextColumn::make('name')->sortable()->searchable(),
+                TextColumn::make('country.name')
                     ->label('Country')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -78,9 +87,9 @@ class CityResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCities::route('/'),
-            'create' => Pages\CreateCity::route('/create'),
-            'edit' => Pages\EditCity::route('/{record}/edit'),
+            'index' => ListCities::route('/'),
+            'create' => CreateCity::route('/create'),
+            'edit' => EditCity::route('/{record}/edit'),
         ];
     }
     public static function getNavigationBadge(): ?string

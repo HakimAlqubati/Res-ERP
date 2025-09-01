@@ -2,6 +2,15 @@
 
 namespace App\Filament\Clusters\HRCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\Pages\ListAdministrations;
+use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\Pages\CreateAdministration;
+use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\Pages\EditAdministration;
 use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\Pages;
 use App\Filament\Clusters\HRCluster\Resources\AdministrationResource\RelationManagers;
@@ -9,13 +18,10 @@ use App\Models\Administration;
 use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -27,15 +33,15 @@ class AdministrationResource extends Resource
 {
     protected static ?string $model = Administration::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     // protected static ?string $cluster = HRCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make('')->columns(6)->label('')->schema([
                     TextInput::make('name')
                         ->label('Name')
@@ -130,12 +136,12 @@ class AdministrationResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -156,9 +162,9 @@ class AdministrationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListAdministrations::route('/'),
-            'create' => Pages\CreateAdministration::route('/create'),
-            'edit' => Pages\EditAdministration::route('/{record}/edit'),
+            'index' => ListAdministrations::route('/'),
+            'create' => CreateAdministration::route('/create'),
+            'edit' => EditAdministration::route('/{record}/edit'),
         ];
     }
 }

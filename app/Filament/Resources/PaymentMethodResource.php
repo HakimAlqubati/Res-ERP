@@ -2,18 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Actions\EditAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\PaymentMethodResource\Pages\ListPaymentMethods;
+use App\Filament\Resources\PaymentMethodResource\Pages\CreatePaymentMethod;
+use App\Filament\Resources\PaymentMethodResource\Pages\EditPaymentMethod;
 use App\Filament\Clusters\InventorySettingsCluster;
 use App\Filament\Resources\PaymentMethodResource\Pages;
 use App\Filament\Resources\PaymentMethodResource\RelationManagers;
 use App\Models\PaymentMethod;
 use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
@@ -27,16 +33,16 @@ class PaymentMethodResource extends Resource
     protected static ?string $model = PaymentMethod::class;
 
     protected static ?string $cluster = InventorySettingsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $modelLabel = 'Payment Method';
     protected static ?string $pluralModelLabel = 'Payment Methods';
     protected static ?string $slug = 'payment-methods';
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Fieldset::make()->label('')->schema([
                     Grid::make()->columns(3)->schema([
                         TextInput::make('name')
@@ -82,12 +88,12 @@ class PaymentMethodResource extends Resource
             ->filters([
                 //
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
+            ->recordActions([
+                EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -102,9 +108,9 @@ class PaymentMethodResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPaymentMethods::route('/'),
-            'create' => Pages\CreatePaymentMethod::route('/create'),
-            'edit' => Pages\EditPaymentMethod::route('/{record}/edit'),
+            'index' => ListPaymentMethods::route('/'),
+            'create' => CreatePaymentMethod::route('/create'),
+            'edit' => EditPaymentMethod::route('/{record}/edit'),
         ];
     }
 

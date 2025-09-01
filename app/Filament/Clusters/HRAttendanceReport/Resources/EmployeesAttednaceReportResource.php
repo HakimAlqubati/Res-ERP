@@ -2,13 +2,13 @@
 
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -22,11 +22,11 @@ class EmployeesAttednaceReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $slug = 'employees-attendance-report';
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label = 'Attendance by branch';
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 2;
     
 
@@ -37,7 +37,7 @@ class EmployeesAttednaceReportResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
-                Filter::make('filter_date')->label('')->form([
+                Filter::make('filter_date')->label('')->schema([
                     DatePicker::make('date')
                         ->label('Date')->default(date('Y-m-d')),
                 ]),

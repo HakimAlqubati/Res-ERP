@@ -15,9 +15,9 @@
 
     @if (!empty($reportData))
         <div id="reportContent">
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+            <table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
-                    <x-filament-tables::row class="header_report">
+                    <tr class="header_report">
                         <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
                             <img src="{{ asset('/storage/' . setting('company_logo')) }}" alt=""
                                 class="logo-left circle-image">
@@ -28,16 +28,16 @@
                         <th class="{{ app()->getLocale() == 'ar' ? 'no_border_right' : 'no_border_left' }}">
                             <img class="circle-image" src="{{ url('/') . '/storage/logo/default.png' }}" alt="">
                         </th>
-                    </x-filament-tables::row>
+                    </tr>
 
-                    <x-filament-tables::row>
+                    <tr>
                         <th>Product ID</th>
                         <th>Product Name</th>
                         <th>Unit</th>
                         <th>Qty per Pack</th>
                         <th>Ordered Qty</th>
                         {{-- <th>Unit Price</th> --}}
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
 
                 <tbody>
@@ -45,18 +45,18 @@
                         @php
                             $data = is_object($data) ? (array) $data : $data;
                         @endphp
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell>{{ $data['product_id'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['p_name'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['unit'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['package_size'] }}</x-filament-tables::cell>
-                            <x-filament-tables::cell>{{ $data['qty'] }}</x-filament-tables::cell>
+                        <tr>
+                            <td>{{ $data['product_id'] }}</td>
+                            <td>{{ $data['p_name'] }}</td>
+                            <td>{{ $data['unit'] }}</td>
+                            <td>{{ $data['package_size'] }}</td>
+                            <td>{{ $data['qty'] }}</td>
 
-                            {{-- <x-filament-tables::cell>{{ $data['price'] }}</x-filament-tables::cell> --}}
-                        </x-filament-tables::row>
+                            {{-- <td>{{ $data['price'] }}</td> --}}
+                        </tr>
                     @endforeach
                 </tbody>
-            </x-filament-tables::table>
+            </table>
         </div>
     @else
         <div class="please_select_message_div text-center">

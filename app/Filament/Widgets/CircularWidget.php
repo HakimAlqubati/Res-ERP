@@ -2,23 +2,23 @@
 
 namespace App\Filament\Widgets;
 
+use Filament\Actions\CreateAction;
+use Filament\Schemas\Components\Wizard;
+use Filament\Schemas\Components\Wizard\Step;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Actions\Action;
+use Filament\Actions\ViewAction;
 use App\Filament\Clusters\HRCircularCluster\Resources\CircularResource;
 use App\Models\Branch;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Notifications\Notification;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -46,7 +46,7 @@ class CircularWidget extends BaseWidget
                         }
                         return true;
                     })
-                    ->form([
+                    ->schema([
                         Wizard::make([
                             Step::make('Basic data')
                                 ->schema([
@@ -124,7 +124,7 @@ class CircularWidget extends BaseWidget
 
                     ])
                     ->modalHeading('')
-                    ->mutateFormDataUsing(function (array $data): array {
+                    ->mutateDataUsing(function (array $data): array {
                         $data['created_by'] = auth()->user()->id;
                         $data['branch_ids'] = isset($data['branch_ids'])?json_encode($data['branch_ids']) : '[]';
                         return $data;
@@ -163,7 +163,7 @@ class CircularWidget extends BaseWidget
                 TextColumn::make('createdBy.name')->label('Created by')->sortable()->toggleable(isToggledHiddenByDefault:true),
                 TextColumn::make('created_at')->date()->sortable()->toggleable(isToggledHiddenByDefault:true),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('viewGallery')
                     ->hidden(function ($record) {
                         return $record->photos_count <= 0 ? true : false;
@@ -183,7 +183,7 @@ class CircularWidget extends BaseWidget
                         return view('filament.resources.circulars.gallery', ['photos' => $record->photos]);
                     }),
                 ViewAction::make()->modalHeading('')
-                ->form([
+                ->schema([
                     Fieldset::make()->columns(3)->label('')->schema([
                         TextInput::make('title')->label('Subject')
                             ->required()

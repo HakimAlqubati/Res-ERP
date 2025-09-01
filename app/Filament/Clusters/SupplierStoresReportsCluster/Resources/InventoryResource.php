@@ -2,6 +2,20 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Notifications\Notification;
+use Throwable;
+use Filament\Tables\Columns\TextColumn;
+use App\Models\Store;
+use Filament\Tables\Filters\TrashedFilter;
+use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\TextInput;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreBulkAction;
+use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages\ListInventories;
 use App\Filament\Clusters\SupplierStoresReportsCluster;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\Pages;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryResource\RelationManagers;
@@ -10,11 +24,8 @@ use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use Filament\Actions\Action;
-use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
@@ -23,7 +34,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Actions\Action as HeaderAction;
 use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -32,15 +42,15 @@ class InventoryResource extends Resource
 {
     protected static ?string $model = InventoryTransaction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 3;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -51,10 +61,10 @@ class InventoryResource extends Resource
             ->paginated([10, 25, 50, 150])
             ->defaultSort('id', 'desc')
             ->headerActions([
-                HeaderAction::make('import_inventory')->hidden()
+                Action::make('import_inventory')->hidden()
                     ->label('Import Inventory Excel')
                     ->icon('heroicon-o-arrow-up-tray')
-                    ->form([
+                    ->schema([
                         FileUpload::make('file')
                             ->label('Upload Excel File')
                             ->required()
@@ -68,14 +78,14 @@ class InventoryResource extends Resource
 
                         try {
                             Excel::import($import, $path);
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Import Successful')
                                 ->success()
                                 ->body('Inventory records were imported successfully.')
                                 ->send();
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             Log::error('Inventory import failed', ['error' => $e->getMessage()]);
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Import Failed')
                                 ->danger()
                                 ->body('Failed to import inventory: ' . $e->getMessage())
@@ -85,64 +95,64 @@ class InventoryResource extends Resource
             ])
             ->columns([
 
-                Tables\Columns\TextColumn::make('id')->sortable()
+                TextColumn::make('id')->sortable()
                     ->label('ID')->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('product.code')
+                TextColumn::make('product.code')
                     ->label('Product Code'),
-                Tables\Columns\TextColumn::make('product.name')
+                TextColumn::make('product.name')
                     ->label('Product'),
-                Tables\Columns\TextColumn::make('store.name')
+                TextColumn::make('store.name')
                     ->label('Store'),
-                Tables\Columns\TextColumn::make('movement_type_title')->alignCenter(true)
+                TextColumn::make('movement_type_title')->alignCenter(true)
                     ->label('Movement Type')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('quantity')
+                TextColumn::make('quantity')
                     ->label('Qty')->alignCenter(true)
                     // ->formatStateUsing(fn($state) => formatQunantity($state))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('remaining_quantity')
+                TextColumn::make('remaining_quantity')
                     ->label('Remaining Qty')->sortable()
                     ->formatStateUsing(fn($state) => formatQunantity($state))
                     // ->description('The remaining quantity of the product at the time this transaction was recorded')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
-                Tables\Columns\TextColumn::make('unit.name')
+                TextColumn::make('unit.name')
                     ->label('Unit'),
 
-                Tables\Columns\TextColumn::make('package_size')->alignCenter(true)
+                TextColumn::make('package_size')->alignCenter(true)
                     ->label('Package Size'),
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Price')->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('movement_date')
+                TextColumn::make('movement_date')
                     ->label('Movement Date')->date('Y-m-d')
                     ->sortable(),
 
 
 
 
-                Tables\Columns\TextColumn::make('notes')
+                TextColumn::make('notes')
                     ->label('Notes'),
-                Tables\Columns\TextColumn::make('transactionable_id')
+                TextColumn::make('transactionable_id')
                     ->label('Transaction ID')->searchable(isIndividual: true)
                     ->sortable()->alignCenter(true)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('formatted_transactionable_type')
+                TextColumn::make('formatted_transactionable_type')
                     ->label('Transaction Type')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
 
-                Tables\Columns\TextColumn::make('sourceTransaction.formatted_transactionable_type')
+                TextColumn::make('sourceTransaction.formatted_transactionable_type')
                     ->label('Source Transaction Type')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
-                Tables\Columns\TextColumn::make('sourceTransaction.transactionable_id')
+                TextColumn::make('sourceTransaction.transactionable_id')
                     ->label('Source ID')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
-                Tables\Columns\TextColumn::make('sourceTransaction.price')
+                TextColumn::make('sourceTransaction.price')
                     ->label('Source Price')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
@@ -227,24 +237,24 @@ class InventoryResource extends Resource
                         fn($value): ?string =>
                         optional(Product::find($value))->code . ' - ' . optional(Product::find($value))->name
                     ),
-                SelectFilter::make('store_id')->options(fn() => \App\Models\Store::active()
+                SelectFilter::make('store_id')->options(fn() => Store::active()
                     ->get(['id', 'name'])
                     ->pluck('name', 'id')
 
                     ->toArray())
                     ->label(__('lang.store')),
-                Tables\Filters\TrashedFilter::make(),
+                TrashedFilter::make(),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
 
                 ActionGroup::make([
 
-                    Tables\Actions\Action::make('editQuantity')
+                    Action::make('editQuantity')
                         ->visible(fn(): bool => auth()->user()->email === 'admin@admin.com')
-                        ->form([
-                            \Filament\Forms\Components\TextInput::make('quantity')
+                        ->schema([
+                            TextInput::make('quantity')
                                 ->required()
                                 ->numeric()->default(fn($record): float => $record->quantity)
                                 ->minValue(0.1),
@@ -254,7 +264,7 @@ class InventoryResource extends Resource
                                 'quantity' => $data['quantity'],
                             ]);
 
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Quantity Updated')
                                 ->success()
                                 ->body('Quantity updated successfully.')
@@ -285,11 +295,11 @@ class InventoryResource extends Resource
 
                 ])
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
+                    RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -304,7 +314,7 @@ class InventoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListInventories::route('/'),
+            'index' => ListInventories::route('/'),
             // 'create' => Pages\CreateInventory::route('/create'),
             // 'edit' => Pages\EditInventory::route('/{record}/edit'),
         ];

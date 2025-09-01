@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource\Pages;
 
+use Filament\Actions\Action;
 use App\Filament\Clusters\HRSalaryCluster\Resources\MonthSalaryResource;
 use App\Models\Employee;
 use Filament\Actions;
@@ -18,17 +19,17 @@ class ViewMonthSalary extends ViewRecord
     {
         return [
             // Actions\DeleteAction::make(),
-            Actions\Action::make('exportExcel')->button()
+            Action::make('exportExcel')->button()
                 ->color('info')
                 ->icon('heroicon-o-arrow-down-on-square-stack')
                 ->action(function () {
                     return MonthSalaryResource::exportExcel($this->record);
                 }),
-            Actions\Action::make('bulk_salary_slip')
+            Action::make('bulk_salary_slip')
                 ->button()->label('Bulk salary slip')
                 ->color('primary') // Use primary color for bulk action
                 ->icon('heroicon-o-archive-box-arrow-down') // Icon for bulk salary slips                
-                ->form(function ($record) {
+                ->schema(function ($record) {
                     return MonthSalaryResource::bulkSalarySlipForm($record);
                 })
 
@@ -36,12 +37,12 @@ class ViewMonthSalary extends ViewRecord
                     $employeeIds = $data['employee_ids'];
                     return MonthSalaryResource::bulkSalarySlip($record,$employeeIds);
                 }),
-            Actions\Action::make('salary_slip')
+            Action::make('salary_slip')
                 ->button()->label('Salary slip')
                 ->color('success') // Use secondary color for single employee action
                 ->icon('heroicon-o-document-arrow-down') // Icon for employee salary slip
 
-                ->form(function ($record) {
+                ->schema(function ($record) {
                     $employeeIds = $record?->details->pluck('employee_id')->toArray();
 
                     return [

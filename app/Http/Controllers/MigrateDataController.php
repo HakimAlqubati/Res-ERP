@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use App\Models\AdvanceRequest;
 use App\Models\Attendance;
 use App\Models\Employee;
@@ -312,7 +313,7 @@ class MigrateDataController extends Controller
             }
             DB::commit();
             return ['DONE'];
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             //throw $th;
             DB::rollBack();
             return ($th->getMessage());
@@ -341,7 +342,7 @@ class MigrateDataController extends Controller
             }
             DB::commit();
             return ['DONE'];
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             //throw $th;
             DB::rollBack();
             return ($th->getMessage());
@@ -371,7 +372,7 @@ class MigrateDataController extends Controller
             }
             DB::commit();
             return ['DONE'];
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             //throw $th;
             DB::rollBack();
             return ($th->getMessage());
@@ -403,7 +404,7 @@ class MigrateDataController extends Controller
             }
             DB::commit();
             return ['DONE'];
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             //throw $th;
             DB::rollBack();
             return ($th->getMessage());

@@ -2,11 +2,20 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\BooleanColumn;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use App\Filament\Resources\ApprovalResource\Pages\ListApprovals;
 use App\Filament\Resources\ApprovalResource\Pages;
 use App\Filament\Resources\ApprovalResource\RelationManagers;
 use App\Models\Approval;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,22 +27,22 @@ class ApprovalResource extends Resource
 {
     protected static ?string $model = Approval::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('route_name')
+        return $schema
+            ->components([
+                TextInput::make('route_name')
                     ->required(),
-                Forms\Components\TextInput::make('date')
+                TextInput::make('date')
                     ->required(),
-                Forms\Components\TextInput::make('time')
+                TextInput::make('time')
                     ->required(),
-                Forms\Components\Checkbox::make('is_approved')
+                Checkbox::make('is_approved')
                     ->label('Approved')
                     ->default(false),
-                Forms\Components\Select::make('approved_by')
+                Select::make('approved_by')
                     ->relationship('approver', 'name')
                     ->searchable()
                     ->disabled(),
@@ -44,20 +53,20 @@ class ApprovalResource extends Resource
     {
         return $table->striped()
             ->columns([
-                Tables\Columns\TextColumn::make('created_by_name')->label('Created By'),
-                Tables\Columns\TextColumn::make('route_name')->label('Route Name'),
-                Tables\Columns\TextColumn::make('date')->label('Date')->date('Y-m-d')->alignCenter(true),
-                Tables\Columns\TextColumn::make('time')->label('Time')->alignCenter(true),
-                Tables\Columns\BooleanColumn::make('is_approved')->label('Approved')->alignCenter(true),
-                Tables\Columns\TextColumn::make('approved_by_name')->label('Approved By'),
-                Tables\Columns\TextColumn::make('created_at')->label('Requested At'),
+                TextColumn::make('created_by_name')->label('Created By'),
+                TextColumn::make('route_name')->label('Route Name'),
+                TextColumn::make('date')->label('Date')->date('Y-m-d')->alignCenter(true),
+                TextColumn::make('time')->label('Time')->alignCenter(true),
+                BooleanColumn::make('is_approved')->label('Approved')->alignCenter(true),
+                TextColumn::make('approved_by_name')->label('Approved By'),
+                TextColumn::make('created_at')->label('Requested At'),
             ])
             ->filters([
                 //
             ])
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('approve')
+                Action::make('approve')
                     ->label('Approve')->button()
                     ->action(function (Approval $record) {
                         $record->is_approved = true;
@@ -67,7 +76,7 @@ class ApprovalResource extends Resource
                     ->requiresConfirmation()
                     ->color('success')->visible(fn($record): bool => $record->is_approved == false),
 
-                Tables\Actions\Action::make('rollbackApprove')
+                Action::make('rollbackApprove')
                     ->label('Rollback')->button()
                     ->action(function (Approval $record) {
                         $record->is_approved = false;
@@ -77,9 +86,9 @@ class ApprovalResource extends Resource
                     ->requiresConfirmation()
                     ->color('danger')->visible(fn($record): bool => $record->is_approved == true),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
@@ -94,7 +103,7 @@ class ApprovalResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListApprovals::route('/'),
+            'index' => ListApprovals::route('/'),
         ];
     }
 

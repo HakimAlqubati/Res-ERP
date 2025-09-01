@@ -2,6 +2,12 @@
 
 namespace App\Filament\Pages;
 
+use App\Jobs\RebuildInventoryFromSources;
+use Throwable;
+use App\Jobs\AllocateAllProductsFifoJob;
+use Filament\Forms\Components\Select;
+use App\Models\Store;
+use App\Jobs\ManufacturingBackfillJob;
 use App\Jobs\CopyOrderOutToBranchStoreJob;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -10,10 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 class DeveloperTools extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-wrench-screwdriver';
     protected static ?string $navigationLabel = 'Developer Tools';
-    protected static ?string $navigationGroup = '⚙️ Developer';
-    protected static string $view = 'filament.pages.developer-tools';
+    protected static string | \UnitEnum | null $navigationGroup = '⚙️ Developer';
+    protected string $view = 'filament.pages.developer-tools';
 
     protected function getHeaderActions(): array
     {
@@ -27,10 +33,10 @@ class DeveloperTools extends Page
 
                     try {
                         // تنفيذ الـ Job مباشرة
-                        (new \App\Jobs\RebuildInventoryFromSources())->handle();
+                        (new RebuildInventoryFromSources())->handle();
                         DB::commit(); // تأكيد المعاملة
                         showSuccessNotifiMessage('✅ Inventory rebuild job dispatched.');
-                    } catch (\Throwable $th) {
+                    } catch (Throwable $th) {
                         DB::rollBack(); // التراجع عن المعاملة في حال حدوث خطأ
                         showWarningNotifiMessage($th->getMessage());
                     }
@@ -45,11 +51,11 @@ class DeveloperTools extends Page
 
                     try {
                         // تنفيذ الـ Job بشكل متزامن
-                        (new \App\Jobs\AllocateAllProductsFifoJob())->handle();
+                        (new AllocateAllProductsFifoJob())->handle();
                         DB::commit(); // تأكيد المعاملة
 
                         showSuccessNotifiMessage('✅ FIFO Allocation command executed successfully.');
-                    } catch (\Throwable $th) {
+                    } catch (Throwable $th) {
                         DB::rollBack(); // التراجع عن المعاملة في حال حدوث خطأ
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
@@ -64,10 +70,10 @@ class DeveloperTools extends Page
 
                     try {
                         // تنفيذ الـ Job بشكل متزامن
-                        (new \App\Jobs\CopyOrderOutToBranchStoreJob())->handle();
+                        (new CopyOrderOutToBranchStoreJob())->handle();
 
                         showSuccessNotifiMessage('✅ Order copied from OUT to IN successfully.');
-                    } catch (\Throwable $th) {
+                    } catch (Throwable $th) {
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
                 }),
@@ -77,19 +83,19 @@ class DeveloperTools extends Page
                 ->label('⚙️ Manufacturing Backfill (Auto OUT)')
                 ->color('danger')
                 ->requiresConfirmation()
-                ->form([
-                    \Filament\Forms\Components\Select::make('store_id')
+                ->schema([
+                    Select::make('store_id')
                         ->label('Store')
-                        ->options(\App\Models\Store::active()->get(['id', 'name'])->pluck('name', 'id'))
+                        ->options(Store::active()->get(['id', 'name'])->pluck('name', 'id'))
                         ->required(),
                 ])
                 ->action(function (array $data) {
                     $storeId = $data['store_id'];
                     try {
                         // تنفيذ الـ Job بشكل متزامن
-                        (new \App\Jobs\ManufacturingBackfillJob($storeId))->handle();
+                        (new ManufacturingBackfillJob($storeId))->handle();
                         showSuccessNotifiMessage('✅ Manufacturing Backfill command executed successfully.');
-                    } catch (\Throwable $th) {
+                    } catch (Throwable $th) {
                         showWarningNotifiMessage("❌ Error: " . $th->getMessage());
                     }
                 }),

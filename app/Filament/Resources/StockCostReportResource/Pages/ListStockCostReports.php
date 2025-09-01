@@ -10,7 +10,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListStockCostReports extends ListRecords
 {
     protected static string $resource = StockCostReportResource::class;
-    protected static string $view     = 'filament.pages.stock-report.stock-cost-report';
+    protected string $view     = 'filament.pages.stock-report.stock-cost-report';
     public $perPage = 15;
     protected function getHeaderActions(): array
     {

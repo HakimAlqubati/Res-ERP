@@ -2,11 +2,14 @@
 
 namespace App\Filament\Clusters\MainOrdersCluster\Resources\OrderResource\Widgets;
 
+use Filament\Schemas\Schema;
+use App\Models\Branch;
+use App\Models\Product;
+use App\Models\Category;
 use Filament\Widgets\ChartWidget;
 use App\Services\Orders\Reports\OrdersReportsService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 
 use Illuminate\Support\Carbon;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
@@ -20,8 +23,8 @@ class BranchConsumptionChart extends ChartWidget implements HasForms
     use HasFiltersForm,
         InteractsWithForms;
 
-    protected static string $view = 'vendor.filament.widgets.branch-consumption-chart';
-    protected static ?string $heading = 'Chart';
+    protected string $view = 'vendor.filament.widgets.branch-consumption-chart';
+    protected ?string $heading = 'Chart';
     protected static bool $isLazy = false;
     protected int | string | array $columnSpan = 'full';
 
@@ -32,11 +35,11 @@ class BranchConsumptionChart extends ChartWidget implements HasForms
     public ?string $fromDate = null;
     public ?string $toDate = null;
 
-    public function filtersForm(Form $form): Form
+    public function filtersForm(Schema $schema): Schema
 
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 DatePicker::make('fromDate')
                     ->label('From Date')
                     ->reactive()
@@ -49,14 +52,14 @@ class BranchConsumptionChart extends ChartWidget implements HasForms
 
                 Select::make('branchIds')->multiple()
                     ->label('Branch')
-                    ->options(\App\Models\Branch::pluck('name', 'id'))
+                    ->options(Branch::pluck('name', 'id'))
                     ->searchable()
                     ->reactive()
                     ->placeholder('Choose a Branch'),
 
                 Select::make('productIds')
                     ->label('Products')
-                    ->options(\App\Models\Product::pluck('name', 'id'))
+                    ->options(Product::pluck('name', 'id'))
                     ->multiple()
                     ->searchable()
                     ->reactive()
@@ -64,7 +67,7 @@ class BranchConsumptionChart extends ChartWidget implements HasForms
 
                 Select::make('categoryIds')
                     ->label('Categories')
-                    ->options(\App\Models\Category::pluck('name', 'id'))
+                    ->options(Category::pluck('name', 'id'))
                     ->multiple()
                     ->searchable()
                     ->reactive()
@@ -74,17 +77,17 @@ class BranchConsumptionChart extends ChartWidget implements HasForms
 
     public function getBranchOptions(): array
     {
-        return \App\Models\Branch::pluck('name', 'id')->toArray();
+        return Branch::pluck('name', 'id')->toArray();
     }
 
     public function getProductOptions(): array
     {
-        return \App\Models\Product::pluck('name', 'id')->toArray();
+        return Product::pluck('name', 'id')->toArray();
     }
 
     public function getCategoryOptions(): array
     {
-        return \App\Models\Category::pluck('name', 'id')->toArray();
+        return Category::pluck('name', 'id')->toArray();
     }
 
 
@@ -143,7 +146,7 @@ class BranchConsumptionChart extends ChartWidget implements HasForms
 
     protected function getFilters(): ?array
     {
-        return \App\Models\Branch::active()->pluck('name', 'id')->toArray();
+        return Branch::active()->pluck('name', 'id')->toArray();
     }
 
     protected function getType(): string

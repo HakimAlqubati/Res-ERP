@@ -1,6 +1,7 @@
 <?php
 namespace App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource\Pages;
 
+use Exception;
 use App\Filament\Clusters\HRAttenanceCluster\Resources\EmployeeOvertimeResource;
 use App\Models\EmployeeOvertime;
 use App\Services\HR\MonthClosure\MonthClosureService;
@@ -91,7 +92,7 @@ class CreateEmployeeOvertime extends CreateRecord
             }
             DB::commit();
             return true;
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             DB::rollBack();
             showWarningNotifiMessage('error', $th->getMessage());
             throw $th;
@@ -129,7 +130,7 @@ class CreateEmployeeOvertime extends CreateRecord
             } //code...
             DB::commit();
             return true;
-        } catch (\Exception $th) {
+        } catch (Exception $th) {
             DB::rollBack();
             showWarningNotifiMessage('error', $th->getMessage());
             throw $th;

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Throwable;
 use App\Models\ProductPriceHistory;
 use App\Models\InventoryTransaction;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +64,7 @@ class ProductSupplyPriceUpdaterService
                 'status' => 'success',
                 'message' => "✅ تم تحديث سعر التوريد الجديد في {$updatedCount} حركة مخزنية.",
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
 
             return [

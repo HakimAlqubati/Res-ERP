@@ -2,6 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Auth\Http\Responses\Contracts\LoginResponse;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Component;
 use App\Models\LoginAttempt;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
@@ -9,10 +12,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\Component;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Notifications\Notification;
 use Filament\Pages\Auth\Login;
@@ -30,7 +30,7 @@ class CustomLogin extends SimplePage
     use InteractsWithFormActions;
     use WithRateLimiting;
 
-    protected static string $view = 'filament.login';
+    protected string $view = 'filament.login';
     // protected static string $view = 'filament-panels::pages.auth.login';
     protected static ?string $title = 'Workbench ERP';
 
@@ -145,13 +145,13 @@ class CustomLogin extends SimplePage
         ]);
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form;
+        return $schema;
     }
 
     /**
-     * @return array<int | string, string | Form>
+     * @return array<int|string, string|\Filament\Schemas\Schema>
      */
     protected function getForms(): array
     {

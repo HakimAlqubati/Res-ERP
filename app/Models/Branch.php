@@ -1,52 +1,76 @@
 <?php
+
 namespace App\Models;
 
+use App\Models\Branch\Traits\BranchAttributes;
+use App\Models\Branch\Traits\BranchBootEvents;
+use App\Models\Branch\Traits\BranchConstants;
+use App\Models\Branch\Traits\BranchRelations;
+use App\Models\Branch\Traits\BranchScopes;
+use App\Models\Branch\Traits\BranchAggregates;
 use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Branch extends Model implements HasMedia, Auditable
 {
+    use HasFactory,
+        SoftDeletes,
+        DynamicConnection,
+        InteractsWithMedia,
+        \OwenIt\Auditing\Auditable;
 
-    use HasFactory, SoftDeletes, DynamicConnection, InteractsWithMedia, \OwenIt\Auditing\Auditable;
+    // 🧩 اجمع كل الـTraits هنا
+    use BranchConstants,
+        BranchRelations,
+        BranchScopes,
+        BranchAttributes,
+        BranchAggregates,
+        BranchBootEvents;
 
     protected $fillable = [
+        // ⚠️ فكّر بإزالة 'id' إن لم تكن تحتاج إدخاله يدويًا
         'id',
         'name',
         'address',
         'manager_id',
         'active',
-
         'store_id',
         'manager_abel_show_orders',
-
         'type',
         'start_date',
         'end_date',
         'more_description',
         'is_hidden',
     ];
+
     protected $auditInclude = [
         'id',
         'name',
         'address',
         'manager_id',
         'active',
-
         'store_id',
         'manager_abel_show_orders',
-
         'type',
         'start_date',
         'end_date',
         'more_description',
         'is_hidden',
     ];
+
+    protected $casts = [
+        'active'     => 'boolean',
+        'is_hidden'  => 'boolean',
+        'start_date' => 'date:Y-m-d',
+        'end_date'   => 'date:Y-m-d',
+
+    ];
+
     protected $appends = [
         'customized_categories',
         'orders_count',
@@ -55,338 +79,27 @@ class Branch extends Model implements HasMedia, Auditable
         'total_sales',
         'total_orders_amount',
         'is_kitchen',
+        'status_label',
+        'is_expired',
     ];
 
-    // ✅ Constants
-    public const TYPE_BRANCH          = 'branch';
-    public const TYPE_CENTRAL_KITCHEN = 'central_kitchen';
-    public const TYPE_HQ              = 'hq';
-    public const TYPE_POPUP           = 'popup';
-    public const TYPE_RESELLER        = 'reseller';
-    // ✅ Optional: Array of allowed types
-    public const TYPES = [
-        self::TYPE_BRANCH,
-        self::TYPE_CENTRAL_KITCHEN,
-        self::TYPE_HQ,
-        self::TYPE_POPUP,
-        self::TYPE_RESELLER,
-    ];
-    // protected $casts = [
-
-    // ];
-
-    public function user()
+    public function toArray(): array
     {
-        return $this->belongsTo(User::class, 'manager_id');
-    }
+        $data = parent::toArray();
 
-    public function getTotalQuantityAttribute()
-    {
-        return $this->orders()
-            ->join('orders_details', 'orders_details.order_id', '=', 'orders.id')
-            ->whereIn('orders.status', [Order::DELEVIRED, Order::READY_FOR_DELEVIRY])
-            ->sum('orders_details.available_quantity');
-    }
-
-    public function orders()
-    {
-        return $this->hasMany(Order::class);
-    }
-
-    public function areas()
-    {
-        return $this->hasMany(BranchArea::class);
-    }
-    public function equipments()
-    {
-        return $this->hasMany(Equipment::class);
-    }
-
-    public function scopeWithUserCheck($query)
-    {
-        $isSuperAdmin    = isSuperAdmin();
-        $isSystemManager = isSystemManager();
-        $isBranchManager = isBranchManager();
-
-        $isStuff = isStuff();
-
-        if ($isSuperAdmin || $isSystemManager) {
-            return $query;
-        }
-
-        if ($isBranchManager) {
-            return $query->where('id', auth()->user()->branch->id);
-        }
-
-        if ($isStuff) {
-            return $query->where('id', auth()->user()->branch_id);
-        }
-    }
-
-    // Apply the global scope
-    protected static function booted()
-    {
-        if (auth()->check()) {
-            if (isBranchManager()) {
-                static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    // $builder->where('id', auth()->user()->branch_id); // Add your default query here
-                });
-            } else if (isStuff()) {
-                static::addGlobalScope('active', function (\Illuminate\Database\Eloquent\Builder $builder) {
-                    $builder->where('id', auth()->user()->branch_id); // Add your default query here
-                });
+        // توافق خلفي (إن كان مستهلك API قديم يعتمد هذا الاسم)
+        $data['is_central_kitchen']    = (int) $this->is_kitchen;
+        $data['customized_categories'] = $this->customized_categories;
+        $data['is_expired'] = $this->is_expired; 
+        // ✅ فرض الوسم مع الاسم عند كون الفرع منتهيًا
+        if ($this->is_expired) {
+            // استخدم ترجمة إن أحببت: __('lang.expired')
+            $suffix = 'Expired';
+            // تجنب التكرار لو تم إضافته سابقًا لأي سبب
+            if (! str_ends_with($data['name'], "($suffix)")) {
+                $data['name'] = trim($data['name'] . " ($suffix)");
             }
         }
-          static::created(function (Branch $branch) {
-            // نتأكد أن الفرع لم يُنشأ له متجر سابق
-            if ($branch->store_id) {
-                return;
-            }
-
-            DB::transaction(function () use ($branch) {
-                $store = Store::create([
-                    'name'      => $branch->name . ' Store',
-                    'active'    => true, 
-                ]);
-
-                $branch->update(['store_id' => $store->id]);
-            });
-        });
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('active', true);
-    }
-
-    public function location()
-    {
-        return $this->morphOne(Location::class, 'locationable');
-    }
-
-    public function store()
-    {
-        return $this->belongsTo(Store::class, 'store_id');
-    }
-    public function toArray()
-    {
-        $data                          = parent::toArray();
-        $data['is_central_kitchen']    = (int) $this->isKitchen;
-        $data['customized_categories'] = $this->categories->map(function ($category) {
-            return [
-                'id'   => $category->id,
-                'name' => $category->name,
-            ];
-        });
         return $data;
     }
-
-    public function getisCentralKitchenAttribute(): bool
-    {
-        return $this->type === self::TYPE_CENTRAL_KITCHEN;
-    }
-    public function getValidStoreIdAttribute(): ?int
-    {
-        if (
-            $this->isKitchen &&
-            $this->categories()->exists() &&
-            $this->store
-        ) {
-            return $this->store_id;
-        }
-        if (
-            auth()->check() &&
-            $this->manager_id === auth()->id() &&
-            $this->isKitchen &&
-            $this->store
-        ) {
-            return $this->store_id;
-        }
-        return null;
-    }
-
-    public function scopeCentralKitchens($query)
-    {
-        return $query->where('type', self::TYPE_CENTRAL_KITCHEN);
-    }
-    public function scopeResellers($query)
-    {
-        return $query->where('type', self::TYPE_RESELLER);
-    }
-
-    public function scopeBranches($query)
-    {
-        return $query->where('type', self::TYPE_BRANCH);
-    }
-    public function scopeHQBranches($query)
-    {
-        return $query->where('type', self::TYPE_HQ);
-    }
-    public function getIsKitchenAttribute(): bool
-    {
-        return $this->type === self::TYPE_CENTRAL_KITCHEN;
-    }
-
-    public function getIsBranchAttribute(): bool
-    {
-        return $this->type === self::TYPE_BRANCH;
-    }
-    public function categories()
-    {
-        return $this->belongsToMany(Category::class, 'branch_category', 'branch_id', 'category_id');
-    }
-
-    public function getCategoryNamesAttribute()
-    {
-        return $this->categories->pluck('name')->toArray();
-    }
-
-    public function scopeNormal($query)
-    {
-        return $query->whereIn('type', [
-            self::TYPE_BRANCH,
-            self::TYPE_HQ,
-        ]);
-    }
-
-    public function scopeWithAllTypes($query)
-    {
-        return $query->whereIn('type', self::TYPES);
-    }
-
-    public function scopePopups($query)
-    {
-        return $query->where('type', self::TYPE_POPUP);
-    }
-
-    public function getIsPopupAttribute(): bool
-    {
-        return $this->type === self::TYPE_POPUP;
-    }
-    public function getTypeTitleAttribute(): string
-    {
-        return match ($this->type) {
-            self::TYPE_BRANCH => __('lang.branch'),
-            self::TYPE_CENTRAL_KITCHEN => __('lang.central_kitchen'),
-            self::TYPE_HQ              => __('lang.hq'),
-            self::TYPE_POPUP           => __('lang.popup_branch'),
-            self::TYPE_RESELLER        => __('lang.reseller'),
-            default                    => __('lang.unknown'),
-        };
-    }
-
-    public function scopeActivePopups($query)
-    {
-        return $query->where(function ($q) {
-            $q->where('type', '!=', self::TYPE_POPUP)
-                ->orWhere(function ($q2) {
-                    $q2->where('type', self::TYPE_POPUP)
-                        ->where('end_date', '>=', now()->format('Y-m-d'));
-                });
-        });
-    }
-
-    public function getCustomizedCategoriesAttribute()
-    {
-        return $this->categories->map(function ($category) {
-            return [
-                'id'   => $category->id,
-                'name' => $category->name,
-            ];
-        });
-    }
-
-    public function getOrdersCountAttribute(): int
-    {
-        return $this->orders()->count();
-    }
-
-    public function paidAmounts()
-    {
-        return $this->hasMany(BranchPaidAmount::class);
-    }
-
-    public function resellerSales()
-    {
-        return $this->hasMany(ResellerSale::class, 'branch_id');
-    }
-
-    // public function getResellerBalanceAttribute(): float
-    // {
-    //     return $this->total_sales - $this->total_paid;
-    // }
-
-    // public function getTotalPaidAttribute(): float
-    // {
-    //     return $this->paidAmounts->sum('amount');
-    // }
-
-    public function resellerSaleItems()
-    {
-        return $this->hasManyThrough(
-            \App\Models\ResellerSaleItem::class,
-            \App\Models\ResellerSale::class,
-            'branch_id',
-            'reseller_sale_id',
-            'id',
-            'id'
-        );
-    }
-
-    public function getTotalSalesAttribute(): float
-    {
-        return $this->resellerSaleItems()->sum('total_price');
-    }
-
-    public function getTotalOrdersAmountAttribute(): float
-    {
-        return $this->orders()
-            ->with('orderDetails') // مهم لتفادي N+1
-            ->get()
-            ->sum(function ($order) {
-                return $order->total_amount; // accessor في Order
-            });
-    }
-
-    public function scopeVisible($query)
-    {
-        return $query->where('is_hidden', false);
-    }
-
-    public function resellerPaidAmounts()
-    {
-        return $this->hasManyThrough(
-            ResellerSalePaidAmount::class,
-            ResellerSale::class,
-            'branch_id',
-            'reseller_sale_id',
-            'id',
-            'id'
-        );
-    }
-
-    public function getTotalPaidAttribute(): float
-    {
-        return $this->resellerPaidAmounts()->sum('amount');
-    }
-
-    public function getResellerBalanceAttribute(): float
-    {
-        return $this->total_sales - $this->total_paid;
-    }
-    public function hasStore(): bool
-    {
-        return ! is_null($this->store?->id);
-    }
-
-    public function scopeReseller($query)
-    {
-        return $query->where('type', self::TYPE_RESELLER);
-    }
-
-    public function scopeNotReseller($query)
-    {
-        return $query->where('type', '!=', self::TYPE_RESELLER);
-    }
-
 }

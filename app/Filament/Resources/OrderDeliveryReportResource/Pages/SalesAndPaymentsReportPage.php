@@ -12,7 +12,7 @@ class SalesAndPaymentsReportPage extends Page
 {
     protected static string $resource = OrderDeliveryReportResource::class;
 
-    protected static string $view = 'filament.resources.order-delivery-report-resource.pages.sales-and-payments';
+    protected string $view = 'filament.resources.order-delivery-report-resource.pages.sales-and-payments';
 
     public Collection $report;
 

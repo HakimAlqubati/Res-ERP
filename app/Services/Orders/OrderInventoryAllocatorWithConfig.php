@@ -2,6 +2,7 @@
 
 namespace App\Services\Orders;
 
+use Exception;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Setting;
@@ -48,7 +49,7 @@ class OrderInventoryAllocatorWithConfig
             $allowNegativeStock = Setting::getSetting('completed_order_if_not_qty', false);
 
             if (!$allowNegativeStock && $totalAvailable < $requiredQty) {
-                throw new \Exception("❌ Insufficient total stock across stores for product {$orderDetail->product?->name}");
+                throw new Exception("❌ Insufficient total stock across stores for product {$orderDetail->product?->name}");
             }
 
             // Step 3: Deduct from stores

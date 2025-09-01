@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Products;
 
+use stdClass;
+use Exception;
 use App\Filament\Resources\OrderReportsResource\GeneralReportOfProductsResource;
 use App\Filament\Resources\OrderReportsResource\Pages\GeneralReportProductDetails;
 use App\Http\Resources\ProductResource;
@@ -47,7 +49,7 @@ class ProductRepository implements ProductRepositoryInterface
             })
             ->HasUnitPrices()
             ->when(
-                $branch && $branch->type === \App\Models\Branch::TYPE_RESELLER,
+                $branch && $branch->type === Branch::TYPE_RESELLER,
                 fn($query) => $query->visibleToBranch($branch)
             )
             ->with(['unitPrices' => function ($query) {
@@ -66,7 +68,7 @@ class ProductRepository implements ProductRepositoryInterface
 
         if (auth()->user()->branch && auth()->user()->branch->is_kitchen && $isManufacturing) {
             $customCategories        = auth()->user()?->branch?->categories()->pluck('category_id')->toArray() ?? [];
-            $otherBranchesCategories = \App\Models\Branch::centralKitchens()
+            $otherBranchesCategories = Branch::centralKitchens()
                 ->where('id', '!=', auth()->user()?->branch?->id) // نستثني فرع المستخدم
                 ->with('categories:id')
                 ->get()
@@ -250,7 +252,7 @@ class ProductRepository implements ProductRepositoryInterface
             ->get();
         $final = [];
         foreach ($data as $val) {
-            $obj               = new \stdClass();
+            $obj               = new stdClass();
             $obj->product      = $val->product;
             $obj->package_size = $val->package_size;
             $obj->branch       = $val->branch;
@@ -267,8 +269,8 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function getReportDataFromTransactions($productParam, $from_date, $to_date, $branch_id)
     {
-        $from = \Carbon\Carbon::parse($from_date)->startOfDay();
-        $to   = \Carbon\Carbon::parse($to_date)->endOfDay();
+        $from = Carbon::parse($from_date)->startOfDay();
+        $to   = Carbon::parse($to_date)->endOfDay();
 
         // 1) branch_id -> store_id(s)
         $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
@@ -402,7 +404,7 @@ class ProductRepository implements ProductRepositoryInterface
             // سعر وحدة التقرير = تكلفة/قاعدة × report_ps
             $unitPriceOut = $avgInCostPerBase * ($reportPs > 0 ? $reportPs : 1.0);
 
-            $obj               = new \stdClass();
+            $obj               = new stdClass();
             $obj->code      = $val->code;
             $obj->product      = $val->product;
             $obj->package_size = $reportPs; // حجم عبوة وحدة التقرير (إن طُلِبت)
@@ -423,8 +425,8 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
     {
-        $from = $from_date ? \Carbon\Carbon::parse($from_date)->startOfDay() : null;
-        $to   = $to_date   ? \Carbon\Carbon::parse($to_date)->endOfDay()   : null;
+        $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
+        $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
         $fromStr = $from ? $from->toDateTimeString() : null;
         $toStr = $to ? $to->toDateTimeString() : null;
 
@@ -612,7 +614,7 @@ class ProductRepository implements ProductRepositoryInterface
             if (($r->remaining_qty_unit ?? 0) <= 0) {
                 continue;
             }
-            $obj               = new \stdClass();
+            $obj               = new stdClass();
             $obj->code         = $r->product_code ?? '';
             $obj->product      = $r->product_name ?? '';
             $obj->package_size = (float)($r->package_size ?? 1);
@@ -646,7 +648,7 @@ class ProductRepository implements ProductRepositoryInterface
             if ($to_date) {
                 $to_date = Carbon::createFromFormat('d-m-Y', $to_date)->format('Y-m-d');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => 'Invalid date format. Use d-m-Y.']);
         }
 

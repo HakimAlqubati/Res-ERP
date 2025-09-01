@@ -1,6 +1,11 @@
 <?php
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Actions\BulkActionGroup;
+use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages\ListEmployeeAttednaceReports;
 use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeeAttednaceReportResource\Pages;
 use App\Models\Attendance;
@@ -8,10 +13,7 @@ use App\Models\Employee;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
@@ -35,8 +37,8 @@ class EmployeeAttednaceReportResource extends Resource
     protected static ?int $navigationSort                         = 2;
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 //
             ]);
     }
@@ -45,7 +47,7 @@ class EmployeeAttednaceReportResource extends Resource
     {
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
 
-        return $table
+        return $table->deferFilters(false)
             ->emptyStateHeading('No data')
             ->columns([])
             ->filters([
@@ -71,7 +73,7 @@ class EmployeeAttednaceReportResource extends Resource
                     ->searchable(),
 
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('start_date')->live()
                             ->afterStateUpdated(function (Set $set, $state) {
                                 $endNextMonthData = getEndOfMonthDate(Carbon::parse($state)->year, Carbon::parse($state)->month);
@@ -86,18 +88,18 @@ class EmployeeAttednaceReportResource extends Resource
                     ]),
                 Filter::make('show_extra_fields')
                     ->label('Show Extra')
-                    ->form([
+                    ->schema([
                         Toggle::make('show_day')
                             ->inline(false)
                             ->label('Show Day'),
                     ]),
 
             ], FiltersLayout::AboveContent)
-            ->actions([
+            ->recordActions([
                 // Tables\Actions\EditAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
+            ->toolbarActions([
+                BulkActionGroup::make([
                     // Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
@@ -111,7 +113,7 @@ class EmployeeAttednaceReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListEmployeeAttednaceReports::route('/'),
+            'index' => ListEmployeeAttednaceReports::route('/'),
         ];
     }
 }

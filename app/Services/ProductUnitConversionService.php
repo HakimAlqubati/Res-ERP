@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log; // Don't forget to import Log
 
@@ -27,7 +28,7 @@ class ProductUnitConversionService // Suggesting a name that indicates its purpo
      * @param int $toUnitId The new unit_id to set.
      * @param float $fromPackageSize The original package_size to find and replace.
      * @param float $toPackageSize The new package_size to set.
-     * @throws \Exception If the transaction fails.
+     * @throws Exception If the transaction fails.
      * @return void
      */
     public function migrateProductUnitAndPackageSize(
@@ -69,7 +70,7 @@ class ProductUnitConversionService // Suggesting a name that indicates its purpo
 
                 Log::info("✅ Successfully migrated unit_id and package_size for product #{$productId} from unit {$fromUnitId} (pkg {$fromPackageSize}) to unit {$toUnitId} (pkg {$toPackageSize}).");
             });
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::error("❌ Failed to migrate unit_id and package_size for product #{$productId}. Error: " . $e->getMessage());
             // Re-throw the exception to ensure the calling code knows it failed
             throw $e;

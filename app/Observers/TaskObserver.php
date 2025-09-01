@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
+use Filament\Actions\Action;
 use App\Models\Task;
 use App\Models\TaskLog;
-use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 
 class TaskObserver

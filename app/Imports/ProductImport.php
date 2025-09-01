@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Exception;
 use App\Models\Category;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
@@ -116,7 +117,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
 
             $this->successCount++;
             // DB::commit();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::channel('single')->error('❌ Import Error', [
                 'row' => $row,
                 'message' => $e->getMessage(),

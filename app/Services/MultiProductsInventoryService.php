@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\UnitPrice;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Product;
@@ -388,22 +389,22 @@ class MultiProductsInventoryService
 
     public function getLastUnitByPackageSize($productId)
     {
-        return \App\Models\UnitPrice::where('product_id', $productId)
+        return UnitPrice::where('product_id', $productId)
             ->with('unit')
             ->orderByDesc('package_size')
             ->first();
     }
     public function getSmallestUnitByPackageSize($productId)
     {
-        return \App\Models\UnitPrice::where('product_id', $productId)
+        return UnitPrice::where('product_id', $productId)
             ->with('unit')
             ->orderBy('package_size', 'asc')
             ->first();
     }
     public function getInventoryIn($productId)
     {
-        $queryIn = \App\Models\InventoryTransaction::query()
-            ->where('movement_type', \App\Models\InventoryTransaction::MOVEMENT_IN)
+        $queryIn = InventoryTransaction::query()
+            ->where('movement_type', InventoryTransaction::MOVEMENT_IN)
             ->whereNull('deleted_at')
             // ->with(['product', 'unit', 'store'])
             // ->orderBy('movement_date', 'desc')

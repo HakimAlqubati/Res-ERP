@@ -12,7 +12,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListEmployeeDeductionSummaryReports extends ListRecords
 {
     protected static string $resource = EmployeeDeductoinSummaryResource::class;
-    protected static string $view = 'reports.deductions.deductions';
+    protected string $view = 'reports.deductions.deductions';
 
     protected function getViewData(): array
     {

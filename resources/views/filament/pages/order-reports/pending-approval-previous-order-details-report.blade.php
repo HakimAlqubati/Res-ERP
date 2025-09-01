@@ -11,9 +11,9 @@
     {{ $this->getTableFiltersForm() }}
     <div id="reportContent">
         @if (!empty($reportData))
-            <x-filament-tables::table class="w-full text-sm text-left pretty reports table-striped border">
+            <table class="w-full text-sm text-left pretty reports table-striped border">
                 <thead>
-                    <x-filament-tables::row class="header_report">
+                    <tr class="header_report">
                         @if (!$groupByOrder)
                             <th>Order ID</th>
                         @endif
@@ -25,56 +25,56 @@
                         @if (!$groupByOrder)
                             <th>Created At</th>
                         @endif
-                    </x-filament-tables::row>
+                    </tr>
                 </thead>
                 <tbody>
                     @foreach ($reportData as $row)
                         @if (isset($row['details']))
                             {{-- Grouped --}}
                             @foreach ($row['details'] as $detail)
-                                <x-filament-tables::row>
+                                <tr>
                                     @if (!$groupByOrder)
-                                        <x-filament-tables::cell>{{ $row['order_id'] }}</x-filament-tables::cell>
+                                        <td>{{ $row['order_id'] }}</td>
                                     @endif
-                                    <x-filament-tables::cell>{{ $detail['product_code'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell>{{ $detail['product_name'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell>{{ $detail['unit_id'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell>{{ $detail['unit_name'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell
-                                        class="font-bold">{{ $detail['quantity'] }}</x-filament-tables::cell>
+                                    <td>{{ $detail['product_code'] }}</td>
+                                    <td>{{ $detail['product_name'] }}</td>
+                                    <td>{{ $detail['unit_id'] }}</td>
+                                    <td>{{ $detail['unit_name'] }}</td>
+                                    <td
+                                        class="font-bold">{{ $detail['quantity'] }}</td>
                                     @if (!$groupByOrder)
-                                        <x-filament-tables::cell class="font-bold">
+                                        <td class="font-bold">
                                             {{ date('Y-m-d', strtotime($detail['created_at'])) }}<br>
                                             {{ date('H:i:s', strtotime($detail['created_at'])) }}
-                                        </x-filament-tables::cell>
+                                        </td>
                                     @endif
-                                </x-filament-tables::row>
+                                </tr>
                             @endforeach
                         @else
                             {{-- Ungrouped --}}
-                            <x-filament-tables::row>
+                            <tr>
                                 @if (!$groupByOrder)
-                                    <x-filament-tables::cell>{{ $row['order_id'] }}</x-filament-tables::cell>
+                                    <td>{{ $row['order_id'] }}</td>
                                 @endif
-                                <x-filament-tables::cell>{{ $row['product_code'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $row['product_name'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $row['unit_id'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell>{{ $row['unit_name'] }}</x-filament-tables::cell>
-                                <x-filament-tables::cell
-                                    class="font-bold">{{ $row['quantity'] }}</x-filament-tables::cell>
+                                <td>{{ $row['product_code'] }}</td>
+                                <td>{{ $row['product_name'] }}</td>
+                                <td>{{ $row['unit_id'] }}</td>
+                                <td>{{ $row['unit_name'] }}</td>
+                                <td
+                                    class="font-bold">{{ $row['quantity'] }}</td>
 
 
                                 @if (!$groupByOrder)
-                                    <x-filament-tables::cell class="font-bold">
+                                    <td class="font-bold">
                                         {{ date('Y-m-d', strtotime($row['created_at'])) }}<br>
                                         {{ date('H:i:s', strtotime($row['created_at'])) }}
-                                    </x-filament-tables::cell>
+                                    </td>
                                 @endif
-                            </x-filament-tables::row>
+                            </tr>
                         @endif
                     @endforeach
                 </tbody>
-            </x-filament-tables::table>
+            </table>
         @else
             <div class="text-center mt-8">
                 <h1 class="text-gray-500">No data available.</h1>

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource\Pages;
 
+use Filament\Actions\DeleteAction;
 use App\Filament\Clusters\SettingsCluster\Resources\NotificationSettingResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
@@ -13,7 +14,7 @@ class EditNotificationSetting extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
     protected function getRedirectUrl(): string

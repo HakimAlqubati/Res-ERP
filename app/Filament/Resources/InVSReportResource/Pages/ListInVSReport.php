@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\InVSReportResource\Pages;
 
+use App\Filament\Traits\HasBackButtonAction;
 use App\Filament\Resources\InVSReportResource;
 use App\Models\Store;
 use App\Services\Reports\CenteralKitchens\InVsOutReportService;
@@ -11,9 +12,9 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListInVSReport extends ListRecords
 {
-    use \App\Filament\Traits\HasBackButtonAction;
+    use HasBackButtonAction;
     protected static string $resource = InVSReportResource::class;
-    protected static string $view = 'filament.pages.stock-report.in-vs-out-report';
+    protected string $view = 'filament.pages.stock-report.in-vs-out-report';
 
 
     protected function getViewData(): array
