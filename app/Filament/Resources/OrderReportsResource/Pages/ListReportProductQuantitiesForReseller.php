@@ -56,7 +56,7 @@ class ListReportProductQuantitiesForReseller extends ListRecords
         $branch = null;
         if (!is_null($branch_id)) {
             $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
-            $branch = Branch::find($branch_id)->name;
+            $branch = Branch::find($branch_id)?->name;
         }
 
 
