@@ -17,11 +17,11 @@ use Filament\Tables\Table;
 class MonthClosureResource extends Resource
 {
     protected static ?string $model          = MonthClosure::class;
-    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
+    // protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
 
-    protected static ?string $navigationLabel  = 'Month Closures';
-    protected static ?string $pluralModelLabel = 'Month Closures';
-    protected static ?string $modelLabel       = 'Month Closure';
+    // protected static ?string $navigationLabel  = 'Month Closures';
+    // protected static ?string $pluralModelLabel = 'Month Closures';
+    // protected static ?string $modelLabel       = 'Month Closure';
     protected static ?string $slug             = 'month-closures';
     
     protected static bool $shouldRegisterNavigation = false;
