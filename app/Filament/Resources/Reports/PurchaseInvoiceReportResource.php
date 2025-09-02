@@ -59,6 +59,7 @@ class PurchaseInvoiceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->deferFilters(false)
             ->filters([
                 SelectFilter::make("store_id")
                     ->searchable()
