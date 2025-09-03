@@ -48,14 +48,15 @@ class ListReportProductQuantitiesForReseller extends ListRecords
     protected function getViewData(): array
     {
         $repo = app(ProductRepository::class);
-        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'] ?? 'all';
+        $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'];
 
+        $branch_id = $branch_id == '' || $branch_id == null ? 'all' : $branch_id;
 
         $start_date = $this->getTable()->getFilters()['date']->getState()['start_date'];
         $end_date = $this->getTable()->getFilters()['date']->getState()['end_date'];
         $product_id = $this->getTable()->getFilters()['product_id']->getState()['value'] ?? null;
-        
-        $branch = null;
+
+        $branch = null; 
         if ($branch_id === 'all') {
             $branch = __('lang.all');
         } elseif (is_numeric($branch_id)) {
@@ -66,7 +67,7 @@ class ListReportProductQuantitiesForReseller extends ListRecords
         if ($branch_id) {
             $data = $repo->getReportDataFromTransactionsV2($product_id, $start_date, $end_date, $branch_id);
         }
-        // dd($data,$branch_id,$branch);
+       
         return [
             'report_data' => $data,
             'product_id'  => $product_id,

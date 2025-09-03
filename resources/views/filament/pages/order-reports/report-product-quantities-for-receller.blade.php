@@ -67,7 +67,7 @@
             cursor: pointer;
         }
     </style>
-    {{-- @if (isset($branch_id) && is_numeric($branch_id)) --}}
+    @if (is_array($report_data) && count($report_data) > 0)
     <table class="w-full text-sm text-left pretty  reports" id="report-table">
         <thead class="fixed-header" style="top:64px;">
 
@@ -128,10 +128,10 @@
         </tbody>
 
     </table>
-    {{-- @else
+    @else
         <div class="please_select_message_div" style="text-align: center;">
 
-            <h1 class="please_select_message_text">{{ __('lang.please_select_a_receller') }}</h1>
+            <h1 class="please_select_message_text">{{ __('lang.no_data') }}</h1>
         </div>
-    @endif --}}
+    @endif
 </x-filament::page>

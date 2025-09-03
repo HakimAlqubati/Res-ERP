@@ -98,7 +98,6 @@ class ReportProductQuantitiesForResellerResource extends Resource
                     ->options(Branch::whereIn('type', [
                         Branch::TYPE_RESELLER
                     ])
-                        // ->activePopups()
                         ->active()->pluck('name', 'id')),
 
                 Filter::make('date')
