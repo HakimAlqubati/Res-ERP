@@ -6,14 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
-            $table->json('modules')->nullable()->after('database_created');
-        });
+        if (Schema::hasTable('tenants')) {
+            Schema::table('tenants', function (Blueprint $table) {
+                if (!Schema::hasColumn('tenants', 'modules')) {
+                    $table->json('modules')->nullable()->after('database_created');
+                }
+            });
+        }
     }
 
     /**
@@ -21,8 +26,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
-            $table->dropColumn('modules');
-        });
+        if (Schema::hasTable('tenants')) {
+            Schema::table('tenants', function (Blueprint $table) {
+                if (Schema::hasColumn('tenants', 'modules')) {
+                    $table->dropColumn('modules');
+                }
+            });
+        }
     }
 };

@@ -7,6 +7,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use App\Filament\Resources\ProductResource;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
 class ManageProducts extends ManageRecords
 {
@@ -31,7 +32,7 @@ class ManageProducts extends ManageRecords
         return [
             'all' => Tab::make(__('All Products'))
                 ->modifyQueryUsing(fn (Builder $query) => $query)
-                ->icon('heroicon-o-rectangle-stack'),
+                ->icon(Heroicon::Cube),
 
             'manufacturing' => Tab::make(__('Manufacturing Products'))
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('category', fn ($q) => $q->where('is_manafacturing', true)))

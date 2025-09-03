@@ -57,7 +57,7 @@ class TenantResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make('')->label('')->columns(3)->schema([
+                Fieldset::make('')->columnSpanFull()->label('')->columns(3)->schema([
                     TextInput::make('name')->required()->unique(ignoreRecord: true)
                         ->live(onBlur: true)
                         ->afterStateUpdated(function (Set $set, ?string $state) {

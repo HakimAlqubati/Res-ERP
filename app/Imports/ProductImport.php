@@ -92,6 +92,13 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                         'package_size' => $packageSize,
                         'order' => $packageSize,
                     ]);
+                } else {
+                    // Update existing unit price if needed
+                    $unitPriceExists->update([
+                        'price' => $calculatedPrice,
+                        'package_size' => $packageSize,
+                        'order' => $packageSize,
+                    ]);
                 }
                 // Queue product for stock addition if needed
                 if ($stockQty > 0) {
@@ -161,5 +168,45 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
     public function getSuccessfulImportsCount(): int
     {
         return $this->successCount;
+    }
+    private function resolvePackageSizeForPrice(int $productId, int $unitId, int $packageSize, float $price): int
+    {
+        $final = $packageSize;
+
+        // هل هناك سعر(أسعار) بنفس الـ package_size لهذا المنتج/الوحدة؟
+        $conflicts = UnitPrice::where('product_id', $productId)
+            ->where('unit_id', $unitId)
+            ->where('package_size', $packageSize)
+            ->get();
+
+        if ($conflicts->isEmpty()) {
+            return $final; // لا تعارض
+        }
+
+        // توجد قيود بنفس الـ package_size
+        // إذا كان سعري أعلى من أي الموجودين، أرفع الـ package_size بمقدار 1
+        $maxExistingPrice = (float) $conflicts->max('price');
+        if ($price > $maxExistingPrice) {
+            $final = $packageSize + 1;
+        } else {
+            // إن لم يكن أعلى، نبقيه كما هو
+            $final = $packageSize;
+        }
+
+        // تأكد أن الـ package_size الجديد غير مستخدم لسعر مختلف
+        // (نكرر الزيادة حتى نجد خانة فاضية أو نفس السعر)
+        while (
+            UnitPrice::where('product_id', $productId)
+            ->where('unit_id', $unitId)
+            ->where('package_size', $final)
+            ->where(function ($q) use ($price) {
+                $q->where('price', '!=', $price);
+            })
+            ->exists()
+        ) {
+            $final++;
+        }
+
+        return $final;
     }
 }

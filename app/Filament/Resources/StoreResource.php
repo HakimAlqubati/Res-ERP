@@ -28,6 +28,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -41,7 +42,7 @@ class StoreResource extends Resource
 {
     protected static ?string $model = Store::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon =Heroicon::BuildingOffice2;
     protected static ?string $cluster = SupplierStoresReportsCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
@@ -60,7 +61,7 @@ class StoreResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columns(4)->schema([
+                Fieldset::make()->columnSpanFull()->columns(4)->schema([
                     TextInput::make('name')->label(__('lang.name'))->required(),
                     Select::make('storekeeper_id')->searchable()
                         ->label(__('stock.storekeeper'))

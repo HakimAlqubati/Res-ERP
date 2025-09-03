@@ -22,6 +22,7 @@ use App\Models\Supplier;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -36,7 +37,7 @@ use Illuminate\Support\Facades\Hash;
 class SupplierResource extends Resource
 {
     protected static ?string $model = Supplier::class;
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedTruck;
     // protected static ?string $navigationGroup = 'Supplier & Roles';
     protected static ?string $cluster = SupplierCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
@@ -51,7 +52,7 @@ class SupplierResource extends Resource
         return $schema
             ->components([
 
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
                     TextInput::make('name')->label(__('lang.name'))->required(),
                     TextInput::make('email')->label(__('lang.email'))
                         ->unique(ignoreRecord: true)
