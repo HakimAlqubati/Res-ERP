@@ -40,10 +40,10 @@ class PositionResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(2)->schema([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(2)->schema([
                         TextInput::make('title')->required()->columnSpan(1),
-                        Toggle::make('active')->default(1)->columnSpan(1),
+                        Toggle::make('active')->inline(false)->default(1)->columnSpan(1),
 
                     ]),
                     Textarea::make('description')->columnSpanFull(),

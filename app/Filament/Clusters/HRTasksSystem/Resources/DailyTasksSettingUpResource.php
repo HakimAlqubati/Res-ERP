@@ -60,9 +60,9 @@ class DailyTasksSettingUpResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
 
-                    Grid::make()->columns(4)->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         TextInput::make('title')
                             ->required()
                             ->autofocus()
@@ -85,8 +85,8 @@ class DailyTasksSettingUpResource extends Resource
 
                     ]),
 
-                    Fieldset::make()->label('Set schedule task type and start date of scheduele task')->schema([
-                        Grid::make()->columns(4)->schema([
+                    Fieldset::make()->columnSpanFull()->label('Set schedule task type and start date of scheduele task')->schema([
+                        Grid::make()->columns(4)->columnSpanFull()->schema([
                             ToggleButtons::make('schedule_type')
                                 ->label('')
                                 ->columnSpan(2)
@@ -162,9 +162,9 @@ class DailyTasksSettingUpResource extends Resource
                         ])
 
                         ,
-                        Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
-                                Grid::make()->label('')->columns(2)->schema([
+                        Fieldset::make('requrrence_pattern')->columnSpanFull()->label('Recurrence pattern')->schema([
+                            Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
+                                Grid::make()->columns(2)->columnSpanFull()->schema([
                                     Radio::make('requr_pattern_set_days')->label('')
                                         ->options([
                                             'specific_days' => 'Every',
@@ -173,15 +173,15 @@ class DailyTasksSettingUpResource extends Resource
                                     TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)'),
                                 ]),
                             ]),
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
-                                Grid::make()->label('')->columns(2)->schema([
+                            Fieldset::make()->label('')->columnSpanFull()->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
+                                Grid::make()->columns(2)->columnSpanFull()->schema([
                                     TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')
                                     ,
                                     ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
-                                Grid::make()->label('')->columns(3)->schema([
+                                Grid::make() ->columns(3)->columnSpanFull()->schema([
                                     Radio::make('requr_pattern_monthly_status')->label('')
                                         ->columnSpan(1)
                                         ->options([
@@ -194,7 +194,7 @@ class DailyTasksSettingUpResource extends Resource
                                         TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
                                         TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
                                     ]),
-                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
+                                    Grid::make()->columns(2)->columnSpanFull()->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
                                         Select::make('requr_pattern_order_name')->label('')->options([
                                             'first' => 'first',
                                             'second' => 'second',

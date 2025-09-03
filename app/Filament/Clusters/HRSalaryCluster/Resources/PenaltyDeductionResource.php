@@ -45,7 +45,7 @@ class PenaltyDeductionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-                Fieldset::make()->label('')->columns(4)->schema([
+                Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
                     Select::make('year')
                         ->options([
                             date('Y') - 1 => date('Y') - 1,
@@ -96,7 +96,7 @@ class PenaltyDeductionResource extends Resource
                         ->options(Deduction::penalty()->get()->pluck('name', 'id'))
                         ->required(),
                 ]),
-                Fieldset::make()->label('')->columns(4)->schema([
+                Fieldset::make()->label('')->columnSpanFull()->columns(4)->schema([
 
                     DatePicker::make('date')->label('Date')->default(now()->toDateString())->maxDate(now()->toDateString()),
                     Select::make('deduction_type')

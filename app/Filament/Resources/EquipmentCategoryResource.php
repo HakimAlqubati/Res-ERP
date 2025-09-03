@@ -43,7 +43,7 @@ class EquipmentCategoryResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->columns(3)->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required()

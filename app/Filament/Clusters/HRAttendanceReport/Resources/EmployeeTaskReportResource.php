@@ -125,14 +125,14 @@ class EmployeeTaskReportResource extends Resource
 
                         return trim($formattedTime);
                     })->toggleable(isToggledHiddenByDefault: false),
-                InlineChart::make('progress')->label('Progress')
-                    ->chart(TaskWidgetChart::class)
+                // InlineChart::make('progress')->label('Progress')
+                //     ->chart(TaskWidgetChart::class)
 
 
-                    ->maxWidth(80)
-                    ->maxHeight(100)->alignCenter(true)
-                    ->description('')->hidden()
-                    ->toggleable(false),
+                //     ->maxWidth(80)
+                //     ->maxHeight(100)->alignCenter(true)
+                //     ->description('')->hidden()
+                //     ->toggleable(false),
                 TextColumn::make('progress_percentage')->label('Progress')
                     ->getStateUsing(function ($record) {
                         $task = Task::find($record->task_id);

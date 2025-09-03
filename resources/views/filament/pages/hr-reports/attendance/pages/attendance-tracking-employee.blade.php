@@ -23,9 +23,9 @@
                 {{-- {{dd($report_data)}} --}}
                 @foreach ($report_data as $date => $data)
                     {{-- @if (empty($data['employees']))
-                        <x-filament-tables::row>
-                            <x-filament-tables::cell colspan="5" class="text-center">{{ __('No One') }}</x-filament-tables::cell>
-                        </x-filament-tables::row>
+                        <tr>
+                            <td colspan="5" class="text-center">{{ __('No One') }}</td>
+                        </tr>
                     @endif --}}
                     @php $rowspan = count($data['employees']); @endphp
                     @if ($rowspan == 0)
@@ -37,19 +37,19 @@
 
                     @else
                         @foreach ($data['employees'] as $index => $employee)
-                            <x-filament-tables::row>
+                            <tr>
                                 @if ($index === 0)
                                     <!-- Only show date for the first employee on this date -->
-                                    <x-filament-tables::cell rowspan="{{ $rowspan }}"
-                                        class="text-center">{{ $date }}</x-filament-tables::cell>
+                                    <td rowspan="{{ $rowspan }}"
+                                        class="text-center">{{ $date }}</td>
                                 @endif
                                 <td>{{ $employee['name'] }}</td>
                                 <td>{{ ucfirst($employee['prediction']) }}</td>
                                 {{-- @foreach ($employee['attendances'] as $attendance)
-                                    <x-filament-tables::cell>{{ $attendance['check_time'] }}</x-filament-tables::cell>
-                                    <x-filament-tables::cell>{{ ucfirst($attendance['check_type']) }}</x-filament-tables::cell>
+                                    <td>{{ $attendance['check_time'] }}</td>
+                                    <td>{{ ucfirst($attendance['check_type']) }}</td>
                                     @endforeach --}}
-                            </x-filament-tables::row>
+                            </tr>
                         @endforeach
                     @endif
                 @endforeach

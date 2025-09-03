@@ -88,7 +88,7 @@ class EmployeeOvertimeResource extends Resource
 
                     Fieldset::make()
                         ->columns(3)
-                        ->label('Set branch employees & the Date')
+                        ->label('Set branch employees & the Date')->columnSpanFull()
                         ->schema([
 
                             Select::make('branch_id')->label('Branch')
@@ -265,7 +265,7 @@ class EmployeeOvertimeResource extends Resource
                         ]),
 
                     Repeater::make('employees')
-                        ->label('')
+                        ->label('')->columnSpanFull()
                         ->visible(fn(Get $get) => in_array($get('type'), [EmployeeOvertime::TYPE_BASED_ON_DAY])
                             && ! is_null($get('branch_id')))
                         ->required()

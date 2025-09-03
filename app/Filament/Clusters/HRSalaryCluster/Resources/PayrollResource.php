@@ -10,15 +10,22 @@ use App\Filament\Pages\RunPayroll;
 use App\Models\Branch;
 use App\Models\Payroll;
 use App\Models\PayrollRun;
- use Filament\Forms\Components\Fieldset;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,7 +64,7 @@ class PayrollResource extends Resource
         return $schema
             ->components([
 
-                Fieldset::make()->label('Set Branch, Month and payment date')->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->label('Set Branch, Month and payment date')->columns(3)->schema([
                     TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')
                         ->disabled()
                         // ->extraAttributes(['class' => 'text-red-600'])
@@ -83,10 +90,10 @@ class PayrollResource extends Resource
                         // ->searchable()
                         ->default(now()->format('F')),
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
-                    Forms\Components\DatePicker::make('payment_date')->required()
+                    DatePicker::make('payment_date')->required()
                         ->default(date('Y-m-d')),
                 ]),
-                Forms\Components\Textarea::make('notes')->label('Notes')->columnSpanFull(),
+                Textarea::make('notes')->label('Notes')->columnSpanFull(),
             ]);
     }
 
@@ -95,27 +102,27 @@ class PayrollResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('branch.name')
+                TextColumn::make('branch.name')
                     ->label('Branch')->sortable(),
-                Tables\Columns\TextColumn::make('year')->sortable(),
-                Tables\Columns\TextColumn::make('month')->sortable(),
+                TextColumn::make('year')->sortable(),
+                TextColumn::make('month')->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('branch_id')->label('Branch')
+                SelectFilter::make('branch_id')->label('Branch')
                     ->relationship('branch', 'name'),
                 TrashedFilter::make(),
 
 
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                ViewAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                    ForceDeleteBulkAction::make(),
                 ]),
             ])
         ;

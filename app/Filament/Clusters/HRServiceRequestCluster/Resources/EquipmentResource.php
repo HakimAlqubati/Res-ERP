@@ -26,6 +26,7 @@ use App\Models\BranchArea;
 use App\Models\Equipment;
 use App\Models\EquipmentType;
 use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Pages\Page;
@@ -57,8 +58,8 @@ class EquipmentResource extends Resource
                     Step::make('Basic data')
                         ->icon('heroicon-o-bars-3-center-left')
                         ->schema([
-                            Fieldset::make()->schema([
-                                Grid::make()->columns(2)->schema([
+                            Fieldset::make()->columnSpanFull()->schema([
+                                Grid::make()->columnSpanFull()->columns(2)->schema([
                                     TextInput::make('name')
                                         ->label('Name')
                                         ->required()->prefixIconColor('primary')->columnSpan(1)
@@ -87,7 +88,7 @@ class EquipmentResource extends Resource
                                         ->unique(ignoreRecord: true)->hidden(),
                                 ]),
 
-                                Fieldset::make()->label('Set Branch & Area')->columns(2)->schema([
+                                Fieldset::make()->columnSpanFull()->label('Set Branch & Area')->columns(2)->schema([
 
                                     Select::make('branch_id')
                                         ->label('Branch')
@@ -103,7 +104,7 @@ class EquipmentResource extends Resource
                                         })->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
                                 ]),
 
-                                Grid::make()->columns(3)->schema([
+                                Grid::make()->columns(3)->columnSpanFull()->schema([
                                     TextInput::make('serial_number')
                                         ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
 
@@ -119,7 +120,7 @@ class EquipmentResource extends Resource
                                         ->nullable(),
 
                                 ]),
-                                Grid::make()->columns(3)->schema([
+                                Grid::make()->columnSpanFull()->columns(3)->schema([
                                     TextInput::make('purchase_price')
                                         ->label('Purchase Price')
                                         ->prefixIcon('heroicon-s-currency-dollar')->prefixIconColor('primary')
@@ -151,7 +152,7 @@ class EquipmentResource extends Resource
                     Step::make('Dates')->label('Set Dates & Warranty')
                         ->icon('heroicon-o-calendar-date-range')
                         ->schema([
-                            Fieldset::make()->label('Set Dates')->columns(2)->schema([
+                            Fieldset::make()->columnSpanFull()->label('Set Dates')->columns(2)->schema([
 
                                 Fieldset::make()->columnSpanFull()->columns(3)->schema([
                                     TextInput::make('warranty_months')
@@ -247,8 +248,8 @@ class EquipmentResource extends Resource
                     Step::make('Images')
                         ->icon('heroicon-o-photo')
                         ->schema([
-                            Fieldset::make()->columns(1)->schema([
-                                SpatieMediaLibraryFileUpload::make('images')
+                            Fieldset::make()->columnSpanFull()->columns(1)->schema([
+                                FileUpload::make('images')
                                     ->disk('public')
                                     ->label('')
                                     ->directory('equipments')

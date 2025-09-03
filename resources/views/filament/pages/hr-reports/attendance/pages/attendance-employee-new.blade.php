@@ -113,9 +113,9 @@
     </div>
 
     @if (isset($employee_id) && is_numeric($employee_id))
-        <x-filament-tables::table class="w-full text-sm text-left pretty reports" id="report-table">
+        <table class="w-full text-sm text-left pretty reports" id="report-table">
             <thead class="fixed-header" style="top:64px;">
-                <x-filament-tables::row class="header_report">
+                <tr class="header_report">
                     <th colspan="4">
                         <p>({{ \App\Models\Employee::find($employee_id)?->name ?? __('lang.choose_branch') }})</p>
                     </th>
@@ -127,16 +127,16 @@
                     <th colspan="5" style="text-align: center;">
                         <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
                     </th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th rowspan="2" style="display: {{ $show_day ? 'table-cell' : 'none' }};">{{ __('Day') }}
                     </th>
                     <th rowspan="2">{{ __('Date') }}</th>
                     <th colspan="2">{{ __('Shift data') }}</th>
                     <th colspan="4">{{ __('Check-in and Check-out data') }}</th>
                     <th colspan="3">{{ __('Work Hours Summary') }}</th>
-                </x-filament-tables::row>
-                <x-filament-tables::row>
+                </tr>
+                <tr>
                     <th class="internal_cell">{{ __('From') }}</th>
                     <th class="internal_cell">{{ __('To') }}</th>
                     <th class="internal_cell">{{ __('Check-in') }}</th>
@@ -146,7 +146,7 @@
                     <th class="internal_cell">{{ __('Supposed') }}</th>
                     <th class="internal_cell">{{ __('Total Hours Worked') }}</th>
                     <th class="internal_cell">{{ __('Approved') }}</th>
-                </x-filament-tables::row>
+                </tr>
             </thead>
 
             <tbody>
@@ -168,15 +168,15 @@
                     @endphp
 
                     @if ($dayStatus == 'leave')
-                        <x-filament-tables::row>
+                        <tr>
                             @if ($show_day)
-                                <x-filament-tables::cell>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</x-filament-tables::cell>
+                                <td>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</td>
                             @endif
-                            <x-filament-tables::cell>{{ $date }}</x-filament-tables::cell>
-                            <x-filament-tables::cell colspan="9" class="text-center text-gray-500 font-bold">
+                            <td>{{ $date }}</td>
+                            <td colspan="9" class="text-center text-gray-500 font-bold">
                                 {{ $data['leave_type'] }}
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
+                            </td>
+                        </tr>
                     @elseif (!is_null($dayStatus) && count($periods) > 0)
                         {{-- @if (count($periods) > 0) --}}
                         @foreach ($periods as $periodIndex => $period)
@@ -196,53 +196,53 @@
                                     $period['attendances']['checkout']['lastcheckout']['status'] ?? '-';
                             @endphp
 
-                            <x-filament-tables::row>
+                            <tr>
                                 {{-- اليوم --}}
                                 @if ($periodIndex == 0)
                                     @if ($show_day)
-                                        <x-filament-tables::cell rowspan="{{ count($periods) }}">
+                                        <td rowspan="{{ count($periods) }}">
                                             {{ $data['day_name'] ?? ($data['day'] ?? '') }}
-                                        </x-filament-tables::cell>
+                                        </td>
                                     @endif
-                                    <x-filament-tables::cell rowspan="{{ count($periods) }}">
+                                    <td rowspan="{{ count($periods) }}">
                                         {{ $date }}
-                                    </x-filament-tables::cell>
+                                    </td>
                                 @endif
 
                                 {{-- بيانات الفترة --}}
-                                <x-filament-tables::cell>
+                                <td>
                                     {{ $period['start_time'] ?? '-' }}
-                                </x-filament-tables::cell>
-                                <x-filament-tables::cell>
+                                </td>
+                                <td>
                                     {{ $period['end_time'] ?? '-' }}
-                                </x-filament-tables::cell>
+                                </td>
 
                                 @if ($period['final_status'] == 'absent')
-                                    <x-filament-tables::cell colspan="8">
+                                    <td colspan="8">
                                         Absent
-                                    </x-filament-tables::cell>
+                                    </td>
                                 @else
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $firstCheckin }}
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $firstCheckinStatus }}
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $lastCheckout }}
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $lastCheckoutStatus }}
-                                    </x-filament-tables::cell>
+                                    </td>
 
-                                    <x-filament-tables::cell>
+                                    <td>
                                         {{ $period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '-' }}
 
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell>
+                                    </td>
+                                    <td>
                                         @php
                                             $duration =
                                                 $period['attendances']['checkout']['lastcheckout'][
@@ -260,39 +260,39 @@
                                         @else
                                             <span>{{ $duration }}</span>
                                         @endif
-                                    </x-filament-tables::cell>
-                                    <x-filament-tables::cell>
+                                    </td>
+                                    <td>
                                         {{ $period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '-' }}
-                                    </x-filament-tables::cell>
+                                    </td>
                                 @endif
-                            </x-filament-tables::row>
+                            </tr>
                         @endforeach
                     @else
-                        <x-filament-tables::row>
+                        <tr>
                             @if ($show_day)
-                                <x-filament-tables::cell>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</x-filament-tables::cell>
+                                <td>{{ $data['day_name'] ?? ($data['day'] ?? '') }}</td>
                             @endif
-                            <x-filament-tables::cell>{{ $date }}</x-filament-tables::cell>
-                            <x-filament-tables::cell colspan="9" class="text-center text-gray-500 font-bold">
+                            <td>{{ $date }}</td>
+                            <td colspan="9" class="text-center text-gray-500 font-bold">
                                 {{ __('No periods') }}
-                            </x-filament-tables::cell>
-                        </x-filament-tables::row>
+                            </td>
+                        </tr>
                     @endif
                 @endforeach
             </tbody>
 
             <tfoot>
-                <x-filament-tables::row>
-                    <x-filament-tables::cell colspan="{{ $show_day ? 8 : 7 }}"
-                        class="text-center font-bold">{{ __('Total') }}</x-filament-tables::cell>
-                    <x-filament-tables::cell class="text-center">{{ $total_duration_hours }}</x-filament-tables::cell>
-                    <x-filament-tables::cell
-                        class="text-center">{{ $total_actual_duration_hours }}</x-filament-tables::cell>
-                    <x-filament-tables::cell
-                        class="text-center">{{ $total_approved_overtime }}</x-filament-tables::cell>
-                </x-filament-tables::row>
+                <tr>
+                    <td colspan="{{ $show_day ? 8 : 7 }}"
+                        class="text-center font-bold">{{ __('Total') }}</td>
+                    <td class="text-center">{{ $total_duration_hours }}</td>
+                    <td
+                        class="text-center">{{ $total_actual_duration_hours }}</td>
+                    <td
+                        class="text-center">{{ $total_approved_overtime }}</td>
+                </tr>
             </tfoot>
-        </x-filament-tables::table>
+        </table>
     @else
         <div class="please_select_message_div" style="text-align: center;">
             <h1 class="please_select_message_text">{{ __('Please select an Employee') }}</h1>

@@ -59,8 +59,8 @@ class WorkPeriodResource extends Resource
     {
         return [
 
-            Fieldset::make()->schema([
-                Grid::make()->columns(3)->schema([
+            Fieldset::make()->columnSpanFull()->schema([
+                Grid::make()->columns(3)->columnSpanFull()->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required()

@@ -43,8 +43,8 @@ class EmployeeFileTypeResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columns(3)->columnSpanFull()->schema([
                         TextInput::make('name')->required()->columnSpan(1),
                         Toggle::make('active')->default(1)->columnSpan(1)->inline(false),
                         Toggle::make('is_required')->label('Is required for employee?')->default(0)->columnSpan(1)->inline(false),
@@ -52,7 +52,7 @@ class EmployeeFileTypeResource extends Resource
                     ]),
                     Textarea::make('description')->columnSpanFull(),
                 ]),
-                Fieldset::make('Dynamic Fields')->schema([
+                Fieldset::make('Dynamic Fields')->columnSpanFull()->schema([
                     RelationshipRepeater::make('dynamicFields')
                         ->relationship('dynamicFields') // Define the relationship for the dynamic fields
                         ->columnSpanFull()

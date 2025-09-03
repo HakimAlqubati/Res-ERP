@@ -17,6 +17,14 @@ use App\Models\LeaveType;
 use App\Services\HR\Attendance\AttendanceService;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
+use DateTime;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ForceDeleteAction;
+use Filament\Actions\ForceDeleteBulkAction;
+use Filament\Actions\RestoreAction;
+use Filament\Actions\RestoreBulkAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
@@ -38,7 +46,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Tables\Filters\TrashedFilter;
 
 class EmployeeApplicationResource extends Resource
 {
@@ -59,7 +71,7 @@ class EmployeeApplicationResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->label('')->columns(2)->schema([
+                Fieldset::make()->columnSpanFull()->label('')->columns(2)->schema([
                     Select::make('employee_id')
                         ->label('Employee')
                         ->searchable()
@@ -145,7 +157,7 @@ class EmployeeApplicationResource extends Resource
                             $set('missedCheckoutRequest.detail_time', now()->toTimeString());
                         }),
                 ]),
-                Fieldset::make('')
+                Fieldset::make('')->columnSpanFull()
                     ->label(fn(Get $get): string => EmployeeApplicationV2::APPLICATION_TYPES[$get('application_type_id')])
 
                     ->columns(1)
@@ -177,7 +189,7 @@ class EmployeeApplicationResource extends Resource
                             ),
                         ];
                     }),
-                Fieldset::make()->label('')->schema([
+                Fieldset::make()->columnSpanFull()->label('')->schema([
                     Textarea::make('notes') // Add the new details field
                         ->label('Notes')
                         ->placeholder('Notes...')
@@ -1148,7 +1160,7 @@ class EmployeeApplicationResource extends Resource
         $set('advanceRequest.detail_date', $get('application_date'));
         $set('advanceRequest.detail_deduction_starts_from', $get('application_date'));
         return [
-            Fieldset::make('advanceRequest')
+            Fieldset::make('advanceRequest')->columnSpanFull()
                 ->relationship('advanceRequest')
                 ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
 
@@ -1171,7 +1183,7 @@ class EmployeeApplicationResource extends Resource
                     return $data;
                 })
                 ->label('')->schema([
-                    Grid::make()->columns(3)->schema([
+                    Grid::make()->columns(3)->columnSpanFull()->schema([
                         DatePicker::make('detail_date')
                             ->label('Date')
                             ->live()
@@ -1189,7 +1201,7 @@ class EmployeeApplicationResource extends Resource
                             ->label('Basic salary')->helperText('Employee basic salary'),
 
                     ]),
-                    Grid::make()->columns(3)->schema([
+                    Grid::make()->columns(3)->columnSpanFull()->schema([
                         TextInput::make('detail_monthly_deduction_amount')
                             ->numeric()
                             ->label('Monthly deduction amount')->required()
