@@ -999,7 +999,7 @@ class TaskResource extends Resource
     public static function canCreate(): bool
     {
         // if (isSuperAdmin() || auth()->user()->can('create_task')) {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
+        if (isSuperAdmin() || isBranchManager() || isSystemManager()) { 
             return true;
         }
 

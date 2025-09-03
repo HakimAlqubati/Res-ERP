@@ -626,7 +626,7 @@ class EmployeeResource extends Resource
                         FileUpload::make('file')
                             ->label('Select Excel file'),
                     ])->extraModalFooterActions([
-                        ActionsAction::make('downloadexcel')->label(__('Download Example File'))
+                        Action::make('downloadexcel')->label(__('Download Example File'))
                             ->icon('heroicon-o-arrow-down-on-square-stack')
                             ->url(asset('storage/sample_file_imports/Sample import file.xlsx')) // URL to the existing file
                             ->openUrlInNewTab(),
@@ -682,7 +682,7 @@ class EmployeeResource extends Resource
                         }
                     })->hidden(),
 
-                // ActionsAction::make('add_face_images')
+                // Action::make('add_face_images')
                 //     ->label('Add Face Images')
                 //     ->icon('heroicon-o-photo')
                 //     ->color('primary')
@@ -705,7 +705,7 @@ class EmployeeResource extends Resource
                 //     ->modalCancelActionLabel('Cancel'),
                 ActionGroup::make([
 
-                    ActionsAction::make('quick_edit_avatar')
+                    Action::make('quick_edit_avatar')
                         ->label('Edit Avatar')
                         ->icon('heroicon-o-camera')
                         ->color('secondary')
@@ -723,7 +723,7 @@ class EmployeeResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    ActionsAction::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
+                    Action::make('checkInstallments')->label('Check Advanced installments')->button()->hidden()
                         ->color('info')
                         ->icon('heroicon-m-banknotes')
                         ->url(fn($record) => CheckInstallments::getUrl(['employeeId' => $record->id]))
@@ -908,7 +908,7 @@ class EmployeeResource extends Resource
                 return Str::random(15) . "." . $file->getClientOriginalExtension();
             })
             // ->imagePreviewHeight('250')
-            ->resize(5)
+            // ->resize(5)
             ->maxSize(333)
             ->columnSpan(2)
             ->reactive();
