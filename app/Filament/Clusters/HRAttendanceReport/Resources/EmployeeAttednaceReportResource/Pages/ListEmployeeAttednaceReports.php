@@ -13,7 +13,7 @@ use Filament\Resources\Pages\ListRecords;
 
 class ListEmployeeAttednaceReports extends ListRecords
 {
-    protected static string $view     = 'filament.pages.hr-reports.attendance.pages.attendance-employee-new';
+    protected   string $view     = 'filament.pages.hr-reports.attendance.pages.attendance-employee-new';
     protected static string $resource = EmployeeAttednaceReportResource::class;
 
     public $showDetailsModal = false;

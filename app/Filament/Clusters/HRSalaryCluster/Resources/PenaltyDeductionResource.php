@@ -26,6 +26,7 @@ use App\Models\PenaltyDeduction;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -35,15 +36,15 @@ class PenaltyDeductionResource extends Resource
 {
     protected static ?string $model = PenaltyDeduction::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-minus-circle';
+    protected static string | \BackedEnum | null $navigationIcon                      = Heroicon::MinusCircle;
 
     protected static ?string $cluster = HRSalaryCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 9;
-    public static function form(Form $form): Form
+ 
+    public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
+        return $schema->components([
                 Fieldset::make()->label('')->columns(4)->schema([
                     Select::make('year')
                         ->options([

@@ -25,7 +25,7 @@ class EmployeeAttednaceReportResource extends Resource
 {
     protected static ?string $model          = Attendance::class;
     protected static ?string $slug           = 'employee-attendance-reports';
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label   = 'Attendance by employee';
@@ -33,10 +33,9 @@ class EmployeeAttednaceReportResource extends Resource
     {
         return isStuff() ? 'My records' : 'Attendance by employee';
     }
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
-    public static function form(Form $form): Form
-    {
+public static function form(Schema $schema): Schema    {
         return $schema
             ->components([
                 //

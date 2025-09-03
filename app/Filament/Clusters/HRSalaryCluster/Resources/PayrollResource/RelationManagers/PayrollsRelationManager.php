@@ -5,9 +5,9 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Relati
 use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Forms; 
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,10 +17,10 @@ class PayrollsRelationManager extends RelationManager
 {
     protected static string $relationship = 'payrolls';
 
-    public function form(Form $form): Form
+    public   function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\TextInput::make('employee')
                     ->required()
                     ->maxLength(255),

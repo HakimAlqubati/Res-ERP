@@ -5,6 +5,7 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Relati
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -14,10 +15,10 @@ class TransactionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'transactions';
 
-    public function form(Form $form): Form
+      public   function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
                 Forms\Components\Select::make('type')->label('Type')->options([
                     'salary' => 'Salary',
                     'allowance' => 'Allowance',

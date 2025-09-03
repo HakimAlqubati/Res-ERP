@@ -1,9 +1,9 @@
 <?php
+
 namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Grid;
@@ -20,13 +20,12 @@ use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
-use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -56,16 +55,16 @@ class LeaveBalanceResource extends Resource
     // }
     public static function getModelLabel(): string
     {
-        return isStuff() ? 'My leaves': static::$modelLabel;
+        return isStuff() ? 'My leaves' : static::$modelLabel;
     }
     public static function getPluralLabel(): ?string
     {
-        return isStuff() ? 'My leaves': static::$modelLabel;
+        return isStuff() ? 'My leaves' : static::$modelLabel;
         static::$pluralLabel;
     }
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 2;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
         return $schema
             ->components(
@@ -136,8 +135,8 @@ class LeaveBalanceResource extends Resource
                                                 ;
                                             }
                                         )->validationMessages([
-                                        'unique' => 'Balance already created',
-                                    ]),
+                                            'unique' => 'Balance already created',
+                                        ]),
 
                                     TextInput::make('balance')->label('Balance')
                                         ->numeric()
@@ -227,19 +226,19 @@ class LeaveBalanceResource extends Resource
                             TextInput::make('balance', $record->balance)->default($record->balance),
                         ];
                     })->action(function ($record, $data) {
-                    DB::beginTransaction();
-                    try {
-                        $record->update([
-                            'balance' => $data['balance'],
-                        ]);
-                        DB::commit();
-                        Notification::make()->success()->title('Done')->send();
-                    } catch (\Exception $th) {
-                        //throw $th;
-                        DB::rollBack();
-                        Notification::make()->warning()->body($th->getMessage())->send();
-                    }
-                }),
+                        DB::beginTransaction();
+                        try {
+                            $record->update([
+                                'balance' => $data['balance'],
+                            ]);
+                            DB::commit();
+                            Notification::make()->success()->title('Done')->send();
+                        } catch (\Exception $th) {
+                            //throw $th;
+                            DB::rollBack();
+                            Notification::make()->warning()->body($th->getMessage())->send();
+                        }
+                    }),
 
             ])
             ->toolbarActions([

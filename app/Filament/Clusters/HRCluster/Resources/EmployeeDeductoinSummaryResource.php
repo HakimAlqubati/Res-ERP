@@ -17,6 +17,7 @@ use App\Models\Employee;
 use App\Models\FakeModelHRReports\EmployeeAttendanceReport;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -28,7 +29,7 @@ class EmployeeDeductoinSummaryResource extends Resource
 {
     protected static ?string $model = EmployeeAttendanceReport::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-minus';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::DocumentMinus;
 
     protected static ?string $cluster = HRSalaryCluster::class;
 

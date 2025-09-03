@@ -10,6 +10,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,9 +26,9 @@ class MonthClosureResource extends Resource
     protected static ?string $slug             = 'month-closures';
     
     protected static bool $shouldRegisterNavigation = false;
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Fieldset::make('Closure Details')
                 ->columns(2)
                 ->schema([

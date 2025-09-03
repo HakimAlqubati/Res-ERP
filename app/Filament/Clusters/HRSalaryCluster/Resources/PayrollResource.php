@@ -10,14 +10,14 @@ use App\Filament\Pages\RunPayroll;
 use App\Models\Branch;
 use App\Models\Payroll;
 use App\Models\PayrollRun;
-use Filament\Forms;
-use Filament\Forms\Components\Fieldset;
+ use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
-use Filament\Pages\SubNavigationPosition;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
@@ -28,7 +28,7 @@ class PayrollResource extends Resource
 {
     protected static ?string $model = PayrollRun::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Banknotes;
 
     protected static ?string $cluster = HRSalaryCluster::class;
     public static function getNavigationBadge(): ?string
@@ -49,13 +49,13 @@ class PayrollResource extends Resource
         return 'Payroll';
     }
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 1;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
-            ->schema([
+        return $schema
+            ->components([
 
                 Fieldset::make()->label('Set Branch, Month and payment date')->columns(3)->schema([
                     TextInput::make('note_that')->label('Note that!')->columnSpan(3)->hiddenOn('view')

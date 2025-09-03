@@ -25,7 +25,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
-use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -37,6 +36,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Filament\Pages\Enums\SubNavigationPosition;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Schema;
 
 class EmployeeApplicationResource extends Resource
 {
@@ -46,7 +48,7 @@ class EmployeeApplicationResource extends Resource
     protected ?bool $hasDatabaseTransactions = true;
 
     protected static ?string $cluster                             = HRApplicationsCluster::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 0;
     protected static ?string $label                               = 'Request';
     protected static ?string $pluralLabel                         = 'Requests';

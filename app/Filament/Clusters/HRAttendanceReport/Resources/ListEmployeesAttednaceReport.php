@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRAttendanceReport\Resources;
 
 use App\Filament\Clusters\HRAttendanceReport\Resources\EmployeesAttednaceReportResource;
@@ -17,15 +18,24 @@ use Illuminate\Support\Facades\DB;
 class ListEmployeesAttednaceReport extends ListRecords
 {
     protected static string $resource = EmployeesAttednaceReportResource::class;
-    protected static string $view     = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed-new';
+    protected   string $view     = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed-new';
 
     public $showDetailsModal = false;
     public $modalData        = [];
-    public function getTableRecordKey(Model $record): string
+    /**
+     * @param  Model|array  $record
+     */
+    public function getTableRecordKey(Model|array $record): string
     {
+        if (is_array($record)) {
+            // لو البيانات جاية كمصفوفة
+            return (string) ($record['employee_id'] ?? $record['id'] ?? '');
+        }
+
+        // لو Model
         $attributes = $record->getAttributes();
 
-        return $attributes['employee_id'];
+        return (string) ($attributes['employee_id'] ?? $record->getKey());
     }
 
     private function parseDuration($duration)
@@ -74,11 +84,11 @@ class ListEmployeesAttednaceReport extends ListRecords
                 if (!is_array($dayData)) {
                     return []; // أو يمكنك تسجيل خطأ أو تجاهله حسب الحاجة
                 }
-            
+
                 $dayData['periods'] = isset($dayData['periods']) && $dayData['periods'] instanceof \Illuminate\Support\Collection
                     ? $dayData['periods']->toArray()
                     : (is_array($dayData['periods'] ?? null) ? $dayData['periods'] : []);
-            
+
                 return $dayData;
             })->toArray();
 
@@ -286,7 +296,7 @@ class ListEmployeesAttednaceReport extends ListRecords
         // Replace with your actual data-fetching logic if needed
         $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
         $this->modalData   = $AttendanceDetails->toArray();
-                                        //  dd($this->modalData);
+        //  dd($this->modalData);
         $this->showDetailsModal = true; // This opens the modal
     }
 }

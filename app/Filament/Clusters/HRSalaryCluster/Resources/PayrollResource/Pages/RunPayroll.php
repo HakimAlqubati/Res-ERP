@@ -11,7 +11,7 @@ use Filament\Resources\Pages\Page;
 class RunPayroll extends Page
 {
     protected static string $resource = PayrollResource::class; 
-    protected static string $view = 'filament.clusters.h-r-salary-cluster.resources.payroll-resource.pages.run-payroll';
+    protected   string $view = 'filament.clusters.h-r-salary-cluster.resources.payroll-resource.pages.run-payroll';
     protected static ?string $title = 'Run Payroll';
 
     
