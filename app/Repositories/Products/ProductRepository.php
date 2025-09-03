@@ -423,80 +423,57 @@ class ProductRepository implements ProductRepositoryInterface
 
 
 
-    public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
-    {
-        $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
-        $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
-        $fromStr = $from ? $from->toDateTimeString() : null;
-        $toStr = $to ? $to->toDateTimeString() : null;
+  public function getReportDataFromTransactionsV2($productParam, $from_date, $to_date, $branch_id)
+{
+    $from = $from_date ? Carbon::parse($from_date)->startOfDay() : null;
+    $to   = $to_date   ? Carbon::parse($to_date)->endOfDay()   : null;
+    $fromStr = $from ? $from->toDateTimeString() : null;
+    $toStr   = $to   ? $to->toDateTimeString()   : null;
 
-        // dd($toStr);
-        // 1) branch_id -> store_id(s)
-        $branchIds = $branch_id ? (is_array($branch_id) ? $branch_id : [$branch_id]) : [];
-        $storeIds = DB::table('branches')
-            ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
-            ->pluck('store_id')
-            ->filter()
-            ->unique()
-            ->values()
+    // 1) تحديد فروع الموزعين
+    if ($branch_id === 'all' || $branch_id === null || (is_array($branch_id) && in_array('all', $branch_id, true))) {
+        $branchIds = DB::table('branches')
+            ->where('type', Branch::TYPE_RESELLER)
+            ->pluck('id')
             ->all();
+    } else {
+        $branchIds = is_array($branch_id) ? $branch_id : [$branch_id];
+    }
 
-        if (empty($storeIds)) {
-            return [];
-        }
+    // 2) استخراج store_ids المرتبطة بالفروع
+    $storeIds = DB::table('branches')
+        ->when($branchIds, fn($q) => $q->whereIn('id', $branchIds))
+        ->pluck('store_id')
+        ->filter()
+        ->unique()
+        ->values()
+        ->all();
 
-        // 2) معلومات المنتج (اختياري للعرض فقط)
-        $product = null;
-        if (is_numeric($productParam)) {
-            $product = DB::table('products')->where('id', (int)$productParam)->first(['id', 'code', 'name']);
-        } elseif ($productParam) {
-            $product = DB::table('products')->where('code', $productParam)->first(['id', 'code', 'name']);
-        }
+    if (empty($storeIds)) {
+        return [];
+    }
 
-        // نوع الفرع (يدعم أن يكون branch_id مصفوفة)
-        $branchType = null;
-        if (is_scalar($branch_id) && $branch_id) {
-            $branchType = Branch::whereKey($branch_id)->value('type');
-        }
+    // 3) تجهيز فلتر المنتج
+    $productId = null;
+    if ($productParam !== null && $productParam !== '') {
+        $productId = is_numeric($productParam)
+            ? (int) $productParam
+            : DB::table('products')->where('code', trim((string)$productParam))->value('id');
+    }
 
-        // productId من إدخال المستخدم (بدون override)
-        $productId = null;
-        if ($productParam !== null && $productParam !== '') {
-            $productId = is_numeric($productParam)
-                ? (int) $productParam
-                : DB::table('products')->where('code', trim((string)$productParam))->value('id');
-        }
+    $productFilterSql = '';
+    $productBindings  = [];
+    if ($productId) {
+        $productFilterSql = "AND it_in.product_id = ?";
+        $productBindings  = [$productId];
+    }
 
-        // 3) فلتر المنتج
-        $productFilterSql = '';
-        $productBindings  = [];
+    // 4) SQL مع اسم الموزع لكل صف
+    $placeholdersStores = implode(',', array_fill(0, count($storeIds), '?'));
 
-        if ($productId) {
-            $productFilterSql = "AND it_in.product_id = ?";
-            $productBindings  = [$productId];
-        } elseif ($branchType === Branch::TYPE_RESELLER) {
-            $allowedProductIds = DB::table('inventory_transactions')
-                ->whereNull('deleted_at')
-                ->whereIn('store_id', $storeIds)
-                ->distinct()
-                ->pluck('product_id')
-                ->all();
-
-            if (empty($allowedProductIds)) {
-                return [];
-            }
-
-
-            $placeholdersProducts = implode(',', array_fill(0, count($allowedProductIds), '?'));
-            $productFilterSql     = "AND it_in.product_id IN ($placeholdersProducts)";
-            $productBindings      = $allowedProductIds;
-        }
-
-        // 4) SQL (Snapshot حتى تاريخ): لا نقيّد it_in بتاريخ، نقيد it_out بـ <= :to
-        $placeholdersStores = implode(',', array_fill(0, count($storeIds), '?'));
-
-        $sql = "
+    $sql = "
         SELECT 
+            t.branch_name,
             t.unit_id,
             t.unit_name,
             t.package_size,
@@ -516,16 +493,9 @@ class ProductRepository implements ProductRepositoryInterface
                 u.name AS unit_name,
                 COALESCE(it_in.package_size, 1.0) AS package_size,
 
-                it_in.quantity AS in_qty_unit,
                 it_in.quantity * COALESCE(it_in.package_size, 1.0) AS in_qty_base,
 
                 COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0) AS out_qty_base,
-
-                GREATEST(
-                    it_in.quantity * COALESCE(it_in.package_size, 1.0)
-                    - COALESCE(SUM(it_out.quantity * COALESCE(it_out.package_size, 1.0)), 0),
-                    0
-                ) AS remaining_base,
 
                 GREATEST(
                     it_in.quantity * COALESCE(it_in.package_size, 1.0)
@@ -555,7 +525,8 @@ class ProductRepository implements ProductRepositoryInterface
 
                 it_in.product_id,
                 p.code AS product_code,
-                p.name AS product_name
+                p.name AS product_name,
+                b.name AS branch_name
 
             FROM inventory_transactions AS it_in
             LEFT JOIN inventory_transactions AS it_out
@@ -570,6 +541,8 @@ class ProductRepository implements ProductRepositoryInterface
             LEFT JOIN unit_prices up
                    ON up.product_id = it_in.product_id
                   AND up.unit_id    = it_in.unit_id
+            LEFT JOIN branches b
+                   ON b.store_id = it_in.store_id
 
             WHERE it_in.deleted_at IS NULL
               AND it_in.movement_type = 'in'
@@ -577,59 +550,47 @@ class ProductRepository implements ProductRepositoryInterface
               {$productFilterSql}
               AND (? IS NULL OR it_in.movement_date >= ?)
               AND (? IS NULL OR it_in.movement_date <= ?)
-              -- أزلنا قيد transactionable_type لأنه غالبًا يمنع النتائج
 
             GROUP BY
               it_in.id, it_in.movement_date, it_in.unit_id, u.name,
               it_in.package_size, it_in.quantity, it_in.price, up.price,
-              it_in.product_id, p.code, p.name
+              it_in.product_id, p.code, p.name, b.name
         ) AS t
-        GROUP BY t.unit_id, t.unit_name, t.unit_price, t.package_size, t.product_id, t.product_code, t.product_name
-        ORDER BY t.unit_id, t.package_size
+        GROUP BY 
+            t.branch_name, t.unit_id, t.unit_name, t.unit_price, 
+            t.package_size, t.product_id, t.product_code, t.product_name
+        ORDER BY t.branch_name, t.unit_id, t.package_size
     ";
 
-        $bindings = array_merge(
-            [$toStr, $toStr],                // لقيد it_out
-            $storeIds,                       // المخازن
-            $productBindings,                // المنتج
-            [$fromStr, $fromStr, $toStr, $toStr] // قيد it_in
-        );
+    $bindings = array_merge(
+        [$toStr, $toStr],            // لقيد it_out
+        $storeIds,                   // المخازن
+        $productBindings,            // المنتج
+        [$fromStr, $fromStr, $toStr, $toStr] // قيد it_in
+    );
 
+    $rows = collect(DB::select($sql, $bindings));
 
-
-        // dd($sql, $bindings);
-        $rows = collect(DB::select($sql, $bindings));
-
-        // أسماء الفرع/المخزن إن كان مخزن واحد فقط
-        $branchName = '';
-        $storeName  = '';
-        if (count($storeIds) === 1) {
-            $branchName = DB::table('branches')->where('store_id', $storeIds[0])->value('name') ?? '';
-            $storeName  = DB::table('stores')->where('id', $storeIds[0])->value('name') ?? '';
+    $final = [];
+    foreach ($rows as $r) {
+        if (($r->remaining_qty_unit ?? 0) <= 0) {
+            continue;
         }
-
-        // الإخراج
-        $final = [];
-        foreach ($rows as $r) {
-            if (($r->remaining_qty_unit ?? 0) <= 0) {
-                continue;
-            }
-            $obj               = new stdClass();
-            $obj->code         = $r->product_code ?? '';
-            $obj->product      = $r->product_name ?? '';
-            $obj->package_size = (float)($r->package_size ?? 1);
-            $obj->branch       = $branchName;
-            $obj->store        = $storeName;
-            $obj->unit         = $r->unit_name ?? '';
-            $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0));
-            $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
-            $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
-            $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
-            $final[]           = $obj;
-        }
-
-        return $final;
+        $obj               = new \stdClass();
+        $obj->code         = $r->product_code ?? '';
+        $obj->product      = $r->product_name ?? '';
+        $obj->branch       = $r->branch_name ?? '';   // <— اسم الموزع/الفرع
+        $obj->package_size = (float)($r->package_size ?? 1);
+        $obj->unit         = $r->unit_name ?? '';
+        $obj->quantity     = formatQunantity((float)($r->remaining_qty_unit ?? 0));
+        $obj->in_quantity  = formatQunantity((float)($r->in_qty_base ?? 0));
+        $obj->out_quantity = formatQunantity((float)($r->out_qty_base ?? 0));
+        $obj->price        = formatMoneyWithCurrency((float)($r->unit_price ?? 0));
+        $final[]           = $obj;
     }
+
+    return $final;
+}
 
 
 
