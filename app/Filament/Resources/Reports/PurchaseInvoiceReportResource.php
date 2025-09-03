@@ -16,6 +16,7 @@ use App\Models\Store;
 use App\Models\Supplier;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -27,7 +28,7 @@ class PurchaseInvoiceReportResource extends Resource
     protected static ?string $model = PurchaseInvoiceReport::class;
     protected static ?string $slug = 'purchase-invoice-reports';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon =  Heroicon::DocumentText;
     protected static ?string $cluster = SupplierCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort = 4;
@@ -59,6 +60,7 @@ class PurchaseInvoiceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+        ->deferFilters(false)
             ->filters([
                 SelectFilter::make("store_id")
                     ->searchable()

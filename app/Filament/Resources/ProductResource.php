@@ -64,6 +64,7 @@ use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Exceptions\Halt;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -83,7 +84,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model                               = Product::class;
     protected static ?string $cluster                             = ProductUnitCluster::class;
-    protected static string | \BackedEnum | null $navigationIcon                      = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon                      =Heroicon::Cube;
     protected static ?string $recordTitleAttribute                = 'name';
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected static ?int $navigationSort                         = 1;
@@ -106,7 +107,7 @@ class ProductResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Fieldset::make()->columns(2)->schema([
+            Fieldset::make()->columnSpanFull()->columns(2)->schema([
                 Placeholder::make('name_above')
                     ->label(__('lang.name'))
                     ->content(fn($record) => $record?->name ?? '-')
@@ -795,7 +796,7 @@ class ProductResource extends Resource
                         $data = Product::where('active', 1)->select('id', 'name', 'description', 'code')->get();
                         return Excel::download(new ProductsExport($data), 'products.xlsx');
                     }),
-            ])
+            ])->deferFilters(false)
             ->columns([
                 TextColumn::make('id')
                     ->label(__('lang.id'))
@@ -806,7 +807,7 @@ class ProductResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->searchable(isIndividual: false, isGlobal: true),
                 TextColumn::make('code')
-                    ->label(__('lang.code'))->copyable()
+                    ->label(__('lang.code'))->copyable()->sortable()
                     ->searchable(isIndividual: false, isGlobal: true),
 
                 TextColumn::make('name')->copyable()

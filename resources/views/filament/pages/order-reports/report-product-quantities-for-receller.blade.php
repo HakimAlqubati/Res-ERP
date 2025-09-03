@@ -67,68 +67,71 @@
             cursor: pointer;
         }
     </style>
-    @if (isset($branch_id) && is_numeric($branch_id))
-        <table class="w-full text-sm text-left pretty  reports" id="report-table">
-            <thead class="fixed-header" style="top:64px;">
+    @if (is_array($report_data) && count($report_data) > 0)
+    <table class="w-full text-sm text-left pretty  reports" id="report-table">
+        <thead class="fixed-header" style="top:64px;">
 
 
 
 
 
-                <tr class="header_report">
-                    <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
-                        <p>{{ 'Delevery Order Report' }}</p>
-                        <p> {{ $branch ?? '' }} </p>
-                        {{-- <p>({{ isset($product_id) && is_numeric($product_id) ? \App\Models\Product::find($product_id)->name : __('lang.all') }}) --}}
-                        </p>
-                    </th>
-                    <th colspan="3" class="no_border_right_left">
-                        <p>{{ __('lang.start_date') . ': ' . $start_date ?? 'Unspecified' }}</p>
-                        <br>
-                        <p>{{ __('lang.end_date') . ': ' . $end_date ?? 'Unspecified' }}</p>
-                    </th>
-                    <th colspan="2" style="text-align: center; vertical-align: middle;"
-                        class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
-                        <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
-                    </th>
-                </tr>
+            <tr class="header_report">
+                <th class="{{ app()->getLocale() == 'en' ? 'no_border_right' : 'no_border_left' }}">
+                    <p>{{ 'Delevery Order Report' }}</p>
+                    <p> {{ $branch ?? '' }} </p>
+                    {{-- <p>({{ isset($product_id) && is_numeric($product_id) ? \App\Models\Product::find($product_id)->name : __('lang.all') }}) --}}
+                    </p>
+                </th>
+                <th colspan="3" class="no_border_right_left">
+                    <p>{{ __('lang.start_date') . ': ' . $start_date ?? 'Unspecified' }}</p>
+                    <br>
+                    <p>{{ __('lang.end_date') . ': ' . $end_date ?? 'Unspecified' }}</p>
+                </th>
+                <th colspan="3" style="text-align: center; vertical-align: middle;"
+                    class="{{ app()->getLocale() == 'en' ? 'no_border_left' : 'no_border_right' }}">
+                    <img class="circle-image" src="{{ url('/') . '/' . 'storage/workbench.png' }}" alt="">
+                </th>
+            </tr>
+
+            <tr>
+                <th>{{ __('lang.reseller') ?? 'Reseller' }}</th> {{-- العمود الجديد --}}
+                <th>{{ __('lang.code') ?? 'Code' }}</th>
+                <th>{{ __('lang.product') ?? 'Product' }}</th>
+                <th>{{ __('lang.unit') ?? 'Unit' }}</th>
+                <th>{{ __('lang.package_size') ?? 'Package Size' }}</th>
+                <th>{{ __('lang.quantity') ?? 'Quantity' }}</th>
+                <th>{{ __('lang.price') ?? 'Price' }}</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($report_data as $data)
                 <tr>
-                    <th>{{ __('lang.code') }}</th>
-                    <th>{{ __('lang.product') }}</th>
-                    <th>{{ __('lang.unit') }}</th>
-                    <th>{{ __('lang.package_size') }}</th>
-                    <th>{{ __('lang.quantity') }}</th>
-                    <th>{{ __('lang.price') }}</th>
+                    <td>{{ $data->branch }}</td>
+                    <td> {{ $data?->code }} </td>
+                    <td> {{ $data?->product }} </td>
+                    <td> {{ $data?->unit }} </td>
+                    <td> {{ $data?->package_size }} </td>
+                    <td> {{ $data?->quantity }} </td>
+                    <td> {{ $data?->price }} </td>
+
+
                 </tr>
-            </thead>
-            <tbody>
-                @foreach ($report_data as $data)
-                    <tr>
+            @endforeach
 
-                        <td> {{ $data?->code }} </td>
-                        <td> {{ $data?->product }} </td>
-                        <td> {{ $data?->unit }} </td>
-                        <td> {{ $data?->package_size }} </td>
-                        <td> {{ $data?->quantity }} </td>
-                        <td> {{ $data?->price }} </td>
-
-
-                    </tr>
-                @endforeach
-
-                {{-- <tr>
+            {{-- <tr>
                 <td colspan="3"> {{ __('lang.total') }} </td>
 
                 <td> {{ $total_quantity }} </td>
                 <td> {{ $total_price }} </td>
             </tr> --}}
-            </tbody>
+        </tbody>
 
-        </table>
+    </table>
     @else
         <div class="please_select_message_div" style="text-align: center;">
 
-            <h1 class="please_select_message_text">{{ __('lang.please_select_a_receller') }}</h1>
+            <h1 class="please_select_message_text">{{ __('lang.no_data') }}</h1>
         </div>
     @endif
 </x-filament::page>

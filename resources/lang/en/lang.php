@@ -243,4 +243,5 @@ return [
     'upcoming' => 'Upcoming',
     'active'   => 'Active',
     'normal'   => 'Normal',
+    'no_data'   => 'No data',
 ];

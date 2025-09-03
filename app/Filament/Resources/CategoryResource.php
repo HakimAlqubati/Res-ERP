@@ -25,6 +25,7 @@ use Filament\Forms;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Filament\Tables;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,7 +36,7 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Squares2x2;
     // protected static ?string $navigationGroup = 'Categories';
     protected static ?string $recordTitleAttribute = 'name';
     protected static ?string $cluster = ProductUnitCluster::class;
@@ -49,8 +50,8 @@ class CategoryResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         TextInput::make('name')
                             ->unique(ignoreRecord: true)
                             ->required()->label(__('lang.name')),
@@ -84,7 +85,7 @@ class CategoryResource extends Resource
                         //     ->maxValue(100)
                         //     ->helperText('Expected stock waste percentage for this category.'),
                     ]),
-                    Grid::make()->columns(3)->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         Toggle::make('active')
                             ->inline(false)->default(true)
                             ->label(__("lang.active")),

@@ -93,11 +93,11 @@ class ReportProductQuantitiesForResellerResource extends Resource
                             ]);
                     }),
                 SelectFilter::make('branch_id')
-                    ->label('Receller')->searchable()->placeholder('Choose')
+                    ->label('Reseller')->searchable()
+                    ->placeholder('all')
                     ->options(Branch::whereIn('type', [
                         Branch::TYPE_RESELLER
                     ])
-                        ->activePopups()
                         ->active()->pluck('name', 'id')),
 
                 Filter::make('date')
