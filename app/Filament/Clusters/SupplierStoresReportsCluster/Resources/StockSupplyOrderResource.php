@@ -60,7 +60,7 @@ class StockSupplyOrderResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->label('')->schema([
+                Fieldset::make()->label('')->columnSpanFull()->schema([
                     DatePicker::make('order_date')
                         ->required()->default(now())
                         ->label('Order Date'),
