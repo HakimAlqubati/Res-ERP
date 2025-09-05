@@ -73,7 +73,7 @@ class LivenessController extends Controller
                     ])
                     ->attach('image', $handle, $file->getClientOriginalName())
                     ->post($pythonUrl);
-                    dd($resp->body(),$pythonUrl);
+                    // dd($resp->body(),$pythonUrl);
 
                 // أغلق الهاندل بعد الإرسال
                 if (is_resource($handle)) {
