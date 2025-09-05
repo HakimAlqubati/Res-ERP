@@ -32,6 +32,7 @@ class LivenessController extends Controller
         $corrId = (string) Str::uuid(); // correlation id لتمييز الطلب في اللوج
         $base   = config('services.python.base_url');
 
+        
         if (!$base) {
             Log::error('Liveness: missing python base URL', ['corr' => $corrId]);
             return response()->json([
@@ -72,6 +73,7 @@ class LivenessController extends Controller
                     ])
                     ->attach('image', $handle, $file->getClientOriginalName())
                     ->post($pythonUrl);
+                    dd($resp);
 
                 // أغلق الهاندل بعد الإرسال
                 if (is_resource($handle)) {
