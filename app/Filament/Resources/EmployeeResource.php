@@ -175,7 +175,7 @@ class EmployeeResource extends Resource
                                             TextInput::make('mykad_number')->label('MyKad no.')->numeric()
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
 
-                                            Fieldset::make()->label('')
+                                            Fieldset::make()->columnSpanFull()->label('')
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
                                                 ->schema([
                                                     TextInput::make('passport_no')->label('Passport no.')->numeric(),
@@ -521,6 +521,7 @@ class EmployeeResource extends Resource
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'asc')
             ->columns([
+                TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault:true),
                 ImageColumn::make('avatar_image')->label('')
                     ->circular(),
                 TextColumn::make('id')->label('id')->copyable()->hidden(),
@@ -533,9 +534,9 @@ class EmployeeResource extends Resource
 
                 TextColumn::make('name')
                     ->sortable()->searchable()
-                    ->label('Full name')->wrap()
-                    ->color('primary')
-                    ->weight(FontWeight::Bold)
+                    ->label('Full name')->wrap(false)
+                    ->color('primary')->words(4)
+                    ->weight(FontWeight::Bold)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('branch.name')

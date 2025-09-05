@@ -21,11 +21,11 @@ trait HasEmployeeExistingForm
 {
     private static function employeExistingForm()
     {
-        return Fieldset::make()->visible(fn(Get $get) => $get('account_mode') === 'existing_employee')
+        return Fieldset::make()->columnSpanFull()->visible(fn(Get $get) => $get('account_mode') === 'existing_employee')
             ->schema([
 
                 Hidden::make('is_exist_employee')->default(1),
-                Fieldset::make()->schema([Select::make('search_employee')->label('Search for employee')
+                Fieldset::make()->columnSpanFull()->schema([Select::make('search_employee')->label('Search for employee')
                         ->helperText('You can search using .. Employee (Name, Email, ID, Employee number)...')
                     // ->options(Employee::where('active', 1)->select('name', 'id', 'phone_number', 'email')->get()->pluck('name', 'id'))
                         ->getSearchResultsUsing(
@@ -73,8 +73,8 @@ trait HasEmployeeExistingForm
                                 }
                             }
                         })]),
-                Fieldset::make('')->label('')->schema([
-                    Grid::make()->columns(3)->schema([
+                Fieldset::make('')->columnSpanFull()->label('')->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                         TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email()->required(),
                         // PhoneInput::make('phone_number')->disabled()
@@ -96,7 +96,7 @@ trait HasEmployeeExistingForm
                         // ,
 
                     ]),
-                    Fieldset::make()->columns(3)->label('Set user type, role and manager')->schema([
+                    Fieldset::make()->columnSpanFull()->columns(3)->label('Set user type, role and manager')->schema([
                         Select::make('user_type')->required()
                             ->label('User type')
                             ->options(getUserTypes())
@@ -138,7 +138,7 @@ trait HasEmployeeExistingForm
                             ->searchable()
                             ->nullable(),
                     ]),
-                    Grid::make()->columns(2)->schema([
+                    Grid::make()->columnSpanFull()->columns(2)->schema([
                         TextInput::make('password')
                             ->password()
                             ->required(fn(string $context) => $context === 'create')

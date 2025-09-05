@@ -19,13 +19,13 @@ trait HasAttendanceForm
 
     private static function attendanceForm()
     {
-        return Fieldset::make()
+        return Fieldset::make()->columnSpanFull()
             ->visible(fn(Get $get) => $get('account_mode') === 'attendance_user')
 
             ->schema([
 
-                Grid::make()->columns(3)->schema([
-                    Fieldset::make()->label('')->schema([
+                Grid::make()->columns(3)->columnSpanFull()->schema([
+                    Fieldset::make()->columnSpanFull()->label('')->schema([
                         Hidden::make('is_attendance_user')->default(1),
                         TextInput::make('name')->live(onBlur: true)
                             ->afterStateUpdated(fn($set, $state) => $set('attendanceDevice.name', $state))->required()->unique(ignoreRecord: true),
@@ -51,13 +51,13 @@ trait HasAttendanceForm
                     ]),
 
                 ]),
-                Fieldset::make()->relationship('attendanceDevice')->schema([
+                Fieldset::make()->columnSpanFull()->relationship('attendanceDevice')->schema([
                     TextInput::make('name')->columnSpanFull()->label('Device Name'),
                     Textarea::make('description')->columnSpanFull()->label('Device Description'),
                 ]),
 
-                Fieldset::make()->label('')->schema([
-                    Grid::make()->columns(2)->schema([
+                Fieldset::make()->columnSpanFull()->label('')->schema([
+                    Grid::make()->columnSpanFull()->columns(2)->schema([
                         TextInput::make('password')
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
