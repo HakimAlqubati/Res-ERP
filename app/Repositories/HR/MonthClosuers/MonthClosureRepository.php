@@ -1,7 +1,7 @@
 <?php 
 // app/Repositories/Hr/MonthClosureRepository.php
 
-namespace App\Repositories\Hr\MonthClosuers;
+namespace App\Repositories\HR\MonthClosuers;
 
 use App\Models\MonthClosure;
 
