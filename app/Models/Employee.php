@@ -146,7 +146,7 @@ class Employee extends Model implements Auditable
         }
 
         // Ensure the default image exists on the local storage
-        $defaultAvatarPath = 'employees/default/avatar.png';
+        $defaultAvatarPath = 'imgs/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
 
@@ -157,7 +157,7 @@ class Employee extends Model implements Auditable
         }
 
         // If file is not found, return a fallback URL
-        return asset('images/default-avatar.png');
+        return asset('imgs/avatar.png');
     }
 
     public function getAvatarImageAttributeOld()
