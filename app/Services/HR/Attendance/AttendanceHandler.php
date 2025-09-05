@@ -54,7 +54,7 @@ class AttendanceHandler
             $this->employeeId         = $employee->id;
 
 
-            app(MonthClosureService::class)->ensureMonthIsOpen($date);
+            // app(MonthClosureService::class)->ensureMonthIsOpen($date);
 
             if ($employee) {
 
