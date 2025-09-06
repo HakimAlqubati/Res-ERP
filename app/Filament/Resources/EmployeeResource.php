@@ -207,7 +207,7 @@ class EmployeeResource extends Resource
                                     Fieldset::make()->label('Upload avatar image')
                                         ->columnSpanFull()
                                         ->schema([
-                                            Grid::make()->columns(2)->schema([
+                                            Grid::make()->columnSpanFull()->columns(2)->schema([
                                                 self::avatarUploadField(),
                                             ]),
                                         ]),
@@ -887,7 +887,7 @@ class EmployeeResource extends Resource
     {
         return FileUpload::make('avatar')
             ->image()
-            ->label('')
+            ->label('')->columnSpanFull()
             // ->avatar()
             ->imageEditor()
 

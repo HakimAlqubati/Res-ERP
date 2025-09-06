@@ -61,6 +61,7 @@ use Filament\Pages;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Colors\Color;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -301,7 +302,11 @@ class AdminPanelProvider extends PanelProvider
                 //         'default' => 1,
                 //         'sm' => 2,
                 //     ]),
-            ])->spa()
+            ])
+            ->assets([
+                Css::make('main', '')
+            ])
+            ->spa()
             ->databaseNotifications()->globalSearch(false)
             ->databaseTransactions()
             // ->renderHook( name: 'panels::topbar.start', hook: fn (): View => view('livewire.credits'), )
