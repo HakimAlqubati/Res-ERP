@@ -1,5 +1,6 @@
 <?php
 
+use App\Attendance\Services\AttendanceHandler;
 use App\Http\Controllers\Api\FaceImageController;
 use App\Http\Controllers\Api\HR\AttendanceController;
 use App\Http\Controllers\Api\HR\EmployeeController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\API\HR\PayrollSimulationController;
 use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\Api\HR\RunPayrollController;
 use App\Models\EmployeeFaceData;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
 
@@ -82,4 +84,16 @@ Route::get('/face-data', function () {
     // يمكنك إضافة المزيد لاحقًا مثل:
     // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
     Route::post('/faceRecognition', [AttendanceController::class, 'identifyEmployeeFromImage']);
+});
+
+
+Route::get('/test-attendance', function () {
+    $result = app(AttendanceHandler::class)->handle(
+        employeeId: 1,
+        periodId: 1,
+        deviceId: 'DEV-01',
+        now: CarbonImmutable::now('Asia/Aden'),
+        isRequest: false
+    );
+    return response()->json($result);
 });
