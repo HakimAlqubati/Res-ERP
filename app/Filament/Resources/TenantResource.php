@@ -172,11 +172,18 @@ class TenantResource extends Resource
                     ->button()
                     ->action(function ($record) {
                         $dbName = $record->database;
+                        $timestamp = now()->format('Y_m_d_His');
 
-                        // Define the backup file path and filename
-                        $backupPath = 'backups/' . $dbName . '_' . now()->format('Y_m_d_His') . '.sql';
+                        $sqlFileName = $dbName . '_' . $timestamp . '.sql';
+                        $zipFileName = $dbName . '_' . $timestamp . '.zip';
+
+                        $sqlPath = storage_path('app/backups/' . $sqlFileName);
+                        $zipPath = storage_path('app/backups/' . $zipFileName);
 
                         try {
+                            // Ensure backup folder exists
+                            Storage::disk('local')->makeDirectory('backups');
+
                             // Run the mysqldump command
                             $process = new Process([
                                 'mysqldump',
@@ -186,24 +193,36 @@ class TenantResource extends Resource
                                 $dbName
                             ]);
 
-                            $process->setTimeout(3600); // Set timeout to 1 hour if large databases
+                            $process->setTimeout(3600); // 1 hour timeout
                             $process->run();
 
-                            // Check for errors
                             if (!$process->isSuccessful()) {
                                 throw new ProcessFailedException($process);
                             }
 
-                            // Store the output to a temporary backup file
-                            Storage::disk('local')->put($backupPath, $process->getOutput());
+                            // Save SQL dump
+                            file_put_contents($sqlPath, $process->getOutput());
 
-                            // Return the file as a downloadable response
-                            return Response::download(storage_path('app/' . $backupPath));
+                            // Create ZIP archive
+                            $zip = new \ZipArchive;
+                            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                                $zip->addFile($sqlPath, $sqlFileName);
+                                $zip->close();
+                            } else {
+                                throw new \Exception("Failed to create ZIP file.");
+                            }
+
+                            // Optionally delete the .sql file after zipping
+                            unlink($sqlPath);
+
+                            // Return the ZIP file for download
+                            return Response::download($zipPath)->deleteFileAfterSend(true);
                         } catch (Throwable $th) {
                             showWarningNotifiMessage($th->getMessage());
                             throw $th;
                         }
                     }),
+
 
             ])
             ->toolbarActions([
