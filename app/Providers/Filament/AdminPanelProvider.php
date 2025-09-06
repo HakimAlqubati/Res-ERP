@@ -82,7 +82,7 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('storage/logo/default.png'))
             ->brandLogo(asset('storage/logo/default.png'))
             ->darkModeBrandLogo(asset('storage/logo/default-wb.png'))
-            ->brandLogoHeight('3.5rem')
+            ->brandLogoHeight('3.0rem')
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 // app(IsTenant::class)::checkCurrent() && app(IsTenant::class)::current()->id
                 $currentTenant = app(IsTenant::class)::current();
