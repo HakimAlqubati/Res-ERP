@@ -190,6 +190,7 @@ class TenantResource extends Resource
                                 '--user=' . env('DB_USERNAME'),
                                 '--password=' . env('DB_PASSWORD'),
                                 '--host=' . env('DB_HOST'),
+                                 '--ignore-table=' . $dbName . '.audits',
                                 $dbName
                             ]);
 
