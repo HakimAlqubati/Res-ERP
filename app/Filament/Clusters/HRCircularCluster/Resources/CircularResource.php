@@ -52,9 +52,9 @@ class CircularResource extends Resource
                 Wizard::make([
                     Step::make('Basic data')
                         ->schema([
-                            Fieldset::make()->schema([
-                                Grid::make()->columns(2)->schema([
-                                    Fieldset::make()->label('Set title of circular & the relased date')->schema([
+                            Fieldset::make()->columnSpanFull()->schema([
+                                Grid::make()->columnSpanFull()->columns(2)->schema([
+                                    Fieldset::make()->columnSpanFull()->label('Set title of circular & the relased date')->schema([
                                         TextInput::make('title')->label('Subject')
                                             ->required()
                                             ->maxLength(255),
@@ -62,7 +62,7 @@ class CircularResource extends Resource
                                             ->helperText('Date that will be released')
                                             ->required(),
                                     ]),
-                                    Fieldset::make()
+                                    Fieldset::make()->columnSpanFull()
                                         ->hiddenOn('view')
                                         ->label('Set the branches that you want to send the circular & the group of users')->schema([
                                         Select::make('group_id')->label('Group')
@@ -80,18 +80,18 @@ class CircularResource extends Resource
 
                                 ]),
 
-                                Grid::make()->columns(1)->schema([
+                                Grid::make()->columnSpanFull()->columns(1)->schema([
                                     RichEditor::make('description'),
                                 ]),
                             ]),
                         ]),
                     Step::make('Images')->hiddenOn('view')
                         ->schema([
-                            Fieldset::make()->label('')->schema([
+                            Fieldset::make()->columnSpanFull()->label('')->schema([
 
-                                Grid::make()->columns(1)->schema([
+                                Grid::make()->columnSpanFull()->columns(1)->schema([
                                     FileUpload::make('file_path')
-                                        ->label('Add photos')
+                                        ->label('Add photos')->columnSpanFull()
                                         ->disk('public')
                                         ->directory('circulars')
                                         ->visibility('public')

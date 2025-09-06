@@ -59,8 +59,8 @@ class WorkPeriodResource extends Resource
     {
         return [
 
-            Fieldset::make()->schema([
-                Grid::make()->columns(3)->schema([
+            Fieldset::make()->columnSpanFull()->schema([
+                Grid::make()->columnSpanFull()->columns(3)->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required()
@@ -108,7 +108,7 @@ class WorkPeriodResource extends Resource
                         ->default('12:00:00'),
                 ]),
 
-                Grid::make()->columns(2)->schema([
+                Grid::make()->columnSpanFull()->columns(2)->schema([
                     Select::make('days')
                         ->label('Days')
                         ->multiple()

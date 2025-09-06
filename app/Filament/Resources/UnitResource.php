@@ -59,7 +59,7 @@ class UnitResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->columns(3)->schema([
                     TextInput::make('name')->required()
                         ->live(onBlur: true)
                         ->unique(ignoreRecord: true)

@@ -69,8 +69,8 @@ class AttendnaceResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->label('Select date & time')->schema([
-                    Grid::make()->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->label('Select date & time')->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
 
                         DatePicker::make('check_date')
                             ->label('Check date')
@@ -89,7 +89,7 @@ class AttendnaceResource extends Resource
                     ]),
                 ]),
 
-                Fieldset::make()->label('Select employee and check type')->schema([
+                Fieldset::make()->columnSpanFull()->label('Select employee and check type')->schema([
                     Select::make('employee_id')
                         ->label('Employee')
                         ->live()
