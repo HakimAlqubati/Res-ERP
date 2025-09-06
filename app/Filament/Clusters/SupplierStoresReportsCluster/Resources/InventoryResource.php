@@ -23,6 +23,7 @@ use App\Imports\InventoryTransactionsImport;
 use App\Models\Inventory;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use Dom\Text;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\FileUpload;
@@ -157,6 +158,7 @@ class InventoryResource extends Resource
                     ->label('Source Price')->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->alignCenter(),
+                    TextColumn::make('created_at'),
 
 
             ])

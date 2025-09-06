@@ -21,7 +21,7 @@ trait HasNewUserForm
 
     private static function newUserForm()
     {
-        return Fieldset::make()
+        return Fieldset::make()->columnSpanFull()
             ->visible(function (Get $get, $record) {
                 if (! is_null($record)) {
                     return true;
@@ -33,8 +33,8 @@ trait HasNewUserForm
             })
             ->schema([
 
-                Grid::make()->columns(3)->schema([
-                    Fieldset::make()->label('Personal data')->schema([
+                Grid::make()->columns(3)->columnSpanFull()->schema([
+                    Fieldset::make()->columnSpanFull()->label('Personal data')->schema([
                         TextInput::make('name')->required()->unique(ignoreRecord: true),
                         TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
                         // PhoneInput::make('phone_number')
@@ -85,7 +85,7 @@ trait HasNewUserForm
 
                 ]),
 
-                Fieldset::make()->label('Set user type and role')->schema([
+                Fieldset::make()->columnSpanFull()->label('Set user type and role')->schema([
                     Select::make('user_type')
                         ->label('User type')
                     // ->options(getUserTypes())
@@ -117,7 +117,7 @@ trait HasNewUserForm
                             }
                         }),
                 ]),
-                Grid::make()->columns(2)->schema([
+                Grid::make()->columnSpanFull()->columns(2)->schema([
 
                     Select::make('owner_id')
                         ->visible(function (Get $get) {
@@ -132,8 +132,8 @@ trait HasNewUserForm
                         }),
 
                 ]),
-                Fieldset::make()->label('')->schema([
-                    Grid::make()->columns(2)->schema([
+                Fieldset::make()->columnSpanFull()->label('')->schema([
+                    Grid::make()->columns(2)->columnSpanFull()->schema([
                         setting('password_contains_for') == 'easy_password' ?
                         TextInput::make('password')
                             ->password()
