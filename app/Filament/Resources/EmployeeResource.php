@@ -229,22 +229,21 @@ class EmployeeResource extends Resource
                                             // ->requiredIf('is_ceo', false)
                                             ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
 
-                                            ->options(function ($get, $livewire) {
+                                            ->options(function (Get $get, ?Employee $record) {
                                                 $branchId = $get('branch_id');
-                                                // نحصل على ID الموظف الحالي إن كنا في edit mode
-                                                $currentEmployeeId = $livewire->record?->id;
+                                                $currentEmployeeId = $record?->id; // سيكون null في List/Create، ومتوفر في Edit/View
+                                        
                                                 if ($branchId) {
                                                     return Employee::active()
                                                         ->forBranch($branchId)
                                                         // ->employeeTypesManagers()
                                                         ->whereIn('employee_type', [1, 2, 3])
-                                                        ->when(
-                                                            $currentEmployeeId,
-                                                            fn($query) =>
-                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي
+                                                        ->when($currentEmployeeId, fn ($query) =>
+                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
                                                         )
                                                         ->pluck('name', 'id');
                                                 }
+                                        
                                                 return [];
                                             })
                                             ,
@@ -496,19 +495,7 @@ class EmployeeResource extends Resource
     }
 
     public static function table(Table $table): Table
-    {
-        // $employee = Employee::with('periodDays.workPeriod')->find(1);
-        // $res=[];
-        // foreach ($employee->periodDays as $periodDay) {
-        //     $period = $periodDay->workPeriod;
-        //     $day    = $periodDay->day_of_week;
-
-        //     $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
-        // }
-        // dd($res);
-
-        // $sessionLifetime = config('session.lifetime');
-        // dd($sessionLifetime);
+    { 
         return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
@@ -527,7 +514,7 @@ class EmployeeResource extends Resource
                 TextColumn::make('name')
                     ->sortable()->searchable()
                     ->label('Full name')->wrap(false)
-                    ->color('primary')->words(4)
+                    ->color('primary')->words(4)->limit(30)
                     ->weight(FontWeight::Bold)->tooltip(fn($state) => $state)
                     ->searchable(isIndividual: false, isGlobal: true)
                     ->toggleable(isToggledHiddenByDefault: false),
