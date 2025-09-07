@@ -28,6 +28,7 @@
         "league/flysystem-aws-s3-v3": "^3.29",
         "league/flysystem-ftp": "^3.29",
         "maatwebsite/excel": "^3.1",
+        "masbug/flysystem-google-drive-ext": "^2.4",
         "nwidart/laravel-modules": "^11.0",
         "owen-it/laravel-auditing": "^14.0",
         "simplesoftwareio/simple-qrcode": "^4.2",

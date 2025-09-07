@@ -170,7 +170,7 @@ class TenantResource extends Resource
                     ->label('Download Backup')
                     ->requiresConfirmation()
                     ->button()
-                    ->action(function ($record) {
+                    ->action(function ($record) { 
                         $dbName = $record->database;
                         $timestamp = now()->format('Y_m_d_His');
 
@@ -187,10 +187,11 @@ class TenantResource extends Resource
                             // Run the mysqldump command
                             $process = new Process([
                                 'mysqldump',
-                                '--user=' . env('DB_USERNAME'),
+                                // 'C:\xampp\mysql\bin\mysqldump.exe',
+                                '--user=' . env('DB_USERNAME','root'),
                                 '--password=' . env('DB_PASSWORD'),
                                 '--host=' . env('DB_HOST'),
-                                 '--ignore-table=' . $dbName . '.audits',
+                                '--ignore-table=' . $dbName . '.audits',
                                 $dbName
                             ]);
 
@@ -215,7 +216,9 @@ class TenantResource extends Resource
 
                             // Optionally delete the .sql file after zipping
                             unlink($sqlPath);
-
+                            // ✅ Upload to Google Drive
+                            $googlePath = 'backups/' . $zipFileName;
+                            Storage::disk('google')->put($googlePath, fopen($zipPath, 'r'));
                             // Return the ZIP file for download
                             return Response::download($zipPath)->deleteFileAfterSend(true);
                         } catch (Throwable $th) {

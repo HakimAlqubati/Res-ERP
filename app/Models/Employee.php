@@ -561,6 +561,8 @@ class Employee extends Model implements Auditable
                 $user = User::create([
                     'name'     => $employee->name,
                     'email'    => $employee->email,
+                    'branch_id' => $employee?->branch_id,
+                    'phone_number' => $employee?->phone_number,
                     'password' => bcrypt('123456'),
                 ]);
 
