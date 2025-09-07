@@ -13,6 +13,7 @@ use App\Models\UserType;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
@@ -70,7 +71,7 @@ trait HasNewUserForm
                             ->options(function () {
                                 return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
                             }),
-                    
+
                     ]),
 
                 ]),
@@ -92,7 +93,15 @@ trait HasNewUserForm
                         }),
                     CheckboxList::make('roles')->required()
                         ->label('Roles')
-                        ->relationship('roles')
+                        ->relationship(
+                            name: 'roles',
+                            titleAttribute: 'name',
+                            modifyQueryUsing: function (Builder $query, Get $get) {
+                                $allowed = getRolesByTypeId($get('user_type') ?? null) ?? [];
+                                $query->where('guard_name', 'web')   // عدّل الحارس إذا لزم
+                                    ->whereIn('id', $allowed);
+                            }
+                        )
                         // ->maxItems(1)
                         ->live()
                         ->options(function (Get $get) {
