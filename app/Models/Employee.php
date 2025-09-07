@@ -140,9 +140,9 @@ class Employee extends Model implements Auditable
     public function getAvatarImageAttribute()
     {
         // Check if avatar is set and exists on S3
-        if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
-            return Storage::disk('s3')->url($this->avatar);
-        }
+        // if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
+        //     return Storage::disk('s3')->url($this->avatar);
+        // }
         if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
             return Storage::disk('public')->url($this->avatar);
         }
