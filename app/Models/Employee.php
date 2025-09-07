@@ -597,7 +597,7 @@ class Employee extends Model implements Auditable
                 $employee->save();
 
                 // إعطاءه الدور المناسب
-                $user->assignRole(8);
+                // $user->assignRole(8);
 
                 // إرسال بريد إلكتروني 
                 Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
