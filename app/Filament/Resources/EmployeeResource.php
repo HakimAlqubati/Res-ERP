@@ -247,13 +247,21 @@ class EmployeeResource extends Resource
                                             ->label('Manager')
                                             ->searchable()
                                             ->requiredIf('is_ceo', false)
-                                            ->options(function ($get) {
+                                            ->options(function ($get, $livewire) {
                                                 $branchId = $get('branch_id');
-                                                // if ($branchId) {
-                                                return Employee::active()
-                                                    // ->forBranch($branchId)
-                                                    ->pluck('name', 'id');
-                                                // }
+                                                // نحصل على ID الموظف الحالي إن كنا في edit mode
+                                                $currentEmployeeId = $livewire->record?->id;
+                                                if ($branchId) {
+                                                    return Employee::active()
+                                                        ->forBranch($branchId)
+                                                        ->employeeTypesManagers()
+                                                        ->when(
+                                                            $currentEmployeeId,
+                                                            fn($query) =>
+                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي
+                                                        )
+                                                        ->pluck('name', 'id');
+                                                }
                                                 return [];
                                             }),
 
@@ -434,7 +442,7 @@ class EmployeeResource extends Resource
                                     Fieldset::make()->columns(3)->label('Finance')->columnSpanFull()
                                         ->disabled(fn(): bool => isBranchManager())
                                         ->schema([
-                                            Repeater::make('Monthly deductions') 
+                                            Repeater::make('Monthly deductions')
                                                 ->defaultItems(0)
                                                 ->relationship('deductions')
                                                 ->schema([
@@ -517,18 +525,17 @@ class EmployeeResource extends Resource
 
         // $sessionLifetime = config('session.lifetime');
         // dd($sessionLifetime);
-        return $table->striped()
+        return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
-            ->defaultSort('id', 'asc')
+            ->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
-                    ->circular(),
-                TextColumn::make('id')->label('id')->copyable()->hidden(),
+                    ->circular(), 
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Employee No.')
+                    ->label('Employee No.')->alignCenter()
                     ->sortable()->searchable()
                     ->searchable(isIndividual: false, isGlobal: false),
 

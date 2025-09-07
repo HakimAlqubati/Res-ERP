@@ -1,0 +1,693 @@
+[
+    {
+        "code": "YE",
+        "name": {
+            "en": "Yemeni",
+            "ar": "يمني"
+        },
+        "country": {
+            "en": "Yemen",
+            "ar": "اليمن"
+        },
+        "active": true,
+        "order": 1
+    },
+    {
+        "code": "MY",
+        "name": {
+            "en": "Malaysian",
+            "ar": "ماليزي"
+        },
+        "country": {
+            "en": "Malaysia",
+            "ar": "ماليزيا"
+        },
+        "active": true,
+        "order": 2
+    },
+    {
+        "code": "AF",
+        "name": {
+            "en": "Afghan",
+            "ar": "أفغاني"
+        },
+        "country": {
+            "en": "Afghanistan",
+            "ar": "أفغانستان"
+        },
+        "active": true,
+        "order": 3
+    },
+    {
+        "code": "AL",
+        "name": {
+            "en": "Albanian",
+            "ar": "ألباني"
+        },
+        "country": {
+            "en": "Albania",
+            "ar": "ألبانيا"
+        },
+        "active": true,
+        "order": 4
+    },
+    {
+        "code": "DZ",
+        "name": {
+            "en": "Algerian",
+            "ar": "جزائري"
+        },
+        "country": {
+            "en": "Algeria",
+            "ar": "الجزائر"
+        },
+        "active": true,
+        "order": 5
+    },
+    {
+        "code": "US",
+        "name": {
+            "en": "American",
+            "ar": "أمريكي"
+        },
+        "country": {
+            "en": "United States",
+            "ar": "الولايات المتحدة الأمريكية"
+        },
+        "active": true,
+        "order": 6
+    },
+    {
+        "code": "AD",
+        "name": {
+            "en": "Andorran",
+            "ar": "أندوري"
+        },
+        "country": {
+            "en": "Andorra",
+            "ar": "أندورا"
+        },
+        "active": true,
+        "order": 7
+    },
+    {
+        "code": "AO",
+        "name": {
+            "en": "Angolan",
+            "ar": "أنغولي"
+        },
+        "country": {
+            "en": "Angola",
+            "ar": "أنغولا"
+        },
+        "active": true,
+        "order": 8
+    },
+    {
+        "code": "AG",
+        "name": {
+            "en": "Antiguan",
+            "ar": "أنتيغوي"
+        },
+        "country": {
+            "en": "Antigua and Barbuda",
+            "ar": "أنتيغوا وبربودا"
+        },
+        "active": true,
+        "order": 9
+    },
+    {
+        "code": "AR",
+        "name": {
+            "en": "Argentinian",
+            "ar": "أرجنتيني"
+        },
+        "country": {
+            "en": "Argentina",
+            "ar": "الأرجنتين"
+        },
+        "active": true,
+        "order": 10
+    },
+    {
+        "code": "AM",
+        "name": {
+            "en": "Armenian",
+            "ar": "أرميني"
+        },
+        "country": {
+            "en": "Armenia",
+            "ar": "أرمينيا"
+        },
+        "active": true,
+        "order": 11
+    },
+    {
+        "code": "AU",
+        "name": {
+            "en": "Australian",
+            "ar": "أسترالي"
+        },
+        "country": {
+            "en": "Australia",
+            "ar": "أستراليا"
+        },
+        "active": true,
+        "order": 12
+    },
+    {
+        "code": "AT",
+        "name": {
+            "en": "Austrian",
+            "ar": "نمساوي"
+        },
+        "country": {
+            "en": "Austria",
+            "ar": "النمسا"
+        },
+        "active": true,
+        "order": 13
+    },
+    {
+        "code": "AZ",
+        "name": {
+            "en": "Azerbaijani",
+            "ar": "أذربيجاني"
+        },
+        "country": {
+            "en": "Azerbaijan",
+            "ar": "أذربيجان"
+        },
+        "active": true,
+        "order": 14
+    },
+    {
+        "code": "BS",
+        "name": {
+            "en": "Bahamian",
+            "ar": "باهامي"
+        },
+        "country": {
+            "en": "Bahamas",
+            "ar": "جزر البهاما"
+        },
+        "active": true,
+        "order": 15
+    },
+    {
+        "code": "BH",
+        "name": {
+            "en": "Bahraini",
+            "ar": "بحريني"
+        },
+        "country": {
+            "en": "Bahrain",
+            "ar": "البحرين"
+        },
+        "active": true,
+        "order": 16
+    },
+    {
+        "code": "BD",
+        "name": {
+            "en": "Bangladeshi",
+            "ar": "بنغلاديشي"
+        },
+        "country": {
+            "en": "Bangladesh",
+            "ar": "بنغلاديش"
+        },
+        "active": true,
+        "order": 17
+    },
+    {
+        "code": "BB",
+        "name": {
+            "en": "Barbadian",
+            "ar": "بربادوسي"
+        },
+        "country": {
+            "en": "Barbados",
+            "ar": "بربادوس"
+        },
+        "active": true,
+        "order": 18
+    },
+    {
+        "code": "BY",
+        "name": {
+            "en": "Belarusian",
+            "ar": "بيلاروسي"
+        },
+        "country": {
+            "en": "Belarus",
+            "ar": "بيلاروسيا"
+        },
+        "active": true,
+        "order": 19
+    },
+    {
+        "code": "BE",
+        "name": {
+            "en": "Belgian",
+            "ar": "بلجيكي"
+        },
+        "country": {
+            "en": "Belgium",
+            "ar": "بلجيكا"
+        },
+        "active": true,
+        "order": 20
+    },
+    {
+        "code": "BZ",
+        "name": {
+            "en": "Belizean",
+            "ar": "بليزي"
+        },
+        "country": {
+            "en": "Belize",
+            "ar": "بليز"
+        },
+        "active": true,
+        "order": 21
+    },
+    {
+        "code": "BJ",
+        "name": {
+            "en": "Beninese",
+            "ar": "بنيني"
+        },
+        "country": {
+            "en": "Benin",
+            "ar": "بنين"
+        },
+        "active": true,
+        "order": 22
+    },
+    {
+        "code": "BT",
+        "name": {
+            "en": "Bhutanese",
+            "ar": "بوتاني"
+        },
+        "country": {
+            "en": "Bhutan",
+            "ar": "بوتان"
+        },
+        "active": true,
+        "order": 23
+    },
+    {
+        "code": "BO",
+        "name": {
+            "en": "Bolivian",
+            "ar": "بوليفي"
+        },
+        "country": {
+            "en": "Bolivia",
+            "ar": "بوليفيا"
+        },
+        "active": true,
+        "order": 24
+    },
+    {
+        "code": "BA",
+        "name": {
+            "en": "Bosnian",
+            "ar": "بوسني"
+        },
+        "country": {
+            "en": "Bosnia and Herzegovina",
+            "ar": "البوسنة والهرسك"
+        },
+        "active": true,
+        "order": 25
+    },
+    {
+        "code": "BW",
+        "name": {
+            "en": "Botswanan",
+            "ar": "بوتسواني"
+        },
+        "country": {
+            "en": "Botswana",
+            "ar": "بوتسوانا"
+        },
+        "active": true,
+        "order": 26
+    },
+    {
+        "code": "BR",
+        "name": {
+            "en": "Brazilian",
+            "ar": "برازيلي"
+        },
+        "country": {
+            "en": "Brazil",
+            "ar": "البرازيل"
+        },
+        "active": true,
+        "order": 27
+    },
+    {
+        "code": "BN",
+        "name": {
+            "en": "Bruneian",
+            "ar": "بروني"
+        },
+        "country": {
+            "en": "Brunei",
+            "ar": "بروناي"
+        },
+        "active": true,
+        "order": 28
+    },
+    {
+        "code": "BG",
+        "name": {
+            "en": "Bulgarian",
+            "ar": "بلغاري"
+        },
+        "country": {
+            "en": "Bulgaria",
+            "ar": "بلغاريا"
+        },
+        "active": true,
+        "order": 29
+    },
+    {
+        "code": "BF",
+        "name": {
+            "en": "Burkinabé",
+            "ar": "بوركيني"
+        },
+        "country": {
+            "en": "Burkina Faso",
+            "ar": "بوركينا فاسو"
+        },
+        "active": true,
+        "order": 30
+    },
+    {
+        "code": "BI",
+        "name": {
+            "en": "Burundian",
+            "ar": "بوروندي"
+        },
+        "country": {
+            "en": "Burundi",
+            "ar": "بوروندي"
+        },
+        "active": true,
+        "order": 31
+    },
+    {
+        "code": "PK",
+        "name": {
+            "en": "Pakistani",
+            "ar": "باكستاني"
+        },
+        "country": {
+            "en": "Pakistan",
+            "ar": "باكستان"
+        },
+        "active": true,
+        "order": 32
+    },
+    {
+        "code": "CA",
+        "name": {
+            "en": "Canadian",
+            "ar": "كندي"
+        },
+        "country": {
+            "en": "Canada",
+            "ar": "كندا"
+        },
+        "active": true,
+        "order": 34
+    },
+    {
+        "code": "CN",
+        "name": {
+            "en": "Chinese",
+            "ar": "صيني"
+        },
+        "country": {
+            "en": "China",
+            "ar": "الصين"
+        },
+        "active": true,
+        "order": 35
+    },
+    {
+        "code": "FR",
+        "name": {
+            "en": "French",
+            "ar": "فرنسي"
+        },
+        "country": {
+            "en": "France",
+            "ar": "فرنسا"
+        },
+        "active": true,
+        "order": 36
+    },
+    {
+        "code": "DE",
+        "name": {
+            "en": "German",
+            "ar": "ألماني"
+        },
+        "country": {
+            "en": "Germany",
+            "ar": "ألمانيا"
+        },
+        "active": true,
+        "order": 37
+    },
+    {
+        "code": "IN",
+        "name": {
+            "en": "Indian",
+            "ar": "هندي"
+        },
+        "country": {
+            "en": "India",
+            "ar": "الهند"
+        },
+        "active": true,
+        "order": 38
+    },
+    {
+        "code": "IT",
+        "name": {
+            "en": "Italian",
+            "ar": "إيطالي"
+        },
+        "country": {
+            "en": "Italy",
+            "ar": "إيطاليا"
+        },
+        "active": true,
+        "order": 39
+    },
+    {
+        "code": "JP",
+        "name": {
+            "en": "Japanese",
+            "ar": "ياباني"
+        },
+        "country": {
+            "en": "Japan",
+            "ar": "اليابان"
+        },
+        "active": true,
+        "order": 40
+    },
+    {
+        "code": "KR",
+        "name": {
+            "en": "South Korean",
+            "ar": "كوري جنوبي"
+        },
+        "country": {
+            "en": "South Korea",
+            "ar": "كوريا الجنوبية"
+        },
+        "active": true,
+        "order": 41
+    },
+    {
+        "code": "MX",
+        "name": {
+            "en": "Mexican",
+            "ar": "مكسيكي"
+        },
+        "country": {
+            "en": "Mexico",
+            "ar": "المكسيك"
+        },
+        "active": true,
+        "order": 42
+    },
+    {
+        "code": "NG",
+        "name": {
+            "en": "Nigerian",
+            "ar": "نيجيري"
+        },
+        "country": {
+            "en": "Nigeria",
+            "ar": "نيجيريا"
+        },
+        "active": true,
+        "order": 43
+    },
+    {
+        "code": "RU",
+        "name": {
+            "en": "Russian",
+            "ar": "روسي"
+        },
+        "country": {
+            "en": "Russia",
+            "ar": "روسيا"
+        },
+        "active": true,
+        "order": 46
+    },
+    {
+        "code": "SA",
+        "name": {
+            "en": "Saudi Arabian",
+            "ar": "سعودي"
+        },
+        "country": {
+            "en": "Saudi Arabia",
+            "ar": "المملكة العربية السعودية"
+        },
+        "active": true,
+        "order": 47
+    },
+    {
+        "code": "ES",
+        "name": {
+            "en": "Spanish",
+            "ar": "إسباني"
+        },
+        "country": {
+            "en": "Spain",
+            "ar": "إسبانيا"
+        },
+        "active": true,
+        "order": 48
+    },
+    {
+        "code": "SE",
+        "name": {
+            "en": "Swedish",
+            "ar": "سويدي"
+        },
+        "country": {
+            "en": "Sweden",
+            "ar": "السويد"
+        },
+        "active": true,
+        "order": 49
+    },
+    {
+        "code": "CH",
+        "name": {
+            "en": "Swiss",
+            "ar": "سويسري"
+        },
+        "country": {
+            "en": "Switzerland",
+            "ar": "سويسرا"
+        },
+        "active": true,
+        "order": 50
+    },
+    {
+        "code": "TH",
+        "name": {
+            "en": "Thai",
+            "ar": "تايلندي"
+        },
+        "country": {
+            "en": "Thailand",
+            "ar": "تايلاند"
+        },
+        "active": true,
+        "order": 51
+    },
+    {
+        "code": "GB",
+        "name": {
+            "en": "British",
+            "ar": "بريطاني"
+        },
+        "country": {
+            "en": "United Kingdom",
+            "ar": "المملكة المتحدة"
+        },
+        "active": true,
+        "order": 52
+    },
+    {
+        "code": "SO",
+        "name": {
+            "en": "Somali",
+            "ar": "صومالي"
+        },
+        "country": {
+            "en": "Somalia",
+            "ar": "الصومال"
+        },
+        "active": true,
+        "order": 53
+    },
+    {
+        "code": "SY",
+        "name": {
+            "en": "Syrian",
+            "ar": "????"
+        },
+        "country": {
+            "en": "Syria",
+            "ar": "?????"
+        },
+        "active": true,
+        "order": 54
+    },
+    {
+        "code": "AF",
+        "name": {
+            "en": "Afghan",
+            "ar": "??????",
+            "ps": "?????"
+        },
+        "country": {
+            "en": "Afghanistan",
+            "ar": "?????????",
+            "ps": "?????????"
+        },
+        "active": true,
+        "order": 55
+    },
+    {
+        "code": "EG",
+        "name": {
+            "en": "Egyptian",
+            "ar": "????"
+        },
+        "country": {
+            "en": "Egypt",
+            "ar": "???"
+        },
+        "active": true,
+        "order": 56
+    }
+]

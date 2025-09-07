@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
@@ -147,13 +148,13 @@ class Employee extends Model implements Auditable
         $defaultAvatarPath = 'imgs/avatar.png';
 
         if (Storage::disk('public')->exists($defaultAvatarPath)) {
-            
-            if(env('APP_ENV')=='local'){
+
+            if (env('APP_ENV') == 'local') {
                 return Storage::disk('public')->url($defaultAvatarPath);
-            } 
+            }
             return url('/') .  Storage::disk('public')->url($defaultAvatarPath);
         }
-         
+
         // If file is not found, return a fallback URL
         return asset('imgs/avatar.png');
     }
@@ -256,11 +257,11 @@ class Employee extends Model implements Auditable
     }
     public function periodHistories()
     {
-        return $this->hasMany(EmployeePeriodHistory::class, );
+        return $this->hasMany(EmployeePeriodHistory::class,);
     }
     public function advancedInstallments()
     {
-        return $this->hasMany(EmployeeAdvanceInstallment::class, );
+        return $this->hasMany(EmployeeAdvanceInstallment::class,);
     }
 
     // Log changes to periods
@@ -556,21 +557,41 @@ class Employee extends Model implements Auditable
         });
         // 👇 New logic: after creating employee, create user
         static::created(function ($employee) {
-            // Only create user if not already linked
+            // فقط إذا لم يكن هناك user مرتبط
             if (! $employee->user_id) {
-                $user = User::create([
-                    'name'     => $employee->name,
-                    'email'    => $employee->email,
-                    'branch_id' => $employee?->branch_id,
-                    'phone_number' => $employee?->phone_number,
-                    'password' => bcrypt('123456'),
-                ]);
+                // الحصول على user_id الخاص بالمدير
+                $managerUserId = Employee::find($employee->manager_id)?->user_id;
 
-                // Assign the user to employee
+                // إعداد البيانات الأساسية
+                $userData = [
+                    'name'          => $employee->name,
+                    'email'         => $employee->email,
+                    'branch_id'     => $employee->branch_id,
+                    'phone_number'  => $employee->phone_number,
+                    'user_type' => $employee?->employee_type,
+                    'nationality' => $employee?->nationality,
+                    'gender'  => $employee->gender,
+                    'password'      => bcrypt('123456'),
+                    'owner_id'      => $managerUserId,
+                ];
+
+                // إذا كان لديه avatar نضيفه
+                if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
+                    $userData['avatar'] = $employee->avatar;
+                }
+
+                // إنشاء اليوزر
+                $user = User::create($userData);
+
+                // ربط user_id بالموظف
                 $employee->user_id = $user->id;
                 $employee->save();
+
+                // إعطاءه الدور المناسب
                 $user->assignRole(8);
-                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email, ));
+
+                // إرسال بريد إلكتروني 
+                Mail::to($user->email)->send(new MailableEmployee($employee->name, $user->email,));
             }
         });
     }
@@ -707,5 +728,4 @@ class Employee extends Model implements Auditable
     {
         return $this->hasMany(EmployeePeriodDay::class, 'employee_id');
     }
-
 }
