@@ -514,7 +514,7 @@ class EmployeeResource extends Resource
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('avatar_image')->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('avatar_image')->copyable()->label('avatar_image')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 // ImageColumn::make('avatar_image')->label('')
                 //     ->circular(),
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
