@@ -117,7 +117,8 @@ class DailyTasksSettingUpResource extends Resource
                                 }),
                             Grid::make()->columnSpanFull()->columns(1)->columnSpan(1)->schema([
                                 DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1)->minDate(date('Y-m-d'))->live(),
-                                TextInput::make('recur_count')->label(function (Get $get) {
+                                TextInput::make('recur_count')
+                                ->label(function (Get $get) {
                                     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
                                         return 'Count days';
                                     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
@@ -137,6 +138,7 @@ class DailyTasksSettingUpResource extends Resource
                                     //     }
 
                                     // })
+                                    ->required()
                                     ->afterStateUpdatedJs(<<<'JS'
                                       
                                         const scheduleType = $get('schedule_type');
