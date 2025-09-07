@@ -134,28 +134,8 @@ class EmployeeResource extends Resource
                                                 ->unique(ignoreRecord: true)
                                                 ->columnSpan(1)
 
-                                            // ->numeric()
-                                            ->maxLength(14)->minLength(8),
-
-                                            // PhoneInput::make('phone_number')
-                                            //     // ->numeric()
-                                            //     ->hidden()
-                                            //     ->initialCountry('MY')
-                                            //     ->onlyCountries([
-                                            //         'MY',
-                                            //         'US',
-                                            //         'YE',
-                                            //         'AE',
-                                            //         'SA',
-                                            //         'PK',
-                                            //     ])
-                                            //     ->displayNumberFormat(PhoneInputNumberType::E164)
-                                            //     ->autoPlaceholder('aggressive')
-                                            //     ->unique(ignoreRecord: true)
-                                            //     ->validateFor(
-                                            //         country: 'MY',
-                                            //         lenient: true, // default: false
-                                            //     ),
+                                                // ->numeric()
+                                                ->maxLength(14)->minLength(8),
                                             Select::make('gender')
                                                 ->label('Gender')
                                                 ->options([
@@ -168,26 +148,26 @@ class EmployeeResource extends Resource
                                             // ->nullable(),
                                             TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
 
-                                        TextInput::make('working_days')
-                                            ->label('Working Days per Month')
-                                            ->numeric()
-                                            ->minValue(1)
-                                            ->maxValue(31)
-                                        // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
-                                        ,
+                                            TextInput::make('working_days')
+                                                ->label('Working Days per Month')
+                                                ->numeric()
+                                                ->minValue(1)
+                                                ->maxValue(31)
+                                            // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
+                                            ,
 
-                                        // TextInput::make('working_hours')
-                                        //     ->label('Working Hours per Day')
-                                        //     ->numeric()
-                                        //     ->minValue(1)
-                                        //     ->maxValue(24)
-                                        //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
+                                            // TextInput::make('working_hours')
+                                            //     ->label('Working Hours per Day')
+                                            //     ->numeric()
+                                            //     ->minValue(1)
+                                            //     ->maxValue(24)
+                                            //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
 
-                                        Select::make('nationality')
-                                            ->label('Nationality')->live()
-                                            // ->required()
-                                            ->options(getNationalities())
-                                            ->searchable(),
+                                            Select::make('nationality')
+                                                ->label('Nationality')->live()
+                                                // ->required()
+                                                ->options(getNationalities())
+                                                ->searchable(),
 
                                             TextInput::make('mykad_number')->label('MyKad no.')->numeric()
                                                 ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
@@ -239,7 +219,9 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
                                             ->label('Manager')
                                             ->searchable()
-                                            ->requiredIf('is_ceo', false)
+                                            // ->requiredIf('is_ceo', false)
+                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
+
                                             ->options(function ($get, $livewire) {
                                                 $branchId = $get('branch_id');
                                                 // نحصل على ID الموظف الحالي إن كنا في edit mode
@@ -414,7 +396,7 @@ class EmployeeResource extends Resource
                                             ->collapsed()
                                             ->minItems(0)         // Set the minimum number of items
                                             // Optional: set the maximum number of items
-                                            ->defaultItems(1)     // Default number of items when the form loads
+                                            ->defaultItems(0)     // Default number of items when the form loads
                                             ->columnSpan('full'), // Adjust the span as necessary
                                     ]),
                                     Fieldset::make()->columnSpanFull()->label('Shift - RFID')->columnSpanFull()->schema([
@@ -524,7 +506,7 @@ class EmployeeResource extends Resource
             ->columns([
                 TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
-                    ->circular(), 
+                    ->circular(),
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
