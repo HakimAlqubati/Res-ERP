@@ -134,26 +134,6 @@ class EmployeeResource extends Resource
 
                                                 // ->numeric()
                                                 ->maxLength(14)->minLength(8),
-
-                                            // PhoneInput::make('phone_number')
-                                            //     // ->numeric()
-                                            //     ->hidden()
-                                            //     ->initialCountry('MY')
-                                            //     ->onlyCountries([
-                                            //         'MY',
-                                            //         'US',
-                                            //         'YE',
-                                            //         'AE',
-                                            //         'SA',
-                                            //         'PK',
-                                            //     ])
-                                            //     ->displayNumberFormat(PhoneInputNumberType::E164)
-                                            //     ->autoPlaceholder('aggressive')
-                                            //     ->unique(ignoreRecord: true)
-                                            //     ->validateFor(
-                                            //         country: 'MY',
-                                            //         lenient: true, // default: false
-                                            //     ),
                                             Select::make('gender')
                                                 ->label('Gender')
                                                 ->options([
@@ -246,7 +226,9 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
                                             ->label('Manager')
                                             ->searchable()
-                                            ->requiredIf('is_ceo', false)
+                                            // ->requiredIf('is_ceo', false)
+                                            ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
+
                                             ->options(function ($get, $livewire) {
                                                 $branchId = $get('branch_id');
                                                 // نحصل على ID الموظف الحالي إن كنا في edit mode
@@ -531,7 +513,7 @@ class EmployeeResource extends Resource
             ->columns([
                 TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
-                    ->circular(), 
+                    ->circular(),
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)

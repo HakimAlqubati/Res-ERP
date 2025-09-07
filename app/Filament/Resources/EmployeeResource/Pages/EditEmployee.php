@@ -45,8 +45,8 @@ class EditEmployee extends EditRecord
             $user->phone_number = $employee?->phone_number;
 
 
-            $employee->name = $user->name;
-            $employee->branch_id = $user?->branch_id;
+            $user->name = $employee->name;
+            $user->branch_id = $employee?->branch_id;
 
 
             $user->gender = $employee?->gender;
