@@ -178,7 +178,7 @@ class EmployeeResource extends Resource
                                                     ->imageEditor()
 
                                                     ->circleCropper()
-                                                    // ->disk('public')
+                                                    ->disk('public')
                                                     // ->directory('employees')
                                                     ->visibility('public')
                                                     ->imageEditorAspectRatios([
@@ -186,7 +186,7 @@ class EmployeeResource extends Resource
                                                         '4:3',
                                                         '1:1',
                                                     ])
-                                                    ->disk('s3') // Change disk to S3
+                                                    // ->disk('s3') // Change disk to S3
                                                     ->directory('employees')
                                                     ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
                                                         return Str::random(15) . "." . $file->getClientOriginalExtension();

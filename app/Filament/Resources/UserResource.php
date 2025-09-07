@@ -137,7 +137,7 @@ class UserResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('first_role.name')->label('Role')
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('roles_title')->label('Roles')
+                TextColumn::make('roles_title')->label('Roles')->limit(20)->tooltip(fn($state) => $state)
                     ->toggleable(isToggledHiddenByDefault: false),
                 IconColumn::make('has_employee')->boolean()
                     ->trueIcon('heroicon-o-check-badge')

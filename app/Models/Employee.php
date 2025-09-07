@@ -143,6 +143,9 @@ class Employee extends Model implements Auditable
         if ($this->avatar && Storage::disk('s3')->exists($this->avatar)) {
             return Storage::disk('s3')->url($this->avatar);
         }
+        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
+            return Storage::disk('public')->url($this->avatar);
+        }
 
         // Ensure the default image exists on the local storage
         $defaultAvatarPath = 'imgs/avatar.png';
@@ -577,6 +580,9 @@ class Employee extends Model implements Auditable
 
                 // إذا كان لديه avatar نضيفه
                 if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
+                    $userData['avatar'] = $employee->avatar;
+                }
+                if ($employee->avatar && Storage::disk('public')->exists($employee->avatar)) {
                     $userData['avatar'] = $employee->avatar;
                 }
 

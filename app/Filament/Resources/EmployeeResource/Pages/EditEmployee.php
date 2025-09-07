@@ -56,6 +56,9 @@ class EditEmployee extends EditRecord
             }
             $user->user_type = $employee?->employee_type;
 
+            if ($employee->avatar && Storage::disk('public')->exists($employee->avatar)) {
+                $user->avatar = $employee->avatar;
+            }
             if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
                 $user->avatar = $employee->avatar;
             }
