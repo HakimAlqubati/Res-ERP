@@ -104,17 +104,18 @@ trait HasNewUserForm
                         )
                         // ->maxItems(1)
                         ->live()
-                        ->options(function (Get $get) {
-                            // dd($get('user_type'),'hi');
-                            if ($get('user_type')) {
-                                $roles = getRolesByTypeId($get('user_type'));
-                                // dd($roles,gettype($roles));
-                                return Role::select('name', 'id')
-                                    ->whereIn('id', $roles)
-                                    ->orderBy('name', 'asc')
-                                    ->get()->pluck('name', 'id');
-                            }
-                        }),
+                        // ->options(function (Get $get) {
+                        //     // dd($get('user_type'),'hi');
+                        //     if ($get('user_type')) {
+                        //         $roles = getRolesByTypeId($get('user_type'));
+                        //         // dd($roles,gettype($roles));
+                        //         return Role::select('name', 'id')
+                        //             ->whereIn('id', $roles)
+                        //             ->orderBy('name', 'asc')
+                        //             ->get()->pluck('name', 'id');
+                        //     }
+                        // })
+                        ,
                 ]),
                 Grid::make()->columnSpanFull()->columns(2)->schema([
 
