@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Traits\Forms;
 
 use Filament\Schemas\Components\Fieldset;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
+
 trait HasNewUserForm
 {
 
@@ -37,32 +39,19 @@ trait HasNewUserForm
                     Fieldset::make()->columnSpanFull()->label('Personal data')->schema([
                         TextInput::make('name')->required()->unique(ignoreRecord: true),
                         TextInput::make('email')->required()->unique(ignoreRecord: true)->email()->required(),
-                        // PhoneInput::make('phone_number')
-                        // // ->numeric()
-                        //     ->initialCountry('MY')
-                        //     ->onlyCountries([
-                        //         'MY',
-                        //         'US',
-                        //         'YE',
-                        //         'AE',
-                        //         'SA',
-                        //     ])
-                        //     ->required()
-                        //     ->unique(ignoreRecord: true)
-                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
-                        //     ->autoPlaceholder('aggressive')
-                        // // ->validateFor(
-                        // //     country: 'MY',
-                        // //     lenient: true, // default: false
-                        // // )
-                        // ,
+                        TextInput::make('phone_number')
+                            ->unique(ignoreRecord: true)
+                            ->columnSpan(1)
+
+                            // ->numeric()
+                            ->maxLength(14)->minLength(8),
                         Select::make('gender')
                             ->label('Gender')
                             ->options([
                                 1 => 'Male',
                                 0 => 'Female',
                             ])
-                            ->default(1)
+                            // ->default(1)
                             ->required(),
 
                         Select::make('nationality')
@@ -81,6 +70,7 @@ trait HasNewUserForm
                             ->options(function () {
                                 return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
                             }),
+                    
                     ]),
 
                 ]),
@@ -88,10 +78,10 @@ trait HasNewUserForm
                 Fieldset::make()->columnSpanFull()->label('Set user type and role')->schema([
                     Select::make('user_type')
                         ->label('User type')
-                    // ->options(getUserTypes())
+                        // ->options(getUserTypes())
                         ->options(
                             UserType::select('name', 'id')
-                            // ->whereNotIn('id', [2,3,4])
+                                // ->whereNotIn('id', [2,3,4])
                                 ->get()->pluck('name', 'id')
                         )
                         ->required()
@@ -103,7 +93,7 @@ trait HasNewUserForm
                     CheckboxList::make('roles')->required()
                         ->label('Roles')
                         ->relationship('roles')
-                    // ->maxItems(1)
+                        // ->maxItems(1)
                         ->live()
                         ->options(function (Get $get) {
                             // dd($get('user_type'),'hi');
@@ -135,13 +125,13 @@ trait HasNewUserForm
                 Fieldset::make()->columnSpanFull()->label('')->schema([
                     Grid::make()->columns(2)->columnSpanFull()->schema([
                         setting('password_contains_for') == 'easy_password' ?
-                        TextInput::make('password')
+                            TextInput::make('password')
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
                             ->reactive()
                             ->dehydrateStateUsing(fn($state) => Hash::make($state))
 
-                        : TextInput::make('password')
+                            : TextInput::make('password')
                             ->label('Password')
                             ->password()
                             ->required(fn(string $context) => $context === 'create')
@@ -166,5 +156,4 @@ trait HasNewUserForm
                 ]),
             ]);
     }
-
 }

@@ -86,7 +86,7 @@ class EmployeeOvertimeResource extends Resource
             ->components(
                 [
 
-                    Fieldset::make()
+                    Fieldset::make()->columnSpanFull()
                         ->columns(3)
                         ->label('Set branch employees & the Date')->columnSpanFull()
                         ->schema([

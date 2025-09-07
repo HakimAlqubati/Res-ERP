@@ -8,6 +8,7 @@ use App\Filament\Resources\EmployeeResource;
 use App\Models\Employee;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Storage;
 
 class EditEmployee extends EditRecord
 {
@@ -32,37 +33,36 @@ class EditEmployee extends EditRecord
         // Access the related user model
         $user = $employee->user;
 
+        // dd($user,$employee,!is_null($employee?->nationality), $employee->nationality);
         if ($user) {
-
+            $managerUserId = Employee::find($employee->manager_id)?->user_id;
+            $user->owner_id = $managerUserId;
             // Check if 'email' or 'phone_number' changed
             // if ($employee->isDirty('email')) {
             $user->email = $employee->email;
             // }
             // if ($employee->isDirty('phone_number')) {
-            $user->phone_number = $employee->phone_number;
-            // }
+            $user->phone_number = $employee?->phone_number;
 
-            // if ($user->isDirty('name')) {
+
             $employee->name = $user->name;
-            // }
+            $employee->branch_id = $user?->branch_id;
 
-            // if ($user->isDirty('branch_id')) {
-            $employee->branch_id = $user->branch_id;
-            // }
 
-            if(!is_null($employee?->gender)){
-                $employee->gender = $user->gender;
+            $user->gender = $employee?->gender;
+
+            if (!is_null($employee?->nationality)) {
+                $user->nationality = $employee->nationality;
             }
-            
-            if(!is_null($employee?->nationality)){
-                $employee->nationality = $user->nationality;
+            $user->user_type = $employee?->employee_type;
+
+            if ($employee->avatar && Storage::disk('s3')->exists($employee->avatar)) {
+                $user->avatar = $employee->avatar;
             }
+
             // Save changes to the user model
             $user->save();
         }
-
-        
-
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
@@ -102,5 +102,4 @@ class EditEmployee extends EditRecord
             }
         }
     }
- 
 }

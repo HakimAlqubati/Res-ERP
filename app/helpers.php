@@ -529,7 +529,7 @@ if (!function_exists('settingWithDefault')) {
 if (!function_exists('getNationalities')) {
     function getNationalities(): array
     {
-        $path = storage_path('app/data/nationalities.json');
+        $path = storage_path('app/data/nationalities.json') ?? asset('data/nationalities.json');
 
         $nationalities = [];
 

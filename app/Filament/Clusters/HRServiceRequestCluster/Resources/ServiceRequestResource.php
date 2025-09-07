@@ -68,7 +68,7 @@ class ServiceRequestResource extends Resource
                         ->icon('heroicon-o-bars-3-center-left')
                         ->schema([
                             Fieldset::make()->columnSpanFull()->schema([
-                                Fieldset::make()->columns(3)->columnSpanFull()->schema([
+                                Fieldset::make()->columnSpanFull()->columns(3)->schema([
                                     Select::make('branch_id')->label('Branch')
                                         ->disabled(function ($record) {
                                             if (isset($record)) {
@@ -133,8 +133,8 @@ class ServiceRequestResource extends Resource
 
                                 ]),
 
-                                Fieldset::make()
-                                    ->columns(4)->columnSpanFull()
+                                Fieldset::make()->columnSpanFull()
+                                    ->columns(4)
                                     ->schema([
                                         Select::make('assigned_to')
                                             ->options(fn(Get $get): Collection => Employee::query()
@@ -202,7 +202,7 @@ class ServiceRequestResource extends Resource
                     Step::make('Images')
                         ->icon('heroicon-o-photo')
                         ->schema([
-                            Fieldset::make()->columns(1)->columnSpanFull()->schema([
+                            Fieldset::make()->columnSpanFull()->columns(1)->schema([
                                 // self::getMediaSpatieField(),
                             ]),
                         ]),

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -84,7 +85,7 @@ class UserResource extends Resource
                     ])->visibleOn('create')
                     ->default('new_user')
                     ->live()
-                    ->required() ,
+                    ->required(),
                 // Fieldset::make()->label('')->columns(2)->schema([
                 //     Toggle::make('is_exist_employee')->label('')
                 //         ->inline(false)->helperText('Check if you want to create a user account for existing employee')
@@ -171,9 +172,9 @@ class UserResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label(__('lang.branch'))->options(
-                    Branch::withAllTypes()
-                        ->pluck('name', 'id')->toArray()
-                ),
+                        Branch::withAllTypes()
+                            ->pluck('name', 'id')->toArray()
+                    ),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -191,14 +192,12 @@ class UserResource extends Resource
                                     ->required()
                                     ->default(fn($record) => $record->name)
                                     ->unique(ignoreRecord: true),
-                                // PhoneInput::make('phone_number')
-                                //     ->label('Phone')
-                                //     ->required()
-                                //     ->default(fn($record) => $record->phone_number)
-                                //     ->unique(ignoreRecord: true)
-                                //     ->initialCountry('MY')
-                                //     ->onlyCountries(['MY', 'US', 'YE', 'AE', 'SA'])
-                                //     ->displayNumberFormat(PhoneInputNumberType::E164),
+                                TextInput::make('phone_number')
+                                    ->unique(ignoreRecord: true)
+                                    ->columnSpan(1)
+
+                                    // ->numeric()
+                                    ->maxLength(14)->minLength(8),
                                 TextInput::make('email')
                                     ->email()
                                     ->default(fn($record) => $record->email)

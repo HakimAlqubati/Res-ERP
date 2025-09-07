@@ -43,11 +43,11 @@ class AllowanceResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columns(3)->label('')->schema([
+                Fieldset::make()->columnSpanFull()->columns(3)->label('')->schema([
                     TextInput::make('name')->required(),
                     TextInput::make('description')->columnSpan(2),
                 ]),
-                Fieldset::make()->label('')->columns(4)->schema([
+                Fieldset::make()->columnSpanFull()->label('')->columns(4)->schema([
                     Toggle::make('is_specific')->default(false)->label('Custom')
                         ->helperText('This means for specific employee or for general'),
                     Toggle::make('active')->default(true),

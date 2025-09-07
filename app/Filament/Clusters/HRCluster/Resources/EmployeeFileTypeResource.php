@@ -44,7 +44,7 @@ class EmployeeFileTypeResource extends Resource
         return $schema
             ->components([
                 Fieldset::make()->columnSpanFull()->schema([
-                    Grid::make()->columns(3)->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         TextInput::make('name')->required()->columnSpan(1),
                         Toggle::make('active')->default(1)->columnSpan(1)->inline(false),
                         Toggle::make('is_required')->label('Is required for employee?')->default(0)->columnSpan(1)->inline(false),

@@ -80,7 +80,7 @@ class CircularResource extends Resource
 
                                 ]),
 
-                                Grid::make()->columns(1)->columnSpanFull()->schema([
+                                Grid::make()->columnSpanFull()->columns(1)->schema([
                                     RichEditor::make('description'),
                                 ]),
                             ]),
@@ -89,9 +89,9 @@ class CircularResource extends Resource
                         ->schema([
                             Fieldset::make()->columnSpanFull()->label('')->schema([
 
-                                Grid::make()->columns(1)->schema([
+                                Grid::make()->columnSpanFull()->columns(1)->schema([
                                     FileUpload::make('file_path')
-                                        ->label('Add photos')
+                                        ->label('Add photos')->columnSpanFull()
                                         ->disk('public')
                                         ->directory('circulars')
                                         ->visibility('public')

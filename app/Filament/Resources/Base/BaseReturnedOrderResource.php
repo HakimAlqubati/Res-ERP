@@ -47,7 +47,7 @@ abstract class BaseReturnedOrderResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make('Returned Order Info')
+                Fieldset::make('Returned Order Info')->columnSpanFull()
                     ->schema([
                         Select::make('original_order_id')
                             ->label('Original Order')
@@ -105,7 +105,7 @@ abstract class BaseReturnedOrderResource extends Resource
                             ->rows(3),
                     ])->columns(5),
 
-                Fieldset::make('Returned Products Details')
+                Fieldset::make('Returned Products Details')->columnSpanFull()
                     ->schema([
                         Repeater::make('details')
                             ->relationship()

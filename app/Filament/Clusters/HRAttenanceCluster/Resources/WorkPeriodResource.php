@@ -60,7 +60,7 @@ class WorkPeriodResource extends Resource
         return [
 
             Fieldset::make()->columnSpanFull()->schema([
-                Grid::make()->columns(3)->columnSpanFull()->schema([
+                Grid::make()->columnSpanFull()->columns(3)->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required()
@@ -108,21 +108,21 @@ class WorkPeriodResource extends Resource
                         ->default('12:00:00'),
                 ]),
 
-                // Grid::make()->columns(2)->schema([
-                //     Forms\Components\Select::make('days')
-                //         ->label('Days')
-                //         ->multiple()
-                //         ->options([
-                //             'Monday' => 'Monday',
-                //             'Tuesday' => 'Tuesday',
-                //             'Wednesday' => 'Wednesday',
-                //             'Thursday' => 'Thursday',
-                //             'Friday' => 'Friday',
-                //             'Saturday' => 'Saturday',
-                //             'Sunday' => 'Sunday',
-                //         ])->default(['Sunday'])
-                //         ->columnSpan(1)
-                //         ->required(),
+                Grid::make()->columnSpanFull()->columns(2)->schema([
+                    Select::make('days')
+                        ->label('Days')
+                        ->multiple()
+                        ->options([
+                            'Monday' => 'Monday',
+                            'Tuesday' => 'Tuesday',
+                            'Wednesday' => 'Wednesday',
+                            'Thursday' => 'Thursday',
+                            'Friday' => 'Friday',
+                            'Saturday' => 'Saturday',
+                            'Sunday' => 'Sunday',
+                        ])->default(['Sunday'])
+                        ->columnSpan(1)
+                        ->required(),
 
                 //     // Forms\Components\TextInput::make('allowed_count_minutes_late')
                 //     //     ->label('Allowed Delay (Minutes)')->required()->default(0)

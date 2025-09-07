@@ -239,14 +239,22 @@ class EmployeeResource extends Resource
                                             ->columnSpan(1)
                                             ->label('Manager')
                                             ->searchable()
-                                            // ->requiredIf('is_ceo', false)
-                                            ->options(function ($get) {
+                                            ->requiredIf('is_ceo', false)
+                                            ->options(function ($get, $livewire) {
                                                 $branchId = $get('branch_id');
-                                                // if ($branchId) {
-                                                return Employee::active()
-                                                    // ->forBranch($branchId)
-                                                    ->pluck('name', 'id');
-                                                // }
+                                                // نحصل على ID الموظف الحالي إن كنا في edit mode
+                                                $currentEmployeeId = $livewire->record?->id;
+                                                if ($branchId) {
+                                                    return Employee::active()
+                                                        ->forBranch($branchId)
+                                                        ->employeeTypesManagers()
+                                                        ->when(
+                                                            $currentEmployeeId,
+                                                            fn($query) =>
+                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي
+                                                        )
+                                                        ->pluck('name', 'id');
+                                                }
                                                 return [];
                                             }),
 
@@ -427,17 +435,68 @@ class EmployeeResource extends Resource
                                     Fieldset::make()->columns(3)->label('Finance')->columnSpanFull()
                                         ->disabled(fn(): bool => isBranchManager())
                                         ->schema([
-                                            TextInput::make('bank')
-                                                ->label('Bank Name')
-                                                ->required()
-                                                ->placeholder('Enter bank name'),
-                                            TextInput::make('number')
-                                                ->label('Bank Account Number')
-                                                ->required()
-                                                ->placeholder('Enter bank account number'),
-                                        ])->columnSpanFull()
-                                        
-                                     
+                                            Repeater::make('Monthly deductions')
+                                                ->defaultItems(0)
+                                                ->relationship('deductions')
+                                                ->schema([
+
+                                                    Select::make('deduction_id')
+                                                        ->label('Deducation')
+                                                        ->options(
+                                                            Deduction::where('active', 1)
+                                                                ->where('is_penalty', 0)
+                                                                ->where('is_specific', 1)
+                                                                ->get()->pluck('name', 'id')
+                                                        )
+                                                        ->required(),
+                                                    Toggle::make('is_percentage')->live()->default(true)
+                                                    // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                                    ,
+                                                    TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-calculator')
+                                                        ->suffixIconColor('success'),
+                                                    TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-percent-badge')
+                                                        ->suffixIconColor('success'),
+
+                                                ]),
+                                            Repeater::make('Monthly allowances')
+                                                ->defaultItems(0)
+                                                ->relationship('allowances')
+                                                ->schema([
+
+                                                    Select::make('allowance_id')
+                                                        ->label('Allowance')
+                                                        ->options(Allowance::where('active', 1)->where('is_specific', 1)->get()->pluck('name', 'id'))
+                                                        ->required(),
+                                                    Toggle::make('is_percentage')->live()->default(true)
+                                                    // ->helperText('Set allowance as a salary percentage or fixed amount')
+                                                    ,
+                                                    TextInput::make('amount')->visible(fn(Get $get): bool => ! $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-calculator')
+                                                        ->suffixIconColor('success'),
+                                                    TextInput::make('percentage')->visible(fn(Get $get): bool => $get('is_percentage'))->numeric()
+                                                        ->suffixIcon('heroicon-o-percent-badge')
+                                                        ->suffixIconColor('success'),
+
+                                                ]),
+                                            Repeater::make('Monthly bonus')
+                                                ->defaultItems(0)
+                                                ->label('Monthly bonus')
+                                                ->relationship('monthlyIncentives')
+                                                ->schema([
+
+                                                    Select::make('monthly_incentive_id')
+                                                        ->label('Monthly bonus')
+                                                        ->options(MonthlyIncentive::where('active', 1)->get()->pluck('name', 'id'))
+                                                        ->required(),
+                                                    TextInput::make('amount')
+                                                        ->default(0)->minValue(0)
+                                                        ->numeric(),
+
+                                                ]),
+
+                                        ]),
                                 ]),
                         ]),
                 ])->columnSpanFull()->skippable(),
@@ -447,18 +506,29 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->striped()
+        // $employee = Employee::with('periodDays.workPeriod')->find(1);
+        // $res=[];
+        // foreach ($employee->periodDays as $periodDay) {
+        //     $period = $periodDay->workPeriod;
+        //     $day    = $periodDay->day_of_week;
+
+        //     $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
+        // }
+        // dd($res);
+
+        // $sessionLifetime = config('session.lifetime');
+        // dd($sessionLifetime);
+        return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
-            ->defaultSort('id', 'asc')
+            ->defaultSort('id', 'desc')
             ->columns([
-                TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault:true),
+                TextColumn::make('id')->label('ID')->alignCenter()->toggleable(isToggledHiddenByDefault: true),
                 ImageColumn::make('avatar_image')->label('')
-                    ->circular(),
-                TextColumn::make('id')->label('id')->copyable()->hidden(),
+                    ->circular(), 
                 TextColumn::make('avatar')->copyable()->label('avatar name')->toggleable(isToggledHiddenByDefault: true)->hidden(),
                 TextColumn::make('employee_no')
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->label('Employee No.')
+                    ->label('Employee No.')->alignCenter()
                     ->sortable()->searchable()
                     ->searchable(isIndividual: false, isGlobal: false),
 

@@ -14,6 +14,7 @@ use App\Models\EmployeeFaceData;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 Route::prefix('hr/payroll')
     ->middleware('auth:api')

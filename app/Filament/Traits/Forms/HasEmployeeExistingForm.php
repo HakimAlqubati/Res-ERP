@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Traits\Forms;
 
 use Filament\Schemas\Components\Fieldset;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\PhoneInputNumberType;
+
 trait HasEmployeeExistingForm
 {
     private static function employeExistingForm()
@@ -26,76 +28,73 @@ trait HasEmployeeExistingForm
 
                 Hidden::make('is_exist_employee')->default(1),
                 Fieldset::make()->columnSpanFull()->schema([Select::make('search_employee')->label('Search for employee')
-                        ->helperText('You can search using .. Employee (Name, Email, ID, Employee number)...')
+                    ->helperText('You can search using .. Employee (Name, Email, ID, Employee number)...')
                     // ->options(Employee::where('active', 1)->select('name', 'id', 'phone_number', 'email')->get()->pluck('name', 'id'))
-                        ->getSearchResultsUsing(
-                            fn(string $search): array=>
-                            Employee::where('active', 1)
-                                ->whereDoesntHave('user')
-                                ->where(function ($query) use ($search) {
-                                    $query->where('name', 'like', "%{$search}%")
-                                        ->orWhere('email', 'like', "%{$search}%")
-                                        ->orWhere('id', $search)
-                                        ->orWhere('phone_number', 'like', "%{$search}%")
-                                        ->orWhere('job_title', 'like', "%{$search}%");
-                                })
-                                ->limit(5)
-                                ->pluck('name', 'id')
-                                ->toArray()
-                        )
-                        ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name)
-                        ->columnSpanFull()
-                        ->searchable()
-                        ->reactive()
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
+                    ->getSearchResultsUsing(
+                        fn(string $search): array =>
+                        Employee::where('active', 1)
+                            ->whereDoesntHave('user')
+                            ->where(function ($query) use ($search) {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('email', 'like', "%{$search}%")
+                                    ->orWhere('id', $search)
+                                    ->orWhere('phone_number', 'like', "%{$search}%")
+                                    ->orWhere('job_title', 'like', "%{$search}%");
+                            })
+                            ->limit(5)
+                            ->pluck('name', 'id')
+                            ->toArray()
+                    )
+                    ->getOptionLabelUsing(fn($value): ?string => Employee::find($value)?->name)
+                    ->columnSpanFull()
+                    ->searchable()
+                    ->reactive()
+                    ->afterStateUpdated(function (Set $set, Get $get, ?string $state) {
 
-                            $employee = Employee::find($state);
-                            if ($employee) {
-                                $set('name', $employee->name);
-                                $set('email', $employee->email);
-                                $set('phone_number', $employee->phone_number);
-                                $set('branch_id', $employee->branch_id);
-                                $set('nationality', $employee->nationality);
-                                // $set('avatar', $employee->avatar);
-                                // $set('avatar', [
-                                //     'url' => Storage::disk('s3')->url($employee->avatar),
-                                //     'name' => basename($employee->avatar),
-                                // ]);
-                                $positionId = $employee?->position_id;
-                                if ($positionId == 2) {
-                                    if (isset($employee?->branch_id)) {
-                                        $branchManagerId = Branch::find($employee?->branch_id)?->user?->id;
-                                        if ($branchManagerId) {
-                                            $set('owner_id', $branchManagerId);
-                                        }
+                        $employee = Employee::find($state);
+                        if ($employee) {
+                            $set('name', $employee->name);
+                            $set('email', $employee->email);
+                            $set('phone_number', $employee->phone_number);
+                            $set('branch_id', $employee->branch_id);
+                            $set('nationality', $employee->nationality);
+                            // $set('avatar', $employee->avatar);
+                            // $set('avatar', [
+                            //     'url' => Storage::disk('s3')->url($employee->avatar),
+                            //     'name' => basename($employee->avatar),
+                            // ]);
+                            $positionId = $employee?->position_id;
+                            if ($positionId == 2) {
+                                if (isset($employee?->branch_id)) {
+                                    $branchManagerId = Branch::find($employee?->branch_id)?->user?->id;
+                                    if ($branchManagerId) {
+                                        $set('owner_id', $branchManagerId);
                                     }
-                                    $set('roles', [8]);
                                 }
+                                $set('roles', [8]);
                             }
-                        })]),
+                        }
+                    })]),
                 Fieldset::make('')->columnSpanFull()->label('')->schema([
                     Grid::make()->columnSpanFull()->columns(3)->schema([
                         TextInput::make('name')->disabled()->unique(ignoreRecord: true),
                         TextInput::make('email')->disabled()->unique(ignoreRecord: true)->email()->required(),
-                        // PhoneInput::make('phone_number')->disabled()
-                        // // ->numeric()
-                        //     ->initialCountry('MY')
-                        //     ->onlyCountries([
-                        //         'MY',
-                        //         'US',
-                        //         'YE',
-                        //         'AE',
-                        //         'SA',
-                        //     ])
-                        //     ->displayNumberFormat(PhoneInputNumberType::E164)
-                        //     ->autoPlaceholder('aggressive')
-                        // // ->validateFor(
-                        // //     country: 'MY',
-                        // //     lenient: true, // default: false
-                        // // )
-                        // ,
+                        TextInput::make('phone_number')
+                            ->unique(ignoreRecord: true)
+                            ->columnSpan(1)
+
+                            // ->numeric()
+                            ->maxLength(14)->minLength(8),
 
                     ]),
+                    Select::make('gender')
+                        ->label('Gender')
+                        ->options([
+                            1 => 'Male',
+                            0 => 'Female',
+                        ])
+                        // ->default(1)
+                        ->required(),
                     Fieldset::make()->columnSpanFull()->columns(3)->label('Set user type, role and manager')->schema([
                         Select::make('user_type')->required()
                             ->label('User type')
@@ -154,6 +153,5 @@ trait HasEmployeeExistingForm
                 ]),
 
             ]);
-
     }
 }

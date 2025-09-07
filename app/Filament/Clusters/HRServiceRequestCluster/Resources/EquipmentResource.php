@@ -104,7 +104,7 @@ class EquipmentResource extends Resource
                                         })->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
                                 ]),
 
-                                Grid::make()->columns(3)->columnSpanFull()->schema([
+                                Grid::make()->columnSpanFull()->columns(3)->schema([
                                     TextInput::make('serial_number')
                                         ->label('Serial Number')->prefixIcon('heroicon-s-ellipsis-vertical')->prefixIconColor('primary')
 

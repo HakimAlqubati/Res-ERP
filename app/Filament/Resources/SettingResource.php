@@ -435,8 +435,8 @@ class SettingResource extends Resource
                             ->label(__('lang.users_settings'))
                             ->icon('heroicon-o-users')
                             ->schema([
-                                Grid::make()->schema([
-                                    Grid::make()->columns(3)->schema([
+                                Grid::make()->columnSpanFull()->schema([
+                                    Grid::make()->columnSpanFull()->columns(3)->schema([
                                         TextInput::make("password_min_length")
                                             ->label(__('lang.password_min_length'))->numeric()
                                             ->columnSpan(1)->required()->default(6),
@@ -459,7 +459,7 @@ class SettingResource extends Resource
                                             ->default(0) // Set default value if required
                                         ,
                                     ]),
-                                    Fieldset::make()->label(__('lang.setting_to_block_users_with_failed_attempts'))
+                                    Fieldset::make()->columnSpanFull()->label(__('lang.setting_to_block_users_with_failed_attempts'))
                                         ->columns(3)
                                         ->schema([
                                             TextInput::make('threshold')
@@ -487,7 +487,7 @@ class SettingResource extends Resource
                                                 ->default(1)
                                                 ->numeric(),
                                         ]),
-                                    Fieldset::make()->label('Setup Mobile Application Login Methos')
+                                    Fieldset::make()->columnSpanFull()->label('Setup Mobile Application Login Methos')
                                         ->columns(2)
                                         ->schema([
                                             Select::make('login_method')->options(['phone_number' => 'Phone', 'email' => 'email'])->label('Login Methos'),
