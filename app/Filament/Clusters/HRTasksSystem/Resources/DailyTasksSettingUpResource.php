@@ -33,6 +33,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -45,7 +46,7 @@ class DailyTasksSettingUpResource extends Resource
 {
     protected static ?string $model = DailyTasksSettingUp::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::OutlinedClock;
 
     protected static ?string $cluster = HRTasksSystem::class;
 
@@ -60,9 +61,9 @@ class DailyTasksSettingUpResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
 
-                    Grid::make()->columns(4)->schema([
+                    Grid::make()->columnSpanFull()->columns(4)->schema([
                         TextInput::make('title')
                             ->required()
                             ->autofocus()
@@ -85,8 +86,8 @@ class DailyTasksSettingUpResource extends Resource
 
                     ]),
 
-                    Fieldset::make()->label('Set schedule task type and start date of scheduele task')->schema([
-                        Grid::make()->columns(4)->schema([
+                    Fieldset::make()->columnSpanFull()->label('Set schedule task type and start date of scheduele task')->schema([
+                        Grid::make()->columnSpanFull()->columns(4)->schema([
                             ToggleButtons::make('schedule_type')
                                 ->label('')
                                 ->columnSpan(2)
@@ -100,7 +101,6 @@ class DailyTasksSettingUpResource extends Resource
                                         $set('recur_count', $pattern->recur_count);
                                         $set('end_date', $pattern->end_date);
                                         $set('start_date', $pattern->start_date);
-
                                     } else {
 
                                         if ($state == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
@@ -114,11 +114,9 @@ class DailyTasksSettingUpResource extends Resource
                                             $set('recur_count', 7);
                                         }
                                     }
-                                })
-                            ,
-                            Grid::make()->columns(1)->columnSpan(1)->schema([
-                                DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1)->minDate(date('Y-m-d'))->live()
-                                ,
+                                }),
+                            Grid::make()->columnSpanFull()->columns(1)->columnSpan(1)->schema([
+                                DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1)->minDate(date('Y-m-d'))->live(),
                                 TextInput::make('recur_count')->label(function (Get $get) {
                                     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
                                         return 'Count days';
@@ -127,44 +125,64 @@ class DailyTasksSettingUpResource extends Resource
                                     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
                                         return 'Count months';
                                     }
+                                })
+                                // ->live()
+                                    // ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                    //     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                    //         $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                    //     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                    //         $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
+                                    //     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                    //         $set('end_date', date('Y-m-d', strtotime("+$state months")));
+                                    //     }
 
-                                })->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        $set('end_date', date('Y-m-d', strtotime("+$state days")));
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                        $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                        $set('end_date', date('Y-m-d', strtotime("+$state months")));
-                                    }
+                                    // })
+                                    ->afterStateUpdatedJs(<<<'JS'
+                                      
+                                        const scheduleType = $get('schedule_type');
+                                        const recurCount = parseInt($state) || 0;
+                                        const today = new Date();
+                                        let newDate;
 
-                                }),
+                                        if (scheduleType === 'daily') {
+                                            newDate = new Date(today);
+                                            newDate.setDate(today.getDate() + recurCount);
+                                        } else if (scheduleType === 'weekly') {
+                                            newDate = new Date(today);
+                                            newDate.setDate(today.getDate() + (recurCount * 7));
+                                        } else if (scheduleType === 'monthly') {
+                                            newDate = new Date(today);
+                                            newDate.setMonth(today.getMonth() + recurCount);
+                                        }
+
+                                        if (newDate) {
+                                            $set('end_date', newDate.toISOString().slice(0, 10));
+                                        }
+                                    JS),
                             ]),
                             DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
 
-                                $date1 = new DateTime($get('start_date'));
-                                $date2 = new DateTime($state);
+                                    $date1 = new DateTime($get('start_date'));
+                                    $date2 = new DateTime($state);
 
-                                $interval = $date1->diff($date2);
+                                    $interval = $date1->diff($date2);
 
-                                if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                    $set('recur_count', $interval->days);
-                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                    $weeks = floor($interval->days / 7);
-                                    $set('recur_count', $weeks);
-                                } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                    $months = ($interval->y * 12) + $interval->m;
-                                    $set('recur_count', $months);
-                                }
-                            })
-                            ,
+                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                        $set('recur_count', $interval->days);
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                        $weeks = floor($interval->days / 7);
+                                        $set('recur_count', $weeks);
+                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                        $months = ($interval->y * 12) + $interval->m;
+                                        $set('recur_count', $months);
+                                    }
+                                }),
 
-                        ])
-
-                        ,
-                        Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
-                                Grid::make()->label('')->columns(2)->schema([
+                        ]),
+                        Fieldset::make('requrrence_pattern')->columnSpanFull()->label('Recurrence pattern')->schema([
+                            Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
+                                Grid::make()->columnSpanFull()->columns(2)->schema([
                                     Radio::make('requr_pattern_set_days')->label('')
                                         ->options([
                                             'specific_days' => 'Every',
@@ -173,15 +191,14 @@ class DailyTasksSettingUpResource extends Resource
                                     TextInput::make('requr_pattern_day_recurrence_each')->minValue(1)->maxValue(7)->numeric()->hidden(fn(Get $get): bool => ($get('requr_pattern_set_days') == 'every_day'))->label('Day(s)'),
                                 ]),
                             ]),
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
-                                Grid::make()->label('')->columns(2)->schema([
-                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')
-                                    ,
+                            Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
+                                Grid::make()->columnSpanFull()->columns(2)->schema([
+                                    TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:'),
                                     ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
                                 ]),
                             ]),
-                            Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
-                                Grid::make()->label('')->columns(3)->schema([
+                            Fieldset::make()->columnSpanFull()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
+                                Grid::make()->columnSpanFull()->columns(3)->schema([
                                     Radio::make('requr_pattern_monthly_status')->label('')
                                         ->columnSpan(1)
                                         ->options([
@@ -200,7 +217,8 @@ class DailyTasksSettingUpResource extends Resource
                                             'second' => 'second',
                                             'third' => 'third',
                                             'fourth' => 'fourth',
-                                            'fifth' => 'fifth'])->default('first'),
+                                            'fifth' => 'fifth'
+                                        ])->default('first'),
                                         Select::make('requr_pattern_order_day')->label('')->options(getDays())->default('Saturday'),
                                     ]),
                                 ]),
@@ -271,7 +289,7 @@ class DailyTasksSettingUpResource extends Resource
                 SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
                     Branch::select('name', 'id')->pluck('name', 'id')
                 ),
-            ],FiltersLayout::AboveContent)
+            ], FiltersLayout::AboveContent)
             ->recordActions([
                 EditAction::make(),
                 // ActionGroup::make([
@@ -305,7 +323,6 @@ class DailyTasksSettingUpResource extends Resource
         }
 
         return $query::count();
-
     }
 
     public static function getPages(): array
@@ -351,7 +368,8 @@ class DailyTasksSettingUpResource extends Resource
     public static function canView(Model $record): bool
     {
 
-        if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
+        if (
+            isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->employee?->id) ||
             (isSystemManager() && $record->assigned_by == auth()?->user()?->employee?->id)
         ) {
             return true;
@@ -370,9 +388,11 @@ class DailyTasksSettingUpResource extends Resource
     public static function canEdit(Model $record): bool
     {
 
-        if (isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->id) ||
+        if (
+            isSuperAdmin() || (isBranchManager() && $record->assigned_by == auth()?->user()?->id) ||
             (isSystemManager() && $record->assigned_by == auth()?->user()?->id)
-            || isStuff() || isFinanceManager()) {
+            || isStuff() || isFinanceManager()
+        ) {
             return true;
         }
         return false;

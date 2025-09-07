@@ -786,7 +786,7 @@ class EmployeeResource extends Resource
                             $employee->update([
                                 'branch_id' => $newBranchId,
                             ]);
-                        }),
+                        })->hidden(),
                     EditAction::make(),
                     ViewAction::make(),
                     DeleteAction::make(),
