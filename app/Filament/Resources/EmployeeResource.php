@@ -236,7 +236,8 @@ class EmployeeResource extends Resource
                                                 if ($branchId) {
                                                     return Employee::active()
                                                         ->forBranch($branchId)
-                                                        ->employeeTypesManagers()
+                                                        // ->employeeTypesManagers()
+                                                        ->whereIn('employee_type', [1, 2, 3])
                                                         ->when(
                                                             $currentEmployeeId,
                                                             fn($query) =>
