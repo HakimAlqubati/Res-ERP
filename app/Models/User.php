@@ -130,7 +130,10 @@ class User extends Authenticatable implements FilamentUser, Auditable
             return Storage::disk('s3')->url($this->avatar);
         }
         if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
-            return Storage::disk('public')->url($this->avatar);
+            if (env('APP_ENV') == 'local') {
+                return Storage::disk('public')->url($this->avatar);
+            }
+            return url('/') .  Storage::disk('public')->url($this->avatar); 
         }
 
         // Ensure the default image exists on the local storage
