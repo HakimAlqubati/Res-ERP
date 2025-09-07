@@ -229,24 +229,24 @@ class EmployeeResource extends Resource
                                             // ->requiredIf('is_ceo', false)
                                             ->required(fn(Get $get) => in_array((int) $get('employee_type'), [3, 4]))
 
-                                            // ->options(function ($get, $livewire) {
-                                            //     $branchId = $get('branch_id');
-                                            //     // نحصل على ID الموظف الحالي إن كنا في edit mode
-                                            //     $currentEmployeeId = $livewire->record?->id;
-                                            //     if ($branchId) {
-                                            //         return Employee::active()
-                                            //             ->forBranch($branchId)
-                                            //             // ->employeeTypesManagers()
-                                            //             ->whereIn('employee_type', [1, 2, 3])
-                                            //             ->when(
-                                            //                 $currentEmployeeId,
-                                            //                 fn($query) =>
-                                            //                 $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي
-                                            //             )
-                                            //             ->pluck('name', 'id');
-                                            //     }
-                                            //     return [];
-                                            // })
+                                            ->options(function ($get, $livewire) {
+                                                $branchId = $get('branch_id');
+                                                // نحصل على ID الموظف الحالي إن كنا في edit mode
+                                                $currentEmployeeId = $livewire->record?->id;
+                                                if ($branchId) {
+                                                    return Employee::active()
+                                                        ->forBranch($branchId)
+                                                        // ->employeeTypesManagers()
+                                                        ->whereIn('employee_type', [1, 2, 3])
+                                                        ->when(
+                                                            $currentEmployeeId,
+                                                            fn($query) =>
+                                                            $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي
+                                                        )
+                                                        ->pluck('name', 'id');
+                                                }
+                                                return [];
+                                            })
                                             ,
 
                                         Select::make('department_id')
