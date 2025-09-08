@@ -119,10 +119,10 @@ class AttendanceCreator
             $remainingSeconds *= -1;
             $message = __('notifications.please_wait_for_a') . ' ' . $remainingMinutes . ' ' . __('notifications.minutue') . ' ' . $remainingSeconds . ' ' . __('notifications.second');
             Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, Attendance::ATTENDANCE_TYPE_RFID);
-            // return [
-            //     'success' => false,
-            //     'message' => $message,
-            // ];
+            return [
+                'success' => false,
+                'message' => $message,
+            ];
         }
 
         // بيانات أولية للحضور
