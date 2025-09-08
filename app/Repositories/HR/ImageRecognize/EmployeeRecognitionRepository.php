@@ -32,9 +32,9 @@ class EmployeeRecognitionRepository
         }
 
         $nameRaw = $item['Name']['S']; // مثال: "Ali-123"
-        $parts   = explode('-', $nameRaw, 2);
-        $name    = $parts[0] ?? 'Unknown';
-        $empId   = $parts[1] ?? null;
+        $parts  = explode('-', $nameRaw);
+        $empId  = trim(array_pop($parts));          // آخر جزء = ID
+        $name   = trim(implode('-', $parts));
 
         $employee = $empId ? Employee::find($empId) : null;
 

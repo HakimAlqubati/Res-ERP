@@ -98,3 +98,14 @@ Route::get('/test-attendance', function () {
     );
     return response()->json($result);
 });
+
+Route::get('/testresult', function () {
+    $nameRaw = "KHAIRALAH EBRAHIM MOHMMED ABDULLAH AL-dd-dd-dd-sdf-werw-sdf- 234sdf - SHARAEA-1";
+    $parts  = explode('-', $nameRaw);
+    $empId  = trim(array_pop($parts));          // آخر جزء = ID
+    $name   = trim(implode('-', $parts));  
+    return [
+        'empId'=> $empId,
+        'name' => $name
+    ];
+});
