@@ -20,6 +20,7 @@ class EmployeeIdentificationController extends Controller
         try {
             $match = $this->service->identify($file);
 
+            dd($match);
             return response()->json([
                 'status' => 'success',
                 'match'  => [
