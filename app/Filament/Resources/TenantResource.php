@@ -254,8 +254,8 @@ class TenantResource extends Resource
 
             // Run the mysqldump command
             $process = new Process([
-                'C:\xampp\mysql\bin\mysqldump.exe',
-                // 'mysqldump',
+                // 'C:\xampp\mysql\bin\mysqldump.exe',
+                'mysqldump',
                 '--user=' . env('DB_USERNAME', 'root'),
                 '--password=' . env('DB_PASSWORD'),
                 '--host=' . env('DB_HOST'),
