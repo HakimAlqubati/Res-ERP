@@ -116,9 +116,9 @@ class TaskResource extends Resource
 
         return $schema
             ->components([
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
 
-                    Grid::make()->columns(7)->schema([
+                    Grid::make()->columnSpanFull()->columns(7)->schema([
                         TextInput::make('title')
                             ->required()
                             ->disabledOn('edit')
@@ -179,8 +179,8 @@ class TaskResource extends Resource
                             ->searchable(),
 
                     ]),
-                    Fieldset::make()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
-                        Grid::make()->columns(4)->schema([
+                    Fieldset::make()->columnSpanFull()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
+                        Grid::make()->columnSpanFull()->columns(4)->schema([
                             ToggleButtons::make('schedule_type')
                                 ->label('')
                                 ->columnSpan(2)
@@ -200,7 +200,7 @@ class TaskResource extends Resource
                                         $set('recur_count', 7);
                                     }
                                 }),
-                            Grid::make()->columns(1)->columnSpan(1)->schema([
+                            Grid::make()->columnSpanFull()->columns(1)->columnSpan(1)->schema([
                                 DatePicker::make('start_date')
                                     ->default(date('Y-m-d', strtotime('+1 days')))
                                     ->columnSpan(1)
@@ -276,7 +276,7 @@ class TaskResource extends Resource
                         ]),
                         Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
-                                Grid::make()->label('')->columns(2)->schema([
+                                Grid::make() ->columns(2)->schema([
                                     Radio::make('requr_pattern_set_days')->label('')
                                         ->options([
                                             'specific_days' => 'Every',
@@ -286,13 +286,13 @@ class TaskResource extends Resource
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
-                                Grid::make()->label('')->columns(2)->schema([
+                                Grid::make() ->columns(2)->schema([
                                     TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
                                     ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
-                                Grid::make()->label('')->columns(3)->schema([
+                                Grid::make() ->columns(3)->schema([
                                     Radio::make('requr_pattern_monthly_status')->label('')
                                         ->columnSpan(1)
                                         ->options([
@@ -370,21 +370,21 @@ class TaskResource extends Resource
                         })
                         ->visibleOn('edit')
                         ->label('')->schema([
-                            Rating::make('rating_value')
-                                ->theme(RatingTheme::HalfStars)
-                                ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
-                                ->helperText(function ($record) {
+                            // Rating::make('rating_value')
+                            //     ->theme(RatingTheme::HalfStars)
+                            //     ->label('')->theme(RatingTheme::Simple)->stars(10)->size('lg')
+                            //     ->helperText(function ($record) {
 
-                                    if (is_null($record?->rating_value)) {
-                                        return 'Rate this from 0 to 10';
-                                    } else {
-                                        return "Your rating:" . $record->rating_value . "/10";
-                                    }
-                                })
-                                ->live()
-                                ->afterStateUpdated(function (?string $state, ?string $old, $component) {
-                                    $component->helperText("Your rating: $state/10");
-                                }),
+                            //         if (is_null($record?->rating_value)) {
+                            //             return 'Rate this from 0 to 10';
+                            //         } else {
+                            //             return "Your rating:" . $record->rating_value . "/10";
+                            //         }
+                            //     })
+                            //     ->live()
+                            //     ->afterStateUpdated(function (?string $state, ?string $old, $component) {
+                            //         $component->helperText("Your rating: $state/10");
+                            //     }),
                         ])->hidden(),
 
                     FileUpload::make('file_path')
