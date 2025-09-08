@@ -232,21 +232,22 @@ class EmployeeResource extends Resource
                                             ->options(function (Get $get, ?Employee $record) {
                                                 $branchId = $get('branch_id');
                                                 $currentEmployeeId = $record?->id; // سيكون null في List/Create، ومتوفر في Edit/View
-                                        
+
                                                 if ($branchId) {
                                                     return Employee::active()
                                                         ->forBranch($branchId)
                                                         // ->employeeTypesManagers()
                                                         ->whereIn('employee_type', [1, 2, 3])
-                                                        ->when($currentEmployeeId, fn ($query) =>
+                                                        ->when(
+                                                            $currentEmployeeId,
+                                                            fn($query) =>
                                                             $query->where('id', '!=', $currentEmployeeId) // استبعاد الموظف الحالي إن كنا في وضع التعديل
                                                         )
                                                         ->pluck('name', 'id');
                                                 }
-                                        
+
                                                 return [];
-                                            })
-                                            ,
+                                            }),
 
                                         Select::make('department_id')
                                             ->columnSpan(1)
@@ -495,7 +496,7 @@ class EmployeeResource extends Resource
     }
 
     public static function table(Table $table): Table
-    { 
+    {
         return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
@@ -643,6 +644,11 @@ class EmployeeResource extends Resource
 
                     ->options([1 => 'Active', 0 => 'Inactive'])
                     ->label('Active'),
+                SelectFilter::make('employee_type')
+                    ->label('Role type')
+                    ->options(UserType::where('active', 1)->pluck('name', 'id')->toArray())
+                    ->searchable()
+                    ->multiple(),
             ], FiltersLayout::AboveContent)
             ->headerActions([
                 Action::make('export_employees')
