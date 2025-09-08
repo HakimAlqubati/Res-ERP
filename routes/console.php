@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Resources\TenantResource;
+use App\Jobs\TestJob;
 use App\Mail\GeneralNotificationMail;
 use App\Models\CustomTenantModel;
 use App\Models\NotificationSetting;
@@ -29,9 +30,8 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::call(function () {
-    
-    // Log::info('Running scheduled backup for all tenants at ' . now());
-    // $now = Carbon::now(); 
+    Log::info('✅ Closure every minute — ' . now());
+
     // $tenants = CustomTenantModel::where('active', 1)->get();
 
     // foreach ($tenants as $tenant) {
@@ -44,5 +44,10 @@ Schedule::call(function () {
     //         ]);
     //     }
     // }
-})->everyMinute();
+    // Artisan::command('test:cron', function () {
+    //     $this->info('Test Cron executed at ' . now());
+    //     Log::info('🟢 TestCron executed at ' . now());
+    // })->describe('My test cron command');
+})->everyTwoMinutes();
 // })->everySixHours();
+Schedule::command('test:cron')->everyMinute();

@@ -21,12 +21,14 @@ class Kernel extends ConsoleKernel
             \Illuminate\Support\Facades\Log::info('✅ Laravel scheduler is working! — ' . now());
         })->everyMinute();
 
-        
+        $schedule->job(new \App\Jobs\TestJob)->everyTwoMinutes();
+
         // $schedule->command('inspire')->hourly();
         // $schedule->command('app:schedule-task')->dailyAt('06:00');
         // $schedule->command('app:schedule-task')->everyMinute();
         // $schedule->command('report:send-absent-employees')->dailyAt('10:00');
-        // $schedule->call('test:cron')->everyMinute();
+        // $schedule->command('test:cron')->everyTwoMinutes();
+
         // $schedule->call(function () {
         //      Log::info('Scheduled task ran at ' . now());
         // })->everyMinute();
@@ -43,7 +45,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }
