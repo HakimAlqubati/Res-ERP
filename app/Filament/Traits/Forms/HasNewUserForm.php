@@ -102,20 +102,31 @@ trait HasNewUserForm
                                     ->whereIn('id', $allowed);
                             }
                         )
+                        ->validationAttribute('Roles')
+                        ->validationMessages([
+                            // Error triggered on each item: roles.*.in
+                            '*.in'     => 'The selected role is not valid for the current user type. Please choose only from the available roles or change the user type.',
+                            // Fallback if error comes on the whole array
+                            'in'       => 'One of the selected roles is not valid for the current user type.',
+                            'array'    => 'The roles list format is invalid.',
+                            'required' => 'Please select at least one role.',
+                        ])
+
+                        // ->helperText('الأدوار المعروضة تعتمد على نوع المستخدم. عند تغيير "User type" قد تصبح بعض الأدوار غير متاحة.')
                         // ->maxItems(1)
                         ->live()
-                        // ->options(function (Get $get) {
-                        //     // dd($get('user_type'),'hi');
-                        //     if ($get('user_type')) {
-                        //         $roles = getRolesByTypeId($get('user_type'));
-                        //         // dd($roles,gettype($roles));
-                        //         return Role::select('name', 'id')
-                        //             ->whereIn('id', $roles)
-                        //             ->orderBy('name', 'asc')
-                        //             ->get()->pluck('name', 'id');
-                        //     }
-                        // })
-                        ,
+                    // ->options(function (Get $get) {
+                    //     // dd($get('user_type'),'hi');
+                    //     if ($get('user_type')) {
+                    //         $roles = getRolesByTypeId($get('user_type'));
+                    //         // dd($roles,gettype($roles));
+                    //         return Role::select('name', 'id')
+                    //             ->whereIn('id', $roles)
+                    //             ->orderBy('name', 'asc')
+                    //             ->get()->pluck('name', 'id');
+                    //     }
+                    // })
+                    ,
                 ]),
                 Grid::make()->columnSpanFull()->columns(2)->schema([
 
@@ -132,8 +143,8 @@ trait HasNewUserForm
                             if (! $branchId) {
                                 return [];
                             }
-                    
-                            return User::where('branch_id', $branchId)->whereIn('user_type',[1,2,3])
+
+                            return User::where('branch_id', $branchId)->whereIn('user_type', [1, 2, 3])
                                 ->select('id', 'name')
                                 ->pluck('name', 'id');
                         }),
