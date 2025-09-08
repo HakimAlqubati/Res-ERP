@@ -226,7 +226,7 @@ class UserResource extends Resource
                                 throw $th;
                                 showWarningNotifiMessage('Failed to update user', $th->getMessage());
                             }
-                        }),
+                        })->hidden(),
                     // Add a custom action for updating password
                     Action::make('updatePassword')
                         ->schema([

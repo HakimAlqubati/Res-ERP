@@ -126,7 +126,8 @@ class EmployeeResource extends Resource
                                                     },
                                                 ])
                                                 ->columnSpan(1)->required(),
-                                            TextInput::make('email')->columnSpan(1)->email()->unique(ignoreRecord: true),
+                                            TextInput::make('email')->columnSpan(1)->email()
+                                            ->unique(ignoreRecord: true)->required(),
 
                                             TextInput::make('phone_number')
                                                 ->unique(ignoreRecord: true)
