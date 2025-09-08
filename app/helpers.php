@@ -1018,3 +1018,69 @@ if (!function_exists('getEndOfMonthDate')) {
         ];
     }
 }
+
+if (! function_exists('tail_file')) {
+    function tail_file(string $filepath, int $lines = 200): string
+    {
+        $f = new SplFileObject($filepath, 'r');
+        $f->seek(PHP_INT_MAX);
+        $lastLine = $f->key();
+        $start = max(0, $lastLine - $lines);
+
+        $out = [];
+        for ($i = $start; $i <= $lastLine; $i++) {
+            $f->seek($i);
+            $out[] = rtrim((string) $f->current(), "\r\n");
+        }
+        return implode(PHP_EOL, $out);
+    }
+}
+
+if (! function_exists('parse_laravel_log')) {
+    /**
+     * يحوّل نص tail إلى سجلّات منظّمة:
+     * يكتشف بداية السجل عبر نمط: [2025-09-08 05:09:01] local.DEBUG: message...
+     * ويضم الأسطر التالية كسياق/تفاصيل (Stack trace, HTML, ...).
+     */
+    function parse_laravel_log(string $text, bool $includeStack = true): array
+    {
+        $lines = preg_split('/\R/u', $text);
+        $entries = [];
+        $current = null;
+
+        // Regex لسطـر البداية
+        $re = '/^\[(?<datetime>[\d\-:\s]+)\]\s+(?<env>[a-zA-Z0-9_\-]+)\.(?<level>[A-Z]+):\s(?<message>.*)$/u';
+
+        foreach ($lines as $line) {
+            if (preg_match($re, $line, $m)) {
+                // ادفع السابق إن وجد
+                if ($current) {
+                    $current['details'] = rtrim($current['details']);
+                    $entries[] = $current;
+                }
+                $current = [
+                    'datetime' => $m['datetime'],            // "2025-09-08 05:09:01"
+                    'env'      => $m['env'],                 // "local"
+                    'level'    => strtoupper($m['level']),   // "DEBUG", "ERROR", ...
+                    'message'  => $m['message'],             // الرسالة في نفس السطر
+                    'details'  => '',                        // الأسطر التالية (stack/html)
+                ];
+            } else {
+                // تابع للسجل الحالي (stack / html / trace)
+                if ($current && $includeStack) {
+                    $current['details'] .= $line . "\n";
+                }
+            }
+        }
+
+        if ($current) {
+            $current['details'] = rtrim($current['details']);
+            $entries[] = $current;
+        }
+
+        // الأحدث غالبًا في النهاية — إن أردت الأحدث أولاً:
+        // usort($entries, fn($a,$b)=> strcmp($b['datetime'],$a['datetime']));
+
+        return $entries;
+    }
+}

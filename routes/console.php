@@ -29,18 +29,20 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::call(function () {
+    
+    Log::info('Running scheduled backup for all tenants at ' . now());
     // $now = Carbon::now(); 
-    $tenants = CustomTenantModel::where('active', 1)->get();
+    // $tenants = CustomTenantModel::where('active', 1)->get();
 
-    foreach ($tenants as $tenant) {
-        try {
-            TenantResource::generateTenantBackup($tenant);
-            Log::info('Backup successful for tenant: ' . $tenant->name);
-        } catch (\Throwable $e) {
-            Log::error('Backup failed for tenant: ' . $tenant->name, [
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
-// })->everyMinute();
-})->everySixHours();
+    // foreach ($tenants as $tenant) {
+    //     try {
+    //         TenantResource::generateTenantBackup($tenant);
+    //         Log::info('Backup successful for tenant: ' . $tenant->name);
+    //     } catch (\Throwable $e) {
+    //         Log::error('Backup failed for tenant: ' . $tenant->name, [
+    //             'error' => $e->getMessage(),
+    //         ]);
+    //     }
+    // }
+})->everyMinute();
+// })->everySixHours();

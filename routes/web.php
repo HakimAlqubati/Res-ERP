@@ -46,7 +46,7 @@ use Spatie\Permission\Models\Role;
 |
  */
 
-Route::get('home',function(){
+Route::get('home', function () {
 
     return view('welcome');
 });
@@ -455,7 +455,7 @@ Route::get('/update_user_branch_id_for_all_users', function () {
     $users       = User::whereNull('branch_id')->withTrashed()->get();
     $branchUsers = [];
     foreach ($users as $user) {
-                                               // Check if the user has an owner
+        // Check if the user has an owner
         $owner    = $user->owner()->exists();  // Check if the owner relationship exists
         $branch   = $user->branch()->exists(); // Check if the branch relationship exists
         $branchId = 0;
@@ -529,8 +529,8 @@ Route::get('workbench_webcam', function () {
     $userId = auth()->id();
     // Check if an approval record exists for the user
     $approval = Approval::where('route_name', 'workbench_webcam')
-    // ->where('date', $date)
-    // ->where('time', $time)
+        // ->where('date', $date)
+        // ->where('time', $time)
         ->where('created_by', $userId)
         ->first();
 
@@ -597,7 +597,7 @@ Route::get('getAttendancesEarlyDeparture', function () {
     $attendances = Attendance::earlyDepartures()
         ->whereYear('check_date', '2024')
         ->whereMonth('check_date', '11')
-    // ->where('employee_id', 83)
+        // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'early_departure_minutes', 'period_id')
         ->where('check_type', Attendance::CHECKTYPEOUT)
         ->where('early_departure_minutes', '<=', 20)
@@ -630,13 +630,13 @@ Route::get('getAttendancesLateArrival', function () {
     $attendances = Attendance::lateArrival()
         ->whereYear('check_date', '2024')
         ->whereMonth('check_date', '11')
-    // ->where('employee_id', 83)
+        // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'delay_minutes', 'period_id')
         ->get()
-    // ->groupBy('employee_id')
-    // ->map(function ($attendances) {
-    //     return $attendances->toArray();
-    // })
+        // ->groupBy('employee_id')
+        // ->map(function ($attendances) {
+        //     return $attendances->toArray();
+        // })
         ->toArray();
     dd($attendances);
     $result = [];
@@ -726,4 +726,73 @@ Route::get('/clear-opcache', function () {
         return 'OPcache cleared successfully ✅';
     }
     return 'OPcache is not enabled ❌';
+});
+
+Route::get('/_logs/files', function () {
+    abort_unless(app()->environment('local'), 403);
+
+    $dir  = storage_path('logs');
+    $list = [];
+
+    foreach (scandir($dir) as $f) {
+        if (!preg_match('/^laravel(?:-\d{4}-\d{2}-\d{2})?\.log$/', $f)) continue;
+        $path = $dir . DIRECTORY_SEPARATOR . $f;
+        $list[] = [
+            'file'    => $f,
+            'size'    => filesize($path),
+            'updated' => date('c', filemtime($path)),
+            'date'    => preg_match('/^laravel-(\d{4}-\d{2}-\d{2})\.log$/', $f, $m) ? $m[1] : null,
+        ];
+    }
+
+    // الأحدث أولاً
+    usort($list, function($a,$b){ return strcmp($b['updated'], $a['updated']); });
+
+    return response()->json($list);
+});
+
+Route::get('/_logs', function () {
+    abort_unless(app()->environment('local'), 403);
+
+    // params: date=YYYY-MM-DD | file=laravel.log | lines=200 | level=DEBUG|INFO|ERROR | contains=term
+    $date     = request('date');                // مثال: 2025-09-08
+    $file     = request('file');                // يتخطى date إن وُجد
+    $lines    = (int) request('lines', 300);
+    $level    = strtoupper((string) request('level', ''));   // اختياري
+    $contains = (string) request('contains', '');            // اختياري
+    $includeStack = (bool) request('stack', true);           // إظهار التفاصيل/الأسطر المتعددة
+
+    $path = storage_path('logs/' . (
+        $file
+            ? $file
+            : ($date ? "laravel-{$date}.log" : 'laravel.log')
+    ));
+
+    if (! is_file($path)) {
+        return response()->json(['error' => 'Log file not found', 'path' => $path], 404);
+    }
+
+    $rawText = tail_file($path, $lines);
+
+    // حوّل النص إلى سجلات منظّمة
+    $entries = parse_laravel_log($rawText, $includeStack);
+
+    // فلاتر اختيارية
+    if ($level !== '') {
+        $entries = array_values(array_filter($entries, fn($e) => strtoupper($e['level'] ?? '') === $level));
+    }
+    if ($contains !== '') {
+        $q = mb_strtolower($contains);
+        $entries = array_values(array_filter($entries, function($e) use ($q){
+            return str_contains(mb_strtolower($e['message'] ?? ''), $q)
+                || str_contains(mb_strtolower($e['details'] ?? ''), $q);
+        }));
+    }
+
+    return response()->json([
+        'file'    => basename($path),
+        'count'   => count($entries),
+        'updated' => date('c', filemtime($path)),
+        'entries' => $entries,  // مصفوفة مُنظّمة
+    ]);
 });
