@@ -50,6 +50,7 @@ class FaceRecognitionService
         Log::info('rekognition_result_new_service', [$result]);
 
         $matches = $result['FaceMatches'] ?? [];
+        dd($matches);   
         if (empty($matches)) {
             return EmployeeMatch::notFound();
         }
