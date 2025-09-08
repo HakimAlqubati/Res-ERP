@@ -24,30 +24,8 @@ use Illuminate\Support\Facades\Mail;
 | simple approach to interacting with each command's IO methods.
 |
 */
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
-
-Schedule::call(function () {
-    Log::info('✅ Closure every minute — ' . now());
-
-    // $tenants = CustomTenantModel::where('active', 1)->get();
-
-    // foreach ($tenants as $tenant) {
-    //     try {
-    //         TenantResource::generateTenantBackup($tenant);
-    //         Log::info('Backup successful for tenant: ' . $tenant->name);
-    //     } catch (\Throwable $e) {
-    //         Log::error('Backup failed for tenant: ' . $tenant->name, [
-    //             'error' => $e->getMessage(),
-    //         ]);
-    //     }
-    // }
-    // Artisan::command('test:cron', function () {
-    //     $this->info('Test Cron executed at ' . now());
-    //     Log::info('🟢 TestCron executed at ' . now());
-    // })->describe('My test cron command');
-})->everyTwoMinutes();
-// })->everySixHours();
+ 
+// Schedule::call(function () {})->everyTwoMinutes();
+Schedule::command('tenant:backup')
+    ->everyTwoMinutes();
 Schedule::command('test:cron')->everyMinute();
