@@ -113,7 +113,7 @@ class ProductImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                         'transaction_date' => now(),
                         'notes' => 'Opening stock from import',
                         'transactionable_id' => $product->id,
-                        'store_id' => 1,
+                        'store_id' => $row['store'],
                         'transactionable_type' => 'ProductImport',
                         'waste_stock_percentage' => 0,
                     ]);
