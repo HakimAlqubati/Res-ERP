@@ -729,7 +729,7 @@ Route::get('/clear-opcache', function () {
 });
 
 Route::get('/_logs/files', function () {
-    abort_unless(app()->environment('local'), 403);
+    // abort_unless(app()->environment('local'), 403);
 
     $dir  = storage_path('logs');
     $list = [];
@@ -752,7 +752,7 @@ Route::get('/_logs/files', function () {
 });
 
 Route::get('/_logs', function () {
-    abort_unless(app()->environment('local'), 403);
+    // abort_unless(app()->environment('local'), 403);
 
     // params: date=YYYY-MM-DD | file=laravel.log | lines=200 | level=DEBUG|INFO|ERROR | contains=term
     $date     = request('date');                // مثال: 2025-09-08
