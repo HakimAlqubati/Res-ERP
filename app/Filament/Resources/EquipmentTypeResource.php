@@ -21,6 +21,7 @@ use App\Filament\Resources\EquipmentTypeResource\Pages;
 use App\Models\EquipmentType;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
@@ -36,7 +37,7 @@ class EquipmentTypeResource extends Resource
     protected static ?string $label       = 'Equipment Type';
     protected static ?string $pluralLabel = 'Equipment Types';
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon =  Heroicon::PuzzlePiece;
 
     public static function form(Schema $schema): Schema
     {

@@ -127,8 +127,15 @@ trait HasNewUserForm
                         })
                         ->label('Manager')
                         ->searchable()
-                        ->options(function () {
-                            return User::query()->select('name', 'id')->get()->pluck('name', 'id');
+                        ->options(function ($get) {
+                            $branchId = $get('branch_id');
+                            if (! $branchId) {
+                                return [];
+                            }
+                    
+                            return User::where('branch_id', $branchId)->whereIn('user_type',[1,2,3])
+                                ->select('id', 'name')
+                                ->pluck('name', 'id');
                         }),
 
                 ]),

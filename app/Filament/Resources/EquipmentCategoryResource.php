@@ -22,6 +22,7 @@ use App\Filament\Resources\EquipmentCategoryResource\RelationManagers;
 use App\Models\EquipmentCategory;
 use Filament\Forms;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,7 +38,7 @@ class EquipmentCategoryResource extends Resource
 
     protected static ?string $label = 'Equipment Category';
     protected static ?string $pluralLabel = 'Equipment Categories';
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Folder;
 
     public static function form(Schema $schema): Schema
     {

@@ -34,6 +34,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -47,7 +48,7 @@ class WorkPeriodResource extends Resource
 {
     protected static ?string $model = WorkPeriod::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon =Heroicon::Clock;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?string $label = 'Work shifts';

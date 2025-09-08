@@ -35,6 +35,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Pages\Page;
 use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\Layout\Split;
 use Filament\Tables\Columns\Layout\Stack;
@@ -51,7 +52,7 @@ class ServiceRequestResource extends Resource
 {
     protected static ?string $model = ServiceRequest::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::WrenchScrewdriver;
 
     protected static ?string $cluster = HRServiceRequestCluster::class;
 

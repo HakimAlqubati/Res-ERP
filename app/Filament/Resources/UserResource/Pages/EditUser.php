@@ -45,7 +45,7 @@ class EditUser extends EditRecord
             $employee->phone_number = $user->phone_number;
             // }
             // if ($user->isDirty('name')) {
-            $employee->name = $user->name; 
+            $employee->name = $user->name;
             // }
 
             $employee->employee_type = $user?->user_type;
@@ -59,11 +59,18 @@ class EditUser extends EditRecord
             if (!is_null($employee?->nationality)) {
                 $employee->nationality = $user->nationality;
             }
+
+            if (!is_null($user->owner_id)) {
+                $managerEmployee = \App\Models\User::find($user->owner_id)?->employee;
+                if ($managerEmployee) {
+                    $employee->manager_id = $managerEmployee->id;
+                }
+            }
+
+
             // Save changes to the employee model
             $employee->save();
         }
-
-       
     }
     protected function getRedirectUrl(): string
     {
