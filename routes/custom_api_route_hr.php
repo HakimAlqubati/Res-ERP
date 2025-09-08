@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\HR\AttendanceController;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,3 +23,35 @@ Route::get('/test-google-upload', function () {
         return '❌ Error: ' . $e->getMessage();
     }
 });
+
+Route::get('/test-log', function () {
+    // Test different log levels
+    Log::info('This is an INFO level log message');
+    Log::warning('This is a WARNING level log message');
+    Log::error('This is an ERROR level log message');
+    Log::debug('This is a DEBUG level log message');
+    Log::critical('This is a CRITICAL level log message');
+    
+    // Test with context data
+    Log::info('User action performed', [
+        'user_id' => 123,
+        'action' => 'test_log_route',
+        'timestamp' => now(),
+        'ip' => request()->ip()
+    ]);
+    
+    return response()->json([
+        'message' => 'Log test completed successfully',
+        'logs_written' => [
+            'info' => 'INFO level log written',
+            'warning' => 'WARNING level log written', 
+            'error' => 'ERROR level log written',
+            'debug' => 'DEBUG level log written',
+            'critical' => 'CRITICAL level log written',
+            'context_data' => 'INFO log with context data written'
+        ],
+        'check_logs_at' => storage_path('logs/laravel.log')
+    ]);
+});
+
+

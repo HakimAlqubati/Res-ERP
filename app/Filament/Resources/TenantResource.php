@@ -170,61 +170,8 @@ class TenantResource extends Resource
                     ->label('Download Backup')
                     ->requiresConfirmation()
                     ->button()
-                    ->action(function ($record) { 
-                        $dbName = $record->database;
-                        $timestamp = now()->format('Y_m_d_His');
-
-                        $sqlFileName = $dbName . '_' . $timestamp . '.sql';
-                        $zipFileName = $dbName . '_' . $timestamp . '.zip';
-
-                        $sqlPath = storage_path('app/backups/' . $sqlFileName);
-                        $zipPath = storage_path('app/backups/' . $zipFileName);
-
-                        try {
-                            // Ensure backup folder exists
-                            Storage::disk('local')->makeDirectory('backups');
-
-                            // Run the mysqldump command
-                            $process = new Process([
-                                'mysqldump',
-                                // 'C:\xampp\mysql\bin\mysqldump.exe',
-                                '--user=' . env('DB_USERNAME','root'),
-                                '--password=' . env('DB_PASSWORD'),
-                                '--host=' . env('DB_HOST'),
-                                '--ignore-table=' . $dbName . '.audits',
-                                $dbName
-                            ]);
-
-                            $process->setTimeout(3600); // 1 hour timeout
-                            $process->run();
-
-                            if (!$process->isSuccessful()) {
-                                throw new ProcessFailedException($process);
-                            }
-
-                            // Save SQL dump
-                            file_put_contents($sqlPath, $process->getOutput());
-
-                            // Create ZIP archive
-                            $zip = new \ZipArchive;
-                            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-                                $zip->addFile($sqlPath, $sqlFileName);
-                                $zip->close();
-                            } else {
-                                throw new \Exception("Failed to create ZIP file.");
-                            }
-
-                            // Optionally delete the .sql file after zipping
-                            unlink($sqlPath);
-                            // ✅ Upload to Google Drive
-                            $googlePath = 'backups/' . $zipFileName;
-                            Storage::disk('google')->put($googlePath, fopen($zipPath, 'r'));
-                            // Return the ZIP file for download
-                            return Response::download($zipPath)->deleteFileAfterSend(true);
-                        } catch (Throwable $th) {
-                            showWarningNotifiMessage($th->getMessage());
-                            throw $th;
-                        }
+                    ->action(function ($record) {
+                        return self::generateTenantBackup($record);
                     }),
 
 
@@ -288,5 +235,65 @@ class TenantResource extends Resource
             return $th->getMessage();
         }
         // add logic to create database
+    }
+
+    public static function generateTenantBackup($record)
+    {
+        $dbName = $record->database;
+        $timestamp = now()->format('Y_m_d_His');
+
+        $sqlFileName = $dbName . '_' . $timestamp . '.sql';
+        $zipFileName = $dbName . '_' . $timestamp . '.zip';
+
+        $sqlPath = storage_path('app/backups/' . $sqlFileName);
+        $zipPath = storage_path('app/backups/' . $zipFileName);
+
+        try {
+            // Ensure backup folder exists
+            Storage::disk('local')->makeDirectory('backups');
+
+            // Run the mysqldump command
+            $process = new Process([
+                'C:\xampp\mysql\bin\mysqldump.exe',
+                // 'mysqldump',
+                '--user=' . env('DB_USERNAME', 'root'),
+                '--password=' . env('DB_PASSWORD'),
+                '--host=' . env('DB_HOST'),
+                '--ignore-table=' . $dbName . '.audits',
+                $dbName
+            ]);
+
+            $process->setTimeout(3600); // 1 hour timeout
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
+
+            // Save SQL dump
+            file_put_contents($sqlPath, $process->getOutput());
+
+            // Create ZIP archive
+            $zip = new \ZipArchive;
+            if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+                $zip->addFile($sqlPath, $sqlFileName);
+                $zip->close();
+            } else {
+                throw new \Exception("Failed to create ZIP file.");
+            }
+
+            // Optionally delete the .sql file after zipping
+            unlink($sqlPath);
+
+            // Upload to Google Drive
+            $googlePath = 'backups/' . $zipFileName;
+            Storage::disk('google')->put($googlePath, fopen($zipPath, 'r'));
+
+            // Return the response for download
+            return Response::download($zipPath)->deleteFileAfterSend(true);
+        } catch (Throwable $th) {
+            showWarningNotifiMessage($th->getMessage());
+            throw $th;
+        }
     }
 }
