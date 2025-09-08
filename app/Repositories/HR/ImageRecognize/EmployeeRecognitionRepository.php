@@ -24,8 +24,7 @@ class EmployeeRecognitionRepository
             ],
             'ConsistentRead' => true,
         ]);
-
-        dd($result);
+ 
         $item = $result['Item'] ?? null;
         if (!$item || empty($item['Name']['S'])) {
             return [null, null, null];
