@@ -37,6 +37,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -47,7 +48,7 @@ class MonthSalaryResource extends Resource
 {
     protected static ?string $model = MonthSalary::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon =  Heroicon::Banknotes;
 
     protected static ?string $cluster = HRSalaryCluster::class;
 

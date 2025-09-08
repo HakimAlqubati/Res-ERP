@@ -28,6 +28,7 @@ use App\Models\PenaltyDeduction;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -40,7 +41,7 @@ class PenaltyDeductionResource extends Resource
 {
     protected static ?string $model = PenaltyDeduction::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::MinusCircle;
 
     protected static ?string $cluster = HRSalaryCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
