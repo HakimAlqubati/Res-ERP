@@ -39,7 +39,7 @@ class DistrictResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->label('')->schema([
+                Fieldset::make()->columnSpanFull()->label('')->schema([
                     TextInput::make('name')
                         ->required()
                         ->maxLength(255),

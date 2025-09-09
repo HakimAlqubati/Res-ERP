@@ -46,8 +46,8 @@ class LeaveTypeResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
-                    Grid::make()->label('')->columns(7)->schema([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(7)->schema([
                         TextInput::make('name')
                             ->label('Leave type name')
                             ->unique(ignoreRecord: true)->columnSpan(2)

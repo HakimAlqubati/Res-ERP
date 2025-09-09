@@ -50,7 +50,7 @@ class ListLeaveBalances extends ListRecords
                 })
                 ->schema(function () {
                     return [
-                        Fieldset::make()->columns(5)->schema([
+                        Fieldset::make()->columnSpanFull()->columns(5)->schema([
                             Select::make('employee_id')
                                 ->label('Employee')
                                 ->required()

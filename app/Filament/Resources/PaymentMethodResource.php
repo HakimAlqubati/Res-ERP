@@ -43,7 +43,7 @@ class PaymentMethodResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->label('')->schema([
+                Fieldset::make()->columnSpanFull()->label('')->schema([
                     Grid::make()->columns(3)->schema([
                         TextInput::make('name')
                             ->label('Name')

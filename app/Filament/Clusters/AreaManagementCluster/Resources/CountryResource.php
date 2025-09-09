@@ -38,7 +38,7 @@ class CountryResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
                     TextInput::make('name')
                         ->required()
                         ->unique()

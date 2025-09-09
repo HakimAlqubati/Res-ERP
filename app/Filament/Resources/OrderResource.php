@@ -98,8 +98,8 @@ class OrderResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
-                    Grid::make()->columns(3)->schema([
+                Fieldset::make()->columnSpanFull()->schema([
+                    Grid::make()->columnSpanFull()->columns(3)->schema([
                         Select::make('branch_id')->required()
                             ->label(__('lang.branch'))
                             ->options(Branch::where('active', 1)->get(['id', 'name'])->pluck('name', 'id')),

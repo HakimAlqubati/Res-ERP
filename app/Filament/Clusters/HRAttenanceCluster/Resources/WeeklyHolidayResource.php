@@ -40,7 +40,7 @@ class WeeklyHolidayResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
                     TextInput::make('description')
                         ->label('Description')
                         ->nullable(),

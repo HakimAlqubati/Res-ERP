@@ -46,7 +46,7 @@ class StockAdjustmentReasonResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->columns(2)->schema([
+                Fieldset::make()->columnSpanFull()->columns(2)->schema([
                     TextInput::make('name')
                         ->label('Reason Name')
                         ->required()

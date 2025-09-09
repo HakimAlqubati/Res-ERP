@@ -74,7 +74,7 @@ class LeaveBalanceResource extends Resource
                 [
 
                     Fieldset::make('basic')
-                        ->columns(4)
+                        ->columns(4)->columnSpanFull()
                         ->label('Set branch employees, the Leave type and Year')
                         ->schema([
 

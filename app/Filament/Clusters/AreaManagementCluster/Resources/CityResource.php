@@ -39,7 +39,7 @@ class CityResource extends Resource
     {
         return $schema
             ->components([
-                Fieldset::make()->schema([
+                Fieldset::make()->columnSpanFull()->schema([
                     TextInput::make('name')
                         ->required()
                         ->maxLength(255),

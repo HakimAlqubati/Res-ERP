@@ -323,7 +323,7 @@ class SettingResource extends Resource
                         Tab::make('Task Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema([
-                                Fieldset::make('')->columns(4)->schema([
+                                Fieldset::make('')->columnSpanFull()->columns(4)->schema([
                                     TextInput::make('task_rejection_times_red_card')
                                         ->label('Rejections times lead to red')
                                         ->default(2)
@@ -358,7 +358,7 @@ class SettingResource extends Resource
                                         ->prefixIcon('heroicon-o-document-currency-dollar')
                                         ->helperText('Specify the deduction amount for employees who receive a red card')
                                         ->default(1),
-                                    Checkbox::make('show_warning_message')
+                                    Toggle::make('show_warning_message')
                                         ->inline(true)
                                         ->label('Show warning message before second rejection')
                                         ->default(false)
@@ -379,7 +379,7 @@ class SettingResource extends Resource
                         Tab::make('Stock Settings')->hidden(fn(): bool => isFinanceManager())
                             ->icon('heroicon-o-shopping-cart')
                             ->schema([
-                                Fieldset::make('')->label('Purchase Settings')->columns(3)->schema([
+                                Fieldset::make('')->columnSpanFull()->label('Purchase Settings')->columns(3)->schema([
                                     Toggle::make('purchase_invoice_no_required_and_disabled_on_edit')
                                         ->inline(false)
                                         ->label('Up: Purchase Invoice Number')
@@ -389,7 +389,7 @@ class SettingResource extends Resource
                                         ->helperText('Purchase Invoice Number is mandatory and becomes non-editable once entered.')
                                         ->default(false),
                                 ]),
-                                Fieldset::make('GRN Workflow Settings')->columns(2)->schema([
+                                Fieldset::make('GRN Workflow Settings')->columnSpanFull()->columns(2)->schema([
                                     Toggle::make('purchase_invoice_from_grn_only')
                                         ->inline(false)->columnSpanFull()
                                         ->label('Enable GRN')
@@ -421,7 +421,7 @@ class SettingResource extends Resource
                                     //     ->inline(false),
                                 ]),
 
-                                Fieldset::make('')->label('Orders Settings')->columns(3)->schema([
+                                Fieldset::make('')->columnSpanFull()->label('Orders Settings')->columns(3)->schema([
                                     // Select::make('calculating_orders_price_method')
                                     //     ->label(__('system_settings.calculating_orders_price_method'))
                                     //     ->options([
@@ -456,7 +456,7 @@ class SettingResource extends Resource
                                             ->default(false),
                                     ]),
 
-                                    Fieldset::make('Toggle Dashboard Sections')->columns(2)->schema([
+                                    Fieldset::make('Toggle Dashboard Sections')->columnSpanFull()->columns(2)->schema([
                                         Toggle::make('show_dashboard_grns')->label('Show GRNs Section')->default(true),
                                         Toggle::make('show_dashboard_invoices')->label('Show Invoices Section')->default(false),
                                         Toggle::make('show_dashboard_branch_orders')->label('Show Branch Orders Section')->default(false),

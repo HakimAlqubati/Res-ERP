@@ -18,9 +18,7 @@
             z-index: 10;
         }
 
-        button {
-            background: #0d7c66;
-        }
+     
     </style>
     {{ $this->getTableFiltersForm() }}
     <div class="flex justify-end mb-4">
