@@ -47,7 +47,7 @@ class LivenessController extends Controller
         // قيود آمنة على المدخلات
         $maxAttemptsReq = (int) $request->input('max_attempts', 1);
         $baseDelayMsReq = (int) $request->input('base_delay_ms', 200);
-        $minScoreReq    = (float) $request->input('min_score', 0.70);
+        $minScoreReq    = (float) $request->input('min_score', 0.50);
 
         $maxAttempts = max(1, min($maxAttemptsReq, 6));       // 1..6
         $baseDelayMs = max(50, min($baseDelayMsReq, 2000));   // 50..2000 ms
