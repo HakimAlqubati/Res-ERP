@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\Reports\ResellerReportController;
 use App\Http\Controllers\Api\Reports\StockAdjustmentReportController;
 use App\Http\Controllers\Api\Reports\StoreCostReportController;
 use App\Http\Controllers\Api\ReturnedOrderController;
+use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
@@ -232,7 +233,7 @@ Route::get('branchConsumptionReport', [BranchConsumptionController::class, 'inde
 Route::get('branchConsumptionReport/topBranches', [BranchConsumptionController::class, 'topBranches']);
 Route::get('branchConsumptionReport/topProducts', [BranchConsumptionController::class, 'topProducts']);
 
-
+Route::get('/app/settings', [SettingController::class, 'show']);
  
 require base_path('routes/custom_api_route_hr.php');
 require base_path('routes/custom_route.php');

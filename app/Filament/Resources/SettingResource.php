@@ -23,7 +23,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Form; 
+use Filament\Forms\Form;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -279,6 +279,11 @@ class SettingResource extends Resource
                                             ->helperText('Choose the delay before capturing an image.')
                                             ->native(false)
                                             ->required(),
+                                        Toggle::make('show_switch_camera_button')
+                                            ->label('Show Switch-Camera Button')
+                                            ->helperText('Toggle to show or hide the camera switch button in the mobile app.')
+                                            ->inline(false)
+                                            ->default(false),
                                     ]),
 
                             ])
