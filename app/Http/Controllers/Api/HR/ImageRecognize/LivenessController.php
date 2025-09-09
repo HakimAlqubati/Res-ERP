@@ -181,7 +181,7 @@ class LivenessController extends Controller
                 'min_score' => $minScore,
                 'result'    => $lastResult,
                 'corr_id'   => $corrId,
-                'message'   => 'Python service did not confirm liveness.',
+                'message'   => 'No clear face found',
             ], 502);
         }
 
