@@ -28,7 +28,7 @@ class TestCronJob extends Command
      */
     public function handle()
     {
-        Log::info('Hi Hakim');
+        // Log::info('Hi Hakim');
 
     }
 }

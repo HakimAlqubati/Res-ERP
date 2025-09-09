@@ -28,21 +28,21 @@ class TenantBackupCommand extends Command
      */
     public function handle(): int
     {
-        Log::info('🚀 tenant:backup started at ' . now());
+        // Log::info('🚀 tenant:backup started at ' . now());
 
         $tenants = CustomTenantModel::where('active', 1)->get();
 
         foreach ($tenants as $tenant) {
             try {
                 TenantResource::generateTenantBackup($tenant);
-                Log::info('Backup successful for tenant: ' . $tenant->name);
+                // Log::info('Backup successful for tenant: ' . $tenant->name);
             } catch (\Throwable $e) {
-                Log::error('Backup failed for tenant: ' . $tenant->name, [
-                    'error' => $e->getMessage(),
-                ]);
+                // Log::error('Backup failed for tenant: ' . $tenant->name, [
+                //     'error' => $e->getMessage(),
+                // ]);
             }
         }
-        Log::info('🏁 tenant:backup finished at ' . now());
+        // Log::info('🏁 tenant:backup finished at ' . now());
         return self::SUCCESS;
     }
 }
