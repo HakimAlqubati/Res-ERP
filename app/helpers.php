@@ -550,7 +550,9 @@ if (!function_exists('getNationalities')) {
 if (!function_exists('getNationalitiesAsCountries')) {
     function getNationalitiesAsCountries(): array
     {
-        $path = storage_path('app/data/nationalities.json');
+        $path = file_exists(storage_path('app/data/nationalities.json')) 
+            ? storage_path('app/data/nationalities.json') 
+            : public_path('data/nationalities.json');;
 
         $nationalities = [];
 
