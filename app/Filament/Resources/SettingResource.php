@@ -260,10 +260,10 @@ class SettingResource extends Resource
                                                 '600000' => 'Ten Minutes',
                                             ])
                                             ->default('30000')
-                                            ->native(false)
+                                            ->native(false)->columnSpan(2)
                                             ->required()
                                             ->helperText('Select the camera timeout duration.'),
-                                        Select::make('webcam_capture_time')
+                                        Select::make('webcam_capture_time')->columnSpan(2)
                                             ->label('Image Capture Delay (Seconds)')
                                             ->options([
                                                 '500'   => 'Half a Second',
@@ -279,11 +279,32 @@ class SettingResource extends Resource
                                             ->helperText('Choose the delay before capturing an image.')
                                             ->native(false)
                                             ->required(),
-                                        Toggle::make('show_switch_camera_button')
-                                            ->label('Show Switch-Camera Button')
-                                            ->helperText('Toggle to show or hide the camera switch button in the mobile app.')
-                                            ->inline(false)
-                                            ->default(false),
+
+                                        Grid::make()->columnSpanFull()->columns(4)->schema([
+                                            Toggle::make('show_switch_camera_button')
+                                                ->label('Show Switch-Camera Button')
+                                                ->helperText('Toggle to show or hide the camera switch button in the mobile app.')
+                                                ->inline(false)
+                                                ->default(false),
+                                            TextInput::make('face_raw_min')
+                                                ->label('Face Raw Min')
+                                                ->numeric()
+                                                ->required()->hint(0.20)
+                                                ->default(0.20),
+
+                                            TextInput::make('face_raw_ideal')
+                                                ->label('Face Raw Ideal')
+                                                ->numeric()->hint(0.22)
+                                                ->required()
+                                                ->default(0.22),
+
+                                            TextInput::make('face_raw_max')
+                                                ->label('Face Raw Max')
+                                                ->numeric()->hint(0.50)
+                                                ->required()
+                                                ->default(0.50),
+                                        ])
+
                                     ]),
 
                             ])

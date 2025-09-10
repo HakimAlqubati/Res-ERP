@@ -8,12 +8,15 @@ use Illuminate\Http\Request;
 
 class SettingController extends Controller
 {
-      public function show(Request $request)
+    public function show(Request $request)
     {
         // يمكنك إضافة وسيطات platform/version في المستقبل
         return response()->json([
             // مفاتيح أخرى إن أردت (countdown, screensaver, ovalRxPct, ...)
             'showSwitchCameraButton' => (bool) Setting::getSetting('show_switch_camera_button', false),
+            'faceRawMin' => (float) Setting::getSetting('face_raw_min', 0.20),
+            'faceRawIdeal' => (float) Setting::getSetting('face_raw_ideal', 0.22),
+            'faceRawMax' => (float) Setting::getSetting('face_raw_max', 0.50),
             'updatedAt' => now()->toIso8601String(),
         ]);
     }
