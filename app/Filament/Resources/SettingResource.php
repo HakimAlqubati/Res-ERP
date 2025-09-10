@@ -280,7 +280,7 @@ class SettingResource extends Resource
                                             ->native(false)
                                             ->required(),
 
-                                        Grid::make()->columnSpanFull()->columns(4)->schema([
+                                        Grid::make()->columnSpanFull()->columns(5)->schema([
                                             Toggle::make('show_switch_camera_button')
                                                 ->label('Show Switch-Camera Button')
                                                 ->helperText('Toggle to show or hide the camera switch button in the mobile app.')
