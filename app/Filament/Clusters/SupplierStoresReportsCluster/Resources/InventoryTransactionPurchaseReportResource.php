@@ -2,6 +2,7 @@
 
 namespace App\Filament\Clusters\SupplierStoresReportsCluster\Resources;
 
+use App\Enums\ProductType;
 use Filament\Pages\Enums\SubNavigationPosition;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\ListInventoryTransactionPurchaseReport;
 use App\Filament\Clusters\SupplierStoresReportsCluster\Resources\InventoryTransactionReportResource\Pages\PurchaseDetails;
@@ -87,11 +88,12 @@ class InventoryTransactionPurchaseReportResource extends Resource
                     }),
                 SelectFilter::make('manufacturing_filter')
                     ->label('Product Type')
-                    ->options([
-                        'only_mana' => 'Manufactured',
-                        'only_unmana' => 'Unmanufactured',
-                    ])
-                    ->default('all'),
+                    ->options(
+                        collect(ProductType::cases())
+                            ->mapWithKeys(fn($case) => [$case->value => $case->label()])
+                            ->toArray()
+                    )
+                    ->default(ProductType::All->value),
                 SelectFilter::make('category_id')
                     ->label('Category')
                     ->options(Category::active()->pluck('name', 'id')->toArray())
@@ -130,5 +132,4 @@ class InventoryTransactionPurchaseReportResource extends Resource
         }
         return false;
     }
-    
 }

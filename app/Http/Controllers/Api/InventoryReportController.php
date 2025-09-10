@@ -128,6 +128,9 @@ class InventoryReportController extends Controller
                 ->centralKitchenStores()
                 ->pluck('name', 'id')->toArray(),
             'movement_types' => InventoryTransaction::getMovementTypes(),
+            'manufacturing_filter' => collect(\App\Enums\ProductType::cases())
+                ->mapWithKeys(fn($case) => [$case->value => $case->label()])
+                ->toArray(),
         ];
 
         return response()->json($filters);
