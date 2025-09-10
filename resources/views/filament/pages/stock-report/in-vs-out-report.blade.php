@@ -4,6 +4,10 @@
         .fi-tabs {
             display: none !important;
         }
+
+        .text-center {
+            text-align: center !important;
+        }
     </style>
     <div class="flex justify-end mb-4">
         <button id="printReport"
@@ -36,18 +40,12 @@
                 <tbody>
                     @foreach ($reportData as $row)
                         <tr>
-                            <td
-                                class="border px-4 py-1 text-center">{{ $row['product_name'] }}</td>
-                            <td
-                                class="border px-4 py-1 text-center">{{ $row['product_code'] }}</td>
-                            <td
-                                class="border px-4 py-1 text-center">{{ $row['unit_name'] }}</td>
-                            <td
-                                class="border px-4 py-1 text-center">{{ $row['in_qty'] }}</td>
-                            <td
-                                class="border px-4 py-1 text-center">{{ $row['out_qty'] }}</td>
-                            <td
-                                class="border px-4 py-1 text-center font-semibold">{{ $row['difference'] }}</td>
+                            <td class="border px-4 py-1 text-center">{{ $row['product_name'] }}</td>
+                            <td class="border px-4 py-1 text-center">{{ $row['product_code'] }}</td>
+                            <td class="border px-4 py-1 text-center">{{ $row['unit_name'] }}</td>
+                            <td class="border px-4 py-1 text-center">{{ $row['in_qty'] }}</td>
+                            <td class="border px-4 py-1 text-center">{{ $row['out_qty'] }}</td>
+                            <td class="border px-4 py-1 text-center font-semibold">{{ $row['difference'] }}</td>
                             {{-- <td
                                 class="border px-4 py-1 text-center">{{ $row['in_price'] }}</td> --}}
                         </tr>
