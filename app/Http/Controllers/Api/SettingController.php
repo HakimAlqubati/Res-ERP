@@ -17,6 +17,7 @@ class SettingController extends Controller
             'faceRawMin' => (float) Setting::getSetting('face_raw_min', 0.20),
             'faceRawIdeal' => (float) Setting::getSetting('face_raw_ideal', 0.22),
             'faceRawMax' => (float) Setting::getSetting('face_raw_max', 0.50),
+            'cropScale' => (float) Setting::getSetting('crop_scale', 0.7),
             'updatedAt' => now()->toIso8601String(),
         ]);
     }

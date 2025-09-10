@@ -303,6 +303,11 @@ class SettingResource extends Resource
                                                 ->numeric()->hint(0.50)
                                                 ->required()
                                                 ->default(0.50),
+                                            TextInput::make('crop_scale')
+                                                ->label('Crop Scale')
+                                                ->numeric()->hint(0.7)
+                                                ->required()
+                                                ->default(0.7),
                                         ])
 
                                     ]),
