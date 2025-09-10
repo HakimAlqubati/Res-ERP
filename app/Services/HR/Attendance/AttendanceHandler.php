@@ -58,13 +58,29 @@ class AttendanceHandler
 
             if ($employee) {
 
-                $latstCheckIn = Attendance::where('employee_id', $this->employeeId)->with('period')
+                // $latstCheckIn = Attendance::where('employee_id', $this->employeeId)->with('period')
+                //     ->where('accepted', 1)
+                //     ->select('id', 'check_type', 'period_id', 'check_date', 'check_time')
+                //     ->latest('id')->where('check_date', '>=', $this->previousDate)
+                //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                //     ->first();
+
+                $openCheckIn = Attendance::where('employee_id', $this->employeeId)
                     ->where('accepted', 1)
-                    ->select('id', 'check_type', 'period_id', 'check_date', 'check_time')
-                    ->latest('id')->where('check_date', '>=', $this->previousDate)
                     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
+                    ->whereBetween('check_date', [$this->previousDate, $this->nextDate])
+                    ->select('id', 'check_type', 'period_id', 'check_date', 'check_time')
+                    ->whereDoesntHave('checkout', function ($q) {
+                        // نفترض عندك علاقة اسمها checkout في الموديل
+                        // اللي تجيب سجلات الخروج المرتبطة عبر checkinrecord_id
+                        $q->where('check_type', Attendance::CHECKTYPE_CHECKOUT);
+                    })
+                    ->orderBy('check_date', 'asc') // ناخذ الأقدم
                     ->first();
- 
+
+                    $latstCheckIn = $openCheckIn;
+
+                // dd($latstCheckIn,$openCheckIn);
                 if ($latstCheckIn) {
                     $isClosed =    Attendance::isCheckinClosed(
                         $this->employeeId,
@@ -73,8 +89,8 @@ class AttendanceHandler
                         $date,
                         $time,
                         $latstCheckIn->id
-                    );  
-                    if (!$isClosed) { 
+                    );
+                    if (!$isClosed) {
                         $this->workPeriod = $latstCheckIn->period;
                         if ($this->workPeriod) {
                             $this->hasWorkPeriod = true;
@@ -112,7 +128,7 @@ class AttendanceHandler
                 $potentialPeriods = collect();
                 $dates = [$date, $this->previousDate, $this->nextDate];
 
-                if (!$this->hasWorkPeriod) { 
+                if (!$this->hasWorkPeriod) {
                     foreach ($dates as $targetDate) {
                         $periods = $this->getPeriodsForDate($employeePeriods, $targetDate);
                         $day     = strtolower(Carbon::parse($targetDate)->format('D'));
@@ -196,7 +212,7 @@ class AttendanceHandler
                     $day,
                     $existAttendance,
                     $this->realAttendanceDate
-                );  
+                );
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                     return $attendanceData;
                 }

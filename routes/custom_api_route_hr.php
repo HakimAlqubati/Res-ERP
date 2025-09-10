@@ -88,7 +88,7 @@ Route::get('/face-data', function () {
 });
 
 
-Route::get('/test-attendance', function () {
+Route::post('/test-attendance', function () {
     $result = app(AttendanceHandler::class)->handle(
         employeeId: 1,
         periodId: 1,
@@ -97,7 +97,7 @@ Route::get('/test-attendance', function () {
         isRequest: false
     );
     return response()->json($result);
-});
+})->middleware('auth:api');
 
 Route::get('/testresult', function () {
     $nameRaw = "KHAIRALAH EBRAHIM MOHMMED ABDULLAH AL-dd-dd-dd-sdf-werw-sdf- 234sdf - SHARAEA-1";

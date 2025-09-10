@@ -82,3 +82,13 @@
         </div>
     </div>
 </div>
+
+<script>
+    function showDetailsModal() {
+        document.getElementById('details-modal').style.display = 'flex';
+    }
+
+    function hideDetailsModal() {
+        document.getElementById('details-modal').style.display = 'none';
+    }
+</script>

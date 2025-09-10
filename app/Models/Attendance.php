@@ -136,6 +136,10 @@ class Attendance extends Model
                 $builder->where('branch_id', auth()->user()->branch_id); // Add your default query here
             });
         }
+
+        static::creating(function ($model) {
+            $model->created_by = auth()->id(); // Set created_by to the current user's ID
+        });
     }
 
     // Define the self-referencing relationship for check-in
@@ -249,13 +253,13 @@ class Attendance extends Model
         $allowedHoursAfter       = (int) \App\Models\Setting::getSetting('hours_count_after_period_after');
         $endTime = Carbon::parse($checkDate . ' ' . $workPeriod->end_at);
         $endTimeWithALlowedTime = $endTime->copy()
-        ->addHours($allowedHoursAfter);
+            ->addHours($allowedHoursAfter);
         // $allowedHoursBefore = (int) \App\Models\Setting::getSetting('hours_count_after_period_before', 1);
         $currentTime = Carbon::createFromTimeString($currentDate . ' ' . $time);
         if ($workPeriod->day_and_night) {
             $endTime->addDay();
             $endTimeWithALlowedTime->addDay();
-        } 
+        }
         $checkoutRecord = self::where('employee_id', $employeeId)
             ->where('period_id', $periodId)
             ->where('check_date', $checkDate)
@@ -276,7 +280,7 @@ class Attendance extends Model
 
         $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
 
-        if ($currentTime->between($checkoutDateTime, $endTimeWithALlowedTime)) { 
+        if ($currentTime->between($checkoutDateTime, $endTimeWithALlowedTime)) {
             return false;
         }
 
@@ -289,5 +293,17 @@ class Attendance extends Model
         //     $checkoutDateTime  = \Carbon\Carbon::parse("$checkoutRecord->real_check_date " . $checkoutRecord->check_time);
         // }
         return $checkoutDateTime->greaterThan($periodEndDateTime);
+    }
+
+    public function checkout()
+    {
+        return $this->hasOne(Attendance::class, 'checkinrecord_id', 'id')
+            ->where('check_type', self::CHECKTYPE_CHECKOUT);
+    }
+
+    public function checkin()
+    {
+        return $this->belongsTo(Attendance::class, 'checkinrecord_id', 'id')
+            ->where('check_type', self::CHECKTYPE_CHECKIN);
     }
 }

@@ -488,18 +488,7 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        // $employee = Employee::with('periodDays.workPeriod')->find(1);
-        // $res=[];
-        // foreach ($employee->periodDays as $periodDay) {
-        //     $period = $periodDay->workPeriod;
-        //     $day    = $periodDay->day_of_week;
-
-        //     $res[$day][] = "يعمل في الفترة: {$period->name} في يوم {$day}";
-        // }
-        // dd($res);
-
-        // $sessionLifetime = config('session.lifetime');
-        // dd($sessionLifetime);
+         
         return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
