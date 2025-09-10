@@ -373,7 +373,7 @@ class ProductRepository implements ProductRepositoryInterface
                 'rup.package_size'
             )
             ->get();
-        dd($rows[0]);
+        // dd($rows);
         // dd($rows->toSql(),$rows->getBindings());
 
         // لو حابب تعرض النتائج بوحدة التقرير (إن وُجدت)، حوِّلها بعد الجلب:
