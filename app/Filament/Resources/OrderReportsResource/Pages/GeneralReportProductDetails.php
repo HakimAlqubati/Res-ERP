@@ -208,7 +208,7 @@ SQL;
         $this->storeId = $storeId;
         $from = Carbon::parse($start_date)->startOfDay();
         $to   = Carbon::parse($end_date)->endOfDay();
-        $rows = $this->runSourceBalanceByCategorySQL($storeId, $this->category_id, $from, $to);
+        $rows = $this->runSourceBalanceByCategorySQL($storeId, $category_id, $from, $to);
 
         // dd($rows);
         // print_html_table($rows, [
