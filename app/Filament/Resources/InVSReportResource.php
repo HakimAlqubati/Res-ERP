@@ -48,7 +48,7 @@ class InVSReportResource extends Resource
     {
         $currentMonthData = getEndOfMonthDate(Carbon::now()->year, Carbon::now()->month);
         return $table
-
+            ->deferFilters(false)
             ->filters([
                 Filter::make('date')
                     ->schema([
