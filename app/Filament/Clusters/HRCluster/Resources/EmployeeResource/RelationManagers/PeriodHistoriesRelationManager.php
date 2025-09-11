@@ -2,13 +2,16 @@
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeek;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\Concerns\CanCustomizeProcess;
+use Filament\Actions\CreateAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -49,7 +52,7 @@ class PeriodHistoriesRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
-                Tables\Actions\Action::make('edit')->label('Edit')->button()
+                Action::make('edit')->label('Edit')->button()
 
                     ->action(function ($record, $data): void {
                         $recordMonth = date('m', strtotime($record->start_date));
