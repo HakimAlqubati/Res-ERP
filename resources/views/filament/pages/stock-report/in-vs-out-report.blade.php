@@ -45,7 +45,7 @@
                             <td class="border px-4 py-1 text-center">{{ $row['unit_name'] }}</td>
                             <td class="border px-4 py-1 text-center">{{ $row['in_qty'] }}</td>
                             <td class="border px-4 py-1 text-center">{{ $row['out_qty'] }}</td>
-                            <td class="border px-4 py-1 text-center font-semibold">{{ $row['difference'] }}</td>
+                            <td class="border px-4 py-1 text-center font-semibold">{{ $row['current_qty'] }}</td>
                             {{-- <td
                                 class="border px-4 py-1 text-center">{{ $row['in_price'] }}</td> --}}
                         </tr>

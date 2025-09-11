@@ -3,10 +3,12 @@
 namespace App\Services\Reports\CenteralKitchens;
 
 use App\Models\UnitPrice;
+use App\Services\MultiProductsInventoryService;
 use Illuminate\Support\Facades\DB;
 
 class InVsOutReportService
 {
+    private array $smallestUnit = [];
     public function getInData(array $filters = [])
     {
 
@@ -41,7 +43,7 @@ class InVsOutReportService
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
 
-       
+
 
 
 
@@ -62,14 +64,14 @@ class InVsOutReportService
             'units.name',
             'inventory_transactions.package_size',
             'inventory_transactions.movement_date',
-            'inventory_transactions.transaction_date', 
+            'inventory_transactions.transaction_date',
         ];
 
 
 
         $query->groupBy(...$groupBy);
 
-        $result = $query 
+        $result = $query
             ->get();
         if (isset($filters['details']) && $filters['details'] == true) {
             return $result;
@@ -158,10 +160,19 @@ class InVsOutReportService
         if (isset($filters['unit_id'])) {
             $query->where('inventory_transactions.unit_id', $filters['unit_id']);
         }
-        
-        if (isset($filters['to_date'])) {
+
+        if (isset($filters['from_date']) && isset($filters['to_date'])) {
+            $query->whereBetween('inventory_transactions.movement_date', [$filters['from_date'], $filters['to_date']]);
+        } elseif (isset($filters['from_date'])) {
+            $query->whereDate('inventory_transactions.movement_date', '>=', $filters['from_date']);
+        } elseif (isset($filters['to_date'])) {
             $query->whereDate('inventory_transactions.movement_date', '<=', $filters['to_date']);
         }
+
+
+        // if (isset($filters['to_date'])) {
+        //     $query->whereDate('inventory_transactions.movement_date', '<=', $filters['to_date']);
+        // }
 
         $groupBy = [
             'inventory_transactions.product_id',
@@ -177,7 +188,7 @@ class InVsOutReportService
 
         $query->groupBy(...$groupBy);
 
-        $result = $query 
+        $result = $query
             ->get();
 
         if (isset($filters['details']) && $filters['details'] == true) {
@@ -196,6 +207,7 @@ class InVsOutReportService
             $totalCost = 0;
 
             $smallestUnit = $this->getSmallestUnitPrice($productId);
+            $this->smallestUnit[$productId] = $smallestUnit;
             if (!$smallestUnit) {
                 continue;
             }
@@ -249,6 +261,19 @@ class InVsOutReportService
             $inPrice = $in['price'] ?? 0;
             $outPrice = $out['price'] ?? 0;
 
+            $currentQty = 0;
+            if (!empty($filters['store_id'])) {
+                $smallestUnit = $this->smallestUnit[$productId] ?? null;
+                if ($smallestUnit) {
+                    $currentQty = MultiProductsInventoryService::getRemainingQty(
+                        $productId,
+                        $smallestUnit->unit_id, // نحاول نمرر unit_id
+                        $filters['store_id']
+                    );
+                }
+            }
+         
+            // dd($currentQty,$this->smallestUnit  );
             $finalResult[] = [
                 'product_id'   => $productId,
                 'product_code' => $productCode,
@@ -261,6 +286,7 @@ class InVsOutReportService
 
                 'in_price'     => round($inPrice, 2),
                 'out_price'    => round($outPrice, 2),
+                'current_qty'  => round($currentQty, 2),
             ];
         }
 

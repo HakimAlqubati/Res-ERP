@@ -50,10 +50,13 @@ class InVSReportResource extends Resource
         return $table
             ->deferFilters(false)
             ->filters([
-                Filter::make('date')
-                    ->schema([
-                        DatePicker::make('to_date')->live()
+                Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('from_date')
+                            ->label('From Date')
+                            ->default(now()->startOfMonth()),
 
+                        DatePicker::make('to_date')
                             ->label('To Date')
                             ->default(now()),
                     ]),

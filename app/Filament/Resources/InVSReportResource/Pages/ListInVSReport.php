@@ -21,12 +21,22 @@ class ListInVSReport extends ListRecords
     {
         $storeId = $this->getTable()->getFilters()['store_id']->getState()['value'] ?? null;
 
-        $toDate = $this->getTable()->getFilters()['date']->getState()['to_date'];
+        // $toDate = $this->getTable()->getFilters()['date']->getState()['to_date'];
+        $dateState = $this->getTable()->getFilters()['date_range']->getState();
+
+        $fromDate = $dateState['from_date'] ?? null;
+        $toDate   = $dateState['to_date'] ?? null;
 
         $filters = [
-            'store_id' => $storeId,
-            'to_date' => $toDate,
+            'store_id'  => $storeId,
+            'from_date' => $fromDate,
+            'to_date'   => $toDate,
         ];
+
+        // $filters = [
+        //     'store_id' => $storeId,
+        //     'to_date' => $toDate,
+        // ];
 
 
         $reportService = new InVsOutReportService();
