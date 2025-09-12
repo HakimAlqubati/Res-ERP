@@ -90,7 +90,7 @@ class PayrollResource extends Resource
                         // ->searchable()
                         ->default(now()->format('F')),
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
-                    DatePicker::make('payment_date')->required()
+                    DatePicker::make('pay_date')->required()
                         ->default(date('Y-m-d')),
                 ]),
                 Textarea::make('notes')->label('Notes')->columnSpanFull(),
@@ -106,8 +106,27 @@ class PayrollResource extends Resource
                     ->label('Name')->searchable()->sortable(),
                 TextColumn::make('branch.name')
                     ->label('Branch')->sortable(),
-                TextColumn::make('year')->sortable(),
-                TextColumn::make('month')->sortable(),
+                TextColumn::make('year')
+
+                    ->sortable(),
+                TextColumn::make('month')
+                    ->formatStateUsing(function ($record) {
+                        $months = getMonthArrayWithKeys();
+                        $key = str_pad($record->month, 2, '0', STR_PAD_LEFT); // يحول 1 → 01 ، 9 → 09 ، 10 تبقى 10
+                        return $months[$key] ?? '';
+                    })
+                    ->sortable(),
+
+                TextColumn::make('status')
+                    ->label(__('Status'))
+                    ->sortable()
+                    ->badge()
+                    ->formatStateUsing(fn($state) => PayrollRun::statuses()[$state] ?? $state)
+                    ->colors([
+                        'warning' => PayrollRun::STATUS_PENDING,   // أصفر
+                        'info'    => PayrollRun::STATUS_COMPLETED, // أزرق
+                        'success' => PayrollRun::STATUS_APPROVED,  // أخضر
+                    ])
             ])
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')

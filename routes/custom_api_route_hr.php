@@ -31,6 +31,8 @@ Route::prefix('hr/payroll')
 Route::prefix('hr')
     ->group(function () {
         Route::post('/attendance/store', [AttendanceController::class, 'store'])->middleware('auth:api');
+        Route::post('/attendance/storeInOut', [AttendanceController::class, 'storeInOut'])->middleware('auth:api');
+        Route::post('/attendance/storeBulk', [AttendanceController::class, 'storeBulk'])->middleware('auth:api');
         // يمكنك إضافة المزيد لاحقًا مثل:
         // Route::get('/employee/{id}', [EmployeeController::class, 'show']);
 
@@ -88,16 +90,7 @@ Route::get('/face-data', function () {
 });
 
 
-Route::post('/test-attendance', function () {
-    $result = app(AttendanceHandler::class)->handle(
-        employeeId: 1,
-        periodId: 1,
-        deviceId: 'DEV-01',
-        now: CarbonImmutable::now('Asia/Aden'),
-        isRequest: false
-    );
-    return response()->json($result);
-})->middleware('auth:api');
+ 
 
 Route::get('/testresult', function () {
     $nameRaw = "KHAIRALAH EBRAHIM MOHMMED ABDULLAH AL-dd-dd-dd-sdf-werw-sdf- 234sdf - SHARAEA-1";

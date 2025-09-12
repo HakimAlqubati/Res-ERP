@@ -29,7 +29,18 @@ class PayrollRun extends Model
         'approved_by',
         'approved_at'
     ];
+    const STATUS_PENDING   = 'pending';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_APPROVED  = 'approved';
 
+    public static function statuses(): array
+    {
+        return [
+            self::STATUS_PENDING   => __('Pending'),
+            self::STATUS_COMPLETED => __('Completed'),
+            self::STATUS_APPROVED  => __('Approved'),
+        ];
+    }
     public function branch()
     {
         return $this->belongsTo(Branch::class);

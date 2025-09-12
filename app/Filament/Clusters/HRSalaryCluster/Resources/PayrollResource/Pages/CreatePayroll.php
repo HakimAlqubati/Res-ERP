@@ -62,7 +62,7 @@ class CreatePayroll extends CreateRecord
         $result = $service->runAndPersist($dto);
 
         if ($result['success']) {
-            showSuccessNotifiMessage($result['message']);
+            // showSuccessNotifiMessage($result['message']);
             $this->getRedirectUrl();
             return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
         } else {

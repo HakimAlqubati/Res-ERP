@@ -5,10 +5,15 @@ namespace App\Filament\Clusters\HRSalaryCluster\Resources\PayrollResource\Relati
 use App\Models\Payroll;
 use App\Models\SalaryTransaction;
 use App\Services\HR\SalaryHelpers\SalarySlipService;
-use Filament\Forms; 
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -32,42 +37,41 @@ class PayrollsRelationManager extends RelationManager
         return $table->striped()
             ->recordTitleAttribute('employee')
             ->columns([
-                Tables\Columns\TextColumn::make('employee.employee_no')->label('Employee No'),
+                Tables\Columns\TextColumn::make('employee.employee_no')->alignCenter()->label('Employee No'),
                 Tables\Columns\TextColumn::make('employee.name'),
                 Tables\Columns\TextColumn::make('base_salary')
                     ->label('Base')
                     ->numeric()->alignCenter()
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('total_allowances')
-                    ->label('Allowances')
-                    ->numeric()->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('overtime_amount')
-                    ->label('Overtime')
-                    ->numeric()->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_deductions')
+
+
+
+                Tables\Columns\TextColumn::make('deductions_from_transactions')
                     ->label('Deductions')
-                    ->numeric()->alignCenter()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('gross_salary')
-                    ->label('Gross')->alignCenter()
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('net_salary')
-                    ->label('Net')->alignCenter()
+                    ->alignCenter()
                     ->numeric()
                     ->sortable()
-                    ->weight(\Filament\Support\Enums\FontWeight::Bold),
+                    ->getStateUsing(function (Payroll $record) {
+                        $amount  = $record->transactions()
+                            ->where('operation', '-')
+                            ->sum('amount');
+                        return formatMoneyWithCurrency($amount);
+                    }),
+
+                TextColumn::make('net_salary')
+                    ->label(__('Net Salary'))->alignCenter()
+                    ->formatStateUsing(fn($state) => formatMoneyWithCurrency($state))
+                    ->sortable(),
+
+
             ])
             ->filters([
                 //
             ])
-            ->headerActions([
-                Tables\Actions\CreateAction::make(),
-            ])
+
             ->actions([
-                Tables\Actions\Action::make('salarySlipPdf')
+                Action::make('salarySlipPdf')->button()
                     ->label('Salary Slip PDF')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('primary')
@@ -75,25 +79,29 @@ class PayrollsRelationManager extends RelationManager
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
                 // ✅ Export transactions (no route)
-                Tables\Actions\Action::make('exportTransactions')
+                Action::make('exportTransactions')->button()
                     ->label('Print Transactions')
                     // ->icon('heroicon-o-print')
                     ->color('success')
                     // ->tooltip('Export all salary transactions for this payroll as CSV')
-                    ->url(fn(\App\Models\Payroll $record) => route('salary.report', [
-                        'employee' => $record->employee_id,
-                        // أي مفاتيح إضافية راح تروح كـ query string تلقائياً:
-                        'run'   => $record->payroll_run_id,
-                        'year'  => $record->year,
-                        'month' => $record->month,
-                    ]))->openUrlInNewTab()
+                    // ->url(fn(\App\Models\Payroll $record) => route('salary.report', [
+                    //     'employee' => $record->employee_id,
+                    //     // أي مفاتيح إضافية راح تروح كـ query string تلقائياً:
+                    //     'run'   => $record->payroll_run_id,
+                    //     'year'  => $record->year,
+                    //     'month' => $record->month,
+                    // ]))
+                    ->url(fn(Payroll $record) => route('transactions.print', [
+                        'payroll_id' => $record->id,
+                    ]))
+                    ->openUrlInNewTab()
                 // ->action(function (Payroll $record) {
 
                 // }),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

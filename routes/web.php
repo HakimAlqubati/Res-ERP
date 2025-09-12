@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
@@ -51,7 +52,7 @@ use Spatie\Permission\Models\Role;
 |
  */
 
-Route::get('home',function(){
+Route::get('home', function () {
 
     return view('welcome');
 });
@@ -460,7 +461,7 @@ Route::get('/update_user_branch_id_for_all_users', function () {
     $users       = User::whereNull('branch_id')->withTrashed()->get();
     $branchUsers = [];
     foreach ($users as $user) {
-                                               // Check if the user has an owner
+        // Check if the user has an owner
         $owner    = $user->owner()->exists();  // Check if the owner relationship exists
         $branch   = $user->branch()->exists(); // Check if the branch relationship exists
         $branchId = 0;
@@ -488,7 +489,7 @@ Route::get('/update_user_branch_id_for_all_users', function () {
         $userObj->update(['branch_id' => $branchUser['branch_id']]);
     }
     return $branchUsers;
-}); 
+});
 Route::get('/attendance', AttendanecEmployee2::class)
     ->name('attendance')->middleware('check');
 Route::get('/attendanceSecret__', AttendanecEmployee2::class)
@@ -533,8 +534,8 @@ Route::get('workbench_webcam', function () {
     $userId = auth()->id();
     // Check if an approval record exists for the user
     $approval = Approval::where('route_name', 'workbench_webcam')
-    // ->where('date', $date)
-    // ->where('time', $time)
+        // ->where('date', $date)
+        // ->where('time', $time)
         ->where('created_by', $userId)
         ->first();
 
@@ -601,7 +602,7 @@ Route::get('getAttendancesEarlyDeparture', function () {
     $attendances = Attendance::earlyDepartures()
         ->whereYear('check_date', '2024')
         ->whereMonth('check_date', '11')
-    // ->where('employee_id', 83)
+        // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'early_departure_minutes', 'period_id')
         ->where('check_type', Attendance::CHECKTYPEOUT)
         ->where('early_departure_minutes', '<=', 20)
@@ -634,13 +635,13 @@ Route::get('getAttendancesLateArrival', function () {
     $attendances = Attendance::lateArrival()
         ->whereYear('check_date', '2024')
         ->whereMonth('check_date', '11')
-    // ->where('employee_id', 83)
+        // ->where('employee_id', 83)
         ->select('id', 'employee_id', 'check_date', 'check_time', 'delay_minutes', 'period_id')
         ->get()
-    // ->groupBy('employee_id')
-    // ->map(function ($attendances) {
-    //     return $attendances->toArray();
-    // })
+        // ->groupBy('employee_id')
+        // ->map(function ($attendances) {
+        //     return $attendances->toArray();
+        // })
         ->toArray();
     dd($attendances);
     $result = [];
@@ -731,3 +732,22 @@ Route::get('/clear-opcache', function () {
     }
     return 'OPcache is not enabled ❌';
 });
+
+
+Route::get('/admin/transactions/print/{payroll_id}', function ($payroll_id) {
+    $payroll = \App\Models\Payroll::with([
+        'transactions'
+    ])->findOrFail($payroll_id);
+    // dd(App\Models\Employee::find(1));
+
+    $transactions = $payroll->transactions()->orderBy('date')->get();
+
+    // dd($payroll, $payroll_id);
+    $total = $transactions->sum(fn($t) => $t->operation === '+' ? $t->amount : -$t->amount);
+
+    return view('reports.hr.payroll.transactions', [
+        'payroll'      => $payroll,
+        'transactions' => $transactions,
+        'total'        => $total,
+    ]);
+})->name('transactions.print');

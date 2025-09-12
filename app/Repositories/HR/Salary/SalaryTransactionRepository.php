@@ -126,7 +126,7 @@ class SalaryTransactionRepository
         int $employeeId,
         float $amount,
         string $date,
-        string $type,
+        SalaryTransactionType $type,
         string $operation,
         string $description,
         $reference = null,
@@ -140,7 +140,7 @@ class SalaryTransactionRepository
             'payroll_id'     => $payrollId,
             'date'           => $date,
             'amount'         => abs($amount), // دائماً موجب
-            'type'           => $type,
+            'type'           => $type->value,
             'operation'      => $operation,
             'description'    => $description,
             'reference_id'   => $reference?->id ?? null,

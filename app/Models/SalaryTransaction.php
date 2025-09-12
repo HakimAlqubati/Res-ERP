@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Enums\HR\Payroll\SalaryTransactionSubType;
 use App\Enums\HR\Payroll\SalaryTransactionType;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use ReflectionClass;
 
 class SalaryTransaction extends Model
 {
@@ -88,5 +90,59 @@ class SalaryTransaction extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public static function typeOptions(): array
+    {
+        return collect(SalaryTransactionType::cases())
+            ->mapWithKeys(fn($case) => [$case->value => __(str_replace('TYPE_', '', $case->name))])
+            ->toArray();
+    }
+    public static function subTypesForType(?string $type = null): array
+    {
+        if (!$type) {
+            return [];
+        }
+
+        return collect(SalaryTransactionSubType::cases())
+            ->filter(fn($case) => $case->parentType()->value === $type)
+            ->mapWithKeys(fn($case) => [$case->value => __($case->name)])
+            ->toArray();
+    }
+    protected static function booted()
+    {
+        static::creating(function ($transaction) {
+            if ($transaction->payroll_id) {
+                $payroll = \App\Models\Payroll::find($transaction->payroll_id);
+
+                if ($payroll) {
+                    if (!$transaction->payroll_run_id) {
+                        $transaction->payroll_run_id = $payroll->payroll_run_id;
+                    }
+
+                    if (!$transaction->year) {
+                        $transaction->year = $payroll->year;
+                    }
+
+                    if (!$transaction->month) {
+                        $transaction->month = $payroll->month;
+                    }
+                }
+            }
+        });
+    }
+
+
+    public static function operationForType(string $type): string
+    {
+        return match ($type) {
+            SalaryTransactionType::TYPE_DEDUCTION->value,
+            SalaryTransactionType::TYPE_PENALTY->value,
+            SalaryTransactionType::TYPE_ADVANCE->value,
+            SalaryTransactionType::TYPE_INSTALL->value
+            => self::OPERATION_SUB,
+
+            default => self::OPERATION_ADD,
+        };
     }
 }

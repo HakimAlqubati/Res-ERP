@@ -34,7 +34,7 @@ class EmployeeDeductoinSummaryResource extends Resource
     protected static ?string $cluster = HRSalaryCluster::class;
 
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $pluralLabel = 'Deduction Summary';
 

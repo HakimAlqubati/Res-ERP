@@ -99,6 +99,7 @@ class PayrollRunService
 
         if (! $run) {
             $run = new PayrollRun();
+            $run->status = PayrollRun::STATUS_PENDING;
             $run->branch_id         = $input->branchId;
             $run->year              = $input->year;
             $run->month             = $input->month;
@@ -106,7 +107,7 @@ class PayrollRunService
             $run->period_end_date   = $periodEnd->toDateString();
             $monthName = Carbon::create($input->year, $input->month, 1)->format('F Y');
             $run->name = "Payroll {$monthName} - $branch->name";
-            $run->status            = 'pending';
+             
             // اترك currency/fx_rate كما هي إن لم تكن موجودة في الـ DTO
             $run->total_gross       = 0;
             $run->total_net         = 0;
@@ -116,7 +117,7 @@ class PayrollRunService
         } else {
             $run->period_start_date = $periodStart->toDateString();
             $run->period_end_date   = $periodEnd->toDateString();
-            $run->status            = 'pending';
+            
             $run->save();
         }
 
@@ -215,7 +216,7 @@ class PayrollRunService
             $run->total_net        = round($aggNet, 2);
             $run->total_allowances = round($aggAllowances, 2);
             $run->total_deductions = round($aggDeductions, 2);
-            $run->status           = 'completed';
+            
             $run->save();
         });
         if (

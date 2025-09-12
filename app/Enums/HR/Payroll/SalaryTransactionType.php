@@ -4,14 +4,16 @@ namespace App\Enums\HR\Payroll;
 
 enum SalaryTransactionType: string
 {
-    const TYPE_SALARY    = 'salary';
-    const TYPE_ALLOWANCE = 'allowance';
-    const TYPE_DEDUCTION = 'deduction';
-    const TYPE_ADVANCE   = 'advance';
-    const TYPE_INSTALL   = 'installment';
-    const TYPE_BONUS     = 'bonus';
-    const TYPE_OVERTIME  = 'overtime';
-    const TYPE_PENALTY   = 'penalty';
-    const TYPE_OTHER     = 'other';
-    const TYPE_NET_SALARY = 'net_salary';
+    case TYPE_SALARY    = 'salary';
+    case TYPE_ALLOWANCE = 'allowance';
+    case TYPE_DEDUCTION = 'deduction';
+    case TYPE_ADVANCE   = 'advance';
+    case TYPE_INSTALL   = 'installment';
+    case TYPE_BONUS     = 'bonus';
+    case TYPE_OVERTIME  = 'overtime';
+    case TYPE_PENALTY   = 'penalty';
+    case TYPE_OTHER     = 'other';
+    case TYPE_NET_SALARY = 'net_salary';
+    case TYPE_ADJUSTMENT = 'adjustment';   // Salary Adjustment
+
 }
