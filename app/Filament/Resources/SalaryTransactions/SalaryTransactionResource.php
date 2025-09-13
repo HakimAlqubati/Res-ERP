@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\SalaryTransactions;
 
-use App\Filament\Clusters\HRCluster;
 use App\Filament\Clusters\HRSalaryCluster;
 use App\Filament\Resources\SalaryTransactions\Pages\CreateSalaryTransaction;
 use App\Filament\Resources\SalaryTransactions\Pages\EditSalaryTransaction;
@@ -28,7 +27,7 @@ class SalaryTransactionResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
     protected static ?string $recordTitleAttribute = 'employee.name';
-    protected static ?string $cluster = HRCluster::class;
+    protected static ?string $cluster = HRSalaryCluster::class;
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?int $navigationSort = 15;
