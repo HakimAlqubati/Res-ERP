@@ -19,7 +19,8 @@ class CreateEmployeeApplication extends CreateRecord
     protected static string $resource = EmployeeApplicationResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-
+        
+        // dd($data);
         if (!isStuff() && !isFinanceManager()) {
             $employee = Employee::find($data['employee_id']);
             if ($employee->branch()->exists()) {
@@ -96,14 +97,14 @@ class CreateEmployeeApplication extends CreateRecord
         }
 
         if ($data['application_type_id'] == EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST) {
-            $attendances = $employee->attendancesByDate($this->data['missedCheckinRequest']['detail_date'])->count();
+            $attendances = $employee->attendancesByDate($this->data['missedCheckinRequest']['date'])->count();
 
             if ($attendances > 0) {
-                Notification::make()->body('Employee has already checked in(' . $this->data['missedCheckinRequest']['detail_date'] . ')')->warning()->send();
+                Notification::make()->body('Employee has already checked in(' . $this->data['missedCheckinRequest']['date'] . ')')->warning()->send();
 
                 // Throw a validation exception if an application exists
                 throw ValidationException::withMessages([
-                    'application_date' => 'Employee has already checked in today.(' . $this->data['missedCheckinRequest']['detail_date'] . ')',
+                    'application_date' => 'Employee has already checked in today.(' . $this->data['missedCheckinRequest']['date'] . ')',
                 ]);
             }
         }
@@ -132,7 +133,7 @@ class CreateEmployeeApplication extends CreateRecord
         $data['application_type_id'] = $data['application_type_id'];
         $data['application_type_name'] = $applicationType;
         $data['created_by'] = auth()->user()->id;
-        $data['status'] = EmployeeApplication::STATUS_PENDING;
+        $data['status'] = EmployeeApplicationV2::STATUS_PENDING;
 
         // $data['details'] = [];
 

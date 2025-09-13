@@ -45,7 +45,7 @@ class ApplicationTransaction extends Model
     // Define relationships
     public function application()
     {
-        return $this->belongsTo(EmployeeApplication::class, 'application_id');
+        return $this->belongsTo(EmployeeApplicationV2::class, 'application_id');
     }
 
     public function createdBy()
@@ -134,7 +134,7 @@ class ApplicationTransaction extends Model
         ]);
 
           // Check if installments should be created
-          if ($employeeApplication->application_type_id == EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST) {
+          if ($employeeApplication->application_type_id == EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST) {
             $transaction->createInstallments(
                 $employeeApplication->employee_id,
                 $amount,

@@ -113,7 +113,7 @@ class EmployeeApplicationResource extends Resource
                             $set('leaveRequest.detail_year', $year);
                             $set('leaveRequest.detail_month', $month);
                             $set('leaveRequest.detail_from_date', $get('application_date'));
-                            $set('missedCheckinRequest.detail_date', $get('application_date'));
+                            $set('missedCheckinRequest.date', $get('application_date'));
                             $set('missedCheckoutRequest.detail_date', $get('application_date'));
                             $set('leaveRequest.detail_to_date', $get('application_date'));
                             $set('leaveRequest.detail_days_count', 1);
@@ -151,7 +151,7 @@ class EmployeeApplicationResource extends Resource
                             $set('leaveRequest.detail_from_date', $get('application_date'));
                             $set('leaveRequest.detail_to_date', $get('application_date'));
                             $set('leaveRequest.detail_days_count', 1);
-                            $set('missedCheckinRequest.detail_date', $get('application_date'));
+                            $set('missedCheckinRequest.date', $get('application_date'));
                             $set('missedCheckoutRequest.detail_date', $get('application_date'));
                             $set('missedCheckinRequest.detail_time', now()->toTimeString());
                             $set('missedCheckoutRequest.detail_time', now()->toTimeString());
@@ -1292,37 +1292,39 @@ class EmployeeApplicationResource extends Resource
 
     public static function attendanceRequestForm()
     {
-        $form = [
-            DatePicker::make('detail_date')->maxDate(now()->toDateString())
-                ->label('Date')->required()
-                ->default('Y-m-d')
-                ->maxDate(now()->toDateString())
-            // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
-            ,
-            TimePicker::make('detail_time')
-                ->default(now())
-                ->seconds(false)
-                ->label('Time')->required(),
-        ];
+
         return [
-            Fieldset::make('missedCheckinRequest')->label('')
+            Fieldset::make('')
+            ->label('')
                 ->relationship('missedCheckinRequest')
-                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+                // ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+                //     Log::info('data', [$data]);
+                //     $data['application_type_id']   = 2;
+                //     $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
 
-                    $data['application_type_id']   = 2;
-                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
+                //     $data['employee_id'] = $get('employee_id');
 
-                    $data['employee_id'] = $get('employee_id');
+                //     $data['date'] = $data['detail_date'];
+                //     $data['time'] = $data['detail_time'];
+                //     $date         = $data['detail_date'] ?? now();
+                //     // app(MonthClosureService::class)->ensureMonthIsOpen($date);
+                //     return $data;
+                // })
 
-                    $data['date'] = $data['detail_date'];
-                    $data['time'] = $data['detail_time'];
-                    $date         = $data['detail_date'] ?? now();
-                    app(MonthClosureService::class)->ensureMonthIsOpen($date);
-                    return $data;
-                })
-
-                ->columns(count($form))->schema(
-                    $form
+                ->columns(2)
+                ->schema(
+                    [
+                        DatePicker::make('date')->maxDate(now()->toDateString())
+                            ->label('Date')->required()
+                            ->default('Y-m-d')
+                            ->maxDate(now()->toDateString())
+                        // ->minDate(fn($get): string => (Carbon::parse($get('../application_date'))->startOfMonth()->toDateString()))
+                        ,
+                        TimePicker::make('time')
+                            ->default(now())
+                            ->seconds(false)
+                            ->label('Time')->required(),
+                    ]
                 ),
         ];
     }

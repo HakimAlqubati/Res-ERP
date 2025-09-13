@@ -209,16 +209,16 @@ class Employee extends Model implements Auditable
     }
     public function approvedAdvanceApplication()
     {
-        return $this->hasMany(EmployeeApplication::class, 'employee_id')
-            ->where('status', EmployeeApplication::STATUS_APPROVED)
-            ->where('application_type_id', EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)
+        return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')
+            ->where('status', EmployeeApplicationV2::STATUS_APPROVED)
+            ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)
         ;
     }
     public function approvedLeaveApplication()
     {
-        return $this->hasMany(EmployeeApplication::class, 'employee_id')
-            ->where('status', EmployeeApplication::STATUS_APPROVED)
-            ->where('application_type_id', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
+        return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')
+            ->where('status', EmployeeApplicationV2::STATUS_APPROVED)
+            ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
         ;
     }
 
