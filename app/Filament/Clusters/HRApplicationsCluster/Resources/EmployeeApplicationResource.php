@@ -18,6 +18,7 @@ use App\Services\HR\Attendance\AttendanceService;
 use App\Services\HR\MonthClosure\MonthClosureService;
 use Carbon\Carbon;
 use DateTime;
+use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -153,7 +154,7 @@ class EmployeeApplicationResource extends Resource
                             $set('leaveRequest.detail_days_count', 1);
                             $set('missedCheckinRequest.date', $get('application_date'));
                             $set('missedCheckoutRequest.detail_date', $get('application_date'));
-                            $set('missedCheckinRequest.detail_time', now()->toTimeString());
+                            $set('missedCheckinRequest.time', now()->toTimeString());
                             $set('missedCheckoutRequest.detail_time', now()->toTimeString());
                         }),
                 ]),
@@ -1294,22 +1295,38 @@ class EmployeeApplicationResource extends Resource
     {
 
         return [
-            Fieldset::make('')
-            ->label('')
+            Fieldset::make('Missed Checkin Request')
+                ->label('')
                 ->relationship('missedCheckinRequest')
-                // ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
-                //     Log::info('data', [$data]);
-                //     $data['application_type_id']   = 2;
+ 
+                // ->mutateRelationshipDataBeforeSaveUsing(function ($data) {
+                //     dd($data);
+                // })
+                // ->mutateRelationshipDataBeforeCreateUsing(function (array $data, \Filament\Schemas\Components\Utilities\Get $get) {
+
+                //     // dd( $get('employee_id'));
+                //     $data['application_type_id']   = EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST;
                 //     $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
+                //     $data['employee_id']           = $get('employee_id');
 
-                //     $data['employee_id'] = $get('employee_id');
-
-                //     $data['date'] = $data['detail_date'];
-                //     $data['time'] = $data['detail_time'];
-                //     $date         = $data['detail_date'] ?? now();
-                //     // app(MonthClosureService::class)->ensureMonthIsOpen($date);
                 //     return $data;
                 // })
+                // ->saveRelationshipsBeforeChildrenUsing(function ($data) {
+                // dd($data);
+                // })
+                ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
+                    Log::info('data', [$data]);
+                    $data['application_type_id']   = 2;
+                    $data['application_type_name'] = EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST];
+
+                    $data['employee_id'] = $get('employee_id');
+
+                    // $data['date'] = $data['detail_date'];
+                    // $data['time'] = $data['detail_time'];
+                    // $date         = $data['detail_date'] ?? now();
+                    // app(MonthClosureService::class)->ensureMonthIsOpen($date);
+                    return $data;
+                })
 
                 ->columns(2)
                 ->schema(
