@@ -64,7 +64,7 @@ class SalaryTransactionResource extends Resource
             'create' => CreateSalaryTransaction::route('/create'),
             'view' => ViewSalaryTransaction::route('/{record}'),
             // 'edit' => EditSalaryTransaction::route('/{record}/edit'),
-        ];
+        ];  
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder
