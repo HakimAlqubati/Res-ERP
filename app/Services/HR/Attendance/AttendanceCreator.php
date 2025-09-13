@@ -58,7 +58,7 @@ class AttendanceCreator
             $typeHidden,     // أو false حسب ما تريده هنا (يمكن تمريره كمرجع)
             $manualType = '' // أو قيمة `checkin/checkout` اليدوية إن وجدت
         );
-
+ 
 // إذا كانت النتيجة رسالة نصية بدل نوع صالح
         if (! in_array($checkType, [Attendance::CHECKTYPE_CHECKIN, Attendance::CHECKTYPE_CHECKOUT])) {
             return [

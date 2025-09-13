@@ -22,6 +22,7 @@ class CheckInHandler
         $periodStartTimeBound = $bounds['periodStart'] ?? null;
         $periodEndTimeBound = $bounds['periodEnd'] ?? null;
 
+        // dd($currentTimeBound);
         // ✅ اضبط status + الدقائق بالاعتماد على bounds (إن وُجدت)
         if ($currentTimeBound && $periodStartTimeBound) {
             $ct = $currentTimeBound instanceof Carbon ? $currentTimeBound : Carbon::parse($currentTimeBound);
@@ -53,17 +54,21 @@ class CheckInHandler
         $periodStartTime = $nearestPeriod->start_at;
 
         $diff = $this->calculateTimeDifferenceV3($checkTime->toTimeString(), $nearestPeriod, $date);
-
+        // $diff = $this->calculateTimeDifferenceV3($checkTime->toTimeString(), $nearestPeriod, $currentTimeBound->format('Y-m-d'));
+        
+        // dd($currentTimeBound->format('Y-m-d'),$diff);
         if (! $this->isWithinAllowedBeforePeriod($nearestPeriod, $date, $checkTimeStr) && $periodStartTime !== '00:00:00') {
             $message = __('notifications.attendance_out_of_range_before_period');
             Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
             return $message;
         }
 
+        // dd($periodStartTimeBound,$currentTimeBound,$currentTimeBound->lt($periodStartTimeBound));
         if (
-            $checkTime->toTimeString() < $periodStartTime &&
+            $currentTimeBound->lt($periodStartTimeBound) &&
             $diff > Setting::getSetting('hours_count_after_period_after') && $type === ''
         ) {
+            // dd('sf',$checkTimeStr, $periodStartTime, $diff,$type);
             $message = __('notifications.you_cannot_attendance_before') . ' ' . $diff . ' ' . __('notifications.hours');
             Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
             return $message;
@@ -121,7 +126,7 @@ class CheckInHandler
         $startTime = $period->start_at;
 
         $checkTime = Carbon::parse("$date $currentTime");
-
+ 
         if ($period->day_and_night && $currentTime >= '00:00:00' && $currentTime <= $period->end_at) {
             $date = Carbon::parse($date)->subDay()->toDateString();
         }

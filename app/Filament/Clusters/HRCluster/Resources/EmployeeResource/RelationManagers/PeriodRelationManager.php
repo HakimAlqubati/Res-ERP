@@ -279,7 +279,7 @@ class PeriodRelationManager extends RelationManager
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
-                $this->assignDaysAction(),
+                $this->assignDaysAction()->hidden(),
                 Action::make('Delete')->requiresConfirmation()
                     ->color('warning')
                     ->button()

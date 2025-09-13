@@ -15,6 +15,8 @@ class CheckOutHandler
         $bounds = (method_exists($nearestPeriod, 'relationLoaded') && $nearestPeriod->relationLoaded('bounds'))
             ? $nearestPeriod->getRelation('bounds')
             : null;
+        $endTimeFromBounds = $bounds['periodEnd']->format('Y-m-d H:i:s');
+
         $endTime   = Carbon::parse($date . ' ' . $nearestPeriod->end_at);
         $startTime = Carbon::parse($date . ' ' . $nearestPeriod->start_at);
 
@@ -96,14 +98,14 @@ class CheckOutHandler
         }
 
         $attendanceData['total_actual_duration_hourly'] = sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60);
-
+        // dd($checkTime->gt($endTime),$checkTime,$endTime);
         // dd($checkTime, $endTime, $attendanceData);
         // 4. تحديد الحالة: تأخر أو خروج مبكر
-        if ($checkTime->gt($endTime)) {
+        if ($checkTime->gt($endTimeFromBounds)) {
             $attendanceData['late_departure_minutes']  = $endTime->diffInMinutes($checkTime);
             $attendanceData['early_departure_minutes'] = 0;
             $attendanceData['status']                  = Attendance::STATUS_LATE_DEPARTURE;
-        } elseif ($checkTime->lt($endTime)) {
+        } elseif ($checkTime->lt($endTimeFromBounds)) {
             $attendanceData['late_departure_minutes']  = 0;
             $attendanceData['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
             $attendanceData['status']                  = Attendance::STATUS_EARLY_DEPARTURE;
@@ -112,6 +114,7 @@ class CheckOutHandler
             $attendanceData['early_departure_minutes'] = 0;
             $attendanceData['status']                  = Attendance::STATUS_ON_TIME;
         }
+        // dd($attendanceData);
         // 5. التعامل مع الحقول الأخرى
         $attendanceData['delay_minutes'] = 0;
 
@@ -140,7 +143,7 @@ class CheckOutHandler
         // === احسب STATUS باستخدام currentTimeObj ===
         $currentTimeObj = $bounds['currentTimeObj']; // fallback لو ما فيه bounds
         // $endForCompare  = $bounds['periodEnd'];
-        $endForCompare  = $endTime;
+        $endForCompare  = $endTimeFromBounds;
         if (! $currentTimeObj instanceof Carbon) {
             $currentTimeObj = Carbon::parse($currentTimeObj);
         }

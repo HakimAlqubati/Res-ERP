@@ -78,7 +78,8 @@ class AttendanceHandler
                     ->orderBy('check_date', 'asc') // ناخذ الأقدم
                     ->first();
 
-                    $latstCheckIn = $openCheckIn;
+                $latstCheckIn = $openCheckIn;
+
 
                 // dd($latstCheckIn,$openCheckIn);
                 if ($latstCheckIn) {
@@ -128,6 +129,7 @@ class AttendanceHandler
                 $potentialPeriods = collect();
                 $dates = [$date, $this->previousDate, $this->nextDate];
 
+
                 if (!$this->hasWorkPeriod) {
                     foreach ($dates as $targetDate) {
                         $periods = $this->getPeriodsForDate($employeePeriods, $targetDate);
@@ -152,12 +154,17 @@ class AttendanceHandler
                     }
 
                     $closestPeriod = $this->findClosestPeriodNew($time, $potentialPeriods);
+                    // dd(
+                    //     $closestPeriod,
+                    //     $time,
+                    //     $potentialPeriods
+                    // );
                     $day = strtolower(Carbon::parse($this->date)->format('D'));
                 } else {
                     $day = $this->day;
                     $closestPeriod = $this->workPeriod;
                 }
-                // dd($closestPeriod,$this->date,$this->targetDate);
+                // dd($closestPeriod, $this->date, $this->targetDate);
 
 
                 // dd(
@@ -173,6 +180,7 @@ class AttendanceHandler
                 if ($closestPeriod) {
                     $this->hasWorkPeriod = $this->periodHelper->hasWorkPeriodForDate($employee->id, $closestPeriod->id, $this->date, $day);
                 }
+                // dd($this->hasWorkPeriod);
                 // Check if no periods are found for the given day 
                 if (! $closestPeriod || ! $this->hasWorkPeriod) {
 
@@ -213,6 +221,7 @@ class AttendanceHandler
                     $existAttendance,
                     $this->realAttendanceDate
                 );
+                // dd($attendanceData);
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {
                     return $attendanceData;
                 }
@@ -271,6 +280,7 @@ class AttendanceHandler
         $allowedAfter  = (int) \App\Models\Setting::getSetting('hours_count_after_period_after', 0);
         $allowedBefore = (int) \App\Models\Setting::getSetting('hours_count_after_period_before', 0);
 
+        // dd($periods);
         // dd($periods->pluck('period')->toArray());
         foreach ($periods as $period) {
             $wp = $period['period']->workPeriod;
@@ -278,7 +288,11 @@ class AttendanceHandler
                 continue;
             }
 
+            $res = [];
             $res = $this->computeWorkPeriodBounds($currentTimeObj, $wp, $allowedBefore, $allowedAfter);
+
+            // dd($wp, $res);
+
             // لو الوقت داخل نافذة السماح للفترة
             if ($res['inWindow']) {
                 // ✅ فلترة إضافية: لازم يكون الوقت >= windowStart
@@ -352,6 +366,7 @@ class AttendanceHandler
         $endToday   = $currentTimeObj->copy()->setTimeFromTimeString($endAt);
         $timeOfDay  = $currentTimeObj->format('H:i:s');
 
+        // dd($timeOfDay,$startAt, $endAt);
         $origin = 'same-day';
 
         if (!$isOvernight) {
@@ -367,10 +382,26 @@ class AttendanceHandler
                 $periodEnd   = $endToday;
                 $origin      = 'same-day';
             } else { // $timeOfDay > $endAt
+                $windowEndCandidate = $endToday->copy()->addHours($allowedAfter);
+
+                if ($currentTimeObj->lte($windowEndCandidate)) {
+                    // ✅ ما زلنا ضمن سماحية ما بعد النهاية -> اعتبرها فترة "اليوم" نفسها
+                    $periodStart = $startToday;      // لا ننقل للتاريخ التالي
+                    $periodEnd   = $endToday;        // نهاية اليوم نفسها
+                    $origin      = 'same-day-grace'; // للتمييز في التشخيص
+                } else {
+                    // ⏭️ خرجنا خارج السماحية -> فعلاً ننتقل إلى فترة الغد
+                    $periodStart = $startToday->copy()->addDay();
+                    $periodEnd   = $endToday->copy()->addDay();
+                    $origin      = 'tomorrow';
+                }
+
+                // if ($workPeriod->id == 10)
+                // dd($startToday, $endToday);
                 // بعد نهاية اليوم ⇒ اختر الفترة القادمة (غدًا)
-                $periodStart = $startToday->copy()->addDay();
-                $periodEnd   = $endToday->copy()->addDay();
-                $origin      = 'tomorrow';
+                // $periodStart = $startToday->copy()->addDay();
+                // $periodEnd   = $endToday->copy()->addDay();
+                // $origin      = 'tomorrow';
             }
         } else {
             // —— فترة ليلية —— (تعبر منتصف الليل)
@@ -391,6 +422,14 @@ class AttendanceHandler
         $windowStart = $periodStart->copy()->subHours($allowedBefore);
         $windowEnd   = $periodEnd->copy()->addHours($allowedAfter);
 
+        // if ($workPeriod->id == 10) {
+        //     dd(
+        //         $currentTimeObj,
+        //         $windowStart,
+        //         $windowEnd,
+        //         $currentTimeObj->betweenIncluded($windowStart, $windowEnd)
+        //     );
+        // }
         return [
             'periodStart' => $periodStart,
             'periodEnd'   => $periodEnd,
