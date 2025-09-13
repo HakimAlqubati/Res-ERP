@@ -35,7 +35,7 @@ class PayrollResource extends Resource
 {
     protected static ?string $model = PayrollRun::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Pencil;
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Banknotes;
 
     protected static ?string $cluster = HRSalaryCluster::class;
     public static function getNavigationBadge(): ?string
