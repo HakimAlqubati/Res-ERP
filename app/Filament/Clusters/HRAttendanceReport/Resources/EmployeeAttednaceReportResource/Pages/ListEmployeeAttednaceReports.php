@@ -20,10 +20,11 @@ class ListEmployeeAttednaceReports extends ListRecords
     public $modalData        = [];
     public function refreshData()
     {
-        
+
         // حالياً فارغة
         // لاحقاً ضع هنا منطق إعادة جلب البيانات
     }
+  
     public function showDetails($date, $employeeId, $periodId)
     {
 
@@ -31,6 +32,8 @@ class ListEmployeeAttednaceReports extends ListRecords
         $attendanceDetails      = $attendanceFetcher->getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
         $this->modalData        = $attendanceDetails->toArray();
         $this->showDetailsModal = true;
+        $this->dispatch('open-modal', id: 'attendance-details');
+
     }
 
     protected function getViewData(): array

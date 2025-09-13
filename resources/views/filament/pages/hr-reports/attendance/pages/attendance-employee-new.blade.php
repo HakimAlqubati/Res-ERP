@@ -98,11 +98,11 @@
         <button type="button" class="btn btn-secondary" wire:click="refreshData">
             🔄 {{ __('Refresh') }}
         </button>
-    
+
         <button type="button" class="btn btn-info" onclick="showChartModal()">
             📊 {{ __('Show Charts') }}
         </button>
-    
+
         <button onclick="printReport()" class="btn btn-print">
             &#128438; {{ __('Print Report') }}
         </button>
@@ -283,13 +283,10 @@
 
             <tfoot>
                 <tr>
-                    <td colspan="{{ $show_day ? 8 : 7 }}"
-                        class="text-center font-bold">{{ __('Total') }}</td>
+                    <td colspan="{{ $show_day ? 8 : 7 }}" class="text-center font-bold">{{ __('Total') }}</td>
                     <td class="text-center">{{ $total_duration_hours }}</td>
-                    <td
-                        class="text-center">{{ $total_actual_duration_hours }}</td>
-                    <td
-                        class="text-center">{{ $total_approved_overtime }}</td>
+                    <td class="text-center">{{ $total_actual_duration_hours }}</td>
+                    <td class="text-center">{{ $total_approved_overtime }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -342,6 +339,9 @@
         }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+
     @if ($showDetailsModal)
         @include('components.hr.attendances-reports.attendance-details-modal', [
             'modalData' => $modalData,
