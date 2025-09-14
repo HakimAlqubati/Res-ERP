@@ -69,7 +69,11 @@ trait HasNewUserForm
                             })
                             ->searchable()
                             ->options(function () {
-                                return Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id');
+                                return Branch::active()
+                                    ->where(function ($q) {
+                                        $q->branches()
+                                            ->orWhere(fn($sub) => $sub->hQBranches());
+                                    })->select('name', 'id')->get()->pluck('name', 'id');
                             }),
 
                     ]),

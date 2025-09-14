@@ -129,7 +129,7 @@ class EmployeeResource extends Resource
                                                 ])
                                                 ->columnSpan(1)->required(),
                                             TextInput::make('email')->columnSpan(1)->email()
-                                            ->unique(ignoreRecord: true)->required(),
+                                                ->unique(ignoreRecord: true)->required(),
 
                                             TextInput::make('phone_number')
                                                 ->unique(ignoreRecord: true)
@@ -236,9 +236,12 @@ class EmployeeResource extends Resource
                                             // ->disabledOn('edit')
                                             ->live()
                                             ->options(
-                                                Branch::where('active', 1)
+                                                Branch::active()
                                                     ->select('id', 'name')
-                                                    ->branches()
+                                                    ->where(function ($q) {
+                                                        $q->branches()
+                                                            ->orWhere(fn($sub) => $sub->hQBranches());
+                                                    })
                                                     ->get()->pluck('name', 'id')
                                             ),
                                         Toggle::make('is_ceo')->label('is_ceo')
