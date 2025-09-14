@@ -404,6 +404,7 @@ class AttendanceHandler
                 // $origin      = 'tomorrow';
             }
         } else {
+            // dd($timeOfDay,$endAt);
             // —— فترة ليلية —— (تعبر منتصف الليل)
             if ($timeOfDay < $endAt) {
                 // بعد منتصف الليل وحتى end_at ⇒ الفترة بدأت أمس وتنتهي اليوم
@@ -413,7 +414,8 @@ class AttendanceHandler
             } else {
                 // باقي اليوم (سواء قبل start_at أو بعده) ⇒ الفترة تبدأ اليوم وتنتهي غدًا
                 $periodStart = $startToday;
-                $periodEnd   = $endToday->copy()->addDay();
+                $periodEnd   = $endToday->copy();
+                // $periodEnd   = $endToday->copy()->addDay();
                 $origin      = 'same-day';
             }
         }

@@ -17,6 +17,7 @@ class CheckOutHandler
             : null;
         $endTimeFromBounds = $bounds['periodEnd']->format('Y-m-d H:i:s');
 
+        // dd($endTimeFromBounds);
         $endTime   = Carbon::parse($date . ' ' . $nearestPeriod->end_at);
         $startTime = Carbon::parse($date . ' ' . $nearestPeriod->start_at);
 
@@ -66,18 +67,21 @@ class CheckOutHandler
             //     $checkinTime = Carbon::parse($checkinRecord->check_date . ' ' . $checkinRecord->check_time);
             // }
         }
+        $allowedTimeAfter = Carbon::parse($nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'));
 
+         
         // معالجة حالة الانصراف بعد منتصف الليل
         // if ($checkTime->lt($checkinTime)) {
         if (
             $checkinRecord->period->day_and_night
             && $checkTime->toTimeString() >= '00:00:00'
-            && $checkTime->toTimeString() <= $nearestPeriod->end_at
+            && $checkTime->toTimeString() <= $allowedTimeAfter->format('H:i:s')
         ) {
             $checkinTime = $checkinTime->copy()->addDay();
         }
         // dd($checkinTime, $checkTime);
         $actualMinutes = $checkinTime->diffInMinutes($checkTime);
+        // dd($actualMinutes, $checkinTime, $checkTime);
         $hoursActual   = floor($actualMinutes / 60);
         $minutesActual = $actualMinutes % 60;
 
@@ -108,7 +112,7 @@ class CheckOutHandler
         }
 
         $attendanceData['total_actual_duration_hourly'] = sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60);
-        // dd($checkTime->gt($endTime),$checkTime,$endTime);
+        // dd($attendanceData, $checkTime->gt($endTimeFromBounds), $checkTime, $endTimeFromBounds);
         // dd($checkTime, $endTime, $attendanceData);
         // 4. تحديد الحالة: تأخر أو خروج مبكر
         if ($checkTime->gt($endTimeFromBounds)) {
@@ -129,7 +133,6 @@ class CheckOutHandler
         $attendanceData['delay_minutes'] = 0;
 
         // 6. حالات إضافية
-        $allowedTimeAfter = Carbon::parse($nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'));
         if (
             $nearestPeriod->end_at > $allowedTimeAfter->format('H:i:s') &&
             $checkTime->toTimeString() < $nearestPeriod->end_at &&
@@ -146,7 +149,7 @@ class CheckOutHandler
             if ($checkTime->toTimeString() > $nearestPeriod->start_at && $checkTime->toTimeString() <= '23:59:59') {
                 $endTime                                   = $endTime->addDay();
                 $attendanceData['early_departure_minutes'] = $checkTime->diffInMinutes($endTime);
-                $attendanceData['status']                  = Attendance::STATUS_EARLY_DEPARTURE;
+                // $attendanceData['status']                  = Attendance::STATUS_EARLY_DEPARTURE;
             }
         }
 
@@ -165,6 +168,7 @@ class CheckOutHandler
         $attendanceData['late_departure_minutes']  = 0;
         $attendanceData['early_departure_minutes'] = 0;
 
+        // dd($currentTimeObj, $endForCompare);
         if ($currentTimeObj->equalTo($endForCompare)) {
             $attendanceData['status'] = Attendance::STATUS_ON_TIME;
         } elseif ($currentTimeObj->greaterThan($endForCompare)) {
