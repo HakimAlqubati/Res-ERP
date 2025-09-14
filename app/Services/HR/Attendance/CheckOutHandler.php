@@ -36,7 +36,11 @@ class CheckOutHandler
 
         // dd($endTimeFromBounds, $date);
         $dateModified = $date;
-        if ($checkTime->format('H:i:s') >= '00:00:00' && $checkTime->format('H:i:s') <= $windowEnd) {
+        if (
+            $checkTime->format('H:i:s') >= '00:00:00' &&
+            $checkTime->format('H:i:s') <= $windowEnd &&
+            $checkinRecord->period->day_and_night
+        ) {
             $dateModified = Carbon::parse($date)->addDay()->toDateString();
         }
         // dd($dateModified);
