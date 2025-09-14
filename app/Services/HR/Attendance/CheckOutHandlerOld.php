@@ -6,11 +6,25 @@ use App\Models\Attendance;
 use App\Models\Setting;
 use Carbon\Carbon;
 
-class CheckOutHandler
+class CheckOutHandlerOld
 {
     public function handle(array $attendanceData, $nearestPeriod, int $employeeId, string $date, Carbon $checkTime, $previousRecord = null): array
     {
 
+        // // ✅ استخدم bounds إن كانت معلّقة على الفترة
+        $bounds = (method_exists($nearestPeriod, 'relationLoaded') && $nearestPeriod->relationLoaded('bounds'))
+            ? $nearestPeriod->getRelation('bounds')
+            : null;
+        // dd($bounds);
+        $endTimeFromBounds = $bounds['periodEnd']->format('Y-m-d H:i:s');
+
+        // dd($endTimeFromBounds);
+        $endTime   = Carbon::parse($date . ' ' . $nearestPeriod->end_at);
+        $startTime = Carbon::parse($date . ' ' . $nearestPeriod->start_at);
+
+        $checkTime = $bounds['currentTimeObj'];
+        // dd($checkTime,$bounds['currentTimeObj']);
+        $realCheckDate = $attendanceData['real_check_date'] ?? $date;
         // 1. تحديد سجل الدخول
         $checkinRecord = Attendance::where('employee_id', $employeeId)
             ->where('period_id', $nearestPeriod->id)
@@ -21,39 +35,7 @@ class CheckOutHandler
             ->first();
 
 
-        // // ✅ استخدم bounds إن كانت معلّقة على الفترة
-        $bounds = (method_exists($nearestPeriod, 'relationLoaded') && $nearestPeriod->relationLoaded('bounds'))
-            ? $nearestPeriod->getRelation('bounds')
-            : null;
-
-
-        $windowStart = $bounds['windowStart']->format('H:i:s');
-        $windowEnd = $bounds['windowEnd']->format('H:i:s');
-
-
-        // dd($windowStart,$windowEnd,$checkTime->format('H:i:s'),$checkinRecord);
-        $endTimeFromBounds = $bounds['periodEnd']->format('Y-m-d H:i:s');
-
-        // dd($endTimeFromBounds, $date);
-        $dateModified = $date;
-        if ($checkTime->format('H:i:s') >= '00:00:00' && $checkTime->format('H:i:s') <= $windowEnd) {
-            $dateModified = Carbon::parse($date)->addDay()->toDateString();
-        }
-        // dd($dateModified);
-        // dd($date);
-        $endTime   = Carbon::parse($dateModified . ' ' . $nearestPeriod->end_at);
-        $startTime = Carbon::parse($date . ' ' . $nearestPeriod->start_at);
-
-        $checkTime = $bounds['currentTimeObj'];
-        // dd($checkTime,$bounds['currentTimeObj']);
-        $realCheckDate = $attendanceData['real_check_date'] ?? $date;
-
-        $allowedTimeAfter = Carbon::parse($nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'));
-
-        // dd($allowedTimeAfter);
-
-
-
+            dd($checkinRecord);
         // dd($checkinRecord,$previousRecord,$realCheckDate);
         if ($checkinRecord) {
             $checkinTime       = Carbon::parse($checkinRecord->check_date . ' ' . $checkinRecord->check_time);
@@ -82,6 +64,7 @@ class CheckOutHandler
 
             $checkinTime = Carbon::parse($checkinRecord->real_check_date . ' ' . $checkinRecord->check_time);
         }
+        $allowedTimeAfter = Carbon::parse($nearestPeriod->end_at)->addHours((int) Setting::getSetting('hours_count_after_period_after'));
 
 
         // معالجة حالة الانصراف بعد منتصف الليل
@@ -118,8 +101,7 @@ class CheckOutHandler
             ->whereDate('check_date', $checkDateToSum)
             ->pluck('actual_duration_hourly')
             ->toArray();
-        // dd($actualMinutes);
-        // dd($existingDurations);
+
         $totalMinutes = $actualMinutes;
         foreach ($existingDurations as $duration) {
             if ($duration) {
@@ -127,16 +109,9 @@ class CheckOutHandler
                 $totalMinutes += ((int) $h * 60 + (int) $m);
             }
         }
-        // dd($totalMinutes);
 
         $attendanceData['total_actual_duration_hourly'] = sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60);
-        // dd(
-        //     $attendanceData,
-        //     $totalMinutes,
-        //     $checkTime->gt($endTimeFromBounds),
-        //     $checkTime,
-        //     $endTimeFromBounds
-        // );
+        // dd($attendanceData, $checkTime->gt($endTimeFromBounds), $checkTime, $endTimeFromBounds);
         // dd($checkTime, $endTime, $attendanceData);
         // dd($checkinTime);
         // 4. تحديد الحالة: تأخر أو خروج مبكر
@@ -153,8 +128,8 @@ class CheckOutHandler
             $attendanceData['early_departure_minutes'] = 0;
             $attendanceData['status']                  = Attendance::STATUS_ON_TIME;
         }
-
-        // dd($attendanceData, $checkTime, $endTimeFromBounds, $endTime);
+        
+        dd($attendanceData,$checkTime,$endTimeFromBounds,$endTime);
         // 5. التعامل مع الحقول الأخرى
         $attendanceData['delay_minutes'] = 0;
 
@@ -189,23 +164,23 @@ class CheckOutHandler
             $endForCompare = Carbon::parse($endForCompare);
         }
 
-        // صفّر الدقائق أولاً 
+        // صفّر الدقائق أولاً
+        // $attendanceData['late_departure_minutes']  = 0;
+        // $attendanceData['early_departure_minutes'] = 0;
 
-        // dd($currentTimeObj, $date, $endTime, $endForCompare);
-        if ($nearestPeriod->day_and_night) {
-            if ($currentTimeObj->equalTo($endTime)) {
-                $attendanceData['status'] = Attendance::STATUS_ON_TIME;
-            } elseif ($currentTimeObj->greaterThan($endTime)) {
-                // خرج بعد نهاية الفترة
-                $attendanceData['status']                 = Attendance::STATUS_LATE_DEPARTURE;
-                $attendanceData['late_departure_minutes'] = $endTime->diffInMinutes($currentTimeObj);
-            } else {
-                // خرج قبل نهاية الفترة
-                $attendanceData['status']                    = Attendance::STATUS_EARLY_DEPARTURE;
-                $attendanceData['early_departure_minutes']   = $currentTimeObj->diffInMinutes($endTime);
-            }
-        }
-        // dd($attendanceData);
+        // dd($currentTimeObj, $endForCompare);
+        // if ($currentTimeObj->equalTo($endForCompare)) {
+        //     $attendanceData['status'] = Attendance::STATUS_ON_TIME;
+        // } elseif ($currentTimeObj->greaterThan($endForCompare)) {
+        //     // خرج بعد نهاية الفترة
+        //     $attendanceData['status']                 = Attendance::STATUS_LATE_DEPARTURE;
+        //     $attendanceData['late_departure_minutes'] = $endForCompare->diffInMinutes($currentTimeObj);
+        // } else {
+        //     // خرج قبل نهاية الفترة
+        //     $attendanceData['status']                    = Attendance::STATUS_EARLY_DEPARTURE;
+        //     $attendanceData['early_departure_minutes']   = $currentTimeObj->diffInMinutes($endForCompare);
+        // }
+        dd($attendanceData);
         if (is_array($attendanceData) && isset($attendanceData['employee_id'], $attendanceData['period_id'])) {
 
             return [
