@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SalaryTransactions\Tables;
 
+use App\Models\SalaryTransaction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -140,7 +141,7 @@ class SalaryTransactionsTable
             ])
             ->recordActions([
                 ViewAction::make(),
-                // EditAction::make(),
+                EditAction::make()->visible(fn($record) => $record->status === SalaryTransaction::STATUS_PENDING),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

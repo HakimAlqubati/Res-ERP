@@ -20,7 +20,7 @@ class SalaryTransactionForm
             Fieldset::make(__('Employee & Payroll'))->columnSpanFull()
                 ->schema([
                     Grid::make(3)->columnSpanFull()->schema([
-                        Select::make('employee_id')
+                        Select::make('employee_id')->disabledOn('edit')
                             ->label(__('Employee'))
                             ->options(fn() => \App\Models\Employee::active()
                                 ->orderBy('name')
@@ -30,7 +30,7 @@ class SalaryTransactionForm
                             ->required()
                             ->reactive(),
 
-                        Select::make('payroll_id')
+                        Select::make('payroll_id')->disabledOn('edit')
                             ->label(__('Payroll'))
                             ->options(function (callable $get) {
                                 $employeeId = $get('employee_id');
@@ -50,7 +50,7 @@ class SalaryTransactionForm
                             })
                             ->searchable()
                             ->preload()
-                            ->nullable()
+                            ->required()
                             ->reactive()
                             ->disabled(fn(callable $get) => ! $get('employee_id')),
                         Select::make('status')
@@ -61,7 +61,7 @@ class SalaryTransactionForm
                                 'rejected' => __('Rejected'),
                             ])
                             ->default('pending')
-                            ->required(),
+                            ->required()->disabledOn('edit'),
                     ]),
                 ]),
 
@@ -70,7 +70,7 @@ class SalaryTransactionForm
                 ->schema([
 
                     Grid::make(3)->columnSpanFull()->schema([
-                        Select::make('type')
+                        Select::make('type')->disabledOn('edit')
                             ->label(__('Type'))
                             ->options(\App\Models\SalaryTransaction::typeOptions())
                             ->searchable()
@@ -109,9 +109,10 @@ class SalaryTransactionForm
                                     }
                                 };
                             })
-                            ->disabled(fn(callable $get) => !$get('type')),
+                            ->disabled(fn(callable $get) => !$get('type'))
+                            ->disabledOn('edit'),
 
-                        Select::make('operation')
+                        Select::make('operation')->disabledOn('edit')
                             ->label(__('Operation'))
                             ->options([
                                 '+' => __('Addition'),
@@ -123,7 +124,7 @@ class SalaryTransactionForm
                         DatePicker::make('date')
                             ->label(__('Date'))
                             ->default(now())
-                            ->required(),
+                            ->required()->disabledOn('edit'),
 
 
                         TextInput::make('amount')
@@ -136,13 +137,13 @@ class SalaryTransactionForm
 
 
                     Grid::make(2)->columnSpanFull()->hidden()->schema([
-                        TextInput::make('qty')
+                        TextInput::make('qty')->disabledOn('edit')
                             ->label(__('Quantity'))
                             ->numeric()
                             ->nullable(),
 
                         TextInput::make('rate')
-                            ->label(__('Rate'))
+                            ->label(__('Rate'))->disabledOn('edit')
                             ->numeric()
                             ->nullable(),
                     ]),

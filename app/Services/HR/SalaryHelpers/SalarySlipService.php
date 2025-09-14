@@ -49,8 +49,10 @@ class SalarySlipService
             ->get();
 
         // تقسيم الحركات (موجب = إيراد، سالب = خصم)
-        $earnings   = $tx->filter(fn ($t) => (float)$t->amount > 0);
-        $deductions = $tx->filter(fn ($t) => (float)$t->amount < 0);
+        // تقسيم الحركات بناءً على operation
+        $earnings   = $tx->filter(fn(SalaryTransaction $t) => $t->operation === SalaryTransaction::OPERATION_ADD);
+        $deductions = $tx->filter(fn(SalaryTransaction $t) => $t->operation === SalaryTransaction::OPERATION_SUB);
+
 
         // البنود الأساسية بحسب النوع
         $basicSalary  = (float) $tx->where('type', 'salary')->sum('amount');
@@ -70,7 +72,7 @@ class SalarySlipService
             ->all();
 
         // تفاصيل الخصومات (لعمود الـ Deductions)
-        $employeeDeductions = $tx->filter(fn ($t) => in_array($t->type, ['deduction', 'penalty', 'installment', 'advance'], true))
+        $employeeDeductions = $tx->filter(fn($t) => in_array($t->type, ['deduction', 'penalty', 'installment', 'advance'], true))
             ->map(function (SalaryTransaction $t) {
                 $name = $t->description ?: (is_string($t->sub_type) ? ucfirst(str_replace('_', ' ', $t->sub_type)) : 'Deduction');
                 return [
@@ -83,9 +85,8 @@ class SalarySlipService
 
         // المجاميع
         $totalEarnings   = round((float) $earnings->sum('amount'), 2);
-        $totalDeductions = round(abs((float) $deductions->sum('amount')), 2);
+        $totalDeductions = round((float) $deductions->sum('amount'), 2);
         $netSalary       = round($totalEarnings - $totalDeductions, 2);
-
         // الحفاظ على أسماء/هيكلة المتغيرات المستخدمة في القالب الحالي:
         $data = (object) [
             'details' => [[
@@ -94,7 +95,7 @@ class SalarySlipService
                 'net_salary'       => $netSalary,
             ]],
         ];
-
+ 
         $totalAllowanceAmount = $totalEarnings;   // إجمالي العمود الأيسر (Earnings)
         $totalDeductionAmount = $totalDeductions; // إجمالي العمود الأيمن (Deductions)
         $monthName            = Carbon::create($year, $month, 1)->format('F Y');

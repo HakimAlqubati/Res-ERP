@@ -88,7 +88,36 @@ class PayrollResource extends Resource
                         ->options(fn() => getMonthOptionsBasedOnSettings()) // Use the helper function
 
                         // ->searchable()
-                        ->default(now()->format('F')),
+                        ->default(now()->format('F'))
+                        ->rule(function (callable $get) {
+                            return function (string $attribute, $value, \Closure $fail) use ($get) {
+                                // استخراج branch_id من الفورم
+                                $branchId = $get('branch_id');
+                                if (! $branchId) {
+                                    return;
+                                }
+
+                                // "August 2025" → [$monthName, $year]
+                                [$monthName, $year] = explode(' ', $value);
+                                $monthNumber = \Carbon\Carbon::parse($monthName)->month;
+
+                                // تحقق من وجود سجل مكرر
+                                $exists = \App\Models\PayrollRun::query()
+                                    ->where('branch_id', $branchId)
+                                    ->where('year', (int) $year)
+                                    ->where('month', (int) $monthNumber)
+                                    ->withTrashed()
+                                    ->first();
+                                // dd($exists);
+                                if ($exists) {
+                                    if ($exists->trashed()) {
+                                        $fail(__('Payroll for this branch and month already exists in the recycle bin. Please restore or permanently delete it before creating a new one.'));
+                                    } else {
+                                        $fail(__('Payroll for this branch and month already exists. You cannot create a duplicate.'));
+                                    }
+                                }
+                            };
+                        }),
                     TextInput::make('name')->label('Title')->hiddenOn('create')->disabled(),
                     DatePicker::make('pay_date')->required()
                         ->default(date('Y-m-d')),

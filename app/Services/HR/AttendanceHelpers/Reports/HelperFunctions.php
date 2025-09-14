@@ -33,12 +33,13 @@ class HelperFunctions
                     $stats['present_days']++;
                     $stats['required_days']++;
                     break;
-                case AttendanceReportStatus::Absent->value:
+                case AttendanceReportStatus::Absent->value: 
                     $stats['absent']++;
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Partial->value:
                     $stats['partial']++;
+                    $stats['absent']++;
                     $stats['required_days']++;
                     break;
                 case AttendanceReportStatus::Leave->value:
@@ -148,13 +149,13 @@ class HelperFunctions
         throw new \InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
     }
 
-   public function calculateMissingHours(
+    public function calculateMissingHours(
         $status,
         $supposedDuration,
         $approvedOvertime,
         $date,
         $employeeId
-    ) { 
+    ) {
 
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
             ->where('check_date', $date)

@@ -48,31 +48,44 @@ class CreatePayroll extends CreateRecord
      */
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
-        /** @var PayrollRunService $service */
-        $service = app(PayrollRunService::class);
+        try {
+            //code...
 
-        // Build DTO expected by your service
-        $dto = new RunPayrollData(
-            branchId: (int) $data['branch_id'],
-            year: (int) $data['year'],
-            month: (int) $data['month'],
-            overwriteExisting: false,
-        );
+            /** @var PayrollRunService $service */
+            $service = app(PayrollRunService::class);
 
-        $result = $service->runAndPersist($dto);
+            // Build DTO expected by your service
+            $dto = new RunPayrollData(
+                branchId: (int) $data['branch_id'],
+                year: (int) $data['year'],
+                month: (int) $data['month'],
+                overwriteExisting: false,
+            );
 
-        if ($result['success']) {
-            // showSuccessNotifiMessage($result['message']);
-            $this->getRedirectUrl();
+            $result = $service->runAndPersist($dto);
+
+            if ($result['success']) {
+                // showSuccessNotifiMessage($result['message']);
+                $this->getRedirectUrl();
+                return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
+            } else {
+                showWarningNotifiMessage($result['message']);
+                $this->halt();
+            }
+
+
+            // Return the PayrollRun for Filament to redirect to View page
             return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
-        } else {
-            showWarningNotifiMessage($result['message']);
+        } catch (\Throwable $th) {
+            Notification::make()
+                ->title('An unexpected error occurred')
+                ->body($th->getMessage())
+                ->danger()
+                ->send();
+
             $this->halt();
         }
-
-
-        // Return the PayrollRun for Filament to redirect to View page
-        return PayrollRun::findOrFail($result['meta']['payroll_run_id']);
+        return new PayrollRun();
     }
 
     protected function getRedirectUrl(): string

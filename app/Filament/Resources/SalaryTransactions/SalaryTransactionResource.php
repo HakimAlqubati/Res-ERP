@@ -63,7 +63,7 @@ class SalaryTransactionResource extends Resource
             'index' => ListSalaryTransactions::route('/'),
             'create' => CreateSalaryTransaction::route('/create'),
             'view' => ViewSalaryTransaction::route('/{record}'),
-            // 'edit' => EditSalaryTransaction::route('/{record}/edit'),
+            'edit' => EditSalaryTransaction::route('/{record}/edit'),
         ];  
     }
 

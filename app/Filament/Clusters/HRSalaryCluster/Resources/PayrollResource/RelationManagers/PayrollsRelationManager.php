@@ -122,6 +122,7 @@ class PayrollsRelationManager extends RelationManager
             month: (int) $record->month
         );
 
+    
         // 2) ابنِ الـ HTML من نفس القالب القديم
         $html = view('export.reports.hr.salaries.salary-slip', $payload)->render();
 

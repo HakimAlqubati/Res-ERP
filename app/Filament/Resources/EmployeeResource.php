@@ -210,7 +210,12 @@ class EmployeeResource extends Resource
                                             ->required()
                                             // ->disabledOn('edit')
                                             ->live()
-                                            ->options(Branch::where('active', 1)->select('id', 'name')->get()->pluck('name', 'id')),
+                                            ->options(
+                                                Branch::where('active', 1)
+                                                    ->select('id', 'name')
+                                                    ->branches()
+                                                    ->get()->pluck('name', 'id')
+                                            ),
                                         Toggle::make('is_ceo')->label('is_ceo')
                                             ->live()
                                             ->visible(fn($get): bool => $get('employee_type') == 1)
@@ -488,7 +493,7 @@ class EmployeeResource extends Resource
 
     public static function table(Table $table): Table
     {
-         
+
         return $table->striped()->deferFilters(false)
             ->paginated([10, 25, 50, 100])
             ->defaultSort('id', 'desc')
