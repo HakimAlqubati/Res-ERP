@@ -46,26 +46,27 @@ class CheckInHandler
         }
         $this->status = $attendanceData['status'] ?? $this->status;
         $this->delayMinutes = abs($this->delayMinutes);
- 
+
         $date            = $attendanceData['check_date'];
         $employee        = $attendanceData['employee'];
         $realCheckDate   = $attendanceData['real_check_date'] ?? $date;
         $periodEndTime   = $nearestPeriod->end_at;
         $periodStartTime = $nearestPeriod->start_at;
 
-        $diff = $this->calculateTimeDifferenceV3($checkTime->toTimeString(), $nearestPeriod, $date);
+        $diff2 = $this->calculateTimeDifferenceV3($checkTime->toTimeString(), $nearestPeriod, $date);
+        $diff = $currentTimeBound->diffInHours($periodStartTimeBound);
         // $diff = $this->calculateTimeDifferenceV3($checkTime->toTimeString(), $nearestPeriod, $currentTimeBound->format('Y-m-d'));
-        
+        // dd($diff);
         // dd($currentTimeBound->format('Y-m-d'),$diff);
         if (! $this->isWithinAllowedBeforePeriod($nearestPeriod, $date, $checkTimeStr) && $periodStartTime !== '00:00:00') {
             $message = __('notifications.attendance_out_of_range_before_period');
             Attendance::storeNotAccepted($employee, $date, $checkTimeStr, $day, $message, $nearestPeriod->id, $attendanceData['attendance_type']);
             return $message;
         }
-
-        // dd($periodStartTimeBound,$currentTimeBound,$currentTimeBound->lt($periodStartTimeBound));
+ 
         if (
             $currentTimeBound->lt($periodStartTimeBound) &&
+
             $diff > Setting::getSetting('hours_count_after_period_after') && $type === ''
         ) {
             // dd('sf',$checkTimeStr, $periodStartTime, $diff,$type);
@@ -126,7 +127,7 @@ class CheckInHandler
         $startTime = $period->start_at;
 
         $checkTime = Carbon::parse("$date $currentTime");
- 
+
         if ($period->day_and_night && $currentTime >= '00:00:00' && $currentTime <= $period->end_at) {
             $date = Carbon::parse($date)->subDay()->toDateString();
         }
