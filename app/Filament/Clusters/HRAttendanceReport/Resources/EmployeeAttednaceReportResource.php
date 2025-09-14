@@ -15,6 +15,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
@@ -25,7 +26,7 @@ class EmployeeAttednaceReportResource extends Resource
 {
     protected static ?string $model          = Attendance::class;
     protected static ?string $slug           = 'employee-attendance-reports';
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::ChartBarSquare;
 
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label   = 'Attendance by employee';
