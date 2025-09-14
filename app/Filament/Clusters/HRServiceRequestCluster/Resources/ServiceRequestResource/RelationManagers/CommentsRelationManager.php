@@ -119,7 +119,7 @@ class CommentsRelationManager extends RelationManager
                             ->columnSpanFull()
                             ->image()
                             ->multiple()
-                            ->resize(5)
+                            // ->resize(5)
                             ->downloadable()
                             ->previewable()
                             ->imagePreviewHeight('250')
