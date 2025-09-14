@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,13 +10,13 @@ class MonthlySalaryIncreaseDetail extends Model
 
     protected $table = 'hr_monthly_salary_increases_details';
 
-    public const TYPE_BONUS = 'bonus';
+    public const TYPE_BONUS     = 'bonus';
     public const TYPE_INCENTIVE = 'incentive';
     public const TYPE_ALLOWANCE = 'allowance';
 
-    public const TYPE_MONTHLY_LEAVE_ALLOWANCE_ID = -1;
+    public const TYPE_MONTHLY_LEAVE_ALLOWANCE_ID   = -1;
     public const TYPE_MONTHLY_LEAVE_ALLOWANCE_Name = 'Weekend overtime pay';
-    protected $fillable = [
+    protected $fillable                            = [
         'month_salary_id',
         'employee_id',
         'is_specific_employee',

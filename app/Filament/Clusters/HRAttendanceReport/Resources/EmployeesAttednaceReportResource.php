@@ -10,6 +10,7 @@ use App\Models\Employee;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\FiltersLayout;
@@ -22,7 +23,7 @@ class EmployeesAttednaceReportResource extends Resource
 {
     protected static ?string $model = Attendance::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::ChartBarSquare;
     protected static ?string $slug = 'employees-attendance-report';
     protected static ?string $cluster = HRAttendanceReport::class;
     protected static ?string $label = 'Attendance by branch';
@@ -33,7 +34,7 @@ class EmployeesAttednaceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No data')
+            ->emptyStateHeading('No data')->deferFilters(false)
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),

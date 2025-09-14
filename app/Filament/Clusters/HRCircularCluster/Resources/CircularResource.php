@@ -51,7 +51,7 @@ class CircularResource extends Resource
         return $schema
             ->components([
                 Wizard::make([
-                    Step::make('Basic data')
+                    Step::make('Basic data')->columnSpanFull()
                         ->schema([
                             Fieldset::make()->columnSpanFull()->schema([
                                 Grid::make()->columnSpanFull()->columns(2)->schema([
@@ -86,7 +86,7 @@ class CircularResource extends Resource
                                 ]),
                             ]),
                         ]),
-                    Step::make('Images')->hiddenOn('view')
+                    Step::make('Images')->columnSpanFull()->hiddenOn('view')
                         ->schema([
                             Fieldset::make()->columnSpanFull()->label('')->schema([
 

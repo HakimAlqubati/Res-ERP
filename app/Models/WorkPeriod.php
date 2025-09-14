@@ -128,8 +128,19 @@ class WorkPeriod extends Model implements Auditable
             // });
         }
     }
-    public function periodDays()
+ 
+    // داخل WorkPeriod.php
+
+    public function employeePeriodDays()
     {
-        return $this->hasMany(EmployeePeriodDay::class, 'period_id');
+        return $this->hasManyThrough(
+            EmployeePeriodDay::class,
+            EmployeePeriod::class,
+            'period_id',            // Foreign key on EmployeePeriod
+            'employee_period_id',   // Foreign key on EmployeePeriodDay
+            'id',                   // Local key on WorkPeriod
+            'id'                    // Local key on EmployeePeriod
+        );
     }
+
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,30 +9,44 @@ class EmployeePeriodDay extends Model
 {
     use HasFactory;
 
-    protected $table = 'employee_period_days';
+    protected $table = 'hr_employee_period_days';
 
     protected $fillable = [
-        'employee_id',
-        'period_id',
+        'employee_period_id',
         'day_of_week',
         'start_date',
         'end_date',
     ];
 
-    // Relationships
-    public function employee()
+    // ✅ علاقة رئيسية: اليوم مرتبط بـ EmployeePeriod
+    public function employeePeriod()
     {
-        return $this->belongsTo(Employee::class, 'employee_id');
+        return $this->belongsTo(EmployeePeriod::class, 'employee_period_id');
     }
 
-    public function period()
+    // ✅ علاقات مساعدة (للوصول للموظف أو فترة العمل من خلال EmployeePeriod)
+
+    public function employee()
     {
-        return $this->belongsTo(WorkPeriod::class, 'period_id');
+        return $this->hasOneThrough(
+            Employee::class,
+            EmployeePeriod::class,
+            'id',          // Foreign key on EmployeePeriod
+            'id',          // Foreign key on Employee
+            'employee_period_id', // Local key on this model
+            'employee_id'         // Local key on EmployeePeriod
+        );
     }
 
     public function workPeriod()
     {
-        return $this->belongsTo(WorkPeriod::class, 'period_id');
+        return $this->hasOneThrough(
+            WorkPeriod::class,
+            EmployeePeriod::class,
+            'id',
+            'id',
+            'employee_period_id',
+            'period_id'
+        );
     }
-
 }

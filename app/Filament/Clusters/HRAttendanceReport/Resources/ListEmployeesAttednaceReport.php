@@ -7,32 +7,43 @@ use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\WeeklyHoliday;
 use App\Models\WorkPeriod;
+use App\Services\HR\AttendanceHelpers\EmployeePeriodHistoryService;
+use App\Services\HR\AttendanceHelpers\Reports\AttendanceFetcher;
+use App\Services\HR\AttendanceHelpers\Reports\EmployeesAttendanceOnDateService;
 use Carbon\Carbon;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ListEmployeesAttednaceReport extends ListRecords
 {
     protected static string $resource = EmployeesAttednaceReportResource::class;
-    protected string $view = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed';
+    protected   string $view     = 'filament.pages.hr-reports.attendance.pages.attendance-employees-with-header-fixed-new';
 
     public $showDetailsModal = false;
-    public $modalData = [];
+    public $modalData        = [];
+    /**
+     * @param  Model|array  $record
+     */
     public function getTableRecordKey(Model|array $record): string
     {
+        if (is_array($record)) {
+            // لو البيانات جاية كمصفوفة
+            return (string) ($record['employee_id'] ?? $record['id'] ?? '');
+        }
+
+        // لو Model
         $attributes = $record->getAttributes();
 
-        return $attributes['employee_id'];
+        return (string) ($attributes['employee_id'] ?? $record->getKey());
     }
 
     private function parseDuration($duration)
     {
         // Match hours and minutes using regex
         if (preg_match('/(\d+)\s*h\s*(\d+)\s*m/', $duration, $matches)) {
-            $hours = (int)$matches[1];
-            $minutes = (int)$matches[2];
+            $hours   = (int) $matches[1];
+            $minutes = (int) $matches[2];
             return $hours * 60 + $minutes; // Convert to total minutes
         }
         return 0; // Default to 0 if parsing fails
@@ -40,7 +51,7 @@ class ListEmployeesAttednaceReport extends ListRecords
 
     private function formatDuration($totalMinutes)
     {
-        $hours = intdiv($totalMinutes, 60);
+        $hours   = intdiv($totalMinutes, 60);
         $minutes = $totalMinutes % 60;
         return "{$hours} h {$minutes} m";
     }
@@ -48,58 +59,62 @@ class ListEmployeesAttednaceReport extends ListRecords
     public function getViewData(): array
     {
         $branch_id = $this->getTable()->getFilters()['branch_id']->getState()['value'];
-        $date = $this->getTable()->getFilters()['filter_date']->getState()['date'];
+        $date      = $this->getTable()->getFilters()['filter_date']->getState()['date'];
 
         $report_data = [];
 
-        $query = Employee::query();
-        $employees = $query->select('id');
+        $employeesPaginator = [];
+        $employeeIds        = [];
+
         if ($branch_id != '') {
-            $employees = $query->where('branch_id', $branch_id);
+            $employeesPaginator = Employee::where('branch_id', $branch_id)->active()
+                ->select('id', 'name')
+                ->paginate(50);
+            $employeeIds = $employeesPaginator->pluck('id')->toArray();
         }
 
+        $service = new EmployeesAttendanceOnDateService(new AttendanceFetcher(new EmployeePeriodHistoryService()));
+        $reports = $service->fetchAttendances($employeeIds, $date);
 
-        $employees = $query->get()->pluck('id')->toArray();
+        // dd($reports);
+        // بعد جلب التقارير:
+        $employees = $reports->map(function ($item) {
+            // تحويل attendance_report إلى مصفوفة (لأنها Collection)
+            $attendance_report = $item['attendance_report']->map(function ($dayData) {
+                if (!is_array($dayData)) {
+                    return []; // أو يمكنك تسجيل خطأ أو تجاهله حسب الحاجة
+                }
 
-        $report_data = employeeAttendancesByDate($employees, $date);
+                $dayData['periods'] = isset($dayData['periods']) && $dayData['periods'] instanceof \Illuminate\Support\Collection
+                    ? $dayData['periods']->toArray()
+                    : (is_array($dayData['periods'] ?? null) ? $dayData['periods'] : []);
+
+                return $dayData;
+            })->toArray();
+
+            return [
+                'employee'          => $item['employee'],
+                'attendance_report' => $attendance_report,
+            ];
+        })->values()->toArray();
 
         // Calculate totals
         $totalSupposed = 0;
-        $totalWorked = 0;
+        $totalWorked   = 0;
         $totalApproved = 0;
 
-        foreach ($report_data as $empData) {
-            foreach ($empData as $periods) {
-                foreach ($periods['periods'] as $period) {
-                    //     dd($period['attendances']['checkout']['lastcheckout']['approved_overtime'],$period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'],
-                    //     $period['total_hours']
-                    // );
-                    // Parse supposed_duration_hourly
-                    $supposedDuration = $this->parseDuration($period['attendances']['checkout']['lastcheckout']['supposed_duration_hourly'] ?? '0 h 0 m');
-                    $totalSupposed += $supposedDuration;
-
-                    // Parse total_hours
-                    $workedDuration = $this->parseDuration($period['total_hours'] ?? '0 h 0 m');
-                    $totalWorked += $workedDuration;
-
-                    // Parse approved_overtime
-                    $approvedDuration = $this->parseDuration($period['attendances']['checkout']['lastcheckout']['approved_overtime'] ?? '0 h 0 m');
-                    $totalApproved += $approvedDuration;
-                }
-            }
-        }
-        // dd($totalSupposed,$totalWorked,$totalApproved);
+        // dd($employees);
         return [
-            'report_data' => $report_data,
-            'branch_id' => $branch_id,
-            'date' => $date,
+            'employees'   => $employees,
+            'report_data'   => $report_data,
+            'branch_id'     => $branch_id,
+            'date'          => $date,
             // 'totalSupposed' => $totalSupposed,
             'totalSupposed' => $this->formatDuration($totalSupposed),
-            'totalWorked' => $this->formatDuration($totalWorked),
+            'totalWorked'   => $this->formatDuration($totalWorked),
             'totalApproved' => $this->formatDuration($totalApproved),
         ];
     }
-
 
     public function getEmployeeAttendance($employees, $date)
     {
@@ -124,7 +139,7 @@ class ListEmployeesAttednaceReport extends ListRecords
             ->keyBy('from_date');
 
         $formatted_date = $date;
-        $day_of_week = date('l', strtotime($date));
+        $day_of_week    = date('l', strtotime($date));
 
         // Loop through each employee
         foreach ($employees as $employee) {
@@ -164,79 +179,79 @@ class ListEmployeesAttednaceReport extends ListRecords
 
                     if (isset($holidays[$formatted_date])) {
                         // If the date is a holiday, add it as a holiday
-                        $holiday = $holidays[$formatted_date];
+                        $holiday                                             = $holidays[$formatted_date];
                         $report_data['data'][$employee->name][$period->id][] = (object) [
-                            'period_id' => $period->id,
-                            'employee_id' => $employee->id,
-                            'employee_no' => 'N/A',
+                            'period_id'     => $period->id,
+                            'employee_id'   => $employee->id,
+                            'employee_no'   => 'N/A',
                             'employee_name' => $employee->name,
-                            'check_type' => 'Holiday',
-                            'check_date' => $formatted_date,
-                            'check_time' => null,
-                            'day' => $day_of_week,
-                            'holiday_name' => 'Holiday of (' . $holiday->name . ')',
+                            'check_type'    => 'Holiday',
+                            'check_date'    => $formatted_date,
+                            'check_time'    => null,
+                            'day'           => $day_of_week,
+                            'holiday_name'  => 'Holiday of (' . $holiday->name . ')',
                         ];
                     } elseif (isset($leaveDates[$formatted_date])) {
                         // If the date is a leave, add it as a leave
-                        $leave_date = $leaveDates[$formatted_date];
+                        $leave_date                                          = $leaveDates[$formatted_date];
                         $report_data['data'][$employee->name][$period->id][] = (object) [
-                            'period_id' => $period->id,
-                            'employee_id' => $employee->id,
-                            'employee_no' => 'N/A',
-                            'employee_name' => $employee->name,
-                            'check_type' => 'ApprovedLeaveApplication',
-                            'check_date' => $formatted_date,
-                            'check_time' => null,
-                            'day' => $day_of_week,
+                            'period_id'       => $period->id,
+                            'employee_id'     => $employee->id,
+                            'employee_no'     => 'N/A',
+                            'employee_name'   => $employee->name,
+                            'check_type'      => 'ApprovedLeaveApplication',
+                            'check_date'      => $formatted_date,
+                            'check_time'      => null,
+                            'day'             => $day_of_week,
                             'leave_type_name' => $leave_date,
                         ];
                     } elseif ($attendances->isNotEmpty()) {
                         // If there are attendance records, add them
                         foreach ($attendances as $attendance) {
                             $report_data['data'][$employee->name][$period->id][] = (object) [
-                                'employee_id' => $attendance->employee_id,
-                                'employee_no' => $attendance->employee_no,
-                                'employee_name' => $attendance->employee_name,
-                                'check_type' => $attendance->check_type,
-                                'check_date' => $attendance->check_date,
-                                'check_time' => $attendance->check_time,
-                                'day' => $attendance->day,
-                                'actual_duration_hourly' => $attendance->actual_duration_hourly,
+                                'employee_id'              => $attendance->employee_id,
+                                'employee_no'              => $attendance->employee_no,
+                                'employee_name'            => $attendance->employee_name,
+                                'check_type'               => $attendance->check_type,
+                                'check_date'               => $attendance->check_date,
+                                'check_time'               => $attendance->check_time,
+                                'day'                      => $attendance->day,
+                                'actual_duration_hourly'   => $attendance->actual_duration_hourly,
                                 'supposed_duration_hourly' => $attendance->supposed_duration_hourly,
-                                'early_arrival_minutes' => $attendance->early_arrival_minutes,
-                                'late_departure_minutes' => $attendance->late_departure_minutes,
-                                'status' => $attendance->status,
-                                'period_id' => $period->id,
-                                'period_start_at' => $period->start_at,
-                                'period_end_at' => $period->end_at,
-                                'id' => $attendance->id,
+                                'early_arrival_minutes'    => $attendance->early_arrival_minutes,
+                                'late_departure_minutes'   => $attendance->late_departure_minutes,
+                                'status'                   => $attendance->status,
+                                'period_id'                => $period->id,
+                                'period_start_at'          => $period->start_at,
+                                'period_end_at'            => $period->end_at,
+                                'id'                       => $attendance->id,
                             ];
                         }
                     } else {
                         // If no attendance, check if it's a weekend
                         if (in_array($day_of_week, $weekend_days)) {
                             $report_data['data'][$employee->name][$period->id][] = (object) [
-                                'employee_id' => $employee->id,
-                                'employee_no' => 'N/A',
+                                'employee_id'   => $employee->id,
+                                'employee_no'   => 'N/A',
                                 'employee_name' => $employee->name,
-                                'check_type' => 'Weekend',
-                                'check_date' => $formatted_date,
-                                'check_time' => null,
-                                'day' => $day_of_week,
+                                'check_type'    => 'Weekend',
+                                'check_date'    => $formatted_date,
+                                'check_time'    => null,
+                                'day'           => $day_of_week,
                             ];
                         } else {
                             // Otherwise, mark as absent
                             $report_data['data'][$employee->name][$period->id][] = (object) [
-                                'employee_id' => $employee->id,
-                                'employee_no' => 'N/A',
-                                'employee_name' => $employee->name,
-                                'check_type' => 'Absent',
-                                'period_id' => $period->id,
+                                'employee_id'     => $employee->id,
+                                'employee_no'     => 'N/A',
+                                'employee_name'   => $employee->name,
+                                'check_type'      => 'Absent',
+                                'period_id'       => $period->id,
                                 'period_start_at' => $period->start_at,
-                                'period_end_at' => $period->end_at,
-                                'check_date' => $formatted_date,
-                                'check_time' => null,
-                                'day' => $day_of_week,
+                                'period_end_at'   => $period->end_at,
+                                'check_date'      => $formatted_date,
+                                'check_time'      => null,
+                                'day'             => $day_of_week,
                             ];
                         }
                     }
@@ -257,7 +272,7 @@ class ListEmployeesAttednaceReport extends ListRecords
         $leaveDates = [];
         foreach ($leaveApplications as $leave) {
             $fromDate = Carbon::parse($leave->from_date);
-            $toDate = Carbon::parse($leave->to_date);
+            $toDate   = Carbon::parse($leave->to_date);
 
             for ($date = $fromDate; $date->lte($toDate); $date->addDay()) {
                 $leaveDates[$date->format('Y-m-d')] = 'Leave application approved for (' . $leave->leaveType->name . ')';
@@ -274,14 +289,13 @@ class ListEmployeesAttednaceReport extends ListRecords
     //     return dd($AttendanceDetails->toArray());
     // }
 
-
     // Add a method to handle showing the modal with data
 
     public function showDetails($date, $employeeId, $periodId)
     {
         // Replace with your actual data-fetching logic if needed
         $AttendanceDetails = getEmployeePeriodAttendnaceDetails($employeeId, $periodId, $date);
-        $this->modalData = $AttendanceDetails->toArray();
+        $this->modalData   = $AttendanceDetails->toArray();
         //  dd($this->modalData);
         $this->showDetailsModal = true; // This opens the modal
     }

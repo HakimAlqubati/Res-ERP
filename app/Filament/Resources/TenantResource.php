@@ -174,7 +174,6 @@ class TenantResource extends Resource
                         return self::generateTenantBackup($record);
                     }),
 
-
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

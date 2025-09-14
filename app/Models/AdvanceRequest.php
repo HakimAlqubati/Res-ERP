@@ -6,6 +6,7 @@ use Throwable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class AdvanceRequest extends Model
 {
@@ -25,6 +26,11 @@ class AdvanceRequest extends Model
         'date',
         'deduction_starts_from',
         'reason',
+        'code',
+        'status',
+        'remaining_total',
+        'paid_installments'
+
     ];
 
     // Define the relationship with Employee
@@ -36,29 +42,76 @@ class AdvanceRequest extends Model
     {
         return $this->hasMany(EmployeeAdvanceInstallment::class, 'transaction_id');
     }
-    public static function createInstallments($employeeId, $totalAmount, $numberOfMonths, $startDate, $applicationId)
-    {
-        try {
-            if ($numberOfMonths <= 0) {
-                return; // Exit if no installments are specified
+    // at top of AdvanceRequest.php
+    public static function createInstallments(
+        $employeeId,
+        $totalAmount,
+        $numberOfMonths,
+        string|\DateTimeInterface $startMonth,
+        $applicationId
+    ) {
+        if ($numberOfMonths <= 0 || $totalAmount <= 0) return;
+
+        DB::transaction(function () use ($employeeId, $totalAmount, $numberOfMonths, $startMonth, $applicationId) {
+            // prevent duplicates for same application
+            if (EmployeeAdvanceInstallment::where('application_id', $applicationId)->exists()) {
+                return;
             }
 
-            $installmentAmount = $totalAmount / $numberOfMonths;
-            $dueDate = Carbon::parse($startDate);
+            $base = floor(($totalAmount / $numberOfMonths) * 100) / 100;   // 2-dec
+            $acc  = round($base * ($numberOfMonths - 1), 2);
+            $last = round($totalAmount - $acc, 2);
 
-            // Loop through each month to create installments
+            $cursor = Carbon::parse($startMonth)->startOfMonth();
+
             for ($i = 0; $i < $numberOfMonths; $i++) {
+                $slice = ($i === $numberOfMonths - 1) ? $last : $base;
+
                 EmployeeAdvanceInstallment::create([
-                    'employee_id' => $employeeId,
-                    'application_id' => $applicationId,
-                    'installment_amount' => round($installmentAmount, 2),
-                    'due_date' => $dueDate->copy()->addMonths($i),
-                    'is_paid' => false,
+                    'employee_id'        => $employeeId,
+                    'application_id'     => $applicationId,
+                    'sequence'           => $i + 1, // NEW
+                    'installment_amount' => $slice,
+                    'due_date'           => (clone $cursor)->endOfMonth()->toDateString(), 
+                    'is_paid'            => false,
+                    // 'paid_payroll_id' stays null until deduction happens
                 ]);
+
+                $cursor->addMonth();
             }
-        } catch (Throwable $th) {
-            //throw $th;
-        }
+        });
     }
+
+
+    protected static function booted(): void
+    {
+        static::creating(function (AdvanceRequest $model) {
+            if (empty($model->code)) {
+                $model->code = static::nextCode(); // يولد كود فريد
+            }
+           
+            if (is_null($model->remaining_total)) {
+                $model->remaining_total = (float) $model->advance_amount;
+            }
+            if (is_null($model->paid_installments)) {
+                $model->paid_installments = 0;
+            }
+        });
+    }
+
+    public static function nextCode(): string
+    {
+        // مثال: ADV-202508-0001
+        $prefix = 'ADV-' . now()->format('Ym') . '-';
+        // تحسب العدّاد الحالي لهذا الشهر
+        $last = DB::table('hr_advance_requests')
+            ->where('code', 'like', $prefix . '%')
+            ->selectRaw("MAX(CAST(SUBSTRING(code, LENGTH(?) + 1) AS UNSIGNED)) as max_seq", [$prefix])
+            ->value('max_seq');
+
+        $seq = (int) $last + 1;
+        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
     // You can define other relationships or methods as needed
 }

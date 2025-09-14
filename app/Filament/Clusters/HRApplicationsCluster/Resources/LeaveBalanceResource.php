@@ -4,7 +4,6 @@ namespace App\Filament\Clusters\HRApplicationsCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Components\Grid;
@@ -16,19 +15,17 @@ use Filament\Actions\BulkActionGroup;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages\ListLeaveBalances;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages\CreateLeaveBalance;
 use App\Filament\Clusters\HRApplicationsCluster\Resources\LeaveBalanceResource\Pages;
-use App\Filament\Clusters\HRAttenanceCluster;
-use App\Filament\Clusters\HRAttendanceReport;
 use App\Filament\Clusters\HRLeaveManagementCluster;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Tables;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
@@ -42,8 +39,8 @@ class LeaveBalanceResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $cluster = HRLeaveManagementCluster::class;
-    protected static ?string $modelLabel = 'Leave balance';
+    protected static ?string $cluster     = HRLeaveManagementCluster::class;
+    protected static ?string $modelLabel  = 'Leave balance';
     protected static ?string $pluralLabel = 'Leave balance';
 
     // public static function getCluster(): ?string
@@ -66,7 +63,7 @@ class LeaveBalanceResource extends Resource
         static::$pluralLabel;
     }
     protected static ?\Filament\Pages\Enums\SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort                         = 2;
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -202,10 +199,16 @@ class LeaveBalanceResource extends Resource
                     ->searchable()
                     ->multiple()
                     ->label('Leave type')->options([LeaveType::get()->pluck('name', 'id')->toArray()]),
-                SelectFilter::make('employee_id')
-                    ->searchable()
-                    ->multiple()
-                    ->label('Employee')->options([Employee::get()->pluck('name', 'id')->toArray()]),
+                SelectFilter::make('employee_id')->label('Employee')->getSearchResultsUsing(function ($search = null) {
+                    return Employee::query()
+                        ->where('active', 1)
+                        ->when($search, fn($q) => $q->where('name', 'like', "%{$search}%"))
+                        ->limit(20)
+                        ->get()
+                        ->mapWithKeys(fn($employee) => [$employee->id => "{$employee->name} - {$employee->id}"]);
+                })
+
+                    ->searchable(),
                 SelectFilter::make('year')
                     ->searchable()
                     ->multiple()
@@ -230,7 +233,7 @@ class LeaveBalanceResource extends Resource
                             ]);
                             DB::commit();
                             Notification::make()->success()->title('Done')->send();
-                        } catch (Exception $th) {
+                        } catch (\Exception $th) {
                             //throw $th;
                             DB::rollBack();
                             Notification::make()->warning()->body($th->getMessage())->send();
@@ -255,8 +258,8 @@ class LeaveBalanceResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => ListLeaveBalances::route('/'),
-            'create' => CreateLeaveBalance::route('/create'),
+            'index'  => Pages\ListLeaveBalances::route('/'),
+            'create' => Pages\CreateLeaveBalance::route('/create'),
             // 'edit' => Pages\EditLeaveBalance::route('/{record}/edit'),
         ];
     }

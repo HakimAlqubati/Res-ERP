@@ -243,6 +243,8 @@ Route::get('/updateCorrectStore',function(){
     ");;
 });
 
+Route::get('employeesAttendanceOnDateToTest', [\App\Http\Controllers\Api\HR\AttendanceController::class, 'employeesAttendanceOnDateToTest']);
+ 
 Route::get('stockPosition', [PurchaseInventoryReportController::class, 'index']);
 
 Route::get('/copyOutToIn', [CopyOutToInApiController::class, 'handle']);

@@ -44,6 +44,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithValidation, SkipsOn
                 'has_employee_pass' => $row['has_employee_pass'] ?? 0,
                 'gender' => $row['gender'] ?? null,
                 'branch_id' => $row['branch_id'] ?? null,
+                'employee_no' => $row['employee_no'] ?? null,
                 'join_date' => $joinDate,
             ]);
         } catch (Exception $e) {

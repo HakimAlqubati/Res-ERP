@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use App\Traits\DynamicConnection;
@@ -24,23 +23,22 @@ class EmployeePeriod extends Model implements Auditable
     // Define fillable or guarded fields
     protected $fillable = [
         'employee_id',
-        'period_id',
-        'period_days',
+        'period_id', 
         'created_by',
         'updated_by',
+        'start_date','end_date',
         // Add other columns if necessary
     ];
     protected $auditInclude = [
         'employee_id',
-        'period_id',
-        'period_days',
+        'period_id', 
         'created_by',
         'updated_by',
         // Add other columns if necessary
     ];
 
     protected $casts = [
-        'period_days' => 'array',
+        // 'period_days' => 'array',
     ];
     /**
      * Relationship with HrWorkPeriod (many-to-one).
@@ -88,13 +86,10 @@ class EmployeePeriod extends Model implements Auditable
         });
     }
 
-    public function scopeForDay($query, $day)
+   
+ 
+    public function days()
     {
-        return $query->whereJsonContains('period_days', $day);
+        return $this->hasMany(EmployeePeriodDay::class, 'employee_period_id');
     }
-
-    // public function getPeriodDaysValAttribute()
-    // {
-    //     return is_array($this->period_days) ? implode(',', $this->period_days) : '';
-    // }
 }

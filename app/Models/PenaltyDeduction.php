@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Traits\DynamicConnection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -77,43 +76,58 @@ class PenaltyDeduction extends Model implements Auditable
         if ($existingPenalty) {
             // If penalty exists, update it
             $existingPenalty->penalty_amount = $penaltyAmount;
-            $existingPenalty->description = $description;
+            $existingPenalty->description    = $description;
             $existingPenalty->deduction_type = $deductionType; // Update the deduction type
-            $existingPenalty->status = 'pending'; // Reset status to pending for review
-            $existingPenalty->created_by = $createdBy;
+            $existingPenalty->status         = 'pending';      // Reset status to pending for review
+            $existingPenalty->created_by     = $createdBy;
             $existingPenalty->save();
         } else {
             // Otherwise, create a new penalty record
             self::create([
-                'employee_id' => $employeeId,
-                'deduction_id' => $deductionId,
+                'employee_id'    => $employeeId,
+                'deduction_id'   => $deductionId,
                 'penalty_amount' => $penaltyAmount,
-                'description' => $description,
-                'month' => $month,
-                'year' => $year,
+                'description'    => $description,
+                'month'          => $month,
+                'year'           => $year,
                 'deduction_type' => $deductionType, // Set the deduction type
-                'status' => 'pending',
-                'created_by' => $createdBy
+                'status'         => 'pending',
+                'created_by'     => $createdBy,
             ]);
         }
     }
 
     // Approve the penalty deduction
-    public function approvePenalty($approvedBy,$approvedAt)
+    public function approvePenalty($approvedBy, $approvedAt)
     {
-        $this->status = 'approved';
+        $this->status      = 'approved';
         $this->approved_by = $approvedBy;
         $this->approved_at = $approvedAt;
         $this->save();
+
+        // if (! $this->salaryTransaction) {
+        //     app(\App\Repositories\HR\Salary\SalaryTransactionRepository::class)->addDeduction(
+        //         $this->employee_id,
+        //         $this->penalty_amount,
+        //         $this->date,
+        //         $this->description,
+        //         $this, // reference is this PenaltyDeduction object
+        //         null,
+        //         [
+        //             'month' => $this->month,
+        //             'year'  => $this->year,
+        //         ]
+        //     );
+        // }
     }
 
     // Reject the penalty deduction
-    public function rejectPenalty($rejectedBy, $rejectedReason,$rejectedAt)
+    public function rejectPenalty($rejectedBy, $rejectedReason, $rejectedAt)
     {
-        $this->status = 'rejected';
-        $this->rejected_by = $rejectedBy;
+        $this->status          = 'rejected';
+        $this->rejected_by     = $rejectedBy;
         $this->rejected_reason = $rejectedReason;
-        $this->rejected_at = $rejectedAt;
+        $this->rejected_at     = $rejectedAt;
         $this->save();
     }
 
@@ -139,22 +153,21 @@ class PenaltyDeduction extends Model implements Auditable
     public function getStatusLabelAttribute()
     {
         $statusLabels = [
-            'pending' => 'Pending',
+            'pending'  => 'Pending',
             'approved' => 'Approved',
-            'rejected' => 'Rejected'
+            'rejected' => 'Rejected',
         ];
 
         return $statusLabels[$this->status] ?? 'Unknown';
     }
 
-
     // Constants for the 'deduction_type' enum values
     // const DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION = 'based_on_selected_deduction';
-    const DEDUCTION_TYPE_FIXED_AMOUNT = 'fixed_amount';
+    const DEDUCTION_TYPE_FIXED_AMOUNT        = 'fixed_amount';
     const DEDUCTION_TYPE_SPECIFIC_PERCENTAGE = 'specific_percentage';
 
     //Constants for status
-    const STATUS_PENDING = 'pending';
+    const STATUS_PENDING  = 'pending';
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
     // Optional: You can define a method to retrieve the list of deduction_type options
@@ -162,7 +175,7 @@ class PenaltyDeduction extends Model implements Auditable
     {
         return [
             // self::DEDUCTION_TYPE_BASED_ON_SELECTED_DEDUCTION => 'Based on Selected Deduction',
-            self::DEDUCTION_TYPE_FIXED_AMOUNT => 'Fixed Amount',
+            self::DEDUCTION_TYPE_FIXED_AMOUNT        => 'Fixed Amount',
             self::DEDUCTION_TYPE_SPECIFIC_PERCENTAGE => 'Specific Percentage',
         ];
     }
@@ -171,10 +184,15 @@ class PenaltyDeduction extends Model implements Auditable
     {
         $deductionTypeLabels = [
             'based_on_selected_deduction' => 'Based on Selected Deduction',
-            'fixed_amount' => 'Fixed Amount',
-            'specific_percentage' => 'Specific Percentage'
+            'fixed_amount'                => 'Fixed Amount',
+            'specific_percentage'         => 'Specific Percentage',
         ];
 
         return $deductionTypeLabels[$this->deduction_type] ?? 'Unknown';
+    }
+
+    public function salaryTransaction()
+    {
+        return $this->morphOne(SalaryTransaction::class, 'referenceable', 'reference_type', 'reference_id');
     }
 }

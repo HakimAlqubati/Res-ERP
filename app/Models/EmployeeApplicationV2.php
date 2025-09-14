@@ -87,7 +87,7 @@ class EmployeeApplicationV2 extends Model implements Auditable
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
 
-    
+
     // Relationships
     public function employee()
     {

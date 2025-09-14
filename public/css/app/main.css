@@ -445,3 +445,6 @@ tbody:last-of-type tr .fixed_footer {
     z-index: 10;
     /* Keep above table body */
 }
+.text-center{
+    text-align: center !important;
+}

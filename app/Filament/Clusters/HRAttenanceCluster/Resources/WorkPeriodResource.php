@@ -61,7 +61,7 @@ class WorkPeriodResource extends Resource
         return [
 
             Fieldset::make()->columnSpanFull()->schema([
-                Grid::make()->columnSpanFull()->columns(3)->schema([
+                Grid::make()->columns(3)->columnSpanFull()->schema([
                     TextInput::make('name')
                         ->label('Name')
                         ->required()
@@ -109,27 +109,27 @@ class WorkPeriodResource extends Resource
                         ->default('12:00:00'),
                 ]),
 
-                Grid::make()->columnSpanFull()->columns(2)->schema([
-                    Select::make('days')
-                        ->label('Days')
-                        ->multiple()
-                        ->options([
-                            'Monday' => 'Monday',
-                            'Tuesday' => 'Tuesday',
-                            'Wednesday' => 'Wednesday',
-                            'Thursday' => 'Thursday',
-                            'Friday' => 'Friday',
-                            'Saturday' => 'Saturday',
-                            'Sunday' => 'Sunday',
-                        ])->default(['Sunday'])
-                        ->columnSpan(1)
-                        ->required(),
+                // Grid::make()->columns(2)->schema([
+                //     Forms\Components\Select::make('days')
+                //         ->label('Days')
+                //         ->multiple()
+                //         ->options([
+                //             'Monday' => 'Monday',
+                //             'Tuesday' => 'Tuesday',
+                //             'Wednesday' => 'Wednesday',
+                //             'Thursday' => 'Thursday',
+                //             'Friday' => 'Friday',
+                //             'Saturday' => 'Saturday',
+                //             'Sunday' => 'Sunday',
+                //         ])->default(['Sunday'])
+                //         ->columnSpan(1)
+                //         ->required(),
 
-                    // Forms\Components\TextInput::make('allowed_count_minutes_late')
-                    //     ->label('Allowed Delay (Minutes)')->required()->default(0)
-                    //     ->columnSpan(1)
-                    //     ->numeric(),
-                ]),
+                //     // Forms\Components\TextInput::make('allowed_count_minutes_late')
+                //     //     ->label('Allowed Delay (Minutes)')->required()->default(0)
+                //     //     ->columnSpan(1)
+                //     //     ->numeric(),
+                // ]),
 
             ]),
         ];
@@ -149,27 +149,29 @@ class WorkPeriodResource extends Resource
                 TextColumn::make('id')
                     ->label('id')
                     ->sortable()
-                    ->searchable(),
-                TextColumn::make('name')
+                    ->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->sortable()
-                    ->searchable(),
+                    ->searchable()->toggleable(),
 
-                TextColumn::make('branch.name')
-                    ->label('Branch')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('branch.name')
+                    ->label('Branch')->searchable()->sortable()->toggleable(),
 
-                BooleanColumn::make('active')->alignCenter(true)
-                    ->label('Active'),
-                BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
-                    ->label('Day and Night'),
+                Tables\Columns\BooleanColumn::make('active')->alignCenter(true)
+                    ->label('Active')->toggleable(),
+                Tables\Columns\BooleanColumn::make('day_and_night')->alignCenter(true)->sortable()
+                    ->label('Day and Night')->toggleable(),
 
                 TextColumn::make('start_at')
                     ->label('Start Time')
-                    ->sortable(),
+                    ->sortable()->toggleable(),
 
                 TextColumn::make('end_at')
                     ->label('End Time')
-                    ->sortable(),
+                    ->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('supposed_duration')
+                    ->label('Duration')->toggleable()->alignCenter(),
 
                 // Tables\Columns\TextColumn::make('allowed_count_minutes_late')->alignCenter(true)
                 //     ->label('Late Minutes Allowed'),
@@ -209,8 +211,10 @@ class WorkPeriodResource extends Resource
                                     ->label('End Time')
                                     ->required()
                                     ->default($record->end_at),
-                                Select::make('branch_id')
-                                    ->options(Branch::where('active', 1)->pluck('name', 'id'))
+                                Forms\Components\Select::make('branch_id')
+                                    ->options(Branch::active()
+                                        ->branches()
+                                        ->pluck('name', 'id'))
                                     ->label('Branch')
                                     ->default($record->branch_id),
                                 // Forms\Components\TextInput::make('allowed_count_minutes_late')

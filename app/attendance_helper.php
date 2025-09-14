@@ -98,14 +98,14 @@ if (!function_exists('getPeriodsForDateRange')) {
 if (!function_exists('reportAbsentEmployees')) {
     function reportAbsentEmployees($date, $branchId, $currentTime)
     {
-        $employees = Employee::where('branch_id', $branchId)
+        $employees = Employee::where('branch_id', $branchId)->active()
             ->with(['periods' => function ($query) {
                 $query->select('hr_work_periods.id', 'hr_work_periods.name', 'hr_work_periods.start_at', 'hr_work_periods.end_at')
                     ->whereNull('hr_work_periods.deleted_at');
             }])
             ->select('id', 'name', 'employee_no', 'branch_id')
             ->get();
-
+ 
         $absentEmployees = [];
 
         // Loop through employees and check if they have attendance for the date
@@ -1134,14 +1134,14 @@ if (!function_exists('calculate_missing_hours')) {
         $approvedOvertime,
         $date,
         $employeeId
-    ) {
+    ) { 
         // $isMultiple = Attendance::where('check_date', $date)
         //     ->where('employee_id', $employeeId)
         //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
         //     ->groupBy('period_id')
         //     ->havingRaw('COUNT(*) > 1')
-        //     ->exists();
-
+        //     ->exists(); 
+        
 
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
             ->where('check_date', $date)
@@ -1149,12 +1149,8 @@ if (!function_exists('calculate_missing_hours')) {
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->groupBy('period_id')
             ->having('total', '>', 1)
-            ->exists();
+            ->exists(); 
 
-        // $isMultipleOld = Attendance::where('check_date', $date)
-        //     ->where('employee_id', $employeeId)
-        //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)->count() > 1 ? true : false;
-        // dd($isMultiple,$isMultiple2);
         if (!$isMultiple) {
             return [
                 'formatted' => '0 h 0m',
@@ -1164,7 +1160,7 @@ if (!function_exists('calculate_missing_hours')) {
         if (in_array($status, [
             Attendance::STATUS_EARLY_DEPARTURE,
             Attendance::STATUS_LATE_ARRIVAL
-        ])) {
+        ])) { 
             return [
                 'formatted' => '0 h 0m',
                 'total_minutes' => 0,

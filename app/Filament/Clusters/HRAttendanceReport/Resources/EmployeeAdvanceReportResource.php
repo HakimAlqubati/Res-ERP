@@ -9,6 +9,7 @@ use App\Filament\Clusters\HRTaskReport;
 use App\Models\Branch;
 use App\Models\Employee;
 use App\Models\EmployeeApplication;
+use App\Models\EmployeeApplicationV2;
 use App\Models\Task;
 use App\Models\TaskLog;
 use Filament\Forms\Components\Checkbox;
@@ -127,7 +128,7 @@ class EmployeeAdvanceReportResource extends Resource
                 
                 ->schema(function ($record) {
                     // Retrieve installments for the given advance_id
-                    $installments = EmployeeApplication::find($record->advance_id)->advanceInstallments;
+                    $installments = EmployeeApplicationV2::find($record->advance_id)->advanceInstallments;
         
                   
             // Define the Repeater component
@@ -191,7 +192,7 @@ class EmployeeAdvanceReportResource extends Resource
 
         )->join('hr_employee_applications',  'hr_employees.id','=','hr_employee_applications.employee_id')
         ->where('hr_employee_applications.application_type_id',3)
-        ->where('hr_employee_applications.status',EmployeeApplication::STATUS_APPROVED)
+        ->where('hr_employee_applications.status',EmployeeApplicationV2::STATUS_APPROVED)
 
         // ->where('hr_task_logs.log_type', TaskLog::TYPE_MOVED)
         // ->whereJsonContains('hr_task_logs.details->to', Task::STATUS_CLOSED, '!=')

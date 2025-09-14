@@ -37,6 +37,7 @@ class LogUserActivity
 
         $existingLogs = \Spatie\Activitylog\Models\Activity::where('causer_id', $user->id)
             ->orderBy('created_at', 'asc')
+            ->limit(100)
             ->get();
 
         if ($existingLogs->count() >= $maxLogsPerUser) {

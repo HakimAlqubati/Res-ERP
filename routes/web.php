@@ -1,14 +1,20 @@
 <?php
 
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Response;
 use App\Filament\Pages\AttendanecEmployee2;
+use App\Http\Controllers\Api\HR\SalarySlipController;
+use App\Http\Controllers\AWS\EmployeeLivenessController;
 use App\Http\Controllers\EmployeeAWSController;
 use App\Http\Controllers\EmployeeImageAwsIndexesController;
+use App\Http\Controllers\HR\TestSalaryCalcController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\MigrateDataController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\Reports\OrderDeliveryReportController;
 use App\Http\Controllers\Reports\OrderSalesPaymentsReportController;
+use App\Http\Controllers\SalaryReportController;
 use App\Http\Controllers\SearchByCameraController;
 use App\Http\Controllers\TestController2;
 use App\Http\Controllers\TestController3;
@@ -484,7 +490,6 @@ Route::get('/update_user_branch_id_for_all_users', function () {
     }
     return $branchUsers;
 });
-
 Route::get('/attendance', AttendanecEmployee2::class)
     ->name('attendance')->middleware('check');
 Route::get('/attendanceSecret__', AttendanecEmployee2::class)
@@ -796,3 +801,21 @@ Route::get('/_logs', function () {
         'entries' => $entries,  // مصفوفة مُنظّمة
     ]);
 });
+
+Route::get('/admin/transactions/print/{payroll_id}', function ($payroll_id) {
+    $payroll = \App\Models\Payroll::with([
+        'transactions'
+    ])->findOrFail($payroll_id);
+    // dd(App\Models\Employee::find(1));
+
+    $transactions = $payroll->transactions()->orderBy('date')->get();
+
+    // dd($payroll, $payroll_id);
+    $total = $transactions->sum(fn($t) => $t->operation === '+' ? $t->amount : -$t->amount);
+
+    return view('reports.hr.payroll.transactions', [
+        'payroll'      => $payroll,
+        'transactions' => $transactions,
+        'total'        => $total,
+    ]);
+})->name('transactions.print');

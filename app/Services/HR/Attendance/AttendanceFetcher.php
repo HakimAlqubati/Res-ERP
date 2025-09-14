@@ -8,7 +8,7 @@ use Carbon\Carbon;
 class AttendanceFetcher
 {
     public static function getExistingAttendance($employee, $closestPeriod, $date, $day, $currentCheckTime)
-    {
+    {  
         $attendances = Attendance::where('employee_id', $employee->id)
             ->where('period_id', $closestPeriod->id) // Using array key if closestPeriod is an array
             ->where('check_date', $date)
@@ -16,7 +16,7 @@ class AttendanceFetcher
             ->where('day', $day)
             ->select('check_type', 'check_date')
             ->get();
-  
+            // dd($attendances,$employee,$closestPeriod,$date,$day);
         if ($attendances->count() === 0) {
             $previousDate    = Carbon::parse($date)->subDay()->format('Y-m-d');
             $previousDayName = Carbon::parse($date)->subDay()->format('l');
@@ -28,6 +28,7 @@ class AttendanceFetcher
                 ->latest('id')
                 ->first();
 
+                // dd($attendanceInPreviousDay,$previousDate);
             if ($attendanceInPreviousDay) {
                 $isLatestSamePeriod = self::checkIfSamePeriod($employee->id, $attendanceInPreviousDay, $closestPeriod, $previousDate, $date, $currentCheckTime);
                 if (! $isLatestSamePeriod) {
@@ -62,41 +63,41 @@ class AttendanceFetcher
             ->latest('id')
             ->first();
 
-        if ($latestAttendance && $latestAttendance->period_id == $period->id) {
-            $res = self::checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime, $date, $currentDate);
+        if ($latestAttendance && $latestAttendance->period_id == $period->id) {  
+            $res = self::checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $checkTime,$currentDate);
             return ! $res;
         }
         return false;
     }
 
-    public static function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentRealDate)
+    public static function checkIfattendanceInPreviousDayIsCompleted($attendanceInPreviousDay, $period, $currentCheckTime, $currentDate)
     {
         $previousDate    = $attendanceInPreviousDay?->check_date;
         $periodId        = $attendanceInPreviousDay?->period_id;
         $employeId       = $attendanceInPreviousDay?->employee_id;
         $periodEndTime   = $period->end_at;
         $periodStartTime = $period->start_at;
-
+        
         $allowedTimeAfterPeriod = Carbon::createFromFormat('H:i:s', $periodEndTime)->addHours((int) Setting::getSetting('hours_count_after_period_after'))->format('H:i:s');
-
+        
         $latstAttendance = Attendance::where('employee_id', $employeId)
-            ->where('accepted', 1)
-            ->where('period_id', $periodId)
-            ->where('check_date', $previousDate)
+        ->where('accepted', 1)
+        ->where('period_id', $periodId)
+        ->where('check_date', $previousDate)
             ->select('id', 'check_type', 'check_date', 'check_time', 'is_from_previous_day')
             ->latest('id')
             ->first();
-
+            
         $lastCheckType = $latstAttendance->check_type;
-
+        
         $dateTimeString = $attendanceInPreviousDay->check_date . ' ' . $latstAttendance->check_time;
-        $lastCheckTime  = Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
-
-        $dateTimeString  = $currentRealDate . ' ' . $currentCheckTime;
-        $currentDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
-
-        $diff = self::calculateTimeDifference($periodEndTime, $currentCheckTime, $currentRealDate);
-
+        $lastCheckTime  = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
+         
+        $dateTimeString  = $currentDate . ' ' . $currentCheckTime;
+        $currentDateTime = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateTimeString);
+        
+        $diff = self::calculateTimeDifference($periodEndTime, $currentCheckTime, $currentDate);
+         
         $lastCheckedPeriodEndTimeDateTime = Carbon::parse($attendanceInPreviousDay->check_date . ' ' . $allowedTimeAfterPeriod);
 
         if ($currentCheckTime > $periodEndTime) {
@@ -120,7 +121,7 @@ class AttendanceFetcher
                 return true;
             }
             if ($currentCheckTime < $periodEndTime && $currentCheckTime > $allowedTimeAfterPeriod) {
-                $diff = self::calculateTimeDifference($periodEndTime, $currentCheckTime, $currentRealDate);
+                $diff = self::calculateTimeDifference($periodEndTime, $currentCheckTime, $currentDate);
 
                 if ($diff >= Setting::getSetting('hours_count_after_period_after')) {
                     return true;

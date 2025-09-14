@@ -213,7 +213,7 @@ class DailyTasksSettingUpResource extends Resource
                                         TextInput::make('requr_pattern_the_day_of_every')->default(15)->numeric()->label('')->helperText('Of every'),
                                         TextInput::make('requr_pattern_months')->label('')->default(1)->numeric()->helperText('Month(s)'),
                                     ]),
-                                    Grid::make()->columns(2)->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
+                                    Grid::make()->columns(2)->columnSpanFull()->visible(fn(Get $get): bool => ($get('requr_pattern_monthly_status') == 'the'))->columnSpan(2)->schema([
                                         Select::make('requr_pattern_order_name')->label('')->options([
                                             'first' => 'first',
                                             'second' => 'second',

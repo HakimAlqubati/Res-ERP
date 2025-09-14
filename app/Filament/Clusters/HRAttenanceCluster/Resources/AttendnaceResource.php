@@ -298,16 +298,16 @@ class AttendnaceResource extends Resource
 
                         $earlyMinutsDepature = round($checkOutTimeDate->diffInMinutes($periodEndAtTimeDate), 2);
                         return [
-                            Grid::make()->disabled()->label('Checkin')->columns(2)->schema([
+                            Fieldset::make()->columnSpanFull()->disabled()->label('Checkin')->columns(2)->schema([
                                 TextInput::make('check_in_time')->default($checkInTime),
                                 TextInput::make('check_in_date')->default($checkInDate),
                             ]),
 
-                            Grid::make()->disabled()->label('Period')->columns(2)->schema([
+                            Fieldset::make()->columnSpanFull()->disabled()->label('Period')->columns(2)->schema([
                                 TextInput::make('period_start_at')->default($periodStartAt),
                                 TextInput::make('period_end_at')->default($periodEndAt),
                             ]),
-                            Grid::make()->label('Checkout')->columns(5)->schema([
+                            Fieldset::make()->columnSpanFull()->label('Checkout')->columns(5)->schema([
                                 TextInput::make('check_time')->default($checkOutTime),
                                 TextInput::make('check_date')->default($checkOutDate),
                                 TextInput::make('early_minuts_departure')->default($record->early_departure_minutes),
@@ -356,14 +356,14 @@ class AttendnaceResource extends Resource
                         return [
 
 
-                            Grid::make()->label('Checkout')->columns(4)->schema([
+                            Fieldset::make()->columnSpanFull()->label('Checkout')->columns(4)->schema([
                                 TextInput::make('check_time')->default($checkInTime),
                                 TextInput::make('delay_minutes')->default($record->delay_minutes),
                                 TextInput::make('check_in_date_')->default($checkInDate),
                                 Select::make('status_2')->label('Status')->options(Attendance::getStatuses())
                                     ->default($record->status),
                             ]),
-                            Grid::make()->disabled()->label('Period')->columns(2)->schema([
+                            Fieldset::make()->columnSpanFull()->disabled()->label('Period')->columns(2)->schema([
                                 TextInput::make('period_start_at')->default($periodStartAt),
                                 TextInput::make('period_end_at')->default($periodEndAt),
                             ]),

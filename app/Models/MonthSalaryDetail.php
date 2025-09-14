@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,7 +22,7 @@ class MonthSalaryDetail extends Model
         'net_salary',
         'total_other_adding',
         'total_absent_days',
-        'total_late_hours'
+        'total_late_hours',
     ];
 
     // Relationship: Each salary detail belongs to a month salary

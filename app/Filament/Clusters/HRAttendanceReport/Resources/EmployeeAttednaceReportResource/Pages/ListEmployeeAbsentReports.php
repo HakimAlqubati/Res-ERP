@@ -21,7 +21,7 @@ class ListEmployeeAbsentReports extends ListRecords
 
         // $report_data = $this->getReportData2($employee_id, $start_date, $end_date);
         $data = reportAbsentEmployees($date, $branchId, $currentTime);
-        // dd($data);
+    
         return [
             'report_data' => $data,
             'branch_id' => $branchId,

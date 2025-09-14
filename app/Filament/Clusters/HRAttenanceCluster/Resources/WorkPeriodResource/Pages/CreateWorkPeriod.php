@@ -12,7 +12,7 @@ class CreateWorkPeriod extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['days'] = json_encode($data['days']);
+        $data['days'] = json_encode(['sun']);
         $data['created_by'] = auth()->user()->id;
         $data['updated_by'] = auth()->user()->id;
         $data['day_and_night'] = WorkPeriodResource::calculateDayAndNight($data['start_at'], $data['end_at']);

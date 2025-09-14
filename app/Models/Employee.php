@@ -52,6 +52,7 @@ class Employee extends Model implements Auditable
         'working_hours',
         'manager_id',
         'is_ceo',
+        'working_days',
     ];
 
     /**
@@ -88,8 +89,9 @@ class Employee extends Model implements Auditable
         'has_employee_pass',
         'working_hours',
         'manager_id',
+        'working_days',
     ];
-    public $appends  = ['avatar_image', 'periodsCount'];
+    // public $appends  = ['avatar_image', 'periodsCount'];
     protected $casts = [
         'bank_information' => 'array',
         'changes'          => 'array', // This allows storing changes as a JSON
@@ -213,16 +215,16 @@ class Employee extends Model implements Auditable
     }
     public function approvedAdvanceApplication()
     {
-        return $this->hasMany(EmployeeApplication::class, 'employee_id')
-            ->where('status', EmployeeApplication::STATUS_APPROVED)
-            ->where('application_type_id', EmployeeApplication::APPLICATION_TYPE_ADVANCE_REQUEST)
+        return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')
+            ->where('status', EmployeeApplicationV2::STATUS_APPROVED)
+            ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST)
         ;
     }
     public function approvedLeaveApplication()
     {
-        return $this->hasMany(EmployeeApplication::class, 'employee_id')
-            ->where('status', EmployeeApplication::STATUS_APPROVED)
-            ->where('application_type_id', EmployeeApplication::APPLICATION_TYPE_LEAVE_REQUEST)
+        return $this->hasMany(EmployeeApplicationV2::class, 'employee_id')
+            ->where('status', EmployeeApplicationV2::STATUS_APPROVED)
+            ->where('application_type_id', EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST)
         ;
     }
 
@@ -259,8 +261,14 @@ class Employee extends Model implements Auditable
 
     public function periods()
     {
-        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id');
+        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id')->withPivot('id');
     }
+    // داخل موديل Employee
+    public function employeePeriods()
+    {
+        return $this->hasMany(EmployeePeriod::class, 'employee_id', 'id');
+    }
+
     public function periodHistories()
     {
         return $this->hasMany(EmployeePeriodHistory::class,);
@@ -733,8 +741,22 @@ class Employee extends Model implements Auditable
         return $this->periods()->count();
     }
 
+    // داخل Employee.php
+
     public function periodDays()
     {
-        return $this->hasMany(EmployeePeriodDay::class, 'employee_id');
+        return $this->hasManyThrough(
+            EmployeePeriodDay::class,
+            EmployeePeriod::class,
+            'employee_id',        // Foreign key on EmployeePeriod
+            'employee_period_id', // Foreign key on EmployeePeriodDay
+            'id',                 // Local key on Employee
+            'id'                  // Local key on EmployeePeriod
+        );
+    }
+
+    public function faceData()
+    {
+        return $this->hasMany(EmployeeFaceData::class, 'employee_id');
     }
 }

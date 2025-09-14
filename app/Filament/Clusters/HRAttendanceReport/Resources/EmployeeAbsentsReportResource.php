@@ -101,5 +101,6 @@ class EmployeeAbsentsReportResource extends Resource
         ];
     }
 
+    protected static bool $shouldRegisterNavigation = false;
 
 }

@@ -20,34 +20,45 @@
                 </tr>
             </thead>
             <tbody>
+                {{-- {{dd($report_data)}} --}}
                 @foreach ($report_data as $date => $data)
                     {{-- @if (empty($data['employees']))
                         <tr>
                             <td colspan="5" class="text-center">{{ __('No One') }}</td>
                         </tr>
-                    @else --}}
-                        @php $rowspan = count($data['employees']); @endphp
+                    @endif --}}
+                    @php $rowspan = count($data['employees']); @endphp
+                    @if ($rowspan == 0)
+                        <div class="please_select_message_div" style="text-align: center;">
+
+                            <h1 class="please_select_message_text">{{ __('No Data') }}</h1>
+                        </div>
+                        @break
+
+                    @else
                         @foreach ($data['employees'] as $index => $employee)
                             <tr>
-                                @if ($index === 0) <!-- Only show date for the first employee on this date -->
-                                    <td rowspan="{{ $rowspan }}" class="text-center">{{ $date }}</td>
+                                @if ($index === 0)
+                                    <!-- Only show date for the first employee on this date -->
+                                    <td rowspan="{{ $rowspan }}"
+                                        class="text-center">{{ $date }}</td>
                                 @endif
                                 <td>{{ $employee['name'] }}</td>
                                 <td>{{ ucfirst($employee['prediction']) }}</td>
                                 {{-- @foreach ($employee['attendances'] as $attendance)
                                     <td>{{ $attendance['check_time'] }}</td>
                                     <td>{{ ucfirst($attendance['check_type']) }}</td>
-                                @endforeach --}}
+                                    @endforeach --}}
                             </tr>
                         @endforeach
-                    {{-- @endif --}}
+                    @endif
                 @endforeach
             </tbody>
         </table>
     @else
-    <div class="please_select_message_div" style="text-align: center;">
+        <div class="please_select_message_div" style="text-align: center;">
 
-        <h1 class="please_select_message_text">{{ __('Please select an Branch') }}</h1>
-    </div>
+            <h1 class="please_select_message_text">{{ __('Please select an Branch') }}</h1>
+        </div>
     @endif
 </x-filament-panels::page>

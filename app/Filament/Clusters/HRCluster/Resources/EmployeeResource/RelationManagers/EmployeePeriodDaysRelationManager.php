@@ -6,7 +6,6 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\DeleteAction;
 use App\Models\EmployeePeriodDay;
-use App\Models\WorkPeriod;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
@@ -23,34 +22,27 @@ class EmployeePeriodDaysRelationManager extends RelationManager
 
     public function form(Schema $schema): Schema
     {
-        return $schema->components([
-            Select::make('period_id')
-                ->label('Work Period')
-                ->options(function () {
-                    $employee = $this->getOwnerRecord();
-
-                    return WorkPeriod::query()
-                        ->when($employee?->branch_id, fn($q) => $q->where('branch_id', $employee->branch_id))
-                        ->pluck('name', 'id');
-                })->preload()
-                ->searchable()
-                ->required(),
-
+        return $form->schema([
             Select::make('day_of_week')
-                ->label('Day of Week')
                 ->options([
-                    'sun' => 'Sunday',
-                    'mon' => 'Monday',
-                    'tue' => 'Tuesday',
-                    'wed' => 'Wednesday',
-                    'thu' => 'Thursday',
-                    'fri' => 'Friday',
-                    'sat' => 'Saturday',
+                    'Monday'    => 'Monday',
+                    'Tuesday'   => 'Tuesday',
+                    'Wednesday' => 'Wednesday',
+                    'Thursday'  => 'Thursday',
+                    'Friday'    => 'Friday',
+                    'Saturday'  => 'Saturday',
+                    'Sunday'    => 'Sunday',
                 ])
-                ->required(),
+                ->required()
+                ->label('Day of Week'),
 
-            DatePicker::make('start_date')->label('Start date')->nullable(),
-            DatePicker::make('end_date')->label('End date')->nullable(),
+            DatePicker::make('start_date')
+                ->label('Start Date')
+                ->nullable(),
+
+            DatePicker::make('end_date')
+                ->label('End Date')
+                ->nullable(),
         ]);
     }
 
@@ -58,10 +50,16 @@ class EmployeePeriodDaysRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                TextColumn::make('period.name')->label('Work Period'),
-                TextColumn::make('day_of_week')->label('Day'),
-                TextColumn::make('start_date')->label('Start date')->date(),
-                TextColumn::make('end_date')->label('End date')->date(),
+                TextColumn::make('day_of_week')
+                    ->label('Day'),
+
+                TextColumn::make('start_date')
+                    ->date()
+                    ->label('Start Date'),
+
+                TextColumn::make('end_date')
+                    ->date()
+                    ->label('End Date'),
             ])
             ->headerActions([
                 CreateAction::make()
@@ -82,7 +80,7 @@ class EmployeePeriodDaysRelationManager extends RelationManager
                                 ->body('This day is already assigned to this period.')
                                 ->danger()
                                 ->send();
- ;
+                            ;
                         }
                     }),
             ])
