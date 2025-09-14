@@ -33,7 +33,7 @@ class EmployeesAttednaceReportResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->emptyStateHeading('No data')
+            ->emptyStateHeading('No data')->deferFilters(false)
             ->filters([
                 SelectFilter::make('branch_id')->label('Branch')->options(Branch::where('active', 1)
                         ->select('name', 'id')->get()->pluck('name', 'id'))->searchable(),
