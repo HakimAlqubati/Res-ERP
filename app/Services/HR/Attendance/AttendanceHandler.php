@@ -414,8 +414,8 @@ class AttendanceHandler
             } else {
                 // باقي اليوم (سواء قبل start_at أو بعده) ⇒ الفترة تبدأ اليوم وتنتهي غدًا
                 $periodStart = $startToday;
-                $periodEnd   = $endToday->copy();
-                // $periodEnd   = $endToday->copy()->addDay();
+                // $periodEnd   = $endToday->copy();
+                $periodEnd   = $endToday->copy()->addDay();
                 $origin      = 'same-day';
             }
         }
