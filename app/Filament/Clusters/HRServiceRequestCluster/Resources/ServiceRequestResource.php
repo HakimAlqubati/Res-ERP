@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -79,8 +80,12 @@ class ServiceRequestResource extends Resource
                                                 return true;
                                             }
                                         })
-                                        ->options(Branch::branches()->active()
-                                                ->select('name', 'id')->pluck('name', 'id'))
+                                        ->options(Branch::active()
+                                            ->where(function ($q) {
+                                                $q->branches()
+                                                    ->orWhere(fn($sub) => $sub->hQBranches());
+                                            })
+                                            ->select('name', 'id')->pluck('name', 'id'))
                                         ->default(function () {
                                             if (isStuff()) {
                                                 return auth()->user()->branch_id;
@@ -103,17 +108,17 @@ class ServiceRequestResource extends Resource
                                                 return true;
                                             }
                                         })->rule(function (Get $get) {
-                                        $branchId = $get('branch_id');
+                                            $branchId = $get('branch_id');
 
-                                        // تحقق من وجود مناطق للفرع المحدد
-                                        $hasAreas = BranchArea::where('branch_id', $branchId)->exists();
+                                            // تحقق من وجود مناطق للفرع المحدد
+                                            $hasAreas = BranchArea::where('branch_id', $branchId)->exists();
 
-                                        return $hasAreas
-                                        ? 'required'
-                                        : function () {
-                                            return fn() => false; // يمنع التقديم
-                                        };
-                                    })
+                                            return $hasAreas
+                                                ? 'required'
+                                                : function () {
+                                                    return fn() => false; // يمنع التقديم
+                                                };
+                                        })
                                         ->validationMessages([
                                             'required' => 'The branch area field is required. ⚠ Go to Branch to add Areas first.',
                                             '*.0'      => '',
@@ -139,9 +144,9 @@ class ServiceRequestResource extends Resource
                                     ->schema([
                                         Select::make('assigned_to')
                                             ->options(fn(Get $get): Collection => Employee::query()
-                                                    ->where('active', 1)
-                                                    ->where('branch_id', $get('branch_id'))
-                                                    ->pluck('name', 'id'))
+                                                ->where('active', 1)
+                                                ->where('branch_id', $get('branch_id'))
+                                                ->pluck('name', 'id'))
                                             ->searchable()
                                             ->hidden(fn() => request()->has('equipment_id'))
                                             ->disabledOn('edit')
@@ -228,60 +233,60 @@ class ServiceRequestResource extends Resource
                     ->description('Click')
                     ->searchable(),
                 TextColumn::make('status')
-                        ->badge()
-                        ->sortable()
-                        ->searchable()
-                        ->icon('heroicon-m-check-badge')
-                        ->searchable(isIndividual: false)
-                        ->colors([
-                            'primary' => ServiceRequest::STATUS_NEW,
-                            'warning' => ServiceRequest::STATUS_PENDING,
-                            'info'    => ServiceRequest::STATUS_IN_PROGRESS,
-                            'success' => ServiceRequest::STATUS_CLOSED,
-                        ]),
+                    ->badge()
+                    ->sortable()
+                    ->searchable()
+                    ->icon('heroicon-m-check-badge')
+                    ->searchable(isIndividual: false)
+                    ->colors([
+                        'primary' => ServiceRequest::STATUS_NEW,
+                        'warning' => ServiceRequest::STATUS_PENDING,
+                        'info'    => ServiceRequest::STATUS_IN_PROGRESS,
+                        'success' => ServiceRequest::STATUS_CLOSED,
+                    ]),
 
-                    TextColumn::make('urgency')
-                        ->badge()
-                        ->searchable()
-                        ->sortable()
-                        ->icon('heroicon-m-check-badge')
-                        ->colors([
-                            'danger'  => ServiceRequest::URGENCY_HIGH,
-                            'warning' => ServiceRequest::URGENCY_MEDIUM,
-                            'success' => ServiceRequest::URGENCY_LOW,
-                        ])
-                        ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('urgency')
+                    ->badge()
+                    ->searchable()
+                    ->sortable()
+                    ->icon('heroicon-m-check-badge')
+                    ->colors([
+                        'danger'  => ServiceRequest::URGENCY_HIGH,
+                        'warning' => ServiceRequest::URGENCY_MEDIUM,
+                        'success' => ServiceRequest::URGENCY_LOW,
+                    ])
+                    ->toggleable(isToggledHiddenByDefault: false),
 
-                    ImageColumn::make('first_photo_url')
-                        ->label('Photo')
-                        ->width(50)
-                        ->height(50)->disabledClick(true)
-                        ->toggleable(isToggledHiddenByDefault: false)
-                        // ->extraAttributes(['class' => 'cursor-pointer']) // Make it look clickable
-                        ->getStateUsing(fn($record) => $record->photos()->first()?->image_path),
+                ImageColumn::make('first_photo_url')
+                    ->label('Photo')
+                    ->width(50)
+                    ->height(50)->disabledClick(true)
+                    ->toggleable(isToggledHiddenByDefault: false)
+                    // ->extraAttributes(['class' => 'cursor-pointer']) // Make it look clickable
+                    ->getStateUsing(fn($record) => $record->photos()->first()?->image_path),
 
-                    TextColumn::make('impact')
-                        ->badge()
-                        ->icon('heroicon-m-check-badge')
-                        ->searchable()
-                        ->sortable()
-                        ->colors([
-                            'danger'  => ServiceRequest::IMPACT_HIGH,
-                            'warning' => ServiceRequest::IMPACT_MEDIUM,
-                            'success' => ServiceRequest::IMPACT_LOW,
-                        ])
-                        ->toggleable(isToggledHiddenByDefault: false),
+                TextColumn::make('impact')
+                    ->badge()
+                    ->icon('heroicon-m-check-badge')
+                    ->searchable()
+                    ->sortable()
+                    ->colors([
+                        'danger'  => ServiceRequest::IMPACT_HIGH,
+                        'warning' => ServiceRequest::IMPACT_MEDIUM,
+                        'success' => ServiceRequest::IMPACT_LOW,
+                    ])
+                    ->toggleable(isToggledHiddenByDefault: false),
 
-                    TextColumn::make('branch.name')->label('Branch')->sortable()
-                        ->toggleable(isToggledHiddenByDefault: true),
-                    TextColumn::make('branchArea.name')->label('Branch Area')
-                        ->toggleable(isToggledHiddenByDefault: true),
-                    TextColumn::make('createdBy.name')->label('Created By')->searchable()
-                        ->toggleable(isToggledHiddenByDefault: true),
-                    TextColumn::make('assignedTo.name')->label('Assigned To')->searchable()
-                        ->toggleable(isToggledHiddenByDefault: true),
-                    TextColumn::make('created_at')->label('Created At')->sortable()
-                        ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('branch.name')->label('Branch')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('branchArea.name')->label('Branch Area')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('createdBy.name')->label('Created By')->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('assignedTo.name')->label('Assigned To')->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')->label('Created At')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 // ])->from('md'),
             ])
             ->filters([
@@ -298,11 +303,11 @@ class ServiceRequestResource extends Resource
                             }
                             return false;
                         })
-                    // ->hidden(function ($record) {
-                    //     if (!isSuperAdmin() && !auth()->user()->can('move_status_task')) {
-                    //         return true;
-                    //     }
-                    // })
+                        // ->hidden(function ($record) {
+                        //     if (!isSuperAdmin() && !auth()->user()->can('move_status_task')) {
+                        //         return true;
+                        //     }
+                        // })
                         ->schema(function ($record) {
                             return [
                                 Select::make('status')->default(function ($record) {
@@ -384,9 +389,9 @@ class ServiceRequestResource extends Resource
                                 Fieldset::make()->schema([
                                     Select::make('assigned_to')->label('')->columnSpanFull()
                                         ->options(Employee::query()
-                                                ->where('active', 1)
-                                                ->where('branch_id', $record->branch_id)
-                                                ->pluck('name', 'id'))
+                                            ->where('active', 1)
+                                            ->where('branch_id', $record->branch_id)
+                                            ->pluck('name', 'id'))
                                         ->searchable()
                                         ->nullable(),
                                 ]),
@@ -523,7 +528,7 @@ class ServiceRequestResource extends Resource
                         ->modalWidth('lg') // Adjust modal size
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Close')
-                    // ->iconButton()
+                        // ->iconButton()
                         ->button()
                         ->icon('heroicon-o-camera')
                         ->modalContent(function ($record) {
