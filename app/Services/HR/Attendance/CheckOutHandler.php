@@ -32,7 +32,6 @@ class CheckOutHandler
             ->latest('id')
             ->first();
 
-            dd($checkinRecord->period->day_and_night);
         // dd($checkinRecord,$previousRecord,$realCheckDate);
         if ($checkinRecord) {
             $checkinTime       = Carbon::parse($checkinRecord->check_date . ' ' . $checkinRecord->check_time);
@@ -68,7 +67,16 @@ class CheckOutHandler
             // }
         }
 
-        dd($checkinTime,$checkTime);
+        // معالجة حالة الانصراف بعد منتصف الليل
+        // if ($checkTime->lt($checkinTime)) {
+        if (
+            $checkinRecord->period->day_and_night
+            && $checkTime->toTimeString() >= '00:00:00'
+            && $checkTime->toTimeString() <= $nearestPeriod->end_at
+        ) {
+            $checkinTime = $checkinTime->copy()->addDay();
+        }
+        // dd($checkinTime, $checkTime);
         $actualMinutes = $checkinTime->diffInMinutes($checkTime);
         $hoursActual   = floor($actualMinutes / 60);
         $minutesActual = $actualMinutes % 60;
@@ -76,7 +84,7 @@ class CheckOutHandler
         $currentDurationFormatted = sprintf('%02d:%02d', $hoursActual, $minutesActual);
         $actualDurationFormatted  = sprintf('%02d:%02d', floor($actualMinutes / 60), $actualMinutes % 60);
 
-        dd($actualDurationFormatted);
+        // dd($actualDurationFormatted);
         $attendanceData['actual_duration_hourly']   = $actualDurationFormatted;
         $attendanceData['checkinrecord_id']         = $previousCheckId ?? null;
         $attendanceData['supposed_duration_hourly'] = $nearestPeriod?->supposed_duration;
@@ -168,7 +176,7 @@ class CheckOutHandler
             $attendanceData['status']                    = Attendance::STATUS_EARLY_DEPARTURE;
             $attendanceData['early_departure_minutes']   = $currentTimeObj->diffInMinutes($endForCompare);
         }
-        dd($attendanceData);
+        // dd($attendanceData);
         if (is_array($attendanceData) && isset($attendanceData['employee_id'], $attendanceData['period_id'])) {
 
             return [
