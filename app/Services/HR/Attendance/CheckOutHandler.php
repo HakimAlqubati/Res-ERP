@@ -76,6 +76,8 @@ class CheckOutHandler
             $checkinRecord->period->day_and_night
             && $checkTime->toTimeString() >= '00:00:00'
             && $checkTime->toTimeString() <= $allowedTimeAfter->format('H:i:s')
+            && $checkinTime->toTimeString() >= '00:00:00' 
+            && $checkinTime->toTimeString() <= $allowedTimeAfter->format('H:i:s')
         ) {
             $checkinTime = $checkinTime->copy()->addDay();
         }

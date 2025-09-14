@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeek;
@@ -117,18 +118,18 @@ class PeriodRelationManager extends RelationManager
 
                                     DatePicker::make('end_date')->label('End period date')
 
-                                    // ->after('')
+                                        // ->after('')
                                         ->nullable()
                                         ->helperText('Leave empty for unlimited (open) period'),
                                 ]),
                             ToggleButtons::make('periods')
                                 ->label('Work Periods')
-                            // ->relationship('periods', 'name')
+                                // ->relationship('periods', 'name')
                                 ->columns(3)->multiple()
-                            // ->disableOptionWhen(function ($value) {
-                            //     $employee = $this->ownerRecord;
-                            //     return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
-                            // })
+                                // ->disableOptionWhen(function ($value) {
+                                //     $employee = $this->ownerRecord;
+                                //     return in_array($value, $employee->periods->pluck('id')->toArray()) ?? false;
+                                // })
 
                                 ->options(
                                     function () {
@@ -137,17 +138,17 @@ class PeriodRelationManager extends RelationManager
                                         // Only fetch periods NOT assigned to the employee
                                         return WorkPeriod::select('name', 'id')
                                             ->where('branch_id', $employee->branch_id)
-                                        // ->whereNotIn('id', $assigned)
+                                            // ->whereNotIn('id', $assigned)
                                             ->get()
                                             ->pluck('name', 'id');
                                     }
                                 )
-                            //     ->default(function () {
-                            //     return $this->ownerRecord?->periods?->plucK('id')?->toArray();
-                            // })
-                            // ->disabled(function(){
-                            //     return [1,2,3,4];
-                            // })
+                                //     ->default(function () {
+                                //     return $this->ownerRecord?->periods?->plucK('id')?->toArray();
+                                // })
+                                // ->disabled(function(){
+                                //     return [1,2,3,4];
+                                // })
                                 ->helperText('Select the employee\'s work periods.')->required(),
                             Fieldset::make()->schema([
                                 CheckboxList::make('period_days')
@@ -231,7 +232,15 @@ class PeriodRelationManager extends RelationManager
                                     $data['start_date'],
                                     $data['end_date'] ?? null,
                                 )) {
-                                    throw new \Exception('Overlapping periods are not allowed.');
+                                    Notification::make()
+                                        ->title('Overlapping Error')
+                                        ->body('❌ Cannot add this Work Period as it overlaps with an existing period.')
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+
+                                    // throw new \Exception('Overlapping periods are not allowed.');
 
                                     // Notification::make()->title('Error')->body('Overlapping periods are not allowed.')->warning()->send();
                                     // return;
@@ -261,7 +270,6 @@ class PeriodRelationManager extends RelationManager
                                         'day_of_week' => $dayOfWeek,
                                     ]);
                                 }
-
                             }
 
                             // Send notification after the operation is complete
@@ -313,7 +321,9 @@ class PeriodRelationManager extends RelationManager
                                         ->exists();
 
                                     if ($attendanceExists) {
-                                        throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
+                                        showWarningNotifiMessage('Warning', 'Cannot delete this period because there are attendance records linked to it.');
+                                        return;
+                                        // throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
                                     }
 
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
@@ -329,9 +339,9 @@ class PeriodRelationManager extends RelationManager
                                 }
 
                                 $period->delete();
+                                // Optionally, send a success notification
+                                Notification::make()->title('Deleted')->success()->send();
                             });
-                            // Optionally, send a success notification
-                            Notification::make()->title('Deleted')->success()->send();
                         } catch (Exception $e) {
                             // Handle the exception
                             Notification::make()->title('Error')->icon('heroicon-o-x-circle')
@@ -373,8 +383,7 @@ class PeriodRelationManager extends RelationManager
                         return \App\Models\EmployeePeriodDay::where('employee_period_id', $record->pivot_id)
                             ->pluck('day_of_week')
                             ->toArray();
-                    })
-                ,
+                    }),
                 DatePicker::make('start_date')
                     ->label('Start Date')
                     ->required()->readOnly()
@@ -396,8 +405,7 @@ class PeriodRelationManager extends RelationManager
                             ->where('period_id', $record->id)
                             ->first();
                         return $period?->end_date;
-                    })
-                ,
+                    }),
             ])
             ->action(function (array $data, $record) {
                 $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot_id);
@@ -423,7 +431,7 @@ class PeriodRelationManager extends RelationManager
                     $periodEndAt,
                     $periodStartDate,
                     $periodEndDate,
-                    $employeePeriod->id// exclude self
+                    $employeePeriod->id // exclude self
                 )) {
                     Notification::make()
                         ->title('Overlapping Error')
@@ -463,7 +471,7 @@ class PeriodRelationManager extends RelationManager
                         foreach ($daysToRemove as $day) {
                             $periodStart = $data['start_date'];       // بداية الفترة المحذوفة
                             $periodEnd   = $data['end_date'] ?? null; // نهاية الفترة المحذوفة (قد تكون null = مفتوحة)
-                                                                      // تحديث end_date في جدول الأيام وفي الهستوري
+                            // تحديث end_date في جدول الأيام وفي الهستوري
                             $employeePeriod->days()->where('day_of_week', $day)->delete();
                             EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
                                 ->where('period_id', $employeePeriod->period_id)
@@ -500,8 +508,7 @@ class PeriodRelationManager extends RelationManager
             ->modalHeading('Assign Work Days')
             ->modalSubmitActionLabel('Save')
             ->modalWidth('md');
-
-    } 
+    }
 
     private function isOverlappingDays_(
         $employeeId,
@@ -629,11 +636,11 @@ class PeriodRelationManager extends RelationManager
                 $aEnd         = $a['end_date'] ?? null;
                 $bEnd         = $b['end_date'] ?? null;
                 $datesOverlap =
-                // الحالة العامة: تواريخ متقاطعة
-                (
-                    ($aEnd === null || $b['start_date'] <= $aEnd) &&
-                    ($bEnd === null || $a['start_date'] <= $bEnd)
-                );
+                    // الحالة العامة: تواريخ متقاطعة
+                    (
+                        ($aEnd === null || $b['start_date'] <= $aEnd) &&
+                        ($bEnd === null || $a['start_date'] <= $bEnd)
+                    );
 
                 if ($timesOverlap && $datesOverlap) {
                     // يوجد تداخل كامل
@@ -643,5 +650,4 @@ class PeriodRelationManager extends RelationManager
         }
         return false;
     }
-
 }
