@@ -99,17 +99,22 @@
             🔄 {{ __('Refresh') }}
         </button>
 
+        <!-- سبينر يظهر فقط أثناء تشغيل refreshData -->
+        <div wire:loading wire:target="refreshData" class="inline-block ml-2">
+            <i class="fas fa-spinner fa-spin"></i> {{ __('') }}
+        </div>
+
         <button type="button" class="btn btn-info" onclick="showChartModal()">
             📊 {{ __('Show Charts') }}
         </button>
 
-        <button onclick="printReport()" class="btn btn-print">
+        {{-- <button onclick="printReport()" class="btn btn-print">
             &#128438; {{ __('Print Report') }}
         </button>
 
         <button onclick="exportToExcel()" class="btn btn-primary">
             &#128200; {{ __('Export to Excel') }}
-        </button>
+        </button> --}}
     </div>
 
     @if (isset($employee_id) && is_numeric($employee_id))
