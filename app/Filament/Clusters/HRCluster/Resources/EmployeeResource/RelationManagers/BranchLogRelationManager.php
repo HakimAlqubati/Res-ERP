@@ -40,7 +40,7 @@ class BranchLogRelationManager extends RelationManager
         $count = $ownerRecord->branchLogs()->count();
 
         if ($count === 0) {
-            return 'gray';
+            return 'primary';
         }
 
         if ($count < 3) {
@@ -54,14 +54,7 @@ class BranchLogRelationManager extends RelationManager
     {
         return "Branch Logs Count: " . $ownerRecord->branchLogs()->count();
     }
-    public function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-              
-            ]);
-    }
-
+    
     public function table(Table $table): Table
     {
 

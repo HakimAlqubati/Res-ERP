@@ -149,7 +149,7 @@ class Employee extends Model implements Auditable
             if (env('APP_ENV') == 'local') {
                 return Storage::disk('public')->url($this->avatar);
             }
-            return url('/') .  Storage::disk('public')->url($this->avatar); 
+            return url('/') .  Storage::disk('public')->url($this->avatar);
         }
 
         // Ensure the default image exists on the local storage
@@ -259,10 +259,27 @@ class Employee extends Model implements Auditable
         });
     }
 
+    // public function periods()
+    // {
+    //     return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id')->withPivot('id');
+    // }
+
     public function periods()
     {
-        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id')->withPivot('id');
+        return $this->belongsToMany(
+            WorkPeriod::class,
+            'hr_employee_periods',
+            'employee_id',
+            'period_id'
+        )->withPivot([
+            'id',
+            'start_date',
+            'end_date',
+            'created_at',
+            'updated_at',
+        ]);
     }
+
     // داخل موديل Employee
     public function employeePeriods()
     {
