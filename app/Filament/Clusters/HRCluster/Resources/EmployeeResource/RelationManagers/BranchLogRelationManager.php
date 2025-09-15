@@ -31,13 +31,13 @@ class BranchLogRelationManager extends RelationManager
        public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
         // مثال: عدد الشفتات لهذا الموظف
-        return $ownerRecord->periods()->count();
+        return $ownerRecord->branchLogs()->count();
     }
 
     public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
     {
         // تقدر ترجع لون حسب الحالة
-        $count = $ownerRecord->periods()->count();
+        $count = $ownerRecord->branchLogs()->count();
 
         if ($count === 0) {
             return 'gray';
@@ -52,7 +52,7 @@ class BranchLogRelationManager extends RelationManager
 
     public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
     {
-        return "Branch Logs Count: " . $ownerRecord->periods()->count();
+        return "Branch Logs Count: " . $ownerRecord->branchLogs()->count();
     }
     public function form(Schema $schema): Schema
     {

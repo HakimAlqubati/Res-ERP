@@ -29,13 +29,13 @@ class PeriodHistoriesRelationManager extends RelationManager
     public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
         // مثال: عدد الشفتات لهذا الموظف
-        return $ownerRecord->periods()->count();
+        return $ownerRecord->periodHistories()->count();
     }
 
     public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
     {
         // تقدر ترجع لون حسب الحالة
-        $count = $ownerRecord->periods()->count();
+        $count = $ownerRecord->periodHistories()->count();
 
         if ($count === 0) {
             return 'gray';
@@ -50,7 +50,7 @@ class PeriodHistoriesRelationManager extends RelationManager
 
     public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
     {
-        return "Shift Histories Count: " . $ownerRecord->periods()->count();
+        return "Shift Histories Count: " . $ownerRecord->periodHistories()->count();
     }
 
     public function table(Table $table): Table
