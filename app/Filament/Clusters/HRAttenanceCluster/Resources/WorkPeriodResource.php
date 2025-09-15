@@ -193,7 +193,7 @@ class WorkPeriodResource extends Resource
                     ->schema(function ($record) {
                         return [
 
-                            Fieldset::make()->label('')->columnSpan(3)->schema([
+                            Fieldset::make()->columnSpanFull()->label('')->columnSpan(3)->schema([
                                 TextInput::make('name')->unique()
                                     ->label('Name')
                                     ->required()

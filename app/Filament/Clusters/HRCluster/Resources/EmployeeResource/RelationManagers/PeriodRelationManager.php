@@ -584,6 +584,7 @@ class PeriodRelationManager extends RelationManager
         // ];
         $periods = \App\Models\WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))->get()->keyBy('id');
 
+        // dd($selectedPeriodsWithDates, $periods);
         $count = count($selectedPeriodsWithDates);
         for ($i = 0; $i < $count; $i++) {
             for ($j = $i + 1; $j < $count; $j++) {
@@ -595,8 +596,8 @@ class PeriodRelationManager extends RelationManager
 
                 // تحقق من تداخل أوقات الشيفت
                 $timesOverlap = (
-                    ($periodA->start_at < $periodB->end_at) &&
-                    ($periodB->start_at < $periodA->end_at)
+                    ($periodA->start_at <= $periodB->end_at) &&
+                    ($periodB->start_at <= $periodA->end_at)
                 );
 
                 // تحقق من تداخل تواريخ الفترات (null end_date تعني مفتوحة)
