@@ -533,9 +533,9 @@ class Employee extends Model implements Auditable
     protected static function booted()
     {
         if (isBranchManager()) {
-            static::addGlobalScope('active', function (Builder $builder) {
-                $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id); // Add your default query here
-            });
+            // static::addGlobalScope('active', function (Builder $builder) {
+            //     $builder->whereNotNull('branch_id')->where('branch_id', auth()->user()->branch_id); // Add your default query here
+            // });
         } elseif (isStuff()) {
             static::addGlobalScope(function (Builder $builder) {
                 // dd(auth()->user()->employee->id);

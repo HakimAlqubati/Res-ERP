@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use DateTime;
-use Filament\Actions\Action; 
+use Filament\Actions\Action;
 use Filament\Support\Enums\TextSize;
 use Throwable;
 use Filament\Tables\Enums\RecordActionsPosition;
@@ -67,7 +67,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Mokhosh\FilamentRating\Components\Rating;
 use Mokhosh\FilamentRating\RatingTheme;
 
-class TaskResource extends Resource 
+class TaskResource extends Resource
 {
     protected static ?string $model = Task::class;
 
@@ -176,7 +176,7 @@ class TaskResource extends Resource
                             ->required()
                             ->options(Employee::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))->searchable()
                             ->multiple()  // Allow multiple users to be selected
-                            ->searchable(),
+                            ->searchable()->hidden(fn() => isStuff()),
 
                     ]),
                     Fieldset::make()->columnSpanFull()->hiddenOn('edit')->visible(fn(Get $get): bool => $get('is_daily'))->label('Set schedule task type and start date of scheduele task')->schema([
@@ -276,7 +276,7 @@ class TaskResource extends Resource
                         ]),
                         Fieldset::make('requrrence_pattern')->label('Recurrence pattern')->schema([
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'daily'))->schema([
-                                Grid::make() ->columns(2)->schema([
+                                Grid::make()->columns(2)->schema([
                                     Radio::make('requr_pattern_set_days')->label('')
                                         ->options([
                                             'specific_days' => 'Every',
@@ -286,13 +286,13 @@ class TaskResource extends Resource
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'weekly'))->schema([
-                                Grid::make() ->columns(2)->schema([
+                                Grid::make()->columns(2)->schema([
                                     TextInput::make('requr_pattern_week_recur_every')->minValue(1)->maxValue(5)->numeric()->label('Recur every')->helperText('Week(s) on:')->required(),
                                     ToggleButtons::make('requr_pattern_weekly_days')->label('')->inline()->options(getDays())->multiple(),
                                 ]),
                             ]),
                             Fieldset::make()->label('')->visible(fn(Get $get): bool => ($get('schedule_type') == 'monthly'))->schema([
-                                Grid::make() ->columns(3)->schema([
+                                Grid::make()->columns(3)->schema([
                                     Radio::make('requr_pattern_monthly_status')->label('')
                                         ->columnSpan(1)
                                         ->options([
@@ -334,7 +334,8 @@ class TaskResource extends Resource
                                     }
                                 }
                                 return false;
-                            })->minDate(now()->toDateString())
+                            })
+                            // ->minDate(now()->toDateString())
                             ->helperText('Set due date for this task'),
                         Select::make('task_status')->options(
                             [
@@ -342,6 +343,7 @@ class TaskResource extends Resource
                                 // Task::STATUS_PENDING => Task::STATUS_PENDING,
                                 Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
                                 Task::STATUS_CLOSED => Task::STATUS_CLOSED,
+                                Task::STATUS_REJECTED => Task::STATUS_REJECTED,
                             ]
                         )->default(Task::STATUS_NEW)
                             ->disabledOn('create')
@@ -450,7 +452,7 @@ class TaskResource extends Resource
             ->defaultSort('id', 'desc')
             ->columns([
                 TextColumn::make('id')->sortable()->alignCenter(true)
-                    ->toggleable(isToggledHiddenByDefault: false), 
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('title')->sortable()->wrap()->words(4)
                     ->color(Color::Blue)
                     ->size(TextSize::Large)
@@ -528,6 +530,7 @@ class TaskResource extends Resource
                         Task::STATUS_NEW => Task::STATUS_NEW,
                         // Task::STATUS_PENDING => Task::STATUS_PENDING,
                         Task::STATUS_IN_PROGRESS => Task::STATUS_IN_PROGRESS,
+                        Task::STATUS_REJECTED => Task::STATUS_REJECTED,
                         Task::STATUS_CLOSED => Task::STATUS_CLOSED,
                     ]
                 ),
@@ -1000,7 +1003,7 @@ class TaskResource extends Resource
     public static function canCreate(): bool
     {
         // if (isSuperAdmin() || auth()->user()->can('create_task')) {
-        if (isSuperAdmin() || isBranchManager() || isSystemManager()) { 
+        if (isSuperAdmin() || isBranchManager() || isSystemManager()) {
             return true;
         }
 

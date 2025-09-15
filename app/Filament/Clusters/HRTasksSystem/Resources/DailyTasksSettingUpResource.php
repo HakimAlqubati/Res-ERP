@@ -127,40 +127,19 @@ class DailyTasksSettingUpResource extends Resource
                                             return 'Count months';
                                         }
                                     })
-                                    // ->live()
-                                    // ->afterStateUpdated(function (Get $get, Set $set, $state) {
-                                    //     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                    //         $set('end_date', date('Y-m-d', strtotime("+$state days")));
-                                    //     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                    //         $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
-                                    //     } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                    //         $set('end_date', date('Y-m-d', strtotime("+$state months")));
-                                    //     }
+                                    ->live()
+                                    ->afterStateUpdated(function (Get $get, Set $set, $state) {
+                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                            $set('end_date', date('Y-m-d', strtotime("+$state days")));
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            $set('end_date', date('Y-m-d', strtotime("+$state weeks")));
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            $set('end_date', date('Y-m-d', strtotime("+$state months")));
+                                        }
 
-                                    // })
+                                    })
                                     ->required()
-                                    ->afterStateUpdatedJs(<<<'JS'
-                                      
-                                        const scheduleType = $get('schedule_type');
-                                        const recurCount = parseInt($state) || 0;
-                                        const today = new Date();
-                                        let newDate;
-
-                                        if (scheduleType === 'daily') {
-                                            newDate = new Date(today);
-                                            newDate.setDate(today.getDate() + recurCount);
-                                        } else if (scheduleType === 'weekly') {
-                                            newDate = new Date(today);
-                                            newDate.setDate(today.getDate() + (recurCount * 7));
-                                        } else if (scheduleType === 'monthly') {
-                                            newDate = new Date(today);
-                                            newDate.setMonth(today.getMonth() + recurCount);
-                                        }
-
-                                        if (newDate) {
-                                            $set('end_date', newDate.toISOString().slice(0, 10));
-                                        }
-                                    JS),
+                                    ,
                             ]),
                             DatePicker::make('end_date')->default(date('Y-m-d', strtotime('+7 days')))->columnSpan(1)->minDate(date('Y-m-d'))
                                 ->live()->afterStateUpdated(function (Get $get, Set $set, $state) {
