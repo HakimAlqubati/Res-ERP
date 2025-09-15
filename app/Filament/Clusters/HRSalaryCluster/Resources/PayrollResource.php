@@ -74,12 +74,10 @@ class PayrollResource extends Resource
                         ->default('Employees who have not had their work periods added, will not appear on the payroll.'),
                     Select::make('branch_id')->label('Choose branch')
                         ->disabledOn('view')->searchable()
-                        ->options(Branch::active()
-                            ->whereIn(
-                                'type',
-                                [Branch::TYPE_BRANCH]
-                            )
-                            ->select('id', 'name')->get()->pluck('name', 'id'))
+                        ->options(Branch::selectable()
+                            ->select('id', 'name')
+                            ->get()
+                            ->pluck('name', 'id'))
                         ->required()
 
                         ->helperText('Please, choose a branch'),

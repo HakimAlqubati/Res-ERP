@@ -8,6 +8,7 @@ use App\Models\EmployeePeriod;
 use App\Models\EmployeePeriodHistory;
 use App\Models\WorkPeriod;
 use Carbon\Carbon;
+use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\CheckboxList;
@@ -278,8 +279,20 @@ class PeriodRelationManager extends RelationManager
                         } catch (Exception $e) {
                             // Handle the exception
                             DB::rollBack();
+                            if ($e->getCode() == 23000) { // Integrity constraint violation
+                                Notification::make()
+                                    ->title('Duplicate Shift Assignment')
+                                    ->body('❌ This employee already has the same work period starting at this date. Please choose another date or period.')
+                                    ->danger()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body($e->getMessage())
+                                    ->warning()
+                                    ->send();
+                            }
                             Log::alert('Error adding new periods: ' . $e->getMessage());
-                            Notification::make()->title('Error')->body($e->getMessage())->warning()->send();
                             // You can also log the error or take other actions as needed
                         }
                     }),
@@ -287,7 +300,7 @@ class PeriodRelationManager extends RelationManager
             ->recordActions([
                 // Tables\Actions\EditAction::make(),
                 // Tables\Actions\DeleteAction::make(),
-                $this->assignDaysAction()->hidden(),
+                $this->assignDaysAction(),
                 Action::make('Delete')->requiresConfirmation()
                     ->color('warning')
                     ->button()
@@ -313,18 +326,18 @@ class PeriodRelationManager extends RelationManager
 
                                 if ($period) {
 
-                                    // 1. البحث عن أي حضور أو انصراف مرتبط بهذه الفترة
-                                    $attendanceExists = \App\Models\Attendance::where('employee_id', $record->employee_id)
-                                        ->where('period_id', $record->period_id)
-                                        ->whereDate('check_date', '>=', $period->start_date)
-                                        ->when($period->end_date, fn($q) => $q->whereDate('check_date', '<=', $period->end_date))
-                                        ->exists();
+                                    // // 1. البحث عن أي حضور أو انصراف مرتبط بهذه الفترة
+                                    // $attendanceExists = \App\Models\Attendance::where('employee_id', $record->employee_id)
+                                    //     ->where('period_id', $record->period_id)
+                                    //     ->whereDate('check_date', '>=', $period->start_date)
+                                    //     ->when($period->end_date, fn($q) => $q->whereDate('check_date', '<=', $period->end_date))
+                                    //     ->exists();
 
-                                    if ($attendanceExists) {
-                                        showWarningNotifiMessage('Warning', 'Cannot delete this period because there are attendance records linked to it.');
-                                        return;
-                                        // throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
-                                    }
+                                    // if ($attendanceExists) {
+                                    // showWarningNotifiMessage('Warning', 'Cannot delete this period because there are attendance records linked to it.');
+                                    // return;
+                                    // throw new \Exception('Cannot delete this period because there are attendance records linked to it.');
+                                    // }
 
                                     // حذف كل الأيام المرتبطة بهذه الفترة فقط
                                     $period->days()->delete();
@@ -369,46 +382,53 @@ class PeriodRelationManager extends RelationManager
     private function assignDaysAction()
     {
         return Action::make('AssignDays')
-            ->label('Assign Days')->button()
+            ->label('Assign Days')
+            ->button()
             ->icon('heroicon-o-calendar-days')
-            ->form(fn($record) => [
-                CheckboxList::make('days')
-                    ->label('Select Days')
-                    ->options(DayOfWeek::options())
-                    ->columns(3)
-                    ->required()
-                    ->default(function () use ($record) {
-                        $employee = $this->ownerRecord;
+            ->form(function ($record) {
+                $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot_id);
 
-                        return \App\Models\EmployeePeriodDay::where('employee_period_id', $record->pivot_id)
-                            ->pluck('day_of_week')
-                            ->toArray();
-                    }),
-                DatePicker::make('start_date')
-                    ->label('Start Date')
-                    ->required()->readOnly()
-                    ->default(function () use ($record) {
-                        // تاريخ بداية الفترة للموظف أو اليوم الحالي
-                        $employee = $this->ownerRecord;
-                        $period   = \App\Models\EmployeePeriod::where('employee_id', $employee->id)
-                            ->where('period_id', $record->id)
-                            ->first();
-                        return $period?->start_date ?? $employee->join_date ?? now()->toDateString();
-                    }),
-                DatePicker::make('end_date')
-                    ->label('End Date')
-                    ->after('start_date')
-                    ->nullable()
-                    ->default(function () use ($record) {
-                        $employee = $this->ownerRecord;
-                        $period   = \App\Models\EmployeePeriod::where('employee_id', $employee->id)
-                            ->where('period_id', $record->id)
-                            ->first();
-                        return $period?->end_date;
-                    }),
-            ])
+                if (! $employeePeriod) {
+                    return [];
+                }
+
+                // الأيام الموجودة حالياً
+                $existingDays = $employeePeriod->days()->pluck('day_of_week')->toArray();
+
+                // جميع الأيام
+                $allDays = DayOfWeek::options();
+
+                // فقط الأيام الناقصة
+                $missingDays = array_diff_key($allDays, array_flip($existingDays));
+
+                return [
+                    CheckboxList::make('existing_days')
+                        ->label('Already Assigned Days')
+                        ->options(array_intersect_key($allDays, array_flip($existingDays)))
+                        ->columns(3)
+                        ->default($existingDays)
+                        ->disabled(),   // 🔒 معطل لا يمكن تغييره
+
+                    CheckboxList::make('days')
+                        ->label('Select Missing Days')
+                        ->options($missingDays)
+                        ->columns(3)
+                        ->helperText('You can only assign days not already assigned to this period.'),
+
+                    DatePicker::make('start_date')
+                        ->label('Start Date')
+                        ->default($employeePeriod->start_date)
+                        ->disabled(),   // 🔒 للعرض فقط
+
+                    DatePicker::make('end_date')
+                        ->label('End Date')
+                        ->default($employeePeriod->end_date)
+                        ->disabled(),   // 🔒 للعرض فقط
+                ];
+            })
             ->action(function (array $data, $record) {
                 $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot_id);
+
                 if (! $employeePeriod) {
                     Notification::make()
                         ->title('Assignment Error')
@@ -418,83 +438,31 @@ class PeriodRelationManager extends RelationManager
                     return;
                 }
 
-                $periodStartAt   = $employeePeriod->workPeriod->start_at;
-                $periodEndAt     = $employeePeriod->workPeriod->end_at;
-                $periodStartDate = $employeePeriod->start_date;
-                $periodEndDate   = $employeePeriod->end_date;
-
-                // لاحظ تمرير رقم فترة الموظف حتى لا يحتسب تداخل مع نفسه
-                if ($this->isOverlappingDays_(
-                    $employeePeriod->employee_id,
-                    $data['days'],
-                    $periodStartAt,
-                    $periodEndAt,
-                    $periodStartDate,
-                    $periodEndDate,
-                    $employeePeriod->id // exclude self
-                )) {
-                    Notification::make()
-                        ->title('Overlapping Error')
-                        ->body('There is an overlapping period with the selected days. Please review your selection.')
-                        ->danger()
-                        ->send();
-                    return;
-                }
-
                 try {
-                    DB::transaction(function () use ($data, $employeePeriod, $record) {
-                        $existingDays = $employeePeriod->days()->pluck('day_of_week')->toArray();
-                        $selectedDays = $data['days'];
+                    DB::transaction(function () use ($data, $employeePeriod) {
+                        if (!empty($data['days'])) {
+                            foreach ($data['days'] as $day) {
+                                $employeePeriod->days()->create([
+                                    'day_of_week' => $day,
+                                ]);
 
-                        // الأيام الجديدة التي أضيفت
-                        $daysToAdd = array_diff($selectedDays, $existingDays);
-                        // الأيام التي أزيلت
-                        $daysToRemove = array_diff($existingDays, $selectedDays);
-
-                        // إضافة الأيام الجديدة
-                        foreach ($daysToAdd as $day) {
-                            $employeePeriod->days()->create([
-                                'day_of_week' => $day,
-                            ]);
-                            EmployeePeriodHistory::create([
-                                'employee_id' => $employeePeriod->employee_id,
-                                'period_id'   => $employeePeriod->period_id,
-                                'start_date'  => $data['start_date'],
-                                'end_date'    => $data['end_date'] ?? null,
-                                'start_time'  => $employeePeriod->workPeriod->start_at,
-                                'end_time'    => $employeePeriod->workPeriod->end_at,
-                                'day_of_week' => $day,
-                            ]);
+                                EmployeePeriodHistory::create([
+                                    'employee_id' => $employeePeriod->employee_id,
+                                    'period_id'   => $employeePeriod->period_id,
+                                    'start_date'  => $employeePeriod->start_date,
+                                    'end_date'    => $employeePeriod->end_date,
+                                    'start_time'  => $employeePeriod->workPeriod->start_at,
+                                    'end_time'    => $employeePeriod->workPeriod->end_at,
+                                    'day_of_week' => $day,
+                                ]);
+                            }
                         }
-
-                        // إنهاء الأيام المحذوفة (تحديث end_date فقط وليس حذف!)
-                        foreach ($daysToRemove as $day) {
-                            $periodStart = $data['start_date'];       // بداية الفترة المحذوفة
-                            $periodEnd   = $data['end_date'] ?? null; // نهاية الفترة المحذوفة (قد تكون null = مفتوحة)
-                            // تحديث end_date في جدول الأيام وفي الهستوري
-                            $employeePeriod->days()->where('day_of_week', $day)->delete();
-                            EmployeePeriodHistory::where('employee_id', $employeePeriod->employee_id)
-                                ->where('period_id', $employeePeriod->period_id)
-                                ->where('day_of_week', $day)
-                                ->where(function ($q) use ($periodStart, $periodEnd) {
-                                    $q->where(function ($query) use ($periodEnd) {
-                                        if ($periodEnd) {
-                                            $query->whereNull('end_date')
-                                                ->orWhere('end_date', '>=', $periodEnd);
-                                        } else {
-                                            $query->whereNull('end_date');
-                                        }
-                                    })
-                                        ->where('start_date', '<=', $periodStart);
-                                })
-                                ->delete();
-                        }
-
-                        Notification::make()
-                            ->title('Days Assigned Successfully')
-                            ->success()
-                            ->send();
                     });
+
+                    Notification::make()
+                        ->title('Days Assigned Successfully')
+                        ->success()
+                        ->send();
                 } catch (\Exception $e) {
                     DB::rollBack();
                     Notification::make()
@@ -504,7 +472,6 @@ class PeriodRelationManager extends RelationManager
                         ->send();
                 }
             })
-
             ->modalHeading('Assign Work Days')
             ->modalSubmitActionLabel('Save')
             ->modalWidth('md');

@@ -1298,7 +1298,7 @@ class EmployeeApplicationResource extends Resource
             Fieldset::make('Missed Checkin Request')
                 ->label('')
                 ->relationship('missedCheckinRequest')
- 
+
                 // ->mutateRelationshipDataBeforeSaveUsing(function ($data) {
                 //     dd($data);
                 // })
@@ -1314,6 +1314,7 @@ class EmployeeApplicationResource extends Resource
                 // ->saveRelationshipsBeforeChildrenUsing(function ($data) {
                 // dd($data);
                 // })
+               
                 ->mutateRelationshipDataBeforeCreateUsing(function ($data, $get) {
                     Log::info('data', [$data]);
                     $data['application_type_id']   = 2;

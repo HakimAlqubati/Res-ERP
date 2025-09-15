@@ -48,7 +48,7 @@ class WorkPeriodResource extends Resource
 {
     protected static ?string $model = WorkPeriod::class;
 
-    protected static string | \BackedEnum | null $navigationIcon =Heroicon::Clock;
+    protected static string | \BackedEnum | null $navigationIcon = Heroicon::Clock;
 
     protected static ?string $cluster = HRAttenanceCluster::class;
     protected static ?string $label = 'Work shifts';
@@ -78,7 +78,9 @@ class WorkPeriodResource extends Resource
                     //     ->inline(false)
                     //     ->default(true),
                     Select::make('branch_id')
-                        ->options(Branch::where('active', 1)->select('name', 'id')->get()->pluck('name', 'id'))
+                        ->options(Branch::where('active', 1)
+                            ->selectable()
+                            ->select('name', 'id')->get()->pluck('name', 'id'))
                         ->label('Branch')->required()
                         ->searchable(),
                     Toggle::make('active')
@@ -179,7 +181,7 @@ class WorkPeriodResource extends Resource
             ])
             ->filters([
                 TrashedFilter::make(),
-                SelectFilter::make('branch_id')->label('Branch')->options(Branch::select('id', 'name')->where('active', 1)->pluck('name', 'id')),
+                SelectFilter::make('branch_id')->searchable()->label('Branch')->options(Branch::select('id', 'name')->where('active', 1)->selectable()->pluck('name', 'id')),
             ])
             ->recordActions([
                 EditAction::make(),
@@ -213,8 +215,7 @@ class WorkPeriodResource extends Resource
                                     ->default($record->end_at),
                                 Forms\Components\Select::make('branch_id')
                                     ->options(Branch::active()
-                                        ->branches()
-                                        ->pluck('name', 'id'))
+                                        ->selectable()->pluck('name', 'id'))
                                     ->label('Branch')
                                     ->default($record->branch_id),
                                 // Forms\Components\TextInput::make('allowed_count_minutes_late')

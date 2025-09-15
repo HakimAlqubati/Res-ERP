@@ -118,16 +118,16 @@ class DailyTasksSettingUpResource extends Resource
                             Grid::make()->columnSpanFull()->columns(1)->columnSpan(1)->schema([
                                 DatePicker::make('start_date')->default(date('Y-m-d', strtotime('+1 days')))->columnSpan(1)->minDate(date('Y-m-d'))->live(),
                                 TextInput::make('recur_count')
-                                ->label(function (Get $get) {
-                                    if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
-                                        return 'Count days';
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
-                                        return 'Count weeks';
-                                    } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
-                                        return 'Count months';
-                                    }
-                                })
-                                // ->live()
+                                    ->label(function (Get $get) {
+                                        if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
+                                            return 'Count days';
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_WEEKLY) {
+                                            return 'Count weeks';
+                                        } elseif ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_MONTHLY) {
+                                            return 'Count months';
+                                        }
+                                    })
+                                    // ->live()
                                     // ->afterStateUpdated(function (Get $get, Set $set, $state) {
                                     //     if ($get('schedule_type') == DailyTasksSettingUp::TYPE_SCHEDULE_DAILY) {
                                     //         $set('end_date', date('Y-m-d', strtotime("+$state days")));
@@ -289,7 +289,10 @@ class DailyTasksSettingUpResource extends Resource
                     ]
                 ),
                 SelectFilter::make('branch_id')->label('Branch')->multiple()->options(
-                    Branch::select('name', 'id')->pluck('name', 'id')
+                    Branch::selectable()
+                        ->select('id', 'name')
+                        ->get()
+                        ->pluck('name', 'id')
                 ),
             ], FiltersLayout::AboveContent)
             ->recordActions([

@@ -253,4 +253,15 @@ trait BranchScopes
     {
         return $query->where('type', '!=', self::TYPE_RESELLER);
     }
+
+    public function scopeSelectable(Builder $query): Builder
+    {
+        return $query->active() // الفروع المفعلة فقط
+            ->where(function ($q) {
+                $q->branches()
+                    ->orWhere(fn($sub) => $sub->popupActive())
+                    ->orWhere(fn($sub) => $sub->hQBranches())
+                    ->orWhere(fn($sub) => $sub->resellers());
+            });
+    }
 }

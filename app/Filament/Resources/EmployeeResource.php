@@ -236,13 +236,10 @@ class EmployeeResource extends Resource
                                             // ->disabledOn('edit')
                                             ->live()
                                             ->options(
-                                                Branch::active()
+                                                Branch::selectable()
                                                     ->select('id', 'name')
-                                                    ->where(function ($q) {
-                                                        $q->branches()
-                                                            ->orWhere(fn($sub) => $sub->hQBranches());
-                                                    })
-                                                    ->get()->pluck('name', 'id')
+                                                    ->get()
+                                                    ->pluck('name', 'id')
                                             ),
                                         Toggle::make('is_ceo')->label('is_ceo')
                                             ->live()

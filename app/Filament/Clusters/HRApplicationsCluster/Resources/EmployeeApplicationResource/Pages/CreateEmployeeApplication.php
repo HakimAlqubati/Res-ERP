@@ -19,7 +19,7 @@ class CreateEmployeeApplication extends CreateRecord
     protected static string $resource = EmployeeApplicationResource::class;
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        
+
         // dd($data);
         if (!isStuff() && !isFinanceManager()) {
             $employee = Employee::find($data['employee_id']);
@@ -138,6 +138,76 @@ class CreateEmployeeApplication extends CreateRecord
         // $data['details'] = [];
 
         return $data;
+    }
+    protected function afterCreate(): void
+    {
+        switch ($this->record->application_type_id) {
+            case EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST:
+                $data = $this->data['missedCheckinRequest'] ?? null;
+                if ($data) {
+                    $this->record->missedCheckinRequest()->create([
+                        'application_id'        => $this->record->id,
+                        'employee_id'           => $this->record->employee_id,
+                        'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST,
+                        'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ATTENDANCE_FINGERPRINT_REQUEST],
+                        'date'                  => $data['date'],
+                        'time'                  => $data['time'],
+                        'reason'                => $data['reason'] ?? null,
+                    ]);
+                }
+                break;
+
+            case EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST:
+                $data = $this->data['missedCheckoutRequest'] ?? null;
+                if ($data) {
+                    $this->record->missedCheckoutRequest()->create([
+                        'application_id'        => $this->record->id,
+                        'employee_id'           => $this->record->employee_id,
+                        'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST,
+                        'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_DEPARTURE_FINGERPRINT_REQUEST],
+                        'date'                  => $data['date'],
+                        'time'                  => $data['time'],
+                        'reason'                => $data['reason'] ?? null,
+                        
+                    ]);
+                }
+                break;
+
+            case EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST:
+                $data = $this->data['leaveRequest'] ?? null;
+                if ($data) {
+                    $this->record->leaveRequest()->create([
+                        'application_id' => $this->record->id,
+                        'start_date'     => $data['detail_from_date'],
+                        'end_date'       => $data['detail_to_date'],
+                        'days_count'     => $data['detail_days_count'] ?? null,
+                        'leave_type_id'  => $data['detail_leave_type_id'] ?? null,
+                        'employee_id'      => $this->record->employee_id,
+                        'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST,
+                        'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_LEAVE_REQUEST],
+
+                    ]);
+                }
+                break;
+
+            case EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST:
+                $data = $this->data['advanceRequest'] ?? null;
+                if ($data) {
+                    $this->record->advanceRequest()->create([
+                        'application_id'           => $this->record->id,
+                        'advance_amount'           => $data['detail_advance_amount'],
+                        'monthly_deduction_amount' => $data['detail_monthly_deduction_amount'],
+                        'deduction_starts_from'    => $data['detail_deduction_starts_from'],
+                        'deduction_ends_at'        => $data['detail_deduction_ends_at'],
+                        'number_of_months_of_deduction' => $data['detail_number_of_months_of_deduction'] ?? null,
+                        'application_type_id'   => EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST,
+                        'application_type_name' => EmployeeApplicationV2::APPLICATION_TYPE_NAMES[EmployeeApplicationV2::APPLICATION_TYPE_ADVANCE_REQUEST],
+                        'employee_id'           => $this->record->employee_id,
+
+                    ]);
+                }
+                break;
+        }
     }
 
     protected function getRedirectUrl(): string

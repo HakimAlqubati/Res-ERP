@@ -81,10 +81,7 @@ class ServiceRequestResource extends Resource
                                             }
                                         })
                                         ->options(Branch::active()
-                                            ->where(function ($q) {
-                                                $q->branches()
-                                                    ->orWhere(fn($sub) => $sub->hQBranches());
-                                            })
+                                            ->selectable()
                                             ->select('name', 'id')->pluck('name', 'id'))
                                         ->default(function () {
                                             if (isStuff()) {

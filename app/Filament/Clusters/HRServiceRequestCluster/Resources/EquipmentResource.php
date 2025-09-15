@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRServiceRequestCluster\Resources;
 
 use Filament\Pages\Enums\SubNavigationPosition;
@@ -93,11 +94,14 @@ class EquipmentResource extends Resource
 
                                     Select::make('branch_id')
                                         ->label('Branch')
-                                        ->options(Branch::branches()->active()->pluck('name', 'id'))
+                                        ->options(Branch::selectable()
+                                            ->select('id', 'name')
+                                            ->get()
+                                            ->pluck('name', 'id'))
                                         ->required()->live()->prefixIcon('heroicon-s-ellipsis-horizontal')->prefixIconColor('primary'),
                                     Select::make('branch_area_id')
-                                    ->required()
-                                    ->label('Branch area')
+                                        ->required()
+                                        ->label('Branch area')
                                         ->options(function ($get) {
                                             return BranchArea::query()
                                                 ->where('branch_id', $get('branch_id'))
@@ -216,15 +220,15 @@ class EquipmentResource extends Resource
                                     DatePicker::make('operation_start_date')
                                         ->label('Operation Start Date')
                                         ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                        // ->default(now()->subYear())
-                                        // ->live(onBlur: true)
-                                        // ->afterStateUpdated(function ($state, callable $set, $get) {
-                                        //     $months = (int) $get('warranty_months');
-                                        //     if ($months) {
-                                        //         $set('warranty_end_date', \Carbon\Carbon::parse($state)->addMonths($months)->format('Y-m-d'));
-                                        //     }
-                                        // })
-                                        ,
+                                    // ->default(now()->subYear())
+                                    // ->live(onBlur: true)
+                                    // ->afterStateUpdated(function ($state, callable $set, $get) {
+                                    //     $months = (int) $get('warranty_months');
+                                    //     if ($months) {
+                                    //         $set('warranty_end_date', \Carbon\Carbon::parse($state)->addMonths($months)->format('Y-m-d'));
+                                    //     }
+                                    // })
+                                    ,
                                 ]),
 
                                 DatePicker::make('last_serviced')
@@ -424,7 +428,7 @@ class EquipmentResource extends Resource
             $typeCode       = $equipmentType?->code ?? 'GEN';
 
             // دمج البادئة النهائية: CategoryPrefix + TypeCode
-            $prefix = $categoryPrefix .'-'. $typeCode;
+            $prefix = $categoryPrefix . '-' . $typeCode;
 
             // قفل السجلات المماثلة لمنع التكرار
             $lastAssetTag = Equipment::where('asset_tag', 'like', $prefix . '%')
@@ -442,8 +446,7 @@ class EquipmentResource extends Resource
             $nextNumber = $lastNumber + 1;
 
             // إعادة الكود الكامل بالشكل: CATEGORYPREFIX + TYPECODE + 3 أرقام
-            return $prefix .'-'. str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
+            return $prefix . '-' . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
         });
     }
-
 }
