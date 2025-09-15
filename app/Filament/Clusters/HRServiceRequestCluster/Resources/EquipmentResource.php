@@ -241,12 +241,12 @@ class EquipmentResource extends Resource
                                         if ($interval) {
                                             $set('next_service_date', Carbon::parse($state)->addDays((float) $interval)->format('Y-m-d'));
                                         }
-                                    }),
+                                    })->hiddenOn('create'),
 
                                 DatePicker::make('next_service_date')
                                     ->label('Next Service Date')
                                     ->prefixIcon('heroicon-s-calendar')->prefixIconColor('primary')
-                                    ->default(now()),
+                                    ->default(now())->hiddenOn('create'),
 
                             ]),
                         ]),
@@ -361,7 +361,7 @@ class EquipmentResource extends Resource
             ->filters([
                 SelectFilter::make('branch_id')
                     ->label('Branch')
-                    ->searchable()->options(fn() => Branch::branches()
+                    ->searchable()->options(fn() => Branch::selectable()
                         ->active()->pluck('name', 'id')),
                 SelectFilter::make('type_id')
                     ->label('Type')
