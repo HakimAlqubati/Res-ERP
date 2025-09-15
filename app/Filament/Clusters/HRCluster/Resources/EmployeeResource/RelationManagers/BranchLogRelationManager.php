@@ -19,6 +19,7 @@ use Filament\Tables;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -27,6 +28,32 @@ class BranchLogRelationManager extends RelationManager
     protected static string $relationship = 'branchLogs';
     protected static ?string $title = 'Branch Logs';
     // protected static ?string $badge = count($this->ownerRecord->periods);
+       public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        // مثال: عدد الشفتات لهذا الموظف
+        return $ownerRecord->periods()->count();
+    }
+
+    public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
+    {
+        // تقدر ترجع لون حسب الحالة
+        $count = $ownerRecord->periods()->count();
+
+        if ($count === 0) {
+            return 'gray';
+        }
+
+        if ($count < 3) {
+            return 'warning';
+        }
+
+        return 'success';
+    }
+
+    public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
+    {
+        return "Branch Logs Count: " . $ownerRecord->periods()->count();
+    }
     public function form(Schema $schema): Schema
     {
         return $schema

@@ -22,6 +22,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -30,23 +31,33 @@ class PeriodRelationManager extends RelationManager
     protected static string $relationship = 'periods';
     protected static ?string $title       = 'Shifts';
     // protected static ?string $badge = count($this->ownerRecord->periods);
-    public function form(Schema $schema): Schema
+
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
     {
-        return $schema
-            ->components([
-                // Grid::make()->columnSpanFull()->columns(1)->schema([
-                //     ToggleButtons::make('periods')
-                //         ->label('Work Periods')
-                //     // ->relationship('periods', 'name')
-                //         ->columns(3)->multiple()
-                //         ->options(
-                //             WorkPeriod::select('name', 'id')->get()->pluck('name', 'id'),
-                //         )->default(function () {
-                //         return $this->ownerRecord?->periods?->plucK('id')?->toArray();
-                //     })
-                //         ->helperText('Select the employee\'s work periods.'),
-                // ]),
-            ]);
+        // مثال: عدد الشفتات لهذا الموظف
+        return $ownerRecord->periods()->count();
+    }
+
+    public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
+    {
+        // تقدر ترجع لون حسب الحالة
+        $count = $ownerRecord->periods()->count();
+
+        if ($count === 0) {
+            return 'gray';
+        }
+
+        if ($count < 3) {
+            return 'warning';
+        }
+
+        return 'success';
+    }
+
+    public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
+    {
+        return "Current Shifts Count: " . $ownerRecord->periods()->count();
     }
 
     public function table(Table $table): Table

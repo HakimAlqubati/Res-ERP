@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Clusters\HRCluster\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeek;
@@ -16,6 +17,7 @@ use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class PeriodHistoriesRelationManager extends RelationManager
@@ -23,6 +25,33 @@ class PeriodHistoriesRelationManager extends RelationManager
     use CanCustomizeProcess;
     protected static string $relationship = 'periodHistories';
     protected static ?string $title       = 'Shift History';
+
+    public static function getBadge(Model $ownerRecord, string $pageClass): ?string
+    {
+        // مثال: عدد الشفتات لهذا الموظف
+        return $ownerRecord->periods()->count();
+    }
+
+    public static function getBadgeColor(Model $ownerRecord, string $pageClass): ?string
+    {
+        // تقدر ترجع لون حسب الحالة
+        $count = $ownerRecord->periods()->count();
+
+        if ($count === 0) {
+            return 'gray';
+        }
+
+        if ($count < 3) {
+            return 'warning';
+        }
+
+        return 'success';
+    }
+
+    public static function getBadgeTooltip(Model $ownerRecord, string $pageClass): ?string
+    {
+        return "Shift Histories Count: " . $ownerRecord->periods()->count();
+    }
 
     public function table(Table $table): Table
     {
