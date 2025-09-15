@@ -56,6 +56,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Page;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables;
@@ -110,113 +112,125 @@ class EmployeeResource extends Resource
             ->components([
 
                 Wizard::make([
-                    Step::make('Personal & Employeement data')
+                    Step::make('Personal Data')
                         ->icon('heroicon-o-user-circle')
                         ->schema([
-                            Fieldset::make('personal_data')->label('Personal data')
-                                ->schema([
-                                    Grid::make()->columns(3)
-                                        ->columnSpanFull()
-                                        ->schema([
-                                            TextInput::make('name')->label('Full name')
-                                                ->rules([
-                                                    fn(): Closure => function (string $attribute, $value, Closure $fail) {
-                                                        // dd('dd',$value);
-                                                        if (count(explode(" ", $value)) < 2) {
-                                                            $fail('The :attribute must be two words at least.');
-                                                        }
-                                                    },
-                                                ])
-                                                ->columnSpan(1)->required(),
-                                            TextInput::make('email')->columnSpan(1)->email()
-                                                ->unique(ignoreRecord: true)->required(),
-
-                                            TextInput::make('phone_number')
-                                                ->unique(ignoreRecord: true)
-                                                ->columnSpan(1)
-
-                                                // ->numeric()
-                                                ->maxLength(14)->minLength(8),
-                                            Select::make('gender')
-                                                ->label('Gender')
-                                                ->options([
-                                                    1 => 'Male',
-                                                    0 => 'Female',
-                                                ])
-                                                ->required(),
-                                            // TextInput::make('nationality')
-                                            // ->label('Nationality')
-                                            // ->nullable(),
-                                            TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
-
-                                            TextInput::make('working_days')
-                                                ->label('Working Days per Month')
-                                                ->numeric()
-                                                ->minValue(1)
-                                                ->maxValue(31)
-                                            // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
-                                            ,
-
-                                            // TextInput::make('working_hours')
-                                            //     ->label('Working Hours per Day')
-                                            //     ->numeric()
-                                            //     ->minValue(1)
-                                            //     ->maxValue(24)
-                                            //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
-
-                                            Select::make('nationality')
-                                                ->label('Nationality')->live()
-                                                // ->required()
-                                                ->options(getNationalities())
-                                                ->searchable(),
-
-                                            TextInput::make('mykad_number')->label('MyKad no.')->numeric()
-                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
-
-                                            Fieldset::make()->columnSpanFull()->label('')
-                                                ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
-                                                ->schema([
-                                                    TextInput::make('passport_no')->label('Passport no.')->numeric(),
-                                                    Toggle::make('has_employee_pass')->label('Has employement pass')->inline(false)->live(),
-
-                                                ]),
-
-                                        ]),
-                                    Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
-                                        Textarea::make('address')->label('')->columnSpanFull(),
-                                    ]),
-                                    Fieldset::make()->label('Upload avatar image')
-                                        ->columnSpanFull()
-                                        ->schema([
-                                            Grid::make()->columnSpanFull()->schema([
-                                                FileUpload::make('avatar')
-                                                    ->image()
-                                                    ->label('')
-                                                    // ->avatar()
-                                                    ->imageEditor()
-
-                                                    ->circleCropper()
-                                                    ->disk('public')
-                                                    // ->directory('employees')
-                                                    ->visibility('public')
-                                                    ->imageEditorAspectRatios([
-                                                        '16:9',
-                                                        '4:3',
-                                                        '1:1',
+                            Tabs::make('')->columnSpanFull()
+                                ->tabs([
+                                    Tab::make('Personal Data')
+                                    ->icon(Heroicon::UserCircle)
+                                        ->schema([Grid::make()->columns(3)
+                                            ->columnSpanFull()
+                                            ->schema([
+                                                TextInput::make('name')->label('Full name')
+                                                    ->rules([
+                                                        fn(): Closure => function (string $attribute, $value, Closure $fail) {
+                                                            // dd('dd',$value);
+                                                            if (count(explode(" ", $value)) < 2) {
+                                                                $fail('The :attribute must be two words at least.');
+                                                            }
+                                                        },
                                                     ])
-                                                    // ->disk('s3') // Change disk to S3
-                                                    ->directory('employees')
-                                                    ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                        return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                    })
-                                                    // ->imagePreviewHeight('250')
-                                                    // ->resize(5)
-                                                    ->maxSize(333)
-                                                    ->columnSpan(2)
-                                                    ->reactive(),
-                                            ]),
+                                                    ->columnSpan(1)->required(),
+                                                TextInput::make('email')->columnSpan(1)->email()
+                                                    ->unique(ignoreRecord: true)->required(),
+
+                                                TextInput::make('phone_number')
+                                                    ->unique(ignoreRecord: true)
+                                                    ->columnSpan(1)
+
+                                                    // ->numeric()
+                                                    ->maxLength(14)->minLength(8),
+                                                Select::make('gender')
+                                                    ->label('Gender')
+                                                    ->options([
+                                                        1 => 'Male',
+                                                        0 => 'Female',
+                                                    ])
+                                                    ->required(),
+                                                // TextInput::make('nationality')
+                                                // ->label('Nationality')
+                                                // ->nullable(),
+                                                TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
+
+                                                TextInput::make('working_days')
+                                                    ->label('Working Days per Month')
+                                                    ->numeric()
+                                                    ->minValue(1)
+                                                    ->maxValue(31)
+                                                // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
+                                                ,
+
+                                                // TextInput::make('working_hours')
+                                                //     ->label('Working Hours per Day')
+                                                //     ->numeric()
+                                                //     ->minValue(1)
+                                                //     ->maxValue(24)
+                                                //     ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee'),
+
+                                                Select::make('nationality')
+                                                    ->label('Nationality')->live()
+                                                    // ->required()
+                                                    ->options(getNationalities())
+                                                    ->searchable(),
+
+                                                TextInput::make('mykad_number')->label('MyKad no.')->numeric()
+                                                    ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') == setting('default_nationality'))),
+
+                                                Fieldset::make()->columnSpanFull()->label('')
+                                                    ->visible(fn($get): bool => ($get('nationality') != null && $get('nationality') != setting('default_nationality')))
+                                                    ->schema([
+                                                        TextInput::make('passport_no')->label('Passport no.')->numeric(),
+                                                        Toggle::make('has_employee_pass')->label('Has employement pass')->inline(false)->live(),
+
+                                                    ]),
+
+                                            ]),]),
+                                    Tab::make('Address & Avatar')
+                                    ->icon(Heroicon::MapPin)
+                                    ->schema([
+                                        Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
+                                            Textarea::make('address')->label('')->columnSpanFull(),
                                         ]),
+                                        Fieldset::make()->label('Upload avatar image')
+                                            ->columnSpanFull()
+                                            ->schema([
+                                                Grid::make()->columnSpanFull()->schema([
+                                                    FileUpload::make('avatar')
+                                                        ->image()
+                                                        ->label('')
+                                                        // ->avatar()
+                                                        ->imageEditor()
+
+                                                        ->circleCropper()
+                                                        ->disk('public')
+                                                        // ->directory('employees')
+                                                        ->visibility('public')
+                                                        ->imageEditorAspectRatios([
+                                                            '16:9',
+                                                            '4:3',
+                                                            '1:1',
+                                                        ])
+                                                        // ->disk('s3') // Change disk to S3
+                                                        ->directory('employees')
+                                                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                            return Str::random(15) . "." . $file->getClientOriginalExtension();
+                                                        })
+                                                        // ->imagePreviewHeight('250')
+                                                        // ->resize(5)
+                                                        ->maxSize(333)
+                                                        ->columnSpan(2)
+                                                        ->reactive(),
+                                                ]),
+                                            ]),
+                                    ])
                                 ]),
+
+                        ]),
+
+                    Step::make('Employeement')
+                        ->icon(Heroicon::Identification)
+                        ->schema([
                             Fieldset::make('Employeement')->label('Employeement')->columnSpanFull()
                                 ->schema([
                                     Grid::make()->columns(4)->columnSpanFull()->schema([
@@ -294,7 +308,6 @@ class EmployeeResource extends Resource
                                     ]),
                                 ]),
                         ]),
-
                     Step::make('Employee files')
                         ->icon('heroicon-o-document-plus')
                         ->schema([

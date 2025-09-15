@@ -259,26 +259,20 @@ class Employee extends Model implements Auditable
         });
     }
 
-    // public function periods()
-    // {
-    //     return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id')->withPivot('id');
-    // }
-
     public function periods()
     {
-        return $this->belongsToMany(
-            WorkPeriod::class,
-            'hr_employee_periods',
-            'employee_id',
-            'period_id'
-        )->withPivot([
-            'id',
-            'start_date',
-            'end_date',
-            'created_at',
-            'updated_at',
-        ]);
+        return $this->belongsToMany(WorkPeriod::class, 'hr_employee_periods', 'employee_id', 'period_id')->withPivot('id');
     }
+
+    // public function periods()
+    // {
+    //     return $this->belongsToMany(
+    //         WorkPeriod::class,
+    //         'hr_employee_periods',
+    //         'employee_id',
+    //         'period_id'
+    //     )->withPivot(['id', 'start_date', 'end_date']);
+    // }
 
     // داخل موديل Employee
     public function employeePeriods()

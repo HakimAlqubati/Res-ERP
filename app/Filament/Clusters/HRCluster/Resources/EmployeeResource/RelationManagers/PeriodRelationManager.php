@@ -100,12 +100,26 @@ class PeriodRelationManager extends RelationManager
                 ,
                 TextColumn::make('start_date')
                     ->label('Start Date')
-                    ->date()
-                    ->sortable(),
+                    // ->date()
+                    ->getStateUsing(function ($record) {
+                        
+                        $employeePeriod = EmployeePeriod::find($record->pivot->id);
+
+                        // dd($period,$record);
+                        // $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot->id);
+                        // dd($employeePeriod,$record);
+                        return $employeePeriod?->start_date;
+                    }),
+
                 TextColumn::make('end_date')
                     ->label('End Date')
                     ->date()
-                    ->sortable(),
+                    ->getStateUsing(function ($record) {
+                        // dd($record);
+                        $employeePeriod = \App\Models\EmployeePeriod::find($record->pivot->id);
+                        return $employeePeriod?->end_date;
+                    }),
+
                 TextColumn::make('creator.name')->label('Created by')->toggleable(isToggledHiddenByDefault: true),
 
             ])
