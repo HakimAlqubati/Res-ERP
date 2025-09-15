@@ -30,7 +30,7 @@ class SalaryTransactionForm
                             ->required()
                             ->reactive(),
 
-                        Select::make('payroll_id')->disabledOn('edit')
+                        Select::make('payroll_id')
                             ->label(__('Payroll'))
                             ->options(function (callable $get) {
                                 $employeeId = $get('employee_id');
@@ -52,7 +52,8 @@ class SalaryTransactionForm
                             ->preload()
                             ->required()
                             ->reactive()
-                            ->disabled(fn(callable $get) => ! $get('employee_id')),
+                            ->disabled(fn(callable $get) => ! $get('employee_id'))
+                            ->disabledOn('edit'),
                         Select::make('status')
                             ->label(__('Status'))
                             ->options([
@@ -93,8 +94,8 @@ class SalaryTransactionForm
                             ->searchable()
                             ->nullable()
                             ->reactive()
-                            ->rule(function (callable $get) {
-                                return function (string $attribute, $value, \Closure $fail) use ($get) {
+                            ->rule(function (callable $get, $operation) {
+                                return function (string $attribute, $value, \Closure $fail) use ($get, $operation) {
                                     $exists = \App\Models\SalaryTransaction::query()
                                         ->where('employee_id', $get('employee_id'))
                                         ->where('payroll_id', $get('payroll_id'))
@@ -104,7 +105,7 @@ class SalaryTransactionForm
                                         ->where('sub_type', $value)
                                         ->exists();
 
-                                    if ($exists) {
+                                    if ($exists && $operation != 'edit') {
                                         $fail(__('This transaction already exists for this employee in the same month and type.'));
                                     }
                                 };

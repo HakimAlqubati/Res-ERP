@@ -47,7 +47,7 @@ class DeductionResource extends Resource
 
         return $schema
             ->components([
-                Fieldset::make()->columns(4)
+                Fieldset::make()->columnSpanFull()->columns(4)
                     ->label('')->schema([
                         TextInput::make('name')->required()
                             ->columnSpan(fn($get): int => ($get('is_penalty') || $get('is_specific')) ? 4 : 1),
@@ -67,7 +67,7 @@ class DeductionResource extends Resource
                             ->required(),
                         TextInput::make('description')->columnSpan(4),
                     ]),
-                Fieldset::make()->label('')->columns(6)->schema([
+                Fieldset::make()->columnSpanFull()->label('')->columns(6)->schema([
                     Toggle::make('is_penalty')
                         ->live()->hidden(fn($get): bool => ($get('is_specific')))
                         ->default(false),
@@ -131,7 +131,7 @@ class DeductionResource extends Resource
     }
 
     public static function table(Table $table): Table
-    { 
+    {
         return $table
             ->striped()
             ->columns([
