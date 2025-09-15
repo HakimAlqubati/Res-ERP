@@ -577,14 +577,10 @@ class PeriodRelationManager extends RelationManager
 
     private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
     {
-        // $selectedPeriodsWithDates = [
-        //     ['period_id' => 1, 'start_date' => '2024-01-01', 'end_date' => '2024-01-10'],
-        //     ['period_id' => 2, 'start_date' => '2024-01-05', 'end_date' => '2024-01-15'],
-        //     ...
-        // ];
-        $periods = \App\Models\WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))->get()->keyBy('id');
+        $periods = WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))
+            ->get()
+            ->keyBy('id');
 
-        // dd($selectedPeriodsWithDates, $periods);
         $count = count($selectedPeriodsWithDates);
         for ($i = 0; $i < $count; $i++) {
             for ($j = $i + 1; $j < $count; $j++) {
@@ -594,28 +590,79 @@ class PeriodRelationManager extends RelationManager
                 $periodA = $periods[$a['period_id']];
                 $periodB = $periods[$b['period_id']];
 
-                // تحقق من تداخل أوقات الشيفت
-                $timesOverlap = (
-                    ($periodA->start_at <= $periodB->end_at) &&
-                    ($periodB->start_at <= $periodA->end_at)
-                );
+                // ✅ استخدم Carbon وحسب day_and_night
+                $aStart = Carbon::createFromFormat('H:i:s', $periodA->start_at);
+                $aEnd   = Carbon::createFromFormat('H:i:s', $periodA->end_at);
+                if ($periodA->day_and_night) {
+                    $aEnd->addDay();
+                }
 
-                // تحقق من تداخل تواريخ الفترات (null end_date تعني مفتوحة)
-                $aEnd         = $a['end_date'] ?? null;
-                $bEnd         = $b['end_date'] ?? null;
+                $bStart = Carbon::createFromFormat('H:i:s', $periodB->start_at);
+                $bEnd   = Carbon::createFromFormat('H:i:s', $periodB->end_at);
+                if ($periodB->day_and_night) {
+                    $bEnd->addDay();
+                }
+
+                // تحقق من التداخل
+                $timesOverlap = ($aStart <= $bEnd) && ($bStart <= $aEnd);
+
+                // تحقق من التواريخ
+                $aEndDate = $a['end_date'] ?? null;
+                $bEndDate = $b['end_date'] ?? null;
                 $datesOverlap =
-                    // الحالة العامة: تواريخ متقاطعة
-                    (
-                        ($aEnd === null || $b['start_date'] <= $aEnd) &&
-                        ($bEnd === null || $a['start_date'] <= $bEnd)
-                    );
+                    ($aEndDate === null || $b['start_date'] <= $aEndDate) &&
+                    ($bEndDate === null || $a['start_date'] <= $bEndDate);
 
                 if ($timesOverlap && $datesOverlap) {
-                    // يوجد تداخل كامل
                     return true;
                 }
             }
         }
         return false;
     }
+
+
+    // private function isInternalPeriodsOverlappingWithDates($selectedPeriodsWithDates)
+    // {
+    //     // $selectedPeriodsWithDates = [
+    //     //     ['period_id' => 1, 'start_date' => '2024-01-01', 'end_date' => '2024-01-10'],
+    //     //     ['period_id' => 2, 'start_date' => '2024-01-05', 'end_date' => '2024-01-15'],
+    //     //     ...
+    //     // ];
+    //     $periods = \App\Models\WorkPeriod::whereIn('id', array_column($selectedPeriodsWithDates, 'period_id'))->get()->keyBy('id');
+
+    //     // dd($selectedPeriodsWithDates, $periods);
+    //     $count = count($selectedPeriodsWithDates);
+    //     for ($i = 0; $i < $count; $i++) {
+    //         for ($j = $i + 1; $j < $count; $j++) {
+    //             $a = $selectedPeriodsWithDates[$i];
+    //             $b = $selectedPeriodsWithDates[$j];
+
+    //             $periodA = $periods[$a['period_id']];
+    //             $periodB = $periods[$b['period_id']];
+
+    //             // تحقق من تداخل أوقات الشيفت
+    //             $timesOverlap = (
+    //                 ($periodA->start_at <= $periodB->end_at) &&
+    //                 ($periodB->start_at <= $periodA->end_at)
+    //             );
+
+    //             // تحقق من تداخل تواريخ الفترات (null end_date تعني مفتوحة)
+    //             $aEnd         = $a['end_date'] ?? null;
+    //             $bEnd         = $b['end_date'] ?? null;
+    //             $datesOverlap =
+    //                 // الحالة العامة: تواريخ متقاطعة
+    //                 (
+    //                     ($aEnd === null || $b['start_date'] <= $aEnd) &&
+    //                     ($bEnd === null || $a['start_date'] <= $bEnd)
+    //                 );
+
+    //             if ($timesOverlap && $datesOverlap) {
+    //                 // يوجد تداخل كامل
+    //                 return true;
+    //             }
+    //         }
+    //     }
+    //     return false;
+    // }
 }
