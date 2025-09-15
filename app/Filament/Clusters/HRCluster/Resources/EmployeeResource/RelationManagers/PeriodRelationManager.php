@@ -543,7 +543,7 @@ class PeriodRelationManager extends RelationManager
             }
 
             // تحقق تداخل الأوقات
-            $timesOverlap = ($currentStart < $existEnd) && ($existStart < $currentEnd);
+            $timesOverlap = ($currentStart <= $existEnd) && ($existStart <= $currentEnd);
 
             // يوجد يوم متداخل && أوقات متداخلة
             if ($timesOverlap && $period->days->count()) {
