@@ -118,7 +118,7 @@ class EmployeeResource extends Resource
                             Tabs::make('')->columnSpanFull()
                                 ->tabs([
                                     Tab::make('Personal Data')
-                                    ->icon(Heroicon::UserCircle)
+                                        ->icon(Heroicon::UserCircle)
                                         ->schema([Grid::make()->columns(3)
                                             ->columnSpanFull()
                                             ->schema([
@@ -151,15 +151,7 @@ class EmployeeResource extends Resource
                                                 // TextInput::make('nationality')
                                                 // ->label('Nationality')
                                                 // ->nullable(),
-                                                TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
 
-                                                TextInput::make('working_days')
-                                                    ->label('Working Days per Month')
-                                                    ->numeric()
-                                                    ->minValue(1)
-                                                    ->maxValue(31)
-                                                // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
-                                                ,
 
                                                 // TextInput::make('working_hours')
                                                 //     ->label('Working Hours per Day')
@@ -187,43 +179,43 @@ class EmployeeResource extends Resource
 
                                             ]),]),
                                     Tab::make('Address & Avatar')
-                                    ->icon(Heroicon::MapPin)
-                                    ->schema([
-                                        Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
-                                            Textarea::make('address')->label('')->columnSpanFull(),
-                                        ]),
-                                        Fieldset::make()->label('Upload avatar image')
-                                            ->columnSpanFull()
-                                            ->schema([
-                                                Grid::make()->columnSpanFull()->schema([
-                                                    FileUpload::make('avatar')
-                                                        ->image()
-                                                        ->label('')
-                                                        // ->avatar()
-                                                        ->imageEditor()
-
-                                                        ->circleCropper()
-                                                        ->disk('public')
-                                                        // ->directory('employees')
-                                                        ->visibility('public')
-                                                        ->imageEditorAspectRatios([
-                                                            '16:9',
-                                                            '4:3',
-                                                            '1:1',
-                                                        ])
-                                                        // ->disk('s3') // Change disk to S3
-                                                        ->directory('employees')
-                                                        ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
-                                                            return Str::random(15) . "." . $file->getClientOriginalExtension();
-                                                        })
-                                                        // ->imagePreviewHeight('250')
-                                                        // ->resize(5)
-                                                        ->maxSize(333)
-                                                        ->columnSpan(2)
-                                                        ->reactive(),
-                                                ]),
+                                        ->icon(Heroicon::MapPin)
+                                        ->schema([
+                                            Fieldset::make()->label('Employee address')->columnSpanFull()->schema([
+                                                Textarea::make('address')->label('')->columnSpanFull(),
                                             ]),
-                                    ])
+                                            Fieldset::make()->label('Upload avatar image')
+                                                ->columnSpanFull()
+                                                ->schema([
+                                                    Grid::make()->columnSpanFull()->schema([
+                                                        FileUpload::make('avatar')
+                                                            ->image()
+                                                            ->label('')
+                                                            // ->avatar()
+                                                            ->imageEditor()
+
+                                                            ->circleCropper()
+                                                            ->disk('public')
+                                                            // ->directory('employees')
+                                                            ->visibility('public')
+                                                            ->imageEditorAspectRatios([
+                                                                '16:9',
+                                                                '4:3',
+                                                                '1:1',
+                                                            ])
+                                                            // ->disk('s3') // Change disk to S3
+                                                            ->directory('employees')
+                                                            ->getUploadedFileNameForStorageUsing(function (TemporaryUploadedFile $file): string {
+                                                                return Str::random(15) . "." . $file->getClientOriginalExtension();
+                                                            })
+                                                            // ->imagePreviewHeight('250')
+                                                            // ->resize(5)
+                                                            ->maxSize(333)
+                                                            ->columnSpan(2)
+                                                            ->reactive(),
+                                                    ]),
+                                                ]),
+                                        ])
                                 ]),
 
                         ]),
@@ -304,6 +296,15 @@ class EmployeeResource extends Resource
                                             ->default(now())
                                             ->columnSpan(1)->label('Start date')->required()
                                             ->maxDate(now()->toDateString()),
+                                        TextInput::make('working_hours')->label('Working hours')->numeric()->required()->default(6),
+
+                                        TextInput::make('working_days')
+                                            ->label('Working Days per Month')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(31)
+                                        // ->visible(fn() => Setting::getSetting('working_policy_mode') === 'custom_per_employee')
+                                        ,
 
                                     ]),
                                 ]),

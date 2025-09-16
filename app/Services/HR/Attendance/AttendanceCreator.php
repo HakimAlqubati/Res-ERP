@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\Attendance;
 
 use App\Models\Attendance;
@@ -10,7 +11,8 @@ class AttendanceCreator
     public $attendanceType = Attendance::ATTENDANCE_TYPE_RFID;
     protected AttendanceValidator $validator;
     public AttendanceHandler $attendanceHandler;
-    public function __construct(AttendanceValidator $validator,
+    public function __construct(
+        AttendanceValidator $validator,
         protected CheckInHandler $checkInHandler,
         protected CheckOutHandler $checkOutHandler,
         protected CheckTypeDecider $checkTypeDecider
@@ -25,7 +27,8 @@ class AttendanceCreator
         string $time,
         string $day,
         array $existAttendance,
-        ?string $realAttendanceDate = null
+        ?string $realAttendanceDate = null,
+        $data
     ) {
         if (isset($existAttendance['in_previous'])) {
             if ($existAttendance['in_previous']['check_type'] == Attendance::CHECKTYPE_CHECKIN) {
@@ -56,10 +59,10 @@ class AttendanceCreator
             $day,
             $existAttendance,
             $typeHidden,     // أو false حسب ما تريده هنا (يمكن تمريره كمرجع)
-            $manualType = '' // أو قيمة `checkin/checkout` اليدوية إن وجدت
+            $data['type'] ?? null // أو قيمة `checkin/checkout` اليدوية إن وجدت
         );
- 
-// إذا كانت النتيجة رسالة نصية بدل نوع صالح
+
+        // إذا كانت النتيجة رسالة نصية بدل نوع صالح
         if (! in_array($checkType, [Attendance::CHECKTYPE_CHECKIN, Attendance::CHECKTYPE_CHECKOUT])) {
             return [
                 'success' => false,
@@ -67,7 +70,7 @@ class AttendanceCreator
             ];
         }
 
-// إنشاء الحضور
+        // إنشاء الحضور
         $createdAttendance = $this->createAttendance(
             $employee,
             $closestPeriod,
@@ -75,7 +78,9 @@ class AttendanceCreator
             $time,
             $day,
             $checkType,
-            $existAttendance, false, $realAttendanceDate
+            $existAttendance,
+            false,
+            $realAttendanceDate
         );
         if (isset($createdAttendance['success']) && ! $createdAttendance['success']) {
             return $createdAttendance;
@@ -87,7 +92,6 @@ class AttendanceCreator
             'success' => true,
             'data'    => $createdAttendance,
         ];
-
     }
 
     public function createAttendance(
@@ -166,9 +170,7 @@ class AttendanceCreator
 
         if ($checkType === Attendance::CHECKTYPE_CHECKOUT) {
             $attendanceData = $this->checkOutHandler->handle($attendanceData, $nearestPeriod, $employee->id, $date, $checkTime, $previousRecord);
-
         }
         return $attendanceData;
-
     }
 }

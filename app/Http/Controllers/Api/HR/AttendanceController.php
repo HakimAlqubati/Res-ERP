@@ -35,6 +35,7 @@ class AttendanceController extends Controller
             'rfid'        => 'nullable|string|max:255',
             'employee_id' => 'nullable|integer|exists:hr_employees,id',
             'date_time'   => 'nullable|date',
+            'type'        => 'nullable|string|in:checkin,checkout',
         ]);
 
         // لازم واحد منهم يكون موجود

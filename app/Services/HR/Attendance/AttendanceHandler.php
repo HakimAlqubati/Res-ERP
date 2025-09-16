@@ -23,6 +23,7 @@ class AttendanceHandler
     public $day = '';
     public bool $hasWorkPeriod        = false;
     public $attendanceType = '';
+    public $data = [];
     public function __construct(
         AttendanceValidator $validator,
         protected CheckInHandler $checkInHandler,
@@ -40,10 +41,13 @@ class AttendanceHandler
         array $data,
         $attendanceType,
     ): array {
+        $this->data = $data;
+        // dd($data);
         $this->attendanceType = $attendanceType;
         try {
             $dateTime = $data['date_time']; // مفترض "Y-m-d H:i:s"
             $dt = CarbonImmutable::parse($dateTime);
+
 
             $this->realAttendanceDate = $dt->toDateString();
             $this->date        = $dt->toDateString();
@@ -219,7 +223,8 @@ class AttendanceHandler
                     $time,
                     $day,
                     $existAttendance,
-                    $this->realAttendanceDate
+                    $this->realAttendanceDate,
+                    $this->data
                 );
                 // dd($attendanceData);
                 if (is_array($attendanceData) && isset($attendanceData['success']) && $attendanceData['success'] === false) {

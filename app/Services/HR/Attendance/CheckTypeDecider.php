@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\HR\Attendance;
 
 use App\Models\Attendance;
@@ -22,6 +23,8 @@ class CheckTypeDecider
 
         $attendanceCount = $attendanceCollection->count();
 
+
+
         if ($attendanceCount === 0) {
             $allowedTimeBeforePeriod = Carbon::createFromFormat('H:i:s', $closestPeriod->start_at)
                 ->subHours((int) Setting::getSetting('hours_count_after_period_before'))
@@ -38,6 +41,10 @@ class CheckTypeDecider
             }
 
             if ($diff) {
+
+                if ($manualType !== null && $manualType !== '') {
+                    return $manualType;
+                }
                 if ($typeHidden) {
                     $typeHidden = false;
                     $message    = 'please specify type ';
@@ -54,11 +61,11 @@ class CheckTypeDecider
             }
 
             return Attendance::CHECKTYPE_CHECKIN;
-        } 
+        }
         // فردي أو زوجي
         return $attendanceCount % 2 === 0
-        ? Attendance::CHECKTYPE_CHECKIN
-        : Attendance::CHECKTYPE_CHECKOUT;
+            ? Attendance::CHECKTYPE_CHECKIN
+            : Attendance::CHECKTYPE_CHECKOUT;
     }
 
     private function isWithinPreEndAllowance(string $currentTime, string $date, $period): bool
