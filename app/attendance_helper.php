@@ -105,7 +105,7 @@ if (!function_exists('reportAbsentEmployees')) {
             }])
             ->select('id', 'name', 'employee_no', 'branch_id')
             ->get();
- 
+
         $absentEmployees = [];
 
         // Loop through employees and check if they have attendance for the date
@@ -1134,14 +1134,14 @@ if (!function_exists('calculate_missing_hours')) {
         $approvedOvertime,
         $date,
         $employeeId
-    ) { 
+    ) {
         // $isMultiple = Attendance::where('check_date', $date)
         //     ->where('employee_id', $employeeId)
         //     ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
         //     ->groupBy('period_id')
         //     ->havingRaw('COUNT(*) > 1')
         //     ->exists(); 
-        
+
 
         $isMultiple = Attendance::selectRaw('period_id, COUNT(*) as total')
             ->where('check_date', $date)
@@ -1149,7 +1149,7 @@ if (!function_exists('calculate_missing_hours')) {
             ->where('check_type', Attendance::CHECKTYPE_CHECKIN)
             ->groupBy('period_id')
             ->having('total', '>', 1)
-            ->exists(); 
+            ->exists();
 
         if (!$isMultiple) {
             return [
@@ -1160,7 +1160,7 @@ if (!function_exists('calculate_missing_hours')) {
         if (in_array($status, [
             Attendance::STATUS_EARLY_DEPARTURE,
             Attendance::STATUS_LATE_ARRIVAL
-        ])) { 
+        ])) {
             return [
                 'formatted' => '0 h 0m',
                 'total_minutes' => 0,
@@ -1303,3 +1303,94 @@ if (!function_exists('timeToHoursForLateArrival')) {
         throw new InvalidArgumentException("Invalid time format. Expected 'H:i:s' or 'X h Y m'.");
     }
 }
+
+/**
+ * start for leave
+ */
+
+if (!function_exists('calculateAutoWeeklyLeaveDataForBranch')) {
+    function calculateAutoWeeklyLeaveDataForBranch($yearAndMonth, $branchId)
+    {
+        $yearMonthArr = explode('-', $yearAndMonth);
+        $year = $yearMonthArr[0] ?? null;
+        $month = $yearMonthArr[1] ?? null;
+        // dd($yearAndMonth,$year,$month);
+
+        $employees = Employee::where('branch_id', $branchId)->get();
+
+        $branchResults = [];
+
+        foreach ($employees as $employee) {
+            $employeeId = $employee->id;
+            $employeeName = $employee->name;
+            $leaveBalance = \App\Models\LeaveBalance::getMonthlyBalanceForEmployee($employeeId, $year, $month);
+            $usedLeaves = 0;
+
+            $date = Carbon::parse($yearAndMonth);
+            $startDate = $date->copy()->startOfMonth()->format('Y-m-d');
+            $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
+
+            $attendances = employeeAttendances($employeeId, $startDate, $endDate);
+            $absentDates = calculateTotalAbsentDays($attendances)['absent_dates'];
+            $absendCalculated = calculateTotalAbsentDays($attendances);
+
+            $absentDates = $absendCalculated['absent_dates'];
+            $totalAttendanceDays = $absendCalculated['total_attendance_days'];
+            $absentDays = count($absentDates);
+
+            $allowedLeaves = (int) round($totalAttendanceDays / 7);
+            if (isset($leaveBalance->balance) && $leaveBalance->balance > 0) {
+                $usedLeaves = $allowedLeaves - $leaveBalance->balance;
+            }
+
+            if ($attendances == 'no_periods') {
+                $branchResults[$employeeId] = 'no_periods';
+                continue;
+            }
+
+
+            if ($absentDays < $allowedLeaves) {
+                $results = [
+                    'employee_id' => $employeeId,
+                    'employee_name' => $employeeName,
+                    'remaining_leaves' => 0,
+                    'compensated_days' => 0,
+                    'excess_absence_days' => 0,
+                    'absent_days' => $absentDays,
+                    'absent_dates' => $absentDates,
+                ];
+
+                if ($absentDays < $allowedLeaves) {
+                    $remainingLeaves = $allowedLeaves - $usedLeaves;
+
+                    // Sub-case 1.1: Employee did not have any absences
+                    if ($absentDays == 0) {
+                        $results['remaining_leaves'] = $remainingLeaves;
+                        $results['compensated_days'] = $remainingLeaves;
+                    } elseif ($absentDays <= $remainingLeaves) {
+                        // Sub-case 1.2: Absences are within the remaining leave allowance
+                        $results['remaining_leaves'] = $remainingLeaves - $absentDays;
+                        $results['compensated_days'] = $remainingLeaves - $absentDays;
+                    } else {
+                        // Sub-case 1.3: Absences exceed the remaining leave allowance
+                        $results['remaining_leaves'] = 0;
+                        $results['excess_absence_days'] = $absentDays - $remainingLeaves;
+                    }
+                } else {
+                    // Case 2: If the employee used all allowed leave
+                    if ($absentDays > $allowedLeaves) {
+                        $results['excess_absence_days'] = $absentDays - $allowedLeaves;
+                    }
+                }
+
+                $branchResults[$employeeId] = $results;
+            }
+        }
+
+        return $branchResults;
+    }
+}
+
+/**
+ * end for leave
+ */

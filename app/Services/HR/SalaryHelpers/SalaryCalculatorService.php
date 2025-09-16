@@ -45,7 +45,7 @@ class SalaryCalculatorService
     protected int $absentDays  = 0;
     protected array $totalDuration = ['hours' => 0, 'minutes' => 0];
     protected array $totalActualDuration = ['hours' => 0, 'minutes' => 0];
-    protected array $totalApprovedOvertime = ['hours' => 0, 'minutes' => 0];
+    protected float $totalApprovedOvertime = 0.0;
     protected float $lateHours = 0.0;   // from analyzer
 
     // Calculated rates
@@ -99,7 +99,7 @@ class SalaryCalculatorService
      * @param int $monthDays   Actual month days (28..31)
      * @param string|array $totalDuration           "HH:MM:SS" or ['hours'=>..,'minutes'=>..]
      * @param string|array $totalActualDuration     "
-     * @param string|array $totalApprovedOvertime   "
+     * @param float $totalApprovedOvertime   "
      */
     public function calculate(
         Employee $employee,
@@ -110,7 +110,7 @@ class SalaryCalculatorService
         int $monthDays,
         string|array $totalDuration,
         string|array $totalActualDuration,
-        string|array $totalApprovedOvertime,
+        float $totalApprovedOvertime,
         ?int $periodYear = null,
         ?int $periodMonth = null,
     ): array {
@@ -132,9 +132,10 @@ class SalaryCalculatorService
         $this->dailyHours   = $dailyHours;
         $this->monthDays    = $monthDays;
 
+
         $this->totalDuration          = is_array($totalDuration) ? $this->sanitizeHM($totalDuration) : $this->parseHM($totalDuration);
         $this->totalActualDuration    = is_array($totalActualDuration) ? $this->sanitizeHM($totalActualDuration) : $this->parseHM($totalActualDuration);
-        $this->totalApprovedOvertime  = is_array($totalApprovedOvertime) ? $this->sanitizeHM($totalApprovedOvertime) : $this->parseHM($totalApprovedOvertime);
+        $this->totalApprovedOvertime = (float) $totalApprovedOvertime;
         $this->lateHours              = $this->extractLateHours($employeeData);
 
         $this->periodYear  = $periodYear;
@@ -268,7 +269,7 @@ class SalaryCalculatorService
 
     protected function computeOvertime(): void
     {
-        $this->overtimeHours  = $this->toHours($this->totalApprovedOvertime);
+        $this->overtimeHours  = $this->totalApprovedOvertime;
         $this->overtimeAmount = $this->round($this->overtimeHours * $this->hourlyRate * $this->overtimeMultiplier);
 
         // Hook: policies can cap or boost overtime
@@ -389,7 +390,7 @@ class SalaryCalculatorService
             'absent_days'            => $this->absentDays,
             'total_duration'         => $this->totalDuration,
             'total_actual_duration'  => $this->totalActualDuration,
-            'total_approved_overtime' => $this->totalApprovedOvertime,
+            'total_approved_overtime' => $this->round($this->totalApprovedOvertime),
             'late_hours'             => $this->round($this->lateHours),
 
             // Raw details
@@ -666,7 +667,7 @@ class SalaryCalculatorService
         'absentDays' => 0,
         'totalDuration' => ['hours' => 0, 'minutes' => 0],
         'totalActualDuration' => ['hours' => 0, 'minutes' => 0],
-        'totalApprovedOvertime' => ['hours' => 0, 'minutes' => 0],
+        'totalApprovedOvertime' => 0.0,
         'lateHours' => 0.0,
         'dailyRate' => 0.0,
         'hourlyRate' => 0.0,

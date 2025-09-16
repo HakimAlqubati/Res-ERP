@@ -55,7 +55,11 @@ class PayrollSimulationService
 
             $totalDuration         = $attendanceArray['total_duration_hours'] ?? '0:00:00';
             $totalActualDuration   = $attendanceArray['total_actual_duration_hours'] ?? '0:00:00';
-            $totalApprovedOvertime =  '0:00:00';
+
+            $totalApprovedOvertime =  $employee->overtimes()
+                ->whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->sum('hours');
 
             // احتساب الراتب باستخدام القيم الجديدة
             $result = $this->salaryCalculatorService->calculate(
@@ -72,7 +76,7 @@ class PayrollSimulationService
                 periodMonth: $month
 
             );
-  
+
             $netSalary = $result['net_salary'] < 0 ? 0 : $result['net_salary'];
             $debt      = $result['net_salary'] < 0 ? abs($result['net_salary']) : 0;
 
@@ -100,7 +104,7 @@ class PayrollSimulationService
                 'dynamic_deductions' => $result['dynamic_deductions'] ?? [],
                 'penalty_total' => $result['penalty_total'] ?? 0,
                 'penalties' => $result['penalties'] ?? [],
-                'daily_rate_method' => $result['daily_rate_method']?? '',
+                'daily_rate_method' => $result['daily_rate_method'] ?? '',
                 'data' => [
                     'base_salary'       => $result['base_salary'],
                     'gross_salary'      => $result['gross_salary'],
@@ -158,7 +162,10 @@ class PayrollSimulationService
 
             $totalDuration         = $attendanceArray['total_duration_hours']        ?? '0:00:00';
             $totalActualDuration   = $attendanceArray['total_actual_duration_hours'] ?? '0:00:00';
-            $totalApprovedOvertime = '0:00:00';
+            $totalApprovedOvertime = $employee->overtimes()
+                ->whereYear('date', $run->year)
+                ->whereMonth('date', $run->month)
+                ->sum('hours');
 
             // Salary calculation
             $result = $this->salaryCalculatorService->calculate(

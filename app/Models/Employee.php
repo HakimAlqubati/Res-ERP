@@ -355,6 +355,7 @@ class Employee extends Model implements Auditable
     {
         $startOfMonth = Carbon::parse($date)->startOfMonth()->toDateString();
         $endOfMonth   = Carbon::parse($date)->endOfMonth()->toDateString();
+        // dd($startOfMonth,$endOfMonth);
         return $this->hasMany(EmployeeOvertime::class, 'employee_id')->day()
             ->where('approved', 1)
             ->whereBetween('date', [$startOfMonth, $endOfMonth]);
@@ -442,6 +443,8 @@ class Employee extends Model implements Auditable
         // Initialize an array to store results
         $results = [];
 
+
+        $arr = [];
         // Loop through each period
         foreach ($employee->periods as $period) {
             // Get attendances for the specified employee and date within the current period
@@ -449,9 +452,13 @@ class Employee extends Model implements Auditable
                 ->where('employee_id', $employee->id)
                 ->where('period_id', $period->id)
                 ->where('check_date', $date)
+                ->accepted()
                 ->orderBy('id')
                 ->get();
+            // dd($employee->periods, $date, $period->id, $attendances);
 
+            $arr[] = $attendances;
+            // dd($attendances);
             $totalMinutes = 0;
             $checkInTime  = null;
             $checkOutTime = null; // To store checkout time
@@ -460,18 +467,23 @@ class Employee extends Model implements Auditable
             for ($i = 0; $i < $attendances->count(); $i++) {
                 $checkIn = $attendances[$i];
 
+                if(count($attendances)>0){
+                    // dd($attendances);
+                }
                 // Ensure the current record is a check-in
                 if ($checkIn->check_type === 'checkin') {
                     // Look for the next check-out
                     $i++;
                     if ($i < $attendances->count()) {
                         $checkOut = $attendances[$i];
-
+                        
                         // Ensure it is indeed a check-out
                         if ($checkOut->check_type === 'checkout') {
-                            $checkInTime  = Carbon::parse("{$checkIn->check_date} {$checkIn->check_time}");
-                            $checkOutTime = Carbon::parse("{$checkOut->check_date} {$checkOut->check_time}");
+                            // dd($checkIn,$checkOut);
+                            $checkInTime  = Carbon::parse("{$checkIn->real_check_date} {$checkIn->check_time}");
+                            $checkOutTime = Carbon::parse("{$checkOut->real_check_date} {$checkOut->check_time}");
 
+                            // dd($checkInTime,$checkOutTime);
                             // Adjust for midnight crossing
                             if ($checkOutTime < $checkInTime) {
                                 $checkOutTime->addDay(); // Add 24 hours
@@ -484,6 +496,8 @@ class Employee extends Model implements Auditable
                 }
             }
 
+            $arr[] = $attendances;
+            $arr2[] = $totalMinutes;
             // Convert the supposed duration string "HH:MM" to total minutes
             list($hours, $minutes)   = explode(':', $period->supposed_duration);
             $supposedDurationMinutes = ($hours * 60) + $minutes; // Convert to total minutes
@@ -522,6 +536,7 @@ class Employee extends Model implements Auditable
                 ];
             }
         }
+        // dd($results, $arr, $arr2);
         return $results; // Return the results
     }
 
