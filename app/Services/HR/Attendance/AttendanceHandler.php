@@ -207,7 +207,7 @@ class AttendanceHandler
                     ];
                 }
 
-                // dd($date, $this->date,$closestPeriod?->name);
+                // dd($date, $this->date, $closestPeriod?->name);
                 $existAttendance = AttendanceFetcher::getExistingAttendance($employee, $closestPeriod, $this->date, $day, $time);
                 // dd($existAttendance,$this->date);
                 if (isset($existAttendance['in_previous'])) {
@@ -313,6 +313,13 @@ class AttendanceHandler
                 // ✅ استدعاء الميثود مباشرة
                 $this->attachBoundsToWorkPeriod($wp, $currentTimeObj);
 
+                // dd(
+                //     $wp,
+                //     Attendance::isPeriodClosed($this->employeeId, $wp->id, $this->targetDate),
+                //     $this->date,
+                //     $this->targetDate
+                // );
+                // if (!Attendance::isPeriodClosed($this->employeeId, $wp->id, $this->targetDate))
                 return $wp;
             }
         }
